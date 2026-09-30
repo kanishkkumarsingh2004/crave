@@ -33,7 +33,7 @@ interface VendorDocument {
   createdAt: string;
 }
 
-interface VendorDetail {
+interface VendorDetailData {
   id: string;
   storeName: string;
   slug: string;
@@ -67,7 +67,7 @@ interface VendorDetail {
   };
 }
 
-async function fetchVendor(id: string): Promise<{ success: boolean; data: VendorDetail }> {
+async function fetchVendor(id: string): Promise<{ success: boolean; data: VendorDetailData }> {
   const res = await fetch(`/api/v1/admin/vendors/${id}`);
   if (!res.ok) throw new Error("Failed to fetch vendor details");
   return res.json();

@@ -5,7 +5,7 @@
  * Requires: CUSTOMER role
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withCustomer } from "@/../../../../server/middleware/auth";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { getOrCreateCart, clearCart } from "@/../../../../server/modules/cart";

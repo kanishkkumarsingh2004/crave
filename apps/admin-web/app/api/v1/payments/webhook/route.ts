@@ -4,7 +4,7 @@
  * Unauthenticated (validates webhook signatures and enforces idempotency via PaymentEvent table)
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { processPaymentWebhook } from "@/../../../../server/modules/payments";
 

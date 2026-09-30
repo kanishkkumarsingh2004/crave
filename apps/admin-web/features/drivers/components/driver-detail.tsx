@@ -32,7 +32,7 @@ interface DriverDocument {
   createdAt: string;
 }
 
-interface DriverDetail {
+interface DriverDetailData {
   id: string;
   status: string;
   availability: string;
@@ -61,7 +61,7 @@ interface DriverDetail {
   };
 }
 
-async function fetchDriver(id: string): Promise<{ success: boolean; data: DriverDetail }> {
+async function fetchDriver(id: string): Promise<{ success: boolean; data: DriverDetailData }> {
   const res = await fetch(`/api/v1/admin/drivers/${id}`);
   if (!res.ok) throw new Error("Failed to fetch driver details");
   return res.json();

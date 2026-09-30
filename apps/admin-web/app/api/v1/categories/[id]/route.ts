@@ -2,7 +2,7 @@
  * GET /api/v1/categories/[id] — Public API for category detail
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import {
   apiSuccess,
   apiNotFound,

@@ -8,7 +8,7 @@
  * spec: Phase 5 §5.6
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withCustomer } from "@/../../../../server/middleware/auth";
 import {
   apiCreated,

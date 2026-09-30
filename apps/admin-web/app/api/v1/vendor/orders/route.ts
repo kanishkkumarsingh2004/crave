@@ -5,10 +5,10 @@
  * spec: Task 6.5
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withVendor } from "@/../../../../server/middleware/auth";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
-import { OrderStatus } from "@delivery/types";
+import type { OrderStatus } from "@delivery/types";
 import { getVendorOrders } from "@/../../../../server/modules/vendors";
 
 export async function GET(request: NextRequest) {

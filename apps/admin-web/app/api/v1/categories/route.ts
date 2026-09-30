@@ -2,7 +2,7 @@
  * GET /api/v1/categories — Public API to list all active categories
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { getActiveCategories } from "@/../../../../server/modules/catalog";
 

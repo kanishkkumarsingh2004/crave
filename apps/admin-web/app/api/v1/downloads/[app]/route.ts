@@ -4,7 +4,8 @@
  * Supported params: "customer" | "vendor" | "driver"
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 

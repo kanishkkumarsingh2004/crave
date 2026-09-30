@@ -4,7 +4,7 @@
  * Requires: Authenticated User
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withAuth } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,

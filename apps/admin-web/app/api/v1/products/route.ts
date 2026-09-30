@@ -2,7 +2,7 @@
  * GET /api/v1/products — Public API to browse products
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { getPublicProducts } from "@/../../../../server/modules/catalog";
 

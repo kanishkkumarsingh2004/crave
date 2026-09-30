@@ -5,7 +5,7 @@
  * spec: Task 6.2
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withVendor } from "@/../../../../server/middleware/auth";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { getVendorDashboard } from "@/../../../../server/modules/vendors";

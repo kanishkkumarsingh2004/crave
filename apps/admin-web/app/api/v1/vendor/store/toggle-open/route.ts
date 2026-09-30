@@ -5,7 +5,7 @@
  * spec: Task 6.7
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withVendor } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,

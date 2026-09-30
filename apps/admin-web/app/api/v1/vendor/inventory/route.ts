@@ -2,7 +2,7 @@
  * GET /api/v1/vendor/inventory — Vendor list inventory for all products
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withVendor } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,

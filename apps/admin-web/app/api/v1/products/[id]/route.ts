@@ -2,7 +2,7 @@
  * GET /api/v1/products/[id] — Public API for product details
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import {
   apiSuccess,
   apiNotFound,

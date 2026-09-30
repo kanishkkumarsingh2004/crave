@@ -4,9 +4,10 @@
  * Requires: Authenticated User
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withAuth } from "@/../../../../server/middleware/auth";
-import { realtimeBus, RealtimeEvent } from "@/../../../../server/realtime/events";
+import type { RealtimeEvent } from "@/../../../../server/realtime/events";
+import { realtimeBus } from "@/../../../../server/realtime/events";
 
 export async function GET(request: NextRequest) {
   const { error } = await withAuth(request);

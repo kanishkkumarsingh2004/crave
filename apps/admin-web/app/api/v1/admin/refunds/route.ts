@@ -4,7 +4,7 @@
  * Requires: ADMIN role
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withAdmin } from "@/../../../../server/middleware/auth";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
 import { getAdminRefunds } from "@/../../../../server/modules/payments";

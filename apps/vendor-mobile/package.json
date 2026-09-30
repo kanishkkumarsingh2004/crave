@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "build": "expo export",
-    "build:apk": "npx --package=eas-cli eas build --platform android --profile preview --local --non-interactive",
+    "build:apk": "eas build --platform android --profile preview --local --non-interactive",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "clean": "rm -rf .expo dist"

@@ -5,7 +5,7 @@
  * spec: Task 4.5 File Storage Integration
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withAuth } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,

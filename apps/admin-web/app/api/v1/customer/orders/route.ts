@@ -4,10 +4,10 @@
  * Requires: CUSTOMER role
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withCustomer } from "@/../../../../server/middleware/auth";
 import { apiSuccess, apiInternalError } from "@/../../../../server/infrastructure/response";
-import { OrderStatus } from "@delivery/types";
+import type { OrderStatus } from "@delivery/types";
 import { getCustomerOrders } from "@/../../../../server/modules/orders";
 
 export async function GET(request: NextRequest) {

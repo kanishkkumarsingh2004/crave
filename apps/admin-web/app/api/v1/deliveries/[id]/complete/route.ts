@@ -4,7 +4,7 @@
  * Requires: DRIVER role
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withDriver } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,

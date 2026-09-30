@@ -2,7 +2,7 @@
  * POST /api/v1/vendor/products/[id]/activate — Vendor activate product (DRAFT/INACTIVE -> ACTIVE)
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { withVendor } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,
