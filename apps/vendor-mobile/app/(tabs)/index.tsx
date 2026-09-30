@@ -175,14 +175,25 @@ export default function VendorDashboardScreen() {
         <View style={styles.statsGrid}>
           {stats.map((stat) => (
             <View key={stat.id} style={styles.statCard}>
-              <View style={[styles.statIconBadge, { backgroundColor: `${stat.color}15` }]}>
-                <Ionicons name={stat.icon} size={20} color={stat.color} />
+              <View style={styles.statHeaderRow}>
+                <View style={[styles.statIconBadge, { backgroundColor: `${stat.color}15` }]}>
+                  <Ionicons name={stat.icon} size={18} color={stat.color} />
+                </View>
+                <Text style={styles.statTitle} numberOfLines={1}>
+                  {stat.title}
+                </Text>
               </View>
-              <Text style={styles.statTitle}>{stat.title}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={[styles.statChange, { color: stat.isPositive ? "#059669" : "#dc2626" }]}>
-                {stat.change}
-              </Text>
+              <View style={styles.statValueRow}>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text
+                  style={[
+                    styles.statChange,
+                    { color: stat.isPositive ? "#059669" : "#dc2626" },
+                  ]}
+                >
+                  {stat.change}
+                </Text>
+              </View>
             </View>
           ))}
         </View>
@@ -352,7 +363,7 @@ const styles = StyleSheet.create({
   statCard: {
     width: "48%",
     backgroundColor: "#fff",
-    padding: 14,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
@@ -362,16 +373,31 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
+  statHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 8,
+  },
   statIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
   },
-  statTitle: { fontSize: 12, color: "#6b7280" },
-  statValue: { fontSize: 20, fontWeight: "700", color: "#111827", marginVertical: 2 },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6b7280",
+    flex: 1,
+  },
+  statValueRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+  },
+  statValue: { fontSize: 18, fontWeight: "700", color: "#111827" },
   statChange: { fontSize: 11, fontWeight: "600" },
   emptyCard: {
     backgroundColor: "#fff",
