@@ -11,11 +11,13 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useDriverAuthStore } from "@/stores/auth.store";
 
 export default function DriverLoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { signIn, loading } = useDriverAuthStore();
 
@@ -73,13 +75,26 @@ export default function DriverLoginScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••••••"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="••••••••••••"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#6b7280"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -150,6 +165,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 14,
     color: "#111827",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 44,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#111827",
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   button: {
     height: 48,

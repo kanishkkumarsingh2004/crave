@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/stores/auth.store";
 
 export default function SignUpScreen() {
@@ -18,6 +19,8 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const { signUp, loading } = useAuthStore();
 
@@ -63,58 +66,65 @@ export default function SignUpScreen() {
           </View>
         )}
 
-        {[
-          {
-            label: "Full Name",
-            value: name,
-            setter: setName,
-            placeholder: "Your name",
-            keyboard: "default",
-            secure: false,
-            complete: "name",
-          },
-          {
-            label: "Email",
-            value: email,
-            setter: setEmail,
-            placeholder: "you@example.com",
-            keyboard: "email-address",
-            secure: false,
-            complete: "email",
-          },
-          {
-            label: "Password",
-            value: password,
-            setter: setPassword,
-            placeholder: "Min. 12 characters",
-            keyboard: "default",
-            secure: true,
-            complete: "new-password",
-          },
-          {
-            label: "Confirm Password",
-            value: confirm,
-            setter: setConfirm,
-            placeholder: "Repeat password",
-            keyboard: "default",
-            secure: true,
-            complete: "new-password",
-          },
-        ].map(({ label, value, setter, placeholder, keyboard, secure, complete }) => (
-          <View key={label} style={styles.inputGroup}>
-            <Text style={styles.label}>{label}</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Full Name</Text>
+          <TextInput style={styles.input} placeholder="Your name" autoComplete="name" value={name} onChangeText={setName} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput style={styles.input} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" autoComplete="email" value={email} onChangeText={setEmail} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Password</Text>
+          <View style={styles.passwordContainer}>
             <TextInput
-              style={styles.input}
-              placeholder={placeholder}
-              keyboardType={keyboard as "default" | "email-address"}
-              autoCapitalize={keyboard === "email-address" ? "none" : "words"}
-              autoComplete={complete as "name" | "email" | "new-password"}
-              secureTextEntry={secure}
-              value={value}
-              onChangeText={setter}
+              style={styles.passwordInput}
+              placeholder="Min. 12 characters"
+              secureTextEntry={!showPassword}
+              autoComplete="new-password"
+              value={password}
+              onChangeText={setPassword}
             />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#6b7280"
+              />
+            </TouchableOpacity>
           </View>
-        ))}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Confirm Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Repeat password"
+              secureTextEntry={!showConfirm}
+              autoComplete="new-password"
+              value={confirm}
+              onChangeText={setConfirm}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowConfirm((prev) => !prev)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showConfirm ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#6b7280"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -173,6 +183,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 14,
     color: "#111827",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 44,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#111827",
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   button: {
     height: 48,

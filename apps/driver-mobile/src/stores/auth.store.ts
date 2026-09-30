@@ -2,9 +2,20 @@ declare const process: any;
 
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
 
 const SESSION_KEY = "delivery_driver_session";
-const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+
+function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
+    return `http://${host}:3000`;
+  }
+  return "http://localhost:3000";
+}
+
+const API_BASE = getApiBaseUrl();
 
 export type AuthStatus = "unknown" | "authenticating" | "authenticated" | "unauthenticated";
 

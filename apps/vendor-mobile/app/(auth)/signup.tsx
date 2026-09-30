@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useVendorAuthStore } from "@/stores/auth.store";
 
 export default function VendorSignUpScreen() {
@@ -20,6 +21,7 @@ export default function VendorSignUpScreen() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { signUp, loading } = useVendorAuthStore();
 
@@ -64,42 +66,54 @@ export default function VendorSignUpScreen() {
           </View>
         )}
 
-        {[
-          { label: "Your Name *", value: name, setter: setName, placeholder: "Full name" },
-          {
-            label: "Business Name *",
-            value: businessName,
-            setter: setBusinessName,
-            placeholder: "Store / Restaurant name",
-          },
-          { label: "Email *", value: email, setter: setEmail, placeholder: "business@example.com" },
-          { label: "Phone", value: phone, setter: setPhone, placeholder: "+91XXXXXXXXXX" },
-          {
-            label: "Business Address",
-            value: address,
-            setter: setAddress,
-            placeholder: "Street, City",
-          },
-          {
-            label: "Password *",
-            value: password,
-            setter: setPassword,
-            placeholder: "Min. 12 characters",
-            secure: true,
-          },
-        ].map(({ label, value, setter, placeholder, secure }) => (
-          <View key={label} style={styles.inputGroup}>
-            <Text style={styles.label}>{label}</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Your Name *</Text>
+          <TextInput style={styles.input} placeholder="Full name" value={name} onChangeText={setName} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Business Name *</Text>
+          <TextInput style={styles.input} placeholder="Store / Restaurant name" value={businessName} onChangeText={setBusinessName} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email *</Text>
+          <TextInput style={styles.input} placeholder="business@example.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone</Text>
+          <TextInput style={styles.input} placeholder="+91XXXXXXXXXX" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Business Address</Text>
+          <TextInput style={styles.input} placeholder="Street, City" value={address} onChangeText={setAddress} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Password *</Text>
+          <View style={styles.passwordContainer}>
             <TextInput
-              style={styles.input}
-              placeholder={placeholder}
-              secureTextEntry={secure}
-              autoCapitalize={label.includes("Email") ? "none" : "sentences"}
-              value={value}
-              onChangeText={setter}
+              style={styles.passwordInput}
+              placeholder="Min. 12 characters"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
             />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#6b7280"
+              />
+            </TouchableOpacity>
           </View>
-        ))}
+        </View>
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -157,6 +171,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 14,
     color: "#111827",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 44,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#111827",
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   button: {
     height: 48,
