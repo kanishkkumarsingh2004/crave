@@ -187,7 +187,7 @@ export function DriverDetail({ id }: DriverDetailProps) {
             <Star className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold">{driver.rating.toFixed(1)} / 5.0</div>
+            <div className="text-2xl font-bold">{Number(driver.rating ?? 0).toFixed(1)} / 5.0</div>
             <div className="text-xs text-muted-foreground font-medium">Average Rating</div>
           </div>
         </div>

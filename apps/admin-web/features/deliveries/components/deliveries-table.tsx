@@ -112,7 +112,7 @@ export function DeliveriesTable() {
       header: "Distance / Est.",
       accessor: (row) => (
         <span className="text-xs font-mono">
-          {row.distanceKm ? `${row.distanceKm.toFixed(1)} km` : "N/A"} •{" "}
+          {row.distanceKm ? `${Number(row.distanceKm).toFixed(1)} km` : "N/A"} •{" "}
           {row.estimatedTimeMin ? `${row.estimatedTimeMin} mins` : "N/A"}
         </span>
       ),

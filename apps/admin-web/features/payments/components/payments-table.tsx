@@ -88,7 +88,7 @@ export function PaymentsTable() {
       header: "Amount",
       accessor: (row) => (
         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-          ₹{row.amount.toFixed(2)} {row.currency}
+          ₹{Number(row.amount ?? 0).toFixed(2)} {row.currency}
         </span>
       ),
     },
