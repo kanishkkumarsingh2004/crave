@@ -1,0 +1,19 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "server"
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  dtrace-provider: true
+  esbuild: true
+  node-pty: true
+  prisma: true
+  protobufjs: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - "@next/eslint-plugin-next@16.3.8"
+  - "@vitest/mocker@5.0.3"
+  - "@vitest/spy@5.0.3"
+  - eslint-config-next@16.3.8
+  - vitest@5.0.3

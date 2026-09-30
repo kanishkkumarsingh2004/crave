@@ -1,0 +1,44 @@
+{
+  "name": "admin-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next dist"
+  },
+  "dependencies": {
+    "@delivery/types": "workspace:*",
+    "@delivery/api-client": "workspace:*",
+    "@delivery/validation": "workspace:*",
+    "@delivery/constants": "workspace:*",
+    "@delivery/ui": "workspace:*",
+    "@delivery/config": "workspace:*",
+    "@tanstack/react-query": "^5.56.0",
+    "@tanstack/react-query-devtools": "^5.56.0",
+    "better-auth": "^1.0.0",
+    "next": "^15.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "recharts": "^2.12.0",
+    "sonner": "^1.5.0",
+    "lucide-react": "^0.441.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.5.0"
+  }
+}

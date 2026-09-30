@@ -1,0 +1,51 @@
+{
+  "name": "delivery-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Mobile + Shared Backend",
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "vitest run",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "prisma:generate": "pnpm exec prisma generate --schema=prisma/schema.prisma",
+    "prisma:migrate": "pnpm --filter @delivery/database prisma:migrate",
+    "prisma:migrate:deploy": "pnpm --filter @delivery/database prisma:migrate:deploy",
+    "prisma:studio": "pnpm --filter @delivery/database prisma:studio",
+    "prisma:seed": "pnpm --filter @delivery/database prisma:seed",
+    "db:reset": "pnpm --filter @delivery/database db:reset",
+    "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm prisma:generate && pnpm build && pnpm build:mobile",
+    "ci:apk": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm prisma:generate && pnpm build && pnpm build:apk",
+    "build:mobile": "pnpm --filter customer-mobile build && pnpm --filter driver-mobile build && pnpm --filter vendor-mobile build",
+    "build:apk": "pnpm --filter customer-mobile build:apk && pnpm --filter driver-mobile build:apk && pnpm --filter vendor-mobile build:apk",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
+    "eas-cli": "^24.8.0",
+    "eas-cli-local-build-plugin": "^24.8.0",
+    "eslint": "^9.20.0",
+    "eslint-config-next": "^16.3.8",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.9.9",
+    "prisma": "^6.19.3",
+    "turbo": "^2.11.5",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  }
+}

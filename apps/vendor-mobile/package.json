@@ -1,0 +1,52 @@
+{
+  "name": "vendor-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "build": "expo export",
+    "build:apk": "npx --package=eas-cli eas build --platform android --profile preview --local --non-interactive",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "clean": "rm -rf .expo dist"
+  },
+  "dependencies": {
+    "@delivery/api-client": "workspace:*",
+    "@delivery/config": "workspace:*",
+    "@delivery/constants": "workspace:*",
+    "@delivery/types": "workspace:*",
+    "@delivery/validation": "workspace:*",
+    "@expo/log-box": "~57.0.4",
+    "@expo/metro-runtime": "~3.2.0",
+    "@expo/vector-icons": "^14.0.0",
+    "@react-navigation/bottom-tabs": "^6.6.1",
+    "@react-navigation/native": "^6.1.18",
+    "@react-navigation/native-stack": "^6.10.1",
+    "@tanstack/react-query": "^5.56.0",
+    "date-fns": "^3.6.0",
+    "expo": "~57.0.26",
+    "expo-document-picker": "~12.0.0",
+    "expo-image-picker": "~15.1.0",
+    "expo-notifications": "~0.28.0",
+    "expo-router": "~3.5.0",
+    "expo-secure-store": "~13.0.0",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-gesture-handler": "~2.16.2",
+    "react-native-reanimated": "~3.10.1",
+    "react-native-safe-area-context": "4.10.5",
+    "react-native-screens": "3.31.1",
+    "react-native-web": "^0.21.3",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "~19.2.18",
+    "@types/react-native": "~0.73.0",
+    "typescript": "~5.9.3"
+  }
+}
