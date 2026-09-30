@@ -133,6 +133,7 @@ export const auth = betterAuth({
       enabled: false,
     },
     generateId: false, // Use Prisma's @default(cuid())
+    disableCSRFCheck: true, // Allow mobile apps & native API clients that do not send Origin header
   },
 
   // Logger configuration
@@ -145,6 +146,7 @@ export const auth = betterAuth({
     BETTER_AUTH_URL,
     "http://localhost:3000",
     "http://localhost:3001",
+    "http://127.0.0.1:3000",
     ...(process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",") ?? []),
   ],
 });

@@ -76,7 +76,10 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
     try {
       const res = await fetch(`${API_BASE}/api/auth/sign-in/email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": API_BASE,
+        },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
@@ -100,7 +103,10 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
     try {
       const res = await fetch(`${API_BASE}/api/v1/vendor/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": API_BASE,
+        },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
@@ -114,7 +120,11 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
 
   signOut: async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/sign-out`, { method: "POST", credentials: "include" });
+      await fetch(`${API_BASE}/api/auth/sign-out`, {
+        method: "POST",
+        headers: { "Origin": API_BASE },
+        credentials: "include",
+      });
     } catch {
       /* ignore */
     }

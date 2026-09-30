@@ -74,7 +74,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/api/auth/sign-in/email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": API_BASE,
+        },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
@@ -105,7 +108,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": API_BASE,
+        },
         credentials: "include",
         body: JSON.stringify({ name, email, password }),
       });
@@ -133,6 +139,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await fetch(`${API_BASE}/api/auth/sign-out`, {
         method: "POST",
+        headers: { "Origin": API_BASE },
         credentials: "include",
       });
     } catch {
