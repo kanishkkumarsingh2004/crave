@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, Filter, CheckCircle2, XCircle, PauseCircle } from "lucide-react";
@@ -147,45 +148,49 @@ function VendorActions({
       </div>
 
       {/* Reject dialog */}
-      {showRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-xl space-y-4 mx-4">
-            <h3 className="font-semibold text-base">Reject Vendor Application</h3>
-            <p className="text-sm text-muted-foreground">
-              Provide a rejection reason for{" "}
-              <span className="font-medium text-foreground">{vendor.storeName}</span>:
-            </p>
-            <textarea
-              rows={3}
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="e.g. Incomplete documentation"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => {
-                  setShowRejectDialog(false);
-                  setRejectReason("");
-                }}
-                className="h-9 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowRejectDialog(false);
-                  onAction(vendor.id, "REJECTED", rejectReason || undefined);
-                  setRejectReason("");
-                }}
-                className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
-              >
-                Reject Vendor
-              </button>
+      {showRejectDialog &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowRejectDialog(false)} />
+            <div className="relative z-10 bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-2xl space-y-4 my-8 animate-in zoom-in-95 duration-200">
+              <h3 className="font-bold text-base text-foreground">Reject Vendor Application</h3>
+              <p className="text-sm text-muted-foreground">
+                Provide a rejection reason for{" "}
+                <span className="font-semibold text-foreground">{vendor.storeName}</span>:
+              </p>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. Incomplete documentation"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              />
+              <div className="flex gap-2 justify-end pt-2 border-t border-border">
+                <button
+                  onClick={() => {
+                    setShowRejectDialog(false);
+                    setRejectReason("");
+                  }}
+                  className="h-9 px-4 rounded-lg border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRejectDialog(false);
+                    onAction(vendor.id, "REJECTED", rejectReason || undefined);
+                    setRejectReason("");
+                  }}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+                >
+                  Reject Vendor
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

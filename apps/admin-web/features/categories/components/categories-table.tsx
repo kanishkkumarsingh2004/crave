@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X } from "lucide-react";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { format } from "date-fns";
 
@@ -99,6 +100,7 @@ interface CategoryFormProps {
 }
 
 function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryFormProps) {
+  const [mounted, setMounted] = React.useState(false);
   const [form, setForm] = useState<CategoryFormData>({
     name: initial?.name ?? "",
     slug: initial?.slug ?? "",
@@ -107,6 +109,11 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
     isActive: initial?.isActive ?? true,
     sortOrder: initial?.sortOrder ?? 0,
   });
+
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   function set<K extends keyof CategoryFormData>(key: K, value: CategoryFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -117,40 +124,54 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
     if (!initial) set("slug", slugify(v));
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-card rounded-xl border border-border p-6 w-full max-w-md shadow-xl space-y-4 mx-4">
-        <h3 className="font-semibold text-base">{initial ? "Edit Category" : "New Category"}</h3>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0" onClick={onClose} />
+
+      <div className="relative z-10 bg-card border border-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4 my-8 animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <h3 className="font-bold text-base text-foreground">
+            {initial ? "Edit Category" : "New Category"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Name *
             </label>
             <input
               value={form.name}
               onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="e.g. Electronics"
+              placeholder="e.g. Food & Groceries"
               id="category-name"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Slug *
             </label>
             <input
               value={form.slug}
               onChange={(e) => set("slug", e.target.value)}
-              placeholder="electronics"
+              placeholder="food-groceries"
               id="category-slug"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono text-xs"
+              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono text-xs"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Description
             </label>
             <textarea
@@ -158,12 +179,12 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
               onChange={(e) => set("description", e.target.value)}
               rows={2}
               id="category-description"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Image URL
             </label>
             <input
@@ -171,13 +192,13 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
               onChange={(e) => set("imageUrl", e.target.value)}
               placeholder="https://…"
               id="category-image-url"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Sort Order
               </label>
               <input
@@ -186,7 +207,7 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
                 onChange={(e) => set("sortOrder", Number(e.target.value))}
                 min={0}
                 id="category-sort-order"
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div className="flex items-center gap-2 pt-5">
@@ -207,23 +228,24 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end pt-1">
+        <div className="flex gap-2 justify-end pt-2 border-t border-border">
           <button
             onClick={onClose}
-            className="h-9 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
+            className="h-9 px-4 rounded-lg border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(form)}
             disabled={!form.name.trim() || !form.slug.trim() || isPending}
-            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isPending ? "Saving…" : initial ? "Update" : "Create"}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -409,38 +431,42 @@ export function CategoriesTable() {
       )}
 
       {/* Delete confirm */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-xl space-y-4 mx-4">
-            <h3 className="font-semibold text-base">Delete Category</h3>
-            <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete{" "}
-              <span className="font-medium text-foreground">{deleteTarget.name}</span>?
-              {deleteTarget._count.products > 0 && (
-                <span className="block mt-1 text-destructive font-medium">
-                  ⚠ This category has {deleteTarget._count.products} product
-                  {deleteTarget._count.products > 1 ? "s" : ""}. This may fail.
-                </span>
-              )}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="h-9 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate(deleteTarget.id)}
-                disabled={deleteMutation.isPending}
-                className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 disabled:opacity-50 transition-colors"
-              >
-                {deleteMutation.isPending ? "Deleting…" : "Delete"}
-              </button>
+      {deleteTarget &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setDeleteTarget(null)} />
+            <div className="relative z-10 bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-2xl space-y-4 my-8 animate-in zoom-in-95 duration-200">
+              <h3 className="font-bold text-base text-foreground">Delete Category</h3>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground">{deleteTarget.name}</span>?
+                {deleteTarget._count.products > 0 && (
+                  <span className="block mt-2 text-xs font-semibold text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                    ⚠ This category has {deleteTarget._count.products} product
+                    {deleteTarget._count.products > 1 ? "s" : ""}. Deleting it may fail.
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-2 justify-end pt-2 border-t border-border">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="h-9 px-4 rounded-lg border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate(deleteTarget.id)}
+                  disabled={deleteMutation.isPending}
+                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                >
+                  {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
