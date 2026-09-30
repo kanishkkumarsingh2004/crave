@@ -24,7 +24,7 @@ export default function DriverDeliveriesScreen() {
     customerPhone: "+1 (555) 777-3311",
     customerAddress: "742 Evergreen Terrace, Apt 3B",
     items: ["2x Truffle Burger", "1x Garlic Fries", "2x Iced Tea"],
-    earnings: "$14.50",
+    earnings: "₹14.50",
   };
 
   const advanceStep = () => {
@@ -43,7 +43,7 @@ export default function DriverDeliveriesScreen() {
         break;
       case "ARRIVED_DELIVERY":
         setCurrentStep("DELIVERED");
-        Alert.alert("Delivery Completed!", "Great job! $14.50 added to earnings.");
+        Alert.alert("Delivery Completed!", "Great job! ₹14.50 added to earnings.");
         break;
     }
   };

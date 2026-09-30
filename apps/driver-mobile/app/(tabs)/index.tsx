@@ -36,7 +36,7 @@ export default function DriverDashboardScreen() {
       vendorName: "Gourmet Burger Kitchen",
       pickupAddress: "104 Market St (0.8 mi away)",
       deliveryAddress: "742 Evergreen Terrace (2.4 mi away)",
-      payout: "$14.50",
+      payout: "₹14.50",
       distance: "3.2 mi total",
       estimatedTime: "20 min",
     },
@@ -46,7 +46,7 @@ export default function DriverDashboardScreen() {
       vendorName: "Tokyo Ramen Bar",
       pickupAddress: "220 Main St (1.2 mi away)",
       deliveryAddress: "405 Pine Ave, Apt 12B (3.1 mi away)",
-      payout: "$11.20",
+      payout: "₹11.20",
       distance: "4.3 mi total",
       estimatedTime: "25 min",
     },
@@ -103,7 +103,7 @@ export default function DriverDashboardScreen() {
           <View style={styles.statCard}>
             <Ionicons name="wallet-outline" size={20} color="#2563eb" />
             <Text style={styles.statTitle}>Today's Earnings</Text>
-            <Text style={styles.statValue}>$118.50</Text>
+            <Text style={styles.statValue}>₹118.50</Text>
             <Text style={styles.statSub}>8 trips completed</Text>
           </View>
 

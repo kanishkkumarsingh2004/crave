@@ -232,7 +232,7 @@ export default function VendorProductsScreen() {
                   {item.description}
                 </Text>
                 <View style={styles.priceRow}>
-                  <Text style={styles.prodPrice}>${item.price.toFixed(2)}</Text>
+                  <Text style={styles.prodPrice}>₹{item.price.toFixed(2)}</Text>
                   <Text style={styles.stockLabel}>Stock: {item.stockCount} units</Text>
                 </View>
               </View>
@@ -313,7 +313,7 @@ export default function VendorProductsScreen() {
 
               <View style={styles.rowInputs}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.inputLabel}>Price ($) *</Text>
+                  <Text style={styles.inputLabel}>Price (₹) *</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="12.99"

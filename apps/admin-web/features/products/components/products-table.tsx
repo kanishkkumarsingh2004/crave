@@ -91,7 +91,7 @@ export function ProductsTable() {
     },
     {
       header: "Price",
-      accessor: (row) => <span className="text-sm font-semibold">${row.price.toFixed(2)}</span>,
+      accessor: (row) => <span className="text-sm font-semibold">₹{row.price.toFixed(2)}</span>,
     },
     {
       header: "Stock (Available / Reserved)",

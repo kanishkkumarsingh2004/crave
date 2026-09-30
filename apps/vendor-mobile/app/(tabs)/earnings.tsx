@@ -25,33 +25,33 @@ const INITIAL_PAYOUTS: PayoutTransaction[] = [
     id: "p-1",
     payoutRef: "PO-99201",
     date: "Sep 28, 2026",
-    amount: "$850.00",
+    amount: "₹850.00",
     status: "COMPLETED",
-    bankAccount: "Chase Bank (****4819)",
+    bankAccount: "HDFC Bank (****4819)",
   },
   {
     id: "p-2",
     payoutRef: "PO-98744",
     date: "Sep 21, 2026",
-    amount: "$1,120.50",
+    amount: "₹1,120.50",
     status: "COMPLETED",
-    bankAccount: "Chase Bank (****4819)",
+    bankAccount: "HDFC Bank (****4819)",
   },
   {
     id: "p-3",
     payoutRef: "PO-97500",
     date: "Sep 14, 2026",
-    amount: "$640.25",
+    amount: "₹640.25",
     status: "COMPLETED",
-    bankAccount: "Chase Bank (****4819)",
+    bankAccount: "HDFC Bank (****4819)",
   },
   {
     id: "p-4",
     payoutRef: "PO-10023",
     date: "Oct 01, 2026",
-    amount: "$420.00",
+    amount: "₹420.00",
     status: "PROCESSING",
-    bankAccount: "Chase Bank (****4819)",
+    bankAccount: "HDFC Bank (****4819)",
   },
 ];
 
@@ -68,7 +68,7 @@ export default function VendorEarningsScreen() {
 
     Alert.alert(
       "Confirm Payout",
-      `Request instant transfer of $${availableBalance.toFixed(2)} to Chase Bank (****4819)?`,
+      `Request instant transfer of ₹${availableBalance.toFixed(2)} to HDFC Bank (****4819)?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -78,9 +78,9 @@ export default function VendorEarningsScreen() {
               id: `p-${Date.now()}`,
               payoutRef: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
               date: "Just now",
-              amount: `$${availableBalance.toFixed(2)}`,
+              amount: `₹${availableBalance.toFixed(2)}`,
               status: "PROCESSING",
-              bankAccount: "Chase Bank (****4819)",
+              bankAccount: "HDFC Bank (****4819)",
             };
             setPayouts([newPayout, ...payouts]);
             setAvailableBalance(0);
@@ -108,7 +108,7 @@ export default function VendorEarningsScreen() {
           <View style={styles.balanceHeader}>
             <View>
               <Text style={styles.balanceLabel}>Available Payout Balance</Text>
-              <Text style={styles.balanceAmount}>${availableBalance.toFixed(2)}</Text>
+              <Text style={styles.balanceAmount}>₹{availableBalance.toFixed(2)}</Text>
             </View>
             <View style={styles.iconCircle}>
               <Ionicons name="wallet" size={24} color="#7c3aed" />
@@ -120,7 +120,7 @@ export default function VendorEarningsScreen() {
           <View style={styles.balanceFooterRow}>
             <View>
               <Text style={styles.subLabel}>Pending Clearance</Text>
-              <Text style={styles.subVal}>${pendingClearance.toFixed(2)}</Text>
+              <Text style={styles.subVal}>₹{pendingClearance.toFixed(2)}</Text>
             </View>
             <TouchableOpacity style={styles.btnPayout} onPress={handleRequestPayout}>
               <Ionicons name="arrow-forward-circle" size={18} color="#fff" />
@@ -134,14 +134,14 @@ export default function VendorEarningsScreen() {
           <View style={styles.metricCard}>
             <Ionicons name="trending-up-outline" size={20} color="#059669" />
             <Text style={styles.metricTitle}>This Week</Text>
-            <Text style={styles.metricVal}>$1,890.40</Text>
+            <Text style={styles.metricVal}>₹1,890.40</Text>
             <Text style={styles.metricSub}>+18.4% vs last week</Text>
           </View>
 
           <View style={styles.metricCard}>
             <Ionicons name="pie-chart-outline" size={20} color="#2563eb" />
             <Text style={styles.metricTitle}>Lifetime Gross</Text>
-            <Text style={styles.metricVal}>$24,650.00</Text>
+            <Text style={styles.metricVal}>₹24,650.00</Text>
             <Text style={styles.metricSub}>Total order earnings</Text>
           </View>
         </View>

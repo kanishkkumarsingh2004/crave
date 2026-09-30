@@ -119,7 +119,7 @@ export function SettingsForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Minimum Order Subtotal ($)</label>
+            <label className="block text-sm font-medium mb-1">Minimum Order Subtotal (₹)</label>
             <div className="relative">
               <input
                 type="number"
@@ -146,7 +146,7 @@ export function SettingsForm() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Base Delivery Fee ($)</label>
+            <label className="block text-sm font-medium mb-1">Base Delivery Fee (₹)</label>
             <input
               type="number"
               step="0.01"
@@ -158,7 +158,7 @@ export function SettingsForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Per Kilometer Rate ($)</label>
+            <label className="block text-sm font-medium mb-1">Per Kilometer Rate (₹)</label>
             <input
               type="number"
               step="0.01"

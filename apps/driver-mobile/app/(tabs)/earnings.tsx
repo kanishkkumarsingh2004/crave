@@ -21,11 +21,11 @@ export default function DriverEarningsScreen() {
 
     Alert.alert(
       "Confirm Instant Cashout",
-      `Transfer $${balance.toFixed(2)} to your linked debit card (Debit ****9012)?`,
+      `Transfer ₹${balance.toFixed(2)} to your linked debit card (Debit ****9012)?`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Transfer Now ($0.50 fee)",
+          text: "Transfer Now (₹5.00 fee)",
           onPress: () => {
             setBalance(0);
             Alert.alert("Cashout Success!", "Funds sent instantly to your card.");
@@ -46,7 +46,7 @@ export default function DriverEarningsScreen() {
         {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
-          <Text style={styles.balanceVal}>${balance.toFixed(2)}</Text>
+          <Text style={styles.balanceVal}>₹{balance.toFixed(2)}</Text>
 
           <TouchableOpacity style={styles.btnCashout} onPress={handleCashout}>
             <Ionicons name="flash-outline" size={18} color="#2563eb" />
@@ -59,22 +59,22 @@ export default function DriverEarningsScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Trip Base Fares (24 trips)</Text>
-            <Text style={styles.rowVal}>$310.00</Text>
+            <Text style={styles.rowVal}>₹310.00</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Customer Tips (100% yours)</Text>
-            <Text style={styles.rowVal}>$124.50</Text>
+            <Text style={styles.rowVal}>₹124.50</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Quest & Surge Bonuses</Text>
-            <Text style={styles.rowVal}>$48.00</Text>
+            <Text style={styles.rowVal}>₹48.00</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.totalLabel}>Total Weekly Earnings</Text>
-            <Text style={styles.totalVal}>$482.50</Text>
+            <Text style={styles.totalVal}>₹482.50</Text>
           </View>
         </View>
       </ScrollView>
