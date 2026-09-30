@@ -286,7 +286,8 @@ Native Android APKs (`.apk`) are built locally using **Expo Application Services
    npm install -g eas-cli eas-cli-local-build-plugin
    ```
 2. **Git Repository**: EAS CLI requires a clean Git history snapshot (`git init` and commit).
-3. **Expo Account & Project Linkage**:
+3. **Android SDK / ANDROID_HOME**: For local builds (`--local`), Android SDK must be installed on your machine (`export ANDROID_HOME=$HOME/Android/Sdk`). Alternatively, omit `--local` to use Expo Cloud Build servers.
+4. **Expo Account & Project Linkage**:
    Each mobile app specifies a valid Expo project ID in its `app.json`:
    - `customer-mobile`: `ec4bb1e0-caa8-4a71-a1c0-fec27425ae18`
    - `driver-mobile`: `a9346614-e832-4ce5-a59f-b57005b91cea`
