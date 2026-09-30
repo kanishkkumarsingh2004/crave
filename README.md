@@ -16,11 +16,13 @@ An enterprise-grade, high-performance **Multi-Role Delivery Platform** monorepo 
 6. [Prerequisites](#-prerequisites)
 7. [Environment Configuration](#-environment-configuration)
 8. [Local Development Setup](#-local-development-setup)
-9. [Docker & Containerized Setup](#-docker--containerized-setup)
-10. [API Endpoint Reference](#-api-endpoint-reference)
-11. [Realtime SSE & Push Notifications](#-realtime-sse--push-notifications)
-12. [Testing Suite](#-testing-suite)
-13. [Production Deployment](#-production-deployment)
+9. [Available Scripts & CI Pipeline](#-available-scripts--ci-pipeline)
+10. [Native Mobile APK Building (EAS)](#-native-mobile-apk-building-eas)
+11. [Docker & Containerized Setup](#-docker--containerized-setup)
+12. [API Endpoint Reference](#-api-endpoint-reference)
+13. [Realtime SSE & Push Notifications](#-realtime-sse--push-notifications)
+14. [Testing Suite](#-testing-suite)
+15. [License](#-license)
 
 ---
 
@@ -31,7 +33,7 @@ The Multi-Role Delivery Platform provides an end-to-end ecosystem connecting fou
 ```mermaid
 graph TD
     Customer["🛒 Customer (Mobile App)"] -->|Places Order & Pays| Backend["⚡ Shared Backend / Next.js Server"]
-    Vendor["🏪 Vendor (Mobile & Web)"] -->|Accepts & Prepares Order| Backend
+    Vendor["🏪 Vendor (Mobile App)"] -->|Accepts & Prepares Order| Backend
     Driver["🚴 Driver (Mobile App)"] -->|Accepts Offer & Delivers| Backend
     Admin["👑 Admin (Next.js Web)"] -->|Manages Platform & Approvals| Backend
     Backend -->|PostgreSQL & Prisma| DB[(🛢️ PostgreSQL Database)]
@@ -47,7 +49,7 @@ graph TD
 - **OTP Delivery Verification**: 6-digit numeric OTP code generated at pickup and verified at customer handover.
 - **Provider-Agnostic Payment Engine**: Idempotent payment webhook ingestion (`PaymentEvent` deduplication) supporting Razorpay and Stripe.
 - **Realtime Server-Sent Events (SSE)**: Live streaming endpoint for order status transitions and GPS driver tracking.
-- **Audit Logging Engine**: Fire-and-forget background audit logger capturing all platform mutation events.
+- **Audit Logging Engine**: Background audit logger capturing all platform mutation events.
 
 ---
 
@@ -58,9 +60,9 @@ Managed via **pnpm Workspaces** and **Turborepo** for optimized caching and fast
 ```text
 ├── apps/
 │   ├── admin-web/          # Next.js 15 App Router (Admin Web App + Server API Routes)
-│   ├── customer-mobile/     # React Native / Expo Customer Mobile App
-│   ├── vendor-mobile/       # React Native / Expo Vendor Mobile App
-│   └── driver-mobile/       # React Native / Expo Driver Mobile App
+│   ├── customer-mobile/     # React Native / Expo SDK 57 Customer Mobile App
+│   ├── vendor-mobile/       # React Native / Expo SDK 57 Vendor Mobile App
+│   └── driver-mobile/       # React Native / Expo SDK 57 Driver Mobile App
 ├── packages/
 │   ├── api-client/          # Shared HTTP client for mobile apps
 │   ├── api-contracts/       # Shared TypeScript request/response contracts
@@ -72,42 +74,46 @@ Managed via **pnpm Workspaces** and **Turborepo** for optimized caching and fast
 │   ├── ui/                  # Shared React Native component library
 │   ├── utils/               # Pure helper functions (math, formatting, geometry)
 │   └── validation/          # Shared Zod validation schemas
-├── prisma/
-│   ├── schema.prisma        # PostgreSQL database schema (22 models, 13 enums)
-│   └── seed.ts              # Idempotent database seeding script
 ├── server/
-│   ├── infrastructure/      # Standardized API response builders & logging
+│   ├── infrastructure/      # Standardized API response builders & storage
 │   ├── middleware/          # Auth guards & sliding-window rate limiter
 │   ├── modules/             # Business domain modules (catalog, orders, deliveries, etc.)
 │   └── realtime/            # Event Emitter bus & SSE stream broadcaster
+├── prisma/
+│   ├── schema.prisma        # PostgreSQL database schema (22 models, 13 enums)
+│   ├── seed.ts              # Database seeding script
+│   └── migrations/          # Version-controlled SQL schema migrations
 ├── Dockerfile               # Multi-stage production container build
 ├── docker-compose.yml       # PostgreSQL database & server orchestration
 ├── turbo.json               # Turborepo task pipeline configuration
-└── vitest.config.ts         # Vitest unit test runner config with monorepo aliases
+├── vitest.config.mts        # Vitest unit test runner config with monorepo aliases
+└── pnpm-workspace.yaml      # Pnpm workspace package definition & build permissions
 ```
 
 ---
 
 ## 📱 Domain Applications
 
-| Application           | Technology                                      | Role / Scope            | Primary Features                                                                                                                    |
-| :-------------------- | :---------------------------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
-| **`admin-web`**       | Next.js 15, React 19, TailwindCSS, Recharts     | Platform Administrators | Dashboard analytics, user/vendor/driver approvals, audit logs, order monitoring, platform settings.                                 |
-| **`customer-mobile`** | React Native, Expo Router, Zustand, React Query | Customers               | Product browsing, cart management, atomic checkout, order tracking, address book, refund requests.                                  |
-| **`vendor-mobile`**   | React Native, Expo Router, Zustand              | Store Owners            | Store open/close toggle, incoming order acceptance, preparation state machine, stock management, earnings.                          |
-| **`driver-mobile`**   | React Native, Expo Router, Expo Location        | Delivery Drivers        | Availability toggle (`OFFLINE ↔ AVAILABLE`), order assignment offer accept/reject, OTP handover verification, GPS location updates. |
+| Application           | Technology                                            | Role / Scope            | Primary Features                                                                                                                    |
+| :-------------------- | :---------------------------------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| **`admin-web`**       | Next.js 15, React 19, TailwindCSS, Recharts           | Platform Administrators | Dashboard analytics, user/vendor/driver approvals, audit logs, order monitoring, platform settings.                                 |
+| **`customer-mobile`** | React Native, Expo SDK 57, Expo Router, Zustand       | Customers               | Product browsing, cart management, atomic checkout, live order tracking, address book, refund requests.                             |
+| **`vendor-mobile`**   | React Native, Expo SDK 57, Expo Router, Zustand       | Store Owners            | Store open/close toggle, incoming order acceptance, preparation state machine, stock management, earnings.                          |
+| **`driver-mobile`**   | React Native, Expo SDK 57, Expo Router, Expo Location | Delivery Drivers        | Availability toggle (`OFFLINE ↔ AVAILABLE`), order assignment offer accept/reject, OTP handover verification, GPS location updates. |
 
 ---
 
 ## 📦 Shared Packages
 
-- **`@delivery/database`**: Prisma client singleton and database migration exports.
+- **`@delivery/database`**: Prisma v6.19.3 client singleton and database migration exports.
 - **`@delivery/auth`**: Better Auth server instance and client hooks.
 - **`@delivery/config`**: Environment variable parsing using Zod (`env.DATABASE_URL`, `env.BETTER_AUTH_SECRET`).
 - **`@delivery/constants`**: Magic numbers, error code definitions (`ERROR_CODES`), notification type keys.
 - **`@delivery/validation`**: Input validation schemas (`zSignUpCustomer`, `zCreateOrder`, `zUpdateDriverLocation`).
 - **`@delivery/types`**: Unified TypeScript interfaces, status enums, and API envelopes.
 - **`@delivery/utils`**: Haversine geographic distance math, currency formatters, order number generators (`ORD-000001`).
+- **`@delivery/api-contracts`**: Shared TypeScript API request & response payload schemas.
+- **`@delivery/api-client`**: Type-safe HTTP client wrapper for React Native mobile apps.
 
 ---
 
@@ -158,10 +164,10 @@ stateDiagram-v2
 
 ## ⚙️ Environment Configuration
 
-Copy `.env.example` or create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root:
 
 ```env
-# Database Connections (Local database setup)
+# Database Connections (PostgreSQL setup)
 DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/delivery_platform?schema=public"
 DIRECT_DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/delivery_platform?schema=public"
 
@@ -195,7 +201,8 @@ FCM_CLIENT_EMAIL=""
 
 - **Node.js**: `>= 20.0.0`
 - **pnpm**: `>= 9.0.0`
-- **PostgreSQL**: `>= 16` (or Docker)
+- **PostgreSQL**: `>= 16` (or running via Docker Compose)
+- **Git**: Installed and initialized
 
 ### 2. Installation
 
@@ -205,73 +212,135 @@ Clone the repository and install workspace dependencies:
 pnpm install
 ```
 
-### 3. Database Initialization & Seeding
+### 3. Database Migration & Seeding
 
-Ensure PostgreSQL is running, then run Prisma migrations and seed the database:
+Ensure PostgreSQL is running (e.g. via `docker-compose up -d postgres`), then initialize the schema:
 
 ```bash
 # Generate Prisma Client
 pnpm prisma:generate
 
-# Run database migrations
+# Execute database migrations
 pnpm prisma:migrate
 
-# Seed database with initial categories, demo users, vendors, and products
+# Seed database with demo data (categories, users, vendors, products)
 pnpm prisma:seed
 ```
 
 ### 4. Start Development Servers
 
-Start all applications concurrently via Turborepo:
+Start all web and mobile apps concurrently via Turborepo:
 
 ```bash
 pnpm dev
 ```
 
-Or run individual apps:
+Or run individual targets:
 
 ```bash
-# Admin Web App (http://localhost:3000)
+# Next.js Admin Web Dashboard & Server API (http://localhost:3000)
 pnpm --filter admin-web dev
 
-# Customer Mobile App (Expo)
+# Customer Mobile App (Expo Dev Server)
 pnpm --filter customer-mobile start
 
-# Vendor Mobile App (Expo)
+# Vendor Mobile App (Expo Dev Server)
 pnpm --filter vendor-mobile start
 
-# Driver Mobile App (Expo)
+# Driver Mobile App (Expo Dev Server)
 pnpm --filter driver-mobile start
+```
+
+---
+
+## 📜 Available Scripts & CI Pipeline
+
+| Command                | Description                                                                                     |
+| :--------------------- | :---------------------------------------------------------------------------------------------- |
+| `pnpm dev`             | Start dev servers for all apps and packages in parallel via Turborepo.                          |
+| `pnpm build`           | Run production build across all workspace packages and apps.                                    |
+| `pnpm lint`            | Run ESLint across all 15 packages.                                                              |
+| `pnpm typecheck`       | Execute TypeScript typechecking (`tsc --noEmit`) across the entire workspace.                   |
+| `pnpm test`            | Run unit test suite using Vitest runner.                                                        |
+| `pnpm format`          | Auto-format all source code files using Prettier.                                               |
+| `pnpm format:check`    | Check code formatting compliance across the workspace.                                          |
+| `pnpm prisma:generate` | Generate Prisma client bindings from `prisma/schema.prisma`.                                    |
+| `pnpm prisma:migrate`  | Apply Prisma schema migrations to the target database.                                          |
+| `pnpm prisma:seed`     | Seed database with initial platform categories, vendors, and demo users.                        |
+| `pnpm db:reset`        | Reset and re-seed the PostgreSQL database.                                                      |
+| `pnpm ci`              | Full CI verification pipeline (Format + Lint + Typecheck + Test + Prisma + Web & Mobile Build). |
+| `pnpm ci:apk`          | Complete CI pipeline including native Android preview APK compilation.                          |
+| `pnpm build:mobile`    | Export web and JavaScript bundles for all mobile apps (`expo export`).                          |
+| `pnpm build:apk`       | Trigger local EAS Android preview APK builds for all 3 mobile apps.                             |
+
+---
+
+## 📱 Native Mobile APK Building (EAS)
+
+Native Android APKs (`.apk`) are built locally using **Expo Application Services (EAS CLI)**.
+
+### EAS Prerequisites
+
+1. **Global EAS Tools**:
+   ```bash
+   npm install -g eas-cli eas-cli-local-build-plugin
+   ```
+2. **Git Repository**: EAS CLI requires a clean Git history snapshot (`git init` and commit).
+3. **Expo Account & Project Linkage**:
+   Each mobile app specifies a valid Expo project ID in its `app.json`:
+   - `customer-mobile`: `ec4bb1e0-caa8-4a71-a1c0-fec27425ae18`
+   - `driver-mobile`: `a9346614-e832-4ce5-a59f-b57005b91cea`
+   - `vendor-mobile`: `1267d51d-aa93-4f45-8902-936462b34895`
+
+### Building Android Preview APKs
+
+To build an APK for a single mobile app:
+
+```bash
+# Build Customer Mobile APK
+pnpm --filter customer-mobile build:apk
+
+# Build Driver Mobile APK
+pnpm --filter driver-mobile build:apk
+
+# Build Vendor Mobile APK
+pnpm --filter vendor-mobile build:apk
+```
+
+To build APKs for all mobile apps in sequence:
+
+```bash
+pnpm build:apk
 ```
 
 ---
 
 ## 🐳 Docker & Containerized Setup
 
-Run the entire platform infrastructure (PostgreSQL database + Next.js Admin/API server) using Docker Compose with zero local Node/PostgreSQL setup required:
+Run the entire platform infrastructure (PostgreSQL database + Next.js Admin/API server) via Docker Compose:
 
-### 1. Build and Start Container Services
+### 1. Build and Launch Containers
 
 ```bash
 docker-compose up --build -d
 ```
 
-### 2. Verify Container Health
+### 2. Check Container Status
 
 ```bash
 docker-compose ps
 ```
 
-### 3. Database Migration inside Container
+### 3. Apply Migrations & Seed inside Container
 
 ```bash
 docker-compose exec admin-web pnpm prisma:migrate:deploy
 docker-compose exec admin-web pnpm prisma:seed
 ```
 
-Access the Admin Web Dashboard at **`http://localhost:3000`**.
+Access the Admin Web Dashboard & API at **`http://localhost:3000`**.
 
-To stop services:
+To stop container services:
 
 ```bash
 docker-compose down -v
@@ -281,25 +350,25 @@ docker-compose down -v
 
 ## 🔌 API Endpoint Reference
 
-All API routes follow standard JSON responses wrapped in the `ApiResponse` envelope:
+All API routes return standardized JSON envelopes (`ApiResponse<T>`):
 
 ### Authentication & Users
 
 - `POST /api/auth/sign-in/email` — Authenticate user credentials.
-- `POST /api/auth/sign-up/email` — Register customer user.
-- `POST /api/auth/sign-out` — Terminate active session.
+- `POST /api/auth/sign-up/email` — Register customer account.
+- `POST /api/auth/sign-out` — Terminate session.
 
 ### Catalog & Inventory
 
 - `GET /api/v1/categories` — List active product categories.
-- `GET /api/v1/products` — Filter products by category, vendor, or search term.
+- `GET /api/v1/products` — Filter products by category, vendor, or query.
 - `POST /api/v1/vendor/products` — Create new vendor product listing.
-- `PATCH /api/v1/vendor/inventory` — Update stock levels & low stock thresholds.
+- `PATCH /api/v1/vendor/inventory` — Update stock levels & threshold settings.
 
 ### Cart & Checkout
 
-- `GET /api/v1/cart` — Fetch customer active cart with server-side totals.
-- `POST /api/v1/cart/items` — Add item to cart (enforces single-vendor rule).
+- `GET /api/v1/cart` — Fetch customer active cart with server-calculated totals.
+- `POST /api/v1/cart/items` — Add item to cart (enforces single-vendor cart rule).
 - `POST /api/v1/checkout` — Atomic checkout transaction with idempotency key.
 - `POST /api/v1/customer/orders/{id}/cancel` — State-aware order cancellation.
 
@@ -329,13 +398,13 @@ All API routes follow standard JSON responses wrapped in the `ApiResponse` envel
 
 The repository uses **Vitest** for fast unit and integration testing.
 
-Run unit test suite:
+Run test suite:
 
 ```bash
 pnpm test
 ```
 
-Run typechecking across all 14 monorepo packages:
+Run TypeScript verification across all 15 packages:
 
 ```bash
 pnpm typecheck
