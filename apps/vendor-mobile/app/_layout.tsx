@@ -24,14 +24,9 @@ export default function VendorRootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
-              name="onboarding"
-              options={{ headerShown: true, title: "Vendor Application" }}
+              name="onboarding/pending"
+              options={{ headerShown: true, title: "Vendor Application Pending" }}
             />
-            <Stack.Screen
-              name="order/[id]"
-              options={{ headerShown: true, title: "Order Details" }}
-            />
-            <Stack.Screen name="product/[id]" options={{ headerShown: true, title: "Product" }} />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>

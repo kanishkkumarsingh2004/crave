@@ -23,9 +23,10 @@ export default function DriverRootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="delivery/[id]" options={{ headerShown: true, title: "Delivery" }} />
-            <Stack.Screen name="pickup/[id]" options={{ headerShown: true, title: "Pickup" }} />
+            <Stack.Screen
+              name="onboarding/pending"
+              options={{ headerShown: true, title: "Driver Application Pending" }}
+            />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
