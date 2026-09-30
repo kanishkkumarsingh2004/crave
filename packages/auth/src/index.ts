@@ -135,6 +135,11 @@ export const auth = betterAuth({
     generateId: false, // Use Prisma's @default(cuid())
   },
 
+  // Logger configuration
+  logger: {
+    disabled: process.env.NODE_ENV !== "test" && !process.env.DEBUG_AUTH,
+  },
+
   // Trusted origins (for CORS)
   trustedOrigins: [
     BETTER_AUTH_URL,
