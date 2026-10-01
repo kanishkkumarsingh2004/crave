@@ -19,10 +19,12 @@ An enterprise-grade, high-performance **Multi-Role Delivery Platform** monorepo 
 9. [Available Scripts & CI Pipeline](#-available-scripts--ci-pipeline)
 10. [Native Mobile APK Building (EAS)](#-native-mobile-apk-building-eas)
 11. [Docker & Containerized Setup](#-docker--containerized-setup)
-12. [API Endpoint Reference](#-api-endpoint-reference)
-13. [Realtime SSE & Push Notifications](#-realtime-sse--push-notifications)
-14. [Testing Suite](#-testing-suite)
-15. [License](#-license)
+12. [Deployment to Render (Cloud Hosting Guide)](#-deployment-to-render-cloud-hosting-guide)
+13. [System Health Monitoring & Keep-Alive Cronjob](#-system-health-monitoring--keep-alive-cronjob)
+14. [API Endpoint Reference](#-api-endpoint-reference)
+15. [Realtime SSE & Push Notifications](#-realtime-sse--push-notifications)
+16. [Testing Suite](#-testing-suite)
+17. [License](#-license)
 
 ---
 
@@ -350,9 +352,125 @@ docker-compose down -v
 
 ---
 
+## 🚀 Deployment to Render (Cloud Hosting Guide)
+
+Follow this step-by-step guide to deploy the entire Monorepo (Next.js Admin Dashboard, Server API Routes, PostgreSQL Database, and Static APK Download Server) to **Render.com**.
+
+### 1. PostgreSQL Database Setup on Render
+
+1. Log in to your [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** -> **PostgreSQL**.
+3. Configure Database:
+   - **Name**: `delivery-platform-db`
+   - **Database**: `delivery_platform`
+   - **User**: `postgres`
+   - **Region**: Choose closest to your target audience (e.g., Singapore, Oregon, Frankfurt).
+4. After creation, copy both **Internal Database URL** and **External Database URL**.
+
+### 2. Deploy Web Service (Next.js App & Server API)
+
+1. In Render Dashboard, click **New +** -> **Web Service**.
+2. Connect your GitHub repository.
+3. Settings:
+   - **Name**: `delivery-platform-web`
+   - **Language**: `Node`
+   - **Region**: Same region as PostgreSQL database.
+   - **Branch**: `main`
+   - **Build Command**:
+     ```bash
+     pnpm install && pnpm prisma:generate && pnpm --filter admin-web build && pnpm package:builds
+     ```
+   - **Start Command**:
+     ```bash
+     pnpm --filter admin-web start
+     ```
+
+### 3. Environment Variables on Render
+
+Add the following key-value pairs under **Environment**:
+
+| Key                   | Example / Description                                                                  |
+| :-------------------- | :------------------------------------------------------------------------------------- |
+| `NODE_VERSION`        | `20.10.0`                                                                              |
+| `DATABASE_URL`        | `postgresql://postgres:<password>@ep-xyz.render.com/delivery_platform?sslmode=require` |
+| `DIRECT_DATABASE_URL` | `postgresql://postgres:<password>@ep-xyz.render.com/delivery_platform?sslmode=require` |
+| `BETTER_AUTH_SECRET`  | Production 32+ character secret string                                                 |
+| `BETTER_AUTH_URL`     | `https://delivery-platform-web.onrender.com`                                           |
+| `NEXT_PUBLIC_API_URL` | `https://delivery-platform-web.onrender.com`                                           |
+| `LOCAL_DATA_DIR`      | `./data`                                                                               |
+| `LOCAL_UPLOADS_DIR`   | `./data/uploads`                                                                       |
+
+### 4. Database Migrations & Seeding
+
+1. Open the **Shell** tab in your Render Web Service dashboard.
+2. Run database migrations:
+   ```bash
+   pnpm prisma:migrate:deploy
+   ```
+3. Seed default admin, categories, vendors, and demo items:
+   ```bash
+   pnpm prisma:seed
+   ```
+
+---
+
+## 🩺 System Health Monitoring & Keep-Alive Cronjob
+
+Render free tier Web Services enter sleep mode after 15 minutes of inactivity. To keep the server awake 24/7 and continuously track system metrics and PostgreSQL query latency, use the built-in Health Check API.
+
+### Public Health API
+
+- **Endpoint**: `GET /api/v1/health` (also supports `HEAD /api/v1/health`)
+- **Authentication**: Bypasses middleware (Public)
+- **Response Payload**:
+  ```json
+  {
+    "status": "ok",
+    "timestamp": "2026-10-01T09:59:24.623Z",
+    "uptimeSeconds": 2583,
+    "environment": "production",
+    "services": {
+      "api": { "status": "healthy", "latencyMs": 12 },
+      "database": { "status": "healthy", "latencyMs": 14 }
+    },
+    "system": {
+      "memory": { "rssMb": 82.5, "heapTotalMb": 45.2, "heapUsedMb": 38.1 },
+      "nodeVersion": "v20.10.0"
+    }
+  }
+  ```
+
+### Setting Up Render Keep-Alive Cronjob
+
+To prevent server sleep mode and maintain active connections:
+
+#### Option A: Render Cron Job (Native)
+
+1. Click **New +** -> **Cron Job** in Render Dashboard.
+2. **Command**:
+   ```bash
+   curl -sS https://delivery-platform-web.onrender.com/api/v1/health > /dev/null
+   ```
+3. **Schedule**: `*/10 * * * *` (Runs every 10 minutes).
+
+#### Option B: External Uptime Monitors (Recommended Free Tier)
+
+Use any free uptime monitoring service:
+
+- [cron-job.org](https://cron-job.org) — Set up a GET request to `https://delivery-platform-web.onrender.com/api/v1/health` every 5 or 10 minutes.
+- [UptimeRobot](https://uptimerobot.com) — Create a HTTP(S) Monitor targeting `/api/v1/health` every 5 minutes.
+- [Healthchecks.io](https://healthchecks.io) — Ping endpoint monitor.
+
+---
+
 ## 🔌 API Endpoint Reference
 
 All API routes return standardized JSON envelopes (`ApiResponse<T>`):
+
+### System Health & Monitoring
+
+- `GET /api/v1/health` — Public uptime check, memory specs, and PostgreSQL query latency test.
+- `HEAD /api/v1/health` — Lightweight 200/503 HTTP ping endpoint.
 
 ### Authentication & Users
 
