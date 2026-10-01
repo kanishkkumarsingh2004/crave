@@ -57,13 +57,11 @@ export function LoginForm() {
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-3">
           <div className="w-12 h-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shadow-md shadow-primary/25 ring-4 ring-primary/10">
-            <span className="font-extrabold text-xl tracking-wider">D</span>
+            <span className="font-extrabold text-xl tracking-wider">B</span>
           </div>
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Admin Login</h1>
-        <p className="text-xs font-medium text-muted-foreground">
-          Delivery Platform Administration
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">Blinkbite Administration</p>
       </div>
 
       {/* Form */}

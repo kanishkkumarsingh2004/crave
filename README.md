@@ -1,6 +1,6 @@
-# 🛵 Multi-Role Delivery Platform
+# ⚡ Blinkbite — Multi-Role Delivery Platform
 
-An enterprise-grade, high-performance **Multi-Role Delivery Platform** monorepo designed for hyper-local food, grocery, and package delivery operations. Built with a modern TypeScript stack powering a **Next.js 15 Admin Web Application**, **React Native / Expo Mobile Apps** (Customer, Vendor, Driver), a **Shared Node.js/TS Backend Server**, and **PostgreSQL with Prisma ORM**.
+An enterprise-grade, high-performance **Blinkbite Multi-Role Delivery Platform** monorepo designed for hyper-local food, grocery, and package delivery operations. Built with a modern TypeScript stack powering a **Next.js 15 Admin Web Application**, **React Native / Expo Mobile Apps** (Customer, Vendor, Driver), a **Shared Node.js/TS Backend Server**, and **PostgreSQL with Prisma ORM**.
 
 ---
 

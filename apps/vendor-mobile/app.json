@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Delivery Vendor",
-    "slug": "delivery-vendor",
+    "name": "Blinkbite Vendor",
+    "slug": "blinkbite-vendor",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

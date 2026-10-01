@@ -112,9 +112,9 @@ export default function PublicDownloadsPage() {
 
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-              D
+              B
             </div>
-            <span className="font-bold text-sm text-slate-900">App Download Portal</span>
+            <span className="font-bold text-sm text-slate-900">Blinkbite App Downloads</span>
           </div>
         </div>
       </header>

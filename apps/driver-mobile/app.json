@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Delivery Driver",
-    "slug": "delivery-driver",
+    "name": "Blinkbite Driver",
+    "slug": "blinkbite-driver",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
