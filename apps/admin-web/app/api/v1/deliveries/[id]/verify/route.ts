@@ -19,9 +19,10 @@ import { verifyDeliveryHandover } from "@/../../../../server/modules/deliveries/
 import { z } from "zod";
 
 const zVerifyPayload = z.object({
-  method: z.enum(["QR", "CODE"]),
+  method: z.enum(["QR", "OTP", "CODE"]),
   token: z.string().optional(),
   code: z.string().optional(),
+  otp: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   accuracy: z.number().optional(),
@@ -41,12 +42,15 @@ export async function POST(
 
     const driverId = ctx.userId;
 
+    const method = input.method === "CODE" ? "OTP" : input.method;
+
     const result = await verifyDeliveryHandover({
       deliveryId,
       driverId,
-      method: input.method,
+      method,
       token: input.token,
       code: input.code,
+      otp: input.otp,
       latitude: input.latitude,
       longitude: input.longitude,
       accuracy: input.accuracy,

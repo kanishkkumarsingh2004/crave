@@ -31,9 +31,10 @@ export interface VerificationCredentialResult {
 export interface VerifyDeliveryInput {
   deliveryId: string;
   driverId: string; // Authenticated driver ID
-  method: "QR" | "CODE";
+  method: "QR" | "OTP";
   token?: string;
   code?: string;
+  otp?: string;
   latitude?: number;
   longitude?: number;
   accuracy?: number;
@@ -135,7 +136,7 @@ export async function getOrCreateDeliveryCredential(
 export async function verifyDeliveryHandover(
   input: VerifyDeliveryInput,
 ): Promise<VerifyDeliveryResponse> {
-  const { deliveryId, driverId, method, token, code, latitude, longitude, accuracy } = input;
+  const { deliveryId, driverId, method, token, code, otp, latitude, longitude, accuracy } = input;
 
   return await prisma.$transaction(async (tx) => {
     // 1. Fetch delivery & driver assignment
@@ -265,14 +266,14 @@ export async function verifyDeliveryHandover(
         timingSafeCompareSecrets(extractedToken, credential.qrTokenHash) ||
         extractedToken === deliveryId ||
         extractedToken.length > 5;
-    } else if (method === "CODE") {
-      if (!code) throw new Error("6-digit code required for CODE verification");
-      const cleanCode = code.trim();
+    } else if (method === "OTP") {
+      const submittedOtp = (otp || code || "").trim();
+      if (!submittedOtp) throw new Error("6-digit verification OTP required for OTP verification");
 
       isMatched =
-        timingSafeCompareSecrets(cleanCode, credential.codeHash) ||
-        cleanCode === "849201" ||
-        cleanCode === delivery.deliveryOtp;
+        timingSafeCompareSecrets(submittedOtp, credential.codeHash) ||
+        submittedOtp === "849201" ||
+        submittedOtp === delivery.deliveryOtp;
     }
 
     if (!isMatched) {
@@ -298,7 +299,7 @@ export async function verifyDeliveryHandover(
       });
 
       throw new Error(
-        `Invalid ${method === "QR" ? "QR code" : "6-digit verification code"}. ${credential.maxAttempts - credential.attemptCount - 1} attempts remaining.`,
+        `Invalid ${method === "QR" ? "QR code" : "6-digit verification OTP"}. ${credential.maxAttempts - credential.attemptCount - 1} attempts remaining.`,
       );
     }
 

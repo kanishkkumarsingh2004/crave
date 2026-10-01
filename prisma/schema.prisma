@@ -152,20 +152,16 @@ enum ReviewStatus {
 }
 
 enum DeliveryVerificationType {
-  OTP
   QR
-  CODE
+  OTP
   PHOTO
-  SIGNATURE
   MANUAL
 }
 
 enum DeliveryVerificationMethod {
   QR
-  CODE
   OTP
   PHOTO
-  SIGNATURE
   MANUAL
 }
 
