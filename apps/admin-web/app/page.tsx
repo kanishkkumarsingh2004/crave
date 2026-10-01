@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Blinkbite — Customer Mobile App | Instant Hyperlocal Delivery",
+  title: "Crave — Customer Mobile App | Instant Hyperlocal Delivery",
   description:
-    "Official single-page portal for the Blinkbite Customer Mobile App (v1.0.0). Download Android APK and iOS packages with live GPS tracking and standard NPCI UPI checkout.",
+    "Official single-page portal for the Crave Customer Mobile App (v1.0.0). Download Android APK and iOS packages with live GPS tracking and standard NPCI UPI checkout.",
 };
 
 const CUSTOMER_APP_SPECS = {
-  title: "Blinkbite Customer Mobile App",
+  title: "Crave Customer Mobile App",
   packageName: "com.delivery.customer",
   version: "v1.0.0",
   buildCode: "1000",
@@ -54,11 +54,11 @@ export default function SingleCustomerAppHomePage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              B
+              C
             </div>
             <div>
               <span className="font-extrabold text-base tracking-tight text-slate-900 block leading-none">
-                Blinkbite
+                Crave
               </span>
               <span className="text-[10px] font-bold text-blue-600 dark:text-blue-500 uppercase tracking-widest flex items-center gap-1 mt-0.5">
                 <span>Customer Mobile App</span>
@@ -67,7 +67,6 @@ export default function SingleCustomerAppHomePage() {
               </span>
             </div>
           </Link>
-
         </div>
       </header>
 
@@ -75,7 +74,7 @@ export default function SingleCustomerAppHomePage() {
       <section className="pt-16 pb-20 px-6 max-w-5xl mx-auto text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-200 bg-blue-50/80 text-blue-700 text-xs font-bold shadow-sm">
           <Zap className="h-3.5 w-3.5 text-blue-600" />
-          <span>Blinkbite Hyperlocal Platform • Customer Mobile Application</span>
+          <span>Crave Hyperlocal Platform • Customer Mobile Application</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
@@ -272,7 +271,7 @@ export default function SingleCustomerAppHomePage() {
                 <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">
                   3
                 </span>
-                <span>Open Blinkbite, grant location permissions, and enjoy instant ordering!</span>
+                <span>Open Crave, grant location permissions, and enjoy instant ordering!</span>
               </div>
             </div>
           </div>
@@ -398,9 +397,9 @@ export default function SingleCustomerAppHomePage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-              B
+              C
             </div>
-            <span className="text-slate-700 font-bold">Blinkbite Customer App © 2026</span>
+            <span className="text-slate-700 font-bold">Crave Customer App © 2026</span>
           </div>
 
           <div className="flex items-center gap-6 font-semibold">
