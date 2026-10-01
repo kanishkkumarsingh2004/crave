@@ -5,10 +5,10 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "Blinkbite — Hyperlocal Delivery Platform",
-    template: "%s | Blinkbite",
+    default: "Crave — Hyperlocal Delivery Platform",
+    template: "%s | Crave",
   },
-  description: "Blinkbite Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Apps",
+  description: "Crave Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Apps",
   robots: { index: false, follow: false },
 };
 

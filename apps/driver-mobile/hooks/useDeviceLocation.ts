@@ -30,7 +30,7 @@ export function useDeviceLocation() {
         setErrorMsg("Permission to access driver location was denied");
         Alert.alert(
           "GPS Location Permission Required",
-          "Blinkbite Driver app requires continuous background/foreground GPS location access to receive nearby delivery offers & navigate.",
+          "Crave Driver app requires continuous background/foreground GPS location access to receive nearby delivery offers & navigate.",
           [{ text: "OK" }],
         );
         setLoading(false);

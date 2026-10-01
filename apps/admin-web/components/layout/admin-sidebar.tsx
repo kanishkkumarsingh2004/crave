@@ -78,11 +78,11 @@ export function AdminSidebar() {
       <div className="h-16 flex items-center px-5 border-b border-border bg-gradient-to-r from-indigo-50/80 via-background to-background dark:from-indigo-950/20 dark:via-background dark:to-background">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 text-white font-black text-lg tracking-wider ring-4 ring-indigo-500/10">
-            B
+            C
           </div>
           <div>
             <span className="font-extrabold text-sm text-foreground block leading-tight tracking-tight">
-              Blinkbite Admin
+              Crave Admin
             </span>
             <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
               <span>Platform Hub</span>

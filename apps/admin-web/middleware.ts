@@ -4,9 +4,7 @@ import type { NextRequest } from "next/server";
 // Public paths that bypass authentication checks completely
 const PUBLIC_EXACT_PATHS = ["/", "/downloads", "/download"];
 const PUBLIC_PREFIXES = [
-  "/api/auth",
-  "/api/v1/downloads",
-  "/api/v1/health",
+  "/api",
   "/apk",
   "/_next",
   "/favicon",

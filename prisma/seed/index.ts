@@ -188,7 +188,7 @@ async function main() {
   if (!vendorUser) {
     vendorUser = await prisma.user.create({
       data: {
-        name: "Blinkbite Organics Store",
+        name: "Crave Organics Store",
         email: vendorEmail,
         emailVerified: true,
         role: "VENDOR",
@@ -207,7 +207,7 @@ async function main() {
     vendor = await prisma.vendor.create({
       data: {
         userId: vendorUser.id,
-        storeName: "Blinkbite Organics",
+        storeName: "Crave Organics",
         description: "Fresh organic food, farm produce, & groceries store",
         address: "104 Market Street, Station Area, Koramangala 4th Block",
         city: "Bengaluru",

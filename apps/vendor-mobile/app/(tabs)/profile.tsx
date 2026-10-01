@@ -42,7 +42,7 @@ export default function VendorProfileScreen() {
           <View style={styles.avatarCircle}>
             <Ionicons name="restaurant" size={32} color="#7c3aed" />
           </View>
-          <Text style={styles.storeName}>{user?.name || "Blinkbite Organics"}</Text>
+          <Text style={styles.storeName}>{user?.name || "Crave Organics"}</Text>
           <Text style={styles.storeEmail}>{user?.email || "vendor@delivery.com"}</Text>
 
           <View style={styles.badgeRow}>
@@ -63,7 +63,7 @@ export default function VendorProfileScreen() {
             <Ionicons name="business-outline" size={20} color="#7c3aed" />
             <View style={styles.infoTextGroup}>
               <Text style={styles.infoLabel}>Business Name</Text>
-              <Text style={styles.infoValue}>{user?.name || "Blinkbite Organics Store"}</Text>
+              <Text style={styles.infoValue}>{user?.name || "Crave Organics Store"}</Text>
             </View>
           </View>
 

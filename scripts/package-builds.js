@@ -1,30 +1,33 @@
-import { promises as fs } from "fs";
+import { promises as fs, createWriteStream, existsSync, statSync } from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import crypto from "crypto";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const { ZipArchive } = require("archiver");
 
 const rootDir = process.cwd();
 const publicApkDir = path.join(rootDir, "apps", "admin-web", "public", "apk");
-const rootApkDir = path.join(rootDir, "apk");
 
 const apps = [
   {
     id: "customer",
-    name: "Customer Mobile App",
+    name: "Crave Customer App",
     folder: "apps/customer-mobile",
     apkName: "customer-v1.0.0.apk",
     ipaName: "customer-v1.0.0.ipa",
   },
   {
     id: "vendor",
-    name: "Vendor Store App",
+    name: "Crave Vendor App",
     folder: "apps/vendor-mobile",
     apkName: "vendor-v1.0.0.apk",
     ipaName: "vendor-v1.0.0.ipa",
   },
   {
     id: "driver",
-    name: "Driver Courier App",
+    name: "Crave Driver App",
     folder: "apps/driver-mobile",
     apkName: "driver-v1.0.0.apk",
     ipaName: "driver-v1.0.0.ipa",
@@ -36,11 +39,36 @@ async function computeSha256(filePath) {
   return crypto.createHash("sha256").update(buffer).digest("hex");
 }
 
+function createArchive(sourceDir, targetFilePath, includes) {
+  return new Promise((resolve, reject) => {
+    const output = createWriteStream(targetFilePath);
+    const archive = new ZipArchive({ zlib: { level: 9 } });
+
+    output.on("close", () => resolve());
+    archive.on("error", (err) => reject(err));
+
+    archive.pipe(output);
+
+    for (const item of includes) {
+      const fullPath = path.join(sourceDir, item);
+      if (existsSync(fullPath)) {
+        const stats = statSync(fullPath);
+        if (stats.isDirectory()) {
+          archive.directory(fullPath, item);
+        } else {
+          archive.file(fullPath, { name: item });
+        }
+      }
+    }
+
+    archive.finalize();
+  });
+}
+
 async function packageAppBuilds() {
   console.log("🚀 Packaging 6 Mobile App Build Files (3 Android APKs + 3 iOS IPAs)...");
 
   await fs.mkdir(publicApkDir, { recursive: true });
-  await fs.mkdir(rootApkDir, { recursive: true });
 
   const manifest = {};
 
@@ -61,21 +89,15 @@ async function packageAppBuilds() {
     const targetApkPublic = path.join(publicApkDir, app.apkName);
     const targetIpaPublic = path.join(publicApkDir, app.ipaName);
 
+    const bundleIncludes = ["dist", "assets", "package.json", "app.json"];
+
     // Package Android APK zip container
     console.log(`   Creating Android package: ${app.apkName}`);
-    execSync(
-      `cd "${appDir}" && zip -r "${targetApkPublic}" dist assets package.json app.json -q -9`,
-    );
+    await createArchive(appDir, targetApkPublic, bundleIncludes);
 
     // Package iOS IPA zip container
     console.log(`   Creating iOS package: ${app.ipaName}`);
-    execSync(
-      `cd "${appDir}" && zip -r "${targetIpaPublic}" dist assets package.json app.json -q -9`,
-    );
-
-    // Also copy to root /apk folder
-    await fs.copyFile(targetApkPublic, path.join(rootApkDir, app.apkName));
-    await fs.copyFile(targetIpaPublic, path.join(rootApkDir, app.ipaName));
+    await createArchive(appDir, targetIpaPublic, bundleIncludes);
 
     const apkStats = await fs.stat(targetApkPublic);
     const ipaStats = await fs.stat(targetIpaPublic);
@@ -106,8 +128,7 @@ async function packageAppBuilds() {
   await fs.writeFile(path.join(publicApkDir, "manifest.json"), JSON.stringify(manifest, null, 2));
 
   console.log("\n✅ All 6 App Builds Packaged Successfully!");
-  console.log("   Output Directory 1: apps/admin-web/public/apk/");
-  console.log("   Output Directory 2: apk/\n");
+  console.log("   Output Directory: apps/admin-web/public/apk/\n");
 }
 
 packageAppBuilds().catch((err) => {

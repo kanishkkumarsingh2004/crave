@@ -30,7 +30,7 @@ export function useDeviceLocation() {
         setErrorMsg("Permission to access location was denied");
         Alert.alert(
           "GPS Location Permission Required",
-          "Blinkbite needs your GPS location to deliver fresh food & track orders in real time. Please enable location permissions in Settings.",
+          "Crave needs your GPS location to deliver fresh food & track orders in real time. Please enable location permissions in Settings.",
           [{ text: "OK" }],
         );
         setLoading(false);

@@ -75,7 +75,7 @@ export default function DriverDashboardScreen() {
         {/* Header Bar */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Blinkbite Driver 🚴</Text>
+            <Text style={styles.greeting}>Crave Driver 🚴</Text>
             <Text style={styles.driverName}>{user?.name || "Rahul Sharma"}</Text>
           </View>
 
