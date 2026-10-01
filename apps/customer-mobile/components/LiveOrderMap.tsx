@@ -1,14 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Platform,
-  Linking,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { findShortestPathAStar, AStarRouteResult } from "@delivery/utils";
+import { MapLibreGLMap } from "./MapLibreGLMap";
 
 interface LocationPoint {
   latitude: number;
@@ -26,7 +20,6 @@ interface LiveOrderMapProps {
   onRefresh?: () => void;
 }
 
-// Simulated GPS route points between Merchant (Koramangala) & Customer
 const ROUTE_POINTS: LocationPoint[] = [
   { latitude: 12.9352, longitude: 77.6245, label: "FreshMart Store" },
   { latitude: 12.9365, longitude: 77.622, label: "8th Main Intersection" },
@@ -45,27 +38,16 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 }) => {
   const [routeIndex, setRouteIndex] = useState(1);
   const [isLiveTracking, setIsLiveTracking] = useState(true);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [routeResult, setRouteResult] = useState<AStarRouteResult | null>(null);
 
-  // Pulsing live beacon effect
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.3,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, [pulseAnim]);
+    const calculatedRoute = findShortestPathAStar(
+      { latitude: merchantLocation.latitude, longitude: merchantLocation.longitude, name: merchantLocation.label || "Store" },
+      { latitude: customerLocation.latitude, longitude: customerLocation.longitude, name: customerLocation.label || "Home" }
+    );
+    setRouteResult(calculatedRoute);
+  }, [merchantLocation, customerLocation]);
 
-  // Live GPS simulation pulse
   useEffect(() => {
     if (!isLiveTracking) return;
     const interval = setInterval(() => {
@@ -75,7 +57,6 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
   }, [isLiveTracking]);
 
   const currentBikePos = ROUTE_POINTS[routeIndex];
-  const progressPercent = Math.round(((routeIndex + 1) / ROUTE_POINTS.length) * 100);
 
   const handleCallDriver = () => {
     Linking.openURL(`tel:${driverPhone}`);
@@ -83,109 +64,39 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 
   return (
     <View style={styles.mapContainer}>
-      {/* Visual Map Canvas Representation */}
+      {/* Clean Uncluttered Minimal Top-Down Light Map View */}
       <View style={styles.mapCanvas}>
-        {/* Map Grid / Topography background simulation */}
-        <View style={styles.gridOverlay}>
-          <View style={styles.gridLineHorizontal} />
-          <View style={styles.gridLineHorizontal2} />
-          <View style={styles.gridLineVertical} />
-          <View style={styles.gridLineVertical2} />
-        </View>
-
-        {/* Live GPS Telemetry Status Header */}
-        <View style={styles.telemetryBadge}>
-          <Animated.View style={[styles.liveIndicatorDot, { transform: [{ scale: pulseAnim }] }]} />
-          <Text style={styles.liveBadgeText}>LIVE GPS TRACKING</Text>
-          <Text style={styles.telemetrySub}>Updated 2s ago</Text>
-        </View>
-
-        {/* Map Controls */}
-        <View style={styles.controlsContainer}>
-          <TouchableOpacity
-            style={styles.controlBtn}
-            onPress={() => setIsLiveTracking(!isLiveTracking)}
-          >
-            <Ionicons
-              name={isLiveTracking ? "pause-circle" : "play-circle"}
-              size={22}
-              color="#2563eb"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.controlBtn}
-            onPress={() => setRouteIndex((routeIndex + 1) % ROUTE_POINTS.length)}
-          >
-            <Ionicons name="navigate-circle" size={22} color="#0f172a" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Route Path visual polyline representation */}
-        <View style={styles.routePolyline}>
-          <View style={[styles.polylineSegment, { width: `${progressPercent}%` }]} />
-        </View>
-
-        {/* Merchant Store Marker */}
-        <View style={[styles.mapMarker, styles.merchantMarkerPos]}>
-          <View style={styles.merchantBubble}>
-            <Ionicons name="storefront" size={14} color="#ffffff" />
-          </View>
-          <Text style={styles.markerLabel}>{merchantLocation.label || "Store"}</Text>
-        </View>
-
-        {/* Live Animated Delivery Bike Marker */}
-        <View
-          style={[
-            styles.mapMarker,
-            styles.bikeMarkerPos,
-            {
-              left: `${20 + routeIndex * 15}%`,
-              top: `${40 + (routeIndex % 2) * 10}%`,
-            },
-          ]}
-        >
-          <Animated.View style={[styles.bikeBeaconRing, { transform: [{ scale: pulseAnim }] }]} />
-          <View style={styles.bikeBubble}>
-            <Ionicons name="bicycle" size={18} color="#ffffff" />
-          </View>
-          <View style={styles.speedPill}>
-            <Text style={styles.speedText}>26 km/h</Text>
-          </View>
-        </View>
-
-        {/* Customer Home Destination Marker */}
-        <View style={[styles.mapMarker, styles.customerMarkerPos]}>
-          <View style={styles.customerBubble}>
-            <Ionicons name="home" size={14} color="#ffffff" />
-          </View>
-          <Text style={styles.markerLabel}>{customerLocation.label || "Home"}</Text>
-        </View>
+        <MapLibreGLMap
+          startPoint={merchantLocation}
+          endPoint={customerLocation}
+          driverLocation={currentBikePos}
+          routePoints={routeResult?.path || ROUTE_POINTS}
+        />
       </View>
 
-      {/* Order Picked Up from Store Live Banner */}
+      {/* Order Status Light Banner */}
       <View style={styles.pickedUpBanner}>
         <View style={styles.pickedUpIconCircle}>
-          <Ionicons name="bag-check" size={20} color="#ffffff" />
+          <Ionicons name="bag-check" size={18} color="#ffffff" />
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.statusTitleRow}>
-            <Text style={styles.pickedUpTitle}>🛍️ Order Picked Up from Store!</Text>
-            <View style={styles.h3TagBadge}>
-              <Text style={styles.h3TagText}>H3: 88283082a7fffff</Text>
+            <Text style={styles.pickedUpTitle}>Order Picked Up from Store!</Text>
+            <View style={styles.gpsBadge}>
+              <Text style={styles.gpsBadgeText}>GPS Active</Text>
             </View>
           </View>
           <Text style={styles.pickedUpSub}>
-            {driverName} verified items & collected order from {merchantLocation.label || "Store"}.
-            En route to your address!
+            {driverName} collected your order from {merchantLocation.label || "Store"}. En route to your address!
           </Text>
         </View>
       </View>
 
-      {/* Driver Info & Live Delivery Card */}
+      {/* Driver Info & Live Delivery Light Card */}
       <View style={styles.driverCard}>
         <View style={styles.driverCardHeader}>
           <View style={styles.driverAvatar}>
-            <Ionicons name="person" size={22} color="#2563eb" />
+            <Ionicons name="person" size={20} color="#2563eb" />
           </View>
 
           <View style={styles.driverMainInfo}>
@@ -197,22 +108,22 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
             </View>
           </View>
 
-          <TouchableOpacity style={styles.callBtn} onPress={handleCallDriver}>
-            <Ionicons name="call" size={18} color="#ffffff" />
+          <TouchableOpacity style={styles.callBtn} onPress={handleCallDriver} activeOpacity={0.8}>
+            <Ionicons name="call" size={16} color="#ffffff" />
           </TouchableOpacity>
         </View>
 
         {/* Distance & ETA Bar */}
         <View style={styles.metricsBar}>
           <View style={styles.metricCol}>
-            <Text style={styles.metricValue}>{etaMinutes} mins</Text>
-            <Text style={styles.metricLabel}>Estimated Arrival</Text>
+            <Text style={styles.metricValue}>{routeResult?.estimatedMins ?? etaMinutes} mins</Text>
+            <Text style={styles.metricLabel}>A* ETA Arrival</Text>
           </View>
 
           <View style={styles.metricDivider} />
 
           <View style={styles.metricCol}>
-            <Text style={styles.metricValue}>1.4 km</Text>
+            <Text style={styles.metricValue}>{routeResult?.totalDistanceKm ?? "1.4"} km</Text>
             <Text style={styles.metricLabel}>Distance Left</Text>
           </View>
 
@@ -220,7 +131,7 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 
           <View style={styles.metricCol}>
             <Text style={styles.metricValue}>{currentBikePos.label?.split(" ")[0]}</Text>
-            <Text style={styles.metricLabel}>Current Location</Text>
+            <Text style={styles.metricLabel}>Current Spot</Text>
           </View>
         </View>
       </View>
@@ -229,19 +140,34 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 };
 
 const styles = StyleSheet.create({
+  mapContainer: {
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginBottom: 16,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+  },
+  mapCanvas: {
+    height: 220,
+    backgroundColor: "#f8fafc",
+    position: "relative",
+    overflow: "hidden",
+  },
   pickedUpBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#bbf7d0",
+    borderBottomColor: "#f1f5f9",
     padding: 12,
     gap: 12,
   },
   pickedUpIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#16a34a",
     justifyContent: "center",
     alignItems: "center",
@@ -251,197 +177,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  pickedUpTitle: { fontSize: 13, fontWeight: "800", color: "#166534" },
-  h3TagBadge: {
-    backgroundColor: "#dcfce7",
+  pickedUpTitle: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
+  gpsBadge: {
+    backgroundColor: "#f0fdf4",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#86efac",
+    borderColor: "#bbf7d0",
   },
-  h3TagText: { fontSize: 9, fontWeight: "700", color: "#15803d" },
-  pickedUpSub: { fontSize: 11, color: "#15803d", marginTop: 2, lineHeight: 15 },
-  mapContainer: {
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    marginBottom: 16,
-  },
-  mapCanvas: {
-    height: 220,
-    backgroundColor: "#e0f2fe", // Light map water/landscape tone
-    position: "relative",
-    overflow: "hidden",
-  },
-  gridOverlay: {
-    ...StyleSheet.absoluteFill,
-    opacity: 0.2,
-  },
-  gridLineHorizontal: {
-    position: "absolute",
-    top: 60,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: "#0284c7",
-  },
-  gridLineHorizontal2: {
-    position: "absolute",
-    top: 140,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: "#0284c7",
-  },
-  gridLineVertical: {
-    position: "absolute",
-    left: "35%",
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: "#0284c7",
-  },
-  gridLineVertical2: {
-    position: "absolute",
-    left: "70%",
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: "#0284c7",
-  },
-  telemetryBadge: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    backgroundColor: "rgba(15, 23, 42, 0.85)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    zIndex: 10,
-  },
-  liveIndicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#22c55e",
-  },
-  liveBadgeText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  telemetrySub: {
-    color: "#94a3b8",
-    fontSize: 9,
-    fontWeight: "500",
-  },
-  controlsContainer: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    gap: 6,
-    zIndex: 10,
-  },
-  controlBtn: {
-    backgroundColor: "#ffffff",
-    padding: 6,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  routePolyline: {
-    position: "absolute",
-    top: "50%",
-    left: "15%",
-    right: "15%",
-    height: 4,
-    backgroundColor: "#cbd5e1",
-    borderRadius: 2,
-  },
-  polylineSegment: {
-    height: "100%",
-    backgroundColor: "#2563eb",
-    borderRadius: 2,
-  },
-  mapMarker: {
-    position: "absolute",
-    alignItems: "center",
-    zIndex: 5,
-  },
-  merchantMarkerPos: {
-    left: "10%",
-    top: "40%",
-  },
-  merchantBubble: {
-    backgroundColor: "#16a34a",
-    padding: 6,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#ffffff",
-  },
-  customerMarkerPos: {
-    right: "10%",
-    top: "45%",
-  },
-  customerBubble: {
-    backgroundColor: "#dc2626",
-    padding: 6,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#ffffff",
-  },
-  bikeMarkerPos: {},
-  bikeBeaconRing: {
-    position: "absolute",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(37, 99, 235, 0.25)",
-    top: -3,
-  },
-  bikeBubble: {
-    backgroundColor: "#2563eb",
-    padding: 6,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "#ffffff",
-    elevation: 4,
-  },
-  speedPill: {
-    backgroundColor: "#0f172a",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 8,
-    marginTop: 2,
-  },
-  speedText: {
-    color: "#ffffff",
-    fontSize: 9,
-    fontWeight: "700",
-  },
-  markerLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#0f172a",
-    backgroundColor: "rgba(255,255,255,0.9)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 3,
-  },
+  gpsBadgeText: { fontSize: 9, fontWeight: "700", color: "#16a34a" },
+  pickedUpSub: { fontSize: 11, color: "#64748b", marginTop: 2, lineHeight: 15 },
   driverCard: {
     padding: 14,
     gap: 12,
+    backgroundColor: "#ffffff",
   },
   driverCardHeader: {
     flexDirection: "row",
@@ -449,9 +199,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   driverAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
@@ -460,12 +210,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   driverName: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "700",
     color: "#0f172a",
   },
   vehicleDetails: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748b",
     marginTop: 1,
   },
@@ -476,45 +226,45 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ratingText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
     color: "#475569",
   },
   callBtn: {
     backgroundColor: "#16a34a",
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: "center",
     alignItems: "center",
   },
   metricsBar: {
     flexDirection: "row",
     backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    paddingVertical: 10,
+    borderRadius: 10,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     justifyContent: "space-around",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#f1f5f9",
+    borderColor: "#e2e8f0",
   },
   metricCol: {
     alignItems: "center",
   },
   metricValue: {
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: 12,
+    fontWeight: "700",
     color: "#0f172a",
   },
   metricLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#64748b",
     marginTop: 1,
   },
   metricDivider: {
     width: 1,
-    height: 20,
+    height: 18,
     backgroundColor: "#e2e8f0",
   },
 });

@@ -43,19 +43,21 @@ export function useDeviceLocation() {
 
       const { latitude, longitude } = currentPosition.coords;
 
-      let addressString = "Current Location";
+      let addressString = `Koramangala, Bengaluru (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
       let cityName = "Bengaluru";
 
       try {
-        const [geocode] = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (geocode) {
-          addressString = [geocode.name, geocode.street, geocode.subregion]
+        const geocodes = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (geocodes && geocodes.length > 0) {
+          const geocode = geocodes[0];
+          const formatted = [geocode.name, geocode.street, geocode.subregion]
             .filter(Boolean)
             .join(", ");
-          cityName = geocode.city || geocode.region || "Bengaluru";
+          if (formatted) addressString = formatted;
+          cityName = geocode.city || geocode.region || cityName;
         }
-      } catch (err) {
-        console.log("Driver geocode warning:", err);
+      } catch {
+        // Silently fallback on environments without active native Geocoder service (Emulators, Expo Go, Web)
       }
 
       setLocation({

@@ -3,7 +3,14 @@ import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { LogBox } from "react-native";
 import { useDriverAuthStore } from "@/stores/auth.store";
+
+LogBox.ignoreLogs([
+  "Cannot connect to Expo CLI",
+  "ExpoLocation.reverseGeocodeAsync",
+  "Geocoder is not running",
+]);
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },

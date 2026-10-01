@@ -53,17 +53,19 @@ export function useDeviceLocation() {
       let postal = "560034";
 
       try {
-        const [geocode] = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (geocode) {
-          addressString = [geocode.name, geocode.street, geocode.subregion]
+        const geocodes = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (geocodes && geocodes.length > 0) {
+          const geocode = geocodes[0];
+          const formatted = [geocode.name, geocode.street, geocode.subregion]
             .filter(Boolean)
             .join(", ");
-          cityName = geocode.city || geocode.region || "Bengaluru";
-          stateName = geocode.region || "Karnataka";
-          postal = geocode.postalCode || "560034";
+          if (formatted) addressString = formatted;
+          cityName = geocode.city || geocode.region || cityName;
+          stateName = geocode.region || stateName;
+          postal = geocode.postalCode || postal;
         }
-      } catch (err) {
-        console.warn("Store geocode warning:", err);
+      } catch {
+        // Silently fallback on environments without active native Geocoder service (Emulators, Expo Go, Web)
       }
 
       setLocation({
