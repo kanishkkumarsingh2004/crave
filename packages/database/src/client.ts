@@ -4,7 +4,7 @@ declare const process: any;
 
 declare global {
   // Allow a single PrismaClient instance to be reused across hot reloads in dev.
-  // eslint-disable-next-line no-var
+
   var __prisma: PrismaClient | undefined;
 }
 

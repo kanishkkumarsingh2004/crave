@@ -25,9 +25,12 @@ export async function POST(request: NextRequest) {
 
     const intent = await initiatePayment(input.orderId, ctx.userId, input.provider);
     return apiSuccess(intent);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ZodError) return apiValidationError(err);
-    if (err.message && (err.message.includes("not found") || err.message.includes("belong"))) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("not found") || err.message.includes("belong"))
+    ) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

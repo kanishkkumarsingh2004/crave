@@ -36,11 +36,7 @@ export default function DriverTabLayout() {
         options={{
           title: "Tasks",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "navigate" : "navigate-outline"}
-              size={22}
-              color={color}
-            />
+            <Ionicons name={focused ? "navigate" : "navigate-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -49,11 +45,7 @@ export default function DriverTabLayout() {
         options={{
           title: "Earnings",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "wallet" : "wallet-outline"}
-              size={22}
-              color={color}
-            />
+            <Ionicons name={focused ? "wallet" : "wallet-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -62,11 +54,7 @@ export default function DriverTabLayout() {
         options={{
           title: "History",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "time" : "time-outline"}
-              size={22}
-              color={color}
-            />
+            <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -75,11 +63,7 @@ export default function DriverTabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "person" : "person-outline"}
-              size={22}
-              color={color}
-            />
+            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
           ),
         }}
       />

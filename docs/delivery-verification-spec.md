@@ -19,15 +19,15 @@ The backend is the final authority for determining whether a delivery is success
 
 The delivery confirmation system must prevent:
 
-* Driver accidentally marking an order as delivered.
-* Driver marking an unrelated order as delivered.
-* Reusing an old delivery code.
-* Reusing a QR code from a previous order.
-* A driver confirming another customer's order.
-* Customer code being accepted after delivery is already completed.
-* Client-side manipulation of delivery status.
-* Unauthorized delivery confirmation.
-* Guessing a valid 6-digit code through unlimited attempts.
+- Driver accidentally marking an order as delivered.
+- Driver marking an unrelated order as delivered.
+- Reusing an old delivery code.
+- Reusing a QR code from a previous order.
+- A driver confirming another customer's order.
+- Customer code being accepted after delivery is already completed.
+- Client-side manipulation of delivery status.
+- Unauthorized delivery confirmation.
+- Guessing a valid 6-digit code through unlimited attempts.
 
 The system must provide a clear audit trail for every verification attempt.
 
@@ -41,25 +41,25 @@ The delivery verification flow involves three primary roles.
 
 The customer:
 
-* Receives the order.
-* Opens the active order.
-* Views the delivery verification screen.
-* Displays the QR code.
-* Can display the 6-digit code.
-* Gives the QR/code to the driver at handoff.
+- Receives the order.
+- Opens the active order.
+- Views the delivery verification screen.
+- Displays the QR code.
+- Can display the 6-digit code.
+- Gives the QR/code to the driver at handoff.
 
 ### Driver
 
 The driver:
 
-* Receives the delivery.
-* Travels to the customer's destination.
-* Opens the active delivery.
-* Scans the customer's QR code.
+- Receives the delivery.
+- Travels to the customer's destination.
+- Opens the active delivery.
+- Scans the customer's QR code.
 
 OR:
 
-* Enters the customer's 6-digit code manually.
+- Enters the customer's 6-digit code manually.
 
 The driver cannot manually set an order to `DELIVERED`.
 
@@ -67,15 +67,15 @@ The driver cannot manually set an order to `DELIVERED`.
 
 The backend:
 
-* Validates the credential.
-* Validates the order.
-* Validates the driver.
-* Validates the delivery.
-* Validates credential expiration.
-* Prevents replay.
-* Records the verification.
-* Changes the delivery/order state.
-* Publishes delivery completion events.
+- Validates the credential.
+- Validates the order.
+- Validates the driver.
+- Validates the delivery.
+- Validates credential expiration.
+- Prevents replay.
+- Records the verification.
+- Changes the delivery/order state.
+- Publishes delivery completion events.
 
 ---
 
@@ -1078,14 +1078,14 @@ The exact resolution should be configurable.
 
 H3 is useful for:
 
-* Finding nearby drivers.
-* Grouping drivers into geographic cells.
-* Delivery zone management.
-* Dispatch candidate discovery.
-* Heatmaps.
-* Driver density.
-* Geographic aggregation.
-* Geofencing logic.
+- Finding nearby drivers.
+- Grouping drivers into geographic cells.
+- Delivery zone management.
+- Dispatch candidate discovery.
+- Heatmaps.
+- Driver density.
+- Geographic aggregation.
+- Geofencing logic.
 
 H3 should NOT be treated as a road-routing engine.
 

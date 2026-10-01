@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
 import {
   Users,
   Store,
@@ -12,7 +13,6 @@ import {
   Navigation,
   IndianRupee,
   Wallet,
-  LucideIcon,
 } from "lucide-react";
 
 interface DashboardStats {

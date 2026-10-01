@@ -12,7 +12,6 @@ import { withDriver } from "@/../../../../server/middleware/auth";
 import {
   apiSuccess,
   apiError,
-  apiInternalError,
   apiValidationError,
 } from "@/../../../../server/infrastructure/response";
 import { verifyDeliveryHandover } from "@/../../../../server/modules/deliveries/verification.service";
@@ -28,10 +27,7 @@ const zVerifyPayload = z.object({
   accuracy: z.number().optional(),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { ctx, error } = await withDriver(request);
   if (error) return error;
 
@@ -57,10 +53,11 @@ export async function POST(
     });
 
     return apiSuccess(result);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof z.ZodError) {
       return apiValidationError(err);
     }
-    return apiError("VERIFICATION_FAILED", err.message || "Delivery verification failed", 400);
+    const message = err instanceof Error ? err.message : "Delivery verification failed";
+    return apiError("VERIFICATION_FAILED", message, 400);
   }
 }

@@ -6,6 +6,8 @@
  */
 
 import { prisma, DriverAvailability, DriverStatus, DeliveryStatus } from "@delivery/database";
+import { cleanGpsFix } from "@delivery/utils";
+import { broadcastDriverLocation } from "../../realtime/events";
 
 // Helper to resolve driver record by authenticated userId
 export async function getDriverByUserId(userId: string) {
@@ -210,6 +212,37 @@ export async function recordDriverLocation(
 ) {
   const driver = await getDriverByUserId(userId);
 
+  // Fetch last recorded location for kinematic velocity filtering
+  const lastLocation = await prisma.driverLocation.findFirst({
+    where: { driverId: driver.id },
+    orderBy: { recordedAt: "desc" },
+  });
+
+  const previousFix = lastLocation
+    ? {
+        latitude: Number(lastLocation.latitude),
+        longitude: Number(lastLocation.longitude),
+        timestamp: lastLocation.recordedAt
+          ? new Date(lastLocation.recordedAt).getTime()
+          : undefined,
+      }
+    : undefined;
+
+  const sanitized = cleanGpsFix(
+    {
+      latitude: data.latitude,
+      longitude: data.longitude,
+      heading: data.heading,
+      speed: data.speed,
+      accuracy: data.accuracy,
+      timestamp: Date.now(),
+    },
+    previousFix,
+  );
+
+  const effectiveLat = sanitized.latitude;
+  const effectiveLng = sanitized.longitude;
+
   // Find current active delivery (if any)
   const activeDelivery = await prisma.delivery.findFirst({
     where: {
@@ -227,15 +260,20 @@ export async function recordDriverLocation(
     },
   });
 
-  return prisma.driverLocation.create({
+  const record = await prisma.driverLocation.create({
     data: {
       driverId: driver.id,
       deliveryId: activeDelivery?.id || null,
-      latitude: data.latitude,
-      longitude: data.longitude,
+      latitude: effectiveLat,
+      longitude: effectiveLng,
       heading: data.heading,
-      speed: data.speed,
+      speed: sanitized.calculatedSpeedKmH ?? data.speed,
       accuracy: data.accuracy,
     },
   });
+
+  // Broadcast location event over SSE stream
+  broadcastDriverLocation(driver.id, activeDelivery?.id || undefined, effectiveLat, effectiveLng);
+
+  return record;
 }

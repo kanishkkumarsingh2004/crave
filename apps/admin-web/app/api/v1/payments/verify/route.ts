@@ -30,9 +30,12 @@ export async function POST(request: NextRequest) {
       input.providerOrderId,
     );
     return apiSuccess(verified);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ZodError) return apiValidationError(err);
-    if (err.message && (err.message.includes("Invalid") || err.message.includes("not found"))) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("Invalid") || err.message.includes("not found"))
+    ) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

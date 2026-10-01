@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -42,11 +35,7 @@ export default function DriverEarningsScreen() {
           <Text style={styles.balanceValue}>₹4,850.00</Text>
           <Text style={styles.balanceSub}>35 Trips completed this week</Text>
 
-          <TouchableOpacity
-            style={styles.cashOutBtn}
-            onPress={handleCashOut}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.cashOutBtn} onPress={handleCashOut} activeOpacity={0.8}>
             <Ionicons name="card-outline" size={16} color="#2563eb" />
             <Text style={styles.cashOutText}>Instant Cash Out to Bank</Text>
           </TouchableOpacity>

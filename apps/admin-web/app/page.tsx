@@ -7,10 +7,7 @@ import {
   Truck,
   ShieldCheck,
   Zap,
-  Star,
   ArrowRight,
-  MapPin,
-  Clock,
   CheckCircle2,
 } from "lucide-react";
 

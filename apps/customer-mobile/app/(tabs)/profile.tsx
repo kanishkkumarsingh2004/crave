@@ -1,12 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/auth.store";
+import { useAddressStore } from "@/src/stores/address.store";
+import { usePaymentStore } from "@/src/stores/payment.store";
+import { AddressModal } from "@/components/AddressModal";
+import { PaymentMethodModal } from "@/components/PaymentMethodModal";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuthStore();
+  const [addressModalVisible, setAddressModalVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const addresses = useAddressStore((state) => state.addresses);
+  const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
+  const activeAddress = getSelectedAddress();
+  const methods = usePaymentStore((state) => state.methods);
+  const getSelectedPaymentMethod = usePaymentStore((state) => state.getSelectedMethod);
+  const activePayment = getSelectedPaymentMethod();
 
   const customerName = user?.name || "Alice Smith";
   const customerEmail = user?.email || "customer@delivery.com";
@@ -53,39 +65,61 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Orders</Text>
           </View>
           <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>2</Text>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => setAddressModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.statNumber}>{addresses.length}</Text>
             <Text style={styles.statLabel}>Addresses</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>2</Text>
-            <Text style={styles.statLabel}>Cards</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => setPaymentModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.statNumber}>{methods.length}</Text>
+            <Text style={styles.statLabel}>Payment Methods</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Account Menu Options */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => setAddressModalVisible(true)}
+            activeOpacity={0.7}
+          >
             <View style={[styles.menuIcon, { backgroundColor: "#eff6ff" }]}>
               <Ionicons name="location-outline" size={18} color="#2563eb" />
             </View>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Saved Addresses</Text>
-              <Text style={styles.menuSub}>123 Main St, Apt 4B, Mumbai</Text>
+              <Text style={styles.menuTitle}>Saved Addresses ({addresses.length})</Text>
+              <Text style={styles.menuSub} numberOfLines={1}>
+                {activeAddress
+                  ? `${activeAddress.label}: ${activeAddress.street}`
+                  : "Add delivery address"}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => setPaymentModalVisible(true)}
+            activeOpacity={0.7}
+          >
             <View style={[styles.menuIcon, { backgroundColor: "#f0fdf4" }]}>
               <Ionicons name="card-outline" size={18} color="#16a34a" />
             </View>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Payment Methods</Text>
-              <Text style={styles.menuSub}>Visa ending in •••• 4242</Text>
+              <Text style={styles.menuTitle}>Payment Methods ({methods.length})</Text>
+              <Text style={styles.menuSub} numberOfLines={1}>
+                {activePayment?.title || "Google Pay, Cards & UPI"}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
           </TouchableOpacity>
@@ -135,6 +169,12 @@ export default function ProfileScreen() {
           <Text style={styles.signOutText}>Sign Out of Blinkbite</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <AddressModal visible={addressModalVisible} onClose={() => setAddressModalVisible(false)} />
+      <PaymentMethodModal
+        visible={paymentModalVisible}
+        onClose={() => setPaymentModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

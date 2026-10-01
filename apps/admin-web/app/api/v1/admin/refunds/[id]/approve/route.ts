@@ -21,8 +21,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params;
     const refund = await approveRefund(ctx.userId, id);
     return apiSuccess(refund);
-  } catch (err: any) {
-    if (err.message && err.message.includes("cannot be approved")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("cannot be approved")) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

@@ -19,27 +19,27 @@
 
 This document defines the complete architecture for:
 
-* Order lifecycle management
-* Delivery lifecycle management
-* Rider/driver assignment
-* GPS tracking
-* Live rider location
-* Customer delivery tracking
-* Driver location updates
-* H3 geospatial indexing
-* Driver proximity search
-* Delivery zones
-* Geofencing
-* Pickup and delivery verification
-* ETA calculation
-* Route tracking
-* Location history
-* GPS quality validation
-* Offline GPS handling
-* Realtime delivery events
-* Tracking privacy
-* Location retention
-* Dispatch optimization
+- Order lifecycle management
+- Delivery lifecycle management
+- Rider/driver assignment
+- GPS tracking
+- Live rider location
+- Customer delivery tracking
+- Driver location updates
+- H3 geospatial indexing
+- Driver proximity search
+- Delivery zones
+- Geofencing
+- Pickup and delivery verification
+- ETA calculation
+- Route tracking
+- Location history
+- GPS quality validation
+- Offline GPS handling
+- Realtime delivery events
+- Tracking privacy
+- Location retention
+- Dispatch optimization
 
 The system must support the complete lifecycle:
 
@@ -1963,8 +1963,8 @@ A delivery tracking response may contain:
     "heading": 180
   },
   "destination": {
-    "latitude": 12.9800,
-    "longitude": 77.6000
+    "latitude": 12.98,
+    "longitude": 77.6
   },
   "eta": {
     "seconds": 540,
@@ -2821,11 +2821,11 @@ Interface:
 
 ```ts
 interface RoutingService {
-  getRoute(input: RouteRequest): Promise<RouteResult>
+  getRoute(input: RouteRequest): Promise<RouteResult>;
 
-  getEta(input: EtaRequest): Promise<EtaResult>
+  getEta(input: EtaRequest): Promise<EtaResult>;
 
-  getDistance(input: DistanceRequest): Promise<DistanceResult>
+  getDistance(input: DistanceRequest): Promise<DistanceResult>;
 }
 ```
 

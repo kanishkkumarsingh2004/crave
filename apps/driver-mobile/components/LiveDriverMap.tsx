@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Linking,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface LiveDriverMapProps {
@@ -89,15 +82,8 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
           <Text style={styles.hudDistance}>In {currentStep.dist}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.hudMuteBtn}
-          onPress={() => setSoundMuted(!soundMuted)}
-        >
-          <Ionicons
-            name={soundMuted ? "volume-mute" : "volume-high"}
-            size={20}
-            color="#ffffff"
-          />
+        <TouchableOpacity style={styles.hudMuteBtn} onPress={() => setSoundMuted(!soundMuted)}>
+          <Ionicons name={soundMuted ? "volume-mute" : "volume-high"} size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -148,9 +134,7 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
             },
           ]}
         >
-          <Animated.View
-            style={[styles.beaconPulse, { transform: [{ scale: pulseAnim }] }]}
-          />
+          <Animated.View style={[styles.beaconPulse, { transform: [{ scale: pulseAnim }] }]} />
           <View style={styles.driverBikeBubble}>
             <Ionicons name="bicycle" size={20} color="#ffffff" />
           </View>

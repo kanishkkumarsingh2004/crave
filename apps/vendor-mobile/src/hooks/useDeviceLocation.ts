@@ -63,7 +63,7 @@ export function useDeviceLocation() {
           postal = geocode.postalCode || "560034";
         }
       } catch (err) {
-        console.log("Store geocode warning:", err);
+        console.warn("Store geocode warning:", err);
       }
 
       setLocation({
@@ -75,9 +75,10 @@ export function useDeviceLocation() {
         postalCode: postal,
       });
       setErrorMsg(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error requesting store GPS location:", err);
-      setErrorMsg(err.message || "Failed to fetch store location");
+      const message = err instanceof Error ? err.message : "Failed to fetch store location";
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
