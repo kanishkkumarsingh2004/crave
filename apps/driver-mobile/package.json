@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "dev": "expo start --port 8082",
     "start": "expo start --port 8082",
     "tunnel": "expo start --tunnel",
     "android": "expo start --android",
