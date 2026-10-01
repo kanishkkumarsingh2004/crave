@@ -6,41 +6,41 @@ export default function DriverTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#ea580c",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: "#2563eb",
+        tabBarInactiveTintColor: "#64748b",
         tabBarStyle: {
-          borderTopColor: "#e5e7eb",
-          backgroundColor: "#fff",
-          paddingBottom: 4,
+          borderTopColor: "#e2e8f0",
+          backgroundColor: "#ffffff",
           height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 11, marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+          title: "Console",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "speedometer" : "speedometer-outline"}
+              size={22}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="deliveries"
         options={{
-          title: "Deliveries",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bicycle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "History",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
+          title: "Tasks",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "navigate" : "navigate-outline"}
+              size={22}
+              color={color}
+            />
           ),
         }}
       />
@@ -48,8 +48,25 @@ export default function DriverTabLayout() {
         name="earnings"
         options={{
           title: "Earnings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "wallet" : "wallet-outline"}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: "History",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "time" : "time-outline"}
+              size={22}
+              color={color}
+            />
           ),
         }}
       />
@@ -57,8 +74,12 @@ export default function DriverTabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={22}
+              color={color}
+            />
           ),
         }}
       />

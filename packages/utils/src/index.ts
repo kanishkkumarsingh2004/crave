@@ -286,3 +286,8 @@ export function haversineDistanceKm(
 export function buildIdempotencyKey(...parts: string[]): string {
   return parts.join(":");
 }
+
+// ============================================================
+// DISPATCH ALGORITHM
+// ============================================================
+export * from "./dispatch";

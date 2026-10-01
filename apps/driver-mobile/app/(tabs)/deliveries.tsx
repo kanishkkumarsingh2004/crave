@@ -1,42 +1,74 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-type DeliveryStep = "ASSIGNED" | "ARRIVED_PICKUP" | "PICKED_UP" | "ARRIVED_DELIVERY" | "DELIVERED";
+type DeliveryStep =
+  | "ASSIGNED"
+  | "ARRIVED_PICKUP"
+  | "PICKED_UP"
+  | "ARRIVED_DELIVERY"
+  | "DELIVERED";
 
 export default function DriverDeliveriesScreen() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<DeliveryStep>("ASSIGNED");
+  const [enteredOtp, setEnteredOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
 
   const activeDelivery = {
-    orderNumber: "#ORD-9102",
-    vendorName: "Gourmet Burger Kitchen",
-    vendorPhone: "+1 (555) 888-9900",
-    vendorAddress: "104 Market St, Downtown",
-    customerName: "Alex Morgan",
-    customerPhone: "+1 (555) 777-3311",
-    customerAddress: "742 Evergreen Terrace, Apt 3B",
-    items: ["2x Truffle Burger", "1x Garlic Fries", "2x Iced Tea"],
-    earnings: "₹14.50",
+    orderNumber: "ORD-10004",
+    vendorName: "FreshMart Organics",
+    vendorPhone: "+919876543210",
+    vendorAddress: "104 Market Street, Station Area, Mumbai",
+    customerName: "Alice Smith",
+    customerPhone: "+919876543210",
+    customerAddress: "123 Main Street, Apt 4B, Mumbai",
+    items: [
+      "2x Fresh Organic Milk (1L)",
+      "1x Whole Wheat Artisanal Bread",
+    ],
+    earnings: "₹85.00",
+    correctOtp: "849201",
   };
 
   const advanceStep = () => {
     switch (currentStep) {
       case "ASSIGNED":
         setCurrentStep("ARRIVED_PICKUP");
-        Alert.alert("Status Updated", "Marked as Arrived at Vendor Store.");
+        Alert.alert("Status Updated 📍", "Marked as Arrived at Vendor Store.");
         break;
+
       case "ARRIVED_PICKUP":
         setCurrentStep("PICKED_UP");
-        Alert.alert("Status Updated", "Order Picked Up! Navigating to customer.");
+        Alert.alert("Parcel Collected 📦", "En route to customer address.");
         break;
+
       case "PICKED_UP":
         setCurrentStep("ARRIVED_DELIVERY");
-        Alert.alert("Status Updated", "Arrived at customer address.");
+        Alert.alert("Arrived at Drop-off 🏠", "Ask customer for the 6-digit OTP code.");
         break;
+
       case "ARRIVED_DELIVERY":
+        if (enteredOtp.trim() !== activeDelivery.correctOtp) {
+          setOtpError(`Invalid OTP. Ask customer for code (Hint: ${activeDelivery.correctOtp})`);
+          return;
+        }
+        setOtpError("");
         setCurrentStep("DELIVERED");
-        Alert.alert("Delivery Completed!", "Great job! ₹14.50 added to earnings.");
+        Alert.alert(
+          "Delivery Completed! 🎉",
+          `Handover verified! ${activeDelivery.earnings} added to your account earnings.`,
+        );
         break;
     }
   };
@@ -50,9 +82,9 @@ export default function DriverDeliveriesScreen() {
       case "PICKED_UP":
         return "Step 3: En Route to Customer";
       case "ARRIVED_DELIVERY":
-        return "Step 4: Hand Order to Customer";
+        return "Step 4: Customer OTP Handover";
       case "DELIVERED":
-        return "Delivery Complete!";
+        return "Delivery Completed!";
     }
   };
 
@@ -60,24 +92,32 @@ export default function DriverDeliveriesScreen() {
     <SafeAreaView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Active Delivery Task</Text>
-          <Text style={styles.subTitle}>Live route navigation and order status tracking</Text>
+          <Text style={styles.title}>Active Task Console</Text>
+          <Text style={styles.subTitle}>
+            Live GPS route tracking & customer handover
+          </Text>
         </View>
 
         {currentStep === "DELIVERED" ? (
           <View style={styles.completeCard}>
-            <Ionicons name="checkmark-circle" size={56} color="#16a34a" />
+            <View style={styles.checkCircle}>
+              <Ionicons name="checkmark" size={40} color="#ffffff" />
+            </View>
             <Text style={styles.completeTitle}>Trip Completed!</Text>
             <Text style={styles.completeSub}>
-              You earned {activeDelivery.earnings} for this delivery.
+              You earned {activeDelivery.earnings} for delivery {activeDelivery.orderNumber}.
             </Text>
-            <TouchableOpacity style={styles.btnReset} onPress={() => setCurrentStep("ASSIGNED")}>
-              <Text style={styles.btnResetText}>Back to Dashboard</Text>
+            <TouchableOpacity
+              style={styles.btnReset}
+              onPress={() => router.push("/")}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnResetText}>Return to Console</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {/* Step Status Tracker */}
+            {/* Progress Bar */}
             <View style={styles.stepProgressCard}>
               <Text style={styles.stepTitle}>{getStepTitle()}</Text>
               <View style={styles.progressTrack}>
@@ -99,61 +139,94 @@ export default function DriverDeliveriesScreen() {
               </View>
             </View>
 
-            {/* Vendor Pickup Card */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardSectionHeader}>
-                <Ionicons name="storefront" size={20} color="#7c3aed" />
-                <Text style={styles.sectionHeading}>Pickup Location</Text>
+            {/* OTP Verification Form at Final Step */}
+            {currentStep === "ARRIVED_DELIVERY" && (
+              <View style={styles.otpCard}>
+                <View style={styles.otpCardHeader}>
+                  <Ionicons name="key-outline" size={20} color="#16a34a" />
+                  <Text style={styles.otpCardTitle}>Verify Delivery OTP</Text>
+                </View>
+                <Text style={styles.otpCardSub}>
+                  Enter the 6-digit PIN code provided by customer {activeDelivery.customerName}:
+                </Text>
+
+                <TextInput
+                  style={styles.otpInput}
+                  placeholder="Enter 6-digit OTP (e.g. 849201)"
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={enteredOtp}
+                  onChangeText={(text) => {
+                    setEnteredOtp(text);
+                    setOtpError("");
+                  }}
+                />
+
+                {!!otpError && <Text style={styles.errorText}>{otpError}</Text>}
               </View>
-              <Text style={styles.mainName}>{activeDelivery.vendorName}</Text>
-              <Text style={styles.addressText}>{activeDelivery.vendorAddress}</Text>
-              <View style={styles.contactRow}>
-                <TouchableOpacity style={styles.contactBtn}>
-                  <Ionicons name="call" size={14} color="#7c3aed" />
-                  <Text style={styles.contactBtnText}>Call Vendor</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.contactBtn}>
-                  <Ionicons name="navigate" size={14} color="#7c3aed" />
-                  <Text style={styles.contactBtnText}>Maps</Text>
-                </TouchableOpacity>
+            )}
+
+            {/* Vendor Details */}
+            <View style={styles.detailCard}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="storefront-outline" size={18} color="#2563eb" />
+                <Text style={styles.cardTitle}>Pickup Details</Text>
               </View>
+
+              <Text style={styles.locationTitle}>{activeDelivery.vendorName}</Text>
+              <Text style={styles.locationSub}>{activeDelivery.vendorAddress}</Text>
+
+              <TouchableOpacity style={styles.callRow} activeOpacity={0.7}>
+                <Ionicons name="call-outline" size={16} color="#2563eb" />
+                <Text style={styles.callText}>Call Store ({activeDelivery.vendorPhone})</Text>
+              </TouchableOpacity>
             </View>
 
-            {/* Order Items Checklist */}
-            <View style={styles.infoCard}>
-              <Text style={styles.sectionHeading}>Order Items ({activeDelivery.orderNumber})</Text>
-              {activeDelivery.items.map((item, idx) => (
-                <View key={idx} style={styles.itemRow}>
-                  <Ionicons name="checkbox-outline" size={18} color="#16a34a" />
-                  <Text style={styles.itemText}>{item}</Text>
-                </View>
+            {/* Customer Details */}
+            <View style={styles.detailCard}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="location-outline" size={18} color="#16a34a" />
+                <Text style={styles.cardTitle}>Drop-off Details</Text>
+              </View>
+
+              <Text style={styles.locationTitle}>{activeDelivery.customerName}</Text>
+              <Text style={styles.locationSub}>{activeDelivery.customerAddress}</Text>
+
+              <TouchableOpacity style={styles.callRow} activeOpacity={0.7}>
+                <Ionicons name="call-outline" size={16} color="#16a34a" />
+                <Text style={[styles.callText, { color: "#16a34a" }]}>
+                  Call Customer ({activeDelivery.customerPhone})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Items Summary */}
+            <View style={styles.detailCard}>
+              <Text style={styles.cardTitle}>Order Items</Text>
+              {activeDelivery.items.map((item, index) => (
+                <Text key={index} style={styles.itemText}>
+                  • {item}
+                </Text>
               ))}
             </View>
 
-            {/* Customer Dropoff Card */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardSectionHeader}>
-                <Ionicons name="location" size={20} color="#16a34a" />
-                <Text style={styles.sectionHeading}>Dropoff Location</Text>
-              </View>
-              <Text style={styles.mainName}>{activeDelivery.customerName}</Text>
-              <Text style={styles.addressText}>{activeDelivery.customerAddress}</Text>
-              <View style={styles.contactRow}>
-                <TouchableOpacity style={styles.contactBtn}>
-                  <Ionicons name="call" size={14} color="#16a34a" />
-                  <Text style={[styles.contactBtnText, { color: "#16a34a" }]}>Call Customer</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Primary Action Button */}
-            <TouchableOpacity style={styles.btnPrimaryAction} onPress={advanceStep}>
-              <Text style={styles.btnPrimaryText}>
-                {currentStep === "ASSIGNED" && "I Have Arrived at Store"}
-                {currentStep === "ARRIVED_PICKUP" && "Confirm Order Picked Up"}
-                {currentStep === "PICKED_UP" && "I Have Arrived at Customer"}
-                {currentStep === "ARRIVED_DELIVERY" && "Complete Delivery"}
+            {/* Action Advance Step Button */}
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={advanceStep}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.actionBtnText}>
+                {currentStep === "ASSIGNED"
+                  ? "Mark Arrived at Vendor"
+                  : currentStep === "ARRIVED_PICKUP"
+                    ? "Confirm Pickup & Start Navigation"
+                    : currentStep === "PICKED_UP"
+                      ? "Arrived at Drop-off"
+                      : "Verify OTP & Complete Delivery"}
               </Text>
+              <Ionicons name="arrow-forward" size={18} color="#ffffff" />
             </TouchableOpacity>
           </>
         )}
@@ -163,73 +236,102 @@ export default function DriverDeliveriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#f8f9fa" },
-  scrollContent: { padding: 16 },
-  header: { marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: "700", color: "#111827" },
-  subTitle: { fontSize: 13, color: "#6b7280", marginTop: 2 },
+  flex: { flex: 1, backgroundColor: "#f8fafc" },
+  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  header: { gap: 2 },
+  title: { fontSize: 20, fontWeight: "800", color: "#0f172a" },
+  subTitle: { fontSize: 12, color: "#64748b" },
   stepProgressCard: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  stepTitle: { fontSize: 15, fontWeight: "700", color: "#111827", marginBottom: 10 },
-  progressTrack: { height: 8, backgroundColor: "#e5e7eb", borderRadius: 4, overflow: "hidden" },
-  progressBar: { height: "100%", backgroundColor: "#2563eb" },
-  infoCard: {
-    backgroundColor: "#fff",
+    borderColor: "#e2e8f0",
     padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    gap: 8,
   },
-  cardSectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
-  sectionHeading: { fontSize: 14, fontWeight: "700", color: "#111827" },
-  mainName: { fontSize: 16, fontWeight: "700", color: "#111827", marginTop: 4 },
-  addressText: { fontSize: 13, color: "#4b5563", marginTop: 2 },
-  contactRow: { flexDirection: "row", gap: 10, marginTop: 10 },
-  contactBtn: {
+  stepTitle: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
+  progressTrack: {
+    height: 8,
+    backgroundColor: "#e2e8f0",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressBar: { height: "100%", backgroundColor: "#2563eb", borderRadius: 4 },
+  otpCard: {
+    backgroundColor: "#f0fdf4",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    padding: 14,
+    gap: 10,
+  },
+  otpCardHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  otpCardTitle: { fontSize: 15, fontWeight: "700", color: "#166534" },
+  otpCardSub: { fontSize: 12, color: "#15803d" },
+  otpInput: {
+    height: 48,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#86efac",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0f172a",
+    letterSpacing: 2,
+  },
+  errorText: { fontSize: 12, color: "#dc2626", fontWeight: "600" },
+  detailCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 14,
+    gap: 8,
+  },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardTitle: { fontSize: 13, fontWeight: "700", color: "#64748b" },
+  locationTitle: { fontSize: 15, fontWeight: "700", color: "#0f172a" },
+  locationSub: { fontSize: 12, color: "#64748b" },
+  callRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  callText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
+  itemText: { fontSize: 13, color: "#334155" },
+  actionBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    gap: 4,
-  },
-  contactBtnText: { fontSize: 12, fontWeight: "600", color: "#7c3aed" },
-  itemRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
-  itemText: { fontSize: 13, color: "#374151" },
-  btnPrimaryAction: {
+    justifyContent: "center",
     backgroundColor: "#2563eb",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
+    gap: 8,
+    marginTop: 8,
   },
-  btnPrimaryText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  actionBtnText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },
   completeCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     borderRadius: 16,
-    padding: 30,
-    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    marginTop: 20,
+    borderColor: "#bbf7d0",
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
   },
-  completeTitle: { fontSize: 20, fontWeight: "700", color: "#111827", marginTop: 12 },
-  completeSub: { fontSize: 14, color: "#6b7280", marginTop: 4, textAlign: "center" },
+  checkCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#16a34a",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  completeTitle: { fontSize: 20, fontWeight: "800", color: "#0f172a" },
+  completeSub: { fontSize: 13, color: "#64748b", textAlign: "center" },
   btnReset: {
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#2563eb",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 8,
   },
-  btnResetText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  btnResetText: { color: "#ffffff", fontWeight: "700", fontSize: 14 },
 });

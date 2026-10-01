@@ -4,14 +4,31 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@delivery/types": ["../../packages/types/src/index.ts"],
-      "@delivery/api-client": ["../../packages/api-client/src/index.ts"],
-      "@delivery/validation": ["../../packages/validation/src/index.ts"],
-      "@delivery/constants": ["../../packages/constants/src/index.ts"],
-      "@delivery/config": ["../../packages/config/src/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@delivery/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@delivery/api-client": [
+        "../../packages/api-client/src/index.ts"
+      ],
+      "@delivery/validation": [
+        "../../packages/validation/src/index.ts"
+      ],
+      "@delivery/constants": [
+        "../../packages/constants/src/index.ts"
+      ],
+      "@delivery/config": [
+        "../../packages/config/src/index.ts"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
