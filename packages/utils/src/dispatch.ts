@@ -84,3 +84,48 @@ export function rankDriverCandidates(
   // Sort candidates by lowest score (best match first)
   return scored.sort((a, b) => a.score - b.score);
 }
+
+export interface BatchableOrder {
+  id: string;
+  pickup: DispatchLocation;
+  dropoff: DispatchLocation;
+}
+
+/**
+ * Group orders into optimal delivery batches based on spatial proximity.
+ */
+export function findOptimalDeliveryBatch(
+  orders: BatchableOrder[],
+  maxRadiusKm = 3.0,
+): BatchableOrder[][] {
+  const batches: BatchableOrder[][] = [];
+  const assigned = new Set<string>();
+
+  for (const order of orders) {
+    if (assigned.has(order.id)) continue;
+
+    const currentBatch: BatchableOrder[] = [order];
+    assigned.add(order.id);
+
+    for (const other of orders) {
+      if (assigned.has(other.id)) continue;
+
+      const pickupDist = haversineDistanceKm(
+        order.pickup.latitude,
+        order.pickup.longitude,
+        other.pickup.latitude,
+        other.pickup.longitude,
+      );
+
+      if (pickupDist <= maxRadiusKm) {
+        currentBatch.push(other);
+        assigned.add(other.id);
+      }
+    }
+
+    batches.push(currentBatch);
+  }
+
+  return batches;
+}
+

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { LiveDriverMap } from "../../components/LiveDriverMap";
 
 type DeliveryStep =
   | "ASSIGNED"
@@ -97,6 +98,14 @@ export default function DriverDeliveriesScreen() {
             Live GPS route tracking & customer handover
           </Text>
         </View>
+
+        {/* Live GPS Navigation & Speedometer Map */}
+        <LiveDriverMap
+          orderNumber={activeDelivery.orderNumber}
+          customerName={activeDelivery.customerName}
+          customerPhone={activeDelivery.customerPhone}
+          destinationAddress={activeDelivery.customerAddress}
+        />
 
         {currentStep === "DELIVERED" ? (
           <View style={styles.completeCard}>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LiveOrderMap } from "../../components/LiveOrderMap";
 
 const ACTIVE_ORDER = {
   orderNumber: "ORD-10004",
@@ -77,6 +78,14 @@ export default function OrdersScreen() {
         >
           {activeTab === "live" ? (
             <View style={styles.liveContainer}>
+              {/* Interactive Live Map Tracking */}
+              <LiveOrderMap
+                driverName={ACTIVE_ORDER.driver.name}
+                driverPhone={ACTIVE_ORDER.driver.phone}
+                vehicleDetails={ACTIVE_ORDER.driver.vehicle}
+                etaMinutes={12}
+              />
+
               {/* Active Order Card */}
               <View style={styles.liveCard}>
                 <View style={styles.liveHeader}>
