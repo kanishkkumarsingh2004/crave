@@ -5,16 +5,16 @@
     "android": {
       "filename": "customer-v1.0.0.apk",
       "url": "/apk/customer-v1.0.0.apk",
-      "sizeMb": "8.5 MB",
-      "bytes": 8870143,
-      "sha256": "fa715dc0c412f36dceb0fed080d34f77cf1133be202913d0097d774db4e487ea"
+      "sizeMb": "12.6 MB",
+      "bytes": 13191411,
+      "sha256": "9b6d5206587f88ba06ea1191cb38a1a4bba7b5d5d5e7c1e76015be8fb9d26302"
     },
     "ios": {
       "filename": "customer-v1.0.0.ipa",
       "url": "/apk/customer-v1.0.0.ipa",
-      "sizeMb": "8.5 MB",
-      "bytes": 8870143,
-      "sha256": "fa715dc0c412f36dceb0fed080d34f77cf1133be202913d0097d774db4e487ea"
+      "sizeMb": "12.6 MB",
+      "bytes": 13191411,
+      "sha256": "9b6d5206587f88ba06ea1191cb38a1a4bba7b5d5d5e7c1e76015be8fb9d26302"
     }
   },
   "vendor": {
@@ -24,15 +24,15 @@
       "filename": "vendor-v1.0.0.apk",
       "url": "/apk/vendor-v1.0.0.apk",
       "sizeMb": "8.5 MB",
-      "bytes": 8937308,
-      "sha256": "0132353ebb8d7d9a36707da5fee3aff039e7eb6a88806b576c3a2eb775ab96e8"
+      "bytes": 8937326,
+      "sha256": "23b945acf9d0663b640ff3e036327632c37925a6c1309118b0377d528e0bae30"
     },
     "ios": {
       "filename": "vendor-v1.0.0.ipa",
       "url": "/apk/vendor-v1.0.0.ipa",
       "sizeMb": "8.5 MB",
-      "bytes": 8937308,
-      "sha256": "0132353ebb8d7d9a36707da5fee3aff039e7eb6a88806b576c3a2eb775ab96e8"
+      "bytes": 8937326,
+      "sha256": "23b945acf9d0663b640ff3e036327632c37925a6c1309118b0377d528e0bae30"
     }
   },
   "driver": {
@@ -42,15 +42,15 @@
       "filename": "driver-v1.0.0.apk",
       "url": "/apk/driver-v1.0.0.apk",
       "sizeMb": "8.5 MB",
-      "bytes": 8894891,
-      "sha256": "5db3df899a22a126dd67041999f8ebe8d0e76500ed81cd57b600d8c1d61afa40"
+      "bytes": 8894907,
+      "sha256": "785bbc2e051a04cf97317cefd2feeb8ba83cada4b359bc87dc6fbf4adfe4ef13"
     },
     "ios": {
       "filename": "driver-v1.0.0.ipa",
       "url": "/apk/driver-v1.0.0.ipa",
       "sizeMb": "8.5 MB",
-      "bytes": 8894891,
-      "sha256": "5db3df899a22a126dd67041999f8ebe8d0e76500ed81cd57b600d8c1d61afa40"
+      "bytes": 8894907,
+      "sha256": "785bbc2e051a04cf97317cefd2feeb8ba83cada4b359bc87dc6fbf4adfe4ef13"
     }
   }
 }
