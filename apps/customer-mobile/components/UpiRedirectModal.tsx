@@ -5,9 +5,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Linking,
-  Alert,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { UpiAppId, RECOMMENDED_UPI_APPS, usePaymentStore } from "@/src/stores/payment.store";
@@ -23,61 +22,60 @@ interface UpiRedirectModalProps {
 
 export function UpiRedirectModal({
   visible,
-  upiAppId,
+  upiAppId: initialUpiAppId,
   amount,
   orderNumber = "ORD-10004",
   onSuccess,
   onCancel,
 }: UpiRedirectModalProps) {
-  const { buildStandardUpiUrl, getSelectedMethod } = usePaymentStore();
-  const currentMethod = getSelectedMethod();
+  const { buildStandardUpiUrl, setUpiApp, payeeAddress, fetchAdminPaymentSettings } =
+    usePaymentStore();
 
-  const appConfig = RECOMMENDED_UPI_APPS.find((a) => a.id === upiAppId) || RECOMMENDED_UPI_APPS[0];
+  const [selectedAppId, setSelectedAppId] = useState<UpiAppId>(initialUpiAppId);
+  const [step, setStep] = useState<"INIT" | "SELECT_APP" | "ENTER_TXN_ID" | "SUCCESS">("INIT");
+  const [transactionId, setTransactionId] = useState<string>("");
+  const [txnError, setTxnError] = useState<string | null>(null);
 
-  const [step, setStep] = useState<"REDIRECTING" | "ENTER_PIN" | "SUCCESS">("REDIRECTING");
-  const [upiPin, setUpiPin] = useState<string>("");
-  const [pinError, setPinError] = useState<string | null>(null);
+  const appConfig =
+    RECOMMENDED_UPI_APPS.find((a) => a.id === selectedAppId) || RECOMMENDED_UPI_APPS[0];
 
   const standardUpiUrl = buildStandardUpiUrl(amount, orderNumber);
 
   useEffect(() => {
     if (visible) {
-      setStep("REDIRECTING");
-      setUpiPin("");
-      setPinError(null);
-      const timer = setTimeout(() => setStep("ENTER_PIN"), 1200);
-      return () => clearTimeout(timer);
+      fetchAdminPaymentSettings();
+      setSelectedAppId(initialUpiAppId);
+      setStep("INIT");
+      setTransactionId("");
+      setTxnError(null);
     }
-  }, [visible]);
+  }, [visible, initialUpiAppId, fetchAdminPaymentSettings]);
 
-  async function handleOpenUpiApp() {
+  function handleSelectApp(appId: UpiAppId) {
+    setSelectedAppId(appId);
+    setUpiApp(appId);
+    setStep("INIT");
+  }
+
+  async function handlePayWithUpi() {
+    // Try opening deep link to UPI app if supported
     try {
       const canOpen = await Linking.canOpenURL(standardUpiUrl);
       if (canOpen) {
         await Linking.openURL(standardUpiUrl);
-      } else {
-        setStep("ENTER_PIN");
       }
     } catch {
-      setStep("ENTER_PIN");
+      // Fallthrough to transaction ID entry
     }
+
+    // Advance directly to Transaction ID entry step
+    setStep("ENTER_TXN_ID");
   }
 
-  function handleKeyPress(num: string) {
-    if (upiPin.length < 6) {
-      setUpiPin((prev) => prev + num);
-      setPinError(null);
-    }
-  }
-
-  function handleBackspace() {
-    setUpiPin((prev) => prev.slice(0, -1));
-    setPinError(null);
-  }
-
-  function handleAuthorizePin() {
-    if (upiPin.length < 4) {
-      setPinError("Please enter your 4-digit or 6-digit UPI PIN");
+  function handleSubmitTransactionId() {
+    const cleanId = transactionId.trim();
+    if (cleanId.length < 6) {
+      setTxnError("Please enter a valid 12-digit UPI Transaction Ref ID / UTR No.");
       return;
     }
 
@@ -93,98 +91,109 @@ export function UpiRedirectModal({
         <View style={styles.popupCard}>
           {/* Header Banner */}
           <View style={[styles.topBanner, { backgroundColor: appConfig.bg }]}>
-            <View style={[styles.appIconCircle, { backgroundColor: appConfig.color }]}>
-              <Ionicons name={appConfig.iconName as any} size={28} color="#ffffff" />
-            </View>
-            <Text style={styles.appName}>{appConfig.name}</Text>
-            <View style={styles.recommendedBadge}>
-              <Text style={styles.recommendedBadgeText}>NPCI Standard UPI</Text>
+            <View style={styles.appBannerRow}>
+              <View style={[styles.appIconCircle, { backgroundColor: appConfig.color }]}>
+                <Ionicons name={appConfig.iconName as any} size={28} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.appName}>{appConfig.name}</Text>
+                <Text style={{ fontSize: 10, color: "#64748b", fontWeight: "600" }}>
+                  NPCI Standard Direct Payment
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.changeAppBtn}
+                onPress={() => setStep("SELECT_APP")}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.changeAppBtnText}>Change App</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Amount & Standard UPI Specs */}
+          {/* Body Content */}
           <View style={styles.body}>
             <Text style={styles.amountLabel}>Total Payment Amount</Text>
             <Text style={styles.amountValue}>₹{amount.toFixed(2)}</Text>
 
-            {/* Standard NPCI URL Details Tag */}
-            <View style={styles.upiParamsCard}>
-              <View style={styles.paramRow}>
-                <Text style={styles.paramKey}>pa (Payee VPA):</Text>
-                <Text style={styles.paramVal}>{currentMethod.payeeAddress}</Text>
-              </View>
-              <View style={styles.paramRow}>
-                <Text style={styles.paramKey}>pn (Payee Name):</Text>
-                <Text style={styles.paramVal}>{currentMethod.payeeName}</Text>
-              </View>
-              <View style={styles.paramRow}>
-                <Text style={styles.paramKey}>mc (MCC Code):</Text>
-                <Text style={styles.paramVal}>{currentMethod.mccCode} (Grocery)</Text>
-              </View>
-            </View>
-
-            {step === "REDIRECTING" && (
-              <View style={styles.statusBox}>
-                <ActivityIndicator size="large" color={appConfig.color} />
-                <Text style={styles.statusTitle}>Opening {appConfig.name}...</Text>
-                <Text style={styles.statusSub}>Building standard NPCI payload</Text>
+            {/* STEP 1: SELECT APP POPUP */}
+            {step === "SELECT_APP" && (
+              <View style={styles.appSelectionBox}>
+                <Text style={styles.appSelectTitle}>Select UPI Application</Text>
+                {RECOMMENDED_UPI_APPS.map((app) => (
+                  <TouchableOpacity
+                    key={app.id}
+                    style={[
+                      styles.appSelectItem,
+                      selectedAppId === app.id && styles.appSelectItemActive,
+                    ]}
+                    onPress={() => handleSelectApp(app.id)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.appItemIcon, { backgroundColor: app.color }]}>
+                      <Ionicons name={app.iconName as any} size={18} color="#ffffff" />
+                    </View>
+                    <Text style={styles.appItemName}>{app.name}</Text>
+                    {selectedAppId === app.id && (
+                      <Ionicons name="checkmark-circle" size={18} color="#2563eb" />
+                    )}
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
 
-            {step === "ENTER_PIN" && (
-              <View style={styles.pinContainer}>
-                <Text style={styles.pinTitle}>Enter {appConfig.name} UPI PIN</Text>
-                <Text style={styles.pinSub}>
-                  Enter 4 or 6 digit PIN to authorize ₹{amount.toFixed(2)}
+            {/* STEP 2: INITIAL PAYLOAD DETAILS */}
+            {step === "INIT" && (
+              <View style={styles.initContainer}>
+                <View style={styles.payloadSummaryBadge}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color="#2563eb" />
+                  <Text style={styles.payloadSummaryText}>
+                    NPCI Ref: {orderNumber} (pa={payeeAddress || "blinkbite.store@okaxis"})
+                  </Text>
+                </View>
+
+                <Text style={styles.initSub}>
+                  Redirecting to {appConfig.name} for instant payment authorization.
+                </Text>
+              </View>
+            )}
+
+            {/* STEP 3: ENTER TRANSACTION ID */}
+            {step === "ENTER_TXN_ID" && (
+              <View style={styles.txnContainer}>
+                <View style={styles.txnIconBox}>
+                  <Ionicons name="receipt-outline" size={32} color="#2563eb" />
+                </View>
+                <Text style={styles.txnTitle}>Enter Transaction Ref ID</Text>
+                <Text style={styles.txnSub}>
+                  Enter the 12-digit UTR or Transaction Ref ID from your {appConfig.name} app
                 </Text>
 
-                {/* PIN Mask Dots */}
-                <View style={styles.pinDotsRow}>
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <View
-                      key={index}
-                      style={[styles.pinDot, upiPin.length > index && styles.pinDotFilled]}
-                    />
-                  ))}
-                </View>
+                <TextInput
+                  style={styles.txnInput}
+                  placeholder="e.g. 123456789012 or UTR No."
+                  placeholderTextColor="#94a3b8"
+                  value={transactionId}
+                  onChangeText={(val) => {
+                    setTransactionId(val);
+                    setTxnError(null);
+                  }}
+                  keyboardType="numeric"
+                  maxLength={18}
+                  autoFocus
+                />
 
-                {pinError && <Text style={styles.errorText}>{pinError}</Text>}
-
-                {/* Custom Numeric Keypad */}
-                <View style={styles.keypadGrid}>
-                  {[
-                    ["1", "2", "3"],
-                    ["4", "5", "6"],
-                    ["7", "8", "9"],
-                    ["C", "0", "⌫"],
-                  ].map((row, rIdx) => (
-                    <View key={rIdx} style={styles.keypadRow}>
-                      {row.map((btn) => (
-                        <TouchableOpacity
-                          key={btn}
-                          style={styles.keypadBtn}
-                          onPress={() => {
-                            if (btn === "C") setUpiPin("");
-                            else if (btn === "⌫") handleBackspace();
-                            else handleKeyPress(btn);
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.keypadBtnText}>{btn}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  ))}
-                </View>
+                {txnError && <Text style={styles.errorText}>{txnError}</Text>}
               </View>
             )}
 
+            {/* STEP 4: SUCCESS */}
             {step === "SUCCESS" && (
               <View style={styles.statusBox}>
                 <Ionicons name="checkmark-circle" size={54} color="#16a34a" />
                 <Text style={styles.statusTitle}>UPI Payment Verified!</Text>
                 <Text style={styles.statusSub}>
-                  Transaction approved via {appConfig.name} NPCI Gateway.
+                  Transaction Ref ID: {transactionId || "UTR-987412354678"} approved via {appConfig.name}.
                 </Text>
               </View>
             )}
@@ -192,15 +201,15 @@ export function UpiRedirectModal({
 
           {/* Footer Actions */}
           <View style={styles.footer}>
-            {step === "ENTER_PIN" && (
+            {step === "INIT" && (
               <>
                 <TouchableOpacity
                   style={[styles.primaryBtn, { backgroundColor: appConfig.color }]}
-                  onPress={handleAuthorizePin}
+                  onPress={handlePayWithUpi}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="lock-closed" size={18} color="#ffffff" />
-                  <Text style={styles.primaryBtnText}>Confirm UPI Payment</Text>
+                  <Ionicons name="flash" size={18} color="#ffffff" />
+                  <Text style={styles.primaryBtnText}>Pay with UPI</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
@@ -209,9 +218,26 @@ export function UpiRedirectModal({
               </>
             )}
 
-            {step === "REDIRECTING" && (
-              <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+            {step === "ENTER_TXN_ID" && (
+              <>
+                <TouchableOpacity
+                  style={[styles.primaryBtn, { backgroundColor: "#2563eb" }]}
+                  onPress={handleSubmitTransactionId}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                  <Text style={styles.primaryBtnText}>Submit Transaction ID</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setStep("INIT")}>
+                  <Text style={styles.cancelBtnText}>Back</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {step === "SELECT_APP" && (
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setStep("INIT")}>
+                <Text style={styles.cancelBtnText}>Back</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -237,74 +263,110 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   topBanner: {
-    alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    gap: 6,
+  },
+  appBannerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   appIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
   },
-  appName: { fontSize: 18, fontWeight: "800", color: "#0f172a" },
-  recommendedBadge: {
+  appName: { fontSize: 17, fontWeight: "800", color: "#0f172a" },
+  changeAppBtn: {
     backgroundColor: "#ffffff",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#cbd5e1",
   },
-  recommendedBadgeText: { fontSize: 9, fontWeight: "800", color: "#475569" },
+  changeAppBtnText: { fontSize: 11, fontWeight: "700", color: "#2563eb" },
   body: { padding: 16, alignItems: "center" },
   amountLabel: { fontSize: 11, fontWeight: "600", color: "#64748b" },
-  amountValue: { fontSize: 28, fontWeight: "900", color: "#0f172a" },
-  upiParamsCard: {
-    width: "100%",
-    backgroundColor: "#f8fafc",
+  amountValue: { fontSize: 28, fontWeight: "900", color: "#0f172a", marginBottom: 8 },
+  payloadSummaryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    gap: 6,
+    marginBottom: 4,
+  },
+  payloadSummaryText: { fontSize: 11, fontWeight: "700", color: "#1e40af" },
+
+  // App Selection Box
+  appSelectionBox: { width: "100%", gap: 8, marginVertical: 8 },
+  appSelectTitle: { fontSize: 13, fontWeight: "800", color: "#0f172a", marginBottom: 4 },
+  appSelectItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
     borderRadius: 12,
+    backgroundColor: "#f8fafc",
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    padding: 10,
-    marginVertical: 10,
-    gap: 4,
+    gap: 10,
   },
-  paramRow: { flexDirection: "row", justifyContent: "space-between" },
-  paramKey: { fontSize: 10, fontWeight: "700", color: "#64748b" },
-  paramVal: { fontSize: 10, fontWeight: "700", color: "#0f172a" },
+  appSelectItemActive: {
+    borderColor: "#2563eb",
+    backgroundColor: "#eff6ff",
+  },
+  appItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  appItemName: { flex: 1, fontSize: 14, fontWeight: "700", color: "#0f172a" },
+
+  // Transaction ID Input
+  txnContainer: { width: "100%", alignItems: "center", gap: 8, marginVertical: 10 },
+  txnIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#eff6ff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  txnTitle: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
+  txnSub: { fontSize: 12, color: "#64748b", textAlign: "center", maxWidth: 280 },
+  txnInput: {
+    width: "100%",
+    backgroundColor: "#f8fafc",
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0f172a",
+    textAlign: "center",
+    marginTop: 8,
+  },
+
   statusBox: { alignItems: "center", gap: 8, marginVertical: 12 },
   statusTitle: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
   statusSub: { fontSize: 12, color: "#64748b", textAlign: "center" },
 
-  // Keypad & PIN Styles
-  pinContainer: { width: "100%", alignItems: "center", gap: 8 },
-  pinTitle: { fontSize: 14, fontWeight: "800", color: "#0f172a" },
-  pinSub: { fontSize: 11, color: "#64748b" },
-  pinDotsRow: { flexDirection: "row", gap: 12, marginVertical: 8 },
-  pinDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    backgroundColor: "#ffffff",
-  },
-  pinDotFilled: { backgroundColor: "#0f172a", borderColor: "#0f172a" },
+  // Init Container Styles
+  initContainer: { width: "100%", alignItems: "center", gap: 8, marginVertical: 12 },
+  initSub: { fontSize: 12, color: "#64748b", textAlign: "center", maxWidth: 280, marginTop: 4 },
   errorText: { fontSize: 11, color: "#ef4444", fontWeight: "600" },
-  keypadGrid: { width: "100%", gap: 6, marginTop: 4 },
-  keypadRow: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
-  keypadBtn: {
-    flex: 1,
-    height: 40,
-    backgroundColor: "#f1f5f9",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  keypadBtnText: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
 
   footer: { padding: 14, gap: 8, borderTopWidth: 1, borderTopColor: "#f1f5f9" },
   primaryBtn: {

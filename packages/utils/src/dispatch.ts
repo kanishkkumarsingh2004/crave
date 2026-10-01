@@ -3,7 +3,7 @@
  * (Aligned with Order & Delivery Tracking Specification Section 42 & Section 47)
  */
 
-import { haversineDistanceKm } from "./index";
+import { haversineDistanceKm } from "./geo";
 
 export interface DriverCandidate {
   id: string;

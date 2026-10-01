@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,11 @@ export default function CartScreen() {
   const [addressModalVisible, setAddressModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [upiModalVisible, setUpiModalVisible] = useState(false);
+
+  const fetchAdminPaymentSettings = usePaymentStore((state) => state.fetchAdminPaymentSettings);
+  useEffect(() => {
+    fetchAdminPaymentSettings();
+  }, [fetchAdminPaymentSettings]);
 
   const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
   const activeAddress = getSelectedAddress();

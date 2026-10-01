@@ -116,28 +116,6 @@ export function PaymentMethodModal({
                 );
               })}
             </View>
-
-            {/* SECTION 2: Custom Payee VPA Handle */}
-            <View style={styles.customUpiBox}>
-              <Text style={styles.inputLabel}>Receiver / Merchant UPI VPA (pa parameter)</Text>
-              <View style={styles.upiInputRow}>
-                <TextInput
-                  style={styles.upiTextInput}
-                  placeholder="e.g. blinkbite.store@okaxis"
-                  value={inputUpi}
-                  onChangeText={setInputUpi}
-                  placeholderTextColor="#94a3b8"
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.verifyUpiBtn}
-                  onPress={handleSaveCustomUpi}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.verifyUpiBtnText}>Set VPA</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
           </ScrollView>
 
           {/* Confirm Footer */}

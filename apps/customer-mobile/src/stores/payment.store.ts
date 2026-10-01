@@ -1,4 +1,15 @@
 import { create } from "zustand";
+import { generatenumeric12Digit } from "@delivery/utils";
+import Constants from "expo-constants";
+
+function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
+    return `http://${host}:3000`;
+  }
+  return "http://localhost:3000";
+}
 
 export type PaymentType = "UPI";
 export type UpiAppId = "GPay" | "PhonePe" | "Paytm" | "BHIM" | "AmazonPay";
@@ -91,8 +102,8 @@ const DEFAULT_UPI_METHODS: SavedPaymentMethod[] = [
     title: "PhonePe UPI",
     subtitle: "Instant NPCI Auto-Redirect",
     upiAppId: "PhonePe",
-    upiId: "blinkbite.store@ybl",
-    payeeAddress: "blinkbite.store@ybl",
+    upiId: "blinkbite.store@okaxis",
+    payeeAddress: "blinkbite.store@okaxis",
     payeeName: "Blinkbite QuickCommerce",
     mccCode: "5411",
     isDefault: false,
@@ -103,8 +114,8 @@ const DEFAULT_UPI_METHODS: SavedPaymentMethod[] = [
     title: "Paytm UPI",
     subtitle: "Instant NPCI Auto-Redirect",
     upiAppId: "Paytm",
-    upiId: "blinkbite.store@paytm",
-    payeeAddress: "blinkbite.store@paytm",
+    upiId: "blinkbite.store@okaxis",
+    payeeAddress: "blinkbite.store@okaxis",
     payeeName: "Blinkbite QuickCommerce",
     mccCode: "5411",
     isDefault: false,
@@ -125,7 +136,8 @@ interface PaymentState {
   setUpiApp: (appId: UpiAppId) => void;
   saveCustomUpi: (upiId: string) => void;
   getSelectedMethod: () => SavedPaymentMethod;
-  buildStandardUpiUrl: (amount: number, orderNumber?: string) => string;
+  fetchAdminPaymentSettings: () => Promise<void>;
+  buildStandardUpiUrl: (amount: number, orderNumber?: string, customTr?: string) => string;
 }
 
 export const usePaymentStore = create<PaymentState>((set, get) => ({
@@ -150,6 +162,9 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
   setUpiApp: (appId: UpiAppId) => {
     const appInfo = RECOMMENDED_UPI_APPS.find((a) => a.id === appId);
     const newId = `pay-upi-${appId.toLowerCase()}`;
+    const currentAddress = get().payeeAddress || "blinkbite.store@okaxis";
+    const currentName = get().payeeName || "Blinkbite QuickCommerce";
+    const currentMcc = get().mccCode || "5411";
 
     set((state) => {
       const exists = state.methods.find((m) => m.upiAppId === appId);
@@ -162,10 +177,10 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
           title: `${appInfo.name} (UPI)`,
           subtitle: `Instant NPCI redirect to ${appInfo.name}`,
           upiAppId: appId,
-          upiId: `blinkbite.store${appInfo.vpaSuffix}`,
-          payeeAddress: `blinkbite.store${appInfo.vpaSuffix}`,
-          payeeName: "Blinkbite QuickCommerce",
-          mccCode: "5411",
+          upiId: currentAddress,
+          payeeAddress: currentAddress,
+          payeeName: currentName,
+          mccCode: currentMcc,
           isDefault: true,
         };
         updatedMethods = [newMethod, ...state.methods];
@@ -191,8 +206,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
       subtitle: "Verified NPCI Merchant VPA",
       upiId: cleanId,
       payeeAddress: cleanId,
-      payeeName: "Blinkbite QuickCommerce",
-      mccCode: "5411",
+      payeeName: get().payeeName || "Blinkbite QuickCommerce",
+      mccCode: get().mccCode || "5411",
       isDefault: true,
     };
 
@@ -203,19 +218,59 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     }));
   },
 
+  fetchAdminPaymentSettings: async () => {
+    try {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/api/v1/public/settings`);
+      if (res.ok) {
+        const body = (await res.json()) as {
+          data?: { upiPayeeAddress?: string; upiPayeeName?: string; upiMccCode?: string };
+        };
+        if (body?.data) {
+          const { upiPayeeAddress, upiPayeeName, upiMccCode } = body.data;
+          const address = upiPayeeAddress || "blinkbite.store@okaxis";
+          const name = upiPayeeName || "Blinkbite QuickCommerce";
+          const mcc = upiMccCode || "5411";
+
+          set((state) => ({
+            payeeAddress: address,
+            payeeName: name,
+            mccCode: mcc,
+            customUpiId: address,
+            methods: state.methods.map((m) => ({
+              ...m,
+              payeeAddress: address,
+              payeeName: name,
+              mccCode: mcc,
+              upiId: address,
+            })),
+          }));
+        }
+      }
+    } catch {
+      // Fallback to defaults
+    }
+  },
+
   /**
-   * Constructs Standard NPCI Specification URL Pattern:
-   * upi://pay?pa={payeeAddress}&pn={payeeName}&am={amount}&cu=INR&tn={transactionNote}&mc={mcc}
+   * Constructs Standard NPCI Specification URL Pattern using DB settings:
+   * upi://pay?pa={payeeAddress}&pn={payeeName}&tr={tr}&am={amount}&cu=INR&tn={transactionNote}&mc={mcc}
    */
-  buildStandardUpiUrl: (amount: number, orderNumber = "ORD-10004") => {
-    const currentMethod = get().getSelectedMethod();
-    const pa = encodeURIComponent(currentMethod.payeeAddress || get().payeeAddress);
-    const pn = encodeURIComponent(currentMethod.payeeName || get().payeeName);
+  buildStandardUpiUrl: (amount: number, orderNumber = "ORD-10004", customTr?: string) => {
+    const state = get();
+    const dbPayeeAddress = state.payeeAddress || "blinkbite.store@okaxis";
+    const dbPayeeName = state.payeeName || "Blinkbite QuickCommerce";
+    const dbMccCode = state.mccCode || "5411";
+
+    const pa = encodeURIComponent(dbPayeeAddress);
+    const pn = encodeURIComponent(dbPayeeName);
+    const tr = encodeURIComponent(customTr || generatenumeric12Digit());
     const am = amount.toFixed(2);
     const cu = "INR";
     const tn = encodeURIComponent(`Payment for ${orderNumber}`);
-    const mc = currentMethod.mccCode || get().mccCode;
+    const mc = dbMccCode;
 
-    return `upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=${cu}&tn=${tn}&mc=${mc}`;
+    return `upi://pay?pa=${pa}&pn=${pn}&tr=${tr}&am=${am}&cu=${cu}&tn=${tn}&mc=${mc}`;
   },
 }));
+

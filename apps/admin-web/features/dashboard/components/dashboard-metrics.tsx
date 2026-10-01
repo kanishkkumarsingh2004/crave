@@ -73,7 +73,7 @@ function MetricCard({ label, value, sub, icon: Icon, badgeClass, borderHoverClas
 }
 
 export function DashboardMetrics() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: fetchDashboardStats,
     refetchInterval: 30_000,
@@ -94,8 +94,14 @@ export function DashboardMetrics() {
 
   if (isError || !data) {
     return (
-      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 text-sm text-destructive font-semibold">
-        Failed to load dashboard metrics. Please check network connection.
+      <div className="flex items-center justify-between rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-sm font-semibold text-amber-900 dark:text-amber-200">
+        <span>Failed to load dashboard metrics. Retrying automatically...</span>
+        <button
+          onClick={() => refetch()}
+          className="ml-4 inline-flex items-center rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors"
+        >
+          Retry Metrics
+        </button>
       </div>
     );
   }

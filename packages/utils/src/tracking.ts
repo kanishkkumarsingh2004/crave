@@ -3,7 +3,7 @@
  * (Aligned with Real-Time Tracking Architecture Blueprint - docs/delivery_app_real_time_tracking_architecture.md)
  */
 
-import { haversineDistanceKm } from "./index";
+import { haversineDistanceKm } from "./geo";
 
 export interface GpsFix {
   latitude: number;

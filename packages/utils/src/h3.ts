@@ -3,7 +3,7 @@
  * (Aligned with Order & Delivery Tracking Specification Section 13 & 38)
  */
 
-import { haversineDistanceKm } from "./index";
+import { haversineDistanceKm } from "./geo";
 
 export interface H3VendorRecord {
   id: string;

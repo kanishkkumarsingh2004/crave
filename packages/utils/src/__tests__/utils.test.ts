@@ -6,6 +6,8 @@ import {
   generateSlug,
   truncate,
   capitalize,
+  generateAlphanumeric12Digit,
+  generatenumeric12Digit,
   generateOrderNumber,
   paiseToRupees,
   rupeesToPaise,
@@ -58,6 +60,18 @@ describe("Utils Package", () => {
 
     it("capitalizes text", () => {
       expect(capitalize("PENDING")).toBe("Pending");
+    });
+
+    it("generates a 12-digit alphanumeric string", () => {
+      const code = generateAlphanumeric12Digit();
+      expect(code).toHaveLength(12);
+      expect(code).toMatch(/^[A-Z0-9]{12}$/);
+    });
+
+    it("generates a 12-digit numeric string", () => {
+      const code = generatenumeric12Digit();
+      expect(code).toHaveLength(12);
+      expect(code).toMatch(/^\d{12}$/);
     });
   });
 

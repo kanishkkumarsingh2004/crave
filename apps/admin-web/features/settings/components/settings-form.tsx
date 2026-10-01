@@ -17,6 +17,8 @@ import {
   Info,
   Truck,
   DollarSign,
+  QrCode,
+  Wallet,
 } from "lucide-react";
 
 interface Setting {
@@ -61,6 +63,9 @@ export function SettingsForm() {
     "order.cancellation_window_mins": "5",
     "system.auto_dispatch": "true",
     "system.surge_pricing": "false",
+    "upi.payee_address": "blinkbite.store@okaxis",
+    "upi.payee_name": "Blinkbite QuickCommerce",
+    "upi.mcc_code": "5411",
   });
 
   const { data, isLoading } = useQuery({
@@ -204,6 +209,101 @@ export function SettingsForm() {
         </div>
       </div>
 
+      {/* Section 0: Merchant Payee UPI Settings */}
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden transition-all hover:shadow-md">
+        <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-transparent dark:from-blue-950/30 dark:to-card p-5 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+              <QrCode className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Merchant Payee UPI Settings (Customer App Gateway)
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Configure the merchant VPA address, payee name, and MCC code used in standard NPCI UPI redirect URLs
+              </p>
+            </div>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-100/70 dark:bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-200/50">
+            <Wallet className="h-3.5 w-3.5" /> NPCI Standard UPI
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Recipient Payee VPA / UPI ID (pa) *
+              </label>
+              <input
+                type="text"
+                value={formData["upi.payee_address"] ?? "blinkbite.store@okaxis"}
+                onChange={(e) => handleChange("upi.payee_address", e.target.value)}
+                placeholder="e.g. merchant@okaxis"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
+                id="setting-upi-payee-address"
+              />
+              <p className="text-xs text-muted-foreground">
+                Merchant Virtual Payment Address receiving customer funds.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Payee Business Name (pn) *
+              </label>
+              <input
+                type="text"
+                value={formData["upi.payee_name"] ?? "Blinkbite QuickCommerce"}
+                onChange={(e) => handleChange("upi.payee_name", e.target.value)}
+                placeholder="e.g. Blinkbite QuickCommerce"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
+                id="setting-upi-payee-name"
+              />
+              <p className="text-xs text-muted-foreground">
+                Registered merchant business name displayed in UPI apps.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Merchant Category Code (mc) *
+              </label>
+              <input
+                type="text"
+                value={formData["upi.mcc_code"] ?? "5411"}
+                onChange={(e) => handleChange("upi.mcc_code", e.target.value)}
+                placeholder="e.g. 5411"
+                maxLength={4}
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
+                id="setting-upi-mcc-code"
+              />
+              <p className="text-xs text-muted-foreground">
+                4-digit NPCI MCC (5411 = Grocery, 5812 = Restaurants).
+              </p>
+            </div>
+          </div>
+
+          {/* Live NPCI URL Pattern Preview Card */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 border border-blue-200/80 dark:border-blue-800/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                Live NPCI Standard UPI Payload Preview
+              </span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-300/60">
+                Verified Pattern
+              </span>
+            </div>
+            <p className="font-mono text-xs font-bold text-blue-900 dark:text-blue-200 break-all bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900">
+              upi://pay?pa={formData["upi.payee_address"] ?? "blinkbite.store@okaxis"}&pn=
+              {encodeURIComponent(formData["upi.payee_name"] ?? "Blinkbite QuickCommerce")}&tr=123456789012&am=250.00&cu=INR&tn=Payment&mc=
+              {formData["upi.mcc_code"] ?? "5411"}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Section 1: Commission & Payout Rates */}
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden transition-all hover:shadow-md">
         <div className="bg-gradient-to-r from-indigo-50/90 via-purple-50/40 to-transparent dark:from-indigo-950/30 dark:to-card p-5 border-b border-border flex items-center justify-between">
@@ -228,7 +328,7 @@ export function SettingsForm() {
         <div className="p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Platform Commission Rate (%) *
               </label>
               <div className="relative flex items-center">
@@ -237,10 +337,10 @@ export function SettingsForm() {
                   step="0.1"
                   value={formData["platform.commission_rate"] ?? "15"}
                   onChange={(e) => handleChange("platform.commission_rate", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-4 pr-12 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-4 pr-12 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all shadow-inner"
                   id="setting-commission-rate"
                 />
-                <span className="absolute right-3 text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
+                <span className="absolute right-3 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-1 rounded-md border border-indigo-100 dark:border-indigo-900">
                   %
                 </span>
               </div>
@@ -250,7 +350,7 @@ export function SettingsForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Minimum Order Subtotal (₹) *
               </label>
               <div className="relative flex items-center">
@@ -260,7 +360,7 @@ export function SettingsForm() {
                   step="0.01"
                   value={formData["order.minimum_amount"] ?? "10.00"}
                   onChange={(e) => handleChange("order.minimum_amount", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-8 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-8 pr-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all shadow-inner"
                   id="setting-min-order"
                 />
               </div>
@@ -305,7 +405,7 @@ export function SettingsForm() {
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Base Delivery Fee (₹)
               </label>
               <div className="relative flex items-center">
@@ -315,7 +415,7 @@ export function SettingsForm() {
                   step="0.01"
                   value={formData["delivery.base_fee"] ?? "3.50"}
                   onChange={(e) => handleChange("delivery.base_fee", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-8 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-8 pr-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
                   id="setting-base-fee"
                 />
               </div>
@@ -323,7 +423,7 @@ export function SettingsForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Per Kilometer Rate (₹)
               </label>
               <div className="relative flex items-center">
@@ -333,10 +433,10 @@ export function SettingsForm() {
                   step="0.01"
                   value={formData["delivery.per_km_rate"] ?? "1.25"}
                   onChange={(e) => handleChange("delivery.per_km_rate", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-8 pr-16 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-8 pr-16 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
                   id="setting-per-km-rate"
                 />
-                <span className="absolute right-3 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                <span className="absolute right-3 text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900">
                   / km
                 </span>
               </div>
@@ -346,7 +446,7 @@ export function SettingsForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Max Delivery Radius (km)
               </label>
               <div className="relative flex items-center">
@@ -355,7 +455,7 @@ export function SettingsForm() {
                   step="1"
                   value={formData["delivery.max_radius_km"] ?? "25"}
                   onChange={(e) => handleChange("delivery.max_radius_km", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-4 pr-12 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-4 pr-12 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all shadow-inner"
                   id="setting-max-radius"
                 />
                 <span className="absolute right-3 text-xs font-bold text-slate-500">km</span>
@@ -411,7 +511,7 @@ export function SettingsForm() {
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Customer Cancellation Window (Minutes)
               </label>
               <div className="relative flex items-center">
@@ -420,10 +520,10 @@ export function SettingsForm() {
                   step="1"
                   value={formData["order.cancellation_window_mins"] ?? "5"}
                   onChange={(e) => handleChange("order.cancellation_window_mins", e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background pl-4 pr-16 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-4 pr-16 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all shadow-inner"
                   id="setting-cancellation-window"
                 />
-                <span className="absolute right-3 text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                <span className="absolute right-3 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-900">
                   mins
                 </span>
               </div>
