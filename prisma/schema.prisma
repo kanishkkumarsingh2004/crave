@@ -154,15 +154,40 @@ enum ReviewStatus {
 enum DeliveryVerificationType {
   OTP
   QR
+  CODE
+  PHOTO
+  SIGNATURE
+  MANUAL
+}
+
+enum DeliveryVerificationMethod {
+  QR
+  CODE
+  OTP
   PHOTO
   SIGNATURE
   MANUAL
 }
 
 enum DeliveryVerificationStatus {
+  ACTIVE
+  CONSUMED
+  EXPIRED
+  REVOKED
   PENDING
   VERIFIED
   FAILED
+}
+
+enum DeliveryVerificationAttemptResult {
+  SUCCESS
+  INVALID_CODE
+  INVALID_QR
+  EXPIRED
+  ALREADY_USED
+  WRONG_DRIVER
+  INVALID_STATE
+  RATE_LIMITED
 }
 
 enum AuditAction {
@@ -884,19 +909,54 @@ model DriverAssignment {
 }
 
 model DeliveryVerification {
-  id         String                    @id @default(cuid())
-  deliveryId String
-  type       DeliveryVerificationType
-  status     DeliveryVerificationStatus @default(PENDING)
-  verifiedBy String?
-  metadata   Json?
-  createdAt  DateTime                  @default(now())
-  updatedAt  DateTime                  @updatedAt
+  id                  String                     @id @default(cuid())
+  deliveryId          String                     @unique
+  orderId             String
+  customerId          String
+  driverId            String?
+
+  codeHash            String
+  qrTokenHash         String
+  type                DeliveryVerificationType   @default(QR)
+  status              DeliveryVerificationStatus @default(ACTIVE)
+
+  expiresAt           DateTime
+
+  attemptCount        Int                        @default(0)
+  maxAttempts         Int                        @default(5)
+
+  consumedAt          DateTime?
+  consumedByDriverId  String?
+
+  verifiedBy          String?
+  metadata            Json?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
 
   delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 
   @@index([deliveryId])
+  @@index([orderId])
+  @@index([driverId])
+  @@index([customerId])
+  @@index([status])
   @@map("delivery_verifications")
+}
+
+model DeliveryVerificationAttempt {
+  id         String                            @id @default(cuid())
+  deliveryId String
+  driverId   String
+  method     DeliveryVerificationMethod
+  result     DeliveryVerificationAttemptResult
+  latitude   Decimal?                          @db.Decimal(10, 8)
+  longitude  Decimal?                          @db.Decimal(11, 8)
+  accuracy   Float?
+  createdAt  DateTime                          @default(now())
+
+  @@index([deliveryId, createdAt])
+  @@index([driverId, createdAt])
+  @@map("delivery_verification_attempts")
 }
 
 model DeliveryStatusHistory {

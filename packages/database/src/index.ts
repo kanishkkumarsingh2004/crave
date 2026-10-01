@@ -65,6 +65,8 @@ export {
   AddressLabel,
   ReviewStatus,
   DeliveryVerificationType,
+  DeliveryVerificationMethod,
   DeliveryVerificationStatus,
+  DeliveryVerificationAttemptResult,
   AuditAction,
 } from "@prisma/client";

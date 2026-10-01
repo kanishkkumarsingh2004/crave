@@ -291,3 +291,4 @@ export function buildIdempotencyKey(...parts: string[]): string {
 // DISPATCH ALGORITHM
 // ============================================================
 export * from "./dispatch";
+export * from "./verification";

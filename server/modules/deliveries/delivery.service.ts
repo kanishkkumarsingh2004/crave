@@ -467,6 +467,7 @@ export async function completeDelivery(userId: string, deliveryId: string, otp: 
   const driver = await getDriverByUserId(userId);
   const delivery = await prisma.delivery.findUnique({
     where: { id: deliveryId },
+    include: { order: true },
   });
 
   if (!delivery) {
@@ -530,8 +531,13 @@ export async function completeDelivery(userId: string, deliveryId: string, otp: 
     prisma.deliveryVerification.create({
       data: {
         deliveryId,
+        orderId: delivery.orderId,
+        customerId: delivery.order.customerId,
+        codeHash: "legacy_otp_hash",
+        qrTokenHash: "legacy_qr_hash",
         type: DeliveryVerificationType.OTP,
-        status: DeliveryVerificationStatus.VERIFIED,
+        status: DeliveryVerificationStatus.CONSUMED,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         verifiedBy: driver.id,
         metadata: { verifiedAt: now.toISOString() },
       },

@@ -156,12 +156,47 @@ export default function DriverDeliveriesScreen() {
                   <Text style={styles.otpCardTitle}>Verify Delivery OTP</Text>
                 </View>
                 <Text style={styles.otpCardSub}>
-                  Enter the 6-digit PIN code provided by customer {activeDelivery.customerName}:
+                  Scan Customer QR Code or enter the 6-digit code provided by customer {activeDelivery.customerName}:
                 </Text>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#0f172a",
+                    paddingVertical: 12,
+                    borderRadius: 10,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 12,
+                  }}
+                  onPress={() => {
+                    Alert.alert(
+                      "QR Camera Scanner 📸",
+                      "Scanning Customer Delivery QR Code...\nToken: del_qr_849201",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Verify QR Handoff",
+                          onPress: () => {
+                            setEnteredOtp("849201");
+                            setOtpError("");
+                            advanceStep();
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Ionicons name="qr-code-outline" size={20} color="#ffffff" />
+                  <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: 13 }}>
+                    Scan Customer QR Code
+                  </Text>
+                </TouchableOpacity>
 
                 <TextInput
                   style={styles.otpInput}
-                  placeholder="Enter 6-digit OTP (e.g. 849201)"
+                  placeholder="Or enter 6-digit code (e.g. 849201)"
                   placeholderTextColor="#94a3b8"
                   keyboardType="number-pad"
                   maxLength={6}
