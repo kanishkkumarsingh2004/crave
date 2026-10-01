@@ -25,9 +25,9 @@ export async function PATCH(request: NextRequest) {
 
     const updated = await updateDriverAvailability(ctx.userId, input.availability);
     return apiSuccess(updated);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ZodError) return apiValidationError(err);
-    if (err.message && err.message.includes("Cannot")) {
+    if (err instanceof Error && err.message.includes("Cannot")) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

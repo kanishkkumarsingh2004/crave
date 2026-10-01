@@ -222,7 +222,9 @@ export async function recordDriverLocation(
     ? {
         latitude: Number(lastLocation.latitude),
         longitude: Number(lastLocation.longitude),
-        timestamp: lastLocation.recordedAt ? new Date(lastLocation.recordedAt).getTime() : undefined,
+        timestamp: lastLocation.recordedAt
+          ? new Date(lastLocation.recordedAt).getTime()
+          : undefined,
       }
     : undefined;
 
@@ -271,12 +273,7 @@ export async function recordDriverLocation(
   });
 
   // Broadcast location event over SSE stream
-  broadcastDriverLocation(
-    driver.id,
-    activeDelivery?.id || undefined,
-    effectiveLat,
-    effectiveLng,
-  );
+  broadcastDriverLocation(driver.id, activeDelivery?.id || undefined, effectiveLat, effectiveLng);
 
   return record;
 }

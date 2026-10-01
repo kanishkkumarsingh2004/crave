@@ -25,7 +25,7 @@ const zCreateSetting = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const { ctx, error } = await withAdmin(request);
+  const { ctx: _ctx, error } = await withAdmin(request);
   if (error) return error;
 
   try {

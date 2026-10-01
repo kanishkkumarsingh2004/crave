@@ -26,8 +26,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const refund = await rejectRefund(ctx.userId, id, body.reason);
     return apiSuccess(refund);
-  } catch (err: any) {
-    if (err.message && err.message.includes("not found")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("not found")) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

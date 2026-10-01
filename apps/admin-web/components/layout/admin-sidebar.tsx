@@ -27,7 +27,7 @@ interface NavGroup {
   items: Array<{
     href: string;
     label: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
   }>;
 }
 

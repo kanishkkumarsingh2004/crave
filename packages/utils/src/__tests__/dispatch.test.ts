@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { rankDriverCandidates, findOptimalDeliveryBatch, DriverCandidate } from "../dispatch";
+import type { DriverCandidate } from "../dispatch";
+import { rankDriverCandidates, findOptimalDeliveryBatch } from "../dispatch";
 
 describe("Dispatch Algorithm", () => {
   const mockPickup = { latitude: 12.9716, longitude: 77.5946 }; // Bangalore Center
@@ -73,9 +74,21 @@ describe("Dispatch Algorithm", () => {
 
   it("finds optimal delivery batch for close orders", () => {
     const orders = [
-      { id: "ord-1", pickup: { latitude: 12.9716, longitude: 77.5946 }, dropoff: { latitude: 12.98, longitude: 77.6 } },
-      { id: "ord-2", pickup: { latitude: 12.972, longitude: 77.595 }, dropoff: { latitude: 12.981, longitude: 77.601 } },
-      { id: "ord-3", pickup: { latitude: 13.5, longitude: 78.0 }, dropoff: { latitude: 13.6, longitude: 78.1 } }, // Far away
+      {
+        id: "ord-1",
+        pickup: { latitude: 12.9716, longitude: 77.5946 },
+        dropoff: { latitude: 12.98, longitude: 77.6 },
+      },
+      {
+        id: "ord-2",
+        pickup: { latitude: 12.972, longitude: 77.595 },
+        dropoff: { latitude: 12.981, longitude: 77.601 },
+      },
+      {
+        id: "ord-3",
+        pickup: { latitude: 13.5, longitude: 78.0 },
+        dropoff: { latitude: 13.6, longitude: 78.1 },
+      }, // Far away
     ];
 
     const batched = findOptimalDeliveryBatch(orders, 3.0);

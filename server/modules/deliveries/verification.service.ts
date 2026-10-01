@@ -3,13 +3,13 @@
  * (Aligned with Delivery Verification & QR Code Specification - docs/delivery-verification-spec.md)
  */
 
+import type { DeliveryVerificationMethod } from "@delivery/database";
 import {
   prisma,
   DeliveryStatus,
   OrderStatus,
   DeliveryVerificationStatus,
   DeliveryVerificationType,
-  DeliveryVerificationMethod,
   DeliveryVerificationAttemptResult,
 } from "@delivery/database";
 import {

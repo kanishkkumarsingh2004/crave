@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -65,9 +57,7 @@ export default function DriverDashboardScreen() {
         {
           text: "Start Delivery",
           onPress: () => {
-            setAvailableOffers((prev) =>
-              prev.filter((o) => o.id !== offer.id),
-            );
+            setAvailableOffers((prev) => prev.filter((o) => o.id !== offer.id));
             router.push("/deliveries");
           },
         },
@@ -86,18 +76,11 @@ export default function DriverDashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Blinkbite Driver 🚴</Text>
-            <Text style={styles.driverName}>
-              {user?.name || "Rahul Sharma"}
-            </Text>
+            <Text style={styles.driverName}>{user?.name || "Rahul Sharma"}</Text>
           </View>
 
           <View style={styles.statusToggleContainer}>
-            <Text
-              style={[
-                styles.statusText,
-                { color: isOnline ? "#16a34a" : "#dc2626" },
-              ]}
-            >
+            <Text style={[styles.statusText, { color: isOnline ? "#16a34a" : "#dc2626" }]}>
               {isOnline ? "ONLINE" : "OFFLINE"}
             </Text>
             <Switch
@@ -110,23 +93,13 @@ export default function DriverDashboardScreen() {
         </View>
 
         {/* Online Status Banner */}
-        <View
-          style={[
-            styles.banner,
-            { backgroundColor: isOnline ? "#f0fdf4" : "#fef2f2" },
-          ]}
-        >
+        <View style={[styles.banner, { backgroundColor: isOnline ? "#f0fdf4" : "#fef2f2" }]}>
           <Ionicons
             name={isOnline ? "navigate-circle" : "pause-circle"}
             size={20}
             color={isOnline ? "#16a34a" : "#dc2626"}
           />
-          <Text
-            style={[
-              styles.bannerText,
-              { color: isOnline ? "#15803d" : "#b91c1c" },
-            ]}
-          >
+          <Text style={[styles.bannerText, { color: isOnline ? "#15803d" : "#b91c1c" }]}>
             {isOnline
               ? "You are ONLINE — Looking for nearby high-priority delivery offers..."
               : "You are OFFLINE — Switch to ONLINE to receive delivery dispatch offers."}
@@ -168,8 +141,7 @@ export default function DriverDashboardScreen() {
             <Ionicons name="moon-outline" size={40} color="#94a3b8" />
             <Text style={styles.emptyTitle}>You are currently Offline</Text>
             <Text style={styles.emptySub}>
-              Toggle your availability switch at the top to start accepting trip
-              offers.
+              Toggle your availability switch at the top to start accepting trip offers.
             </Text>
           </View>
         ) : availableOffers.length === 0 ? (
@@ -177,8 +149,7 @@ export default function DriverDashboardScreen() {
             <Ionicons name="checkmark-circle-outline" size={40} color="#16a34a" />
             <Text style={styles.emptyTitle}>No Offers Right Now</Text>
             <Text style={styles.emptySub}>
-              You are in a high-demand zone. New delivery requests will pop up
-              shortly.
+              You are in a high-demand zone. New delivery requests will pop up shortly.
             </Text>
           </View>
         ) : (
@@ -198,9 +169,7 @@ export default function DriverDashboardScreen() {
                   <Ionicons name="ellipse" size={12} color="#2563eb" />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.routeLabel}>PICKUP</Text>
-                    <Text style={styles.routeAddress}>
-                      {offer.pickupAddress}
-                    </Text>
+                    <Text style={styles.routeAddress}>{offer.pickupAddress}</Text>
                   </View>
                 </View>
 
@@ -208,9 +177,7 @@ export default function DriverDashboardScreen() {
                   <Ionicons name="location" size={14} color="#16a34a" />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.routeLabel}>DROP-OFF</Text>
-                    <Text style={styles.routeAddress}>
-                      {offer.deliveryAddress}
-                    </Text>
+                    <Text style={styles.routeAddress}>{offer.deliveryAddress}</Text>
                   </View>
                 </View>
               </View>
@@ -218,15 +185,11 @@ export default function DriverDashboardScreen() {
               <View style={styles.metaRow}>
                 <View style={styles.metaBadge}>
                   <Ionicons name="compass-outline" size={14} color="#64748b" />
-                  <Text style={styles.metaBadgeText}>
-                    {offer.distanceKm} km
-                  </Text>
+                  <Text style={styles.metaBadgeText}>{offer.distanceKm} km</Text>
                 </View>
                 <View style={styles.metaBadge}>
                   <Ionicons name="time-outline" size={14} color="#64748b" />
-                  <Text style={styles.metaBadgeText}>
-                    ~{offer.estimatedTimeMin} mins
-                  </Text>
+                  <Text style={styles.metaBadgeText}>~{offer.estimatedTimeMin} mins</Text>
                 </View>
               </View>
 

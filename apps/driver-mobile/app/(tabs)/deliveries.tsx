@@ -13,12 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LiveDriverMap } from "../../components/LiveDriverMap";
 
-type DeliveryStep =
-  | "ASSIGNED"
-  | "ARRIVED_PICKUP"
-  | "PICKED_UP"
-  | "ARRIVED_DELIVERY"
-  | "DELIVERED";
+type DeliveryStep = "ASSIGNED" | "ARRIVED_PICKUP" | "PICKED_UP" | "ARRIVED_DELIVERY" | "DELIVERED";
 
 export default function DriverDeliveriesScreen() {
   const router = useRouter();
@@ -34,10 +29,7 @@ export default function DriverDeliveriesScreen() {
     customerName: "Alice Smith",
     customerPhone: "+919876543210",
     customerAddress: "123 Main Street, Apt 4B, Koramangala, Bengaluru",
-    items: [
-      "2x Fresh Organic Milk (1L)",
-      "1x Artisanal Whole Wheat Bread",
-    ],
+    items: ["2x Fresh Organic Milk (1L)", "1x Artisanal Whole Wheat Bread"],
     earnings: "₹85.00",
     correctOtp: "849201",
   };
@@ -94,9 +86,7 @@ export default function DriverDeliveriesScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Active Task Console</Text>
-          <Text style={styles.subTitle}>
-            Live GPS route tracking & customer handover
-          </Text>
+          <Text style={styles.subTitle}>Live GPS route tracking & customer handover</Text>
         </View>
 
         {/* Live GPS Navigation & Speedometer Map */}
@@ -156,7 +146,8 @@ export default function DriverDeliveriesScreen() {
                   <Text style={styles.otpCardTitle}>Verify Delivery OTP</Text>
                 </View>
                 <Text style={styles.otpCardSub}>
-                  Scan Customer QR Code or enter the 6-digit code provided by customer {activeDelivery.customerName}:
+                  Scan Customer QR Code or enter the 6-digit code provided by customer{" "}
+                  {activeDelivery.customerName}:
                 </Text>
 
                 <TouchableOpacity
@@ -256,11 +247,7 @@ export default function DriverDeliveriesScreen() {
             </View>
 
             {/* Action Advance Step Button */}
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={advanceStep}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.actionBtn} onPress={advanceStep} activeOpacity={0.8}>
               <Text style={styles.actionBtnText}>
                 {currentStep === "ASSIGNED"
                   ? "Mark Arrived at Vendor"

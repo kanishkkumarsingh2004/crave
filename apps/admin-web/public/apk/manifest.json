@@ -5,16 +5,16 @@
     "android": {
       "filename": "customer-v1.0.0.apk",
       "url": "/apk/customer-v1.0.0.apk",
-      "sizeMb": "12.6 MB",
-      "bytes": 13191411,
-      "sha256": "9b6d5206587f88ba06ea1191cb38a1a4bba7b5d5d5e7c1e76015be8fb9d26302"
+      "sizeMb": "16.7 MB",
+      "bytes": 17557346,
+      "sha256": "a0ed3c273cf95048262605cece4145b9fc5cc217ddaff7e052d06402b50febbd"
     },
     "ios": {
       "filename": "customer-v1.0.0.ipa",
       "url": "/apk/customer-v1.0.0.ipa",
-      "sizeMb": "12.6 MB",
-      "bytes": 13191411,
-      "sha256": "9b6d5206587f88ba06ea1191cb38a1a4bba7b5d5d5e7c1e76015be8fb9d26302"
+      "sizeMb": "16.7 MB",
+      "bytes": 17557346,
+      "sha256": "a0ed3c273cf95048262605cece4145b9fc5cc217ddaff7e052d06402b50febbd"
     }
   },
   "vendor": {
@@ -23,16 +23,16 @@
     "android": {
       "filename": "vendor-v1.0.0.apk",
       "url": "/apk/vendor-v1.0.0.apk",
-      "sizeMb": "8.5 MB",
-      "bytes": 8937326,
-      "sha256": "23b945acf9d0663b640ff3e036327632c37925a6c1309118b0377d528e0bae30"
+      "sizeMb": "12.7 MB",
+      "bytes": 13307616,
+      "sha256": "d5b4bcbf617a65f16f0b26a1547c97a6cf5357eab77cc9ab3ab6ff4e4d0a1687"
     },
     "ios": {
       "filename": "vendor-v1.0.0.ipa",
       "url": "/apk/vendor-v1.0.0.ipa",
-      "sizeMb": "8.5 MB",
-      "bytes": 8937326,
-      "sha256": "23b945acf9d0663b640ff3e036327632c37925a6c1309118b0377d528e0bae30"
+      "sizeMb": "12.7 MB",
+      "bytes": 13307616,
+      "sha256": "d5b4bcbf617a65f16f0b26a1547c97a6cf5357eab77cc9ab3ab6ff4e4d0a1687"
     }
   },
   "driver": {
@@ -41,16 +41,16 @@
     "android": {
       "filename": "driver-v1.0.0.apk",
       "url": "/apk/driver-v1.0.0.apk",
-      "sizeMb": "8.5 MB",
-      "bytes": 8894907,
-      "sha256": "785bbc2e051a04cf97317cefd2feeb8ba83cada4b359bc87dc6fbf4adfe4ef13"
+      "sizeMb": "12.6 MB",
+      "bytes": 13237284,
+      "sha256": "13b430c2fba504ba8fa7202466a1ce6cee4dd2b7cc6d078141bb8851b05ba1ff"
     },
     "ios": {
       "filename": "driver-v1.0.0.ipa",
       "url": "/apk/driver-v1.0.0.ipa",
-      "sizeMb": "8.5 MB",
-      "bytes": 8894907,
-      "sha256": "785bbc2e051a04cf97317cefd2feeb8ba83cada4b359bc87dc6fbf4adfe4ef13"
+      "sizeMb": "12.6 MB",
+      "bytes": 13237284,
+      "sha256": "13b430c2fba504ba8fa7202466a1ce6cee4dd2b7cc6d078141bb8851b05ba1ff"
     }
   }
 }

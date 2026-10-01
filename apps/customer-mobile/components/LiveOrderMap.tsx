@@ -95,9 +95,7 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 
         {/* Live GPS Telemetry Status Header */}
         <View style={styles.telemetryBadge}>
-          <Animated.View
-            style={[styles.liveIndicatorDot, { transform: [{ scale: pulseAnim }] }]}
-          />
+          <Animated.View style={[styles.liveIndicatorDot, { transform: [{ scale: pulseAnim }] }]} />
           <Text style={styles.liveBadgeText}>LIVE GPS TRACKING</Text>
           <Text style={styles.telemetrySub}>Updated 2s ago</Text>
         </View>
@@ -146,9 +144,7 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
             },
           ]}
         >
-          <Animated.View
-            style={[styles.bikeBeaconRing, { transform: [{ scale: pulseAnim }] }]}
-          />
+          <Animated.View style={[styles.bikeBeaconRing, { transform: [{ scale: pulseAnim }] }]} />
           <View style={styles.bikeBubble}>
             <Ionicons name="bicycle" size={18} color="#ffffff" />
           </View>
@@ -163,6 +159,25 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
             <Ionicons name="home" size={14} color="#ffffff" />
           </View>
           <Text style={styles.markerLabel}>{customerLocation.label || "Home"}</Text>
+        </View>
+      </View>
+
+      {/* Order Picked Up from Store Live Banner */}
+      <View style={styles.pickedUpBanner}>
+        <View style={styles.pickedUpIconCircle}>
+          <Ionicons name="bag-check" size={20} color="#ffffff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={styles.statusTitleRow}>
+            <Text style={styles.pickedUpTitle}>🛍️ Order Picked Up from Store!</Text>
+            <View style={styles.h3TagBadge}>
+              <Text style={styles.h3TagText}>H3: 88283082a7fffff</Text>
+            </View>
+          </View>
+          <Text style={styles.pickedUpSub}>
+            {driverName} verified items & collected order from {merchantLocation.label || "Store"}.
+            En route to your address!
+          </Text>
         </View>
       </View>
 
@@ -214,6 +229,39 @@ export const LiveOrderMap: React.FC<LiveOrderMapProps> = ({
 };
 
 const styles = StyleSheet.create({
+  pickedUpBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0fdf4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#bbf7d0",
+    padding: 12,
+    gap: 12,
+  },
+  pickedUpIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#16a34a",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  statusTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  pickedUpTitle: { fontSize: 13, fontWeight: "800", color: "#166534" },
+  h3TagBadge: {
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#86efac",
+  },
+  h3TagText: { fontSize: 9, fontWeight: "700", color: "#15803d" },
+  pickedUpSub: { fontSize: 11, color: "#15803d", marginTop: 2, lineHeight: 15 },
   mapContainer: {
     borderRadius: 16,
     overflow: "hidden",

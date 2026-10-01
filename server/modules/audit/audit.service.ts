@@ -9,7 +9,7 @@
  */
 
 import { prisma } from "@delivery/database";
-import { AuditAction, UserRole } from "@delivery/database";
+import type { AuditAction, UserRole } from "@delivery/database";
 
 export interface AuditLogInput {
   actorId: string;

@@ -26,9 +26,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const refund = await requestRefund(ctx.userId, id, input.reason, input.amount);
     return apiSuccess(refund);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ZodError) return apiValidationError(err);
-    if (err.message && (err.message.includes("not found") || err.message.includes("paid"))) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("not found") || err.message.includes("paid"))
+    ) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

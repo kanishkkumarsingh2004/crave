@@ -52,7 +52,7 @@ export function cleanGpsFix(
     longitude,
   );
 
-  const calculatedSpeedKmH = (distKm / (timeDeltaSeconds / 3600));
+  const calculatedSpeedKmH = distKm / (timeDeltaSeconds / 3600);
 
   if (calculatedSpeedKmH > maxSpeedKmH && distKm > 0.1) {
     return {

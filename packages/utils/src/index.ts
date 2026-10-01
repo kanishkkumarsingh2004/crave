@@ -5,6 +5,8 @@
  * Pure functions only — no framework dependencies.
  */
 
+export * from "./h3";
+
 import {
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,

@@ -21,8 +21,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params;
     const updated = await arrivingAtCustomer(ctx.userId, id);
     return apiSuccess(updated);
-  } catch (err: any) {
-    if (err.message && err.message.includes("not assigned")) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("not assigned")) {
       return apiBadRequest(err.message);
     }
     return apiInternalError(err);

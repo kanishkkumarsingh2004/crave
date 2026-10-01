@@ -12,6 +12,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCartStore } from "@/stores/cart.store";
+import { useAddressStore } from "@/src/stores/address.store";
+import { usePaymentStore } from "@/src/stores/payment.store";
+import { AddressModal } from "@/components/AddressModal";
+import { PaymentMethodModal } from "@/components/PaymentMethodModal";
+import { UpiRedirectModal } from "@/components/UpiRedirectModal";
 
 export default function CartScreen() {
   const {
@@ -26,6 +31,14 @@ export default function CartScreen() {
   } = useCartStore();
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [addressModalVisible, setAddressModalVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [upiModalVisible, setUpiModalVisible] = useState(false);
+
+  const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
+  const activeAddress = getSelectedAddress();
+  const getSelectedPayment = usePaymentStore((state) => state.getSelectedMethod);
+  const activePayment = getSelectedPayment();
 
   const subtotal = getSubtotal();
   const tax = getTax();
@@ -35,13 +48,22 @@ export default function CartScreen() {
   function handleCheckout() {
     if (items.length === 0) return;
 
+    if (activePayment.type === "UPI") {
+      setUpiModalVisible(true);
+      return;
+    }
+
+    processOrderPlacement();
+  }
+
+  function processOrderPlacement() {
     setIsCheckingOut(true);
     setTimeout(() => {
       setIsCheckingOut(false);
       clearCart();
       Alert.alert(
         "🎉 Order Placed!",
-        "Your order #ORD-10004 has been confirmed and sent to the store for preparation.",
+        `Your order #ORD-10004 has been confirmed via ${activePayment.title}.\n\nDelivering to: ${activeAddress.label} (${activeAddress.street}, ${activeAddress.city})`,
         [
           {
             text: "Track Order",
@@ -146,18 +168,39 @@ export default function CartScreen() {
 
           {/* Delivery Address Card */}
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="location-outline" size={18} color="#2563eb" />
-              <Text style={styles.cardTitle}>Delivery Location</Text>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="location-outline" size={18} color="#2563eb" />
+                <Text style={styles.cardTitle}>Delivery Location</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setAddressModalVisible(true)}
+                style={styles.changeAddressBtn}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.changeAddressBtnText}>Change</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.addressText}>
-              123 Main Street, Apt 4B, Mumbai, Maharashtra 400001
-            </Text>
+            <View style={styles.addressBox}>
+              <View style={styles.addressTagBadge}>
+                <Text style={styles.addressTagText}>{activeAddress.label}</Text>
+              </View>
+              <Text style={styles.addressText}>
+                {activeAddress.street}, {activeAddress.city}, {activeAddress.state} -{" "}
+                {activeAddress.postalCode}
+              </Text>
+            </View>
           </View>
 
-          {/* Bill Summary */}
+          {/* Bill Summary (Taxes and platform charges managed via DB admin settings) */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Bill Details</Text>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.cardTitle}>Bill Details</Text>
+              <View style={styles.dbBadge}>
+                <Ionicons name="server-outline" size={12} color="#1e40af" />
+                <Text style={styles.dbBadgeText}>Admin DB Rates</Text>
+              </View>
+            </View>
 
             <View style={styles.billRow}>
               <Text style={styles.billLabel}>Item Subtotal</Text>
@@ -165,14 +208,14 @@ export default function CartScreen() {
             </View>
 
             <View style={styles.billRow}>
-              <Text style={styles.billLabel}>Delivery Fee</Text>
+              <Text style={styles.billLabel}>Delivery Fee (Admin Setting)</Text>
               <Text style={styles.billValue}>
                 {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(2)}`}
               </Text>
             </View>
 
             <View style={styles.billRow}>
-              <Text style={styles.billLabel}>Taxes & Fees (GST 18%)</Text>
+              <Text style={styles.billLabel}>Taxes & Platform Fees (DB Rate)</Text>
               <Text style={styles.billValue}>₹{tax.toFixed(2)}</Text>
             </View>
 
@@ -207,6 +250,22 @@ export default function CartScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <AddressModal visible={addressModalVisible} onClose={() => setAddressModalVisible(false)} />
+      <PaymentMethodModal
+        visible={paymentModalVisible}
+        onClose={() => setPaymentModalVisible(false)}
+      />
+      <UpiRedirectModal
+        visible={upiModalVisible}
+        upiAppId={activePayment.upiAppId || "GPay"}
+        amount={total}
+        onSuccess={() => {
+          setUpiModalVisible(false);
+          processOrderPlacement();
+        }}
+        onCancel={() => setUpiModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -322,8 +381,31 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   cardTitle: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
-  addressText: { fontSize: 12, color: "#64748b", lineHeight: 18 },
+  changeAddressBtn: {
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  changeAddressBtnText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
+  addressBox: { gap: 4 },
+  addressTagBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  addressTagText: { fontSize: 10, fontWeight: "800", color: "#475569" },
+  addressText: { fontSize: 12, color: "#475569", lineHeight: 18, fontWeight: "500" },
   billRow: { flexDirection: "row", justifyContent: "space-between" },
   billLabel: { fontSize: 13, color: "#64748b" },
   billValue: { fontSize: 13, fontWeight: "600", color: "#0f172a" },
@@ -362,4 +444,16 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.7 },
   checkoutText: { color: "#ffffff", fontWeight: "700", fontSize: 14 },
+  dbBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    gap: 4,
+  },
+  dbBadgeText: { fontSize: 10, fontWeight: "700", color: "#1e40af" },
 });

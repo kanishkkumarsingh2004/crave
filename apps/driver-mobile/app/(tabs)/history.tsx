@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -51,41 +45,23 @@ export default function DriverHistoryScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Delivery Log History</Text>
-          <Text style={styles.subTitle}>
-            Completed trip logs & handover records
-          </Text>
+          <Text style={styles.subTitle}>Completed trip logs & handover records</Text>
 
           <View style={styles.filterRow}>
             <TouchableOpacity
-              style={[
-                styles.filterChip,
-                filter === "ALL" && styles.filterChipActive,
-              ]}
+              style={[styles.filterChip, filter === "ALL" && styles.filterChipActive]}
               onPress={() => setFilter("ALL")}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  filter === "ALL" && styles.filterTextActive,
-                ]}
-              >
+              <Text style={[styles.filterText, filter === "ALL" && styles.filterTextActive]}>
                 All Trips ({TRIP_HISTORY.length})
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.filterChip,
-                filter === "COMPLETED" && styles.filterChipActive,
-              ]}
+              style={[styles.filterChip, filter === "COMPLETED" && styles.filterChipActive]}
               onPress={() => setFilter("COMPLETED")}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  filter === "COMPLETED" && styles.filterTextActive,
-                ]}
-              >
+              <Text style={[styles.filterText, filter === "COMPLETED" && styles.filterTextActive]}>
                 Completed
               </Text>
             </TouchableOpacity>

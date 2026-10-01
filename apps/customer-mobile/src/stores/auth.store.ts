@@ -1,5 +1,3 @@
-declare const process: any;
-
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
@@ -40,7 +38,7 @@ interface AuthState {
   setUser: (user: AuthUser | null) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: "unknown",
   loading: false,

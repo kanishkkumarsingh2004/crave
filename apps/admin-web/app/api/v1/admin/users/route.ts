@@ -22,7 +22,7 @@ import { ZodError } from "zod";
 import type { Prisma } from "@delivery/database";
 
 export async function GET(request: NextRequest) {
-  const { ctx, error } = await withAdmin(request);
+  const { ctx: _ctx, error } = await withAdmin(request);
   if (error) return error;
 
   try {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { ctx, error } = await withAdmin(request);
+  const { ctx: _ctx, error } = await withAdmin(request);
   if (error) return error;
 
   try {

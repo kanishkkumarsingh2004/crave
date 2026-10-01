@@ -84,7 +84,9 @@ export default function VendorProfileScreen() {
             <View style={styles.infoTextGroup}>
               <Text style={styles.infoLabel}>Actual Store Address</Text>
               <Text style={styles.infoValue}>
-                {location?.address || "104 Market Street, Station Area, Koramangala 4th Block"}, {location?.city || "Bengaluru"}, {location?.state || "Karnataka"} - {location?.postalCode || "560034"}
+                {location?.address || "104 Market Street, Station Area, Koramangala 4th Block"},{" "}
+                {location?.city || "Bengaluru"}, {location?.state || "Karnataka"} -{" "}
+                {location?.postalCode || "560034"}
               </Text>
             </View>
           </View>
@@ -96,7 +98,8 @@ export default function VendorProfileScreen() {
             <View style={styles.infoTextGroup}>
               <Text style={styles.infoLabel}>Store GPS Coordinates (Lat / Lng)</Text>
               <Text style={styles.infoValue}>
-                Lat: {location?.latitude.toFixed(5) ?? "12.93524"} • Lng: {location?.longitude.toFixed(5) ?? "77.62450"}
+                Lat: {location?.latitude.toFixed(5) ?? "12.93524"} • Lng:{" "}
+                {location?.longitude.toFixed(5) ?? "77.62450"}
               </Text>
             </View>
           </View>

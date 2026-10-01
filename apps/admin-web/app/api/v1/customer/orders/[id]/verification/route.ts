@@ -16,10 +16,7 @@ import {
 import { getOrCreateDeliveryCredential } from "@/../../../../server/modules/deliveries/verification.service";
 import { prisma } from "@delivery/database";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { ctx, error } = await withCustomer(request);
   if (error) return error;
 
@@ -59,7 +56,7 @@ export async function GET(
       expiresAt: credential.expiresAt,
       status: credential.status,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return apiInternalError(err);
   }
 }

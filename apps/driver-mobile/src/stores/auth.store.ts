@@ -1,5 +1,3 @@
-declare const process: any;
-
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";

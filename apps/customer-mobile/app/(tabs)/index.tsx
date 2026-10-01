@@ -13,7 +13,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCartStore } from "@/stores/cart.store";
+import { useAddressStore } from "@/src/stores/address.store";
+import { AddressModal } from "@/components/AddressModal";
 import { useDeviceLocation } from "../../hooks/useDeviceLocation";
+import { findNearbyH3Stores } from "@delivery/utils";
 
 const CATEGORIES = [
   { id: "all", name: "All", icon: "apps-outline" },
@@ -78,6 +81,8 @@ const FEATURED_VENDORS = [
     rating: "4.9 ★ (1.2k+)",
     time: "15–20 mins",
     discount: "20% OFF",
+    latitude: 12.9352,
+    longitude: 77.6245,
   },
   {
     id: "v-2",
@@ -86,14 +91,35 @@ const FEATURED_VENDORS = [
     rating: "4.8 ★ (850+)",
     time: "25–30 mins",
     discount: "Free Delivery",
+    latitude: 12.9385,
+    longitude: 77.6212,
+  },
+  {
+    id: "v-3",
+    name: "TechGear Electronics",
+    category: "Gadgets & Chargers",
+    rating: "4.7 ★ (420+)",
+    time: "20–25 mins",
+    discount: "10% OFF",
+    latitude: 12.941,
+    longitude: 77.618,
   },
 ];
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addedToast, setAddedToast] = useState<string | null>(null);
+  const [addressModalVisible, setAddressModalVisible] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
-  const { location, requestGpsPermission } = useDeviceLocation();
+  const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
+  const activeAddress = getSelectedAddress();
+  const { location } = useDeviceLocation();
+
+  const h3Vendors = findNearbyH3Stores(
+    activeAddress?.latitude || 12.9344,
+    activeAddress?.longitude || 77.6192,
+    FEATURED_VENDORS,
+  );
 
   function handleAddToCart(product: (typeof FEATURED_PRODUCTS)[0]) {
     addItem({
@@ -113,14 +139,20 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
         {/* Header Bar */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={requestGpsPermission}>
+          <TouchableOpacity onPress={() => setAddressModalVisible(true)} activeOpacity={0.8}>
             <View style={styles.locationRow}>
               <Ionicons name="location" size={16} color="#2563eb" />
-              <Text style={styles.locationLabel}>Deliver to</Text>
+              <Text style={styles.locationLabel}>
+                {activeAddress?.label ? `Deliver to ${activeAddress.label}` : "Deliver to"}
+              </Text>
               <Ionicons name="chevron-down" size={14} color="#64748b" />
             </View>
             <Text style={styles.locationAddress} numberOfLines={1}>
-              {location?.address ? `${location.address}, ${location.city}` : "Koramangala 4th Block, Bengaluru"}
+              {activeAddress
+                ? `${activeAddress.street}, ${activeAddress.city}`
+                : location?.address
+                  ? `${location.address}, ${location.city}`
+                  : "Koramangala 4th Block, Bengaluru"}
             </Text>
           </TouchableOpacity>
 
@@ -239,20 +271,30 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Featured Vendors */}
+        {/* H3 Indexed Featured Vendors */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Top Stores Near You</Text>
+          <Text style={styles.sectionTitle}>Nearby Stores (H3 Hex Ranked)</Text>
+          <View style={styles.h3TagBadgeHeader}>
+            <Text style={styles.h3TagBadgeHeaderText}>⚡ H3 Spatial Res 8</Text>
+          </View>
         </View>
 
-        {FEATURED_VENDORS.map((vendor) => (
+        {h3Vendors.map((vendor) => (
           <View key={vendor.id} style={styles.vendorCard}>
             <View style={styles.vendorHeader}>
               <View style={styles.vendorIcon}>
                 <Ionicons name="storefront-outline" size={24} color="#2563eb" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.vendorTitle}>{vendor.name}</Text>
-                <Text style={styles.vendorSub}>{vendor.category}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Text style={styles.vendorTitle}>{vendor.name}</Text>
+                  <View style={styles.h3CellBadge}>
+                    <Text style={styles.h3CellBadgeText}>Hex: {vendor.h3Cell.slice(-6)}</Text>
+                  </View>
+                </View>
+                <Text style={styles.vendorSub}>
+                  {vendor.category} • {vendor.h3Tag}
+                </Text>
               </View>
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>{vendor.discount}</Text>
@@ -265,6 +307,10 @@ export default function HomeScreen() {
                 <Text style={styles.metaText}>{vendor.time}</Text>
               </View>
               <View style={styles.metaItem}>
+                <Ionicons name="location-outline" size={14} color="#2563eb" />
+                <Text style={styles.metaText}>{vendor.distanceKm} km</Text>
+              </View>
+              <View style={styles.metaItem}>
                 <Ionicons name="star" size={14} color="#eab308" />
                 <Text style={styles.metaText}>{vendor.rating}</Text>
               </View>
@@ -272,6 +318,8 @@ export default function HomeScreen() {
           </View>
         ))}
       </ScrollView>
+
+      <AddressModal visible={addressModalVisible} onClose={() => setAddressModalVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -372,6 +420,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a" },
+  h3TagBadgeHeader: {
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  h3TagBadgeHeaderText: { fontSize: 10, fontWeight: "800", color: "#2563eb" },
+  h3CellBadge: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+  },
+  h3CellBadgeText: { fontSize: 9, fontWeight: "700", color: "#475569" },
   seeAllText: { fontSize: 13, fontWeight: "600", color: "#2563eb" },
   categoriesRow: { gap: 8, paddingBottom: 16 },
   categoryChip: {

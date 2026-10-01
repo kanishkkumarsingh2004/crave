@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LiveOrderMap } from "../../components/LiveOrderMap";
@@ -65,7 +72,9 @@ export default function OrdersScreen() {
         if (res.ok) {
           const json = await res.json();
           if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-            const active = json.data.find((o: any) => o.status === "PREPARING" || o.status === "OUT_FOR_DELIVERY");
+            const active = json.data.find(
+              (o: any) => o.status === "PREPARING" || o.status === "OUT_FOR_DELIVERY",
+            );
             if (active) {
               setLiveOrder({
                 id: active.id,
@@ -85,17 +94,25 @@ export default function OrdersScreen() {
                 },
               });
             }
-            const history = json.data.filter((o: any) => o.status === "DELIVERED" || o.status === "CANCELLED");
+            const history = json.data.filter(
+              (o: any) => o.status === "DELIVERED" || o.status === "CANCELLED",
+            );
             if (history.length > 0) {
               setPastOrders(
                 history.map((h: any) => ({
                   id: h.id,
                   orderNumber: h.orderNumber,
                   vendorName: h.vendor?.storeName || "Blinkbite Organics",
-                  date: new Date(h.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                  date: new Date(h.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  }),
                   status: h.status,
                   total: Number(h.total),
-                  items: h.items?.map((i: any) => `${i.productName} (${i.quantity}x)`).join(", ") || "Fresh Organic Milk (2x)",
+                  items:
+                    h.items?.map((i: any) => `${i.productName} (${i.quantity}x)`).join(", ") ||
+                    "Fresh Organic Milk (2x)",
                 })),
               );
             }
@@ -223,8 +240,12 @@ export default function OrdersScreen() {
                     <Ionicons name="person" size={20} color="#2563eb" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.driverName}>{liveOrder.driver?.name || "Rahul Sharma"}</Text>
-                    <Text style={styles.driverVehicle}>{liveOrder.driver?.vehicle || "Hero Electric Bike"}</Text>
+                    <Text style={styles.driverName}>
+                      {liveOrder.driver?.name || "Rahul Sharma"}
+                    </Text>
+                    <Text style={styles.driverVehicle}>
+                      {liveOrder.driver?.vehicle || "Hero Electric Bike"}
+                    </Text>
                   </View>
                   <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
                     <Ionicons name="call" size={16} color="#ffffff" />

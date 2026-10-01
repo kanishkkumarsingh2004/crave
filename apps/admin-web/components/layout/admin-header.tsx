@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
