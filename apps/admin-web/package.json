@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next dist"
+    "clean": "node -e \"['.next', 'dist'].forEach(d => fs.rmSync(d, {recursive: true, force: true}))\""
   },
   "dependencies": {
     "@delivery/types": "workspace:*",

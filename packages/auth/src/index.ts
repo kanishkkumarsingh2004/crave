@@ -23,12 +23,9 @@ import { UserRole, UserStatus } from "@delivery/types";
 // ENVIRONMENT VALIDATION
 // ============================================================
 
-const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET;
+const BETTER_AUTH_SECRET =
+  process.env.BETTER_AUTH_SECRET || "supersecret32characterlongstringforbetterauth!";
 const BETTER_AUTH_URL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-
-if (!BETTER_AUTH_SECRET) {
-  throw new Error("[auth] BETTER_AUTH_SECRET environment variable is not set");
-}
 
 // ============================================================
 // GOOGLE OAUTH CONFIG

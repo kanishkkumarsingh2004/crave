@@ -18,7 +18,7 @@
     "test": "vitest run",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
-    "prisma:generate": "pnpm exec prisma generate --schema=prisma/schema.prisma",
+    "prisma:generate": "pnpm --filter @delivery/database prisma:generate",
     "prisma:migrate": "pnpm --filter @delivery/database prisma:migrate",
     "prisma:migrate:deploy": "pnpm --filter @delivery/database prisma:migrate:deploy",
     "prisma:studio": "pnpm --filter @delivery/database prisma:studio",
@@ -35,12 +35,14 @@
     "build:mobile": "pnpm --filter customer-mobile build && pnpm --filter driver-mobile build && pnpm --filter vendor-mobile build",
     "build:apk": "node scripts/package-builds.js",
     "package:builds": "node scripts/package-builds.js",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && node -e \"fs.rmSync('node_modules', {recursive: true, force: true})\""
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@types/archiver": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
+    "archiver": "^8.0.0",
     "eas-cli": "^24.8.0",
     "eas-cli-local-build-plugin": "^24.8.0",
     "eslint": "^9.20.0",
