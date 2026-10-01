@@ -130,7 +130,7 @@ export default function VendorOrdersScreen() {
 
   const updateOrderStatus = (orderId: string, nextStatus: Exclude<OrderStatus, "ALL">) => {
     setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status: nextStatus } : ord))
+      prev.map((ord) => (ord.id === orderId ? { ...ord, status: nextStatus } : ord)),
     );
     Alert.alert("Order Updated", `Order moved to status: ${nextStatus}`);
   };

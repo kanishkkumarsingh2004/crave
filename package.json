@@ -27,7 +27,8 @@
     "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm prisma:generate && pnpm build && pnpm build:mobile",
     "ci:apk": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm prisma:generate && pnpm build && pnpm build:apk",
     "build:mobile": "pnpm --filter customer-mobile build && pnpm --filter driver-mobile build && pnpm --filter vendor-mobile build",
-    "build:apk": "pnpm --filter customer-mobile build:apk && pnpm --filter driver-mobile build:apk && pnpm --filter vendor-mobile build:apk",
+    "build:apk": "node scripts/package-builds.js",
+    "package:builds": "node scripts/package-builds.js",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

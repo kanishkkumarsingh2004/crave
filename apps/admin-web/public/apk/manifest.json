@@ -1,0 +1,56 @@
+{
+  "customer": {
+    "id": "customer",
+    "name": "Customer Mobile App",
+    "android": {
+      "filename": "customer-v1.0.0.apk",
+      "url": "/apk/customer-v1.0.0.apk",
+      "sizeMb": "8.5 MB",
+      "bytes": 8870143,
+      "sha256": "fa715dc0c412f36dceb0fed080d34f77cf1133be202913d0097d774db4e487ea"
+    },
+    "ios": {
+      "filename": "customer-v1.0.0.ipa",
+      "url": "/apk/customer-v1.0.0.ipa",
+      "sizeMb": "8.5 MB",
+      "bytes": 8870143,
+      "sha256": "fa715dc0c412f36dceb0fed080d34f77cf1133be202913d0097d774db4e487ea"
+    }
+  },
+  "vendor": {
+    "id": "vendor",
+    "name": "Vendor Store App",
+    "android": {
+      "filename": "vendor-v1.0.0.apk",
+      "url": "/apk/vendor-v1.0.0.apk",
+      "sizeMb": "8.5 MB",
+      "bytes": 8937308,
+      "sha256": "0132353ebb8d7d9a36707da5fee3aff039e7eb6a88806b576c3a2eb775ab96e8"
+    },
+    "ios": {
+      "filename": "vendor-v1.0.0.ipa",
+      "url": "/apk/vendor-v1.0.0.ipa",
+      "sizeMb": "8.5 MB",
+      "bytes": 8937308,
+      "sha256": "0132353ebb8d7d9a36707da5fee3aff039e7eb6a88806b576c3a2eb775ab96e8"
+    }
+  },
+  "driver": {
+    "id": "driver",
+    "name": "Driver Courier App",
+    "android": {
+      "filename": "driver-v1.0.0.apk",
+      "url": "/apk/driver-v1.0.0.apk",
+      "sizeMb": "8.5 MB",
+      "bytes": 8894891,
+      "sha256": "5db3df899a22a126dd67041999f8ebe8d0e76500ed81cd57b600d8c1d61afa40"
+    },
+    "ios": {
+      "filename": "driver-v1.0.0.ipa",
+      "url": "/apk/driver-v1.0.0.ipa",
+      "sizeMb": "8.5 MB",
+      "bytes": 8894891,
+      "sha256": "5db3df899a22a126dd67041999f8ebe8d0e76500ed81cd57b600d8c1d61afa40"
+    }
+  }
+}

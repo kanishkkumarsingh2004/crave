@@ -78,7 +78,7 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Origin": API_BASE,
+          Origin: API_BASE,
         },
         credentials: "include",
         body: JSON.stringify({ email, password }),
@@ -105,7 +105,7 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Origin": API_BASE,
+          Origin: API_BASE,
         },
         body: JSON.stringify(data),
       });
@@ -122,7 +122,7 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
     try {
       await fetch(`${API_BASE}/api/auth/sign-out`, {
         method: "POST",
-        headers: { "Origin": API_BASE },
+        headers: { Origin: API_BASE },
         credentials: "include",
       });
     } catch {

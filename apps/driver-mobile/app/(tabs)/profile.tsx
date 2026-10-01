@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDriverAuthStore } from "../../src/stores/auth.store";
@@ -84,19 +77,62 @@ export default function DriverProfileScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: "#f8f9fa" },
   scrollContent: { padding: 16 },
-  profileCard: { backgroundColor: "#fff", padding: 20, borderRadius: 16, alignItems: "center", marginBottom: 20, borderWidth: 1, borderColor: "#e5e7eb" },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#dbeafe", justifyContent: "center", alignItems: "center", marginBottom: 12 },
+  profileCard: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#dbeafe",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   driverName: { fontSize: 20, fontWeight: "700", color: "#111827" },
   driverEmail: { fontSize: 13, color: "#6b7280", marginTop: 2 },
-  ratingBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#fffbeb", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, gap: 4, marginTop: 10 },
+  ratingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fffbeb",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+    marginTop: 10,
+  },
   ratingText: { fontSize: 12, fontWeight: "700", color: "#d97706" },
   sectionTitle: { fontSize: 17, fontWeight: "700", color: "#111827", marginBottom: 10 },
-  infoCard: { backgroundColor: "#fff", borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: "#e5e7eb" },
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   infoText: { flex: 1 },
   infoLabel: { fontSize: 11, color: "#9ca3af" },
   infoVal: { fontSize: 14, fontWeight: "600", color: "#111827", marginTop: 2 },
   divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 12 },
-  btnSignOut: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#fef2f2", borderWidth: 1, borderColor: "#fca5a5", paddingVertical: 14, borderRadius: 12, gap: 8, marginBottom: 30 },
+  btnSignOut: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fca5a5",
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 30,
+  },
   btnSignOutText: { color: "#dc2626", fontWeight: "700", fontSize: 14 },
 });

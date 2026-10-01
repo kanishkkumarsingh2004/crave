@@ -89,9 +89,7 @@ export default function VendorProductsScreen() {
 
   const toggleStock = (productId: string) => {
     setProducts((prev) =>
-      prev.map((prod) =>
-        prod.id === productId ? { ...prod, inStock: !prod.inStock } : prod
-      )
+      prev.map((prod) => (prod.id === productId ? { ...prod, inStock: !prod.inStock } : prod)),
     );
   };
 
@@ -241,12 +239,7 @@ export default function VendorProductsScreen() {
             {/* Toggle & Actions Row */}
             <View style={styles.cardFooter}>
               <View style={styles.toggleGroup}>
-                <Text
-                  style={[
-                    styles.toggleLabel,
-                    { color: item.inStock ? "#16a34a" : "#dc2626" },
-                  ]}
-                >
+                <Text style={[styles.toggleLabel, { color: item.inStock ? "#16a34a" : "#dc2626" }]}>
                   {item.inStock ? "Available" : "Sold Out"}
                 </Text>
                 <Switch
@@ -293,10 +286,7 @@ export default function VendorProductsScreen() {
                 {["Mains", "Sides", "Beverages", "Desserts"].map((cat) => (
                   <TouchableOpacity
                     key={cat}
-                    style={[
-                      styles.modalCatChip,
-                      newCategory === cat && styles.modalCatChipActive,
-                    ]}
+                    style={[styles.modalCatChip, newCategory === cat && styles.modalCatChipActive]}
                     onPress={() => setNewCategory(cat)}
                   >
                     <Text

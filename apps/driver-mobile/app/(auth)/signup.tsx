@@ -92,27 +92,55 @@ export default function DriverSignUpScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Full Name *</Text>
-          <TextInput style={styles.input} placeholder="Your name" value={name} onChangeText={setName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Your name"
+            value={name}
+            onChangeText={setName}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email *</Text>
-          <TextInput style={styles.input} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Phone *</Text>
-          <TextInput style={styles.input} placeholder="+91XXXXXXXXXX" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+          <TextInput
+            style={styles.input}
+            placeholder="+91XXXXXXXXXX"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={setPhone}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Vehicle Type *</Text>
-          <TextInput style={styles.input} placeholder="Bike / Car / Van" value={vehicleType} onChangeText={setVehicleType} />
+          <TextInput
+            style={styles.input}
+            placeholder="Bike / Car / Van"
+            value={vehicleType}
+            onChangeText={setVehicleType}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Vehicle Number</Text>
-          <TextInput style={styles.input} placeholder="MH12AB1234" value={vehicleNumber} onChangeText={setVehicleNumber} />
+          <TextInput
+            style={styles.input}
+            placeholder="MH12AB1234"
+            value={vehicleNumber}
+            onChangeText={setVehicleNumber}
+          />
         </View>
 
         <View style={styles.inputGroup}>

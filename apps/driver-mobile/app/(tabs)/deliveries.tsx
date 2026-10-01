@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -75,11 +68,10 @@ export default function DriverDeliveriesScreen() {
           <View style={styles.completeCard}>
             <Ionicons name="checkmark-circle" size={56} color="#16a34a" />
             <Text style={styles.completeTitle}>Trip Completed!</Text>
-            <Text style={styles.completeSub}>You earned {activeDelivery.earnings} for this delivery.</Text>
-            <TouchableOpacity
-              style={styles.btnReset}
-              onPress={() => setCurrentStep("ASSIGNED")}
-            >
+            <Text style={styles.completeSub}>
+              You earned {activeDelivery.earnings} for this delivery.
+            </Text>
+            <TouchableOpacity style={styles.btnReset} onPress={() => setCurrentStep("ASSIGNED")}>
               <Text style={styles.btnResetText}>Back to Dashboard</Text>
             </TouchableOpacity>
           </View>
@@ -97,10 +89,10 @@ export default function DriverDeliveriesScreen() {
                         currentStep === "ASSIGNED"
                           ? "25%"
                           : currentStep === "ARRIVED_PICKUP"
-                          ? "50%"
-                          : currentStep === "PICKED_UP"
-                          ? "75%"
-                          : "100%",
+                            ? "50%"
+                            : currentStep === "PICKED_UP"
+                              ? "75%"
+                              : "100%",
                     },
                   ]}
                 />
@@ -176,25 +168,68 @@ const styles = StyleSheet.create({
   header: { marginBottom: 16 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827" },
   subTitle: { fontSize: 13, color: "#6b7280", marginTop: 2 },
-  stepProgressCard: { backgroundColor: "#fff", padding: 16, borderRadius: 12, marginBottom: 14, borderWidth: 1, borderColor: "#e5e7eb" },
+  stepProgressCard: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   stepTitle: { fontSize: 15, fontWeight: "700", color: "#111827", marginBottom: 10 },
   progressTrack: { height: 8, backgroundColor: "#e5e7eb", borderRadius: 4, overflow: "hidden" },
   progressBar: { height: "100%", backgroundColor: "#2563eb" },
-  infoCard: { backgroundColor: "#fff", padding: 14, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: "#e5e7eb" },
+  infoCard: {
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   cardSectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   sectionHeading: { fontSize: 14, fontWeight: "700", color: "#111827" },
   mainName: { fontSize: 16, fontWeight: "700", color: "#111827", marginTop: 4 },
   addressText: { fontSize: 13, color: "#4b5563", marginTop: 2 },
   contactRow: { flexDirection: "row", gap: 10, marginTop: 10 },
-  contactBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "#f3f4f6", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, gap: 4 },
+  contactBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
   contactBtnText: { fontSize: 12, fontWeight: "600", color: "#7c3aed" },
   itemRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
   itemText: { fontSize: 13, color: "#374151" },
-  btnPrimaryAction: { backgroundColor: "#2563eb", paddingVertical: 14, borderRadius: 12, alignItems: "center", marginTop: 10, marginBottom: 20 },
+  btnPrimaryAction: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+  },
   btnPrimaryText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  completeCard: { backgroundColor: "#fff", borderRadius: 16, padding: 30, alignItems: "center", borderWidth: 1, borderColor: "#e5e7eb", marginTop: 20 },
+  completeCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 30,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginTop: 20,
+  },
   completeTitle: { fontSize: 20, fontWeight: "700", color: "#111827", marginTop: 12 },
   completeSub: { fontSize: 14, color: "#6b7280", marginTop: 4, textAlign: "center" },
-  btnReset: { backgroundColor: "#7c3aed", paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, marginTop: 20 },
+  btnReset: {
+    backgroundColor: "#7c3aed",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 20,
+  },
   btnResetText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

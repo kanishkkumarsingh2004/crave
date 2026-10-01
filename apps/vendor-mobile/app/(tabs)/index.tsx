@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -34,48 +34,99 @@ interface ActiveOrder {
   timeAgo: string;
 }
 
+const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+
 export default function VendorDashboardScreen() {
   const router = useRouter();
   const user = useVendorAuthStore((state) => state.user);
   const [isStoreOnline, setIsStoreOnline] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [metrics, setMetrics] = useState<{
+    todayRevenue: number;
+    todayTotalOrders: number;
+    pendingOrders: number;
+    preparingOrders: number;
+    readyOrders: number;
+    completedOrders: number;
+    activeProducts: number;
+    lowStockAlerts: number;
+  } | null>(null);
+  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
 
-  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([
-    {
-      id: "ord-101",
-      orderNumber: "#ORD-8821",
-      customerName: "Alex Morgan",
-      itemsCount: 3,
-      totalAmount: "₹42.50",
-      status: "PENDING",
-      timeAgo: "2 mins ago",
-    },
-    {
-      id: "ord-102",
-      orderNumber: "#ORD-8819",
-      customerName: "Sarah Connor",
-      itemsCount: 1,
-      totalAmount: "₹18.90",
-      status: "PREPARING",
-      timeAgo: "12 mins ago",
-    },
-    {
-      id: "ord-103",
-      orderNumber: "#ORD-8815",
-      customerName: "David Miller",
-      itemsCount: 4,
-      totalAmount: "₹65.00",
-      status: "READY",
-      timeAgo: "25 mins ago",
-    },
-  ]);
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [dashRes, ordersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/vendor/dashboard`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/v1/vendor/orders?limit=10`, { credentials: "include" }),
+      ]);
+
+      if (dashRes.ok) {
+        const dashData = await dashRes.json();
+        if (dashData?.data?.metrics) {
+          setMetrics(dashData.data.metrics);
+          setIsStoreOnline(Boolean(dashData.data.isOpen));
+        }
+      }
+
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        if (ordersData?.data?.orders) {
+          const rawOrders = ordersData.data.orders as any[];
+          const formatted: ActiveOrder[] = rawOrders
+            .filter((o) =>
+              ["PENDING", "CONFIRMED", "PREPARING", "READY_FOR_PICKUP"].includes(o.status),
+            )
+            .map((o) => ({
+              id: o.id,
+              orderNumber: `#${(o.orderNumber || o.id).slice(-8).toUpperCase()}`,
+              customerName: o.deliveryRecipientName || "Customer",
+              itemsCount: o.items?.length || 1,
+              totalAmount: `₹${Number(o.total || 0).toFixed(2)}`,
+              status:
+                o.status === "CONFIRMED"
+                  ? "PENDING"
+                  : o.status === "READY_FOR_PICKUP"
+                    ? "READY"
+                    : o.status,
+              timeAgo: o.createdAt
+                ? new Date(o.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Recently",
+            }));
+          setActiveOrders(formatted);
+        }
+      }
+    } catch {
+      /* graceful fallback */
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const handleToggleStore = async (val: boolean) => {
+    setIsStoreOnline(val);
+    try {
+      await fetch(`${API_BASE}/api/v1/vendor/store/toggle-open`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isOpen: val }),
+      });
+    } catch {
+      /* ignore */
+    }
+  };
 
   const stats: QuickStat[] = [
     {
       id: "1",
       title: "Today's Revenue",
-      value: "₹548.20",
-      change: "+14.2%",
+      value: `₹${(metrics?.todayRevenue ?? 0).toFixed(2)}`,
+      change: `${metrics?.todayTotalOrders ?? 0} orders`,
       isPositive: true,
       icon: "wallet-outline",
       color: "#7c3aed",
@@ -84,7 +135,7 @@ export default function VendorDashboardScreen() {
       id: "2",
       title: "Active Orders",
       value: String(activeOrders.length),
-      change: "3 Need Action",
+      change: `${metrics?.pendingOrders ?? 0} pending`,
       isPositive: true,
       icon: "receipt-outline",
       color: "#2563eb",
@@ -92,43 +143,52 @@ export default function VendorDashboardScreen() {
     {
       id: "3",
       title: "Completed Today",
-      value: "28",
-      change: "+5 orders",
+      value: String(metrics?.completedOrders ?? 0),
+      change: "Delivered",
       isPositive: true,
       icon: "checkmark-done-circle-outline",
       color: "#059669",
     },
     {
       id: "4",
-      title: "Avg Prep Time",
-      value: "16 min",
-      change: "-2 min faster",
+      title: "Active Products",
+      value: String(metrics?.activeProducts ?? 0),
+      change: `${metrics?.lowStockAlerts ?? 0} low stock`,
       isPositive: true,
-      icon: "time-outline",
+      icon: "cube-outline",
       color: "#d97706",
     },
   ];
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await fetchDashboardData();
+    setRefreshing(false);
   };
 
-  const handleOrderStatusChange = (orderId: string, nextStatus: "PREPARING" | "READY" | "COMPLETED") => {
-    setActiveOrders((prev) =>
-      prev
-        .map((order) => {
-          if (order.id === orderId) {
-            if (nextStatus === "COMPLETED") return null;
-            return { ...order, status: nextStatus as any };
-          }
-          return order;
-        })
-        .filter(Boolean) as ActiveOrder[]
-    );
-    Alert.alert("Status Updated", `Order ${orderId} moved to ${nextStatus.toLowerCase()}.`);
+  const handleOrderStatusChange = async (
+    orderId: string,
+    nextStatus: "PREPARING" | "READY" | "COMPLETED",
+  ) => {
+    try {
+      const endpoint =
+        nextStatus === "PREPARING"
+          ? `/api/v1/vendor/orders/${orderId}/start-preparation`
+          : nextStatus === "READY"
+            ? `/api/v1/vendor/orders/${orderId}/ready`
+            : null;
+
+      if (endpoint) {
+        await fetch(`${API_BASE}${endpoint}`, {
+          method: "POST",
+          credentials: "include",
+        });
+      }
+      await fetchDashboardData();
+      Alert.alert("Status Updated", `Order updated successfully.`);
+    } catch {
+      Alert.alert("Error", "Could not update order status.");
+    }
   };
 
   return (
@@ -186,10 +246,7 @@ export default function VendorDashboardScreen() {
               <View style={styles.statValueRow}>
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text
-                  style={[
-                    styles.statChange,
-                    { color: stat.isPositive ? "#059669" : "#dc2626" },
-                  ]}
+                  style={[styles.statChange, { color: stat.isPositive ? "#059669" : "#dc2626" }]}
                 >
                   {stat.change}
                 </Text>
@@ -226,8 +283,8 @@ export default function VendorDashboardScreen() {
                     order.status === "PENDING"
                       ? styles.badgePending
                       : order.status === "PREPARING"
-                      ? styles.badgePreparing
-                      : styles.badgeReady,
+                        ? styles.badgePreparing
+                        : styles.badgeReady,
                   ]}
                 >
                   <Text
@@ -236,8 +293,8 @@ export default function VendorDashboardScreen() {
                       order.status === "PENDING"
                         ? styles.badgePendingText
                         : order.status === "PREPARING"
-                        ? styles.badgePreparingText
-                        : styles.badgeReadyText,
+                          ? styles.badgePreparingText
+                          : styles.badgeReadyText,
                     ]}
                   >
                     {order.status}
@@ -297,7 +354,10 @@ export default function VendorDashboardScreen() {
             <Text style={styles.quickActionText}>Products</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push("/inventory")}>
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => router.push("/inventory")}
+          >
             <View style={[styles.quickActionIcon, { backgroundColor: "#dbeafe" }]}>
               <Ionicons name="cube-outline" size={24} color="#2563eb" />
             </View>

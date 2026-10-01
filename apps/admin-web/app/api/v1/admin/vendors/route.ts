@@ -67,7 +67,29 @@ export async function GET(request: NextRequest) {
       prisma.vendor.count({ where }),
     ]);
 
-    return apiSuccess(vendors, 200, buildPaginationMeta(page, limit, total));
+    const vendorIds = vendors.map((v) => v.id);
+
+    const revenueByVendor = await prisma.order.groupBy({
+      by: ["vendorId"],
+      where: {
+        vendorId: { in: vendorIds },
+        OR: [{ paymentStatus: "PAID" }, { status: "DELIVERED" }],
+      },
+      _sum: { subtotal: true },
+    });
+
+    const revenueMap = new Map<string, number>();
+    for (const r of revenueByVendor) {
+      const gross = Number(r._sum.subtotal ?? 0);
+      revenueMap.set(r.vendorId, Math.round(gross * 0.85 * 100) / 100);
+    }
+
+    const vendorsWithRevenue = vendors.map((v) => ({
+      ...v,
+      revenue: revenueMap.get(v.id) ?? 0,
+    }));
+
+    return apiSuccess(vendorsWithRevenue, 200, buildPaginationMeta(page, limit, total));
   } catch (err) {
     if (err instanceof ZodError) return apiValidationError(err);
     return apiInternalError(err);

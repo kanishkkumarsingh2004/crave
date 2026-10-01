@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -94,11 +86,13 @@ export default function VendorInventoryScreen() {
           };
         }
         return item;
-      })
+      }),
     );
   };
 
-  const lowStockCount = inventory.filter((i) => i.stockCount > 0 && i.stockCount <= i.minThreshold).length;
+  const lowStockCount = inventory.filter(
+    (i) => i.stockCount > 0 && i.stockCount <= i.minThreshold,
+  ).length;
   const outOfStockCount = inventory.filter((i) => i.stockCount === 0).length;
 
   const filteredInventory = inventory.filter((item) => {
@@ -167,7 +161,9 @@ export default function VendorInventoryScreen() {
           style={[styles.filterChip, selectedFilter === "ALL" && styles.filterChipActive]}
           onPress={() => setSelectedFilter("ALL")}
         >
-          <Text style={[styles.filterChipText, selectedFilter === "ALL" && styles.filterChipTextActive]}>
+          <Text
+            style={[styles.filterChipText, selectedFilter === "ALL" && styles.filterChipTextActive]}
+          >
             All Items
           </Text>
         </TouchableOpacity>
@@ -229,11 +225,7 @@ export default function VendorInventoryScreen() {
                 <View
                   style={[
                     styles.statusBadge,
-                    isOut
-                      ? styles.badgeOut
-                      : isLow
-                      ? styles.badgeLow
-                      : styles.badgeGood,
+                    isOut ? styles.badgeOut : isLow ? styles.badgeLow : styles.badgeGood,
                   ]}
                 >
                   <Text
@@ -242,8 +234,8 @@ export default function VendorInventoryScreen() {
                       isOut
                         ? styles.badgeOutText
                         : isLow
-                        ? styles.badgeLowText
-                        : styles.badgeGoodText,
+                          ? styles.badgeLowText
+                          : styles.badgeGoodText,
                     ]}
                   >
                     {isOut ? "OUT OF STOCK" : isLow ? "LOW STOCK" : "IN STOCK"}

@@ -17,6 +17,8 @@ import { prisma } from "@delivery/database";
 import { PaymentStatus } from "@delivery/database";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const { error } = await withAdmin(request);
   if (error) return error;

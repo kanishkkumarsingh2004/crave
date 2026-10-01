@@ -68,12 +68,26 @@ export default function SignUpScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Full Name</Text>
-          <TextInput style={styles.input} placeholder="Your name" autoComplete="name" value={name} onChangeText={setName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Your name"
+            autoComplete="name"
+            value={name}
+            onChangeText={setName}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
-          <TextInput style={styles.input} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" autoComplete="email" value={email} onChangeText={setEmail} />
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            value={email}
+            onChangeText={setEmail}
+          />
         </View>
 
         <View style={styles.inputGroup}>

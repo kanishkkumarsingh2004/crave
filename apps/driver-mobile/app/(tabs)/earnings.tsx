@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -31,7 +24,7 @@ export default function DriverEarningsScreen() {
             Alert.alert("Cashout Success!", "Funds sent instantly to your card.");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -88,13 +81,34 @@ const styles = StyleSheet.create({
   header: { marginBottom: 16 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827" },
   subTitle: { fontSize: 13, color: "#6b7280", marginTop: 2 },
-  balanceCard: { backgroundColor: "#2563eb", borderRadius: 16, padding: 20, marginBottom: 20, alignItems: "center" },
+  balanceCard: {
+    backgroundColor: "#2563eb",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: "center",
+  },
   balanceLabel: { fontSize: 13, color: "#bfdbfe" },
   balanceVal: { fontSize: 36, fontWeight: "800", color: "#fff", marginVertical: 6 },
-  btnCashout: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, gap: 6, marginTop: 10 },
+  btnCashout: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+    marginTop: 10,
+  },
   btnCashoutText: { color: "#2563eb", fontWeight: "700", fontSize: 14 },
   sectionTitle: { fontSize: 17, fontWeight: "700", color: "#111827", marginBottom: 12 },
-  summaryCard: { backgroundColor: "#fff", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#e5e7eb" },
+  summaryCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   row: { flexDirection: "row", justifyContent: "space-between", marginVertical: 4 },
   rowLabel: { fontSize: 13, color: "#4b5563" },
   rowVal: { fontSize: 14, fontWeight: "600", color: "#111827" },

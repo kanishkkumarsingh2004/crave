@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
   const router = useRouter();
@@ -11,6 +12,17 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/get-session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user && data.user.role === "ADMIN") {
+          router.replace("/dashboard");
+        }
+      })
+      .catch(() => undefined);
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,49 +52,61 @@ export function LoginForm() {
   }
 
   return (
-    <div className="bg-card rounded-xl shadow-md border border-border p-8 space-y-6">
+    <div className="bg-card text-card-foreground rounded-2xl shadow-xl border border-border/80 p-8 space-y-6 max-w-md w-full mx-auto backdrop-blur-sm">
       {/* Header */}
-      <div className="text-center space-y-1">
-        <div className="flex justify-center mb-4">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">D</span>
+      <div className="text-center space-y-2">
+        <div className="flex justify-center mb-3">
+          <div className="w-12 h-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shadow-md shadow-primary/25 ring-4 ring-primary/10">
+            <span className="font-extrabold text-xl tracking-wider">D</span>
           </div>
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin Login</h1>
-        <p className="text-sm text-muted-foreground">Delivery Platform Administration</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Admin Login</h1>
+        <p className="text-xs font-medium text-muted-foreground">
+          Delivery Platform Administration
+        </p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-xs font-bold text-muted-foreground uppercase tracking-wider"
+          >
+            Email Address
           </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@example.com"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          />
+          <div className="flex items-center gap-3 rounded-xl border border-input bg-background/50 px-3.5 py-2.5 focus-within:bg-background focus-within:ring-2 focus-within:ring-ring focus-within:border-primary transition-all shadow-sm">
+            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              className="flex-1 bg-transparent border-0 outline-none p-0 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 shadow-none"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium">
+            <label
+              htmlFor="password"
+              className="text-xs font-bold text-muted-foreground uppercase tracking-wider"
+            >
               Password
             </label>
             <a
               href="/forgot-password"
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
             >
               Forgot Password?
             </a>
           </div>
-          <div className="relative">
+          <div className="flex items-center gap-3 rounded-xl border border-input bg-background/50 px-3.5 py-2.5 focus-within:bg-background focus-within:ring-2 focus-within:ring-ring focus-within:border-primary transition-all shadow-sm">
+            <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -91,12 +115,12 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 bg-transparent border-0 outline-none p-0 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 shadow-none"
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              className="text-muted-foreground hover:text-foreground focus:outline-none shrink-0 p-0.5"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -104,13 +128,24 @@ export function LoginForm() {
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium h-10 px-4 py-2 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 transition-colors"
+          isLoading={loading}
+          className="w-full gap-2 text-sm font-semibold"
         >
-          {loading ? "Signing in…" : "Sign In"}
-        </button>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Signing in…</span>
+            </>
+          ) : (
+            <>
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </>
+          )}
+        </Button>
       </form>
 
       {/* Divider */}
@@ -119,17 +154,18 @@ export function LoginForm() {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground font-semibold">OR</span>
         </div>
       </div>
 
-      {/* Google */}
-      <button
+      {/* Google Button */}
+      <Button
         type="button"
+        variant="outline"
         onClick={handleGoogleSignIn}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background text-sm font-medium h-10 px-4 py-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+        className="w-full gap-2.5 text-sm font-semibold"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             fill="#4285F4"
@@ -147,8 +183,8 @@ export function LoginForm() {
             fill="#EA4335"
           />
         </svg>
-        Continue with Google
-      </button>
+        <span>Continue with Google</span>
+      </Button>
     </div>
   );
 }

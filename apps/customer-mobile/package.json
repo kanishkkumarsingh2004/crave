@@ -5,8 +5,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "build": "expo export",
     "build:apk": "eas build --platform android --profile preview --local --non-interactive",
     "typecheck": "tsc --noEmit",

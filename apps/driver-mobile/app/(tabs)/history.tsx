@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -83,17 +77,13 @@ export default function DriverHistoryScreen() {
           style={[styles.chip, filter === "ALL" && styles.chipActive]}
           onPress={() => setFilter("ALL")}
         >
-          <Text style={[styles.chipText, filter === "ALL" && styles.chipTextActive]}>
-            All Time
-          </Text>
+          <Text style={[styles.chipText, filter === "ALL" && styles.chipTextActive]}>All Time</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.chip, filter === "TODAY" && styles.chipActive]}
           onPress={() => setFilter("TODAY")}
         >
-          <Text style={[styles.chipText, filter === "TODAY" && styles.chipTextActive]}>
-            Today
-          </Text>
+          <Text style={[styles.chipText, filter === "TODAY" && styles.chipTextActive]}>Today</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.chip, filter === "WEEK" && styles.chipActive]}
@@ -130,7 +120,8 @@ export default function DriverHistoryScreen() {
 
             <View style={styles.breakdownRow}>
               <Text style={styles.breakdownText}>
-                Fare: {item.tripEarnings} | Tip: <Text style={{ color: "#16a34a", fontWeight: "700" }}>{item.tipAmount}</Text>
+                Fare: {item.tripEarnings} | Tip:{" "}
+                <Text style={{ color: "#16a34a", fontWeight: "700" }}>{item.tipAmount}</Text>
               </Text>
             </View>
           </View>
@@ -146,12 +137,26 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "700", color: "#111827" },
   subTitle: { fontSize: 13, color: "#6b7280", marginTop: 2 },
   filterRow: { flexDirection: "row", paddingHorizontal: 16, marginVertical: 10, gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e5e7eb" },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   chipActive: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
   chipText: { fontSize: 12, fontWeight: "600", color: "#4b5563" },
   chipTextActive: { color: "#fff" },
   listContent: { paddingHorizontal: 16, paddingBottom: 20 },
-  card: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: "#e5e7eb" },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   vendorName: { fontSize: 15, fontWeight: "700", color: "#111827" },
   dateText: { fontSize: 12, color: "#6b7280", marginTop: 2 },

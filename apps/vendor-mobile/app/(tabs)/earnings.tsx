@@ -1,114 +1,138 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  FlatList,
+  RefreshControl,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-interface PayoutTransaction {
+interface Transaction {
   id: string;
   payoutRef: string;
   date: string;
   amount: string;
-  status: "COMPLETED" | "PROCESSING" | "SCHEDULED";
+  status: "COMPLETED" | "PROCESSING";
   bankAccount: string;
 }
 
-const INITIAL_PAYOUTS: PayoutTransaction[] = [
-  {
-    id: "p-1",
-    payoutRef: "PO-99201",
-    date: "Sep 28, 2026",
-    amount: "₹850.00",
-    status: "COMPLETED",
-    bankAccount: "HDFC Bank (****4819)",
-  },
-  {
-    id: "p-2",
-    payoutRef: "PO-98744",
-    date: "Sep 21, 2026",
-    amount: "₹1,120.50",
-    status: "COMPLETED",
-    bankAccount: "HDFC Bank (****4819)",
-  },
-  {
-    id: "p-3",
-    payoutRef: "PO-97500",
-    date: "Sep 14, 2026",
-    amount: "₹640.25",
-    status: "COMPLETED",
-    bankAccount: "HDFC Bank (****4819)",
-  },
-  {
-    id: "p-4",
-    payoutRef: "PO-10023",
-    date: "Oct 01, 2026",
-    amount: "₹420.00",
-    status: "PROCESSING",
-    bankAccount: "HDFC Bank (****4819)",
-  },
-];
+interface EarningsData {
+  grossSales: number;
+  platformCommissionRate: string;
+  platformFees: number;
+  netEarnings: number;
+  fulfilledOrdersCount: number;
+  recentTransactions: Array<{
+    orderId: string;
+    grossSubtotal: number;
+    netEarned: number;
+    date: string;
+  }>;
+}
+
+const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export default function VendorEarningsScreen() {
-  const [payouts, setPayouts] = useState<PayoutTransaction[]>(INITIAL_PAYOUTS);
-  const [availableBalance, setAvailableBalance] = useState(1248.5);
-  const [pendingClearance, setPendingClearance] = useState(320.0);
+  const [earnings, setEarnings] = useState<EarningsData | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [payouts, setPayouts] = useState<Transaction[]>([]);
+
+  const fetchEarnings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/vendor/earnings`, { credentials: "include" });
+      if (res.ok) {
+        const body = await res.json();
+        if (body?.data) {
+          const data: EarningsData = body.data;
+          setEarnings(data);
+
+          const formattedTx: Transaction[] = (data.recentTransactions || []).map((t, idx) => ({
+            id: t.orderId || `tx-${idx}`,
+            payoutRef: `ORD-${(t.orderId || "").slice(-6).toUpperCase()}`,
+            date: t.date ? new Date(t.date).toLocaleDateString() : "Recent",
+            amount: `₹${t.netEarned.toFixed(2)}`,
+            status: "COMPLETED",
+            bankAccount: "Primary Bank Account",
+          }));
+          setPayouts(formattedTx);
+        }
+      }
+    } catch {
+      /* graceful fallback */
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEarnings();
+  }, [fetchEarnings]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchEarnings();
+    setRefreshing(false);
+  };
+
+  const netBalance = earnings?.netEarnings ?? 0;
+  const grossSales = earnings?.grossSales ?? 0;
+  const platformFees = earnings?.platformFees ?? 0;
 
   const handleRequestPayout = () => {
-    if (availableBalance <= 0) {
-      Alert.alert("Insufficient Balance", "You have no available funds for payout.");
+    if (netBalance <= 0) {
+      Alert.alert("Insufficient Balance", "You have no available net earnings for payout.");
       return;
     }
 
     Alert.alert(
       "Confirm Payout",
-      `Request instant transfer of ₹${availableBalance.toFixed(2)} to HDFC Bank (****4819)?`,
+      `Request transfer of ₹${netBalance.toFixed(2)} to your registered bank account?`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Transfer Now",
           onPress: () => {
-            const newPayout: PayoutTransaction = {
+            const newPayout: Transaction = {
               id: `p-${Date.now()}`,
               payoutRef: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
               date: "Just now",
-              amount: `₹${availableBalance.toFixed(2)}`,
+              amount: `₹${netBalance.toFixed(2)}`,
               status: "PROCESSING",
-              bankAccount: "HDFC Bank (****4819)",
+              bankAccount: "Primary Bank Account",
             };
             setPayouts([newPayout, ...payouts]);
-            setAvailableBalance(0);
             Alert.alert(
               "Payout Initiated!",
-              "Funds will arrive in your bank account within 24 hours."
+              "Funds will arrive in your bank account within 24 hours.",
             );
           },
         },
-      ]
+      ],
     );
   };
 
   return (
     <SafeAreaView style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Earnings & Payouts</Text>
-          <Text style={styles.subTitle}>Track revenue, payouts, and financial summaries</Text>
+          <Text style={styles.subTitle}>Live synced financial revenue & commission breakdown</Text>
         </View>
 
         {/* Main Payout Balance Card */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
             <View>
-              <Text style={styles.balanceLabel}>Available Payout Balance</Text>
-              <Text style={styles.balanceAmount}>₹{availableBalance.toFixed(2)}</Text>
+              <Text style={styles.balanceLabel}>
+                Available Net Earnings (After 15% Platform Fee)
+              </Text>
+              <Text style={styles.balanceAmount}>₹{netBalance.toFixed(2)}</Text>
             </View>
             <View style={styles.iconCircle}>
               <Ionicons name="wallet" size={24} color="#7c3aed" />
@@ -119,8 +143,8 @@ export default function VendorEarningsScreen() {
 
           <View style={styles.balanceFooterRow}>
             <View>
-              <Text style={styles.subLabel}>Pending Clearance</Text>
-              <Text style={styles.subVal}>₹{pendingClearance.toFixed(2)}</Text>
+              <Text style={styles.subLabel}>Platform Commission (15%)</Text>
+              <Text style={styles.subVal}>₹{platformFees.toFixed(2)}</Text>
             </View>
             <TouchableOpacity style={styles.btnPayout} onPress={handleRequestPayout}>
               <Ionicons name="arrow-forward-circle" size={18} color="#fff" />
@@ -133,64 +157,70 @@ export default function VendorEarningsScreen() {
         <View style={styles.metricsRow}>
           <View style={styles.metricCard}>
             <Ionicons name="trending-up-outline" size={20} color="#059669" />
-            <Text style={styles.metricTitle}>This Week</Text>
-            <Text style={styles.metricVal}>₹1,890.40</Text>
-            <Text style={styles.metricSub}>+18.4% vs last week</Text>
+            <Text style={styles.metricTitle}>Gross Sales</Text>
+            <Text style={styles.metricVal}>₹{grossSales.toFixed(2)}</Text>
+            <Text style={styles.metricSub}>Total order value</Text>
           </View>
 
           <View style={styles.metricCard}>
             <Ionicons name="pie-chart-outline" size={20} color="#2563eb" />
-            <Text style={styles.metricTitle}>Lifetime Gross</Text>
-            <Text style={styles.metricVal}>₹24,650.00</Text>
-            <Text style={styles.metricSub}>Total order earnings</Text>
+            <Text style={styles.metricTitle}>Orders Fulfilled</Text>
+            <Text style={styles.metricVal}>{earnings?.fulfilledOrdersCount ?? 0}</Text>
+            <Text style={styles.metricSub}>Completed orders</Text>
           </View>
         </View>
 
         {/* Payout History Section */}
-        <Text style={styles.sectionTitle}>Payout History</Text>
+        <Text style={styles.sectionTitle}>Recent Transactions & Payouts</Text>
 
-        {payouts.map((item) => (
-          <View key={item.id} style={styles.payoutCard}>
-            <View style={styles.payoutMain}>
-              <View style={styles.payoutIconBadge}>
-                <Ionicons
-                  name={item.status === "COMPLETED" ? "checkmark-circle" : "time"}
-                  size={20}
-                  color={item.status === "COMPLETED" ? "#16a34a" : "#d97706"}
-                />
-              </View>
+        {payouts.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Ionicons name="receipt-outline" size={32} color="#9ca3af" />
+            <Text style={styles.emptyTitle}>No transactions yet</Text>
+            <Text style={styles.emptySub}>Delivered orders will appear here automatically.</Text>
+          </View>
+        ) : (
+          payouts.map((item) => (
+            <View key={item.id} style={styles.payoutCard}>
+              <View style={styles.payoutMain}>
+                <View style={styles.payoutIconBadge}>
+                  <Ionicons
+                    name={item.status === "COMPLETED" ? "checkmark-circle" : "time"}
+                    size={20}
+                    color={item.status === "COMPLETED" ? "#16a34a" : "#d97706"}
+                  />
+                </View>
 
-              <View style={{ flex: 1 }}>
-                <Text style={styles.payoutRef}>{item.payoutRef}</Text>
-                <Text style={styles.payoutBank}>{item.bankAccount}</Text>
-                <Text style={styles.payoutDate}>{item.date}</Text>
-              </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.payoutRef}>{item.payoutRef}</Text>
+                  <Text style={styles.payoutBank}>{item.bankAccount}</Text>
+                  <Text style={styles.payoutDate}>{item.date}</Text>
+                </View>
 
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={styles.payoutAmount}>{item.amount}</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    item.status === "COMPLETED"
-                      ? styles.badgeCompleted
-                      : styles.badgeProcessing,
-                  ]}
-                >
-                  <Text
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.payoutAmount}>{item.amount}</Text>
+                  <View
                     style={[
-                      styles.badgeText,
-                      item.status === "COMPLETED"
-                        ? styles.badgeCompletedText
-                        : styles.badgeProcessingText,
+                      styles.statusBadge,
+                      item.status === "COMPLETED" ? styles.badgeCompleted : styles.badgeProcessing,
                     ]}
                   >
-                    {item.status}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        item.status === "COMPLETED"
+                          ? styles.badgeCompletedText
+                          : styles.badgeProcessingText,
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -294,4 +324,15 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 10, fontWeight: "700" },
   badgeCompletedText: { color: "#16a34a" },
   badgeProcessingText: { color: "#d97706" },
+  emptyCard: {
+    backgroundColor: "#fff",
+    padding: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginBottom: 20,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: "600", color: "#374151", marginTop: 8 },
+  emptySub: { fontSize: 13, color: "#9ca3af", marginTop: 2 },
 });

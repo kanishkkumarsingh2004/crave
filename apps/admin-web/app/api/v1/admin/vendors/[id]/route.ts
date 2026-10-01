@@ -28,32 +28,53 @@ export async function GET(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
 
-    const vendor = await prisma.vendor.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            status: true,
-            createdAt: true,
+    const [vendor, orderRevenue] = await Promise.all([
+      prisma.vendor.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              status: true,
+              createdAt: true,
+            },
+          },
+          documents: true,
+          _count: {
+            select: {
+              products: true,
+              orders: true,
+              reviews: true,
+            },
           },
         },
-        documents: true,
-        _count: {
-          select: {
-            products: true,
-            orders: true,
-            reviews: true,
-          },
+      }),
+      prisma.order.aggregate({
+        where: {
+          vendorId: id,
+          OR: [{ paymentStatus: "PAID" }, { status: "DELIVERED" }],
         },
-      },
-    });
+        _sum: {
+          subtotal: true,
+          total: true,
+        },
+      }),
+    ]);
 
     if (!vendor) return apiNotFound("Vendor");
-    return apiSuccess(vendor);
+
+    const grossSales = Number(orderRevenue._sum.subtotal ?? 0);
+    const netEarnings = Math.round(grossSales * 0.85 * 100) / 100;
+
+    return apiSuccess({
+      ...vendor,
+      grossSales,
+      netEarnings,
+      totalRevenue: netEarnings,
+    });
   } catch (err) {
     return apiInternalError(err);
   }

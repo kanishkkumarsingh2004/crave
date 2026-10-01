@@ -16,6 +16,7 @@ import {
   Package,
   ShoppingBag,
   Star,
+  Wallet,
 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import Link from "next/link";
@@ -51,6 +52,9 @@ interface VendorDetailData {
   rejectionReason: string | null;
   suspendedAt: string | null;
   createdAt: string;
+  grossSales?: number;
+  netEarnings?: number;
+  totalRevenue?: number;
   user: {
     id: string;
     name: string;
@@ -231,7 +235,7 @@ export function VendorDetail({ id }: VendorDetailProps) {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
           <div className="p-3 rounded-lg bg-blue-500/10 text-blue-500">
             <Package className="h-6 w-6" />
@@ -248,9 +252,19 @@ export function VendorDetail({ id }: VendorDetailProps) {
           </div>
           <div>
             <div className="text-2xl font-bold">{vendor._count.orders}</div>
-            <div className="text-xs text-muted-foreground font-medium font-medium">
-              Total Orders
+            <div className="text-xs text-muted-foreground font-medium">Total Orders</div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
+          <div className="p-3 rounded-lg bg-violet-500/10 text-violet-500">
+            <Wallet className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">
+              ₹{vendor.totalRevenue?.toLocaleString() ?? "0"}
             </div>
+            <div className="text-xs text-muted-foreground font-medium">Net Revenue</div>
           </div>
         </div>
 

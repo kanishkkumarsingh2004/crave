@@ -25,13 +25,6 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="product/[id]" options={{ headerShown: true, title: "Product" }} />
-            <Stack.Screen name="vendor/[id]" options={{ headerShown: true, title: "Vendor" }} />
-            <Stack.Screen name="order/[id]" options={{ headerShown: true, title: "Order" }} />
-            <Stack.Screen
-              name="checkout/index"
-              options={{ headerShown: true, title: "Checkout" }}
-            />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>

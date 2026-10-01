@@ -1,24 +1,21 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: {
-    default: "Delivery Platform — Admin",
-    template: "%s | Delivery Admin",
+    default: "Delivery Platform — Hyperlocal Delivery",
+    template: "%s | Delivery Platform",
   },
-  description: "Multi-Role Delivery Platform Administration",
+  description: "Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Apps",
   robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans antialiased bg-slate-950 text-slate-100">
         <Providers>{children}</Providers>
       </body>
     </html>

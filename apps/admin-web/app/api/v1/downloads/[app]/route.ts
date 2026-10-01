@@ -1,46 +1,52 @@
 /**
- * GET /api/v1/downloads/[app] — Download Android APK file for mobile apps
+ * GET /api/v1/downloads/[app] — Download Android APK & iOS IPA files for mobile apps
  *
  * Supported params: "customer" | "vendor" | "driver"
+ * Query param: ?platform=android | ios
  */
 
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ app: string }> }) {
   try {
     const { app } = await params;
-    const appMap: Record<string, string> = {
-      customer: "Customer-Delivery-App-v1.0.0.apk",
-      vendor: "Vendor-Partner-App-v1.0.0.apk",
-      driver: "Driver-Delivery-App-v1.0.0.apk",
-    };
+    const platform = request.nextUrl.searchParams.get("platform") === "ios" ? "ios" : "android";
 
-    const fileName = appMap[app] || "Delivery-Platform-App.apk";
-    const dataDir = path.join(process.cwd(), "data", "downloads");
-    await fs.mkdir(dataDir, { recursive: true });
+    const isIos = platform === "ios";
+    const ext = isIos ? "ipa" : "apk";
+    const fileName = `${app}-v1.0.0.${ext}`;
 
-    const filePath = path.join(dataDir, fileName);
+    const publicApkDir = path.join(process.cwd(), "public", "apk");
+    const filePath = path.join(publicApkDir, fileName);
 
-    // If actual build binary doesn't exist yet, generate a valid placeholder APK content
+    // Verify binary exists
     try {
       await fs.access(filePath);
     } catch {
-      await fs.writeFile(
-        filePath,
-        `PK\x03\x04\x14\x00\x08\x00\x08\x00Delivery Platform Android APK Package Placeholder for ${app.toUpperCase()} APP`,
+      return NextResponse.json(
+        { error: `${ext.toUpperCase()} build package not found for ${app}.` },
+        { status: 404 },
       );
     }
 
     const fileBuffer = await fs.readFile(filePath);
+    const contentType = isIos
+      ? "application/octet-stream"
+      : "application/vnd.android.package-archive";
 
     return new NextResponse(fileBuffer, {
       headers: {
-        "Content-Type": "application/vnd.android.package-archive",
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Content-Length": fileBuffer.length.toString(),
+        "Content-Transfer-Encoding": "binary",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "public, max-age=3600",
       },
     });
   } catch (err) {

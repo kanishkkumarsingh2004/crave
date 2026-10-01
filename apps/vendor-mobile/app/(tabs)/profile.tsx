@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useVendorAuthStore } from "../../src/stores/auth.store";
@@ -177,7 +169,12 @@ const styles = StyleSheet.create({
   storeName: { fontSize: 20, fontWeight: "700", color: "#111827" },
   storeEmail: { fontSize: 13, color: "#6b7280", marginTop: 2 },
   badgeRow: { flexDirection: "row", gap: 8, marginTop: 12 },
-  categoryBadge: { backgroundColor: "#f3f4f6", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  categoryBadge: {
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   categoryText: { fontSize: 11, fontWeight: "600", color: "#4b5563" },
   ratingBadge: {
     flexDirection: "row",

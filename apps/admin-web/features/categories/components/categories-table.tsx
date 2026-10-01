@@ -112,8 +112,15 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
 
   React.useEffect(() => {
     setMounted(true);
-    return () => setMounted(false);
-  }, []);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      setMounted(false);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
   function set<K extends keyof CategoryFormData>(key: K, value: CategoryFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -127,15 +134,20 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="fixed inset-0" onClick={onClose} />
-
-      <div className="relative z-10 bg-card border border-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4 my-8 animate-in zoom-in-95 duration-200">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="relative z-10 bg-card border border-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4 my-auto animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-base text-foreground">
             {initial ? "Edit Category" : "New Category"}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
@@ -230,12 +242,14 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
 
         <div className="flex gap-2 justify-end pt-2 border-t border-border">
           <button
+            type="button"
             onClick={onClose}
             className="h-9 px-4 rounded-lg border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={() => onSave(form)}
             disabled={!form.name.trim() || !form.slug.trim() || isPending}
             className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -245,7 +259,7 @@ function CategoryFormModal({ initial, onClose, onSave, isPending }: CategoryForm
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -360,7 +374,10 @@ export function CategoriesTable() {
       render: (c) => (
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setEditTarget(c)}
+            onClick={() => {
+              setShowForm(false);
+              setEditTarget(c);
+            }}
             id={`edit-category-${c.id}`}
             className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-input bg-background hover:bg-accent transition-colors"
             title="Edit"
@@ -390,7 +407,10 @@ export function CategoriesTable() {
             </span>
           )}
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditTarget(null);
+              setShowForm(true);
+            }}
             id="add-category-btn"
             className="ml-auto flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
@@ -465,7 +485,7 @@ export function CategoriesTable() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

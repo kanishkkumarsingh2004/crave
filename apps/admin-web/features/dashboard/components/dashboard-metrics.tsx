@@ -41,24 +41,32 @@ interface MetricItem {
   value: string | number;
   sub?: string;
   icon: LucideIcon;
-  color: string;
-  bg: string;
+  badgeClass: string;
+  borderHoverClass: string;
 }
 
-function MetricCard({ label, value, sub, icon: Icon, color, bg }: MetricItem) {
+function MetricCard({ label, value, sub, icon: Icon, badgeClass, borderHoverClass }: MetricItem) {
   return (
-    <div className="group rounded-xl border border-border bg-card p-4 space-y-2 transition-all hover:border-primary/30 hover:shadow-sm">
+    <div
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-4 space-y-3 transition-all duration-300 ${borderHoverClass} hover:shadow-md hover:-translate-y-0.5 cursor-default`}
+    >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider line-clamp-1">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider line-clamp-1">
           {label}
         </p>
-        <div className={`p-2 rounded-lg ${bg} ${color} flex-shrink-0 transition-transform group-hover:scale-105`}>
-          <Icon className="h-4 w-4" />
+        <div
+          className={`w-9 h-9 rounded-xl ${badgeClass} flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110`}
+        >
+          <Icon className="h-4 w-4 text-white shrink-0" />
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold tabular-nums text-foreground tracking-tight">{value}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-1 font-medium">{sub}</p>}
+        <p className="text-2xl font-black tabular-nums text-foreground tracking-tight">{value}</p>
+        {sub && (
+          <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <span>{sub}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -68,7 +76,7 @@ export function DashboardMetrics() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: fetchDashboardStats,
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
   });
 
   if (isLoading) {
@@ -77,7 +85,7 @@ export function DashboardMetrics() {
         {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-xl border border-border bg-card p-4 h-24 animate-pulse bg-muted/40"
+            className="rounded-2xl border border-border bg-card p-4 h-28 animate-pulse bg-muted/30"
           />
         ))}
       </div>
@@ -86,8 +94,8 @@ export function DashboardMetrics() {
 
   if (isError || !data) {
     return (
-      <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium">
-        Failed to load dashboard metrics. Please refresh the page.
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 text-sm text-destructive font-semibold">
+        Failed to load dashboard metrics. Please check network connection.
       </div>
     );
   }
@@ -95,83 +103,83 @@ export function DashboardMetrics() {
   const metrics: MetricItem[] = [
     {
       label: "Total Customers",
-      value: data.customers.total,
-      sub: `${data.customers.active} active`,
+      value: data.customers.total.toLocaleString(),
+      sub: `${data.customers.active} Active`,
       icon: Users,
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-500/10",
+      badgeClass: "bg-blue-600 text-white shadow-md shadow-blue-600/20",
+      borderHoverClass: "hover:border-blue-500/40",
     },
     {
       label: "Total Vendors",
-      value: data.vendors.total,
-      sub: `${data.vendors.active} active · ${data.vendors.pending} pending`,
+      value: data.vendors.total.toLocaleString(),
+      sub: `${data.vendors.active} Active · ${data.vendors.pending} Pending`,
       icon: Store,
-      color: "text-purple-600 dark:text-purple-400",
-      bg: "bg-purple-500/10",
+      badgeClass: "bg-purple-600 text-white shadow-md shadow-purple-600/20",
+      borderHoverClass: "hover:border-purple-500/40",
     },
     {
       label: "Total Drivers",
-      value: data.drivers.total,
-      sub: `${data.drivers.active} active · ${data.drivers.pending} pending`,
+      value: data.drivers.total.toLocaleString(),
+      sub: `${data.drivers.active} Active · ${data.drivers.pending} Pending`,
       icon: Truck,
-      color: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-500/10",
+      badgeClass: "bg-amber-600 text-white shadow-md shadow-amber-600/20",
+      borderHoverClass: "hover:border-amber-500/40",
     },
     {
       label: "Total Orders",
-      value: data.orders.total,
-      sub: `${data.orders.pending} pending`,
+      value: data.orders.total.toLocaleString(),
+      sub: `${data.orders.pending} Pending Approval`,
       icon: ShoppingBag,
-      color: "text-indigo-600 dark:text-indigo-400",
-      bg: "bg-indigo-500/10",
+      badgeClass: "bg-indigo-600 text-white shadow-md shadow-indigo-600/20",
+      borderHoverClass: "hover:border-indigo-500/40",
     },
     {
       label: "Active Orders",
-      value: data.orders.active,
-      sub: "In preparation",
+      value: data.orders.active.toLocaleString(),
+      sub: "In Preparation / Transit",
       icon: Clock,
-      color: "text-cyan-600 dark:text-cyan-400",
-      bg: "bg-cyan-500/10",
+      badgeClass: "bg-cyan-600 text-white shadow-md shadow-cyan-600/20",
+      borderHoverClass: "hover:border-cyan-500/40",
     },
     {
       label: "Completed Orders",
-      value: data.orders.completed,
-      sub: "Successfully delivered",
+      value: data.orders.completed.toLocaleString(),
+      sub: "Delivered",
       icon: CheckCircle2,
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-500/10",
+      badgeClass: "bg-emerald-600 text-white shadow-md shadow-emerald-600/20",
+      borderHoverClass: "hover:border-emerald-500/40",
     },
     {
       label: "Cancelled Orders",
-      value: data.orders.cancelled,
-      sub: "Refunded / Cancelled",
+      value: data.orders.cancelled.toLocaleString(),
+      sub: "Refunded",
       icon: XCircle,
-      color: "text-rose-600 dark:text-rose-400",
-      bg: "bg-rose-500/10",
+      badgeClass: "bg-rose-600 text-white shadow-md shadow-rose-600/20",
+      borderHoverClass: "hover:border-rose-500/40",
     },
     {
       label: "Active Deliveries",
-      value: data.deliveries.active,
-      sub: "Drivers en route",
+      value: data.deliveries.active.toLocaleString(),
+      sub: "Drivers En Route",
       icon: Navigation,
-      color: "text-teal-600 dark:text-teal-400",
-      bg: "bg-teal-500/10",
+      badgeClass: "bg-teal-600 text-white shadow-md shadow-teal-600/20",
+      borderHoverClass: "hover:border-teal-500/40",
     },
     {
-      label: "Total Revenue",
-      value: `₹${data.revenue.total}`,
-      sub: `Platform: ₹${data.revenue.platformRevenue}`,
+      label: "Total GMV Revenue",
+      value: `₹${Number(data.revenue.total).toLocaleString()}`,
+      sub: `Platform: ₹${Number(data.revenue.platformRevenue).toLocaleString()}`,
       icon: IndianRupee,
-      color: "text-green-600 dark:text-green-400",
-      bg: "bg-green-500/10",
+      badgeClass: "bg-green-600 text-white shadow-md shadow-green-600/20",
+      borderHoverClass: "hover:border-green-500/40",
     },
     {
-      label: "Vendor Revenue",
-      value: `₹${data.revenue.vendorRevenue}`,
-      sub: `Driver: ₹${data.revenue.driverPayments}`,
+      label: "Vendor Net Revenue",
+      value: `₹${Number(data.revenue.vendorRevenue).toLocaleString()}`,
+      sub: `Driver Payouts: ₹${Number(data.revenue.driverPayments).toLocaleString()}`,
       icon: Wallet,
-      color: "text-violet-600 dark:text-violet-400",
-      bg: "bg-violet-500/10",
+      badgeClass: "bg-violet-600 text-white shadow-md shadow-violet-600/20",
+      borderHoverClass: "hover:border-violet-500/40",
     },
   ];
 

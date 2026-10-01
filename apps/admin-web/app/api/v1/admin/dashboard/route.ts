@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       pendingDrivers,
       orderCounts,
       revenueData,
+      orderRevenueData,
       activeDeliveries,
     ] = await Promise.all([
       // Customers
@@ -64,6 +65,18 @@ export async function GET(request: NextRequest) {
         _sum: { amount: true },
       }),
 
+      // Order financial totals for revenue breakdown
+      prisma.order.aggregate({
+        where: {
+          OR: [{ paymentStatus: PaymentStatus.PAID }, { status: OrderStatus.DELIVERED }],
+        },
+        _sum: {
+          subtotal: true,
+          deliveryFee: true,
+          total: true,
+        },
+      }),
+
       // Active deliveries
       prisma.delivery.count({
         where: {
@@ -86,6 +99,17 @@ export async function GET(request: NextRequest) {
     ) as Record<string, number>;
 
     const totalOrders = Object.values(orderByStatus).reduce((sum, c) => sum + c, 0);
+
+    const paidPaymentsTotal = Number(revenueData._sum.amount ?? 0);
+    const orderTotalSum = Number(orderRevenueData._sum.total ?? 0);
+    const totalRevenueCalc = Math.max(paidPaymentsTotal, orderTotalSum);
+
+    const grossSalesSum = Number(orderRevenueData._sum.subtotal ?? 0);
+    const deliveryFeesSum = Number(orderRevenueData._sum.deliveryFee ?? 0);
+
+    const platformRevenueCalc = Math.round(grossSalesSum * 0.15 * 100) / 100;
+    const vendorRevenueCalc = Math.round(grossSalesSum * 0.85 * 100) / 100;
+    const driverPaymentsCalc = Math.round(deliveryFeesSum * 100) / 100;
 
     const data = {
       customers: {
@@ -115,10 +139,10 @@ export async function GET(request: NextRequest) {
         cancelled: orderByStatus[OrderStatus.CANCELLED] ?? 0,
       },
       revenue: {
-        total: revenueData._sum.amount?.toString() ?? "0",
-        vendorRevenue: "0", // Calculated in Phase 6 with payment split logic
-        driverPayments: "0",
-        platformRevenue: "0",
+        total: totalRevenueCalc.toFixed(2),
+        vendorRevenue: vendorRevenueCalc.toFixed(2),
+        driverPayments: driverPaymentsCalc.toFixed(2),
+        platformRevenue: platformRevenueCalc.toFixed(2),
       },
       deliveries: {
         active: activeDeliveries,

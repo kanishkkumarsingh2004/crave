@@ -26,6 +26,7 @@ interface Vendor {
   isOpen: boolean;
   approvedAt: string | null;
   createdAt: string;
+  revenue?: number;
   user: { id: string; name: string; email: string; status: string };
   _count: { products: number; orders: number };
 }
@@ -189,7 +190,7 @@ function VendorActions({
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -283,6 +284,11 @@ export function VendorsTable() {
       key: "orders",
       header: "Orders",
       render: (v) => v._count.orders.toLocaleString(),
+    },
+    {
+      key: "revenue",
+      header: "Net Revenue",
+      render: (v) => `₹${(v.revenue ?? 0).toLocaleString()}`,
     },
     {
       key: "createdAt",

@@ -71,7 +71,7 @@ export const useDriverAuthStore = create<DriverAuthState>((set) => ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Origin": API_BASE,
+          Origin: API_BASE,
         },
         credentials: "include",
         body: JSON.stringify({ email, password }),
@@ -95,7 +95,7 @@ export const useDriverAuthStore = create<DriverAuthState>((set) => ({
     try {
       await fetch(`${API_BASE}/api/auth/sign-out`, {
         method: "POST",
-        headers: { "Origin": API_BASE },
+        headers: { Origin: API_BASE },
         credentials: "include",
       });
     } catch {

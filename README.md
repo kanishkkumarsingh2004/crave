@@ -94,12 +94,12 @@ Managed via **pnpm Workspaces** and **Turborepo** for optimized caching and fast
 
 ## 📱 Domain Applications
 
-| Application           | Technology                                            | Role / Scope            | Primary Features                                                                                                                    |
-| :-------------------- | :---------------------------------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
-| **`admin-web`**       | Next.js 15, React 19, TailwindCSS, Recharts           | Platform Administrators | Dashboard analytics, user/vendor/driver approvals, audit logs, order monitoring, platform settings.                                 |
-| **`customer-mobile`** | React Native, Expo SDK 57, Expo Router, Zustand       | Customers               | Product browsing, cart management, atomic checkout, live order tracking, address book, refund requests.                             |
-| **`vendor-mobile`**   | React Native, Expo SDK 57, Expo Router, Zustand       | Store Owners            | Store open/close toggle, incoming order acceptance, preparation state machine, stock management, earnings.                          |
-| **`driver-mobile`**   | React Native, Expo SDK 57, Expo Router, Expo Location | Delivery Drivers        | Availability toggle (`OFFLINE ↔ AVAILABLE`), order assignment offer accept/reject, OTP handover verification, GPS location updates. |
+| Application           | Technology                                            | Role / Scope            | App Downloads & Access                                                                                                                              | Primary Features                                                                                                                    |
+| :-------------------- | :---------------------------------------------------- | :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| **`admin-web`**       | Next.js 15, React 19, TailwindCSS, Recharts           | Platform Administrators | 🌐 [Web Portal](http://localhost:3000) <br/> 📥 [Downloads Hub](http://localhost:3000/downloads)                                                    | Dashboard analytics, user/vendor/driver approvals, audit logs, order monitoring, platform settings.                                 |
+| **`customer-mobile`** | React Native, Expo SDK 57, Expo Router, Zustand       | Customers               | 🤖 [Android APK (v1.0.0)](http://localhost:3000/apk/customer-v1.0.0.apk) <br/> 🍎 [iOS IPA (v1.0.0)](http://localhost:3000/apk/customer-v1.0.0.ipa) | Product browsing, cart management, atomic checkout, live order tracking, address book, refund requests.                             |
+| **`vendor-mobile`**   | React Native, Expo SDK 57, Expo Router, Zustand       | Store Owners            | 🤖 [Android APK (v1.0.0)](http://localhost:3000/apk/vendor-v1.0.0.apk) <br/> 🍎 [iOS IPA (v1.0.0)](http://localhost:3000/apk/vendor-v1.0.0.ipa)     | Store open/close toggle, incoming order acceptance, preparation state machine, stock management, earnings.                          |
+| **`driver-mobile`**   | React Native, Expo SDK 57, Expo Router, Expo Location | Delivery Drivers        | 🤖 [Android APK (v1.0.0)](http://localhost:3000/apk/driver-v1.0.0.apk) <br/> 🍎 [iOS IPA (v1.0.0)](http://localhost:3000/apk/driver-v1.0.0.ipa)     | Availability toggle (`OFFLINE ↔ AVAILABLE`), order assignment offer accept/reject, OTP handover verification, GPS location updates. |
 
 ---
 
@@ -271,7 +271,8 @@ pnpm --filter driver-mobile start
 | `pnpm ci`              | Full CI verification pipeline (Format + Lint + Typecheck + Test + Prisma + Web & Mobile Build). |
 | `pnpm ci:apk`          | Complete CI pipeline including native Android preview APK compilation.                          |
 | `pnpm build:mobile`    | Export web and JavaScript bundles for all mobile apps (`expo export`).                          |
-| `pnpm build:apk`       | Trigger local EAS Android preview APK builds for all 3 mobile apps.                             |
+| `pnpm package:builds`  | Package static app builds (3 Android APKs + 3 iOS IPAs) into `apk/` & `public/apk/`.            |
+| `pnpm build:apk`       | Alias for `pnpm package:builds` to generate all 6 mobile application packages.                  |
 
 ---
 

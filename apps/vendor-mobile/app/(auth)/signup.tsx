@@ -68,27 +68,55 @@ export default function VendorSignUpScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Your Name *</Text>
-          <TextInput style={styles.input} placeholder="Full name" value={name} onChangeText={setName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Full name"
+            value={name}
+            onChangeText={setName}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Business Name *</Text>
-          <TextInput style={styles.input} placeholder="Store / Restaurant name" value={businessName} onChangeText={setBusinessName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Store / Restaurant name"
+            value={businessName}
+            onChangeText={setBusinessName}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email *</Text>
-          <TextInput style={styles.input} placeholder="business@example.com" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+          <TextInput
+            style={styles.input}
+            placeholder="business@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Phone</Text>
-          <TextInput style={styles.input} placeholder="+91XXXXXXXXXX" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+          <TextInput
+            style={styles.input}
+            placeholder="+91XXXXXXXXXX"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={setPhone}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Business Address</Text>
-          <TextInput style={styles.input} placeholder="Street, City" value={address} onChangeText={setAddress} />
+          <TextInput
+            style={styles.input}
+            placeholder="Street, City"
+            value={address}
+            onChangeText={setAddress}
+          />
         </View>
 
         <View style={styles.inputGroup}>

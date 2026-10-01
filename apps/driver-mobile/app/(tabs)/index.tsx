@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -188,7 +180,12 @@ export default function DriverDashboardScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: "#f8f9fa" },
   scrollContent: { padding: 16 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   greeting: { fontSize: 13, color: "#6b7280" },
   driverName: { fontSize: 22, fontWeight: "700", color: "#111827" },
   statusToggleContainer: { alignItems: "flex-end" },
@@ -244,7 +241,15 @@ const styles = StyleSheet.create({
   metaRow: { marginBottom: 12 },
   metaText: { fontSize: 12, color: "#6b7280" },
   actionsRow: { flexDirection: "row", gap: 8 },
-  btnAction: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6 },
+  btnAction: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
   btnDecline: { backgroundColor: "#fee2e2" },
   btnDeclineText: { color: "#dc2626", fontWeight: "600", fontSize: 13 },
   btnAccept: { backgroundColor: "#2563eb" },
