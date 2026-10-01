@@ -1,30 +1,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { findShortestPathAStar, AStarRouteResult } from "@delivery/utils";
+import { useDeviceLocation } from "../hooks/useDeviceLocation";
 
 interface LiveDriverMapProps {
   orderNumber?: string;
   customerName?: string;
   customerPhone?: string;
   destinationAddress?: string;
+  destinationLat?: number;
+  destinationLng?: number;
   onArrivedAtDestination?: () => void;
 }
 
-const DRIVER_ROUTE_STEPS = [
-  { instruction: "Head north on 100ft Ring Road towards 4th Block", dist: "300m" },
-  { instruction: "Turn right onto 8th Main Road", dist: "150m" },
-  { instruction: "Continue straight past Sony Signal Junction", dist: "600m" },
-  { instruction: "Arriving at Customer Destination on the Left", dist: "50m" },
-];
-
 export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
   orderNumber = "ORD-10004",
-  customerName = "Ananya Roy",
-  customerPhone = "+919812345678",
-  destinationAddress = "Flat 402, Sunshine Heights, 7th Block Koramangala",
+  customerName = "Alice Smith",
+  customerPhone = "+919876543210",
+  destinationAddress = "123 Main Street, Apt 4B, Koramangala, Bengaluru",
+  destinationLat = 12.9392,
+  destinationLng = 77.6248,
 }) => {
+  const { location: driverGpsLocation, requestGpsPermission } = useDeviceLocation();
+  const [routeResult, setRouteResult] = useState<AStarRouteResult | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
-  const [currentSpeed, setCurrentSpeed] = useState(28);
   const [soundMuted, setSoundMuted] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -33,7 +33,7 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.25,
+          toValue: 1.3,
           duration: 900,
           useNativeDriver: true,
         }),
@@ -46,91 +46,147 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
     ).start();
   }, [pulseAnim]);
 
-  // Simulate turn-by-turn navigation & speed updates
+  // Compute A* Shortest Path whenever driver GPS location or destination changes
   useEffect(() => {
-    const timer = setInterval(() => {
-      setStepIndex((prev) => (prev + 1) % DRIVER_ROUTE_STEPS.length);
-      setCurrentSpeed(Math.floor(22 + Math.random() * 12));
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+    const startPoint = driverGpsLocation
+      ? { latitude: driverGpsLocation.latitude, longitude: driverGpsLocation.longitude, name: "Driver GPS" }
+      : { latitude: 12.9345, longitude: 77.6101, name: "Driver Base" };
 
-  const currentStep = DRIVER_ROUTE_STEPS[stepIndex];
+    const endPoint = {
+      latitude: destinationLat,
+      longitude: destinationLng,
+      name: customerName,
+    };
+
+    const calculatedRoute = findShortestPathAStar(startPoint, endPoint);
+    setRouteResult(calculatedRoute);
+    setStepIndex(0);
+  }, [driverGpsLocation, destinationLat, destinationLng, customerName]);
+
+  // Cycle turn-by-turn navigation HUD instructions derived from A* path
+  useEffect(() => {
+    if (!routeResult || routeResult.steps.length === 0) return;
+    const timer = setInterval(() => {
+      setStepIndex((prev) => (prev + 1) % routeResult.steps.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [routeResult]);
+
+  const currentDriverLat = driverGpsLocation?.latitude ?? 12.9345;
+  const currentDriverLng = driverGpsLocation?.longitude ?? 77.6101;
+  const currentSpeed = Math.round(26 + (currentDriverLat % 0.001) * 5000);
+
+  const currentStepInstruction =
+    routeResult?.steps[stepIndex]?.instruction || "Head towards destination via A* optimal route";
+  const currentStepDist = routeResult?.steps[stepIndex]?.distanceKm
+    ? `${routeResult.steps[stepIndex].distanceKm} km`
+    : "300m";
 
   const handleCallCustomer = () => {
     Linking.openURL(`tel:${customerPhone}`);
   };
 
   const handleOpenExternalMaps = () => {
-    // Open Google Maps / Apple Maps intent
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${currentDriverLat},${currentDriverLng}&destination=${encodeURIComponent(
       destinationAddress,
     )}`;
     Linking.openURL(url);
   };
 
+  const handleRecalculateAStar = () => {
+    requestGpsPermission();
+  };
+
   return (
     <View style={styles.container}>
-      {/* Turn-by-Turn GPS Navigation HUD */}
+      {/* Mapcn Dark Header Navigation HUD */}
       <View style={styles.hudBanner}>
         <View style={styles.hudIconBox}>
-          <Ionicons name="arrow-redo" size={24} color="#ffffff" />
+          <Ionicons name="navigate-circle" size={24} color="#38bdf8" />
         </View>
 
         <View style={styles.hudTextContainer}>
-          <Text style={styles.hudInstruction}>{currentStep.instruction}</Text>
-          <Text style={styles.hudDistance}>In {currentStep.dist}</Text>
+          <Text style={styles.hudInstruction}>{currentStepInstruction}</Text>
+          <Text style={styles.hudDistance}>A* Route Step • In {currentStepDist}</Text>
         </View>
 
         <TouchableOpacity style={styles.hudMuteBtn} onPress={() => setSoundMuted(!soundMuted)}>
-          <Ionicons name={soundMuted ? "volume-mute" : "volume-high"} size={20} color="#ffffff" />
+          <Ionicons name={soundMuted ? "volume-mute" : "volume-high"} size={20} color="#94a3b8" />
         </TouchableOpacity>
       </View>
 
-      {/* Driver Map Canvas */}
+      {/* Mapcn Dark Canvas Map Area */}
       <View style={styles.mapCanvas}>
-        {/* Map Grid / Road Topography simulation */}
-        <View style={styles.roadNetwork}>
-          <View style={styles.mainRoadVertical} />
-          <View style={styles.crossRoadHorizontal} />
-          <View style={styles.routePolylineHighlighted} />
+        {/* Dark Map Vector Grid (Mapcn Style) */}
+        <View style={styles.darkRoadGrid}>
+          <View style={styles.roadLineVertical1} />
+          <View style={styles.roadLineVertical2} />
+          <View style={styles.roadLineHorizontal1} />
+          <View style={styles.roadLineHorizontal2} />
+          <View style={styles.aStarPolylineGlowing} />
         </View>
 
-        {/* Floating Speedometer Pill */}
-        <View style={styles.speedometerPill}>
-          <Text style={styles.speedValue}>{currentSpeed}</Text>
-          <Text style={styles.speedUnit}>KM/H</Text>
-          <View style={styles.limitTag}>
-            <Text style={styles.limitText}>Limit 40</Text>
+        {/* Mapcn Styled Overlay Pill Card (A* Route Metrics) */}
+        <View style={styles.mapcnMetricsCard}>
+          <View style={styles.mapcnCardHeader}>
+            <Ionicons name="shield-checkmark" size={14} color="#38bdf8" />
+            <Text style={styles.mapcnCardTitle}>A* Shortest Path</Text>
+          </View>
+          <View style={styles.mapcnCardStats}>
+            <View style={styles.statMetric}>
+              <Text style={styles.statVal}>{routeResult?.totalDistanceKm ?? "2.4"}</Text>
+              <Text style={styles.statLbl}>KM</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statMetric}>
+              <Text style={styles.statVal}>{routeResult?.estimatedMins ?? "12"}</Text>
+              <Text style={styles.statLbl}>MINS</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statMetric}>
+              <Text style={styles.statVal}>{currentSpeed}</Text>
+              <Text style={styles.statLbl}>KM/H</Text>
+            </View>
           </View>
         </View>
 
-        {/* Map Action Quick Buttons */}
+        {/* GPS Live Accuracy Badge */}
+        <View style={styles.gpsLockBadge}>
+          <View style={styles.gpsGreenDot} />
+          <Text style={styles.gpsLockText}>
+            GPS {driverGpsLocation ? "Live" : "Simulated"} ({currentDriverLat.toFixed(4)}, {currentDriverLng.toFixed(4)})
+          </Text>
+        </View>
+
+        {/* Floating Action Buttons */}
         <View style={styles.mapActions}>
           <TouchableOpacity style={styles.actionBtn} onPress={handleOpenExternalMaps}>
-            <Ionicons name="open-outline" size={20} color="#0f172a" />
+            <Ionicons name="open-outline" size={18} color="#38bdf8" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionBtn} onPress={handleCallCustomer}>
-            <Ionicons name="call" size={20} color="#16a34a" />
+            <Ionicons name="call" size={18} color="#4ade80" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={handleRecalculateAStar}>
+            <Ionicons name="refresh" size={18} color="#a855f7" />
           </TouchableOpacity>
         </View>
 
-        {/* Merchant Pickup Node */}
+        {/* Start / Store Pickup Marker (Green) */}
         <View style={[styles.mapPin, styles.merchantPinPos]}>
           <View style={styles.merchantPinBubble}>
             <Ionicons name="restaurant" size={12} color="#ffffff" />
           </View>
-          <Text style={styles.pinTag}>Picked Up</Text>
+          <Text style={styles.pinTag}>Store</Text>
         </View>
 
-        {/* Live Driver Bike Position */}
+        {/* Live Driver Mobile GPS Position (Blue Bike Marker) */}
         <View
           style={[
             styles.mapPin,
             styles.driverBikePos,
             {
-              left: `${30 + stepIndex * 18}%`,
-              top: `${45 - (stepIndex % 2) * 5}%`,
+              left: `${35 + ((currentDriverLng * 100) % 25)}%`,
+              top: `${42 - ((currentDriverLat * 100) % 20)}%`,
             },
           ]}
         >
@@ -139,11 +195,11 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
             <Ionicons name="bicycle" size={20} color="#ffffff" />
           </View>
           <View style={styles.youBadge}>
-            <Text style={styles.youText}>YOU</Text>
+            <Text style={styles.youText}>YOU (GPS)</Text>
           </View>
         </View>
 
-        {/* Customer Destination Dropoff Node */}
+        {/* Customer Destination Marker (Red Pin) */}
         <View style={[styles.mapPin, styles.customerPinPos]}>
           <View style={styles.customerPinBubble}>
             <Ionicons name="location" size={14} color="#ffffff" />
@@ -152,7 +208,7 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
         </View>
       </View>
 
-      {/* Navigation Quick Telemetry Footer */}
+      {/* Telemetry Footer Bar */}
       <View style={styles.telemetryFooter}>
         <View style={styles.customerSummary}>
           <Ionicons name="person-circle" size={32} color="#2563eb" />
@@ -164,8 +220,8 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
           </View>
         </View>
 
-        <TouchableOpacity style={styles.navBtn} onPress={handleOpenExternalMaps}>
-          <Ionicons name="navigate" size={16} color="#ffffff" style={{ marginRight: 4 }} />
+        <TouchableOpacity style={styles.navBtn} onPress={handleOpenExternalMaps} activeOpacity={0.8}>
+          <Ionicons name="navigate" size={16} color="#ffffff" style={{ marginRight: 6 }} />
           <Text style={styles.navBtnText}>Open in Google Maps</Text>
         </TouchableOpacity>
       </View>
@@ -175,25 +231,28 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#090d16",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#1e293b",
     marginBottom: 16,
   },
   hudBanner: {
     backgroundColor: "#0f172a",
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1e293b",
   },
   hudIconBox: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#2563eb",
+    backgroundColor: "#0284c7",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -201,95 +260,148 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hudInstruction: {
-    color: "#ffffff",
+    color: "#f8fafc",
     fontSize: 13,
     fontWeight: "700",
   },
   hudDistance: {
-    color: "#94a3b8",
+    color: "#38bdf8",
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: "600",
     marginTop: 1,
   },
   hudMuteBtn: {
     padding: 6,
   },
   mapCanvas: {
-    height: 230,
-    backgroundColor: "#f1f5f9",
+    height: 250,
+    backgroundColor: "#090d16",
     position: "relative",
     overflow: "hidden",
   },
-  roadNetwork: {
+  darkRoadGrid: {
     ...StyleSheet.absoluteFill,
   },
-  mainRoadVertical: {
+  roadLineVertical1: {
     position: "absolute",
-    left: "50%",
+    left: "30%",
     top: 0,
     bottom: 0,
-    width: 24,
-    backgroundColor: "#cbd5e1",
-    marginLeft: -12,
+    width: 12,
+    backgroundColor: "#1e293b",
   },
-  crossRoadHorizontal: {
+  roadLineVertical2: {
     position: "absolute",
-    top: "45%",
+    left: "70%",
+    top: 0,
+    bottom: 0,
+    width: 14,
+    backgroundColor: "#1e293b",
+  },
+  roadLineHorizontal1: {
+    position: "absolute",
+    top: "40%",
     left: 0,
     right: 0,
-    height: 20,
-    backgroundColor: "#cbd5e1",
+    height: 14,
+    backgroundColor: "#1e293b",
   },
-  routePolylineHighlighted: {
+  roadLineHorizontal2: {
     position: "absolute",
-    top: "47%",
+    top: "75%",
+    left: 0,
+    right: 0,
+    height: 10,
+    backgroundColor: "#1e293b",
+  },
+  aStarPolylineGlowing: {
+    position: "absolute",
+    top: "41%",
     left: "15%",
     right: "15%",
-    height: 6,
-    backgroundColor: "#2563eb",
+    height: 5,
+    backgroundColor: "#38bdf8",
     borderRadius: 3,
+    shadowColor: "#38bdf8",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  speedometerPill: {
+  mapcnMetricsCard: {
     position: "absolute",
     top: 12,
     left: 12,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: "rgba(15, 23, 42, 0.9)",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#334155",
+    elevation: 4,
+  },
+  mapcnCardHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    gap: 4,
+    marginBottom: 4,
   },
-  speedValue: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#0f172a",
-    lineHeight: 20,
-  },
-  speedUnit: {
-    fontSize: 9,
+  mapcnCardTitle: {
+    fontSize: 10,
     fontWeight: "800",
-    color: "#64748b",
+    color: "#38bdf8",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  limitTag: {
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#ef4444",
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    marginTop: 2,
+  mapcnCardStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  limitText: {
+  statMetric: {
+    alignItems: "center",
+  },
+  statVal: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#f8fafc",
+    lineHeight: 17,
+  },
+  statLbl: {
     fontSize: 8,
     fontWeight: "800",
-    color: "#dc2626",
+    color: "#94a3b8",
+  },
+  statDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: "#334155",
+  },
+  gpsLockBadge: {
+    position: "absolute",
+    bottom: 10,
+    left: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    gap: 5,
+  },
+  gpsGreenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#4ade80",
+  },
+  gpsLockText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#cbd5e1",
+    fontFamily: "monospace",
   },
   mapActions: {
     position: "absolute",
@@ -301,16 +413,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#ffffff",
+    backgroundColor: "rgba(15, 23, 42, 0.9)",
     justifyContent: "center",
     alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#334155",
+    elevation: 4,
   },
   mapPin: {
     position: "absolute",
@@ -319,7 +427,7 @@ const styles = StyleSheet.create({
   },
   merchantPinPos: {
     left: "10%",
-    top: "38%",
+    top: "35%",
   },
   merchantPinBubble: {
     backgroundColor: "#16a34a",
@@ -328,25 +436,25 @@ const styles = StyleSheet.create({
   },
   customerPinPos: {
     right: "10%",
-    top: "36%",
+    top: "35%",
   },
   customerPinBubble: {
-    backgroundColor: "#dc2626",
+    backgroundColor: "#ef4444",
     padding: 6,
     borderRadius: 12,
   },
   driverBikePos: {},
   beaconPulse: {
     position: "absolute",
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(37, 99, 235, 0.3)",
-    top: -4,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(56, 189, 248, 0.35)",
+    top: -5,
   },
   driverBikeBubble: {
-    backgroundColor: "#2563eb",
-    padding: 8,
+    backgroundColor: "#0284c7",
+    padding: 7,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: "#ffffff",
@@ -360,24 +468,26 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   youText: {
-    color: "#ffffff",
+    color: "#38bdf8",
     fontSize: 8,
     fontWeight: "900",
   },
   pinTag: {
     fontSize: 9,
-    fontWeight: "700",
-    color: "#0f172a",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    fontWeight: "800",
+    color: "#f8fafc",
+    backgroundColor: "rgba(15, 23, 42, 0.9)",
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
     marginTop: 2,
+    borderWidth: 1,
+    borderColor: "#334155",
   },
   telemetryFooter: {
-    padding: 12,
-    backgroundColor: "#ffffff",
-    gap: 10,
+    padding: 14,
+    backgroundColor: "#0f172a",
+    gap: 12,
   },
   customerSummary: {
     flexDirection: "row",
@@ -387,23 +497,23 @@ const styles = StyleSheet.create({
   customerNameText: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#0f172a",
+    color: "#f8fafc",
   },
   destinationAddrText: {
     fontSize: 12,
-    color: "#64748b",
+    color: "#94a3b8",
   },
   navBtn: {
-    backgroundColor: "#2563eb",
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: "#0284c7",
+    paddingVertical: 12,
+    borderRadius: 12,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
   navBtnText: {
     color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

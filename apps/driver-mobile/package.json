@@ -20,6 +20,7 @@
     "@delivery/config": "workspace:*",
     "@delivery/constants": "workspace:*",
     "@delivery/types": "workspace:*",
+    "@delivery/utils": "workspace:*",
     "@delivery/validation": "workspace:*",
     "@expo/log-box": "~57.0.4",
     "@expo/metro-runtime": "~57.0.16",
