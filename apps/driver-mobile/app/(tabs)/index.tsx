@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useDriverAuthStore } from "../../src/stores/auth.store";
+import { useDeviceLocation } from "../../hooks/useDeviceLocation";
 
 interface DeliveryOffer {
   id: string;
@@ -29,6 +30,7 @@ export default function DriverDashboardScreen() {
   const router = useRouter();
   const user = useDriverAuthStore((state) => state.user);
   const [isOnline, setIsOnline] = useState(true);
+  const { location, requestGpsPermission } = useDeviceLocation();
 
   const [availableOffers, setAvailableOffers] = useState<DeliveryOffer[]>([
     {

@@ -234,13 +234,17 @@ async function main() {
       const vendor = await prisma.vendor.create({
         data: {
           userId: vendorUser.id,
-          storeName: "Test Store",
-          description: "A test vendor store for development",
+          storeName: "Blinkbite Organics",
+          description: "Fresh organic food, farm produce, & groceries store",
+          address: "104 Market Street, Station Area, Koramangala 4th Block",
+          city: "Bengaluru",
+          state: "Karnataka",
+          postalCode: "560034",
+          country: "IN",
+          latitude: 12.93524,
+          longitude: 77.6245,
           status: "ACTIVE",
           isOpen: true,
-          city: "Mumbai",
-          state: "Maharashtra",
-          country: "IN",
         },
       });
 
@@ -355,7 +359,7 @@ async function main() {
 
     // Seed sample orders & payments for live sync between admin and vendor app
     const testVendor = await prisma.vendor.findFirst({
-      where: { storeName: "Test Store" },
+      where: { storeName: "Blinkbite Organics" },
       select: { id: true },
     });
     const testCustomer = await prisma.user.findFirst({

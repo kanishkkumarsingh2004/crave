@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } f
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useVendorAuthStore } from "../../src/stores/auth.store";
+import { useDeviceLocation } from "../../src/hooks/useDeviceLocation";
 
 export default function VendorProfileScreen() {
   const { user, signOut } = useVendorAuthStore();
+  const { location, requestGpsPermission } = useDeviceLocation();
 
   const [autoAcceptOrders, setAutoAcceptOrders] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -24,6 +26,14 @@ export default function VendorProfileScreen() {
     ]);
   };
 
+  const handleUpdateStoreGps = async () => {
+    await requestGpsPermission();
+    Alert.alert(
+      "GPS Location Saved 📍",
+      `Store Latitude: ${location?.latitude ?? 12.93524}\nStore Longitude: ${location?.longitude ?? 77.6245}\n\nAddress: ${location?.address || "104 Market Street, Station Area, Koramangala 4th Block, Bengaluru"}`,
+    );
+  };
+
   return (
     <SafeAreaView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -32,12 +42,12 @@ export default function VendorProfileScreen() {
           <View style={styles.avatarCircle}>
             <Ionicons name="restaurant" size={32} color="#7c3aed" />
           </View>
-          <Text style={styles.storeName}>{user?.name || "Gourmet Kitchen"}</Text>
+          <Text style={styles.storeName}>{user?.name || "Blinkbite Organics"}</Text>
           <Text style={styles.storeEmail}>{user?.email || "vendor@delivery.com"}</Text>
 
           <View style={styles.badgeRow}>
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>Fine Dining & Bistro</Text>
+              <Text style={styles.categoryText}>Groceries & Fresh Produce</Text>
             </View>
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={12} color="#d97706" />
@@ -47,13 +57,13 @@ export default function VendorProfileScreen() {
         </View>
 
         {/* Store Info Section */}
-        <Text style={styles.sectionTitle}>Store Information</Text>
+        <Text style={styles.sectionTitle}>Store Information & Database GPS</Text>
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <Ionicons name="business-outline" size={20} color="#7c3aed" />
             <View style={styles.infoTextGroup}>
               <Text style={styles.infoLabel}>Business Name</Text>
-              <Text style={styles.infoValue}>{user?.name || "Gourmet Kitchen LLC"}</Text>
+              <Text style={styles.infoValue}>{user?.name || "Blinkbite Organics Store"}</Text>
             </View>
           </View>
 
@@ -63,7 +73,7 @@ export default function VendorProfileScreen() {
             <Ionicons name="call-outline" size={20} color="#7c3aed" />
             <View style={styles.infoTextGroup}>
               <Text style={styles.infoLabel}>Phone Contact</Text>
-              <Text style={styles.infoValue}>+1 (555) 019-2834</Text>
+              <Text style={styles.infoValue}>+91 98765 43210</Text>
             </View>
           </View>
 
@@ -72,20 +82,46 @@ export default function VendorProfileScreen() {
           <View style={styles.infoRow}>
             <Ionicons name="location-outline" size={20} color="#7c3aed" />
             <View style={styles.infoTextGroup}>
-              <Text style={styles.infoLabel}>Store Address</Text>
-              <Text style={styles.infoValue}>104 Market Street, Downtown, Suite 2B</Text>
+              <Text style={styles.infoLabel}>Actual Store Address</Text>
+              <Text style={styles.infoValue}>
+                {location?.address || "104 Market Street, Station Area, Koramangala 4th Block"}, {location?.city || "Bengaluru"}, {location?.state || "Karnataka"} - {location?.postalCode || "560034"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.infoDivider} />
 
           <View style={styles.infoRow}>
-            <Ionicons name="time-outline" size={20} color="#7c3aed" />
+            <Ionicons name="compass-outline" size={20} color="#7c3aed" />
             <View style={styles.infoTextGroup}>
-              <Text style={styles.infoLabel}>Operating Hours</Text>
-              <Text style={styles.infoValue}>Mon - Sun • 09:00 AM - 10:00 PM</Text>
+              <Text style={styles.infoLabel}>Store GPS Coordinates (Lat / Lng)</Text>
+              <Text style={styles.infoValue}>
+                Lat: {location?.latitude.toFixed(5) ?? "12.93524"} • Lng: {location?.longitude.toFixed(5) ?? "77.62450"}
+              </Text>
             </View>
           </View>
+
+          <View style={styles.infoDivider} />
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#7c3aed",
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              borderRadius: 10,
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
+            }}
+            onPress={handleUpdateStoreGps}
+          >
+            <Ionicons name="locate" size={18} color="#ffffff" />
+            <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: 13 }}>
+              Update Store GPS & Address from Device
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Store Preferences & Settings */}

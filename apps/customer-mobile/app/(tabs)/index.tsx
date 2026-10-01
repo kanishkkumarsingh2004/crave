@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCartStore } from "@/stores/cart.store";
+import { useDeviceLocation } from "../../hooks/useDeviceLocation";
 
 const CATEGORIES = [
   { id: "all", name: "All", icon: "apps-outline" },
@@ -92,6 +93,7 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
+  const { location, requestGpsPermission } = useDeviceLocation();
 
   function handleAddToCart(product: (typeof FEATURED_PRODUCTS)[0]) {
     addItem({
@@ -111,16 +113,16 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
         {/* Header Bar */}
         <View style={styles.header}>
-          <View>
+          <TouchableOpacity onPress={requestGpsPermission}>
             <View style={styles.locationRow}>
               <Ionicons name="location" size={16} color="#2563eb" />
               <Text style={styles.locationLabel}>Deliver to</Text>
               <Ionicons name="chevron-down" size={14} color="#64748b" />
             </View>
             <Text style={styles.locationAddress} numberOfLines={1}>
-              123 Main Street, Apt 4B, Mumbai
+              {location?.address ? `${location.address}, ${location.city}` : "Koramangala 4th Block, Bengaluru"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.notificationBtn} activeOpacity={0.7}>
             <Ionicons name="notifications-outline" size={20} color="#1e293b" />
