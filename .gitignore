@@ -30,7 +30,6 @@ prisma/migrations/*.sql.bak
 *.db
 *.db-journal
 prisma/*.db
-seed
 
 # Storage & Data Uploads
 data/
