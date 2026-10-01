@@ -11,6 +11,8 @@ const PUBLIC_PREFIXES = [
   "/_next",
   "/favicon",
   "/robots.txt",
+  "/sitemap.xml",
+  "/sitemap",
 ];
 
 /**
