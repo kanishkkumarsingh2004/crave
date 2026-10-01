@@ -13,6 +13,7 @@ import { LiveOrderMap } from "../../components/LiveOrderMap";
 import Constants from "expo-constants";
 
 function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
   const host = Constants.expoConfig?.hostUri?.split(":")[0];
   if (host && host !== "localhost" && host !== "127.0.0.1") {
     return `http://${host}:3000`;
@@ -43,7 +44,7 @@ export interface OrderItem {
 const DEFAULT_ACTIVE_ORDER: OrderItem = {
   id: "ord-10004",
   orderNumber: "ORD-10004",
-  vendorName: "Blinkbite Organics",
+  vendorName: "Crave Organics",
   status: "PREPARING",
   statusStep: 2,
   itemsCount: 2,
@@ -79,7 +80,7 @@ export default function OrdersScreen() {
               setLiveOrder({
                 id: active.id,
                 orderNumber: active.orderNumber,
-                vendorName: active.vendor?.storeName || "Blinkbite Organics",
+                vendorName: active.vendor?.storeName || "Crave Organics",
                 status: active.status,
                 statusStep: active.status === "PREPARING" ? 2 : 3,
                 itemsCount: active.items?.length || 2,
@@ -102,7 +103,7 @@ export default function OrdersScreen() {
                 history.map((h: any) => ({
                   id: h.id,
                   orderNumber: h.orderNumber,
-                  vendorName: h.vendor?.storeName || "Blinkbite Organics",
+                  vendorName: h.vendor?.storeName || "Crave Organics",
                   date: new Date(h.createdAt).toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",
@@ -262,7 +263,7 @@ export default function OrdersScreen() {
                     {
                       id: "ord-10001",
                       orderNumber: "ORD-10001",
-                      vendorName: "Blinkbite Organics",
+                      vendorName: "Crave Organics",
                       date: "1 Oct 2026",
                       status: "DELIVERED",
                       total: 633.1,
@@ -271,7 +272,7 @@ export default function OrdersScreen() {
                     {
                       id: "ord-10002",
                       orderNumber: "ORD-10002",
-                      vendorName: "Blinkbite Organics",
+                      vendorName: "Crave Organics",
                       date: "28 Sep 2026",
                       status: "DELIVERED",
                       total: 1217.2,

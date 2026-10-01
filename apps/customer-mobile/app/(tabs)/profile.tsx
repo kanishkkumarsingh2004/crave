@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const customerEmail = user?.email || "customer@delivery.com";
 
   function handleSignOut() {
-    Alert.alert("Sign Out", "Are you sure you want to sign out of Blinkbite?", [
+    Alert.alert("Sign Out", "Are you sure you want to sign out of Crave?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign Out",
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
               <Ionicons name="help-circle-outline" size={18} color="#ea580c" />
             </View>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Blinkbite Help Center</Text>
+              <Text style={styles.menuTitle}>Crave Help Center</Text>
               <Text style={styles.menuSub}>FAQs & 24/7 Support Chat</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
@@ -166,7 +166,7 @@ export default function ProfileScreen() {
         {/* Sign Out Action Button */}
         <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
           <Ionicons name="log-out-outline" size={18} color="#ef4444" />
-          <Text style={styles.signOutText}>Sign Out of Blinkbite</Text>
+          <Text style={styles.signOutText}>Sign Out of Crave</Text>
         </TouchableOpacity>
       </ScrollView>
 

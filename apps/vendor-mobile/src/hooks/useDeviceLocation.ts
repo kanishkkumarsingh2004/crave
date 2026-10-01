@@ -34,7 +34,7 @@ export function useDeviceLocation() {
         setErrorMsg("Permission to access store location was denied");
         Alert.alert(
           "Store GPS Location Required",
-          "Blinkbite Vendor app requires location access to set your store's accurate pickup coordinates for drivers.",
+          "Crave Vendor app requires location access to set your store's accurate pickup coordinates for drivers.",
           [{ text: "OK" }],
         );
         setLoading(false);

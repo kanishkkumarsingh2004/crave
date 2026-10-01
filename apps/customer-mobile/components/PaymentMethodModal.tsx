@@ -123,7 +123,7 @@ export function PaymentMethodModal({
               <View style={styles.upiInputRow}>
                 <TextInput
                   style={styles.upiTextInput}
-                  placeholder="e.g. blinkbite.store@okaxis"
+                  placeholder="e.g. crave.store@okaxis"
                   value={inputUpi}
                   onChangeText={setInputUpi}
                   placeholderTextColor="#94a3b8"

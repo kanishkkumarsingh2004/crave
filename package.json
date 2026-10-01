@@ -1,8 +1,8 @@
 {
-  "name": "delivery-platform",
+  "name": "crave-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Mobile + Shared Backend",
+  "description": "Crave Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Mobile + Shared Backend",
   "type": "module",
   "packageManager": "pnpm@12.8.1",
   "engines": {

@@ -27,6 +27,16 @@ const BETTER_AUTH_SECRET =
   process.env.BETTER_AUTH_SECRET || "supersecret32characterlongstringforbetterauth!";
 const BETTER_AUTH_URL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
+if (
+  process.env.NODE_ENV === "production" &&
+  (!process.env.BETTER_AUTH_SECRET ||
+    process.env.BETTER_AUTH_SECRET.includes("supersecret32characterlongstring"))
+) {
+  console.warn(
+    "⚠️ SECURITY WARNING: BETTER_AUTH_SECRET is not configured or using default fallback in production! Set a secure random 32+ char key.",
+  );
+}
+
 // ============================================================
 // GOOGLE OAUTH CONFIG
 // ============================================================

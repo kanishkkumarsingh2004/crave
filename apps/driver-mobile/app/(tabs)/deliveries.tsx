@@ -23,7 +23,7 @@ export default function DriverDeliveriesScreen() {
 
   const activeDelivery = {
     orderNumber: "ORD-10004",
-    vendorName: "Blinkbite Organics",
+    vendorName: "Crave Organics",
     vendorPhone: "+919876543210",
     vendorAddress: "104 Market Street, Station Area, Koramangala 4th Block, Bengaluru",
     customerName: "Alice Smith",

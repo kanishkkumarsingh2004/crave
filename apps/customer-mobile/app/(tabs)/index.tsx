@@ -187,10 +187,10 @@ export default function HomeScreen() {
         <View style={styles.heroBanner}>
           <View style={styles.heroContent}>
             <View style={styles.tagBadge}>
-              <Text style={styles.tagBadgeText}>⚡ BLINKBITE FAST</Text>
+              <Text style={styles.tagBadgeText}>⚡ CRAVE FAST</Text>
             </View>
             <Text style={styles.heroTitle}>Get Everything Delivered in 20 Mins</Text>
-            <Text style={styles.heroSub}>Use code BLINK50 for 50% OFF on your first order</Text>
+            <Text style={styles.heroSub}>Use code CRAVE50 for 50% OFF on your first order</Text>
           </View>
         </View>
 

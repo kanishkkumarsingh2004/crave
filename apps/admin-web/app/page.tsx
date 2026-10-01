@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Blinkbite — Instant On-Demand Hyperlocal Delivery",
+  title: "Crave — Instant On-Demand Hyperlocal Delivery",
   description:
     "Next-generation hyperlocal delivery platform connecting customers, local vendor stores, and delivery couriers with real-time dispatch and tracking.",
 };
@@ -25,11 +25,11 @@ export default function PublicLandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-sm">
-              B
+              C
             </div>
             <div>
               <span className="font-bold text-base tracking-tight text-slate-900 block leading-none">
-                Blinkbite
+                Crave
               </span>
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
                 Hyperlocal Ecosystem
@@ -232,9 +232,9 @@ export default function PublicLandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-              B
+              C
             </div>
-            <span className="text-slate-700 font-semibold">Blinkbite © 2026</span>
+            <span className="text-slate-700 font-semibold">Crave © 2026</span>
           </div>
 
           <div className="flex items-center gap-6 font-medium">
