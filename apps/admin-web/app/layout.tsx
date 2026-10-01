@@ -5,17 +5,17 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "Crave — Hyperlocal Delivery Platform",
-    template: "%s | Crave",
+    default: "Akshaya Ventures — Admin Platform",
+    template: "%s | Akshaya Ventures",
   },
-  description: "Crave Multi-Role Delivery Platform — Admin Web + Customer/Vendor/Driver Apps",
+  description: "Akshaya Ventures Multi-Role Delivery Platform & Enterprise Operations",
   robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-slate-950 text-slate-100">
+      <body className="font-sans antialiased bg-slate-50 text-slate-900 selection:bg-blue-600 selection:text-white">
         <Providers>{children}</Providers>
       </body>
     </html>

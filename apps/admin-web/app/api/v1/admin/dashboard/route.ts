@@ -20,9 +20,16 @@ import {
   DeliveryStatus,
 } from "@delivery/database";
 
+let cachedDashboard: { data: any; timestamp: number } | null = null;
+const DASHBOARD_CACHE_TTL_MS = 10_000;
+
 export async function GET(request: NextRequest) {
   const { ctx: _ctx, error } = await withAdmin(request);
   if (error) return error;
+
+  if (cachedDashboard && Date.now() - cachedDashboard.timestamp < DASHBOARD_CACHE_TTL_MS) {
+    return apiSuccess(cachedDashboard.data);
+  }
 
   try {
     const [
@@ -149,6 +156,7 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    cachedDashboard = { data, timestamp: Date.now() };
     return apiSuccess(data);
   } catch (err) {
     return apiInternalError(err);

@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Filter, CheckCircle2, XCircle, PauseCircle } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { format } from "date-fns";
+import Link from "next/link";
 
 // ============================================================
 // Types
@@ -67,136 +67,6 @@ async function updateVendorStatus(id: string, status: string, reason?: string): 
 }
 
 // ============================================================
-// Action button group
-// ============================================================
-
-function VendorActions({
-  vendor,
-  onAction,
-}: {
-  vendor: Vendor;
-  onAction: (id: string, status: string, reason?: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-
-  const isApproveble = vendor.status === "PENDING" || vendor.status === "SUSPENDED";
-  const isRejectable = vendor.status === "PENDING";
-  const isSuspendable = vendor.status === "ACTIVE" || vendor.status === "APPROVED";
-
-  return (
-    <>
-      <div className="relative">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-input bg-background text-xs font-medium hover:bg-accent transition-colors"
-          id={`vendor-action-btn-${vendor.id}`}
-        >
-          Actions
-        </button>
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 mt-1 w-44 rounded-lg border border-border bg-popover shadow-lg z-20 overflow-hidden">
-              {isApproveble && (
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    onAction(vendor.id, "APPROVED");
-                  }}
-                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-xs font-medium text-emerald-600 hover:bg-accent transition-colors"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Approve
-                </button>
-              )}
-              {isRejectable && (
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    setShowRejectDialog(true);
-                  }}
-                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-xs font-medium text-destructive hover:bg-accent transition-colors"
-                >
-                  <XCircle className="h-3.5 w-3.5" /> Reject
-                </button>
-              )}
-              {isSuspendable && (
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    onAction(vendor.id, "SUSPENDED");
-                  }}
-                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-xs font-medium text-orange-600 hover:bg-accent transition-colors"
-                >
-                  <PauseCircle className="h-3.5 w-3.5" /> Suspend
-                </button>
-              )}
-              {vendor.status === "SUSPENDED" && (
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    onAction(vendor.id, "ACTIVE");
-                  }}
-                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-xs font-medium text-emerald-600 hover:bg-accent transition-colors"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Reactivate
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Reject dialog */}
-      {showRejectDialog &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="fixed inset-0" onClick={() => setShowRejectDialog(false)} />
-            <div className="relative z-10 bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-2xl space-y-4 my-8 animate-in zoom-in-95 duration-200">
-              <h3 className="font-bold text-base text-foreground">Reject Vendor Application</h3>
-              <p className="text-sm text-muted-foreground">
-                Provide a rejection reason for{" "}
-                <span className="font-semibold text-foreground">{vendor.storeName}</span>:
-              </p>
-              <textarea
-                rows={3}
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="e.g. Incomplete documentation"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-              />
-              <div className="flex gap-2 justify-end pt-2 border-t border-border">
-                <button
-                  onClick={() => {
-                    setShowRejectDialog(false);
-                    setRejectReason("");
-                  }}
-                  className="h-9 px-4 rounded-lg border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRejectDialog(false);
-                    onAction(vendor.id, "REJECTED", rejectReason || undefined);
-                    setRejectReason("");
-                  }}
-                  className="h-9 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
-                >
-                  Reject Vendor
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-    </>
-  );
-}
-
-// ============================================================
 // Main component
 // ============================================================
 
@@ -243,11 +113,26 @@ export function VendorsTable() {
       key: "storeName",
       header: "Store",
       render: (v) => (
-        <div>
-          <p className="font-medium text-foreground">{v.storeName}</p>
-          <p className="text-xs text-muted-foreground">
-            {v.user.name} · {v.email ?? v.user.email}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl overflow-hidden bg-blue-50 border border-slate-200 shrink-0 flex items-center justify-center">
+            {v.logoUrl ? (
+              <img src={v.logoUrl} alt={v.storeName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-bold text-blue-600 text-sm">{v.storeName[0]}</span>
+            )}
+          </div>
+          <div>
+            <Link
+              href={`/vendors/${v.id}`}
+              className="font-bold text-slate-900 hover:text-blue-600 transition-colors inline-flex items-center gap-1"
+            >
+              <span>{v.storeName}</span>
+              <span className="text-[10px] text-blue-500 font-semibold">↗</span>
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              {v.user.name} · {v.email ?? v.user.email}
+            </p>
+          </div>
         </div>
       ),
     },
@@ -256,7 +141,9 @@ export function VendorsTable() {
       header: "Location",
       render: (v) =>
         v.city ? (
-          `${v.city}${v.state ? `, ${v.state}` : ""}`
+          <span className="text-xs font-medium text-slate-700">
+            {v.city}{v.state ? `, ${v.state}` : ""}
+          </span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
@@ -277,8 +164,16 @@ export function VendorsTable() {
     },
     {
       key: "products",
-      header: "Products",
-      render: (v) => v._count.products.toLocaleString(),
+      header: "Menu Items",
+      render: (v) => (
+        <Link
+          href={`/vendors/${v.id}`}
+          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+        >
+          <span>{v._count.products} items</span>
+          <span className="text-[10px]">↗</span>
+        </Link>
+      ),
     },
     {
       key: "orders",
@@ -301,56 +196,66 @@ export function VendorsTable() {
     },
     {
       key: "actions",
-      header: "",
-      className: "w-28",
+      header: "Action",
+      className: "w-36 text-right",
       render: (v) => (
-        <VendorActions
-          vendor={v}
-          onAction={(id, newStatus, reason) => mutation.mutate({ id, newStatus, reason })}
-        />
+        <div className="flex items-center gap-2 justify-end">
+          <Link
+            href={`/vendors/${v.id}`}
+            id={`manage-vendor-btn-${v.id}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all shadow-xs border border-blue-200 hover:border-transparent shrink-0"
+          >
+            <span>Manage Store</span>
+            <span className="text-[10px] font-black">↗</span>
+          </Link>
+        </div>
       ),
     },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search store name, email, city…"
-            value={search}
-            onChange={handleSearchChange}
-            id="vendor-search"
-            className="w-full pl-9 pr-4 h-9 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="search"
+              placeholder="Search store name, email, city…"
+              value={search}
+              onChange={handleSearchChange}
+              id="vendor-search"
+              className="w-full pl-9 pr-4 h-9 rounded-xl border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+              id="vendor-status-filter"
+              className="h-9 rounded-xl border border-input bg-background text-sm px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="APPROVED">Approved</option>
+              <option value="PENDING">Pending</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="CLOSED">Closed</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            id="vendor-status-filter"
-            className="h-9 rounded-md border border-input bg-background text-sm px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="CLOSED">Closed</option>
-          </select>
-        </div>
-        {data?.meta && (
-          <span className="self-center text-sm text-muted-foreground ml-auto">
-            {data.meta.total.toLocaleString()} total
-          </span>
-        )}
+
+        <Link
+          href="/vendors/new"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all shrink-0"
+        >
+          <span>+ Add Vendor</span>
+        </Link>
       </div>
 
       <DataTable

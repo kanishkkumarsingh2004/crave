@@ -18,7 +18,6 @@ import {
   Settings,
   ScrollText,
   LogOut,
-  Download,
   ShieldCheck,
 } from "lucide-react";
 
@@ -74,18 +73,18 @@ export function AdminSidebar() {
   return (
     <aside className="w-64 flex-shrink-0 border-r border-border bg-card flex flex-col shadow-md select-none z-20">
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-5 border-b border-border bg-gradient-to-r from-indigo-50/80 via-background to-background dark:from-indigo-950/20 dark:via-background dark:to-background">
+      <div className="h-16 flex items-center px-5 border-b border-border bg-gradient-to-r from-blue-50/70 via-background to-background">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 text-white font-black text-lg tracking-wider ring-4 ring-indigo-500/10">
-            C
+          <div className="w-10 h-10 bg-gradient-to-tr from-blue-700 to-sky-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 text-white font-black text-sm tracking-wider ring-4 ring-blue-500/10">
+            AV
           </div>
           <div>
             <span className="font-extrabold text-sm text-foreground block leading-tight tracking-tight">
-              Crave Admin
+              Akshaya Ventures
             </span>
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
-              <span>Platform Hub</span>
-              <span className="h-1 w-1 rounded-full bg-indigo-500" />
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
+              <span>Platform Core</span>
+              <span className="h-1 w-1 rounded-full bg-blue-500" />
             </span>
           </div>
         </div>
@@ -105,17 +104,18 @@ export function AdminSidebar() {
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                      prefetch={true}
+                      className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-150 ${
                         isActive
-                          ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 font-bold scale-[1.01]"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/60 dark:hover:bg-accent"
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold scale-[1.01]"
+                          : "text-muted-foreground hover:text-blue-700 hover:bg-blue-50/70"
                       }`}
                     >
                       <Icon
                         className={`h-4 w-4 shrink-0 transition-colors ${
                           isActive
                             ? "text-white"
-                            : "text-muted-foreground group-hover:text-foreground"
+                            : "text-muted-foreground group-hover:text-blue-700"
                         }`}
                       />
                       <span className="truncate">{label}</span>
@@ -132,7 +132,7 @@ export function AdminSidebar() {
       <div className="p-3 border-t border-border bg-muted/20 space-y-2">
         <div className="flex items-center justify-between px-2 py-1">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               A
             </div>
             <div className="min-w-0">

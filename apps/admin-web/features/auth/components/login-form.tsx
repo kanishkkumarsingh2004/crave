@@ -14,15 +14,15 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/get-session")
+    fetch("/api/auth/get-session", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.user && data.user.role === "ADMIN") {
-          router.replace("/dashboard");
+          window.location.href = "/dashboard";
         }
       })
       .catch(() => undefined);
-  }, [router]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,20 +31,33 @@ export function LoginForm() {
       const res = await fetch("/api/auth/sign-in/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
+      const body = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error((body as { message?: string }).message ?? "Login failed");
+        throw new Error((body as { message?: string }).message ?? "Invalid email or password");
       }
 
-      router.replace("/dashboard");
+      if (body?.user && body.user.role !== "ADMIN") {
+        throw new Error("Access denied: Only administrator accounts can access this console.");
+      }
+
+      toast.success("Login successful! Redirecting to dashboard...");
+      // Hard redirect ensures session cookies are reliably committed and sent to Next.js middleware & dashboard layout
+      window.location.href = "/dashboard";
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
       setLoading(false);
     }
+  }
+
+  function fillDemoAdmin() {
+    setEmail("admin@delivery.com");
+    setPassword("Password123");
+    toast.info("Demo admin credentials filled!");
   }
 
   async function handleGoogleSignIn() {
@@ -52,16 +65,16 @@ export function LoginForm() {
   }
 
   return (
-    <div className="bg-card text-card-foreground rounded-2xl shadow-xl border border-border/80 p-8 space-y-6 max-w-md w-full mx-auto backdrop-blur-sm">
+    <div className="bg-card text-card-foreground rounded-3xl shadow-2xl border border-blue-100 p-8 space-y-6 max-w-md w-full mx-auto backdrop-blur-md">
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shadow-md shadow-primary/25 ring-4 ring-primary/10">
-            <span className="font-extrabold text-xl tracking-wider">C</span>
+          <div className="w-12 h-12 bg-gradient-to-tr from-blue-700 to-sky-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 ring-4 ring-blue-500/10">
+            <span className="font-black text-lg tracking-wider">AV</span>
           </div>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Admin Login</h1>
-        <p className="text-xs font-medium text-muted-foreground">Crave Administration</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">Admin Console</h1>
+        <p className="text-xs font-semibold text-slate-500">Akshaya Ventures Enterprise Operations</p>
       </div>
 
       {/* Form */}
@@ -130,7 +143,7 @@ export function LoginForm() {
           type="submit"
           disabled={loading}
           isLoading={loading}
-          className="w-full gap-2 text-sm font-semibold"
+          className="w-full gap-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20"
         >
           {loading ? (
             <>
@@ -140,10 +153,18 @@ export function LoginForm() {
           ) : (
             <>
               <LogIn className="h-4 w-4" />
-              <span>Sign In</span>
+              <span>Sign In to Dashboard</span>
             </>
           )}
         </Button>
+
+        <button
+          type="button"
+          onClick={fillDemoAdmin}
+          className="w-full py-2.5 px-3 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200/80 transition-all active:scale-[0.99] flex items-center justify-center gap-1.5 shadow-sm"
+        >
+          <span>⚡ Use Admin Demo Credentials (admin@delivery.com)</span>
+        </button>
       </form>
 
       {/* Divider */}

@@ -12,6 +12,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000, // 1 minute
+            gcTime: 5 * 60 * 1000, // 5 minutes cache retention
+            refetchOnWindowFocus: false, // Prevent continuous refetches on focus
+            refetchOnMount: false, // Use memory cache instantly when switching tabs
             retry: 1,
           },
         },

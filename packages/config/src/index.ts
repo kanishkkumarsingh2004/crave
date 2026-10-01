@@ -70,6 +70,8 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url().optional().default("http://localhost:3000"),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
   NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
 });
 
 // ============================================================
@@ -100,6 +102,8 @@ function parseClientEnv() {
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     });
   } catch (e) {
     const formatted = (e as z.ZodError).format();

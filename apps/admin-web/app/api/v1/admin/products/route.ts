@@ -74,3 +74,104 @@ export async function GET(request: NextRequest) {
     return apiInternalError(err);
   }
 }
+
+export async function POST(request: NextRequest) {
+  const { error } = await withAdmin(request);
+  if (error) return error;
+
+  try {
+    const body = (await request.json().catch(() => ({}))) as Record<string, any>;
+    const {
+      vendorId,
+      categoryId,
+      name,
+      description,
+      price,
+      comparePrice,
+      currency = "INR",
+      imageUrl,
+      sku: providedSku,
+      initialStock = 50,
+      status = "ACTIVE",
+    } = body;
+
+    if (!vendorId) {
+      return Response.json(
+        { success: false, error: { message: "Vendor ID is required" } },
+        { status: 400 }
+      );
+    }
+
+    if (!categoryId) {
+      return Response.json(
+        { success: false, error: { message: "Category is required" } },
+        { status: 400 }
+      );
+    }
+
+    if (!name || !name.trim()) {
+      return Response.json(
+        { success: false, error: { message: "Product name is required" } },
+        { status: 400 }
+      );
+    }
+
+    const numPrice = Number(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+      return Response.json(
+        { success: false, error: { message: "Valid price is required" } },
+        { status: 400 }
+      );
+    }
+
+    // Auto-generate SKU if not provided
+    const sku =
+      providedSku && String(providedSku).trim()
+        ? String(providedSku).trim()
+        : `${name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, "ITM")}-${Date.now().toString(36).toUpperCase()}`;
+
+    // Transactionally create product and its inventory
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          vendorId,
+          categoryId,
+          name: name.trim(),
+          description: description?.trim() || null,
+          sku,
+          price: numPrice,
+          comparePrice: comparePrice != null && !isNaN(Number(comparePrice)) ? Number(comparePrice) : null,
+          currency,
+          imageUrl: imageUrl?.trim() || null,
+          status: status === "DRAFT" ? "DRAFT" : "ACTIVE",
+        },
+        include: {
+          category: { select: { id: true, name: true } },
+          vendor: { select: { id: true, storeName: true } },
+        },
+      });
+
+      const inventory = await tx.inventory.create({
+        data: {
+          productId: product.id,
+          onHand: Math.max(0, parseInt(String(initialStock), 10) || 50),
+          reserved: 0,
+          lowStockThreshold: 5,
+        },
+      });
+
+      return { ...product, inventory };
+    });
+
+    return Response.json({ success: true, data: result }, { status: 201 });
+  } catch (err) {
+    if (err instanceof Error) {
+      return Response.json(
+        { success: false, error: { message: err.message } },
+        { status: 400 }
+      );
+    }
+    return apiInternalError(err);
+  }
+}
+

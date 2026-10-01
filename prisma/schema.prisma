@@ -372,6 +372,7 @@ model Vendor {
   storeName   String
   description String?
   logoUrl     String?
+  bannerUrl   String?
   phone       String?
   email       String?
   // Store location
@@ -382,6 +383,10 @@ model Vendor {
   country     String?      @default("IN")
   latitude    Decimal?     @db.Decimal(10, 8)
   longitude   Decimal?     @db.Decimal(11, 8)
+  // Commission & Pricing Policy
+  commissionType  String?  @default("COMMISSION")
+  commissionRate  Decimal? @default(15.00) @db.Decimal(5, 2)
+  isPricingLocked Boolean? @default(true)
   // Status
   status      VendorStatus @default(PENDING)
   approvedAt  DateTime?

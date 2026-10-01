@@ -10,7 +10,7 @@
     "prisma:migrate": "prisma migrate dev --schema=../../prisma/schema.prisma",
     "prisma:migrate:deploy": "prisma migrate deploy --schema=../../prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema=../../prisma/schema.prisma",
-    "prisma:seed": "tsx ../../prisma/seed/index.ts",
+    "prisma:seed": "tsx --env-file=../../.env ../../prisma/seed/index.ts",
     "db:reset": "prisma migrate reset --schema=../../prisma/schema.prisma",
     "typecheck": "tsc --noEmit"
   },

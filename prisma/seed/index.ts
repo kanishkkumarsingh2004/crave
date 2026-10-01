@@ -1,13 +1,17 @@
 /**
  * Prisma Seed — Multi-Role Delivery Platform
  *
- * Creates initial real database data for:
- * 1. Platform admin user (admin@delivery.com / Password123)
+ * Configures the database with:
+ * 1. Platform settings & metrics
  * 2. Product categories
- * 3. Platform settings
- * 4. Seed Vendors, Drivers, Customers, Products, Inventory, Orders, & Deliveries
+ * 3. Exactly ONE test user per role:
+ *    - Admin: admin@delivery.com
+ *    - Customer: customer@delivery.com
+ *    - Vendor: vendor@delivery.com (with 1 test store profile, 0 mock products)
+ *    - Driver / Rider: driver@delivery.com (with 1 test rider profile)
+ * 4. Cleans all mock orders, mock products/items, mock inventory, mock deliveries, etc.
  *
- * Run: pnpm prisma:seed
+ * Password for all test users: Password123
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -43,12 +47,47 @@ async function createOrUpdateUserPassword(userId: string, password = DEFAULT_PAS
 }
 
 async function main() {
-  console.log("🌱 Starting database seed...");
+  console.log("🧹 Clearing mock data (orders, deliveries, products, inventory, mock stores)...");
+
+  // 1. Delete dependent transactional & operational data in proper foreign-key order
+  await prisma.auditLog.deleteMany({});
+  await prisma.notification.deleteMany({});
+  await prisma.review.deleteMany({});
+  await prisma.driverLocation.deleteMany({});
+  await prisma.deliveryStatusHistory.deleteMany({});
+  await prisma.deliveryVerification.deleteMany({});
+  await prisma.driverAssignment.deleteMany({});
+  await prisma.delivery.deleteMany({});
+  await prisma.refund.deleteMany({});
+  await prisma.paymentStatusHistory.deleteMany({});
+  await prisma.paymentEvent.deleteMany({});
+  await prisma.payment.deleteMany({});
+  await prisma.orderStatusHistory.deleteMany({});
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.cartItem.deleteMany({});
+  await prisma.inventoryReservation.deleteMany({});
+  await prisma.inventory.deleteMany({});
+  await prisma.productImage.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.driverDocument.deleteMany({});
+  await prisma.vendorDocument.deleteMany({});
+  await prisma.cart.deleteMany({});
+  await prisma.address.deleteMany({});
+  await prisma.session.deleteMany({});
+  await prisma.verification.deleteMany({});
+  await prisma.account.deleteMany({});
+  await prisma.customerProfile.deleteMany({});
+  await prisma.driver.deleteMany({});
+  await prisma.vendor.deleteMany({});
+  await prisma.user.deleteMany({});
+
+  console.log("✅ All mock data cleared.");
 
   // ============================================================
-  // 1. PLATFORM SETTINGS
+  // 1. PLATFORM SETTINGS & METRICS
   // ============================================================
-  console.log("⚙️  Creating platform settings...");
+  console.log("⚙️  Ensuring platform settings...");
 
   const platformSettings = [
     { key: "delivery_fee", value: "49.00", description: "Flat delivery fee in INR" },
@@ -92,13 +131,12 @@ async function main() {
       create: setting,
     });
   }
-
-  console.log(`✅ Created ${platformSettings.length} platform settings`);
+  console.log(`✅ ${platformSettings.length} platform settings verified`);
 
   // ============================================================
-  // 2. PRODUCT CATEGORIES
+  // 2. PRODUCT CATEGORIES (Platform Functionality)
   // ============================================================
-  console.log("📦 Creating product categories...");
+  console.log("📦 Ensuring product categories...");
 
   const categories = [
     {
@@ -141,348 +179,138 @@ async function main() {
       create: cat,
     });
   }
-
-  console.log(`✅ Created ${categories.length} categories`);
+  console.log(`✅ ${categories.length} product categories verified`);
 
   // ============================================================
-  // 3. ADMIN USER
+  // 3. ADMIN USER (Admin Web)
   // ============================================================
-  console.log("👤 Creating admin user...");
-
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@delivery.com";
-
-  let adminUser = await prisma.user.findUnique({
-    where: { email: adminEmail },
-    select: { id: true },
+  console.log("👤 Creating 1 test Admin user...");
+  const adminEmail = "admin@delivery.com";
+  const adminUser = await prisma.user.create({
+    data: {
+      name: "Platform Admin",
+      email: adminEmail,
+      emailVerified: true,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
   });
-
-  if (!adminUser) {
-    adminUser = await prisma.user.create({
-      data: {
-        name: "Platform Admin",
-        email: adminEmail,
-        emailVerified: true,
-        role: "ADMIN",
-        status: "ACTIVE",
-      },
-    });
-    console.log(`✅ Admin user created: ${adminEmail}`);
-  } else {
-    console.log(`ℹ️  Admin user already exists: ${adminEmail}`);
-  }
-
   await createOrUpdateUserPassword(adminUser.id, DEFAULT_PASSWORD);
-  console.log(`🔑 Admin password set to '${DEFAULT_PASSWORD}'`);
+  console.log(`✅ Admin: ${adminEmail} (password: ${DEFAULT_PASSWORD})`);
 
   // ============================================================
-  // 4. SEED VENDORS, PRODUCTS & INVENTORY
+  // 4. VENDOR USER (Vendor Mobile / Store Management)
   // ============================================================
-  console.log("🏪 Creating seed vendors and real products...");
-
+  console.log("🏪 Creating 1 test Vendor user & store...");
   const vendorEmail = "vendor@delivery.com";
-  let vendorUser = await prisma.user.findUnique({
-    where: { email: vendorEmail },
-    select: { id: true },
+  const vendorUser = await prisma.user.create({
+    data: {
+      name: "Test Vendor",
+      email: vendorEmail,
+      emailVerified: true,
+      role: "VENDOR",
+      status: "ACTIVE",
+    },
   });
-
-  if (!vendorUser) {
-    vendorUser = await prisma.user.create({
-      data: {
-        name: "Crave Organics Store",
-        email: vendorEmail,
-        emailVerified: true,
-        role: "VENDOR",
-        status: "ACTIVE",
-      },
-    });
-  }
-
   await createOrUpdateUserPassword(vendorUser.id, DEFAULT_PASSWORD);
 
-  let vendor = await prisma.vendor.findUnique({
-    where: { userId: vendorUser.id },
+  await prisma.vendor.create({
+    data: {
+      userId: vendorUser.id,
+      storeName: "Test Restaurant",
+      description: "Test vendor store ready for menu items and orders",
+      address: "104 Market Street, Koramangala 4th Block",
+      city: "Bengaluru",
+      state: "Karnataka",
+      postalCode: "560034",
+      country: "IN",
+      latitude: 12.93524,
+      longitude: 77.6245,
+      status: "ACTIVE",
+      isOpen: true,
+    },
   });
-
-  if (!vendor) {
-    vendor = await prisma.vendor.create({
-      data: {
-        userId: vendorUser.id,
-        storeName: "Crave Organics",
-        description: "Fresh organic food, farm produce, & groceries store",
-        address: "104 Market Street, Station Area, Koramangala 4th Block",
-        city: "Bengaluru",
-        state: "Karnataka",
-        postalCode: "560034",
-        country: "IN",
-        latitude: 12.93524,
-        longitude: 77.6245,
-        status: "ACTIVE",
-        isOpen: true,
-      },
-    });
-  }
-
-  // Seed Products
-  const foodCategory = await prisma.category.findUnique({ where: { slug: "food-groceries" } });
-
-  const sampleProducts = [
-    {
-      name: "Fresh Organic Milk 1L",
-      sku: "MILK-001",
-      price: 65.0,
-      description: "100% Pure, pasteurized organic cow milk directly from dairy farms.",
-    },
-    {
-      name: "Artisanal Whole Wheat Bread",
-      sku: "BREAD-001",
-      price: 45.0,
-      description: "Freshly baked whole wheat artisanal sandwich bread.",
-    },
-    {
-      name: "Farm Eggs (Pack of 12)",
-      sku: "EGGS-012",
-      price: 95.0,
-      description: "Fresh brown farm-raised cage-free eggs packed with nutrients.",
-    },
-    {
-      name: "Organic Shimla Apples 1kg",
-      sku: "APPLES-1KG",
-      price: 180.0,
-      description: "Sweet, juicy, premium quality Shimla red apples.",
-    },
-  ];
-
-  if (foodCategory && vendor) {
-    for (const prod of sampleProducts) {
-      const existingProd = await prisma.product.findFirst({
-        where: { sku: prod.sku, vendorId: vendor.id },
-      });
-
-      if (!existingProd) {
-        const createdProd = await prisma.product.create({
-          data: {
-            vendorId: vendor.id,
-            categoryId: foodCategory.id,
-            name: prod.name,
-            sku: prod.sku,
-            price: prod.price,
-            status: "ACTIVE",
-            description: prod.description,
-          },
-        });
-
-        await prisma.inventory.create({
-          data: {
-            productId: createdProd.id,
-            onHand: 150,
-            lowStockThreshold: 15,
-          },
-        });
-      }
-    }
-    console.log(`✅ Seeded ${sampleProducts.length} real products & inventory`);
-  }
+  console.log(`✅ Vendor: ${vendorEmail} (password: ${DEFAULT_PASSWORD}) with clean store (0 items)`);
 
   // ============================================================
-  // 5. SEED DRIVER
+  // 5. DRIVER / RIDER USER (Driver Mobile)
   // ============================================================
-  console.log("🚴 Creating seed driver...");
+  console.log("🚴 Creating 1 test Rider / Driver user...");
   const driverEmail = "driver@delivery.com";
-  let driverUser = await prisma.user.findUnique({
-    where: { email: driverEmail },
-    select: { id: true },
+  const driverUser = await prisma.user.create({
+    data: {
+      name: "Test Rider",
+      email: driverEmail,
+      emailVerified: true,
+      role: "DRIVER",
+      status: "ACTIVE",
+    },
   });
-
-  if (!driverUser) {
-    driverUser = await prisma.user.create({
-      data: {
-        name: "Rahul Sharma Driver",
-        email: driverEmail,
-        emailVerified: true,
-        role: "DRIVER",
-        status: "ACTIVE",
-      },
-    });
-  }
-
   await createOrUpdateUserPassword(driverUser.id, DEFAULT_PASSWORD);
 
-  const existingDriver = await prisma.driver.findUnique({
-    where: { userId: driverUser.id },
-    select: { id: true },
+  await prisma.driver.create({
+    data: {
+      userId: driverUser.id,
+      status: "ACTIVE",
+      availability: "AVAILABLE",
+      vehicleType: "Motorcycle",
+      vehicleNumber: "KA01AB1234",
+      licenseNumber: "DL-0420110012345",
+    },
   });
-
-  if (!existingDriver) {
-    await prisma.driver.create({
-      data: {
-        userId: driverUser.id,
-        status: "ACTIVE",
-        availability: "AVAILABLE",
-        vehicleType: "Motorcycle",
-        vehicleNumber: "MH01AB1234",
-        licenseNumber: "DL-0420110012345",
-      },
-    });
-    console.log(`✅ Seed driver created: ${driverEmail} (password: ${DEFAULT_PASSWORD})`);
-  }
+  console.log(`✅ Rider: ${driverEmail} (password: ${DEFAULT_PASSWORD})`);
 
   // ============================================================
-  // 6. SEED CUSTOMER & CUSTOMER ADDRESSES
+  // 6. CUSTOMER USER (Customer Mobile)
   // ============================================================
-  console.log("🛒 Creating seed customer profile & addresses...");
+  console.log("🛒 Creating 1 test Customer user...");
   const customerEmail = "customer@delivery.com";
-  let customerUser = await prisma.user.findUnique({
-    where: { email: customerEmail },
-    select: { id: true },
+  const customerUser = await prisma.user.create({
+    data: {
+      name: "Test Customer",
+      email: customerEmail,
+      emailVerified: true,
+      role: "CUSTOMER",
+      status: "ACTIVE",
+    },
   });
-
-  if (!customerUser) {
-    customerUser = await prisma.user.create({
-      data: {
-        name: "Alice Smith Customer",
-        email: customerEmail,
-        emailVerified: true,
-        role: "CUSTOMER",
-        status: "ACTIVE",
-      },
-    });
-  }
-
   await createOrUpdateUserPassword(customerUser.id, DEFAULT_PASSWORD);
 
-  const existingCustomerProfile = await prisma.customerProfile.findUnique({
-    where: { userId: customerUser.id },
-    select: { id: true },
+  const customerProfile = await prisma.customerProfile.create({
+    data: { userId: customerUser.id },
   });
 
-  if (!existingCustomerProfile) {
-    const profile = await prisma.customerProfile.create({
-      data: { userId: customerUser.id },
-    });
+  await prisma.cart.create({
+    data: { customerId: customerProfile.id },
+  });
 
-    await prisma.cart.create({
-      data: {
-        customerId: profile.id,
-      },
-    });
+  await prisma.address.create({
+    data: {
+      userId: customerUser.id,
+      recipientName: "Test Customer",
+      phone: "+919876543210",
+      addressLine1: "123 Indiranagar 100ft Road",
+      city: "Bengaluru",
+      state: "Karnataka",
+      postalCode: "560038",
+      country: "IN",
+      latitude: 12.9716,
+      longitude: 77.6412,
+      isDefault: true,
+    },
+  });
+  console.log(`✅ Customer: ${customerEmail} (password: ${DEFAULT_PASSWORD})`);
 
-    // Add default customer address
-    await prisma.customerAddress.create({
-      data: {
-        customerId: profile.id,
-        recipientName: "Alice Smith",
-        phone: "+919876543210",
-        addressLine1: "123 Main Street, Apt 4B",
-        city: "Bengaluru",
-        state: "Karnataka",
-        postalCode: "560034",
-        country: "IN",
-        latitude: 12.9425,
-        longitude: 77.6165,
-        isDefault: true,
-      },
-    });
-
-    console.log(`✅ Seed customer created with default address: ${customerEmail}`);
-  }
-
-  // ============================================================
-  // 7. SEED LIVE ORDERS WITH VERIFICATION OTP & PAYMENTS
-  // ============================================================
-  if (vendor && customerUser) {
-    const orderCount = await prisma.order.count({ where: { vendorId: vendor.id } });
-    if (orderCount === 0) {
-      console.log("🧾 Creating seed orders and live delivery tracking data...");
-
-      const firstProduct = await prisma.product.findFirst({
-        where: { sku: "MILK-001" },
-        select: { id: true, name: true, price: true, sku: true },
-      });
-
-      const sampleOrders = [
-        {
-          orderNumber: "ORD-10004",
-          status: "PREPARING" as const,
-          paymentStatus: "PAID" as const,
-          subtotal: 585.0,
-          deliveryFee: 49.0,
-          tax: 105.3,
-          total: 739.3,
-          recipient: "Alice Smith",
-        },
-        {
-          orderNumber: "ORD-10001",
-          status: "DELIVERED" as const,
-          paymentStatus: "PAID" as const,
-          subtotal: 495.0,
-          deliveryFee: 49.0,
-          tax: 89.1,
-          total: 633.1,
-          recipient: "Alice Smith",
-        },
-        {
-          orderNumber: "ORD-10002",
-          status: "DELIVERED" as const,
-          paymentStatus: "PAID" as const,
-          subtotal: 990.0,
-          deliveryFee: 49.0,
-          tax: 178.2,
-          total: 1217.2,
-          recipient: "Bob Johnson",
-        },
-      ];
-
-      for (const o of sampleOrders) {
-        await prisma.order.create({
-          data: {
-            orderNumber: o.orderNumber,
-            customerId: customerUser.id,
-            vendorId: vendor.id,
-            status: o.status,
-            paymentStatus: o.paymentStatus,
-            subtotal: o.subtotal,
-            deliveryFee: o.deliveryFee,
-            tax: o.tax,
-            total: o.total,
-            currency: "INR",
-            deliveryRecipientName: o.recipient,
-            deliveryPhone: "+919876543210",
-            deliveryAddressLine1: "123 Main Street, Apt 4B",
-            deliveryCity: "Bengaluru",
-            deliveryState: "Karnataka",
-            deliveryPostalCode: "560034",
-            deliveredAt: o.status === "DELIVERED" ? new Date() : undefined,
-            items: firstProduct
-              ? {
-                  create: [
-                    {
-                      productId: firstProduct.id,
-                      productName: firstProduct.name,
-                      sku: firstProduct.sku || "MILK-001",
-                      quantity: 2,
-                      unitPrice: firstProduct.price,
-                      lineTotal: Number(firstProduct.price) * 2,
-                    },
-                  ],
-                }
-              : undefined,
-            payment: {
-              create: {
-                customerId: customerUser.id,
-                provider: "stripe",
-                amount: o.total,
-                currency: "INR",
-                status: o.paymentStatus,
-              },
-            },
-          },
-        });
-      }
-      console.log(`✅ Created ${sampleOrders.length} seed orders with payments`);
-    }
-  }
-
-  console.log("\n✨ Seed complete! Default password for all seeded accounts: Password123");
+  console.log("\n============================================================");
+  console.log("🎉 Database Cleaned & Reset to Pure Test State!");
+  console.log("============================================================");
+  console.log("• Admin:    admin@delivery.com    / Password123");
+  console.log("• Customer: customer@delivery.com / Password123");
+  console.log("• Vendor:   vendor@delivery.com   / Password123 (1 Store, 0 Items)");
+  console.log("• Rider:    driver@delivery.com   / Password123");
+  console.log("• Categories & Platform Settings Preserved");
+  console.log("• All mock products, orders, deliveries, and reviews cleared");
+  console.log("============================================================\n");
 }
 
 main()

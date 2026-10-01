@@ -43,6 +43,14 @@ export async function GET(request: NextRequest, { params }: Params) {
             },
           },
           documents: true,
+          products: {
+            where: { isArchived: false },
+            include: {
+              category: { select: { id: true, name: true, slug: true } },
+              inventory: { select: { onHand: true, reserved: true, lowStockThreshold: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
           _count: {
             select: {
               products: true,
@@ -86,8 +94,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   try {
     const { id } = await params;
-    const body = (await request.json()) as unknown;
-    const input = zUpdateVendorStatus.parse(body);
+    const body = (await request.json().catch(() => ({}))) as Record<string, any>;
 
     const vendor = await prisma.vendor.findUnique({
       where: { id },
@@ -95,33 +102,67 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     });
     if (!vendor) return apiNotFound("Vendor");
 
-    // Set timestamps based on status transition
+    const updateData: Record<string, any> = {};
     const now = new Date();
-    const statusData: Record<string, unknown> = { status: input.status };
 
-    if (input.status === VendorStatus.APPROVED) {
-      statusData.approvedAt = now;
-      statusData.rejectedAt = null;
-      statusData.rejectionReason = null;
-    } else if (input.status === VendorStatus.REJECTED) {
-      statusData.rejectedAt = now;
-      statusData.rejectionReason = input.reason ?? null;
-    } else if (input.status === VendorStatus.SUSPENDED) {
-      statusData.suspendedAt = now;
+    // 1. Status update if provided
+    if (body.status) {
+      updateData.status = body.status;
+      if (body.status === "APPROVED" || body.status === "ACTIVE") {
+        updateData.approvedAt = now;
+        updateData.rejectedAt = null;
+        updateData.rejectionReason = null;
+      } else if (body.status === "REJECTED") {
+        updateData.rejectedAt = now;
+        updateData.rejectionReason = body.reason ?? null;
+      } else if (body.status === "SUSPENDED") {
+        updateData.suspendedAt = now;
+      }
+    }
+
+    // 2. Open / Closed operational toggle
+    if (body.isOpen !== undefined) {
+      updateData.isOpen = Boolean(body.isOpen);
+    }
+
+    // 3. Profile details
+    if (body.storeName !== undefined) updateData.storeName = String(body.storeName).trim();
+    if (body.description !== undefined) {
+      updateData.description = body.description ? String(body.description).trim() : null;
+    }
+    if (body.phone !== undefined) updateData.phone = body.phone ? String(body.phone).trim() : null;
+    if (body.email !== undefined) updateData.email = body.email ? String(body.email).trim().toLowerCase() : null;
+    if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl ? String(body.logoUrl).trim() : null;
+    if (body.bannerUrl !== undefined) updateData.bannerUrl = body.bannerUrl ? String(body.bannerUrl).trim() : null;
+
+    // 4. Location coordinates & address
+    if (body.address !== undefined) updateData.address = body.address ? String(body.address).trim() : null;
+    if (body.city !== undefined) updateData.city = body.city ? String(body.city).trim() : null;
+    if (body.state !== undefined) updateData.state = body.state ? String(body.state).trim() : null;
+    if (body.postalCode !== undefined) updateData.postalCode = body.postalCode ? String(body.postalCode).trim() : null;
+    if (body.latitude !== undefined && body.latitude !== null && !isNaN(Number(body.latitude))) {
+      updateData.latitude = Number(body.latitude);
+    }
+    if (body.longitude !== undefined && body.longitude !== null && !isNaN(Number(body.longitude))) {
+      updateData.longitude = Number(body.longitude);
+    }
+
+    // 5. Commission & Pricing Lock
+    if (body.commissionType !== undefined) {
+      updateData.commissionType = body.commissionType === "MARKUP" ? "MARKUP" : "COMMISSION";
+    }
+    if (body.commissionRate !== undefined && !isNaN(Number(body.commissionRate))) {
+      updateData.commissionRate = Number(body.commissionRate);
+    }
+    if (body.isPricingLocked !== undefined) {
+      updateData.isPricingLocked = Boolean(body.isPricingLocked);
     }
 
     const updated = await prisma.vendor.update({
       where: { id },
-      data: statusData,
-      select: {
-        id: true,
-        storeName: true,
-        status: true,
-        approvedAt: true,
-        rejectedAt: true,
-        rejectionReason: true,
-        suspendedAt: true,
-        updatedAt: true,
+      data: updateData,
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true, status: true } },
       },
     });
 
