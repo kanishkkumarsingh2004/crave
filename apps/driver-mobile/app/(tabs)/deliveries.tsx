@@ -28,15 +28,15 @@ export default function DriverDeliveriesScreen() {
 
   const activeDelivery = {
     orderNumber: "ORD-10004",
-    vendorName: "FreshMart Organics",
+    vendorName: "Blinkbite Organics",
     vendorPhone: "+919876543210",
-    vendorAddress: "104 Market Street, Station Area, Mumbai",
+    vendorAddress: "104 Market Street, Station Area, Koramangala 4th Block, Bengaluru",
     customerName: "Alice Smith",
     customerPhone: "+919876543210",
-    customerAddress: "123 Main Street, Apt 4B, Mumbai",
+    customerAddress: "123 Main Street, Apt 4B, Koramangala, Bengaluru",
     items: [
       "2x Fresh Organic Milk (1L)",
-      "1x Whole Wheat Artisanal Bread",
+      "1x Artisanal Whole Wheat Bread",
     ],
     earnings: "₹85.00",
     correctOtp: "849201",

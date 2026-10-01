@@ -1,16 +1,46 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LiveOrderMap } from "../../components/LiveOrderMap";
+import Constants from "expo-constants";
 
-const ACTIVE_ORDER = {
+function getApiBaseUrl(): string {
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
+    return `http://${host}:3000`;
+  }
+  return "http://localhost:3000";
+}
+
+const API_BASE = getApiBaseUrl();
+
+export interface OrderItem {
+  id: string;
+  orderNumber: string;
+  vendorName: string;
+  status: string;
+  statusStep: number;
+  itemsCount: number;
+  total: number;
+  otpCode: string;
+  estimatedTime: string;
+  driver?: {
+    name: string;
+    vehicle: string;
+    rating: string;
+    phone: string;
+  };
+}
+
+const DEFAULT_ACTIVE_ORDER: OrderItem = {
+  id: "ord-10004",
   orderNumber: "ORD-10004",
-  vendorName: "FreshMart Organics",
+  vendorName: "Blinkbite Organics",
   status: "PREPARING",
-  statusStep: 2, // 1: Confirmed, 2: Preparing, 3: Out for Delivery, 4: Delivered
-  itemsCount: 3,
-  total: 633.1,
+  statusStep: 2,
+  itemsCount: 2,
+  total: 739.3,
   otpCode: "849201",
   estimatedTime: "12–15 mins",
   driver: {
@@ -21,29 +51,64 @@ const ACTIVE_ORDER = {
   },
 };
 
-const PAST_ORDERS = [
-  {
-    id: "ord-10001",
-    orderNumber: "ORD-10001",
-    vendorName: "FreshMart Organics",
-    date: "1 Oct 2026",
-    status: "DELIVERED",
-    total: 633.1,
-    items: "Fresh Organic Milk (2x), Wheat Bread (1x)",
-  },
-  {
-    id: "ord-10002",
-    orderNumber: "ORD-10002",
-    vendorName: "Urban Spice Kitchen",
-    date: "28 Sep 2026",
-    status: "DELIVERED",
-    total: 1217.2,
-    items: "Paneer Butter Masala (1x), Naan (4x)",
-  },
-];
-
 export default function OrdersScreen() {
   const [activeTab, setActiveTab] = useState<"live" | "history">("live");
+  const [liveOrder, setLiveOrder] = useState<OrderItem>(DEFAULT_ACTIVE_ORDER);
+  const [pastOrders, setPastOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchDatabaseOrders() {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE}/api/v1/customer/orders`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+            const active = json.data.find((o: any) => o.status === "PREPARING" || o.status === "OUT_FOR_DELIVERY");
+            if (active) {
+              setLiveOrder({
+                id: active.id,
+                orderNumber: active.orderNumber,
+                vendorName: active.vendor?.storeName || "Blinkbite Organics",
+                status: active.status,
+                statusStep: active.status === "PREPARING" ? 2 : 3,
+                itemsCount: active.items?.length || 2,
+                total: Number(active.total),
+                otpCode: "849201",
+                estimatedTime: "10–12 mins",
+                driver: {
+                  name: "Rahul Sharma",
+                  vehicle: "Hero Electric Bike (MH-01-AB-1234)",
+                  rating: "4.9 ★",
+                  phone: "+919876543210",
+                },
+              });
+            }
+            const history = json.data.filter((o: any) => o.status === "DELIVERED" || o.status === "CANCELLED");
+            if (history.length > 0) {
+              setPastOrders(
+                history.map((h: any) => ({
+                  id: h.id,
+                  orderNumber: h.orderNumber,
+                  vendorName: h.vendor?.storeName || "Blinkbite Organics",
+                  date: new Date(h.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                  status: h.status,
+                  total: Number(h.total),
+                  items: h.items?.map((i: any) => `${i.productName} (${i.quantity}x)`).join(", ") || "Fresh Organic Milk (2x)",
+                })),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.log("DB Orders fetch info:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDatabaseOrders();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -66,7 +131,7 @@ export default function OrdersScreen() {
               onPress={() => setActiveTab("history")}
             >
               <Text style={[styles.toggleText, activeTab === "history" && styles.toggleTextActive]}>
-                History ({PAST_ORDERS.length})
+                History ({pastOrders.length})
               </Text>
             </TouchableOpacity>
           </View>
@@ -80,9 +145,9 @@ export default function OrdersScreen() {
             <View style={styles.liveContainer}>
               {/* Interactive Live Map Tracking */}
               <LiveOrderMap
-                driverName={ACTIVE_ORDER.driver.name}
-                driverPhone={ACTIVE_ORDER.driver.phone}
-                vehicleDetails={ACTIVE_ORDER.driver.vehicle}
+                driverName={liveOrder.driver?.name || "Rahul Sharma"}
+                driverPhone={liveOrder.driver?.phone || "+919876543210"}
+                vehicleDetails={liveOrder.driver?.vehicle || "Hero Electric Bike (MH-01-AB-1234)"}
                 etaMinutes={12}
               />
 
@@ -90,12 +155,12 @@ export default function OrdersScreen() {
               <View style={styles.liveCard}>
                 <View style={styles.liveHeader}>
                   <View>
-                    <Text style={styles.orderNum}>{ACTIVE_ORDER.orderNumber}</Text>
-                    <Text style={styles.vendorName}>{ACTIVE_ORDER.vendorName}</Text>
+                    <Text style={styles.orderNum}>{liveOrder.orderNumber}</Text>
+                    <Text style={styles.vendorName}>{liveOrder.vendorName}</Text>
                   </View>
                   <View style={styles.etaBadge}>
                     <Ionicons name="time" size={14} color="#2563eb" />
-                    <Text style={styles.etaText}>ETA {ACTIVE_ORDER.estimatedTime}</Text>
+                    <Text style={styles.etaText}>ETA {liveOrder.estimatedTime}</Text>
                   </View>
                 </View>
 
@@ -109,7 +174,7 @@ export default function OrdersScreen() {
                     </View>
                   </View>
                   <View style={styles.otpCodeBox}>
-                    <Text style={styles.otpCode}>{ACTIVE_ORDER.otpCode}</Text>
+                    <Text style={styles.otpCode}>{liveOrder.otpCode}</Text>
                   </View>
                 </View>
 
@@ -158,8 +223,8 @@ export default function OrdersScreen() {
                     <Ionicons name="person" size={20} color="#2563eb" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.driverName}>{ACTIVE_ORDER.driver.name}</Text>
-                    <Text style={styles.driverVehicle}>{ACTIVE_ORDER.driver.vehicle}</Text>
+                    <Text style={styles.driverName}>{liveOrder.driver?.name || "Rahul Sharma"}</Text>
+                    <Text style={styles.driverVehicle}>{liveOrder.driver?.vehicle || "Hero Electric Bike"}</Text>
                   </View>
                   <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
                     <Ionicons name="call" size={16} color="#ffffff" />
@@ -170,12 +235,34 @@ export default function OrdersScreen() {
             </View>
           ) : (
             <View style={styles.historyContainer}>
-              {PAST_ORDERS.map((order) => (
+              {(pastOrders.length > 0
+                ? pastOrders
+                : [
+                    {
+                      id: "ord-10001",
+                      orderNumber: "ORD-10001",
+                      vendorName: "Blinkbite Organics",
+                      date: "1 Oct 2026",
+                      status: "DELIVERED",
+                      total: 633.1,
+                      items: "Fresh Organic Milk (2x), Whole Wheat Bread (1x)",
+                    },
+                    {
+                      id: "ord-10002",
+                      orderNumber: "ORD-10002",
+                      vendorName: "Blinkbite Organics",
+                      date: "28 Sep 2026",
+                      status: "DELIVERED",
+                      total: 1217.2,
+                      items: "Farm Eggs Pack of 12 (2x), Shimla Apples 1kg (1x)",
+                    },
+                  ]
+              ).map((order) => (
                 <View key={order.id} style={styles.historyCard}>
                   <View style={styles.historyHeader}>
                     <View>
-                      <Text style={styles.historyNum}>{order.orderNumber}</Text>
-                      <Text style={styles.historyVendor}>{order.vendorName}</Text>
+                      <Text style={styles.orderNum}>{order.orderNumber}</Text>
+                      <Text style={styles.vendorName}>{order.vendorName}</Text>
                     </View>
                     <View style={styles.deliveredBadge}>
                       <Ionicons name="checkmark-circle" size={14} color="#16a34a" />
