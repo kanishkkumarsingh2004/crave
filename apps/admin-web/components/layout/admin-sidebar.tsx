@@ -57,7 +57,6 @@ const navGroups: NavGroup[] = [
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
       { href: "/reviews", label: "Reviews", icon: Star },
       { href: "/notifications", label: "Notifications", icon: Bell },
-      { href: "/downloads", label: "Download Apps", icon: Download },
       { href: "/settings", label: "Settings", icon: Settings },
       { href: "/audit-logs", label: "Audit Logs", icon: ScrollText },
     ],
