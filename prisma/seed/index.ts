@@ -364,7 +364,7 @@ async function main() {
     });
     const testProduct = await prisma.product.findFirst({
       where: { sku: "TEST-001" },
-      select: { id: true, name: true, price: true },
+      select: { id: true, name: true, price: true, sku: true },
     });
 
     if (testVendor && testCustomer && testProduct) {
