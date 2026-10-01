@@ -68,21 +68,6 @@ export default function SingleCustomerAppHomePage() {
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#features" className="hover:text-blue-600 transition-colors">
-              App Features
-            </a>
-            <a href="#download" className="hover:text-blue-600 transition-colors">
-              Download Package
-            </a>
-            <a href="#specs" className="hover:text-blue-600 transition-colors">
-              Build Specs
-            </a>
-            <a href="#security" className="hover:text-blue-600 transition-colors">
-              System Metrics
-            </a>
-          </nav>
         </div>
       </header>
 
