@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowRight,
   Bike,
@@ -13,7 +14,7 @@ import {
   ShoppingBag,
   Star,
   Store,
-  Utensils,
+  UtensilsCrossed,
   Zap,
 } from 'lucide-react'
 import Navbar, { roleDetails } from '@/components/Navbar'
@@ -47,7 +48,28 @@ const featuredRestaurants = [
 ]
 
 export default function HomePage() {
-  const { role, loginAsRole } = useAuth()
+  const { user, role, loginAsRole } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (user) {
+      const targetDashboard = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+      router.replace(targetDashboard)
+    }
+  }, [user, role, router])
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
+            Redirecting to your {role} Dashboard...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c]">
@@ -62,16 +84,16 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-[clamp(2.8rem,5.5vw,5.5rem)] font-bold leading-[.92] tracking-tight">
-            Good food.<br />
-            <span className="text-[#89a217]">Good mood.</span><br />
+            Satisfy your<br />
+            <span className="text-[#89a217]">crave.</span><br />
             On its way.
           </h1>
 
           <p className="mt-6 text-base leading-7 text-[#647169]">
-            The unified platform that connects <span className="font-bold text-[#18201c]">Customers</span>,{' '}
+            The unified food platform connecting <span className="font-bold text-[#18201c]">Customers</span>,{' '}
             <span className="font-bold text-[#18201c]">Vendors</span>,{' '}
             <span className="font-bold text-[#18201c]">Drivers</span>, and{' '}
-            <span className="font-bold text-[#18201c]">Admins</span> in one seamless flow.
+            <span className="font-bold text-[#18201c]">Admins</span> seamlessly.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -87,12 +109,6 @@ export default function HomePage() {
             >
               Log In to Account
             </Link>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 rounded-full bg-[#18201c] px-6 py-3.5 text-xs font-bold text-white transition hover:bg-[#323d36]"
-            >
-              Launch Dashboard ({role})
-            </Link>
           </div>
 
           <div className="mt-10 flex items-center gap-8 text-xs font-semibold text-[#75817a]">
@@ -105,7 +121,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Hero Banner Visual */}
+        {/* Hero Visual */}
         <div className="relative min-h-[420px] overflow-hidden rounded-[36px] bg-[#e1e9d3] p-6 lg:min-h-[520px]">
           <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'radial-gradient(#849c38 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -113,10 +129,10 @@ export default function HomePage() {
             <div className="flex items-center justify-between rounded-2xl bg-white/90 p-3.5 backdrop-blur-md shadow-lg">
               <div className="flex items-center gap-3">
                 <span className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
-                  <Zap className="size-5" />
+                  <UtensilsCrossed className="size-5" />
                 </span>
                 <div>
-                  <p className="text-xs font-bold">4-Role Ecosystem</p>
+                  <p className="text-xs font-bold">crave. Ecosystem</p>
                   <p className="text-[10px] text-[#717d77]">Select any perspective below</p>
                 </div>
               </div>
@@ -125,15 +141,15 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Role cards highlight */}
             <div className="grid grid-cols-2 gap-3 my-auto py-6">
               {(Object.keys(roleDetails) as UserRole[]).map((rKey) => {
                 const details = roleDetails[rKey]
                 const IconComp = details.icon
+                const targetUrl = rKey === 'customer' ? '/user/dashboard' : `/${rKey}/dashboard`
                 return (
                   <Link
                     key={rKey}
-                    href="/dashboard"
+                    href={targetUrl}
                     onClick={() => loginAsRole(rKey)}
                     className="group rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition hover:bg-white hover:shadow-xl"
                   >
@@ -152,7 +168,7 @@ export default function HomePage() {
 
             <div className="rounded-2xl border border-white/80 bg-white/90 p-4 backdrop-blur-md flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#819289]">Live Order #DRP-9021</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#819289]">Live Order #CRV-9021</p>
                 <p className="text-xs font-bold text-[#18201c]">The Green Table ➔ Alex Rivera (8 min away)</p>
               </div>
               <span className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-bold text-[#18201c]">
@@ -163,7 +179,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Feature Section: 4 Kinds of Users */}
+      {/* Feature Section */}
       <section className="border-t border-[#e5e9e1] bg-white py-16 lg:py-24">
         <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -174,12 +190,11 @@ export default function HomePage() {
               Engineered for Every Stakeholder
             </h2>
             <p className="mt-2 text-sm text-[#6f7a73]">
-              Whether you are ordering food, running a kitchen, making deliveries, or governing the network — drop provides a specialized experience.
+              Whether ordering, cooking, delivering, or managing — crave. delivers a customized dashboard.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Card 1: Customer */}
             <div className="rounded-3xl border border-[#dfe4dc] bg-[#f8f9f6] p-6 flex flex-col justify-between hover:border-[#a3ba24] transition">
               <div>
                 <div className="grid size-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-800 font-bold mb-4">
@@ -187,11 +202,11 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">1. Customer User</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Discover top kitchens, customize dishes, pay via secure UPI, and track live delivery routes step-by-step.
+                  Discover top kitchens, customize dishes, pay via secure UPI, and track live delivery routes.
                 </p>
               </div>
               <Link
-                href="/dashboard"
+                href="/user/dashboard"
                 onClick={() => loginAsRole('customer')}
                 className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:underline"
               >
@@ -199,7 +214,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Card 2: Vendor */}
             <div className="rounded-3xl border border-[#dfe4dc] bg-[#f8f9f6] p-6 flex flex-col justify-between hover:border-[#a3ba24] transition">
               <div>
                 <div className="grid size-12 place-items-center rounded-2xl bg-amber-100 text-amber-800 font-bold mb-4">
@@ -207,11 +221,11 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">2. Kitchen Vendor</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Live incoming kitchen order queue, dish stock management, prep timer, and real-time revenue analytics.
+                  Live incoming order queue, stock toggles, prep timer, and sales analytics sidebar.
                 </p>
               </div>
               <Link
-                href="/dashboard"
+                href="/vendor/dashboard"
                 onClick={() => loginAsRole('vendor')}
                 className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 hover:underline"
               >
@@ -219,7 +233,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Card 3: Driver */}
             <div className="rounded-3xl border border-[#dfe4dc] bg-[#f8f9f6] p-6 flex flex-col justify-between hover:border-[#a3ba24] transition">
               <div>
                 <div className="grid size-12 place-items-center rounded-2xl bg-blue-100 text-blue-800 font-bold mb-4">
@@ -227,11 +240,11 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">3. Delivery Driver</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Duty status toggle, active trip navigation, step-by-step pickup/delivery confirmation, and earnings ledger.
+                  Duty status toggle, active trip navigation, step-by-step confirmation, and earnings ledger.
                 </p>
               </div>
               <Link
-                href="/dashboard"
+                href="/driver/dashboard"
                 onClick={() => loginAsRole('driver')}
                 className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 hover:underline"
               >
@@ -239,7 +252,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Card 4: Admin */}
             <div className="rounded-3xl border border-[#dfe4dc] bg-[#f8f9f6] p-6 flex flex-col justify-between hover:border-[#a3ba24] transition">
               <div>
                 <div className="grid size-12 place-items-center rounded-2xl bg-purple-100 text-purple-800 font-bold mb-4">
@@ -247,11 +259,11 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">4. System Admin</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Network stats, user management across all 4 roles, UPI payment reference verification queue, and security control.
+                  Network stats, user management across all 4 roles, UPI verification queue, and sidebar control.
                 </p>
               </div>
               <Link
-                href="/dashboard"
+                href="/admin/dashboard"
                 onClick={() => loginAsRole('admin')}
                 className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-purple-900 hover:underline"
               >
@@ -262,16 +274,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Kitchens Section */}
+      {/* Featured Kitchens */}
       <section className="py-16 lg:py-24 border-t border-[#e5e9e1]">
         <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[#799017]">Local Top Picks</p>
-              <h2 className="mt-1 text-3xl font-bold tracking-tight">Popular Kitchens on drop.</h2>
+              <h2 className="mt-1 text-3xl font-bold tracking-tight">Popular Kitchens on crave.</h2>
             </div>
             <Link
-              href="/dashboard"
+              href="/user/dashboard"
               className="flex items-center gap-1.5 text-xs font-bold text-[#18201c] hover:underline"
             >
               Explore all 2,000+ kitchens <ArrowRight className="size-3.5" />
@@ -309,11 +321,14 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-[#e5e9e1] bg-white py-8">
         <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-4 px-5 text-xs text-[#7a857e] sm:flex-row lg:px-8">
-          <span>© 2026 drop. Multi-role Food Delivery System (Customer, Vendor, Driver, Admin).</span>
+          <span>© 2026 crave. Multi-role Food Delivery Platform.</span>
           <div className="flex gap-4 font-semibold text-[#18201c]">
             <Link href="/login">Login</Link>
             <Link href="/signup">Sign Up</Link>
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/user/dashboard">Customer</Link>
+            <Link href="/vendor/dashboard">Vendor</Link>
+            <Link href="/driver/dashboard">Driver</Link>
+            <Link href="/admin/dashboard">Admin</Link>
           </div>
         </div>
       </footer>

@@ -3,7 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
-  title: 'drop. | Next-Gen Multi-Role Food Delivery Platform',
+  title: 'crave. | Next-Gen Multi-Role Food Delivery Platform',
   description: 'Instant food delivery platform connecting Customers, Kitchen Vendors, Delivery Drivers, and System Admins in real-time.',
 }
 

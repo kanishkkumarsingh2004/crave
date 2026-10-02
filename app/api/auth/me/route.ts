@@ -6,18 +6,16 @@ export async function GET(request: Request) {
   try {
     let token = ''
 
-    // 1. Check Authorization Header (Bearer token)
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7)
     }
 
-    // 2. Check Cookie fallback
     if (!token) {
       const cookieStore = await cookies()
-      const authCookie = cookieStore.get('drop_auth_token')
-      if (authCookie) {
-        token = authCookie.value
+      const craveCookie = cookieStore.get('crave_auth_token') || cookieStore.get('drop_auth_token')
+      if (craveCookie) {
+        token = craveCookie.value
       }
     }
 

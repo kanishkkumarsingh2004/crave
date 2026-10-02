@@ -4,7 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get('drop_auth_token')?.value
+  const token = request.cookies.get('crave_auth_token')?.value || request.cookies.get('drop_auth_token')?.value
 
   // Verify token if present
   const payload = token ? await verifyToken(token) : null
@@ -14,8 +14,8 @@ export async function middleware(request: NextRequest) {
     return userRole === 'customer' ? '/user/dashboard' : `/${userRole}/dashboard`
   }
 
-  // If user is already logged in and hits /login or /signup, redirect to their role dashboard
-  if (payload && (pathname === '/login' || pathname === '/signup')) {
+  // If user is logged in and hits landing page (/), /login, or /signup, redirect to their role dashboard
+  if (payload && (pathname === '/' || pathname === '/login' || pathname === '/signup')) {
     const targetDashboard = getRoleDashboard(payload.role)
     return NextResponse.redirect(new URL(targetDashboard, request.url))
   }
@@ -68,5 +68,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/user/:path*', '/driver/:path*', '/vendor/:path*', '/vender/:path*', '/login', '/signup'],
+  matcher: ['/', '/admin/:path*', '/user/:path*', '/driver/:path*', '/vendor/:path*', '/vender/:path*', '/login', '/signup'],
 }

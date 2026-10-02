@@ -15,6 +15,8 @@ import {
   Zap,
   X,
   LayoutDashboard,
+  UtensilsCrossed,
+  Compass,
 } from 'lucide-react'
 import { useAuth, UserRole } from '@/lib/auth-context'
 
@@ -59,18 +61,19 @@ export default function Navbar() {
 
   const CurrentRoleIcon = roleDetails[role]?.icon || ShoppingBag
   const currentDashboardLink = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+  const logoTargetLink = user ? currentDashboardLink : '/'
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e5e9e1] bg-white/90 backdrop-blur-md">
       <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shadow-[0_4px_16px_rgba(217,244,71,0.4)]">
-              <Zap className="size-5 fill-current" />
+          <Link href={logoTargetLink} className="flex items-center gap-2.5 group">
+            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shadow-[0_4px_16px_rgba(217,244,71,0.4)] transition group-hover:scale-105">
+              <UtensilsCrossed className="size-5 fill-current" />
             </span>
             <span className="text-xl font-bold tracking-tight text-[#18201c]">
-              drop<span className="text-[#869c18]">.</span>
+              crave<span className="text-[#869c18]">.</span>
             </span>
           </Link>
 
@@ -127,19 +130,42 @@ export default function Navbar() {
 
         {/* Center navigation links */}
         <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] lg:flex">
-          <Link href="/" className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}>
-            Explore
-          </Link>
-          <Link href={currentDashboardLink} className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${pathname.includes('dashboard') ? 'text-[#18201c] font-bold' : ''}`}>
-            <LayoutDashboard className="size-3.5 text-[#859d19]" />
-            Dashboard ({roleDetails[role]?.title})
-          </Link>
-          <Link href="/login" className={`transition hover:text-[#18201c] ${pathname === '/login' ? 'text-[#18201c] font-bold' : ''}`}>
-            Login
-          </Link>
-          <Link href="/signup" className={`transition hover:text-[#18201c] ${pathname === '/signup' ? 'text-[#18201c] font-bold' : ''}`}>
-            Sign Up
-          </Link>
+          {user ? (
+            /* Authenticated Nav Items */
+            <>
+              <Link
+                href={currentDashboardLink}
+                className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                  pathname.includes('dashboard') ? 'text-[#18201c] font-bold' : ''
+                }`}
+              >
+                <LayoutDashboard className="size-3.5 text-[#859d19]" />
+                Dashboard ({roleDetails[role]?.title})
+              </Link>
+              <Link
+                href={currentDashboardLink}
+                className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                  pathname === '/' ? 'text-[#18201c] font-bold' : ''
+                }`}
+              >
+                <Compass className="size-3.5 text-[#859d19]" />
+                Explore Kitchens
+              </Link>
+            </>
+          ) : (
+            /* Unauthenticated Nav Items */
+            <>
+              <Link href="/" className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}>
+                Explore
+              </Link>
+              <Link href="/login" className={`transition hover:text-[#18201c] ${pathname === '/login' ? 'text-[#18201c] font-bold' : ''}`}>
+                Login
+              </Link>
+              <Link href="/signup" className={`transition hover:text-[#18201c] ${pathname === '/signup' ? 'text-[#18201c] font-bold' : ''}`}>
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Right side auth & profile */}
@@ -214,7 +240,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setShowMobileMenu((v) => !v)}
             className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
@@ -253,19 +278,24 @@ export default function Navbar() {
 
             <hr className="my-1 border-[#edf0ea]" />
 
-            <Link href="/" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
-              Home / Explore
-            </Link>
-            <Link href={currentDashboardLink} onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c] flex items-center justify-between">
-              <span>Dashboard</span>
-              <span className="rounded-full bg-[#f0f5db] px-2 py-0.5 text-[10px] text-[#718714] capitalize">{role}</span>
-            </Link>
-            <Link href="/login" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
-              Login
-            </Link>
-            <Link href="/signup" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
-              Sign Up
-            </Link>
+            {user ? (
+              <Link href={currentDashboardLink} onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c] flex items-center justify-between">
+                <span>Dashboard</span>
+                <span className="rounded-full bg-[#f0f5db] px-2 py-0.5 text-[10px] text-[#718714] capitalize">{role}</span>
+              </Link>
+            ) : (
+              <>
+                <Link href="/" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                  Explore
+                </Link>
+                <Link href="/login" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                  Login
+                </Link>
+                <Link href="/signup" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

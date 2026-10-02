@@ -32,13 +32,13 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     phone: '+91 97444 55667',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
   },
-  'admin@drop.com': {
+  'admin@crave.com': {
     id: 'usr_admin_1',
     name: 'Sara Vance (Admin)',
-    email: 'admin@drop.com',
+    email: 'admin@crave.com',
     role: 'admin',
     phone: '+91 99000 00001',
-    adminCode: 'DROP-SYS-8890',
+    adminCode: 'CRAVE-SYS-8890',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
   },
 }
@@ -80,13 +80,16 @@ export async function POST(request: Request) {
       user: userPayload,
     })
 
-    response.cookies.set('drop_auth_token', token, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
+    }
+
+    response.cookies.set('crave_auth_token', token, cookieOptions)
+    response.cookies.set('drop_auth_token', token, cookieOptions)
 
     return response
   } catch (error) {

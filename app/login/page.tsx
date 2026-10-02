@@ -25,19 +25,23 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('customer')
   const [errorMsg, setErrorMsg] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email.trim()) {
       setErrorMsg('Please enter your email address')
       return
     }
-    login(email.trim(), selectedRole)
-    router.push('/dashboard')
+    const success = await login(email.trim(), selectedRole)
+    if (success) {
+      const targetPath = selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
+      router.push(targetPath)
+    }
   }
 
-  function handleDemoRoleClick(r: UserRole) {
-    loginAsRole(r)
-    router.push('/dashboard')
+  async function handleDemoRoleClick(r: UserRole) {
+    await loginAsRole(r)
+    const targetPath = r === 'customer' ? '/user/dashboard' : `/${r}/dashboard`
+    router.push(targetPath)
   }
 
   return (
@@ -52,7 +56,7 @@ export default function LoginPage() {
               <Zap className="size-6 fill-current" />
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#18201c]">
-              Welcome Back to <span className="text-[#7d9518]">drop.</span>
+              Welcome Back to <span className="text-[#7d9518]">crave.</span>
             </h1>
             <p className="mt-1 text-xs text-[#717c76]">
               Sign in to your account or pick a demo role to test.
@@ -152,7 +156,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Footer link to signup */}
           <div className="mt-6 text-center text-xs text-[#717c76]">
             Don't have an account yet?{' '}
             <Link href="/signup" className="font-bold text-[#7d9518] hover:underline">
@@ -163,7 +166,7 @@ export default function LoginPage() {
       </main>
 
       <footer className="py-6 text-center text-xs text-gray-400 border-t border-gray-200">
-        © 2026 drop. Fast multi-role food delivery platform.
+        © 2026 crave. Fast multi-role food delivery platform.
       </footer>
     </div>
   )

@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'drop-secret-jwt-key-bengaluru-2026-secure-token'
+  process.env.JWT_SECRET || 'crave-secret-jwt-key-bengaluru-2026-secure-token'
 )
 
 export interface JWTPayload {
@@ -19,9 +19,6 @@ export interface JWTPayload {
   [key: string]: any
 }
 
-/**
- * Sign a new JSON Web Token (JWT) with user payload
- */
 export async function createToken(payload: JWTPayload): Promise<string> {
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
@@ -32,9 +29,6 @@ export async function createToken(payload: JWTPayload): Promise<string> {
   return token
 }
 
-/**
- * Verify and decode an existing JWT token
- */
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET, {

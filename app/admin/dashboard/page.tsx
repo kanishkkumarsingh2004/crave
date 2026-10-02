@@ -1,62 +1,132 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Navbar from '@/components/Navbar'
-import { useAuth } from '@/lib/auth-context'
-import AdminDashboard from '@/components/dashboards/AdminDashboard'
-import { ShieldAlert } from 'lucide-react'
+import React from 'react'
+import Link from 'next/link'
+import {
+  ArrowUpRight,
+  DollarSign,
+  Store,
+  TrendingUp,
+  Users,
+  Zap,
+} from 'lucide-react'
 
-export default function AdminDashboardPage() {
-  const { user, role } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (user && role !== 'admin') {
-      const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
-      router.replace(redirectPath)
-    }
-  }, [user, role, router])
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Authentication Required</p>
-          <p className="mt-2 text-sm font-semibold">Checking admin permissions...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-xl border border-rose-200">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-100 text-rose-700">
-            <ShieldAlert className="size-6" />
-          </div>
-          <h2 className="mt-4 text-xl font-bold text-[#18201c]">Access Denied</h2>
-          <p className="mt-2 text-xs text-gray-600">
-            You are logged in as <span className="font-bold capitalize">{role}</span>. You do not have permission to access the Admin Dashboard.
-          </p>
-          <button
-            onClick={() => router.push(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)}
-            className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
-          >
-            Go to Your {role} Dashboard
-          </button>
-        </div>
-      </div>
-    )
-  }
+export default function AdminOverviewPage() {
+  const pendingPayments = [
+    { id: 'pay_1', orderId: '#CRV-9021', customerUpi: 'alex@upi', utrRef: '428190021389', amount: 867 },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7]">
-      <Navbar />
-      <main>
-        <AdminDashboard />
-      </main>
+    <div className="flex flex-col gap-6">
+      {/* Metric Cards */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Total Network Sales</span>
+            <span className="grid size-8 place-items-center rounded-xl bg-purple-100 text-purple-800">
+              <DollarSign className="size-4" />
+            </span>
+          </div>
+          <p className="mt-3 text-3xl font-bold text-[#18201c]">₹4,28,900</p>
+          <p className="mt-1 text-xs font-semibold text-emerald-600 flex items-center gap-1">
+            <TrendingUp className="size-3.5" /> +24% growth this week
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Active Registered Users</span>
+            <span className="grid size-8 place-items-center rounded-xl bg-blue-100 text-blue-800">
+              <Users className="size-4" />
+            </span>
+          </div>
+          <p className="mt-3 text-3xl font-bold text-[#18201c]">12,480</p>
+          <p className="mt-1 text-xs text-[#737e77]">Across 4 ecosystem roles</p>
+        </div>
+
+        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Verified Kitchens</span>
+            <span className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
+              <Store className="size-4" />
+            </span>
+          </div>
+          <p className="mt-3 text-3xl font-bold text-amber-700">340 Partners</p>
+          <p className="mt-1 text-xs text-[#737e77]">2 awaiting approval</p>
+        </div>
+
+        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Delivery Fleet</span>
+            <span className="grid size-8 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
+              <Zap className="size-4" />
+            </span>
+          </div>
+          <p className="mt-3 text-3xl font-bold text-emerald-700">185 Active</p>
+          <p className="mt-1 text-xs text-[#737e77]">94% Electric Fleet</p>
+        </div>
+      </div>
+
+      {/* Action Quick Links */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
+            <h3 className="font-bold text-base text-[#18201c]">Pending Verification Queue</h3>
+            <Link href="/admin/payments" className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="mt-4 flex flex-col gap-3">
+            {pendingPayments.map((pay) => (
+              <div key={pay.id} className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] p-3 text-xs">
+                <div>
+                  <p className="font-bold text-[#18201c]">{pay.orderId} · UTR: {pay.utrRef}</p>
+                  <p className="text-[11px] text-gray-500">Customer VPA: {pay.customerUpi}</p>
+                </div>
+                <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
+            <h3 className="font-bold text-base text-[#18201c]">Role Distribution breakdown</h3>
+            <Link href="/admin/users" className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1">
+              Manage Accounts <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="mt-4 space-y-3 text-xs">
+            <div>
+              <div className="flex justify-between font-semibold mb-1">
+                <span>Customers / End Users</span>
+                <span>11,200 (89%)</span>
+              </div>
+              <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
+                <div className="h-full bg-emerald-500 w-[89%]" />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between font-semibold mb-1">
+                <span>Kitchen Vendors</span>
+                <span>340 (3%)</span>
+              </div>
+              <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
+                <div className="h-full bg-amber-500 w-[3%]" />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between font-semibold mb-1">
+                <span>Delivery Drivers</span>
+                <span>185 (2%)</span>
+              </div>
+              <div className="h-2 rounded-full bg-blue-100 overflow-hidden">
+                <div className="h-full bg-blue-500 w-[2%]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
