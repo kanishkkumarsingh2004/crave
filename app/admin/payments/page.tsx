@@ -32,47 +32,95 @@ export default function AdminPaymentsPage() {
         Review customer-submitted 12-digit UTR numbers before releasing funds to vendors.
       </p>
 
-      <div className="mt-6 flex flex-col gap-4">
+      {/* Mobile Responsive Payment Cards */}
+      <div className="flex flex-col gap-3 mt-6 block md:hidden">
         {payments.map((p) => (
-          <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border border-gray-200 p-4 gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-[#18201c]">{p.orderId}</span>
-                <span className="text-xs text-gray-500 font-mono">UTR: {p.utrRef}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold">{p.submittedAt}</span>
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Customer VPA: {p.customerUpi}</p>
+          <div key={p.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-[#18201c]">{p.orderId}</span>
+              <span className="font-bold text-[#18201c] text-sm">₹{p.amount}</span>
             </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-4">
-              <span className="font-bold text-base text-[#18201c]">₹{p.amount}</span>
-              {p.status === 'pending' ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => verifyPayment(p.id, 'verified')}
-                    className="rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700"
-                  >
-                    Approve Payment
-                  </button>
-                  <button
-                    onClick={() => verifyPayment(p.id, 'rejected')}
-                    className="rounded-full bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-rose-700"
-                  >
-                    Reject / Flag
-                  </button>
-                </div>
-              ) : (
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${
-                    p.status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                  }`}
-                >
-                  {p.status === 'verified' ? 'Verified & Paid' : 'Flagged as Fraud'}
-                </span>
-              )}
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">{p.utrRef}</span>
+              <span className="text-[11px]">{p.submittedAt}</span>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                onClick={() => verifyPayment(p.id, 'verified')}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
+                  p.status === 'verified'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white'
+                }`}
+              >
+                {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
+              </button>
+              <button
+                onClick={() => verifyPayment(p.id, 'rejected')}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
+                  p.status === 'rejected'
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white'
+                }`}
+              >
+                {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
+              </button>
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Desktop & Tablet Table */}
+      <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
+        <table className="w-full text-left text-sm border-collapse min-w-[650px]">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50/80 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-5 py-3.5 whitespace-nowrap">Order ID</th>
+              <th className="px-5 py-3.5 whitespace-nowrap">UTR Ref</th>
+              <th className="px-5 py-3.5 whitespace-nowrap">Submitted</th>
+              <th className="px-5 py-3.5 text-right whitespace-nowrap">Amount</th>
+              <th className="px-5 py-3.5 text-right whitespace-nowrap">Status / Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white">
+            {payments.map((p) => (
+              <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
+                <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">{p.orderId}</td>
+                <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">{p.utrRef}</td>
+                <td className="px-5 py-4 text-xs whitespace-nowrap">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                    {p.submittedAt}
+                  </span>
+                </td>
+                <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">₹{p.amount}</td>
+                <td className="px-5 py-4 text-right whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => verifyPayment(p.id, 'verified')}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
+                        p.status === 'verified'
+                          ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white'
+                      }`}
+                    >
+                      {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
+                    </button>
+                    <button
+                      onClick={() => verifyPayment(p.id, 'rejected')}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
+                        p.status === 'rejected'
+                          ? 'bg-rose-600 text-white ring-2 ring-rose-600/30'
+                          : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white'
+                      }`}
+                    >
+                      {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

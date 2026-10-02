@@ -70,6 +70,69 @@ export default function AdminUsersPage() {
   // State for active Vendor Overview modal/drawer
   const [activeVendorModal, setActiveVendorModal] = useState<VendorDetails | null>(null)
 
+  // Add User Modal State
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [newUserForm, setNewUserForm] = useState<{
+    name: string
+    email: string
+    role: UserRole
+    phone: string
+    detail: string
+    status: 'active' | 'pending'
+  }>({
+    name: '',
+    email: '',
+    role: 'customer',
+    phone: '',
+    detail: '',
+    status: 'active',
+  })
+
+  function handleCreateUser(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newUserForm.name || !newUserForm.email) return
+
+    const newAcc: AccountRecord = {
+      id: 'u_' + Date.now(),
+      name: newUserForm.name,
+      email: newUserForm.email,
+      role: newUserForm.role,
+      status: newUserForm.status,
+      joinedDate: new Date().toISOString().split('T')[0],
+      detail: newUserForm.detail || `${newUserForm.role.toUpperCase()} Account`,
+    }
+
+    if (newUserForm.role === 'vendor') {
+      newAcc.vendorData = {
+        id: newAcc.id,
+        name: newUserForm.name,
+        ownerName: newUserForm.name,
+        email: newUserForm.email,
+        phone: newUserForm.phone || '+91 99000 00000',
+        cuisine: newUserForm.detail || 'Multi-Cuisine Kitchen',
+        address: 'Bengaluru, India',
+        fssaiLicense: '#FSSAI-' + Math.floor(10000000 + Math.random() * 90000000),
+        bankAccount: 'HDFC Bank ••• 9821',
+        ifscCode: 'HDFC0001234',
+        paymentModel: 'commission',
+        commissionRate: 15,
+        kitchenStatus: 'open',
+        menu: [],
+      }
+    }
+
+    setAccounts((prev) => [newAcc, ...prev])
+    setIsAddUserOpen(false)
+    setNewUserForm({
+      name: '',
+      email: '',
+      role: 'customer',
+      phone: '',
+      detail: '',
+      status: 'active',
+    })
+  }
+
   // State for editing menu or adding new item
   const [isAddingDish, setIsAddingDish] = useState(false)
   const [newDish, setNewDish] = useState<{
@@ -478,36 +541,131 @@ export default function AdminUsersPage() {
                 </button>
               ))}
             </div>
+
+            <button
+              onClick={() => setIsAddUserOpen(true)}
+              className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-[#323d36]"
+            >
+              <Plus className="size-4" /> Add User
+            </button>
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 text-gray-400 uppercase font-bold text-[10px]">
+        {/* Mobile Responsive Account Cards (visible on mobile screens < md) */}
+        <div className="flex flex-col gap-3.5 mt-6 block md:hidden">
+          {filteredAccounts.map((acc) => (
+            <div key={acc.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {acc.role === 'vendor' && (
+                    <span className="grid size-7 place-items-center rounded-lg bg-amber-100 text-amber-800 shrink-0">
+                      <Store className="size-4" />
+                    </span>
+                  )}
+                  <div>
+                    <p className="font-bold text-sm text-[#18201c] leading-snug">{acc.name}</p>
+                    <p className="text-xs text-gray-500 font-medium">{acc.email}</p>
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase shrink-0 ${
+                    acc.status === 'active'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : acc.status === 'pending'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}
+                >
+                  {acc.status}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-xs">
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                    acc.role === 'vendor'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {acc.role}
+                </span>
+
+                {acc.vendorData ? (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${
+                      acc.vendorData.paymentModel === 'markup'
+                        ? 'bg-purple-50 text-purple-800 border-purple-200'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    }`}
+                  >
+                    <Tag className="size-3" />
+                    {acc.vendorData.paymentModel === 'markup'
+                      ? 'Price Markup Model'
+                      : `Commission (${acc.vendorData.commissionRate}%)`}
+                  </span>
+                ) : (
+                  <span className="text-gray-500 font-medium">{acc.detail}</span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                {acc.vendorData && (
+                  <button
+                    onClick={() => {
+                      setActiveVendorModal(acc.vendorData!)
+                      setIsAddingDish(false)
+                      setEditingDishId(null)
+                    }}
+                    className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1.5 text-xs font-bold text-white hover:bg-black transition shadow-sm"
+                  >
+                    <ChefHat className="size-3.5 text-[#d9f447]" /> Menu
+                  </button>
+                )}
+
+                <button
+                  onClick={() => toggleAccountStatus(acc.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold border transition ${
+                    acc.status === 'active'
+                      ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  {acc.status === 'active' ? 'Suspend' : 'Activate'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop & Tablet Table (Hidden on small mobile screens, horizontally scrollable with min-width) */}
+        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
+          <table className="w-full text-left text-xs border-collapse min-w-[850px]">
+            <thead className="border-b border-gray-200 bg-gray-50/80 text-gray-500 uppercase font-semibold text-[10px] tracking-wider">
               <tr>
-                <th className="pb-3">User / Name</th>
-                <th className="pb-3">Email Address</th>
-                <th className="pb-3">Role Type</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3">Payment Model / Details</th>
-                <th className="pb-3 text-right">Action</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">User / Name</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Email Address</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Role Type</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Payment Model / Details</th>
+                <th className="px-4 py-3.5 whitespace-nowrap text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {filteredAccounts.map((acc) => (
-                <tr key={acc.id} className="hover:bg-gray-50/50">
-                  <td className="py-3.5 font-bold text-[#18201c]">
+                <tr key={acc.id} className="hover:bg-gray-50/60 transition-colors">
+                  <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {acc.role === 'vendor' && (
-                        <span className="grid size-6 place-items-center rounded-lg bg-amber-100 text-amber-800">
+                        <span className="grid size-6 place-items-center rounded-lg bg-amber-100 text-amber-800 shrink-0">
                           <Store className="size-3.5" />
                         </span>
                       )}
                       <span>{acc.name}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 text-gray-600">{acc.email}</td>
-                  <td className="py-3.5">
+                  <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{acc.email}</td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <span
                       className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
                         acc.role === 'vendor'
@@ -518,7 +676,7 @@ export default function AdminUsersPage() {
                       {acc.role}
                     </span>
                   </td>
-                  <td className="py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                         acc.status === 'active'
@@ -531,7 +689,7 @@ export default function AdminUsersPage() {
                       {acc.status}
                     </span>
                   </td>
-                  <td className="py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     {acc.vendorData ? (
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${
@@ -549,30 +707,32 @@ export default function AdminUsersPage() {
                       <span className="text-gray-500">{acc.detail}</span>
                     )}
                   </td>
-                  <td className="py-3.5 text-right flex items-center justify-end gap-2">
-                    {acc.vendorData && (
-                      <button
-                        onClick={() => {
-                          setActiveVendorModal(acc.vendorData!)
-                          setIsAddingDish(false)
-                          setEditingDishId(null)
-                        }}
-                        className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-bold text-white hover:bg-black transition shadow-sm"
-                      >
-                        <ChefHat className="size-3.5 text-[#d9f447]" /> Restaurant Overview & Menu
-                      </button>
-                    )}
+                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-2">
+                      {acc.vendorData && (
+                        <button
+                          onClick={() => {
+                            setActiveVendorModal(acc.vendorData!)
+                            setIsAddingDish(false)
+                            setEditingDishId(null)
+                          }}
+                          className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-bold text-white hover:bg-black transition shadow-sm"
+                        >
+                          <ChefHat className="size-3.5 text-[#d9f447]" /> Restaurant Overview & Menu
+                        </button>
+                      )}
 
-                    <button
-                      onClick={() => toggleAccountStatus(acc.id)}
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${
-                        acc.status === 'active'
-                          ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                          : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                      }`}
-                    >
-                      {acc.status === 'active' ? 'Suspend' : 'Activate'}
-                    </button>
+                      <button
+                        onClick={() => toggleAccountStatus(acc.id)}
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${
+                          acc.status === 'active'
+                            ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {acc.status === 'active' ? 'Suspend' : 'Activate'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1006,6 +1166,124 @@ export default function AdminUsersPage() {
                 Close Overview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create New User Modal */}
+      {isAddUserOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#18201c]">Create New User Account</h3>
+                <p className="text-xs text-gray-500">Add a new Customer, Vendor, Driver, or Admin account to the platform.</p>
+              </div>
+              <button
+                onClick={() => setIsAddUserOpen(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="mt-5 flex flex-col gap-4 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Full Name / Business Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Sharma or Biryani Blues"
+                  value={newUserForm.name}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@domain.com"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Account Role *</label>
+                  <select
+                    value={newUserForm.role}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })}
+                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="vendor">Kitchen Vendor</option>
+                    <option value="driver">Delivery Driver</option>
+                    <option value="admin">System Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Initial Status *</label>
+                  <select
+                    value={newUserForm.status}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as 'active' | 'pending' })}
+                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
+                  >
+                    <option value="active">Active</option>
+                    <option value="pending">Pending Verification</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="+91 98765 43210"
+                  value={newUserForm.phone}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Detail / Description</label>
+                <input
+                  type="text"
+                  placeholder={
+                    newUserForm.role === 'vendor'
+                      ? 'e.g. North Indian & Mughlai'
+                      : newUserForm.role === 'driver'
+                      ? 'e.g. Ather 450X EV'
+                      : 'e.g. Premium Customer'
+                  }
+                  value={newUserForm.detail}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, detail: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div className="mt-4 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsAddUserOpen(false)}
+                  className="rounded-full border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#18201c] px-5 py-2 font-bold text-white shadow-md hover:bg-black"
+                >
+                  Create User Account
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

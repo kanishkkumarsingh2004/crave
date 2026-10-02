@@ -15,7 +15,6 @@ export interface JWTPayload {
   cuisine?: string
   vehicleType?: string
   licensePlate?: string
-  adminCode?: string
   [key: string]: any
 }
 

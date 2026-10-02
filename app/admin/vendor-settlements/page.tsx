@@ -152,9 +152,13 @@ export default function VendorSettlementsPage() {
 
   // Helper calculation for single vendor
   function getVendorFinancials(v: VendorFinancialRecord) {
-    const commissionCut = (v.weeklyGrossSales * v.commissionRate) / 100
-    const promoCut = (v.weeklyGrossSales * v.promoSubsidyPct) / 100
-    const netPayable = v.weeklyGrossSales - commissionCut + promoCut
+    const gross = typeof v.weeklyGrossSales === 'number' ? v.weeklyGrossSales : (parseFloat(v.weeklyGrossSales as any) || 0)
+    const commRate = typeof v.commissionRate === 'number' ? v.commissionRate : (parseFloat(v.commissionRate as any) || 0)
+    const promoPct = typeof v.promoSubsidyPct === 'number' ? v.promoSubsidyPct : (parseFloat(v.promoSubsidyPct as any) || 0)
+
+    const commissionCut = (gross * commRate) / 100
+    const promoCut = (gross * promoPct) / 100
+    const netPayable = gross - commissionCut + promoCut
     return { commissionCut, promoCut, netPayable }
   }
 
@@ -199,51 +203,51 @@ export default function VendorSettlementsPage() {
       </div>
 
       {/* Network Financial Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Total Weekly Gross Sales</span>
-            <span className="grid size-8 place-items-center rounded-xl bg-purple-100 text-purple-800">
-              <DollarSign className="size-4" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Weekly Gross</span>
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-purple-100 text-purple-800">
+              <DollarSign className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-3 text-3xl font-bold text-[#18201c]">₹{totalGrossSales.toLocaleString()}</p>
-          <p className="mt-1 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-            <TrendingUp className="size-3.5" /> Across {vendors.length} kitchens
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-[#18201c]">₹{totalGrossSales.toLocaleString()}</p>
+          <p className="mt-1 text-[10px] sm:text-xs font-semibold text-emerald-600 flex items-center gap-1">
+            <TrendingUp className="size-3 sm:size-3.5" /> Across {vendors.length} kitchens
           </p>
         </div>
 
-        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Retained Platform Commission</span>
-            <span className="grid size-8 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
-              <Percent className="size-4" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Our Commission</span>
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-800">
+              <Percent className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-3 text-3xl font-bold text-emerald-700">₹{totalCommissionRevenue.toLocaleString()}</p>
-          <p className="mt-1 text-xs text-[#737e77]">Our net revenue cut</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-700">₹{totalCommissionRevenue.toLocaleString()}</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Net revenue cut</p>
         </div>
 
-        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Net Payable Vendor Settlement</span>
-            <span className="grid size-8 place-items-center rounded-xl bg-blue-100 text-blue-800">
-              <Store className="size-4" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Net Vendor Pay</span>
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-800">
+              <Store className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-3 text-3xl font-bold text-blue-700">₹{totalNetVendorPayable.toLocaleString()}</p>
-          <p className="mt-1 text-xs text-[#737e77]">To be disbursed to vendors</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-blue-700">₹{totalNetVendorPayable.toLocaleString()}</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">To be disbursed</p>
         </div>
 
-        <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Pending Disbursements</span>
-            <span className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
-              <Clock3 className="size-4" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Pending Pay</span>
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-amber-100 text-amber-800">
+              <Clock3 className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-3 text-3xl font-bold text-amber-600">{pendingSettlementsCount} Kitchens</p>
-          <p className="mt-1 text-xs text-[#737e77]">Awaiting payout release</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600">{pendingSettlementsCount} Kitchens</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Awaiting payout release</p>
         </div>
       </div>
 
@@ -283,49 +287,100 @@ export default function VendorSettlementsPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 text-gray-400 uppercase font-bold text-[10px]">
+        {/* Mobile Vendor Cards (< md) */}
+        <div className="flex flex-col gap-3.5 mt-6 block md:hidden">
+          {filteredVendors.map((v) => {
+            const fin = getVendorFinancials(v)
+            return (
+              <div key={v.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm text-[#18201c]">{v.name}</h4>
+                    <p className="text-xs text-gray-500">{v.ownerName} · {v.phone}</p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                      v.settlementStatus === 'settled'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                    }`}
+                  >
+                    {v.settlementStatus}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 border-y border-gray-100 py-2.5 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block">Weekly Gross</span>
+                    <span className="font-bold text-[#18201c] text-sm">₹{v.weeklyGrossSales.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block">Commission Cut ({v.commissionRate}%)</span>
+                    <span className="font-bold text-emerald-700 text-sm">₹{fin.commissionCut.toLocaleString()}</span>
+                  </div>
+                  <div className="col-span-2 pt-1 border-t border-dashed border-gray-100 flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Net Payable</span>
+                    <span className="font-extrabold text-blue-700 text-sm">₹{fin.netPayable.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-gray-500 font-medium">{v.cuisine}</span>
+                  <button
+                    onClick={() => setSelectedVendor(v)}
+                    className="rounded-full bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1.5"
+                  >
+                    <Sliders className="size-3.5 text-[#d9f447]" /> Alter & Inspect
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop & Tablet Table (>= md) */}
+        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
+          <table className="w-full text-left text-xs min-w-[850px]">
+            <thead className="border-b border-gray-200 bg-gray-50/80 text-gray-500 uppercase font-bold text-[10px] tracking-wider">
               <tr>
-                <th className="pb-3">Restaurant & Owner</th>
-                <th className="pb-3">Cuisine / Location</th>
-                <th className="pb-3">Weekly Gross Sales</th>
-                <th className="pb-3">Commission Cut (%)</th>
-                <th className="pb-3">Our Platform Cut</th>
-                <th className="pb-3">Net Vendor Settlement</th>
-                <th className="pb-3">Payout Status</th>
-                <th className="pb-3 text-right">Action</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Restaurant & Owner</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Cuisine / Location</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Weekly Gross Sales</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Commission Cut (%)</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Our Platform Cut</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Net Vendor Settlement</th>
+                <th className="px-4 py-3.5 whitespace-nowrap">Payout Status</th>
+                <th className="px-4 py-3.5 whitespace-nowrap text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {filteredVendors.map((v) => {
                 const fin = getVendorFinancials(v)
                 return (
                   <tr key={v.id} className="hover:bg-gray-50/60 transition">
-                    <td className="py-4">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <p className="font-bold text-[#18201c] text-sm">{v.name}</p>
                       <p className="text-[11px] text-gray-500">{v.ownerName} ({v.phone})</p>
                     </td>
-                    <td className="py-4">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <p className="font-semibold text-gray-700">{v.cuisine}</p>
                       <p className="text-[10px] text-gray-400">{v.address}</p>
                     </td>
-                    <td className="py-4 font-bold text-base text-[#18201c]">
+                    <td className="px-4 py-4 font-bold text-base text-[#18201c] whitespace-nowrap">
                       ₹{v.weeklyGrossSales.toLocaleString()}
                     </td>
-                    <td className="py-4">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-[11px] font-bold text-amber-800">
                         {v.commissionRate}%
                       </span>
                     </td>
-                    <td className="py-4 font-bold text-emerald-700">
+                    <td className="px-4 py-4 font-bold text-emerald-700 whitespace-nowrap">
                       ₹{fin.commissionCut.toLocaleString()}
                     </td>
-                    <td className="py-4 font-bold text-blue-700 text-sm">
+                    <td className="px-4 py-4 font-bold text-blue-700 text-sm whitespace-nowrap">
                       ₹{fin.netPayable.toLocaleString()}
                     </td>
-                    <td className="py-4">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span
                         className={`rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${
                           v.settlementStatus === 'settled'
@@ -336,7 +391,7 @@ export default function VendorSettlementsPage() {
                         {v.settlementStatus}
                       </span>
                     </td>
-                    <td className="py-4 text-right">
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
                       <button
                         onClick={() => setSelectedVendor(v)}
                         className="rounded-full bg-[#18201c] px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1.5 ml-auto"
@@ -415,9 +470,10 @@ export default function VendorSettlementsPage() {
                       min="0"
                       max="40"
                       value={selectedVendor.commissionRate}
-                      onChange={(e) =>
-                        updateVendorPricing(selectedVendor.id, 'commissionRate', parseFloat(e.target.value) || 0)
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        updateVendorPricing(selectedVendor.id, 'commissionRate', val === '' ? '' : parseFloat(val))
+                      }}
                       className="w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
                     />
                     <span className="font-bold text-purple-900">%</span>
@@ -429,9 +485,10 @@ export default function VendorSettlementsPage() {
                   <input
                     type="number"
                     value={selectedVendor.packagingCapFee}
-                    onChange={(e) =>
-                      updateVendorPricing(selectedVendor.id, 'packagingCapFee', parseFloat(e.target.value) || 0)
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value
+                      updateVendorPricing(selectedVendor.id, 'packagingCapFee', val === '' ? '' : parseFloat(val))
+                    }}
                     className="mt-1.5 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
                   />
                 </div>
@@ -441,9 +498,10 @@ export default function VendorSettlementsPage() {
                   <input
                     type="number"
                     value={selectedVendor.promoSubsidyPct}
-                    onChange={(e) =>
-                      updateVendorPricing(selectedVendor.id, 'promoSubsidyPct', parseFloat(e.target.value) || 0)
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value
+                      updateVendorPricing(selectedVendor.id, 'promoSubsidyPct', val === '' ? '' : parseFloat(val))
+                    }}
                     className="mt-1.5 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
                   />
                 </div>

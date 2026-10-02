@@ -22,30 +22,49 @@ import {
   Zap,
 } from 'lucide-react'
 
+function handleNumInput(val: string): number | '' {
+  if (val === '') return ''
+  const parsed = parseFloat(val)
+  return isNaN(parsed) ? '' : parsed
+}
+
+function getNum(val: number | '' | undefined | null): number {
+  if (typeof val === 'number' && !isNaN(val)) return val
+  if (typeof val === 'string') {
+    const p = parseFloat(val)
+    return isNaN(p) ? 0 : p
+  }
+  return 0
+}
+
 export default function AdminPaymentConfigPage() {
-  // 1. UPI Receiver Credentials
+  // 1. UPI Receiver Credentials & Customer Confirmation
   const [upiVpa, setUpiVpa] = useState('crave@upi')
   const [merchantName, setMerchantName] = useState('crave Food Delivery Services')
+  const [thankYouMessage, setThankYouMessage] = useState(
+    'Thank you for ordering with crave! Your payment reference has been submitted successfully and is being verified by our team.'
+  )
   const [mccCode, setMccCode] = useState('5812')
   const [ifscCode, setIfscCode] = useState('HDFC0001234')
   const [accountNumber, setAccountNumber] = useState('50100293849281')
 
   // 2. Platform & Vendor Fees
-  const [platformFee, setPlatformFee] = useState<number>(6) // Flat ₹6
-  const [vendorCommission, setVendorCommission] = useState<number>(15) // 15%
-  const [packagingCap, setPackagingCap] = useState<number>(20) // ₹20 max
+  const [platformFee, setPlatformFee] = useState<number | ''>(6) // Flat ₹6
+  const [handlingFee, setHandlingFee] = useState<number | ''>(5) // Flat ₹5 Handling Charge
+  const [vendorCommission, setVendorCommission] = useState<number | ''>(15) // 15%
+  const [packagingCap, setPackagingCap] = useState<number | ''>(20) // ₹20 max
 
   // 3. Delivery Fee Rules
-  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(30) // ₹30 for first 3 km
-  const [baseDistanceKm, setBaseDistanceKm] = useState<number>(3)
-  const [perKmRate, setPerKmRate] = useState<number>(10) // ₹10 / extra km
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(500) // ₹500
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number | ''>(30) // ₹30 for first 3 km
+  const [baseDistanceKm, setBaseDistanceKm] = useState<number | ''>(3)
+  const [perKmRate, setPerKmRate] = useState<number | ''>(10) // ₹10 / extra km
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | ''>(500) // ₹500
   const [driverPayoutShare, setDriverPayoutShare] = useState<number>(80) // 80% to driver
 
   // 4. Surge Pricing & Weather Settings
   const [surgeMultiplier, setSurgeMultiplier] = useState<number>(1.25) // 1.25x
-  const [rainFee, setRainFee] = useState<number>(20) // ₹20
-  const [nightSurgeFee, setNightSurgeFee] = useState<number>(15) // ₹15
+  const [rainFee, setRainFee] = useState<number | ''>(20) // ₹20
+  const [nightSurgeFee, setNightSurgeFee] = useState<number | ''>(15) // ₹15
   const [isRainModeActive, setIsRainModeActive] = useState<boolean>(false)
   const [isNightSurgeActive, setIsNightSurgeActive] = useState<boolean>(false)
 
@@ -62,14 +81,26 @@ export default function AdminPaymentConfigPage() {
 
   // Live Playground Fee Calculation Math
   const playgroundCalc = useMemo(() => {
+    const baseFee = getNum(baseDeliveryFee)
+    const baseDist = getNum(baseDistanceKm)
+    const perKm = getNum(perKmRate)
+    const freeThresh = getNum(freeDeliveryThreshold)
+    const ordVal = getNum(testOrderValue)
+    const distKm = getNum(testDistanceKm)
+    const pFee = getNum(platformFee)
+    const hFee = getNum(handlingFee)
+    const vComm = getNum(vendorCommission)
+    const rFee = getNum(rainFee)
+    const nFee = getNum(nightSurgeFee)
+
     // Delivery fee math
-    let rawDelivery = baseDeliveryFee
-    if (testDistanceKm > baseDistanceKm) {
-      rawDelivery += (testDistanceKm - baseDistanceKm) * perKmRate
+    let rawDelivery = baseFee
+    if (distKm > baseDist) {
+      rawDelivery += (distKm - baseDist) * perKm
     }
 
     // Apply Free Delivery check
-    const isFreeDelivery = testOrderValue >= freeDeliveryThreshold && freeDeliveryThreshold > 0
+    const isFreeDelivery = ordVal >= freeThresh && freeThresh > 0
     let finalDeliveryFee = isFreeDelivery ? 0 : rawDelivery
 
     // Surge calculations
@@ -78,20 +109,20 @@ export default function AdminPaymentConfigPage() {
       surgeAddon += finalDeliveryFee * (surgeMultiplier - 1.0)
     }
     if (isRainModeActive) {
-      surgeAddon += rainFee
+      surgeAddon += rFee
     }
     if (isNightSurgeActive) {
-      surgeAddon += nightSurgeFee
+      surgeAddon += nFee
     }
 
     const totalDeliveryCharges = Math.round((finalDeliveryFee + surgeAddon) * 100) / 100
 
-    // Customer Grand Total
-    const customerTotal = testOrderValue + totalDeliveryCharges + platformFee
+    // Customer Grand Total (includes Subtotal + Delivery + Platform Fee + Handling Charges)
+    const customerTotal = Math.round((ordVal + totalDeliveryCharges + pFee + hFee) * 100) / 100
 
     // Breakdown Split
-    const vendorCommissionAmount = (testOrderValue * vendorCommission) / 100
-    const vendorPayout = testOrderValue - vendorCommissionAmount
+    const vendorCommissionAmount = (ordVal * vComm) / 100
+    const vendorPayout = ordVal - vendorCommissionAmount
     const driverPayout = Math.round(totalDeliveryCharges * (driverPayoutShare / 100))
     const platformNetProfit = Math.round((customerTotal - vendorPayout - driverPayout) * 100) / 100
 
@@ -101,6 +132,7 @@ export default function AdminPaymentConfigPage() {
       finalDeliveryFee,
       surgeAddon,
       totalDeliveryCharges,
+      handlingFee: hFee,
       customerTotal,
       vendorCommissionAmount,
       vendorPayout,
@@ -120,6 +152,7 @@ export default function AdminPaymentConfigPage() {
     isNightSurgeActive,
     nightSurgeFee,
     platformFee,
+    handlingFee,
     vendorCommission,
     driverPayoutShare,
   ])
@@ -146,13 +179,13 @@ export default function AdminPaymentConfigPage() {
             Payment, Delivery & Surge Charge Playground
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Configure platform fees, delivery distance rates, rain/rush surge multipliers, and test live order payouts.
+            Configure receiver UPI credentials, thank you messages, platform service fees, and test live order payouts.
           </p>
         </div>
 
         {savedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
-            <CheckCircle2 className="size-4 text-emerald-700" /> All Settings & Surge Playground Saved!
+            <CheckCircle2 className="size-4 text-emerald-700" /> All UPI Credentials, Thank You Message & Playground Saved!
           </div>
         )}
       </div>
@@ -169,26 +202,35 @@ export default function AdminPaymentConfigPage() {
               Set revenue share rates and order handling charges.
             </p>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3 text-xs">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
               <div>
                 <label className="font-bold text-[#18201c]">Platform Service Fee (₹)</label>
                 <input
                   type="number"
-                  required
                   value={platformFee}
-                  onChange={(e) => setPlatformFee(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setPlatformFee(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Flat fee per customer order</p>
               </div>
 
               <div>
+                <label className="font-bold text-[#18201c]">Handling Charge (₹)</label>
+                <input
+                  type="number"
+                  value={handlingFee}
+                  onChange={(e) => setHandlingFee(handleNumInput(e.target.value))}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Payment processing fee</p>
+              </div>
+
+              <div>
                 <label className="font-bold text-[#18201c]">Vendor Commission (%)</label>
                 <input
                   type="number"
-                  required
                   value={vendorCommission}
-                  onChange={(e) => setVendorCommission(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setVendorCommission(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">% cut from food value</p>
@@ -198,9 +240,8 @@ export default function AdminPaymentConfigPage() {
                 <label className="font-bold text-[#18201c]">Max Packaging Cap (₹)</label>
                 <input
                   type="number"
-                  required
                   value={packagingCap}
-                  onChange={(e) => setPackagingCap(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setPackagingCap(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Max kitchen container fee</p>
@@ -222,21 +263,19 @@ export default function AdminPaymentConfigPage() {
                 <label className="font-bold text-[#18201c]">Base Delivery Fee (₹)</label>
                 <input
                   type="number"
-                  required
                   value={baseDeliveryFee}
-                  onChange={(e) => setBaseDeliveryFee(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setBaseDeliveryFee(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Fixed rate for first {baseDistanceKm} km</p>
+                <p className="mt-1 text-[10px] text-gray-400">Fixed rate for first {getNum(baseDistanceKm)} km</p>
               </div>
 
               <div>
                 <label className="font-bold text-[#18201c]">Base Distance Threshold (km)</label>
                 <input
                   type="number"
-                  required
                   value={baseDistanceKm}
-                  onChange={(e) => setBaseDistanceKm(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setBaseDistanceKm(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Distance included in base fare</p>
@@ -246,9 +285,8 @@ export default function AdminPaymentConfigPage() {
                 <label className="font-bold text-[#18201c]">Per-KM Rate Beyond Base (₹/km)</label>
                 <input
                   type="number"
-                  required
                   value={perKmRate}
-                  onChange={(e) => setPerKmRate(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setPerKmRate(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Extra charge per additional km</p>
@@ -258,9 +296,8 @@ export default function AdminPaymentConfigPage() {
                 <label className="font-bold text-[#18201c]">Free Delivery Order Threshold (₹)</label>
                 <input
                   type="number"
-                  required
                   value={freeDeliveryThreshold}
-                  onChange={(e) => setFreeDeliveryThreshold(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setFreeDeliveryThreshold(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Free delivery for orders above this</p>
@@ -350,7 +387,7 @@ export default function AdminPaymentConfigPage() {
                     <input
                       type="number"
                       value={rainFee}
-                      onChange={(e) => setRainFee(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setRainFee(handleNumInput(e.target.value))}
                       className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-1.5 font-bold outline-none"
                     />
                   </div>
@@ -380,7 +417,7 @@ export default function AdminPaymentConfigPage() {
                     <input
                       type="number"
                       value={nightSurgeFee}
-                      onChange={(e) => setNightSurgeFee(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setNightSurgeFee(handleNumInput(e.target.value))}
                       className="mt-1 w-full rounded-xl border border-purple-200 bg-white px-3 py-1.5 font-bold outline-none"
                     />
                   </div>
@@ -389,31 +426,57 @@ export default function AdminPaymentConfigPage() {
             </div>
           </div>
 
-          {/* SECTION 4: UPI Merchant Credentials */}
+          {/* SECTION 4: UPI Receiver Credentials & Customer Thank You Message */}
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI Credentials
+              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI & Confirmation Configs
             </h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 text-xs">
-              <div>
-                <label className="font-bold text-[#18201c]">Receiver UPI VPA *</label>
-                <input
-                  type="text"
-                  required
-                  value={upiVpa}
-                  onChange={(e) => setUpiVpa(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-mono font-bold outline-none"
-                />
+            <p className="text-xs text-gray-500 mt-0.5">
+              Configure the receiver UPI ID, business payee name, and thank you message shown after checkout.
+            </p>
+
+            <div className="mt-4 flex flex-col gap-4 text-xs">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Receiver UPI ID (VPA) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={upiVpa}
+                    onChange={(e) => setUpiVpa(e.target.value)}
+                    placeholder="e.g. crave@upi"
+                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-mono font-bold outline-none focus:border-[#86a018]"
+                  />
+                  <p className="mt-1 text-[10px] text-gray-400">Target VPA ID for UPI payments</p>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Receiver / Merchant Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={merchantName}
+                    onChange={(e) => setMerchantName(e.target.value)}
+                    placeholder="e.g. crave Food Delivery Services"
+                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  />
+                  <p className="mt-1 text-[10px] text-gray-400">Official payee name on UPI apps</p>
+                </div>
               </div>
+
               <div>
-                <label className="font-bold text-[#18201c]">Merchant Business Name *</label>
-                <input
-                  type="text"
+                <label className="font-bold text-[#18201c]">Customer Thank You Message *</label>
+                <textarea
+                  rows={3}
                   required
-                  value={merchantName}
-                  onChange={(e) => setMerchantName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none"
+                  value={thankYouMessage}
+                  onChange={(e) => setThankYouMessage(e.target.value)}
+                  placeholder="e.g. Thank you for your order! Your payment reference is recorded."
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-medium outline-none focus:border-[#86a018]"
                 />
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Custom message shown to customers after completing payment and submitting their 12-digit UTR reference.
+                </p>
               </div>
             </div>
           </div>
@@ -483,14 +546,14 @@ export default function AdminPaymentConfigPage() {
               </div>
 
               <div className="flex justify-between text-white/70">
-                <span>Base Delivery ({baseDistanceKm}km)</span>
-                <span>₹{baseDeliveryFee}</span>
+                <span>Base Delivery ({getNum(baseDistanceKm)}km)</span>
+                <span>₹{getNum(baseDeliveryFee)}</span>
               </div>
 
-              {testDistanceKm > baseDistanceKm && (
+              {testDistanceKm > getNum(baseDistanceKm) && (
                 <div className="flex justify-between text-white/70">
-                  <span>Extra Distance ({(testDistanceKm - baseDistanceKm).toFixed(1)}km @ ₹{perKmRate}/km)</span>
-                  <span>+₹{(testDistanceKm - baseDistanceKm) * perKmRate}</span>
+                  <span>Extra Distance ({(testDistanceKm - getNum(baseDistanceKm)).toFixed(1)}km @ ₹{getNum(perKmRate)}/km)</span>
+                  <span>+₹{(testDistanceKm - getNum(baseDistanceKm)) * getNum(perKmRate)}</span>
                 </div>
               )}
 
@@ -510,7 +573,12 @@ export default function AdminPaymentConfigPage() {
 
               <div className="flex justify-between text-white/70">
                 <span>Platform Service Fee</span>
-                <span>₹{platformFee}</span>
+                <span>₹{getNum(platformFee)}</span>
+              </div>
+
+              <div className="flex justify-between text-white/70">
+                <span>Order Handling Charge</span>
+                <span>₹{getNum(handlingFee)}</span>
               </div>
 
               <div className="pt-3 border-t border-white/15 flex justify-between font-bold text-base text-[#d9f447]">
@@ -522,7 +590,7 @@ export default function AdminPaymentConfigPage() {
               <div className="mt-4 pt-4 border-t border-white/15 space-y-2 text-[11px]">
                 <p className="font-bold text-white/50 uppercase tracking-wider text-[9px]">Settlement Payout Split</p>
                 <div className="flex justify-between text-amber-300">
-                  <span>🏪 Kitchen Vendor Payout ({100 - vendorCommission}%):</span>
+                  <span>🏪 Kitchen Vendor Payout ({100 - getNum(vendorCommission)}%):</span>
                   <span className="font-bold">₹{playgroundCalc.vendorPayout}</span>
                 </div>
                 <div className="flex justify-between text-blue-300">
@@ -533,6 +601,38 @@ export default function AdminPaymentConfigPage() {
                   <span>🛡️ Platform Net Commission Profit:</span>
                   <span className="font-bold">₹{playgroundCalc.platformNetProfit}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* LIVE CUSTOMER CONFIRMATION & UPI PREVIEW CARD */}
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-emerald-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                  <ShieldCheck className="size-4 text-emerald-700" /> Live Customer Checkout Preview
+                </span>
+                <span className="rounded-full bg-emerald-200/70 px-2 py-0.5 text-[9px] font-extrabold text-emerald-900 uppercase">
+                  Active
+                </span>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-emerald-100 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Receiver UPI VPA:</span>
+                  <span className="font-mono font-bold text-[#18201c]">{upiVpa}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Merchant Payee Name:</span>
+                  <span className="font-bold text-[#18201c]">{merchantName}</span>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-emerald-100/70 p-3 border border-emerald-200 text-emerald-950">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1">
+                  Customer Thank You Note
+                </p>
+                <p className="italic text-[11px] font-medium leading-relaxed text-emerald-900">
+                  "{thankYouMessage}"
+                </p>
               </div>
             </div>
           </div>

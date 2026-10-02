@@ -38,7 +38,6 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     email: 'admin@crave.com',
     role: 'admin',
     phone: '+91 99000 00001',
-    adminCode: 'CRAVE-SYS-8890',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
   },
 }
