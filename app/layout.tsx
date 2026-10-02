@@ -5,10 +5,10 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "CRAVE — Enterprise Operations & Delivery Platform",
-    template: "%s | CRAVE Platform",
+    default: "BlinkBite — Operations & Admin Console",
+    template: "%s | BlinkBite Admin",
   },
-  description: "CRAVE Multi-Role Delivery Platform & Enterprise Operations",
+  description: "BlinkBite Multi-Role Operations & Admin Console",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -22,7 +22,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-slate-50 text-slate-900 selection:bg-blue-600 selection:text-white">
+      <body
+        suppressHydrationWarning
+        className="font-sans antialiased bg-slate-50 text-slate-900 selection:bg-blue-600 selection:text-white"
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
