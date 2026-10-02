@@ -1,13 +1,9 @@
 /**
- * @delivery/types
- *
- * Shared TypeScript types for the entire delivery platform.
- * All apps and packages should import domain types from here.
- * Do NOT import @prisma/client directly in application code — use @delivery/database instead.
+ * BlinkBite Admin Console - Domain & API Types
  */
 
 // ============================================================
-// ENUMS (mirrored from Prisma for use in non-server contexts)
+// ENUMS
 // ============================================================
 
 export enum UserRole {
@@ -92,15 +88,6 @@ export enum DeliveryStatus {
   CANCELLED = "CANCELLED",
 }
 
-export enum DriverAssignmentStatus {
-  OFFERED = "OFFERED",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED",
-  EXPIRED = "EXPIRED",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
-}
-
 export enum RefundStatus {
   NOT_REQUESTED = "NOT_REQUESTED",
   REQUESTED = "REQUESTED",
@@ -110,24 +97,6 @@ export enum RefundStatus {
   PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED",
   REFUNDED = "REFUNDED",
   REJECTED = "REJECTED",
-  FAILED = "FAILED",
-}
-
-export enum InventoryReservationStatus {
-  PENDING = "PENDING",
-  RESERVED = "RESERVED",
-  RELEASED = "RELEASED",
-  COMMITTED = "COMMITTED",
-  EXPIRED = "EXPIRED",
-}
-
-export enum NotificationStatus {
-  CREATED = "CREATED",
-  QUEUED = "QUEUED",
-  SENDING = "SENDING",
-  SENT = "SENT",
-  DELIVERED = "DELIVERED",
-  READ = "READ",
   FAILED = "FAILED",
 }
 
@@ -143,22 +112,8 @@ export enum ReviewStatus {
   REMOVED = "REMOVED",
 }
 
-export enum DeliveryVerificationType {
-  OTP = "OTP",
-  QR = "QR",
-  PHOTO = "PHOTO",
-  SIGNATURE = "SIGNATURE",
-  MANUAL = "MANUAL",
-}
-
-export enum DeliveryVerificationStatus {
-  PENDING = "PENDING",
-  VERIFIED = "VERIFIED",
-  FAILED = "FAILED",
-}
-
 // ============================================================
-// AUTH CONTEXT TYPE
+// AUTH CONTEXT
 // ============================================================
 
 export interface AuthContext {
@@ -169,7 +124,7 @@ export interface AuthContext {
 }
 
 // ============================================================
-// API RESPONSE ENVELOPE
+// API RESPONSE ENVELOPES
 // ============================================================
 
 export interface ApiSuccess<T> {
@@ -204,7 +159,7 @@ export interface PaginationQuery {
 }
 
 // ============================================================
-// USER DOMAIN TYPES
+// DOMAIN MODELS (Admin Console)
 // ============================================================
 
 export interface UserSummary {
@@ -219,10 +174,6 @@ export interface UserSummary {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ============================================================
-// CUSTOMER DOMAIN TYPES
-// ============================================================
 
 export interface CustomerProfileSummary {
   id: string;
@@ -252,10 +203,6 @@ export interface AddressSummary {
   updatedAt: Date;
 }
 
-// ============================================================
-// VENDOR DOMAIN TYPES
-// ============================================================
-
 export interface VendorSummary {
   id: string;
   userId: string;
@@ -278,10 +225,6 @@ export interface VendorSummary {
   updatedAt: Date;
 }
 
-// ============================================================
-// DRIVER DOMAIN TYPES
-// ============================================================
-
 export interface DriverSummary {
   id: string;
   userId: string;
@@ -298,10 +241,6 @@ export interface DriverSummary {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ============================================================
-// CATALOG DOMAIN TYPES
-// ============================================================
 
 export interface CategorySummary {
   id: string;
@@ -323,7 +262,7 @@ export interface ProductSummary {
   slug: string | null;
   description: string | null;
   sku: string;
-  price: string; // Decimal as string for serialization
+  price: string;
   comparePrice: string | null;
   currency: string;
   imageUrl: string | null;
@@ -332,33 +271,6 @@ export interface ProductSummary {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ============================================================
-// CART DOMAIN TYPES
-// ============================================================
-
-export interface CartSummary {
-  id: string;
-  customerProfileId: string;
-  vendorId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  items: CartItemSummary[];
-}
-
-export interface CartItemSummary {
-  id: string;
-  cartId: string;
-  productId: string;
-  quantity: number;
-  unitPrice: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ============================================================
-// ORDER DOMAIN TYPES
-// ============================================================
 
 export interface OrderSummary {
   id: string;
@@ -372,7 +284,6 @@ export interface OrderSummary {
   total: string;
   currency: string;
   notes: string | null;
-  // Snapshotted delivery address
   deliveryAddressLine1: string;
   deliveryAddressLine2: string | null;
   deliveryCity: string;
@@ -400,10 +311,6 @@ export interface OrderItemSummary {
   productImageUrl: string | null;
 }
 
-// ============================================================
-// PAYMENT DOMAIN TYPES
-// ============================================================
-
 export interface PaymentSummary {
   id: string;
   orderId: string;
@@ -417,10 +324,6 @@ export interface PaymentSummary {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ============================================================
-// DELIVERY DOMAIN TYPES
-// ============================================================
 
 export interface DeliverySummary {
   id: string;
@@ -439,26 +342,6 @@ export interface DeliverySummary {
   updatedAt: Date;
 }
 
-// ============================================================
-// NOTIFICATION DOMAIN TYPES
-// ============================================================
-
-export interface NotificationSummary {
-  id: string;
-  userId: string;
-  title: string;
-  body: string;
-  type: string;
-  status: NotificationStatus;
-  data: Record<string, unknown> | null;
-  readAt: Date | null;
-  createdAt: Date;
-}
-
-// ============================================================
-// REVIEW DOMAIN TYPES
-// ============================================================
-
 export interface ReviewSummary {
   id: string;
   customerId: string;
@@ -471,10 +354,6 @@ export interface ReviewSummary {
   updatedAt: Date;
 }
 
-// ============================================================
-// DASHBOARD / ANALYTICS TYPES
-// ============================================================
-
 export interface DashboardMetrics {
   totalOrders: number;
   totalRevenue: string;
@@ -486,10 +365,6 @@ export interface DashboardMetrics {
   pendingVendorApplications: number;
   pendingDriverApplications: number;
 }
-
-// ============================================================
-// PLATFORM SETTING TYPE
-// ============================================================
 
 export interface PlatformSettingSummary {
   id: string;
