@@ -15,6 +15,7 @@ import {
   QrCode,
   Settings,
   ShieldCheck,
+  Store,
   Users,
   UtensilsCrossed,
   X,
@@ -54,6 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard },
+    { href: '/admin/vendor-settlements', label: 'Vendor Settlements', icon: Store },
     { href: '/admin/users', label: 'User Accounts', icon: Users },
     { href: '/admin/payments', label: 'Payment Review Queue', icon: CreditCard },
     { href: '/admin/payment-config', label: 'Payment Configs (UPI)', icon: QrCode },
