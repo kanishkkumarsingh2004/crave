@@ -199,7 +199,7 @@ export default function VendorSettlementsPage() {
       </div>
 
       {/* Network Financial Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Total Weekly Gross Sales</span>
