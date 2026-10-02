@@ -1,30 +1,128 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   AlertCircle,
   ArrowRight,
+  Calculator,
   Check,
   CheckCircle2,
+  CloudRain,
   Copy,
   CreditCard,
+  DollarSign,
+  Flame,
+  Percent,
   QrCode,
   Save,
   ShieldCheck,
+  Sliders,
+  Sparkles,
+  Truck,
   Zap,
 } from 'lucide-react'
 
 export default function AdminPaymentConfigPage() {
+  // 1. UPI Receiver Credentials
   const [upiVpa, setUpiVpa] = useState('crave@upi')
   const [merchantName, setMerchantName] = useState('crave Food Delivery Services')
   const [mccCode, setMccCode] = useState('5812')
   const [ifscCode, setIfscCode] = useState('HDFC0001234')
   const [accountNumber, setAccountNumber] = useState('50100293849281')
+
+  // 2. Platform & Vendor Fees
+  const [platformFee, setPlatformFee] = useState<number>(6) // Flat ₹6
+  const [vendorCommission, setVendorCommission] = useState<number>(15) // 15%
+  const [packagingCap, setPackagingCap] = useState<number>(20) // ₹20 max
+
+  // 3. Delivery Fee Rules
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(30) // ₹30 for first 3 km
+  const [baseDistanceKm, setBaseDistanceKm] = useState<number>(3)
+  const [perKmRate, setPerKmRate] = useState<number>(10) // ₹10 / extra km
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(500) // ₹500
+  const [driverPayoutShare, setDriverPayoutShare] = useState<number>(80) // 80% to driver
+
+  // 4. Surge Pricing & Weather Settings
+  const [surgeMultiplier, setSurgeMultiplier] = useState<number>(1.25) // 1.25x
+  const [rainFee, setRainFee] = useState<number>(20) // ₹20
+  const [nightSurgeFee, setNightSurgeFee] = useState<number>(15) // ₹15
+  const [isRainModeActive, setIsRainModeActive] = useState<boolean>(false)
+  const [isNightSurgeActive, setIsNightSurgeActive] = useState<boolean>(false)
+
+  // Payment Options
   const [enableCashOnDelivery, setEnableCashOnDelivery] = useState(false)
   const [enableUpiDeepLink, setEnableUpiDeepLink] = useState(true)
-  const [enableQrCode, setEnableQrCode] = useState(true)
   const [requireUtrNumber, setRequireUtrNumber] = useState(true)
+
   const [savedSuccess, setSavedSuccess] = useState(false)
+
+  // 5. Playground Calculator State
+  const [testOrderValue, setTestOrderValue] = useState<number>(400)
+  const [testDistanceKm, setTestDistanceKm] = useState<number>(5.5)
+
+  // Live Playground Fee Calculation Math
+  const playgroundCalc = useMemo(() => {
+    // Delivery fee math
+    let rawDelivery = baseDeliveryFee
+    if (testDistanceKm > baseDistanceKm) {
+      rawDelivery += (testDistanceKm - baseDistanceKm) * perKmRate
+    }
+
+    // Apply Free Delivery check
+    const isFreeDelivery = testOrderValue >= freeDeliveryThreshold && freeDeliveryThreshold > 0
+    let finalDeliveryFee = isFreeDelivery ? 0 : rawDelivery
+
+    // Surge calculations
+    let surgeAddon = 0
+    if (surgeMultiplier > 1.0) {
+      surgeAddon += finalDeliveryFee * (surgeMultiplier - 1.0)
+    }
+    if (isRainModeActive) {
+      surgeAddon += rainFee
+    }
+    if (isNightSurgeActive) {
+      surgeAddon += nightSurgeFee
+    }
+
+    const totalDeliveryCharges = Math.round((finalDeliveryFee + surgeAddon) * 100) / 100
+
+    // Customer Grand Total
+    const customerTotal = testOrderValue + totalDeliveryCharges + platformFee
+
+    // Breakdown Split
+    const vendorCommissionAmount = (testOrderValue * vendorCommission) / 100
+    const vendorPayout = testOrderValue - vendorCommissionAmount
+    const driverPayout = Math.round(totalDeliveryCharges * (driverPayoutShare / 100))
+    const platformNetProfit = Math.round((customerTotal - vendorPayout - driverPayout) * 100) / 100
+
+    return {
+      rawDelivery,
+      isFreeDelivery,
+      finalDeliveryFee,
+      surgeAddon,
+      totalDeliveryCharges,
+      customerTotal,
+      vendorCommissionAmount,
+      vendorPayout,
+      driverPayout,
+      platformNetProfit,
+    }
+  }, [
+    testOrderValue,
+    testDistanceKm,
+    baseDeliveryFee,
+    baseDistanceKm,
+    perKmRate,
+    freeDeliveryThreshold,
+    surgeMultiplier,
+    isRainModeActive,
+    rainFee,
+    isNightSurgeActive,
+    nightSurgeFee,
+    platformFee,
+    vendorCommission,
+    driverPayoutShare,
+  ])
 
   function handleSaveConfig(e: React.FormEvent) {
     e.preventDefault()
@@ -34,172 +132,288 @@ export default function AdminPaymentConfigPage() {
     }, 3000)
   }
 
-  const sampleUpiLink = `upi://pay?pa=${encodeURIComponent(upiVpa)}&pn=${encodeURIComponent(merchantName)}&mc=${mccCode}&cu=INR&tn=Order%20CRV-9021`
+  const sampleUpiLink = `upi://pay?pa=${encodeURIComponent(upiVpa)}&pn=${encodeURIComponent(merchantName)}&mc=${mccCode}&am=${playgroundCalc.customerTotal}&cu=INR&tn=Order%20CRV-9021`
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl">
-      {/* Page Title Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] pb-5">
+    <div className="flex flex-col gap-8 max-w-6xl pb-16">
+      {/* Top Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] pb-5">
         <div>
           <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6a8014]">
-            Payment Gateway Config
+            Payment & Fee Engine
           </span>
-          <h2 className="mt-2 text-2xl font-bold text-[#18201c]">UPI Receiver Payment Settings</h2>
+          <h2 className="mt-2 text-2xl font-bold text-[#18201c]">
+            Payment, Delivery & Surge Charge Playground
+          </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Set up the merchant UPI VPA, Payee Name, bank accounts, and checkout rules for customer transactions.
+            Configure platform fees, delivery distance rates, rain/rush surge multipliers, and test live order payouts.
           </p>
         </div>
 
         {savedSuccess && (
-          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 animate-fade-in border border-emerald-300">
-            <CheckCircle2 className="size-4 text-emerald-700" /> Payment Config Saved Successfully!
+          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
+            <CheckCircle2 className="size-4 text-emerald-700" /> All Settings & Surge Playground Saved!
           </div>
         )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-12">
-        {/* Form Container */}
+        {/* Form Settings Area (Left 7 Cols) */}
         <form onSubmit={handleSaveConfig} className="lg:col-span-7 flex flex-col gap-6">
-          {/* Section 1: Merchant UPI Receiver Credentials */}
+          {/* SECTION 1: Platform Fees & Commission */}
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <CreditCard className="size-4 text-[#859d19]" /> Merchant Receiver Credentials
+              <Percent className="size-4 text-[#859d19]" /> Platform Service Fees & Vendor Commission
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              These details will be embedded into customer UPI deep links and generated QR codes.
+              Set revenue share rates and order handling charges.
             </p>
 
-            <div className="mt-5 flex flex-col gap-4 text-xs">
+            <div className="mt-5 grid gap-4 sm:grid-cols-3 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Receiver UPI VPA / ID *</label>
+                <label className="font-bold text-[#18201c]">Platform Service Fee (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={platformFee}
+                  onChange={(e) => setPlatformFee(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Flat fee per customer order</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Vendor Commission (%)</label>
+                <input
+                  type="number"
+                  required
+                  value={vendorCommission}
+                  onChange={(e) => setVendorCommission(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">% cut from food value</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Max Packaging Cap (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={packagingCap}
+                  onChange={(e) => setPackagingCap(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Max kitchen container fee</p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: Delivery Charges Configuration */}
+          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+            <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
+              <Truck className="size-4 text-[#859d19]" /> Delivery Fee Calculation Engine
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Distance-based delivery fare structure and driver payout allocation.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Base Delivery Fee (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={baseDeliveryFee}
+                  onChange={(e) => setBaseDeliveryFee(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Fixed rate for first {baseDistanceKm} km</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Base Distance Threshold (km)</label>
+                <input
+                  type="number"
+                  required
+                  value={baseDistanceKm}
+                  onChange={(e) => setBaseDistanceKm(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Distance included in base fare</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Per-KM Rate Beyond Base (₹/km)</label>
+                <input
+                  type="number"
+                  required
+                  value={perKmRate}
+                  onChange={(e) => setPerKmRate(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Extra charge per additional km</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Free Delivery Order Threshold (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={freeDeliveryThreshold}
+                  onChange={(e) => setFreeDeliveryThreshold(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Free delivery for orders above this</p>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="font-bold text-[#18201c]">Driver Payout Share (% of delivery fee)</label>
+                <div className="mt-1.5 flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="50"
+                    max="100"
+                    value={driverPayoutShare}
+                    onChange={(e) => setDriverPayoutShare(parseInt(e.target.value))}
+                    className="flex-1 accent-[#86a018]"
+                  />
+                  <span className="font-mono font-bold text-sm bg-gray-100 px-3 py-1 rounded-xl">
+                    {driverPayoutShare}%
+                  </span>
+                </div>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Driver gets {driverPayoutShare}% of delivery fee + 100% customer tips.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: Surge Pricing & Weather Charges */}
+          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+            <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
+              <Zap className="size-4 text-amber-500 fill-amber-500" /> Dynamic Surge Pricing & Weather Charges
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Control surge multipliers for high demand periods, heavy rain, or peak rush hours.
+            </p>
+
+            <div className="mt-5 flex flex-col gap-5 text-xs">
+              {/* Surge Multiplier Cards */}
+              <div>
+                <label className="font-bold text-[#18201c] mb-2 block">Rush Demand Surge Multiplier</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: '1.0x (Normal)', val: 1.0 },
+                    { label: '1.25x (Peak Rush)', val: 1.25 },
+                    { label: '1.5x (High Demand)', val: 1.5 },
+                    { label: '2.0x (Extreme Surge)', val: 2.0 },
+                  ].map((s) => (
+                    <button
+                      key={s.val}
+                      type="button"
+                      onClick={() => setSurgeMultiplier(s.val)}
+                      className={`rounded-2xl border p-2.5 text-center font-bold transition ${
+                        surgeMultiplier === s.val
+                          ? 'border-amber-400 bg-amber-50 text-amber-900 ring-2 ring-amber-400/40'
+                          : 'border-gray-200 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rain & Night Toggles */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-blue-900 flex items-center gap-1.5">
+                      <CloudRain className="size-4 text-blue-600" /> Rain / Bad Weather Fee
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsRainModeActive((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                        isRainModeActive ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block size-4 transform rounded-full bg-white transition ${
+                          isRainModeActive ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[10px] font-bold text-blue-800">Rain Bonus Fee (₹)</label>
+                    <input
+                      type="number"
+                      value={rainFee}
+                      onChange={(e) => setRainFee(parseFloat(e.target.value) || 0)}
+                      className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-1.5 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-purple-200 bg-purple-50/50 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-purple-900 flex items-center gap-1.5">
+                      <Flame className="size-4 text-purple-600" /> Late Night Rush Fee
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsNightSurgeActive((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                        isNightSurgeActive ? 'bg-purple-600' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block size-4 transform rounded-full bg-white transition ${
+                          isNightSurgeActive ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[10px] font-bold text-purple-800">Night Surge Fee (₹)</label>
+                    <input
+                      type="number"
+                      value={nightSurgeFee}
+                      onChange={(e) => setNightSurgeFee(parseFloat(e.target.value) || 0)}
+                      className="mt-1 w-full rounded-xl border border-purple-200 bg-white px-3 py-1.5 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4: UPI Merchant Credentials */}
+          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+            <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
+              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI Credentials
+            </h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Receiver UPI VPA *</label>
                 <input
                   type="text"
                   required
                   value={upiVpa}
                   onChange={(e) => setUpiVpa(e.target.value)}
-                  placeholder="e.g. crave@upi"
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 outline-none font-mono focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/50"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-mono font-bold outline-none"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">All customer payments will be directed to this VPA.</p>
               </div>
-
               <div>
-                <label className="font-bold text-[#18201c]">Payee / Merchant Business Name *</label>
+                <label className="font-bold text-[#18201c]">Merchant Business Name *</label>
                 <input
                   type="text"
                   required
                   value={merchantName}
                   onChange={(e) => setMerchantName(e.target.value)}
-                  placeholder="e.g. crave Food Delivery Services"
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 outline-none font-medium focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none"
                 />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="font-bold text-[#18201c]">Merchant Category Code (MCC)</label>
-                  <input
-                    type="text"
-                    value={mccCode}
-                    onChange={(e) => setMccCode(e.target.value)}
-                    placeholder="5812"
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 outline-none font-mono focus:border-[#86a018]"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-[#18201c]">Bank IFSC Code</label>
-                  <input
-                    type="text"
-                    value={ifscCode}
-                    onChange={(e) => setIfscCode(e.target.value)}
-                    placeholder="HDFC0001234"
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 outline-none font-mono focus:border-[#86a018]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Merchant Settlement Bank Account Number</label>
-                <input
-                  type="text"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="e.g. 50100293849281"
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 outline-none font-mono focus:border-[#86a018]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Payment Method Switches */}
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-            <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <QrCode className="size-4 text-[#859d19]" /> Payment Gateway Rules & Methods
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Control allowed payment options for checkout.</p>
-
-            <div className="mt-5 flex flex-col gap-4 text-xs divide-y divide-gray-100">
-              {/* Cash on Delivery Toggle */}
-              <div className="flex items-center justify-between pt-3">
-                <div>
-                  <p className="font-bold text-[#18201c]">Cash on Delivery (COD)</p>
-                  <p className="text-[11px] text-gray-500">Allow customers to pay cash upon order arrival.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setEnableCashOnDelivery((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enableCashOnDelivery ? 'bg-emerald-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      enableCashOnDelivery ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* UPI Deep-Link Toggle */}
-              <div className="flex items-center justify-between pt-3">
-                <div>
-                  <p className="font-bold text-[#18201c]">Instant UPI Deep Link (`upi://pay`)</p>
-                  <p className="text-[11px] text-gray-500">Auto-open GPay, PhonePe, Paytm, or BHIM on mobile devices.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setEnableUpiDeepLink((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enableUpiDeepLink ? 'bg-emerald-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      enableUpiDeepLink ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Mandatory UTR Entry Toggle */}
-              <div className="flex items-center justify-between pt-3">
-                <div>
-                  <p className="font-bold text-[#18201c]">Require 12-Digit UTR / Transaction Reference</p>
-                  <p className="text-[11px] text-gray-500">Mandate customers to enter reference number for admin review queue.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setRequireUtrNumber((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireUtrNumber ? 'bg-emerald-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      requireUtrNumber ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
               </div>
             </div>
           </div>
@@ -208,60 +422,117 @@ export default function AdminPaymentConfigPage() {
             type="submit"
             className="flex items-center justify-center gap-2 rounded-full bg-[#18201c] py-3.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#323d36]"
           >
-            <Save className="size-4" /> Save & Apply Payment Configuration
+            <Save className="size-4" /> Save & Activate Fee & Surge Configuration
           </button>
         </form>
 
-        {/* Live Customer Checkout Preview Box */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm sticky top-24">
-            <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase text-[#6a8014]">
-              Live Preview
-            </span>
-            <h4 className="mt-2 font-bold text-base text-[#18201c]">Customer Checkout View</h4>
+        {/* Dynamic Surge Simulator & Playground (Right 5 Cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-md sticky top-24">
+            <div className="flex items-center justify-between">
+              <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase text-[#6a8014]">
+                Interactive Simulator
+              </span>
+              <Sparkles className="size-4 text-amber-500 animate-pulse" />
+            </div>
+            <h3 className="mt-2 text-xl font-bold text-[#18201c]">Dynamic Pricing Playground</h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              This preview shows how end-customers see the payment modal during checkout based on your settings.
+              Simulate an order to test real-time fee breakdowns, surge pricing, vendor cut, and driver payouts.
             </p>
 
-            {/* Simulated Checkout Box */}
-            <div className="mt-5 rounded-2xl border border-gray-200 bg-[#f8f9f6] p-4 text-xs">
-              <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-[#86a018]">Secure UPI Checkout</p>
-                  <p className="font-bold text-sm text-[#18201c]">Pay ₹329 for Order #CRV-9021</p>
+            {/* Test Controls */}
+            <div className="mt-5 flex flex-col gap-4 bg-[#f8f9f6] p-4 rounded-2xl border border-gray-200 text-xs">
+              <div>
+                <div className="flex justify-between font-bold mb-1">
+                  <span>Food Item Subtotal:</span>
+                  <span className="text-[#18201c]">₹{testOrderValue}</span>
                 </div>
-                <span className="grid size-8 place-items-center rounded-full bg-[#d9f447] text-[#18201c]">
-                  <Zap className="size-4 fill-current" />
-                </span>
+                <input
+                  type="range"
+                  min="100"
+                  max="1200"
+                  step="50"
+                  value={testOrderValue}
+                  onChange={(e) => setTestOrderValue(parseInt(e.target.value))}
+                  className="w-full accent-[#86a018]"
+                />
               </div>
 
-              {/* UPI VPA Display */}
-              <div className="mt-4 rounded-xl bg-white p-3 border border-gray-200">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Merchant Receiver VPA</p>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="font-mono font-bold text-xs text-[#18201c]">{upiVpa}</span>
-                  <span className="text-[10px] font-bold text-[#86a018] bg-[#f1f6d9] px-2 py-0.5 rounded-full">
-                    Active VPA
-                  </span>
+              <div>
+                <div className="flex justify-between font-bold mb-1">
+                  <span>Delivery Distance:</span>
+                  <span className="text-[#18201c]">{testDistanceKm} km</span>
                 </div>
-                <p className="text-[11px] text-gray-600 mt-1">{merchantName}</p>
+                <input
+                  type="range"
+                  min="1"
+                  max="15"
+                  step="0.5"
+                  value={testDistanceKm}
+                  onChange={(e) => setTestDistanceKm(parseFloat(e.target.value))}
+                  className="w-full accent-[#86a018]"
+                />
+              </div>
+            </div>
+
+            {/* Simulated Live Fee Breakdown Card */}
+            <div className="mt-5 rounded-2xl bg-[#18201c] p-5 text-white space-y-3 text-xs">
+              <div className="flex justify-between text-white/70">
+                <span>Food Items Order Subtotal</span>
+                <span>₹{testOrderValue}</span>
               </div>
 
-              {/* Instant Deep Link Button */}
-              {enableUpiDeepLink && (
-                <a
-                  href={sampleUpiLink}
-                  onClick={(e) => e.preventDefault()}
-                  className="mt-3 flex items-center justify-center gap-2 rounded-full bg-[#d9f447] py-2.5 text-xs font-bold text-[#18201c] shadow-sm"
-                >
-                  Open Installed UPI App <ArrowRight className="size-3.5" />
-                </a>
+              <div className="flex justify-between text-white/70">
+                <span>Base Delivery ({baseDistanceKm}km)</span>
+                <span>₹{baseDeliveryFee}</span>
+              </div>
+
+              {testDistanceKm > baseDistanceKm && (
+                <div className="flex justify-between text-white/70">
+                  <span>Extra Distance ({(testDistanceKm - baseDistanceKm).toFixed(1)}km @ ₹{perKmRate}/km)</span>
+                  <span>+₹{(testDistanceKm - baseDistanceKm) * perKmRate}</span>
+                </div>
               )}
 
-              {/* Payment Methods Info */}
-              <div className="mt-3 text-[11px] text-gray-500 space-y-1">
-                <p>● Payment Mode: {enableCashOnDelivery ? 'UPI & Cash on Delivery' : 'Only Digital UPI (No Cash)'}</p>
-                <p>● Mandatory Reference: {requireUtrNumber ? '12-Digit UTR Required' : 'Optional'}</p>
+              {playgroundCalc.isFreeDelivery && (
+                <div className="flex justify-between text-emerald-400 font-bold">
+                  <span>Free Delivery Threshold Applied</span>
+                  <span>-₹{playgroundCalc.rawDelivery}</span>
+                </div>
+              )}
+
+              {playgroundCalc.surgeAddon > 0 && (
+                <div className="flex justify-between text-amber-400 font-bold">
+                  <span>Surge & Weather Addon ({surgeMultiplier}x)</span>
+                  <span>+₹{playgroundCalc.surgeAddon}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-white/70">
+                <span>Platform Service Fee</span>
+                <span>₹{platformFee}</span>
+              </div>
+
+              <div className="pt-3 border-t border-white/15 flex justify-between font-bold text-base text-[#d9f447]">
+                <span>Customer Grand Total</span>
+                <span>₹{playgroundCalc.customerTotal}</span>
+              </div>
+
+              {/* Settlement Payout Split */}
+              <div className="mt-4 pt-4 border-t border-white/15 space-y-2 text-[11px]">
+                <p className="font-bold text-white/50 uppercase tracking-wider text-[9px]">Settlement Payout Split</p>
+                <div className="flex justify-between text-amber-300">
+                  <span>🏪 Kitchen Vendor Payout ({100 - vendorCommission}%):</span>
+                  <span className="font-bold">₹{playgroundCalc.vendorPayout}</span>
+                </div>
+                <div className="flex justify-between text-blue-300">
+                  <span>🛵 Driver Delivery Payout ({driverPayoutShare}%):</span>
+                  <span className="font-bold">₹{playgroundCalc.driverPayout}</span>
+                </div>
+                <div className="flex justify-between text-emerald-300">
+                  <span>🛡️ Platform Net Commission Profit:</span>
+                  <span className="font-bold">₹{playgroundCalc.platformNetProfit}</span>
+                </div>
               </div>
             </div>
           </div>
