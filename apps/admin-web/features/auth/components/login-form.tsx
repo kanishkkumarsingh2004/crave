@@ -69,12 +69,14 @@ export function LoginForm() {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-gradient-to-tr from-blue-700 to-sky-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 ring-4 ring-blue-500/10">
-            <span className="font-black text-lg tracking-wider">AV</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="CRAVE"
+            className="w-14 h-14 object-contain rounded-2xl shadow-xl shadow-blue-500/25 ring-4 ring-blue-500/10 bg-white p-1"
+          />
         </div>
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Admin Console</h1>
-        <p className="text-xs font-semibold text-slate-500">Akshaya Ventures Enterprise Operations</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">CRAVE Admin Console</h1>
+        <p className="text-xs font-semibold text-slate-500">Enterprise Operations & Logistics Management</p>
       </div>
 
       {/* Form */}

@@ -75,16 +75,18 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="h-16 flex items-center px-5 border-b border-border bg-gradient-to-r from-blue-50/70 via-background to-background">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-blue-700 to-sky-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 text-white font-black text-sm tracking-wider ring-4 ring-blue-500/10">
-            AV
-          </div>
+          <img
+            src="/logo.png"
+            alt="Crave"
+            className="w-10 h-10 object-contain rounded-xl shadow-md shadow-blue-500/20 bg-white ring-2 ring-blue-500/10"
+          />
           <div>
             <span className="font-extrabold text-sm text-foreground block leading-tight tracking-tight">
-              Akshaya Ventures
+              CRAVE Platform
             </span>
             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
-              <span>Platform Core</span>
-              <span className="h-1 w-1 rounded-full bg-blue-500" />
+              <span>Operations Core</span>
+              <span className="h-1 w-1 rounded-full bg-emerald-500" />
             </span>
           </div>
         </div>

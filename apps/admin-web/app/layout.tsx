@@ -5,10 +5,17 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "Akshaya Ventures — Admin Platform",
-    template: "%s | Akshaya Ventures",
+    default: "CRAVE — Enterprise Operations & Delivery Platform",
+    template: "%s | CRAVE Platform",
   },
-  description: "Akshaya Ventures Multi-Role Delivery Platform & Enterprise Operations",
+  description: "CRAVE Multi-Role Delivery Platform & Enterprise Operations",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   robots: { index: false, follow: false },
 };
 
