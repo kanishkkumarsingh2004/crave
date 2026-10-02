@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useState } from "react";
@@ -48,10 +49,12 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>D</Text>
-          </View>
-          <Text style={styles.appName}>Delivery</Text>
+          <Image
+            source={require("../../assets/logo.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>CRAVE</Text>
         </View>
 
         <Text style={styles.heading}>Welcome Back</Text>
@@ -164,17 +167,12 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   logoContainer: { alignItems: "center", marginBottom: 32 },
-  logoBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: "#111827",
-    alignItems: "center",
-    justifyContent: "center",
+  logoImage: {
+    width: 72,
+    height: 72,
     marginBottom: 12,
   },
-  logoText: { color: "#fff", fontSize: 22, fontWeight: "700" },
-  appName: { fontSize: 20, fontWeight: "600", color: "#111827" },
+  appName: { fontSize: 22, fontWeight: "800", color: "#111827", letterSpacing: 1 },
   heading: {
     fontSize: 26,
     fontWeight: "700",

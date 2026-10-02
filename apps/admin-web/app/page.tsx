@@ -205,9 +205,11 @@ export default function PremiumCraveHomePage() {
           {/* Brand Logo & Location Switcher */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 via-blue-700 to-indigo-700 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-300">
-                C
-              </div>
+              <img
+                src="/logo.png"
+                alt="CRAVE"
+                className="w-11 h-11 object-contain rounded-2xl shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-300 bg-white"
+              />
               <div>
                 <span className="font-black text-xl tracking-tight text-slate-900 block leading-none">
                   CRAVE
@@ -850,9 +852,11 @@ export default function PremiumCraveHomePage() {
       <footer className="border-t border-slate-100 bg-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-500">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm">
-              C
-            </div>
+            <img
+              src="/logo.png"
+              alt="CRAVE"
+              className="w-8 h-8 object-contain rounded-xl shadow-sm bg-white"
+            />
             <div>
               <span className="font-extrabold text-slate-900 block">CRAVE DELIVERY PLATFORM</span>
               <span className="text-[10px] text-slate-400">© 2026 Crave Technologies Inc. All rights reserved.</span>
