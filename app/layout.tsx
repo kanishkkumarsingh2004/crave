@@ -1,33 +1,49 @@
-import React from "react";
-import type { Metadata } from "next";
-import "./globals.css";
-import { Providers } from "./providers";
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: {
-    default: "BlinkBite — Operations & Admin Console",
-    template: "%s | BlinkBite Admin",
-  },
-  description: "BlinkBite Multi-Role Operations & Admin Console",
+  title: 'v0 App',
+  description: 'Created with v0',
+  generator: 'v0.app',
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/logo.png", type: "image/png" },
+      {
+        url: '/icon-light-32x32.png',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        url: '/icon-dark-32x32.png',
+        media: '(prefers-color-scheme: dark)',
+      },
+      {
+        url: '/icon.svg',
+        type: 'image/svg+xml',
+      },
     ],
-    apple: "/apple-touch-icon.png",
+    apple: '/apple-icon.png',
   },
-  robots: { index: false, follow: false },
-};
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const viewport: Viewport = {
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' },
+  ],
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        suppressHydrationWarning
-        className="font-sans antialiased bg-slate-50 text-slate-900 selection:bg-blue-600 selection:text-white"
-      >
-        <Providers>{children}</Providers>
+    <html lang="en">
+      <body className="antialiased">
+        {children}
+        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
-  );
+  )
 }

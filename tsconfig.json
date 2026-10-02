@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "target": "ES6",
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -11,29 +11,23 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
-    "noUncheckedIndexedAccess": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "exactOptionalPropertyTypes": false,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["./*"],
-      "@delivery/types": ["./types/index.ts"],
-      "@delivery/constants": ["./lib/constants/index.ts"],
-      "@delivery/validation": ["./lib/validation/index.ts"],
-      "@delivery/utils": ["./lib/utils/index.ts"],
-      "@delivery/auth": ["./lib/auth/index.ts"],
-      "@delivery/database": ["./lib/db/index.ts"],
-      "@delivery/config": ["./lib/config/index.ts"]
+      "@/*": ["./*"]
     }
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "apps", "packages", "server", "prisma"]
+  "exclude": ["node_modules"]
 }

@@ -1,2 +1,9 @@
+pmOnFail: ignore
+
+minimumReleaseAgeExclude:
+  - '@next/*'
+  - next
+
 allowBuilds:
-  esbuild: true
+  esbuild: set this to true or false
+  workerd: set this to true or false
