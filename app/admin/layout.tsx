@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  BarChart3,
   Activity,
-  ArrowLeft,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
-  Globe,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -16,19 +16,19 @@ import {
   Settings,
   ShieldCheck,
   Store,
+  Tag,
   Users,
   UtensilsCrossed,
   X,
-  Zap,
 } from 'lucide-react'
-import { useAuth, UserRole } from '@/lib/auth-context'
-import { roleDetails } from '@/components/Navbar'
+import { useAuth } from '@/lib/auth-context'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, role, loginAsRole, logout } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [showRoleMenu, setShowRoleMenu] = useState(false)
 
   useEffect(() => {
@@ -55,6 +55,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard },
+    { href: '/admin/analytics', label: 'Platform Analytics', icon: BarChart3 },
+    { href: '/admin/coupons', label: 'Coupons & Discounts', icon: Tag },
     { href: '/admin/vendor-settlements', label: 'Vendor Settlements', icon: Store },
     { href: '/admin/users', label: 'User Accounts', icon: Users },
     { href: '/admin/payments', label: 'Payment Review Queue', icon: CreditCard },
@@ -71,39 +73,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#121815]/60 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      {/* Admin Full-Height Left Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between border-r border-[#202923] bg-[#121815] text-white transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      {/* Mobile Overlay with Smooth Fade Transition */}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        className={`fixed inset-0 z-40 bg-[#121815]/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
+      />
+
+      {/* Admin Full-Height Left Sidebar with Smooth Expand/Collapse/Slide Animations */}
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:sticky lg:top-0 lg:h-screen lg:left-0 lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0 shadow-2xl w-72 border-l border-[#202923]' : 'translate-x-full lg:shadow-none'
+        } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
-        <div className="flex flex-col gap-6 p-4">
+        <div className={`flex flex-col gap-6 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}>
           {/* Logo & Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4 pt-1">
-            <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)]">
+            <Link href="/admin/dashboard" className="flex items-center gap-2.5 group min-w-0" title={sidebarCollapsed ? 'crave. Admin' : undefined}>
+              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)] shrink-0 transition-transform duration-300 group-hover:scale-105">
                 <UtensilsCrossed className="size-5 fill-current" />
               </span>
-              <div>
+              <div className={`flex items-center gap-1.5 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                sidebarCollapsed ? 'opacity-0 max-w-0 hidden lg:hidden' : 'opacity-100 max-w-[160px]'
+              }`}>
                 <span className="text-lg font-bold tracking-tight text-white leading-none">
                   crave<span className="text-[#d9f447]">.</span>
                 </span>
-                <span className="ml-1.5 rounded-md bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-purple-300 border border-purple-500/30">
+                <span className="rounded-md bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-purple-300 border border-purple-500/30">
                   Admin
                 </span>
               </div>
             </Link>
+
             <button
               onClick={() => setSidebarOpen(false)}
-              className="grid size-7 place-items-center rounded-lg bg-white/10 text-white lg:hidden"
+              className="grid size-7 place-items-center rounded-lg bg-white/10 text-white lg:hidden transition hover:bg-white/20"
             >
               <X className="size-4" />
             </button>
@@ -111,7 +116,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1">
-            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">
+            <p className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+              sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
+            }`}>
               Management & Controls
             </p>
             {navItems.map((item) => {
@@ -121,67 +128,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
+                  title={sidebarCollapsed ? item.label : undefined}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition ${
+                  className={`flex items-center ${
+                    sidebarCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-3.5 py-2.5'
+                  } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
                     isActive
                       ? 'bg-[#d9f447] text-[#121815] font-bold shadow-md'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <Icon className={`size-4 ${isActive ? 'text-[#121815]' : 'text-[#d9f447]'}`} />
-                  <span>{item.label}</span>
+                  <Icon className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`} />
+                  <span className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
+                    sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[170px]'
+                  }`}>
+                    {item.label}
+                  </span>
                 </Link>
               )
             })}
           </nav>
         </div>
 
-        {/* Sidebar Bottom Profile */}
-        <div className="border-t border-white/10 p-3.5 flex flex-col gap-2">
-          {/* Quick Perspective Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleMenu((v) => !v)}
-              className="flex w-full items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-[11px] font-semibold text-white/80 hover:bg-white/10 transition"
-            >
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="size-3.5 text-[#d9f447]" /> Switch Role View
-              </span>
-              <ChevronDown className="size-3 text-white/50" />
-            </button>
-
-            {showRoleMenu && (
-              <div className="absolute bottom-11 left-0 z-50 w-full rounded-xl border border-white/15 bg-[#1a221d] p-1.5 shadow-2xl">
-                {(Object.keys(roleDetails) as UserRole[]).map((rKey) => {
-                  const info = roleDetails[rKey]
-                  const targetUrl = rKey === 'customer' ? '/user/dashboard' : `/${rKey}/dashboard`
-                  return (
-                    <button
-                      key={rKey}
-                      onClick={async () => {
-                        await loginAsRole(rKey)
-                        setShowRoleMenu(false)
-                        router.push(targetUrl)
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[11px] font-semibold text-white/80 hover:bg-white/10 hover:text-white"
-                    >
-                      <span className={`grid size-5 place-items-center rounded ${info.bg}`}>
-                        <info.icon className={`size-3 ${info.color}`} />
-                      </span>
-                      <span className="capitalize">{info.title}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl bg-white/5 p-2.5">
+        {/* Sidebar Bottom Profile & Single Minimize Arrow Button */}
+        <div className="border-t border-white/10 p-3.5 flex flex-col gap-2 transition-all duration-300 ease-in-out">
+          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="grid size-8 place-items-center rounded-lg bg-purple-950 text-purple-300 font-bold border border-purple-800 text-xs">
+              <span className="grid size-8 place-items-center rounded-lg bg-purple-950 text-purple-300 font-bold border border-purple-800 text-xs shrink-0" title={user?.name || 'Sara Vance'}>
                 SV
               </span>
-              <div className="min-w-0 flex-1">
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
+                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+              }`}>
                 <p className="text-xs font-bold text-white truncate">{user?.name || 'Sara Vance'}</p>
                 <p className="text-[10px] text-white/50 truncate">Master Admin</p>
               </div>
@@ -189,11 +167,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               onClick={() => logout()}
               title="Sign Out"
-              className="grid size-7 place-items-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition shrink-0"
+              className={`grid size-7 place-items-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
+                sidebarCollapsed ? 'hidden' : 'block'
+              }`}
             >
               <LogOut className="size-3.5" />
             </button>
           </div>
+
+          {/* Bottom Single Minimize Toggle Arrow Button */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
+            className={`hidden lg:flex items-center ${
+              sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
+            } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
+          >
+            <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+              sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+            }`}>
+              Minimize Sidebar
+            </span>
+            <span className="transition-transform duration-300 ease-in-out">
+              {sidebarCollapsed ? (
+                <ChevronRight className="size-4 text-[#d9f447]" />
+              ) : (
+                <ChevronLeft className="size-4 text-[#d9f447]" />
+              )}
+            </span>
+          </button>
         </div>
       </aside>
 
@@ -202,13 +204,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Top Header Bar for Admin */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] bg-white/90 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white lg:hidden"
-            >
-              <Menu className="size-5 text-[#18201c]" />
-            </button>
-
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
                 Admin Command Center
@@ -221,8 +216,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3.5 py-1 text-xs font-bold text-purple-900">
-              <ShieldCheck className="size-3.5 text-purple-700" /> Passcode: {user?.adminCode || 'CRAVE-SYS-8890'}
+              <ShieldCheck className="size-3.5 text-purple-700" /> Master Admin Access
             </span>
+
+            {/* Mobile 3 Lines Menu Button placed on the RIGHT side */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open navigation menu"
+              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white shadow-xs lg:hidden hover:bg-gray-50 active:scale-95 transition"
+            >
+              <Menu className="size-5 text-[#18201c]" />
+            </button>
           </div>
         </header>
 

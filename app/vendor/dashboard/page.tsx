@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import VendorDashboard from '@/components/dashboards/VendorDashboard'
 import { ShieldAlert } from 'lucide-react'
@@ -51,12 +50,5 @@ export default function VendorDashboardPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-[#f8f9f7]">
-      <Navbar />
-      <main>
-        <VendorDashboard />
-      </main>
-    </div>
-  )
+  return <VendorDashboard />
 }

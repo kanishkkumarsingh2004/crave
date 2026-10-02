@@ -4,7 +4,7 @@ import { createToken, JWTPayload } from '@/lib/jwt'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, role, phone, address, restaurantName, cuisine, vehicleType, licensePlate, adminCode } = body
+    const { name, email, role, phone, address, restaurantName, cuisine, vehicleType, licensePlate } = body
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 })
@@ -21,7 +21,6 @@ export async function POST(request: Request) {
       cuisine,
       vehicleType,
       licensePlate,
-      adminCode,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'crave')}`,
     }
 

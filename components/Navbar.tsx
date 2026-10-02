@@ -11,8 +11,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   Store,
-  User,
-  Zap,
   X,
   LayoutDashboard,
   UtensilsCrossed,
@@ -241,7 +239,13 @@ export default function Navbar() {
           )}
 
           <button
-            onClick={() => setShowMobileMenu((v) => !v)}
+            onClick={() => {
+              if (pathname.includes('/dashboard') || pathname.includes('/user/')) {
+                window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'))
+              } else {
+                setShowMobileMenu((v) => !v)
+              }
+            }}
             className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
             aria-label="Toggle menu"
           >
@@ -254,30 +258,6 @@ export default function Navbar() {
       {showMobileMenu && (
         <div className="border-t border-[#e2e6de] bg-white px-5 py-4 lg:hidden">
           <div className="flex flex-col gap-3 text-xs font-semibold">
-            <p className="text-[10px] uppercase tracking-wider text-[#8a958e]">Select Role Mode</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(roleDetails) as UserRole[]).map((rKey) => {
-                const targetUrl = rKey === 'customer' ? '/user/dashboard' : `/${rKey}/dashboard`
-                return (
-                  <button
-                    key={rKey}
-                    onClick={async () => {
-                      await loginAsRole(rKey)
-                      setShowMobileMenu(false)
-                      router.push(targetUrl)
-                    }}
-                    className={`flex items-center gap-2 rounded-xl border p-2 text-[11px] font-semibold ${
-                      role === rKey ? 'border-[#d9f447] bg-[#f2f8da]' : 'border-[#e5e9e1] bg-[#f8f9f7]'
-                    }`}
-                  >
-                    <span className="capitalize">{rKey}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <hr className="my-1 border-[#edf0ea]" />
-
             {user ? (
               <Link href={currentDashboardLink} onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c] flex items-center justify-between">
                 <span>Dashboard</span>

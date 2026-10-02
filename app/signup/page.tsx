@@ -38,7 +38,6 @@ export default function SignupPage() {
   const [cuisine, setCuisine] = useState('')
   const [vehicleType, setVehicleType] = useState('Electric Scooter')
   const [licensePlate, setLicensePlate] = useState('')
-  const [adminCode, setAdminCode] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,7 +52,6 @@ export default function SignupPage() {
       cuisine: selectedRole === 'vendor' ? cuisine : undefined,
       vehicleType: selectedRole === 'driver' ? vehicleType : undefined,
       licensePlate: selectedRole === 'driver' ? licensePlate : undefined,
-      adminCode: selectedRole === 'admin' ? adminCode : undefined,
     })
 
     const targetPath = selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
@@ -254,22 +252,6 @@ export default function SignupPage() {
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
                   />
                 </div>
-              </div>
-            )}
-
-            {selectedRole === 'admin' && (
-              <div>
-                <label className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
-                  <ShieldCheck className="size-3.5 text-purple-700" /> Admin Secret Passcode
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter organization admin key (e.g. CRAVE-SYS-8890)"
-                  value={adminCode}
-                  onChange={(e) => setAdminCode(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
-                />
               </div>
             )}
 
