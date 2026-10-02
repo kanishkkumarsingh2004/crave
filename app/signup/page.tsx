@@ -15,7 +15,6 @@ import {
   Phone,
   ShieldCheck,
   ShoppingBag,
-  Utensils,
   Store,
   User,
   Zap,
@@ -41,10 +40,10 @@ export default function SignupPage() {
   const [licensePlate, setLicensePlate] = useState('')
   const [adminCode, setAdminCode] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    signup({
+    await signup({
       name,
       email,
       role: selectedRole,
@@ -57,7 +56,8 @@ export default function SignupPage() {
       adminCode: selectedRole === 'admin' ? adminCode : undefined,
     })
 
-    router.push('/dashboard')
+    const targetPath = selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
+    router.push(targetPath)
   }
 
   return (
@@ -72,7 +72,7 @@ export default function SignupPage() {
               Join the Network
             </span>
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#18201c] sm:text-3xl">
-              Create Your Account on <span className="text-[#7d9518]">drop.</span>
+              Create Your Account on <span className="text-[#7d9518]">crave.</span>
             </h1>
             <p className="mt-1 text-xs text-[#717c76]">
               Choose your role below to get customized platform access.
@@ -118,7 +118,6 @@ export default function SignupPage() {
               <span className="text-[#18201c] capitalize font-extrabold">{selectedRole}</span> account
             </div>
 
-            {/* Common Fields */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
@@ -179,7 +178,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Role Specific Extra Inputs */}
             {selectedRole === 'customer' && (
               <div>
                 <label className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
@@ -213,7 +211,7 @@ export default function SignupPage() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
-                    <Utensils className="size-3.5 text-amber-700" /> Cuisine Speciality
+                    <Building className="size-3.5 text-amber-700" /> Cuisine Speciality
                   </label>
                   <input
                     type="text"
@@ -267,7 +265,7 @@ export default function SignupPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Enter organization admin key (e.g. DROP-SYS-8890)"
+                  placeholder="Enter organization admin key (e.g. CRAVE-SYS-8890)"
                   value={adminCode}
                   onChange={(e) => setAdminCode(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
@@ -283,7 +281,6 @@ export default function SignupPage() {
             </button>
           </form>
 
-          {/* Footer link to login */}
           <div className="mt-6 text-center text-xs text-[#717c76]">
             Already have an account?{' '}
             <Link href="/login" className="font-bold text-[#7d9518] hover:underline">
@@ -294,7 +291,7 @@ export default function SignupPage() {
       </main>
 
       <footer className="py-6 text-center text-xs text-gray-400 border-t border-gray-200">
-        © 2026 drop. Multi-role authentication & dashboard system.
+        © 2026 crave. Multi-role authentication & dashboard system.
       </footer>
     </div>
   )

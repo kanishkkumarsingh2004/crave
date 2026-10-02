@@ -22,10 +22,9 @@ export async function POST(request: Request) {
       vehicleType,
       licensePlate,
       adminCode,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'drop')}`,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'crave')}`,
     }
 
-    // Sign JWT token using jose
     const token = await createToken(userPayload)
 
     const response = NextResponse.json({
@@ -35,14 +34,16 @@ export async function POST(request: Request) {
       user: userPayload,
     })
 
-    // Store JWT in HTTP-Only Cookie
-    response.cookies.set('drop_auth_token', token, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
-    })
+    }
+
+    response.cookies.set('crave_auth_token', token, cookieOptions)
+    response.cookies.set('drop_auth_token', token, cookieOptions)
 
     return response
   } catch (error) {

@@ -64,10 +64,10 @@ const DEMO_USERS: Record<UserRole, UserProfile> = {
   admin: {
     id: 'usr_admin_1',
     name: 'Sara Vance (Admin)',
-    email: 'admin@drop.com',
+    email: 'admin@crave.com',
     role: 'admin',
     phone: '+91 99000 00001',
-    adminCode: 'DROP-SYS-8890',
+    adminCode: 'CRAVE-SYS-8890',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
   },
 }
@@ -78,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [token, setToken] = useState<string | null>(null)
 
-  // Verify JWT on initial load
   useEffect(() => {
     async function checkCurrentJWT() {
       try {
@@ -87,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const data = await res.json()
           if (data.authenticated && data.user) {
             setUser(data.user)
-            const savedToken = localStorage.getItem('drop_jwt_token')
+            const savedToken = localStorage.getItem('crave_jwt_token')
             if (savedToken) setToken(savedToken)
             return
           }
@@ -96,7 +95,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to verify JWT:', err)
       }
 
-      // Default demo login fallback if no valid JWT found
       loginAsRole('customer')
     }
 
@@ -114,8 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.success && data.user) {
         setUser(data.user)
         setToken(data.token)
-        localStorage.setItem('drop_jwt_token', data.token)
-        localStorage.setItem('drop_auth_user', JSON.stringify(data.user))
+        localStorage.setItem('crave_jwt_token', data.token)
+        localStorage.setItem('crave_auth_user', JSON.stringify(data.user))
         return true
       }
     } catch (err) {
@@ -140,8 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.success && data.user) {
         setUser(data.user)
         setToken(data.token)
-        localStorage.setItem('drop_jwt_token', data.token)
-        localStorage.setItem('drop_auth_user', JSON.stringify(data.user))
+        localStorage.setItem('crave_jwt_token', data.token)
+        localStorage.setItem('crave_auth_user', JSON.stringify(data.user))
       }
     } catch (err) {
       console.error('Signup error:', err)
@@ -156,8 +154,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null)
     setToken(null)
-    localStorage.removeItem('drop_jwt_token')
-    localStorage.removeItem('drop_auth_user')
+    localStorage.removeItem('crave_jwt_token')
+    localStorage.removeItem('crave_auth_user')
   }
 
   const role: UserRole = user?.role || 'customer'
