@@ -1,3 +1,29 @@
+if (typeof globalThis !== "undefined" && typeof globalThis.TextDecoder !== "undefined") {
+  try {
+    new globalThis.TextDecoder("utf-16le");
+  } catch (err) {
+    const NativeTextDecoder = globalThis.TextDecoder;
+    (globalThis as any).TextDecoder = function TextDecoderPolyfill(encoding?: string, options?: any) {
+      const enc = (encoding || "utf-8").toLowerCase();
+      if (enc === "utf-16le" || enc === "utf16le" || enc === "utf-16" || enc === "utf16") {
+        return {
+          decode(buffer?: any) {
+            if (!buffer) return "";
+            const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer.buffer || buffer);
+            let str = "";
+            for (let i = 0; i < bytes.length; i += 2) {
+              const code = bytes[i] | (bytes[i + 1] << 8);
+              if (code !== 0) str += String.fromCharCode(code);
+            }
+            return str;
+          },
+        };
+      }
+      return new NativeTextDecoder(encoding, options);
+    } as any;
+  }
+}
+
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,6 +58,8 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="terms" />
+            <Stack.Screen name="privacy" />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>

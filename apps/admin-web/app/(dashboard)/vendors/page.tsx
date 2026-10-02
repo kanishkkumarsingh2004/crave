@@ -14,7 +14,7 @@ export default function Page() {
     <div className="space-y-6">
       <PageHeader
         title="Vendors & Restaurants"
-        description="Review applications, register new restaurants, configure Google Maps locations, and manage commissions"
+        description="Review applications, register new restaurants, configure Mapcn locations, and manage commissions"
         actions={
           <Link
             href="/vendors/new"

@@ -387,10 +387,10 @@ export function VendorDetail({ id }: VendorDetailProps) {
 
   const vendor = data.data;
   const products = vendor.products ?? [];
-  const googleMapsUrl =
+  const mapcnUrl =
     vendor.latitude && vendor.longitude
-      ? `https://www.google.com/maps?q=${vendor.latitude},${vendor.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vendor.storeName}, ${vendor.city ?? ""}`)}`;
+      ? `https://www.openstreetmap.org/?mlat=${vendor.latitude}&mlon=${vendor.longitude}#map=16/${vendor.latitude}/${vendor.longitude}`
+      : `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${vendor.storeName}, ${vendor.city ?? ""}`)}`;
 
   return (
     <div className="space-y-8 pb-16">
@@ -532,12 +532,12 @@ export function VendorDetail({ id }: VendorDetailProps) {
               </span>
 
               <a
-                href={googleMapsUrl}
+                href={mapcnUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors border border-blue-200"
               >
-                <span>View on Google Maps</span>
+                <span>View on Mapcn</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -613,7 +613,7 @@ export function VendorDetail({ id }: VendorDetailProps) {
               <span>Store Location & Dispatch Map</span>
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Powered by high-definition Google Maps with interactive pin relocation, layer switching, and GPS dispatch.
+              Powered by Mapcn & MapLibre GL JS with high-definition tiles, interactive pin relocation, layer switching, and GPS dispatch.
             </p>
           </div>
 

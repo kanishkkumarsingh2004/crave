@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+
+const Icon = Ionicons as unknown as React.ComponentType<any>;
 import { router } from "expo-router";
 import { useCartStore } from "@/stores/cart.store";
 import { useAddressStore } from "@/src/stores/address.store";
@@ -63,12 +65,13 @@ export default function CartScreen() {
 
   function processOrderPlacement() {
     setIsCheckingOut(true);
+    const randomOrdNum = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
     setTimeout(() => {
       setIsCheckingOut(false);
       clearCart();
       Alert.alert(
         "🎉 Order Placed!",
-        `Your order #ORD-10004 has been confirmed via ${activePayment.title}.\n\nDelivering to: ${activeAddress.label} (${activeAddress.street}, ${activeAddress.city})`,
+        `Your order #${randomOrdNum} has been confirmed via ${activePayment.title}.\n\nDelivering to: ${activeAddress.label} (${activeAddress.street}, ${activeAddress.city})`,
         [
           {
             text: "Track Order",

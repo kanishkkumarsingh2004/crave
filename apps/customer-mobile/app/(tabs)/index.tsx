@@ -1,134 +1,111 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Image,
-  FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+
+const Icon = Ionicons as unknown as React.ComponentType<any>;
 import { useCartStore } from "@/stores/cart.store";
 import { useAddressStore } from "@/src/stores/address.store";
 import { AddressModal } from "@/components/AddressModal";
 import { useDeviceLocation } from "../../hooks/useDeviceLocation";
 import { findNearbyH3Stores } from "@delivery/utils";
-
-const CATEGORIES = [
-  { id: "all", name: "All", icon: "apps-outline" },
-  { id: "grocery", name: "Groceries", icon: "basket-outline" },
-  { id: "food", name: "Restaurants", icon: "restaurant-outline" },
-  { id: "electronics", name: "Electronics", icon: "phone-portrait-outline" },
-  { id: "health", name: "Health", icon: "medkit-outline" },
-];
-
-const FEATURED_PRODUCTS = [
-  {
-    id: "prod-1",
-    name: "Fresh Organic Milk 1L",
-    price: 65,
-    vendorId: "v-1",
-    vendorName: "FreshMart Organics",
-    rating: "4.8",
-    deliveryTime: "15 min",
-    sku: "MILK-001",
-    badge: "Bestseller",
-  },
-  {
-    id: "prod-2",
-    name: "Artisanal Whole Wheat Bread",
-    price: 45,
-    vendorId: "v-1",
-    vendorName: "FreshMart Organics",
-    rating: "4.9",
-    deliveryTime: "15 min",
-    sku: "BREAD-001",
-    badge: "Fresh",
-  },
-  {
-    id: "prod-3",
-    name: "Farm Eggs (Pack of 12)",
-    price: 95,
-    vendorId: "v-1",
-    vendorName: "FreshMart Organics",
-    rating: "4.7",
-    deliveryTime: "20 min",
-    sku: "EGGS-012",
-    badge: "Popular",
-  },
-  {
-    id: "prod-4",
-    name: "Cold Pressed Orange Juice 500ml",
-    price: 120,
-    vendorId: "v-2",
-    vendorName: "JuiceHub Corner",
-    rating: "4.6",
-    deliveryTime: "25 min",
-    sku: "JUICE-500",
-    badge: "Healthy",
-  },
-];
-
-const FEATURED_VENDORS = [
-  {
-    id: "v-1",
-    name: "FreshMart Organics",
-    category: "Grocery & Dairy",
-    rating: "4.9 ★ (1.2k+)",
-    time: "15–20 mins",
-    discount: "20% OFF",
-    latitude: 12.9352,
-    longitude: 77.6245,
-  },
-  {
-    id: "v-2",
-    name: "Urban Spice Kitchen",
-    category: "Indian & Asian",
-    rating: "4.8 ★ (850+)",
-    time: "25–30 mins",
-    discount: "Free Delivery",
-    latitude: 12.9385,
-    longitude: 77.6212,
-  },
-  {
-    id: "v-3",
-    name: "TechGear Electronics",
-    category: "Gadgets & Chargers",
-    rating: "4.7 ★ (420+)",
-    time: "20–25 mins",
-    discount: "10% OFF",
-    latitude: 12.941,
-    longitude: 77.618,
-  },
-];
+import {
+  fetchCategoriesFromDb,
+  fetchProductsFromDb,
+  fetchVendorsFromDb,
+  DbCategory,
+  DbProduct,
+  DbVendor,
+} from "@/src/services/api.service";
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
+  
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [products, setProducts] = useState<DbProduct[]>([]);
+  const [vendors, setVendors] = useState<DbVendor[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const addItem = useCartStore((state) => state.addItem);
   const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
   const activeAddress = getSelectedAddress();
   const { location } = useDeviceLocation();
 
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const [dbCats, dbProds, dbVendors] = await Promise.all([
+          fetchCategoriesFromDb(),
+          fetchProductsFromDb(),
+          fetchVendorsFromDb(),
+        ]);
+
+        setCategories(dbCats);
+        setProducts(dbProds);
+        setVendors(dbVendors);
+      } catch (err) {
+        console.error("Failed to load home page DB data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadData();
+  }, []);
+
+  // Format categories list
+  const categoryChips = [
+    { id: "all", name: "All", icon: "apps-outline" },
+    ...categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      icon: cat.icon || "basket-outline",
+    })),
+  ];
+
+  // Filter products by category
+  const filteredProducts = products.filter((p) => {
+    if (selectedCategory === "all") return true;
+    return p.categoryId === selectedCategory;
+  });
+
+  // Map vendors for spatial H3 lookup
+  const vendorPoints = vendors.map((v) => ({
+    id: v.id,
+    name: v.storeName,
+    category: v.description || "Grocery & Delivery",
+    rating: v.rating || "4.8 ★",
+    time: v.isOpen ? "15–20 mins" : "Closed",
+    discount: "Verified Store",
+    latitude: typeof v.latitude === "number" ? v.latitude : Number(v.latitude) || 12.9352,
+    longitude: typeof v.longitude === "number" ? v.longitude : Number(v.longitude) || 77.6245,
+  }));
+
   const h3Vendors = findNearbyH3Stores(
-    activeAddress?.latitude || 12.9344,
-    activeAddress?.longitude || 77.6192,
-    FEATURED_VENDORS,
+    activeAddress?.latitude || location?.latitude || 12.9344,
+    activeAddress?.longitude || location?.longitude || 77.6192,
+    vendorPoints,
   );
 
-  function handleAddToCart(product: (typeof FEATURED_PRODUCTS)[0]) {
+  function handleAddToCart(product: DbProduct) {
+    const priceNum = typeof product.price === "number" ? product.price : Number(product.price);
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: priceNum,
       vendorId: product.vendorId,
-      vendorName: product.vendorName,
-      sku: product.sku,
+      vendorName: product.vendor?.storeName || "Crave Partner",
+      sku: product.sku || product.id,
     });
     setAddedToast(`Added ${product.name}`);
     setTimeout(() => setAddedToast(null), 2000);
@@ -141,23 +118,23 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setAddressModalVisible(true)} activeOpacity={0.8}>
             <View style={styles.locationRow}>
-              <Ionicons name="location" size={16} color="#2563eb" />
+              <Icon name="location" size={16} color="#2563eb" />
               <Text style={styles.locationLabel}>
                 {activeAddress?.label ? `Deliver to ${activeAddress.label}` : "Deliver to"}
               </Text>
-              <Ionicons name="chevron-down" size={14} color="#64748b" />
+              <Icon name="chevron-down" size={14} color="#64748b" />
             </View>
             <Text style={styles.locationAddress} numberOfLines={1}>
               {activeAddress
                 ? `${activeAddress.street}, ${activeAddress.city}`
                 : location?.address
                   ? `${location.address}, ${location.city}`
-                  : "Koramangala 4th Block, Bengaluru"}
+                  : "Select delivery address"}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.notificationBtn} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={20} color="#1e293b" />
+            <Icon name="notifications-outline" size={20} color="#1e293b" />
             <View style={styles.notificationBadge} />
           </TouchableOpacity>
         </View>
@@ -165,7 +142,7 @@ export default function HomeScreen() {
         {/* Toast Notification */}
         {addedToast && (
           <View style={styles.toastBox}>
-            <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+            <Icon name="checkmark-circle" size={16} color="#16a34a" />
             <Text style={styles.toastText}>{addedToast}</Text>
           </View>
         )}
@@ -176,11 +153,11 @@ export default function HomeScreen() {
           activeOpacity={0.8}
           onPress={() => router.push("/explore")}
         >
-          <Ionicons name="search-outline" size={18} color="#64748b" />
+          <Icon name="search-outline" size={18} color="#64748b" />
           <Text style={styles.placeholderText}>
-            Search &quot;milk&quot;, &quot;bread&quot;, or stores...
+            Search products, categories, or stores...
           </Text>
-          <Ionicons name="options-outline" size={18} color="#2563eb" />
+          <Icon name="options-outline" size={18} color="#2563eb" />
         </TouchableOpacity>
 
         {/* Hero Promo Banner */}
@@ -190,9 +167,17 @@ export default function HomeScreen() {
               <Text style={styles.tagBadgeText}>⚡ CRAVE FAST</Text>
             </View>
             <Text style={styles.heroTitle}>Get Everything Delivered in 20 Mins</Text>
-            <Text style={styles.heroSub}>Use code CRAVE50 for 50% OFF on your first order</Text>
+            <Text style={styles.heroSub}>Directly from verified local partners & stores</Text>
           </View>
         </View>
+
+        {/* Loading Indicator */}
+        {loading && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="small" color="#2563eb" />
+            <Text style={styles.loadingText}>Fetching database catalog...</Text>
+          </View>
+        )}
 
         {/* Categories Pills */}
         <View style={styles.sectionHeader}>
@@ -204,7 +189,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesRow}
         >
-          {CATEGORIES.map((cat) => {
+          {categoryChips.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
               <TouchableOpacity
@@ -213,7 +198,7 @@ export default function HomeScreen() {
                 onPress={() => setSelectedCategory(cat.id)}
                 activeOpacity={0.8}
               >
-                <Ionicons
+                <Icon
                   name={cat.icon as any}
                   size={16}
                   color={isSelected ? "#ffffff" : "#475569"}
@@ -228,95 +213,113 @@ export default function HomeScreen() {
 
         {/* Featured Products */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Today</Text>
+          <Text style={styles.sectionTitle}>Popular Products ({filteredProducts.length})</Text>
           <TouchableOpacity onPress={() => router.push("/explore")}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.productGrid}>
-          {FEATURED_PRODUCTS.map((product) => (
-            <View key={product.id} style={styles.productCard}>
-              <View style={styles.imagePlaceholder}>
-                <Ionicons name="cube-outline" size={32} color="#94a3b8" />
-                <View style={styles.badgeTag}>
-                  <Text style={styles.badgeText}>{product.badge}</Text>
-                </View>
-              </View>
-
-              <View style={styles.productDetails}>
-                <Text style={styles.vendorTag}>{product.vendorName}</Text>
-                <Text style={styles.productName} numberOfLines={1}>
-                  {product.name}
-                </Text>
-
-                <View style={styles.metaRow}>
-                  <Text style={styles.productPrice}>₹{product.price}</Text>
-                  <View style={styles.ratingBox}>
-                    <Ionicons name="star" size={12} color="#eab308" />
-                    <Text style={styles.ratingText}>{product.rating}</Text>
+        {filteredProducts.length === 0 && !loading ? (
+          <View style={styles.emptyCard}>
+            <Icon name="cube-outline" size={36} color="#94a3b8" />
+            <Text style={styles.emptyTitle}>No products found in database</Text>
+            <Text style={styles.emptySub}>Check back later or browse other categories</Text>
+          </View>
+        ) : (
+          <View style={styles.productGrid}>
+            {filteredProducts.map((product) => (
+              <View key={product.id} style={styles.productCard}>
+                <View style={styles.imagePlaceholder}>
+                  <Icon name="cube-outline" size={32} color="#94a3b8" />
+                  <View style={styles.badgeTag}>
+                    <Text style={styles.badgeText}>Active</Text>
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  style={styles.addBtn}
-                  onPress={() => handleAddToCart(product)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="add" size={16} color="#ffffff" />
-                  <Text style={styles.addBtnText}>Add</Text>
-                </TouchableOpacity>
+                <View style={styles.productDetails}>
+                  <Text style={styles.vendorTag}>
+                    {product.vendor?.storeName || "Crave Partner"}
+                  </Text>
+                  <Text style={styles.productName} numberOfLines={1}>
+                    {product.name}
+                  </Text>
+
+                  <View style={styles.metaRow}>
+                    <Text style={styles.productPrice}>₹{Number(product.price)}</Text>
+                    <View style={styles.ratingBox}>
+                      <Icon name="star" size={12} color="#eab308" />
+                      <Text style={styles.ratingText}>4.8</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.addBtn}
+                    onPress={() => handleAddToCart(product)}
+                    activeOpacity={0.8}
+                  >
+                    <Icon name="add" size={16} color="#ffffff" />
+                    <Text style={styles.addBtnText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
 
         {/* H3 Indexed Featured Vendors */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Nearby Stores (H3 Hex Ranked)</Text>
+          <Text style={styles.sectionTitle}>Nearby Stores ({h3Vendors.length})</Text>
           <View style={styles.h3TagBadgeHeader}>
             <Text style={styles.h3TagBadgeHeaderText}>⚡ H3 Spatial Res 8</Text>
           </View>
         </View>
 
-        {h3Vendors.map((vendor) => (
-          <View key={vendor.id} style={styles.vendorCard}>
-            <View style={styles.vendorHeader}>
-              <View style={styles.vendorIcon}>
-                <Ionicons name="storefront-outline" size={24} color="#2563eb" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Text style={styles.vendorTitle}>{vendor.name}</Text>
-                  <View style={styles.h3CellBadge}>
-                    <Text style={styles.h3CellBadgeText}>Hex: {vendor.h3Cell.slice(-6)}</Text>
-                  </View>
-                </View>
-                <Text style={styles.vendorSub}>
-                  {vendor.category} • {vendor.h3Tag}
-                </Text>
-              </View>
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>{vendor.discount}</Text>
-              </View>
-            </View>
-
-            <View style={styles.vendorMeta}>
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={14} color="#64748b" />
-                <Text style={styles.metaText}>{vendor.time}</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Ionicons name="location-outline" size={14} color="#2563eb" />
-                <Text style={styles.metaText}>{vendor.distanceKm} km</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Ionicons name="star" size={14} color="#eab308" />
-                <Text style={styles.metaText}>{vendor.rating}</Text>
-              </View>
-            </View>
+        {h3Vendors.length === 0 && !loading ? (
+          <View style={styles.emptyCard}>
+            <Icon name="storefront-outline" size={36} color="#94a3b8" />
+            <Text style={styles.emptyTitle}>No active stores found</Text>
+            <Text style={styles.emptySub}>Approved vendors will appear here automatically</Text>
           </View>
-        ))}
+        ) : (
+          h3Vendors.map((vendor) => (
+            <View key={vendor.id} style={styles.vendorCard}>
+              <View style={styles.vendorHeader}>
+                <View style={styles.vendorIcon}>
+                  <Icon name="storefront-outline" size={24} color="#2563eb" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={styles.vendorTitle}>{vendor.name}</Text>
+                    <View style={styles.h3CellBadge}>
+                      <Text style={styles.h3CellBadgeText}>Hex: {vendor.h3Cell.slice(-6)}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.vendorSub}>
+                    {vendor.category} • {vendor.h3Tag}
+                  </Text>
+                </View>
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountText}>{vendor.discount}</Text>
+                </View>
+              </View>
+
+              <View style={styles.vendorMeta}>
+                <View style={styles.metaItem}>
+                  <Icon name="time-outline" size={14} color="#64748b" />
+                  <Text style={styles.metaText}>{vendor.time}</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Icon name="location-outline" size={14} color="#2563eb" />
+                  <Text style={styles.metaText}>{vendor.distanceKm} km</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Icon name="star" size={14} color="#eab308" />
+                  <Text style={styles.metaText}>{vendor.rating}</Text>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
 
       <AddressModal visible={addressModalVisible} onClose={() => setAddressModalVisible(false)} />
@@ -349,17 +352,18 @@ const styles = StyleSheet.create({
   notificationBtn: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 20,
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#e2e8f0",
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
   },
   notificationBadge: {
     position: "absolute",
     top: 8,
-    right: 8,
+    right: 10,
     width: 8,
     height: 8,
     borderRadius: 4,
@@ -368,28 +372,28 @@ const styles = StyleSheet.create({
   toastBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     backgroundColor: "#f0fdf4",
     borderWidth: 1,
     borderColor: "#bbf7d0",
+    borderRadius: 8,
     padding: 10,
-    borderRadius: 10,
     marginBottom: 12,
   },
-  toastText: { fontSize: 13, fontWeight: "600", color: "#166534" },
+  toastText: { color: "#166534", fontSize: 13, fontWeight: "600" },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 14,
-    height: 48,
-    marginBottom: 16,
+    height: 46,
     gap: 10,
+    marginBottom: 16,
   },
-  placeholderText: { flex: 1, fontSize: 13, color: "#94a3b8" },
+  placeholderText: { flex: 1, color: "#94a3b8", fontSize: 14 },
   heroBanner: {
     backgroundColor: "#2563eb",
     borderRadius: 16,
@@ -398,20 +402,27 @@ const styles = StyleSheet.create({
   },
   heroContent: { gap: 6 },
   tagBadge: {
-    backgroundColor: "#3b82f6",
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: "flex-start",
+    borderRadius: 12,
   },
-  tagBadgeText: { color: "#ffffff", fontSize: 10, fontWeight: "800" },
-  heroTitle: {
-    color: "#ffffff",
-    fontSize: 20,
-    fontWeight: "800",
-    lineHeight: 26,
+  tagBadgeText: { color: "#ffffff", fontSize: 11, fontWeight: "700" },
+  heroTitle: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
+  heroSub: { color: "#dbeafe", fontSize: 12 },
+  loaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
   },
-  heroSub: { color: "#dbeafe", fontSize: 12, fontWeight: "500" },
+  loadingText: { fontSize: 13, color: "#64748b" },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -420,24 +431,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a" },
-  h3TagBadgeHeader: {
-    backgroundColor: "#eff6ff",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#bfdbfe",
-  },
-  h3TagBadgeHeaderText: { fontSize: 10, fontWeight: "800", color: "#2563eb" },
-  h3CellBadge: {
-    backgroundColor: "#f1f5f9",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-  },
-  h3CellBadgeText: { fontSize: 9, fontWeight: "700", color: "#475569" },
   seeAllText: { fontSize: 13, fontWeight: "600", color: "#2563eb" },
   categoriesRow: { gap: 8, paddingBottom: 16 },
   categoryChip: {
@@ -457,6 +450,7 @@ const styles = StyleSheet.create({
   productGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 12,
     marginBottom: 20,
   },
@@ -477,12 +471,12 @@ const styles = StyleSheet.create({
   },
   badgeTag: {
     position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "#1e293b",
+    top: 6,
+    left: 6,
+    backgroundColor: "#16a34a",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   badgeText: { color: "#ffffff", fontSize: 9, fontWeight: "700" },
   productDetails: { padding: 10, gap: 4 },
@@ -496,45 +490,61 @@ const styles = StyleSheet.create({
   },
   productPrice: { fontSize: 14, fontWeight: "800", color: "#2563eb" },
   ratingBox: { flexDirection: "row", alignItems: "center", gap: 2 },
-  ratingText: { fontSize: 11, fontWeight: "700", color: "#334155" },
+  ratingText: { fontSize: 11, fontWeight: "600", color: "#475569" },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2563eb",
-    borderRadius: 8,
+    backgroundColor: "#0f172a",
     paddingVertical: 6,
-    marginTop: 6,
+    borderRadius: 8,
+    marginTop: 4,
     gap: 4,
   },
   addBtnText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
+  h3TagBadgeHeader: {
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  h3TagBadgeHeaderText: { fontSize: 10, fontWeight: "700", color: "#166534" },
   vendorCard: {
     backgroundColor: "#ffffff",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
+    padding: 12,
+    marginBottom: 12,
+    gap: 10,
   },
-  vendorHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  vendorHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
   vendorIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
   },
-  vendorTitle: { fontSize: 15, fontWeight: "700", color: "#0f172a" },
-  vendorSub: { fontSize: 12, color: "#64748b", marginTop: 2 },
+  vendorTitle: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
+  vendorSub: { fontSize: 11, color: "#64748b", marginTop: 2 },
+  h3CellBadge: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  h3CellBadgeText: { fontSize: 9, fontWeight: "700", color: "#475569" },
   discountBadge: {
-    backgroundColor: "#dcfce7",
+    backgroundColor: "#fef2f2",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
   },
-  discountText: { color: "#166534", fontSize: 11, fontWeight: "700" },
+  discountText: { color: "#ef4444", fontSize: 10, fontWeight: "700" },
   vendorMeta: {
     flexDirection: "row",
     gap: 16,
@@ -543,5 +553,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  metaText: { fontSize: 12, fontWeight: "600", color: "#475569" },
+  metaText: { fontSize: 11, color: "#64748b", fontWeight: "500" },
+  emptyCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  emptyTitle: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
+  emptySub: { fontSize: 12, color: "#64748b" },
 });

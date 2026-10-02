@@ -253,19 +253,19 @@ export function CreateVendorForm() {
             </div>
           </div>
 
-          {/* Section 2: Location & Google Maps Verification */}
+          {/* Section 2: Location & Mapcn Verification */}
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                 <MapPin className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-900">Location & Google Maps Integration</h2>
+                <h2 className="text-sm font-bold text-slate-900">Location & Mapcn Integration</h2>
                 <p className="text-[11px] text-slate-400">Pinpoint accurate restaurant coordinates for driver dispatch</p>
               </div>
             </div>
 
-            {/* Interactive Premium Map Picker with Google Maps and GPS */}
+            {/* Interactive Premium Map Picker with Mapcn and GPS */}
             <PremiumMapPicker
               latitude={latitude}
               longitude={longitude}

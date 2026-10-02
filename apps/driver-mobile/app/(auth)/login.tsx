@@ -109,13 +109,11 @@ export default function DriverLoginScreen() {
           )}
         </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>New driver? </Text>
-          <Link href="/(auth)/signup" asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>Register</Text>
-            </TouchableOpacity>
-          </Link>
+        <View style={styles.adminNoticeBox}>
+          <Ionicons name="information-circle-outline" size={18} color="#c2410c" style={{ marginRight: 6 }} />
+          <Text style={styles.adminNoticeText}>
+            Driver accounts are created exclusively by System Administrators. Once your driver profile is created by Admin, sign in using your assigned credentials.
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -200,4 +198,21 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
   footerText: { fontSize: 13, color: "#6b7280" },
   footerLink: { fontSize: 13, color: "#ea580c", fontWeight: "600" },
+  adminNoticeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff7ed",
+    borderWidth: 1,
+    borderColor: "#ffedd5",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 24,
+  },
+  adminNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#9a3412",
+    lineHeight: 17,
+    fontWeight: "500",
+  },
 });

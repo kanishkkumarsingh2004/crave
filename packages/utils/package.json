@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@delivery/constants": "workspace:*",
-    "@delivery/types": "workspace:*"
+    "@delivery/types": "workspace:*",
+    "h3-js": "^4.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

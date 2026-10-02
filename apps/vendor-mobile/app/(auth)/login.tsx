@@ -109,13 +109,11 @@ export default function VendorLoginScreen() {
           )}
         </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>New vendor? </Text>
-          <Link href="/(auth)/signup" asChild>
-            <TouchableOpacity>
-              <Text style={styles.footerLink}>Apply Now</Text>
-            </TouchableOpacity>
-          </Link>
+        <View style={styles.adminNoticeBox}>
+          <Ionicons name="information-circle-outline" size={18} color="#6d28d9" style={{ marginRight: 6 }} />
+          <Text style={styles.adminNoticeText}>
+            Vendor accounts are created exclusively by System Administrators. Once your store is registered by Admin, sign in using your assigned credentials.
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -200,4 +198,21 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
   footerText: { fontSize: 13, color: "#6b7280" },
   footerLink: { fontSize: 13, color: "#7c3aed", fontWeight: "600" },
+  adminNoticeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f3ff",
+    borderWidth: 1,
+    borderColor: "#ddd6fe",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 24,
+  },
+  adminNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#5b21b6",
+    lineHeight: 17,
+    fontWeight: "500",
+  },
 });

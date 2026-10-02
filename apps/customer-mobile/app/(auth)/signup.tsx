@@ -153,6 +153,20 @@ export default function SignUpScreen() {
           )}
         </TouchableOpacity>
 
+        <View style={styles.legalDisclaimer}>
+          <Text style={styles.legalText}>
+            By signing up, you agree to Crave's{" "}
+            <Text style={styles.legalLink} onPress={() => router.push("/terms")}>
+              Terms & Conditions
+            </Text>{" "}
+            and{" "}
+            <Text style={styles.legalLink} onPress={() => router.push("/privacy")}>
+              Privacy Policy
+            </Text>
+            .
+          </Text>
+        </View>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
           <Link href="/(auth)/login" asChild>
@@ -229,7 +243,10 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
-  footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
+  footer: { flexDirection: "row", justifyContent: "center", marginTop: 16 },
   footerText: { fontSize: 13, color: "#6b7280" },
   footerLink: { fontSize: 13, color: "#111827", fontWeight: "600" },
+  legalDisclaimer: { marginTop: 16, alignItems: "center" },
+  legalText: { fontSize: 12, color: "#6b7280", textAlign: "center", lineHeight: 18 },
+  legalLink: { color: "#2563eb", fontWeight: "600", textDecorationLine: "underline" },
 });

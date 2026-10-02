@@ -2,17 +2,21 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+
+const Icon = Ionicons as unknown as React.ComponentType<any>;
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/auth.store";
 import { useAddressStore } from "@/src/stores/address.store";
 import { usePaymentStore } from "@/src/stores/payment.store";
 import { AddressModal } from "@/components/AddressModal";
 import { PaymentMethodModal } from "@/components/PaymentMethodModal";
+import { API_BASE_URL } from "@/src/services/api.service";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuthStore();
   const [addressModalVisible, setAddressModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [orderCount, setOrderCount] = useState<number>(0);
   const addresses = useAddressStore((state) => state.addresses);
   const getSelectedAddress = useAddressStore((state) => state.getSelectedAddress);
   const activeAddress = getSelectedAddress();
@@ -20,8 +24,25 @@ export default function ProfileScreen() {
   const getSelectedPaymentMethod = usePaymentStore((state) => state.getSelectedMethod);
   const activePayment = getSelectedPaymentMethod();
 
-  const customerName = user?.name || "Alice Smith";
-  const customerEmail = user?.email || "customer@delivery.com";
+  const customerName = user?.name || "Customer User";
+  const customerEmail = user?.email || "guest@crave.com";
+
+  React.useEffect(() => {
+    async function loadOrdersCount() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/customer/orders`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && Array.isArray(json.data)) {
+            setOrderCount(json.data.length);
+          }
+        }
+      } catch (e) {
+        console.log("Order count fetch info:", e);
+      }
+    }
+    void loadOrdersCount();
+  }, []);
 
   function handleSignOut() {
     Alert.alert("Sign Out", "Are you sure you want to sign out of Crave?", [
@@ -60,10 +81,14 @@ export default function ProfileScreen() {
 
         {/* Quick Stats */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>14</Text>
+          <TouchableOpacity
+            style={styles.statBox}
+            onPress={() => router.push("/orders")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.statNumber}>{orderCount}</Text>
             <Text style={styles.statLabel}>Orders</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
           <TouchableOpacity
             style={styles.statBox}
@@ -151,13 +176,32 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-            <View style={[styles.menuIcon, { backgroundColor: "#f1f5f9" }]}>
-              <Ionicons name="document-text-outline" size={18} color="#475569" />
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/terms")}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: "#eff6ff" }]}>
+              <Ionicons name="document-text-outline" size={18} color="#2563eb" />
             </View>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Terms & Privacy Policy</Text>
-              <Text style={styles.menuSub}>v1.0.0 • Production Build</Text>
+              <Text style={styles.menuTitle}>Terms & Conditions</Text>
+              <Text style={styles.menuSub}>User agreement & ordering terms</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/privacy")}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: "#f0fdf4" }]}>
+              <Ionicons name="shield-checkmark-outline" size={18} color="#16a34a" />
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Privacy Policy</Text>
+              <Text style={styles.menuSub}>Data protection & security policies</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
           </TouchableOpacity>

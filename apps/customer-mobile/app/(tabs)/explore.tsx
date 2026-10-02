@@ -1,122 +1,64 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore } from "@/stores/cart.store";
 
-const SEARCH_CATEGORIES = [
-  {
-    id: "groceries",
-    name: "Groceries & Milk",
-    count: "450+ items",
-    icon: "basket",
-    color: "#2563eb",
-    bg: "#eff6ff",
-  },
-  {
-    id: "food",
-    name: "Hot Meals",
-    count: "320+ items",
-    icon: "restaurant",
-    color: "#ea580c",
-    bg: "#fff7ed",
-  },
-  {
-    id: "bakery",
-    name: "Bakery & Desserts",
-    count: "180+ items",
-    icon: "pizza",
-    color: "#d97706",
-    bg: "#fffbeb",
-  },
-  {
-    id: "electronics",
-    name: "Electronics & Cable",
-    count: "90+ items",
-    icon: "hardware-chip",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
-  },
-  {
-    id: "health",
-    name: "Pharmacy & Care",
-    count: "210+ items",
-    icon: "medkit",
-    color: "#16a34a",
-    bg: "#f0fdf4",
-  },
-  {
-    id: "drinks",
-    name: "Cold Beverages",
-    count: "150+ items",
-    icon: "beer",
-    color: "#0284c7",
-    bg: "#f0f9ff",
-  },
-];
-
-const ALL_SEARCH_ITEMS = [
-  {
-    id: "prod-1",
-    name: "Fresh Organic Milk 1L",
-    price: 65,
-    vendorId: "v-1",
-    vendorName: "FreshMart Organics",
-    category: "Groceries & Milk",
-    sku: "MILK-001",
-  },
-  {
-    id: "prod-2",
-    name: "Artisanal Whole Wheat Bread",
-    price: 45,
-    vendorId: "v-1",
-    vendorName: "FreshMart Organics",
-    category: "Bakery & Desserts",
-    sku: "BREAD-001",
-  },
-  {
-    id: "prod-3",
-    name: "Paneer Tikka Roll",
-    price: 180,
-    vendorId: "v-2",
-    vendorName: "Urban Spice Kitchen",
-    category: "Hot Meals",
-    sku: "ROLL-001",
-  },
-  {
-    id: "prod-4",
-    name: "Cold Pressed Orange Juice",
-    price: 120,
-    vendorId: "v-2",
-    vendorName: "JuiceHub Corner",
-    category: "Cold Beverages",
-    sku: "JUICE-500",
-  },
-  {
-    id: "prod-5",
-    name: "Fast Charging Type-C Cable",
-    price: 299,
-    vendorId: "v-3",
-    vendorName: "TechGear Store",
-    category: "Electronics & Cable",
-    sku: "CABLE-001",
-  },
-];
+const Icon = Ionicons as unknown as React.ComponentType<any>;
+import {
+  fetchCategoriesFromDb,
+  fetchProductsFromDb,
+  DbCategory,
+  DbProduct,
+} from "@/src/services/api.service";
 
 export default function ExploreScreen() {
   const [query, setQuery] = useState("");
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [products, setProducts] = useState<DbProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const addItem = useCartStore((state) => state.addItem);
 
-  const filteredItems = ALL_SEARCH_ITEMS.filter((item) => {
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const [dbCats, dbProds] = await Promise.all([
+          fetchCategoriesFromDb(),
+          fetchProductsFromDb(),
+        ]);
+        setCategories(dbCats);
+        setProducts(dbProds);
+      } catch (err) {
+        console.error("Failed to load explore catalog:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadData();
+  }, []);
+
+  const filteredItems = products.filter((item) => {
     const matchesQuery =
       query.trim() === "" ||
       item.name.toLowerCase().includes(query.toLowerCase()) ||
-      item.vendorName.toLowerCase().includes(query.toLowerCase());
+      (item.vendor?.storeName || "").toLowerCase().includes(query.toLowerCase());
 
-    const matchesCat = !selectedCat || item.category === selectedCat;
+    const matchesCat = !selectedCatId || item.categoryId === selectedCatId;
     return matchesQuery && matchesCat;
   });
+
+  const selectedCategoryName = categories.find((c) => c.id === selectedCatId)?.name;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -125,7 +67,7 @@ export default function ExploreScreen() {
         <View style={styles.header}>
           <Text style={styles.heading}>Explore Catalog</Text>
           <View style={styles.inputBox}>
-            <Ionicons name="search" size={18} color="#64748b" />
+            <Icon name="search" size={18} color="#64748b" />
             <TextInput
               style={styles.input}
               placeholder="Search products, groceries, stores..."
@@ -136,7 +78,7 @@ export default function ExploreScreen() {
             />
             {query.length > 0 && (
               <TouchableOpacity onPress={() => setQuery("")}>
-                <Ionicons name="close-circle" size={18} color="#94a3b8" />
+                <Icon name="close-circle" size={18} color="#94a3b8" />
               </TouchableOpacity>
             )}
           </View>
@@ -146,27 +88,39 @@ export default function ExploreScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
+          {loading && (
+            <View style={styles.loaderBox}>
+              <ActivityIndicator size="small" color="#2563eb" />
+              <Text style={styles.loaderText}>Loading live catalog...</Text>
+            </View>
+          )}
+
           {/* Categories Grid */}
-          <Text style={styles.sectionTitle}>Explore Categories</Text>
+          <Text style={styles.sectionTitle}>Explore Categories ({categories.length})</Text>
           <View style={styles.categoryGrid}>
-            {SEARCH_CATEGORIES.map((cat) => {
-              const isSelected = selectedCat === cat.name;
+            {categories.map((cat, idx) => {
+              const isSelected = selectedCatId === cat.id;
+              const bgColors = ["#eff6ff", "#fff7ed", "#fffbeb", "#f5f3ff", "#f0fdf4", "#f0f9ff"];
+              const iconColors = ["#2563eb", "#ea580c", "#d97706", "#7c3aed", "#16a34a", "#0284c7"];
+              const bg = bgColors[idx % bgColors.length];
+              const color = iconColors[idx % iconColors.length];
+
               return (
                 <TouchableOpacity
                   key={cat.id}
                   style={[
                     styles.categoryCard,
-                    { backgroundColor: cat.bg },
+                    { backgroundColor: bg },
                     isSelected && styles.categoryCardSelected,
                   ]}
-                  onPress={() => setSelectedCat(isSelected ? null : cat.name)}
+                  onPress={() => setSelectedCatId(isSelected ? null : cat.id)}
                   activeOpacity={0.8}
                 >
                   <View style={[styles.iconCircle, { backgroundColor: "#ffffff" }]}>
-                    <Ionicons name={cat.icon as any} size={20} color={cat.color} />
+                    <Icon name={(cat.icon as any) || "grid-outline"} size={20} color={color} />
                   </View>
                   <Text style={styles.catName}>{cat.name}</Text>
-                  <Text style={styles.catCount}>{cat.count}</Text>
+                  <Text style={styles.catCount}>Active Category</Text>
                 </TouchableOpacity>
               );
             })}
@@ -175,56 +129,60 @@ export default function ExploreScreen() {
           {/* Search Results */}
           <View style={styles.resultsHeader}>
             <Text style={styles.sectionTitle}>
-              {selectedCat ? `${selectedCat}` : "All Items"} ({filteredItems.length})
+              {selectedCategoryName ? `${selectedCategoryName}` : "All Products"} ({filteredItems.length})
             </Text>
-            {selectedCat && (
-              <TouchableOpacity onPress={() => setSelectedCat(null)}>
+            {selectedCatId && (
+              <TouchableOpacity onPress={() => setSelectedCatId(null)}>
                 <Text style={styles.clearFilterText}>Clear Filter</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {filteredItems.length === 0 ? (
+          {filteredItems.length === 0 && !loading ? (
             <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={44} color="#94a3b8" />
-              <Text style={styles.emptyTitle}>No matching products found</Text>
+              <Icon name="search-outline" size={44} color="#94a3b8" />
+              <Text style={styles.emptyTitle}>No matching products in database</Text>
               <Text style={styles.emptySub}>
-                Try searching for &quot;Milk&quot;, &quot;Bread&quot;, or clearing active category
-                filters.
+                Try searching for other terms or selecting a different category filter.
               </Text>
             </View>
           ) : (
-            filteredItems.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <View style={styles.itemIconBox}>
-                  <Ionicons name="cube-outline" size={24} color="#2563eb" />
-                </View>
+            filteredItems.map((item) => {
+              const priceNum = typeof item.price === "number" ? item.price : Number(item.price);
+              return (
+                <View key={item.id} style={styles.itemRow}>
+                  <View style={styles.itemIconBox}>
+                    <Icon name="cube-outline" size={24} color="#2563eb" />
+                  </View>
 
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemVendor}>{item.vendorName}</Text>
-                  <Text style={styles.itemPrice}>₹{item.price}</Text>
-                </View>
+                  <View style={styles.itemDetails}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemVendor}>
+                      {item.vendor?.storeName || "Crave Partner Store"}
+                    </Text>
+                    <Text style={styles.itemPrice}>₹{priceNum}</Text>
+                  </View>
 
-                <TouchableOpacity
-                  style={styles.addBtn}
-                  onPress={() =>
-                    addItem({
-                      id: item.id,
-                      name: item.name,
-                      price: item.price,
-                      vendorId: item.vendorId,
-                      vendorName: item.vendorName,
-                      sku: item.sku,
-                    })
-                  }
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="add" size={16} color="#ffffff" />
-                  <Text style={styles.addBtnText}>Add</Text>
-                </TouchableOpacity>
-              </View>
-            ))
+                  <TouchableOpacity
+                    style={styles.addBtn}
+                    onPress={() =>
+                      addItem({
+                        id: item.id,
+                        name: item.name,
+                        price: priceNum,
+                        vendorId: item.vendorId,
+                        vendorName: item.vendor?.storeName || "Crave Partner",
+                        sku: item.sku || item.id,
+                      })
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Icon name="add" size={16} color="#ffffff" />
+                    <Text style={styles.addBtnText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })
           )}
         </ScrollView>
       </View>
@@ -251,50 +209,78 @@ const styles = StyleSheet.create({
     height: 44,
     gap: 8,
   },
-  input: { flex: 1, fontSize: 13, color: "#0f172a" },
-  scrollContent: { padding: 16, paddingBottom: 40 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a", marginBottom: 12 },
-  categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 },
-  categoryCard: {
-    width: "31%",
-    borderRadius: 14,
-    padding: 12,
+  input: { flex: 1, fontSize: 14, color: "#0f172a" },
+  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  loaderBox: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 8,
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  categoryCardSelected: { borderWidth: 2, borderColor: "#2563eb" },
+  loaderText: { fontSize: 13, color: "#64748b" },
+  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a" },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  categoryCard: {
+    width: "48%",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "transparent",
+    gap: 4,
+  },
+  categoryCardSelected: { borderColor: "#2563eb", borderWidth: 2 },
   iconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 4,
   },
-  catName: { fontSize: 11, fontWeight: "700", color: "#0f172a", textAlign: "center" },
-  catCount: { fontSize: 9, color: "#64748b" },
+  catName: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
+  catCount: { fontSize: 11, color: "#64748b" },
   resultsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 8,
   },
   clearFilterText: { fontSize: 12, fontWeight: "600", color: "#ef4444" },
+  emptyState: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  emptyTitle: { fontSize: 15, fontWeight: "700", color: "#0f172a" },
+  emptySub: { fontSize: 12, color: "#64748b", textAlign: "center", lineHeight: 18 },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#e2e8f0",
+    padding: 12,
     gap: 12,
   },
   itemIconBox: {
     width: 44,
     height: 44,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
@@ -306,14 +292,11 @@ const styles = StyleSheet.create({
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#0f172a",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 8,
-    gap: 2,
+    gap: 4,
   },
   addBtnText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
-  emptyState: { alignItems: "center", paddingVertical: 40, gap: 8 },
-  emptyTitle: { fontSize: 15, fontWeight: "700", color: "#334155" },
-  emptySub: { fontSize: 12, color: "#64748b", textAlign: "center", maxWidth: 260 },
 });

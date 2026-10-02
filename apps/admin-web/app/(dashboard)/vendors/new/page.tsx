@@ -3,7 +3,7 @@ import { CreateVendorForm } from "@/features/vendors/components/create-vendor-fo
 
 export const metadata: Metadata = {
   title: "Add New Vendor | Akshaya Ventures Admin",
-  description: "Register a new restaurant vendor, configure Google Maps location, commission policy, and branding",
+  description: "Register a new restaurant vendor, configure Mapcn location, commission policy, and branding",
 };
 
 export default function NewVendorPage() {

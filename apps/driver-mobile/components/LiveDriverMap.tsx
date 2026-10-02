@@ -63,9 +63,7 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
     : "300m";
 
   const handleOpenExternalMaps = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${currentDriverLat},${currentDriverLng}&destination=${encodeURIComponent(
-      destinationAddress,
-    )}`;
+    const url = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${currentDriverLat}%2C${currentDriverLng}%3B${destinationLat}%2C${destinationLng}`;
     Linking.openURL(url);
   };
 
@@ -111,7 +109,7 @@ export const LiveDriverMap: React.FC<LiveDriverMapProps> = ({
 
         <TouchableOpacity style={styles.navBtn} onPress={handleOpenExternalMaps} activeOpacity={0.8}>
           <Ionicons name="map-outline" size={16} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.navBtnText}>Open in Google Maps</Text>
+          <Text style={styles.navBtnText}>Open in Mapcn Map</Text>
         </TouchableOpacity>
       </View>
     </View>

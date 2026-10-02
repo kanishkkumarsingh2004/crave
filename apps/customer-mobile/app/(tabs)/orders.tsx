@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+
+const Icon = Ionicons as unknown as React.ComponentType<any>;
 import { LiveOrderMap } from "../../components/LiveOrderMap";
 import Constants from "expo-constants";
 
@@ -41,27 +43,9 @@ export interface OrderItem {
   };
 }
 
-const DEFAULT_ACTIVE_ORDER: OrderItem = {
-  id: "ord-10004",
-  orderNumber: "ORD-10004",
-  vendorName: "Crave Organics",
-  status: "PREPARING",
-  statusStep: 2,
-  itemsCount: 2,
-  total: 739.3,
-  otpCode: "849201",
-  estimatedTime: "12–15 mins",
-  driver: {
-    name: "Rahul Sharma",
-    vehicle: "Hero Electric Bike (MH-01-AB-1234)",
-    rating: "4.9 ★",
-    phone: "+919876543210",
-  },
-};
-
 export default function OrdersScreen() {
   const [activeTab, setActiveTab] = useState<"live" | "history">("live");
-  const [liveOrder, setLiveOrder] = useState<OrderItem>(DEFAULT_ACTIVE_ORDER);
+  const [liveOrder, setLiveOrder] = useState<OrderItem | null>(null);
   const [pastOrders, setPastOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -80,10 +64,10 @@ export default function OrdersScreen() {
               setLiveOrder({
                 id: active.id,
                 orderNumber: active.orderNumber,
-                vendorName: active.vendor?.storeName || "Crave Organics",
+                vendorName: active.vendor?.storeName || "Crave Partner Store",
                 status: active.status,
                 statusStep: active.status === "PREPARING" ? 2 : 3,
-                itemsCount: active.items?.length || 2,
+                itemsCount: active.items?.length || 1,
                 total: Number(active.total),
                 otpCode: "849201",
                 estimatedTime: "10–12 mins",
@@ -94,7 +78,10 @@ export default function OrdersScreen() {
                   phone: "+919876543210",
                 },
               });
+            } else {
+              setLiveOrder(null);
             }
+
             const history = json.data.filter(
               (o: any) => o.status === "DELIVERED" || o.status === "CANCELLED",
             );
@@ -103,7 +90,7 @@ export default function OrdersScreen() {
                 history.map((h: any) => ({
                   id: h.id,
                   orderNumber: h.orderNumber,
-                  vendorName: h.vendor?.storeName || "Crave Organics",
+                  vendorName: h.vendor?.storeName || "Crave Partner Store",
                   date: new Date(h.createdAt).toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",
@@ -112,10 +99,12 @@ export default function OrdersScreen() {
                   status: h.status,
                   total: Number(h.total),
                   items:
-                    h.items?.map((i: any) => `${i.productName} (${i.quantity}x)`).join(", ") ||
-                    "Fresh Organic Milk (2x)",
+                    h.items?.map((i: any) => `${i.productName || "Product"} (${i.quantity}x)`).join(", ") ||
+                    "Order Items",
                 })),
               );
+            } else {
+              setPastOrders([]);
             }
           }
         }
@@ -140,7 +129,7 @@ export default function OrdersScreen() {
               onPress={() => setActiveTab("live")}
             >
               <Text style={[styles.toggleText, activeTab === "live" && styles.toggleTextActive]}>
-                Live Order (1)
+                Live Order ({liveOrder ? 1 : 0})
               </Text>
             </TouchableOpacity>
 
@@ -159,127 +148,128 @@ export default function OrdersScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
+          {loading && (
+            <View style={styles.loaderBox}>
+              <ActivityIndicator size="small" color="#2563eb" />
+              <Text style={styles.loaderText}>Checking database for active orders...</Text>
+            </View>
+          )}
+
           {activeTab === "live" ? (
-            <View style={styles.liveContainer}>
-              {/* Interactive Live Map Tracking */}
-              <LiveOrderMap
-                driverName={liveOrder.driver?.name || "Rahul Sharma"}
-                driverPhone={liveOrder.driver?.phone || "+919876543210"}
-                vehicleDetails={liveOrder.driver?.vehicle || "Hero Electric Bike (MH-01-AB-1234)"}
-                etaMinutes={12}
-              />
+            liveOrder ? (
+              <View style={styles.liveContainer}>
+                {/* Interactive Live Map Tracking */}
+                <LiveOrderMap
+                  driverName={liveOrder.driver?.name || "Rahul Sharma"}
+                  driverPhone={liveOrder.driver?.phone || "+919876543210"}
+                  vehicleDetails={liveOrder.driver?.vehicle || "Hero Electric Bike"}
+                  etaMinutes={12}
+                />
 
-              {/* Active Order Card */}
-              <View style={styles.liveCard}>
-                <View style={styles.liveHeader}>
-                  <View>
-                    <Text style={styles.orderNum}>{liveOrder.orderNumber}</Text>
-                    <Text style={styles.vendorName}>{liveOrder.vendorName}</Text>
-                  </View>
-                  <View style={styles.etaBadge}>
-                    <Ionicons name="time" size={14} color="#2563eb" />
-                    <Text style={styles.etaText}>ETA {liveOrder.estimatedTime}</Text>
-                  </View>
-                </View>
-
-                {/* OTP Verification Badge */}
-                <View style={styles.otpBanner}>
-                  <View style={styles.otpLeft}>
-                    <Ionicons name="key" size={18} color="#15803d" />
+                {/* Active Order Card */}
+                <View style={styles.liveCard}>
+                  <View style={styles.liveHeader}>
                     <View>
-                      <Text style={styles.otpLabel}>Handover Delivery OTP</Text>
-                      <Text style={styles.otpSub}>Show code to driver at delivery</Text>
+                      <Text style={styles.orderNum}>{liveOrder.orderNumber}</Text>
+                      <Text style={styles.vendorName}>{liveOrder.vendorName}</Text>
+                    </View>
+                    <View style={styles.etaBadge}>
+                      <Icon name="time" size={14} color="#2563eb" />
+                      <Text style={styles.etaText}>ETA {liveOrder.estimatedTime}</Text>
                     </View>
                   </View>
-                  <View style={styles.otpCodeBox}>
-                    <Text style={styles.otpCode}>{liveOrder.otpCode}</Text>
-                  </View>
-                </View>
 
-                {/* Stepper Progress Bar */}
-                <Text style={styles.stepperTitle}>Order Status</Text>
-                <View style={styles.stepperContainer}>
-                  {/* Step 1 */}
-                  <View style={styles.stepItem}>
-                    <View style={[styles.stepCircle, styles.stepDone]}>
-                      <Ionicons name="checkmark" size={14} color="#ffffff" />
+                  {/* OTP Verification Badge */}
+                  <View style={styles.otpBanner}>
+                    <View style={styles.otpLeft}>
+                      <Icon name="key" size={18} color="#15803d" />
+                      <View>
+                        <Text style={styles.otpLabel}>Handover Delivery OTP</Text>
+                        <Text style={styles.otpSub}>Show code to driver at delivery</Text>
+                      </View>
                     </View>
-                    <Text style={styles.stepText}>Confirmed</Text>
-                  </View>
-                  <View style={[styles.stepLine, styles.stepLineActive]} />
-
-                  {/* Step 2 */}
-                  <View style={styles.stepItem}>
-                    <View style={[styles.stepCircle, styles.stepActive]}>
-                      <Ionicons name="restaurant-outline" size={14} color="#ffffff" />
+                    <View style={styles.otpCodeBox}>
+                      <Text style={styles.otpCode}>{liveOrder.otpCode}</Text>
                     </View>
-                    <Text style={[styles.stepText, styles.stepTextActive]}>Preparing</Text>
                   </View>
-                  <View style={styles.stepLine} />
 
-                  {/* Step 3 */}
-                  <View style={styles.stepItem}>
-                    <View style={styles.stepCircle}>
-                      <Ionicons name="bicycle-outline" size={14} color="#94a3b8" />
+                  {/* Stepper Progress Bar */}
+                  <Text style={styles.stepperTitle}>Order Status</Text>
+                  <View style={styles.stepperContainer}>
+                    {/* Step 1 */}
+                    <View style={styles.stepItem}>
+                      <View style={[styles.stepCircle, styles.stepDone]}>
+                        <Icon name="checkmark" size={14} color="#ffffff" />
+                      </View>
+                      <Text style={styles.stepText}>Confirmed</Text>
                     </View>
-                    <Text style={styles.stepText}>On the Way</Text>
-                  </View>
-                  <View style={styles.stepLine} />
+                    <View style={[styles.stepLine, styles.stepLineActive]} />
 
-                  {/* Step 4 */}
-                  <View style={styles.stepItem}>
-                    <View style={styles.stepCircle}>
-                      <Ionicons name="home-outline" size={14} color="#94a3b8" />
+                    {/* Step 2 */}
+                    <View style={styles.stepItem}>
+                      <View style={[styles.stepCircle, styles.stepActive]}>
+                        <Icon name="restaurant-outline" size={14} color="#ffffff" />
+                      </View>
+                      <Text style={[styles.stepText, styles.stepTextActive]}>Preparing</Text>
                     </View>
-                    <Text style={styles.stepText}>Delivered</Text>
-                  </View>
-                </View>
+                    <View style={styles.stepLine} />
 
-                {/* Driver Info Card */}
-                <View style={styles.driverBox}>
-                  <View style={styles.driverAvatar}>
-                    <Ionicons name="person" size={20} color="#2563eb" />
+                    {/* Step 3 */}
+                    <View style={styles.stepItem}>
+                      <View style={styles.stepCircle}>
+                        <Icon name="bicycle-outline" size={14} color="#94a3b8" />
+                      </View>
+                      <Text style={styles.stepText}>On the Way</Text>
+                    </View>
+                    <View style={styles.stepLine} />
+
+                    {/* Step 4 */}
+                    <View style={styles.stepItem}>
+                      <View style={styles.stepCircle}>
+                        <Icon name="home-outline" size={14} color="#94a3b8" />
+                      </View>
+                      <Text style={styles.stepText}>Delivered</Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.driverName}>
-                      {liveOrder.driver?.name || "Rahul Sharma"}
-                    </Text>
-                    <Text style={styles.driverVehicle}>
-                      {liveOrder.driver?.vehicle || "Hero Electric Bike"}
-                    </Text>
+
+                  {/* Driver Info Card */}
+                  <View style={styles.driverBox}>
+                    <View style={styles.driverAvatar}>
+                      <Icon name="person" size={20} color="#2563eb" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.driverName}>
+                        {liveOrder.driver?.name || "Rahul Sharma"}
+                      </Text>
+                      <Text style={styles.driverVehicle}>
+                        {liveOrder.driver?.vehicle || "Hero Electric Bike"}
+                      </Text>
+                    </View>
+                    <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
+                      <Icon name="call" size={16} color="#ffffff" />
+                      <Text style={styles.callText}>Call</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
-                    <Ionicons name="call" size={16} color="#ffffff" />
-                    <Text style={styles.callText}>Call</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Icon name="bicycle-outline" size={48} color="#94a3b8" />
+                <Text style={styles.emptyTitle}>No Active Delivery Orders</Text>
+                <Text style={styles.emptySub}>
+                  When you place an order, live GPS tracking and order status updates will appear here in real-time.
+                </Text>
+              </View>
+            )
+          ) : pastOrders.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="receipt-outline" size={48} color="#94a3b8" />
+              <Text style={styles.emptyTitle}>No Past Order History</Text>
+              <Text style={styles.emptySub}>Your completed and cancelled orders will be logged here.</Text>
             </View>
           ) : (
             <View style={styles.historyContainer}>
-              {(pastOrders.length > 0
-                ? pastOrders
-                : [
-                    {
-                      id: "ord-10001",
-                      orderNumber: "ORD-10001",
-                      vendorName: "Crave Organics",
-                      date: "1 Oct 2026",
-                      status: "DELIVERED",
-                      total: 633.1,
-                      items: "Fresh Organic Milk (2x), Whole Wheat Bread (1x)",
-                    },
-                    {
-                      id: "ord-10002",
-                      orderNumber: "ORD-10002",
-                      vendorName: "Crave Organics",
-                      date: "28 Sep 2026",
-                      status: "DELIVERED",
-                      total: 1217.2,
-                      items: "Farm Eggs Pack of 12 (2x), Shimla Apples 1kg (1x)",
-                    },
-                  ]
-              ).map((order) => (
+              {pastOrders.map((order) => (
                 <View key={order.id} style={styles.historyCard}>
                   <View style={styles.historyHeader}>
                     <View>
@@ -287,7 +277,7 @@ export default function OrdersScreen() {
                       <Text style={styles.vendorName}>{order.vendorName}</Text>
                     </View>
                     <View style={styles.deliveredBadge}>
-                      <Ionicons name="checkmark-circle" size={14} color="#16a34a" />
+                      <Icon name="checkmark-circle" size={14} color="#16a34a" />
                       <Text style={styles.deliveredText}>{order.status}</Text>
                     </View>
                   </View>
@@ -318,14 +308,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
-    gap: 12,
   },
-  heading: { fontSize: 20, fontWeight: "800", color: "#0f172a" },
+  heading: { fontSize: 20, fontWeight: "800", color: "#0f172a", marginBottom: 12 },
   tabToggle: {
     flexDirection: "row",
     backgroundColor: "#f1f5f9",
     borderRadius: 10,
-    padding: 3,
+    padding: 4,
   },
   toggleBtn: {
     flex: 1,
@@ -333,24 +322,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
   },
-  toggleBtnActive: {
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+  toggleBtnActive: { backgroundColor: "#ffffff" },
   toggleText: { fontSize: 13, fontWeight: "600", color: "#64748b" },
-  toggleTextActive: { color: "#2563eb" },
+  toggleTextActive: { color: "#0f172a", fontWeight: "700" },
   scrollContent: { padding: 16, paddingBottom: 40 },
+  loaderBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  loaderText: { fontSize: 13, color: "#64748b" },
   liveContainer: { gap: 16 },
   liveCard: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#bfdbfe",
+    borderColor: "#e2e8f0",
     padding: 16,
-    gap: 16,
+    gap: 14,
   },
   liveHeader: {
     flexDirection: "row",
@@ -358,75 +353,80 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   orderNum: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
-  vendorName: { fontSize: 13, color: "#64748b", marginTop: 2 },
+  vendorName: { fontSize: 12, color: "#64748b", marginTop: 2 },
   etaBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#eff6ff",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
     gap: 4,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
-  etaText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
+  etaText: { fontSize: 11, fontWeight: "700", color: "#1e40af" },
   otpBanner: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#f0fdf4",
     borderWidth: 1,
     borderColor: "#bbf7d0",
-    padding: 12,
     borderRadius: 12,
+    padding: 12,
   },
   otpLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  otpLabel: { fontSize: 13, fontWeight: "700", color: "#166534" },
+  otpLabel: { fontSize: 12, fontWeight: "700", color: "#166534" },
   otpSub: { fontSize: 10, color: "#15803d" },
   otpCodeBox: {
     backgroundColor: "#166534",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
   },
-  otpCode: { color: "#ffffff", fontSize: 14, fontWeight: "800", letterSpacing: 2 },
-  stepperTitle: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
+  otpCode: { fontSize: 14, fontWeight: "800", color: "#ffffff", letterSpacing: 1 },
+  stepperTitle: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
   stepperContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 4,
   },
   stepItem: { alignItems: "center", gap: 4 },
   stepCircle: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: "#f1f5f9",
     justifyContent: "center",
     alignItems: "center",
   },
   stepDone: { backgroundColor: "#16a34a" },
   stepActive: { backgroundColor: "#2563eb" },
-  stepLine: { flex: 1, height: 2, backgroundColor: "#e2e8f0", marginHorizontal: 2 },
-  stepLineActive: { backgroundColor: "#16a34a" },
-  stepText: { fontSize: 10, fontWeight: "600", color: "#64748b" },
+  stepText: { fontSize: 10, color: "#94a3b8", fontWeight: "600" },
   stepTextActive: { color: "#2563eb", fontWeight: "700" },
+  stepLine: { flex: 1, height: 2, backgroundColor: "#e2e8f0", marginHorizontal: 4 },
+  stepLineActive: { backgroundColor: "#16a34a" },
   driverBox: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f8fafc",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
     padding: 12,
-    gap: 12,
+    gap: 10,
   },
   driverAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
   },
-  driverName: { fontSize: 14, fontWeight: "700", color: "#0f172a" },
+  driverName: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
   driverVehicle: { fontSize: 11, color: "#64748b" },
   callBtn: {
     flexDirection: "row",
@@ -447,24 +447,10 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
-  historyHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  historyNum: { fontSize: 14, fontWeight: "800", color: "#0f172a" },
-  historyVendor: { fontSize: 12, color: "#64748b", marginTop: 2 },
-  deliveredBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#f0fdf4",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  deliveredText: { fontSize: 11, fontWeight: "700", color: "#166534" },
-  historyItems: { fontSize: 12, color: "#334155" },
+  historyHeader: { flexDirection: "row", justifyContent: "space-between" },
+  deliveredBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
+  deliveredText: { fontSize: 11, fontWeight: "700", color: "#16a34a" },
+  historyItems: { fontSize: 12, color: "#475569", lineHeight: 17 },
   historyFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -475,10 +461,23 @@ const styles = StyleSheet.create({
   },
   historyPrice: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
   reorderBtn: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: "#f1f5f9",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
   },
-  reorderText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
+  reorderText: { fontSize: 12, fontWeight: "600", color: "#0f172a" },
+  emptyState: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginTop: 16,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a" },
+  emptySub: { fontSize: 12, color: "#64748b", textAlign: "center", lineHeight: 18 },
 });
