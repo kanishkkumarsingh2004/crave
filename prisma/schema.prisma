@@ -751,7 +751,7 @@ model Payment {
   id                String        @id @default(cuid())
   orderId           String        @unique
   customerId        String
-  provider          String        // "stripe" | "razorpay"
+  provider          String        // "stripe" | "mock"
   providerPaymentId String?       @unique
   amount            Decimal       @db.Decimal(12, 2)
   currency          String        @default("INR")

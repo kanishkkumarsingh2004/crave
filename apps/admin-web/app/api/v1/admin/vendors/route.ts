@@ -17,7 +17,7 @@ import { normalizePagination, buildPaginationMeta } from "@delivery/utils";
 import { zVendorListQuery } from "@delivery/validation";
 import { ZodError } from "zod";
 import type { Prisma } from "@delivery/database";
-import { hashPassword } from "better-auth/crypto";
+import { hashPassword } from "@delivery/auth";
 
 export async function GET(request: NextRequest) {
   const { error } = await withAdmin(request);

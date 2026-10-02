@@ -42,25 +42,24 @@
     "clean": "turbo run clean && node -e \"fs.rmSync('node_modules', {recursive: true, force: true})\""
   },
   "devDependencies": {
-    "@eslint/js": "^9.20.0",
+    "@eslint/js": "^9.39.5",
     "@types/archiver": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "archiver": "^8.0.0",
     "eas-cli": "^24.8.0",
     "eas-cli-local-build-plugin": "^24.8.0",
-    "eslint": "^9.20.0",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.8",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.9.9",
     "prisma": "^6.19.3",
-    "turbo": "^2.11.5",
+    "turbo": "^2.11.6",
     "typescript": "~5.9.3",
     "vitest": "^5.0.3"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3",
-    "better-auth": "^1.2.5"
+    "@prisma/client": "^6.19.3"
   },
   "overrides": {
     "minimatch": "^9.0.5",

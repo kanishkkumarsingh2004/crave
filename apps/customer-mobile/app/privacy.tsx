@@ -51,7 +51,7 @@ export default function PrivacyPolicyScreen() {
       bullets: [
         "Delivery Drivers: Name, contact phone, and delivery address (active during order fulfillment only).",
         "Partner Vendors: Store order details and item instructions (excluding full billing address).",
-        "Payment Processors: Encrypted billing data passed to PCI-DSS compliant gateways (e.g. Razorpay, Stripe).",
+        "Payment Processors: Encrypted billing data passed to PCI-DSS compliant payment gateways (e.g. Stripe).",
         "Legal Requirements: When mandatory by law enforcement, court orders, or government regulations.",
       ],
     },
@@ -283,11 +283,11 @@ export default function PrivacyPolicyScreen() {
 
             <TouchableOpacity
               style={styles.contactButtonSecondary}
-              onPress={() => router.push("/(tabs)/profile")}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace("/(auth)/login"))}
               activeOpacity={0.8}
             >
-              <Ionicons name="person-outline" size={16} color="#334155" />
-              <Text style={styles.contactButtonSecondaryText}>Profile Settings</Text>
+              <Ionicons name="arrow-back-outline" size={16} color="#334155" />
+              <Text style={styles.contactButtonSecondaryText}>Go Back</Text>
             </TouchableOpacity>
           </View>
 

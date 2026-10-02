@@ -49,7 +49,7 @@ graph TD
 - **Single-Vendor Cart Enforcement**: Prevents cross-vendor product conflicts inside customer carts (`CART_VENDOR_CONFLICT`).
 - **Automated Driver Dispatch Engine**: Auto-assigns available active drivers when orders enter `READY_FOR_PICKUP` status with expiration timers.
 - **OTP Delivery Verification**: 6-digit numeric OTP code generated at pickup and verified at customer handover.
-- **Provider-Agnostic Payment Engine**: Idempotent payment webhook ingestion (`PaymentEvent` deduplication) supporting Razorpay and Stripe.
+- **Provider-Agnostic Payment Engine**: Idempotent payment webhook ingestion (`PaymentEvent` deduplication) supporting Stripe and digital payment gateways.
 - **Realtime Server-Sent Events (SSE)**: Live streaming endpoint for order status transitions and GPS driver tracking.
 - **Audit Logging Engine**: Background audit logger capturing all platform mutation events.
 
@@ -183,11 +183,6 @@ BETTER_AUTH_URL="http://localhost:3000"
 
 # Exposed Public Client API URL
 NEXT_PUBLIC_API_URL="http://localhost:3000"
-
-# Payment Gateways (Optional for dev mock mode)
-RAZORPAY_KEY_ID="rzp_test_mock_key"
-RAZORPAY_KEY_SECRET="rzp_test_mock_secret"
-RAZORPAY_WEBHOOK_SECRET="rzp_test_webhook_secret"
 
 # Push Notifications / FCM (Optional for dev simulator)
 FCM_PROJECT_ID=""

@@ -25,12 +25,13 @@ if (typeof globalThis !== "undefined" && typeof globalThis.TextDecoder !== "unde
 }
 
 import { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Stack, useSegments, useRouter } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LogBox } from "react-native";
 import { useAuthStore } from "@/stores/auth.store";
+import { AppSplashScreen } from "@/components/AppSplashScreen";
 
 LogBox.ignoreLogs([
   "Cannot connect to Expo CLI",
@@ -44,6 +45,35 @@ const queryClient = new QueryClient({
   },
 });
 
+function AuthGuard() {
+  const { status } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unknown" || status === "authenticating") return;
+
+    const firstSegment = segments[0];
+    const inAuthGroup = firstSegment === "(auth)";
+    const isPublicException =
+      firstSegment === "terms" ||
+      firstSegment === "privacy" ||
+      inAuthGroup;
+
+    if (status === "unauthenticated" && !isPublicException) {
+      router.replace("/(auth)/login");
+    } else if (status === "authenticated" && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [status, segments, router]);
+
+  if (status === "unknown" || status === "authenticating") {
+    return <AppSplashScreen />;
+  }
+
+  return null;
+}
+
 export default function RootLayout() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
 
@@ -55,6 +85,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
+          <AuthGuard />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />

@@ -15,8 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3",
-    "better-auth": "^1.2.5"
+    "@prisma/client": "^6.19.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

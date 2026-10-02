@@ -75,7 +75,7 @@ export const DEFAULT_CURRENCY = "INR";
 /** Tax rate (as a decimal fraction, e.g. 0.18 = 18%) */
 export const DEFAULT_TAX_RATE = 0.18;
 
-/** Minimum order subtotal before delivery fee (in paise for Razorpay or smallest unit) */
+/** Minimum order subtotal before delivery fee (in paise or smallest currency unit) */
 export const FREE_DELIVERY_THRESHOLD_PAISE = 50000; // ₹500
 
 /** Flat delivery fee in paise */

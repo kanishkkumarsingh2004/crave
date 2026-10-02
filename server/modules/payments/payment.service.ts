@@ -1,29 +1,12 @@
 /**
  * Payment & Financial System Service
  *
- * Provider-agnostic payment gateway engine supporting Razorpay & Stripe.
+ * Provider-agnostic payment gateway engine supporting Stripe & digital payments.
  * Handles payment initiation, client verification, webhook event processing
  * with DB idempotency check, refund workflows, and payout ledger calculations.
  */
 
-import crypto from "crypto";
 import { prisma, PaymentStatus, OrderStatus, RefundStatus } from "@delivery/database";
-import { env } from "@delivery/config";
-
-// Helper to calculate Razorpay HMAC SHA256 signature
-function verifyRazorpaySignature(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-  secret: string,
-): boolean {
-  if (!secret) return true; // Fallback for dev mode when secret not set
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-  return expectedSignature === signature;
-}
 
 // ============================================================
 // INITIATE & VERIFY PAYMENT
@@ -32,7 +15,7 @@ function verifyRazorpaySignature(
 export async function initiatePayment(
   orderId: string,
   customerId: string,
-  provider: string = "razorpay",
+  provider: string = "stripe",
 ) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -100,7 +83,6 @@ export async function initiatePayment(
     currency: order.currency,
     provider,
     providerOrderId: payment.providerPaymentId,
-    razorpayKeyId: env.RAZORPAY_KEY_ID || "rzp_test_mock_key",
   };
 }
 
@@ -117,19 +99,6 @@ export async function verifyPayment(
 
   if (!payment) {
     throw new Error("Payment record not found for order");
-  }
-
-  // Validate signature if secret configured
-  if (payment.provider === "razorpay" && env.RAZORPAY_KEY_SECRET) {
-    const isValid = verifyRazorpaySignature(
-      providerOrderId,
-      providerPaymentId,
-      providerSignature,
-      env.RAZORPAY_KEY_SECRET,
-    );
-    if (!isValid) {
-      throw new Error("Invalid payment signature verification failed");
-    }
   }
 
   const now = new Date();

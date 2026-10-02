@@ -237,11 +237,11 @@ export default function TermsAndConditionsScreen() {
 
             <TouchableOpacity
               style={styles.contactButtonSecondary}
-              onPress={() => router.push("/(tabs)/profile")}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace("/(auth)/login"))}
               activeOpacity={0.8}
             >
-              <Ionicons name="help-circle-outline" size={16} color="#334155" />
-              <Text style={styles.contactButtonSecondaryText}>Back to Profile</Text>
+              <Ionicons name="arrow-back-outline" size={16} color="#334155" />
+              <Text style={styles.contactButtonSecondaryText}>Go Back</Text>
             </TouchableOpacity>
           </View>
 

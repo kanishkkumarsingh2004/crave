@@ -46,8 +46,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   restoreSession: async () => {
     set({ status: "authenticating" });
     try {
-      // Attempt to restore session via Better Auth session endpoint
+      const storedToken = await SecureStore.getItemAsync(SESSION_KEY);
+      const headers: Record<string, string> = {};
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      }
+
       const res = await fetch(`${API_BASE}/api/auth/get-session`, {
+        headers,
         credentials: "include",
       });
 
@@ -59,8 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       }
 
-      // Clear any stale stored session token
-      await SecureStore.deleteItemAsync(SESSION_KEY);
+      await SecureStore.deleteItemAsync(SESSION_KEY).catch(() => undefined);
       set({ user: null, status: "unauthenticated" });
     } catch {
       set({ user: null, status: "unauthenticated" });

@@ -18,6 +18,7 @@ import {
 import { prisma } from "@delivery/database";
 import { normalizePagination, buildPaginationMeta } from "@delivery/utils";
 import { zUserListQuery, zAdminCreateUser } from "@delivery/validation";
+import { hashPassword } from "@delivery/auth";
 import { ZodError } from "zod";
 import type { Prisma } from "@delivery/database";
 
@@ -85,14 +86,22 @@ export async function POST(request: NextRequest) {
     });
     if (existing) return apiConflict("A user with this email already exists");
 
-    // Create via Better Auth to ensure password hashing
-    // For MVP, create the user record directly and let BA handle the account on first login
+    const rawPassword = (input as any).password || "Password123";
+    const hashedPassword = await hashPassword(rawPassword);
+
     const user = await prisma.user.create({
       data: {
         name: input.name,
         email: input.email,
         role: input.role,
         phone: input.phone,
+        accounts: {
+          create: {
+            accountId: input.email,
+            providerId: "credential",
+            password: hashedPassword,
+          },
+        },
       },
       select: {
         id: true,

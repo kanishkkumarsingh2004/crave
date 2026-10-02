@@ -347,7 +347,7 @@ export const zCancelOrder = z
 export const zInitiatePayment = z
   .object({
     orderId: zCuid,
-    provider: z.string().default("razorpay"),
+    provider: z.string().default("stripe"),
   })
   .strict();
 

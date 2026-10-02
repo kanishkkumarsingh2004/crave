@@ -54,7 +54,16 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
   restoreSession: async () => {
     set({ status: "authenticating" });
     try {
-      const res = await fetch(`${API_BASE}/api/auth/get-session`, { credentials: "include" });
+      const storedToken = await SecureStore.getItemAsync(SESSION_KEY);
+      const headers: Record<string, string> = {};
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      }
+
+      const res = await fetch(`${API_BASE}/api/auth/get-session`, {
+        headers,
+        credentials: "include",
+      });
       if (res.ok) {
         const body = (await res.json()) as { user?: VendorUser };
         if (body?.user && body.user.role === "VENDOR") {
@@ -62,7 +71,7 @@ export const useVendorAuthStore = create<VendorAuthState>((set) => ({
           return;
         }
       }
-      await SecureStore.deleteItemAsync(SESSION_KEY);
+      await SecureStore.deleteItemAsync(SESSION_KEY).catch(() => undefined);
       set({ user: null, status: "unauthenticated" });
     } catch {
       set({ user: null, status: "unauthenticated" });

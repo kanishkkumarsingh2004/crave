@@ -15,7 +15,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "better-auth/crypto";
+import { hashPassword } from "@delivery/auth";
 
 const prisma = new PrismaClient();
 const DEFAULT_PASSWORD = "Password123";

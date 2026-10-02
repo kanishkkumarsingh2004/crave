@@ -136,7 +136,7 @@ export async function processCheckout(userId: string, input: CreateOrderInput) {
         customerId: customer.id,
         amount: total,
         currency: "INR",
-        provider: "razorpay",
+        provider: "stripe",
         status: PaymentStatus.PENDING,
       },
     });

@@ -1,18 +1,23 @@
 /**
- * @delivery/auth — Client-side Better Auth helper
- *
- * Import this in React/Next.js client components to use auth.
- * Mobile apps have their own better-auth-client configured in-app.
- *
- * spec: auth-spec.md §20
+ * @delivery/auth — Client-side Auth helper
  */
 
-declare const process: any;
+export const authClient = {
+  async getSession() {
+    try {
+      const res = await fetch("/api/auth/get-session");
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+  async signOut() {
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" });
+    } catch {}
+  },
+};
 
-import { createAuthClient } from "better-auth/react";
-
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000",
-});
-
-export const { signIn, signUp, signOut, useSession, getSession } = authClient;
+export const getSession = authClient.getSession;
+export const signOut = authClient.signOut;

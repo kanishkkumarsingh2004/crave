@@ -36,11 +36,6 @@ export default function LoginScreen() {
     }
   }
 
-  async function handleGoogleSignIn() {
-    // Google OAuth flow — implemented in Phase 2 with Better Auth
-    setError("Google sign-in coming soon.");
-  }
-
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -126,22 +121,6 @@ export default function LoginScreen() {
           ) : (
             <Text style={styles.buttonText}>Sign In</Text>
           )}
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Google */}
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignIn}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
         {/* Sign Up */}
@@ -240,19 +219,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
-  divider: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#e5e7eb" },
-  dividerText: { marginHorizontal: 12, fontSize: 12, color: "#9ca3af", fontWeight: "500" },
-  googleButton: {
-    height: 48,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleButtonText: { color: "#374151", fontWeight: "500", fontSize: 15 },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
   footerText: { fontSize: 13, color: "#6b7280" },
   footerLink: { fontSize: 13, color: "#111827", fontWeight: "600" },
