@@ -12,8 +12,8 @@ interface RecentOrder {
   status: string;
   total: string;
   createdAt: string;
-  vendor: { storeName: string };
-  deliveryRecipientName: string;
+  vendor?: { storeName?: string; name?: string } | null;
+  deliveryRecipientName?: string;
 }
 
 async function fetchRecentOrders(): Promise<RecentOrder[]> {
@@ -83,14 +83,14 @@ export function RecentActivityFeed() {
                   <p className="text-sm font-semibold text-foreground truncate">
                     {order.orderNumber} ·{" "}
                     <span className="font-normal text-muted-foreground">
-                      {order.vendor.storeName}
+                      {order.vendor?.storeName || order.vendor?.name || "Vendor"}
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                     <span>{order.deliveryRecipientName || "Customer"}</span>
                     <span>•</span>
                     <Clock className="h-3 w-3" />
-                    <span>{format(new Date(order.createdAt), "MMM d, h:mm a")}</span>
+                    <span>{order.createdAt ? format(new Date(order.createdAt), "MMM d, h:mm a") : "Recent"}</span>
                   </p>
                 </div>
               </div>

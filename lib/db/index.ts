@@ -19,19 +19,35 @@ class InMemoryDatabase {
     this.data = this.loadData();
   }
 
+  private formatVendor(v: any) {
+    if (!v) return null;
+    return {
+      ...v,
+      storeName: v.storeName || v.name || "Vendor Store",
+      name: v.name || v.storeName || "Vendor Store",
+    };
+  }
+
   private loadData(): DataStore {
     try {
       if (fs.existsSync(DB_FILE)) {
         const content = fs.readFileSync(DB_FILE, "utf-8");
         const parsed = JSON.parse(content);
         if (parsed && typeof parsed === "object" && parsed.users && parsed.vendors) {
-          return parsed as DataStore;
+          const store = parsed as DataStore;
+          if (store.vendors) {
+            store.vendors = store.vendors.map((v: any) => this.formatVendor(v));
+          }
+          return store;
         }
       }
     } catch (e) {
       console.warn("Failed to load existing db.json, generating fresh seed data", e);
     }
     const initial = getInitialSeedData();
+    if (initial.vendors) {
+      initial.vendors = initial.vendors.map((v: any) => this.formatVendor(v));
+    }
     this.saveDataDirect(initial);
     return initial;
   }
@@ -156,7 +172,7 @@ class InMemoryDatabase {
         clone.accounts = this.data.accounts.filter((a) => a.userId === item.id);
       }
       if (include.vendor) {
-        clone.vendor = this.data.vendors.find((v) => v.userId === item.id) || null;
+        clone.vendor = this.formatVendor(this.data.vendors.find((v) => v.userId === item.id));
       }
       if (include.driver) {
         clone.driver = this.data.drivers.find((d) => d.userId === item.id) || null;
@@ -174,7 +190,7 @@ class InMemoryDatabase {
 
     if (entityName === "product") {
       if (include.vendor) {
-        clone.vendor = this.data.vendors.find((v) => v.id === item.vendorId) || null;
+        clone.vendor = this.formatVendor(this.data.vendors.find((v) => v.id === item.vendorId));
       }
       if (include.category) {
         clone.category = this.data.categories.find((c) => c.id === item.categoryId) || null;
@@ -197,7 +213,7 @@ class InMemoryDatabase {
         clone.customer = this.data.users.find((u) => u.id === item.customerId) || null;
       }
       if (include.vendor) {
-        clone.vendor = this.data.vendors.find((v) => v.id === item.vendorId) || null;
+        clone.vendor = this.formatVendor(this.data.vendors.find((v) => v.id === item.vendorId));
       }
       if (include.driver) {
         const drv = this.data.drivers.find((d) => d.id === item.driverId);
@@ -216,6 +232,11 @@ class InMemoryDatabase {
       }
       if (include.delivery) {
         clone.delivery = this.data.deliveries.find((d) => d.orderId === item.id) || null;
+      }
+      if (include._count) {
+        clone._count = {
+          items: this.data.orderItems.filter((i) => i.orderId === item.id).length,
+        };
       }
     }
 
@@ -236,7 +257,7 @@ class InMemoryDatabase {
         clone.customer = this.data.users.find((u) => u.id === item.customerId) || null;
       }
       if (include.vendor) {
-        clone.vendor = this.data.vendors.find((v) => v.id === item.vendorId) || null;
+        clone.vendor = this.formatVendor(this.data.vendors.find((v) => v.id === item.vendorId));
       }
     }
 
@@ -261,7 +282,8 @@ class InMemoryDatabase {
         if (args?.orderBy) items = this.sortItems(items, args.orderBy);
         if (args?.skip) items = items.slice(args.skip);
         if (args?.take) items = items.slice(0, args.take);
-        return items.map((i) => this.attachRelations(entityName, i, args?.include));
+        const relationSpec = { ...args?.include, ...args?.select };
+        return items.map((i) => this.attachRelations(entityName, i, relationSpec));
       },
 
       findUnique: async (args: {
@@ -271,7 +293,8 @@ class InMemoryDatabase {
       }) => {
         const item = getArray().find((i) => this.matchWhere(i, args.where));
         if (!item) return null;
-        return this.attachRelations(entityName, item, args?.include);
+        const relationSpec = { ...args?.include, ...args?.select };
+        return this.attachRelations(entityName, item, relationSpec);
       },
 
       findFirst: async (args?: {
@@ -284,7 +307,8 @@ class InMemoryDatabase {
         if (args?.orderBy) items = this.sortItems(items, args.orderBy);
         const item = items[0];
         if (!item) return null;
-        return this.attachRelations(entityName, item, args?.include);
+        const relationSpec = { ...args?.include, ...args?.select };
+        return this.attachRelations(entityName, item, relationSpec);
       },
 
       count: async (args?: { where?: Record<string, any> }) => {

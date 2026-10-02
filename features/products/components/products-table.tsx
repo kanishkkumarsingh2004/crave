@@ -83,7 +83,7 @@ export function ProductsTable() {
     },
     {
       header: "Vendor",
-      accessor: (row) => <span className="text-sm font-medium">{row.vendor.storeName}</span>,
+      accessor: (row) => <span className="text-sm font-medium">{row.vendor?.storeName ?? "N/A"}</span>,
     },
     {
       header: "Category",
