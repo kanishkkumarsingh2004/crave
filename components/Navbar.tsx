@@ -13,6 +13,7 @@ import {
   Store,
   UtensilsCrossed,
   X,
+  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -92,6 +93,15 @@ export default function Navbar() {
                   >
                     <Compass className="size-3.5 text-[#859d19]" />
                     Explore Kitchens
+                  </Link>
+                  <Link
+                    href="/user/cravexp"
+                    className={`flex items-center gap-1.5 transition hover:text-emerald-700 ${
+                      pathname.includes('/user/cravexp') ? 'text-emerald-700 font-bold' : ''
+                    }`}
+                  >
+                    <Zap className="size-3.5 text-emerald-600 fill-emerald-600" />
+                    <span>crave<strong className="text-emerald-600">XP</strong> Instamart</span>
                   </Link>
                   <Link
                     href="/user/orders"
@@ -194,6 +204,22 @@ export default function Navbar() {
                         Explore Kitchens
                       </Link>
                       <Link
+                        href="/user/cravexp"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
+                      >
+                        <Zap className="size-4 text-emerald-600 fill-emerald-600" />
+                        craveXP Instamart (10 Min)
+                      </Link>
+                      <Link
+                        href="/vendor/crave-ep"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] bg-[#f0f3eb] hover:bg-[#e2e7dc]"
+                      >
+                        <Store className="size-4 text-[#7d9518]" />
+                        craveEP Store Console
+                      </Link>
+                      <Link
                         href="/user/orders"
                         onClick={() => setShowUserDropdown(false)}
                         className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
@@ -219,14 +245,24 @@ export default function Navbar() {
                       </Link>
                     </>
                   ) : (
-                    <Link
-                      href={currentDashboardLink}
-                      onClick={() => setShowUserDropdown(false)}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
-                    >
-                      <LayoutDashboard className="size-4 text-[#7d9518]" />
-                      Go to Dashboard
-                    </Link>
+                    <>
+                      <Link
+                        href={currentDashboardLink}
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
+                      >
+                        <LayoutDashboard className="size-4 text-[#7d9518]" />
+                        Go to Dashboard
+                      </Link>
+                      <Link
+                        href="/vendor/crave-ep"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
+                      >
+                        <Store className="size-4 text-emerald-600" />
+                        craveEP Store Console
+                      </Link>
+                    </>
                   )}
 
                   <button
