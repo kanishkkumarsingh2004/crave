@@ -32,6 +32,7 @@ import {
   Zap,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
@@ -764,53 +765,34 @@ export default function CustomerDashboard({
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
         {activeTab === 'explore' && (
           <div className="flex flex-col gap-8">
-            {/* Overview KPI Stat Highlights Bar */}
-            <div className="grid gap-3 sm:grid-cols-4">
-              <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 shadow-xs flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-800 font-bold">
-                  <Tag className="size-5" />
+            {/* craveXP 10-Min Instamart Store Banner (Replaces Stat Cards) */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#121815] via-[#1b2722] to-[#121815] p-6 text-white shadow-xl border-2 border-emerald-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="grid size-14 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] font-black text-2xl shadow-lg shrink-0">
+                  <Zap className="size-8 fill-current text-[#121815]" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">
-                    Savings &amp; Cashback
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                      crave<span className="text-[#d9f447]">XP</span> Instamart
+                    </span>
+                    <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-0.5 text-[10px] font-extrabold uppercase text-emerald-300">
+                      ⚡ 10 Min Drop
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-300 max-w-lg">
+                    Milk, Eggs, Bread, Cold Drinks, Chips &amp; Fresh Veggies delivered from our nearest dark store in 10 minutes. Separated 100% from restaurant orders!
                   </p>
-                  <p className="text-base font-bold text-[#18201c]">₹150 Credit Active</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 shadow-xs flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
-                  <Sparkles className="size-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">Member Status</p>
-                  <p className="text-base font-bold text-purple-900">Gold Foodie Rewards</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 shadow-xs flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-blue-100 text-blue-800 font-bold">
-                  <Zap className="size-5 text-blue-600 fill-blue-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">
-                    Avg Delivery Speed
-                  </p>
-                  <p className="text-base font-bold text-blue-900">22 mins Ultra Fast</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 shadow-xs flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-amber-100 text-amber-800 font-bold">
-                  <ShoppingBag className="size-5 text-amber-700" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">
-                    Total Completed Drops
-                  </p>
-                  <p className="text-base font-bold text-[#18201c]">12 Orders Placed</p>
-                </div>
-              </div>
+              <Link
+                href="/user/cravexp"
+                className="rounded-2xl bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#121815] shadow-xl hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 shrink-0 flex items-center gap-2"
+              >
+                Open craveXP Instamart Store
+                <ArrowRight className="size-4" />
+              </Link>
             </div>
 
             {/* Promotional Offer Banners — Auto Carousel */}

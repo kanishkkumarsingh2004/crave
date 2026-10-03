@@ -279,19 +279,36 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   function triggerSimulatedOffer() {
     setOfferTimer(15)
-    setBroadcastOffer({
-      id: `off_${Date.now()}`,
-      orderNumber: `#DRP-${Math.floor(1000 + Math.random() * 9000)}`,
-      restaurantName: 'Subway Fresh',
-      restaurantAddress: 'CMH Road, Indiranagar',
-      customerName: 'Ananya Roy',
-      customerAddress: 'Sobha Crimson, HAL 2nd Stage',
-      basePayout: 95,
-      surgeBonus: 40,
-      tip: 50,
-      distance: '2.8 km',
-      itemsCount: 2,
-    })
+    const isDarkStoreOffer = Math.random() > 0.4
+    if (isDarkStoreOffer) {
+      setBroadcastOffer({
+        id: `off_${Date.now()}`,
+        orderNumber: `#CXP-${Math.floor(1000 + Math.random() * 9000)}`,
+        restaurantName: '⚡ craveEP Dark Store Hub #402 (10-Min Express)',
+        restaurantAddress: 'Aisle B3, Indiranagar Micro-Hub',
+        customerName: 'Priya Sharma (Instamart Order)',
+        customerAddress: 'Tower 4, Skylight Apts, Indiranagar',
+        basePayout: 110,
+        surgeBonus: 50,
+        tip: 60,
+        distance: '1.4 km',
+        itemsCount: 5,
+      })
+    } else {
+      setBroadcastOffer({
+        id: `off_${Date.now()}`,
+        orderNumber: `#DRP-${Math.floor(1000 + Math.random() * 9000)}`,
+        restaurantName: 'Subway Fresh',
+        restaurantAddress: 'CMH Road, Indiranagar',
+        customerName: 'Ananya Roy',
+        customerAddress: 'Sobha Crimson, HAL 2nd Stage',
+        basePayout: 95,
+        surgeBonus: 40,
+        tip: 50,
+        distance: '2.8 km',
+        itemsCount: 2,
+      })
+    }
   }
 
   function acceptBroadcastOffer() {
