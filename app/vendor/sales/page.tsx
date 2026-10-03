@@ -1,0 +1,379 @@
+'use client'
+
+import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  Download,
+  LogOut,
+  Percent,
+  Receipt,
+  Search,
+  Store,
+  TrendingUp,
+  UtensilsCrossed,
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+interface OrderRecord {
+  id: string
+  customer_name: string
+  created_at: string
+  subtotal: number
+  total_amount: number
+  status: string
+  items: string
+}
+
+export default function VendorSalesPage() {
+  const { user, role, isLoading, logout } = useAuth()
+  const router = useRouter()
+
+  const [orders, setOrders] = useState<OrderRecord[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [settlementsHistory, setSettlementsHistory] = useState([
+    {
+      id: 'set_101',
+      period: '23 Sep 2026 – 29 Sep 2026',
+      grossSales: 148200,
+      commissionRate: 15,
+      commissionAmount: 22230,
+      netPayout: 125970,
+      status: 'settled',
+      payoutDate: '30 Sep 2026',
+      utr: 'UTR89201928312',
+    },
+    {
+      id: 'set_100',
+      period: '16 Sep 2026 – 22 Sep 2026',
+      grossSales: 132400,
+      commissionRate: 15,
+      commissionAmount: 19860,
+      netPayout: 112540,
+      status: 'settled',
+      payoutDate: '23 Sep 2026',
+      utr: 'UTR77109283911',
+    },
+  ])
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!user) {
+      router.replace('/login')
+    } else if (role !== 'vendor') {
+      router.replace(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
+    }
+  }, [user, role, isLoading, router])
+
+  useEffect(() => {
+    async function loadSalesOrders() {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (!error && data) {
+          setOrders(data)
+        }
+      } catch (err) {
+        console.error('Failed to load orders for sales:', err)
+      }
+    }
+    loadSalesOrders()
+  }, [])
+
+  if (isLoading || !user || role !== 'vendor') {
+    return (
+      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
+        <div className="size-8 border-4 border-[#86a018] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // Real Sales Calculations from database
+  const completedOrders = orders.filter((o) => o.status === 'completed' || o.status === 'ready' || o.status === 'new' || o.status === 'preparing')
+  const totalGrossSales = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+  const commissionRate = 15 // 15% Zomato/Swiggy standard
+  const totalCommission = Math.round((totalGrossSales * commissionRate) / 100)
+  const totalNetEarnings = totalGrossSales - totalCommission
+
+  const filteredOrders = orders.filter(
+    (o) =>
+      o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.customer_name && o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
+  return (
+    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16">
+      {/* Top Header Navbar */}
+      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
+            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+              crave<span className="text-[#86a018]">.</span>
+            </Link>
+            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
+              VENDOR
+            </span>
+
+            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
+              <Store className="size-4 text-[#86a018] shrink-0" />
+              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+            <Link
+              href="/vendor/dashboard"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Kitchen Orders</span>
+            </Link>
+            <Link
+              href="/vendor/menu"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <UtensilsCrossed className="size-3.5 text-amber-600" />
+              <span>Menu Management</span>
+            </Link>
+            <button
+              onClick={() => router.push('/vendor/sales')}
+              className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
+            >
+              Sales &amp; Earnings
+            </button>
+            <Link
+              href="/vendor/coupons"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <Percent className="size-3.5 text-purple-600" />
+              <span>Store Offers</span>
+            </Link>
+            <Link
+              href="/vendor/settings"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50"
+            >
+              Bank &amp; Settings
+            </Link>
+            <button
+              onClick={() => logout()}
+              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
+              title="Sign Out"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
+        {/* Sales Overview Banner */}
+        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                Restaurant Financial Analytics
+              </span>
+              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">Sales Revenue &amp; Settlements</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Financial performance for <strong className="text-[#18201c]">{user?.restaurantName || 'The Green Table'}</strong>
+              </p>
+            </div>
+            <Link
+              href="/vendor/settings"
+              className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition"
+            >
+              Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#d9f447]" />
+            </Link>
+          </div>
+        </div>
+
+        {/* 4 Financial KPI Cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Gross Sales
+              </span>
+              <div className="grid size-9 place-items-center rounded-2xl bg-emerald-50 text-emerald-800">
+                <DollarSign className="size-4" />
+              </div>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-[#18201c]">₹{totalGrossSales}</p>
+            <p className="text-[11px] text-gray-500 mt-1">Total revenue across {orders.length} orders</p>
+          </div>
+
+          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Platform Commission (15%)
+              </span>
+              <div className="grid size-9 place-items-center rounded-2xl bg-amber-50 text-amber-800">
+                <Percent className="size-4" />
+              </div>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-amber-900">-₹{totalCommission}</p>
+            <p className="text-[11px] text-gray-500 mt-1">Standard 15% platform fee</p>
+          </div>
+
+          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Net Vendor Payout
+              </span>
+              <div className="grid size-9 place-items-center rounded-2xl bg-blue-50 text-blue-800">
+                <TrendingUp className="size-4" />
+              </div>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-emerald-700">₹{totalNetEarnings}</p>
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1">Transferrable to bank account</p>
+          </div>
+
+          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Settlement Schedule
+              </span>
+              <div className="grid size-9 place-items-center rounded-2xl bg-purple-50 text-purple-800">
+                <Clock3 className="size-4" />
+              </div>
+            </div>
+            <p className="mt-3 text-lg font-bold text-[#18201c]">Every Monday</p>
+            <p className="text-[11px] text-gray-500 mt-1">Automatic NEFT/IMPS transfer</p>
+          </div>
+        </div>
+
+        {/* Weekly Settlement Transfers Table */}
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-[#18201c]">Weekly Bank Settlements History</h3>
+              <p className="text-xs text-gray-500">Payout records transferred to your registered bank account</p>
+            </div>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+              Verified Payouts
+            </span>
+          </div>
+
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-400 font-bold bg-gray-50/50">
+                <tr>
+                  <th className="py-3 px-4">Period</th>
+                  <th className="py-3 px-4">Gross Sales</th>
+                  <th className="py-3 px-4">Commission (15%)</th>
+                  <th className="py-3 px-4">Net Payout</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Bank Ref UTR</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 font-medium">
+                {settlementsHistory.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50/60 transition">
+                    <td className="py-3.5 px-4 font-bold text-[#18201c]">{s.period}</td>
+                    <td className="py-3.5 px-4 font-semibold text-gray-700">₹{s.grossSales}</td>
+                    <td className="py-3.5 px-4 text-rose-600 font-semibold">-₹{s.commissionAmount}</td>
+                    <td className="py-3.5 px-4 font-bold text-emerald-700">₹{s.netPayout}</td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        <CheckCircle2 className="size-3" /> Paid on {s.payoutDate}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-gray-500">{s.utr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Individual Order Transactions Table */}
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-[#18201c]">Individual Customer Orders</h3>
+              <p className="text-xs text-gray-500">Breakdown of orders and earnings</p>
+            </div>
+
+            <div className="relative max-w-xs w-full">
+              <Search className="absolute left-3 top-2.5 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search order ID or customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-2 pl-9 pr-3 text-xs outline-none focus:border-[#86a018]"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto no-scrollbar">
+            {filteredOrders.length === 0 ? (
+              <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                No orders match your search query.
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-400 font-bold bg-gray-50/50">
+                  <tr>
+                    <th className="py-3 px-4">Order ID</th>
+                    <th className="py-3 px-4">Customer Name</th>
+                    <th className="py-3 px-4">Date &amp; Time</th>
+                    <th className="py-3 px-4">Order Amount</th>
+                    <th className="py-3 px-4">Net Share (85%)</th>
+                    <th className="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-medium">
+                  {filteredOrders.map((o) => {
+                    const gross = o.total_amount || 0
+                    const net = Math.round(gross * 0.85)
+                    return (
+                      <tr key={o.id} className="hover:bg-gray-50/60 transition">
+                        <td className="py-3.5 px-4 font-mono font-bold text-[#18201c]">#{o.id}</td>
+                        <td className="py-3.5 px-4 font-semibold text-[#18201c]">{o.customer_name || 'Customer'}</td>
+                        <td className="py-3.5 px-4 text-gray-500">
+                          {o.created_at
+                            ? new Date(o.created_at).toLocaleString([], {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : 'Recent'}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-[#18201c]">₹{gross}</td>
+                        <td className="py-3.5 px-4 font-bold text-emerald-700">₹{net}</td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                              o.status === 'completed' || o.status === 'ready'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {o.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

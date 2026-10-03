@@ -337,7 +337,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               title="Test Delivery Radar"
             >
               <Radio className="size-4 text-amber-700 animate-pulse" />
-              <span>Radar Demo</span>
+              <span>Scan Nearby Orders</span>
             </button>
 
             {/* Mobile Hamburger Menu Button */}

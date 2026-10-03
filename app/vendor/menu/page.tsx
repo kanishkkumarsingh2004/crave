@@ -1,0 +1,611 @@
+'use client'
+
+import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  Edit,
+  Flame,
+  LogOut,
+  Minus,
+  PackageCheck,
+  Percent,
+  Plus,
+  Search,
+  Settings,
+  Sparkles,
+  Store,
+  Trash2,
+  Utensils,
+  X,
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { FormEvent, useEffect, useState } from 'react'
+
+interface MenuItemRecord {
+  id: string
+  restaurant_id: string
+  name: string
+  category: string
+  price: number
+  description: string
+  in_stock: boolean
+  image: string
+  veg?: boolean
+}
+
+const PRESET_IMAGES = [
+  { label: 'Harvest Bowl', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85' },
+  { label: 'Paneer Wrap', url: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85' },
+  { label: 'Asian Momos', url: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85' },
+  { label: 'Salad & Greens', url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=500&q=85' },
+  { label: 'Matcha Drink', url: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=500&q=85' },
+]
+
+const INITIAL_GREEN_TABLE_ITEMS: MenuItemRecord[] = [
+  {
+    id: 'menu_1',
+    restaurant_id: 'rest_1',
+    name: 'Avocado Quinoa Harvest Bowl',
+    category: 'Bowls',
+    price: 289,
+    description: 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & pine nuts',
+    in_stock: true,
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
+    veg: true,
+  },
+  {
+    id: 'menu_2',
+    restaurant_id: 'rest_1',
+    name: 'Smoky Paneer Tikka Wrap',
+    category: 'Wraps',
+    price: 249,
+    description: 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt',
+    in_stock: true,
+    image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85',
+    veg: true,
+  },
+  {
+    id: 'menu_3',
+    restaurant_id: 'rest_1',
+    name: 'Steamed Truffle Edamame Momos',
+    category: 'Starters',
+    price: 320,
+    description: 'Delicate dumplings stuffed with smashed edamame and black truffle oil',
+    in_stock: true,
+    image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85',
+    veg: true,
+  },
+]
+
+export default function VendorMenuPage() {
+  const { user, role, isLoading, logout } = useAuth()
+  const router = useRouter()
+
+  const [menuItems, setMenuItems] = useState<MenuItemRecord[]>(INITIAL_GREEN_TABLE_ITEMS)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [toastMsg, setToastMsg] = useState('')
+
+  // Modal State for Adding / Editing Dish
+  const [showItemModal, setShowItemModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<MenuItemRecord | null>(null)
+
+  // Form Fields
+  const [nameInput, setNameInput] = useState('')
+  const [categoryInput, setCategoryInput] = useState('Bowls')
+  const [priceInput, setPriceInput] = useState(249)
+  const [descInput, setDescInput] = useState('')
+  const [imageInput, setImageInput] = useState(PRESET_IMAGES[0].url)
+  const [isVegInput, setIsVegInput] = useState(true)
+  const [inStockInput, setInStockInput] = useState(true)
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!user) {
+      router.replace('/login')
+    } else if (role !== 'vendor') {
+      router.replace(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
+    }
+  }, [user, role, isLoading, router])
+
+  // Fetch Live Menu Items from Supabase
+  useEffect(() => {
+    async function loadLiveMenu() {
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('restaurant_id', 'rest_1')
+
+        if (!error && data && data.length > 0) {
+          const formatted: MenuItemRecord[] = data.map((item) => ({
+            id: item.id,
+            restaurant_id: item.restaurant_id || 'rest_1',
+            name: item.name,
+            category: item.category || 'Bowls',
+            price: Number(item.price),
+            description: item.description || '',
+            in_stock: item.in_stock !== false,
+            image: item.image || PRESET_IMAGES[0].url,
+            veg: true,
+          }))
+          setMenuItems(formatted)
+        }
+      } catch (err) {
+        console.error('Failed to fetch menu_items from Supabase:', err)
+      }
+    }
+    loadLiveMenu()
+  }, [])
+
+  function triggerToast(msg: string) {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(''), 3000)
+  }
+
+  function openAddModal() {
+    setEditingItem(null)
+    setNameInput('')
+    setCategoryInput('Bowls')
+    setPriceInput(249)
+    setDescInput('')
+    setImageInput(PRESET_IMAGES[0].url)
+    setIsVegInput(true)
+    setInStockInput(true)
+    setShowItemModal(true)
+  }
+
+  function openEditModal(item: MenuItemRecord) {
+    setEditingItem(item)
+    setNameInput(item.name)
+    setCategoryInput(item.category)
+    setPriceInput(item.price)
+    setDescInput(item.description)
+    setImageInput(item.image)
+    setIsVegInput(item.veg !== false)
+    setInStockInput(item.in_stock)
+    setShowItemModal(true)
+  }
+
+  async function handleSaveItem(e: FormEvent) {
+    e.preventDefault()
+    if (!nameInput.trim()) return
+
+    const newItemId = editingItem ? editingItem.id : `menu_${Date.now()}`
+    const itemData: MenuItemRecord = {
+      id: newItemId,
+      restaurant_id: 'rest_1',
+      name: nameInput.trim(),
+      category: categoryInput,
+      price: Number(priceInput),
+      description: descInput.trim(),
+      in_stock: inStockInput,
+      image: imageInput || PRESET_IMAGES[0].url,
+      veg: isVegInput,
+    }
+
+    try {
+      if (editingItem) {
+        await supabase
+          .from('menu_items')
+          .update({
+            name: itemData.name,
+            category: itemData.category,
+            price: itemData.price,
+            description: itemData.description,
+            in_stock: itemData.in_stock,
+            image: itemData.image,
+          })
+          .eq('id', editingItem.id)
+      } else {
+        await supabase.from('menu_items').insert([
+          {
+            id: newItemId,
+            restaurant_id: 'rest_1',
+            name: itemData.name,
+            category: itemData.category,
+            price: itemData.price,
+            description: itemData.description,
+            in_stock: itemData.in_stock,
+            image: itemData.image,
+          },
+        ])
+      }
+    } catch (err) {
+      console.error('Failed to save menu item to Supabase:', err)
+    }
+
+    if (editingItem) {
+      setMenuItems((prev) => prev.map((i) => (i.id === editingItem.id ? itemData : i)))
+      triggerToast(`Updated dish '${itemData.name}'!`)
+    } else {
+      setMenuItems((prev) => [itemData, ...prev])
+      triggerToast(`Added new dish '${itemData.name}' to live menu!`)
+    }
+
+    setShowItemModal(false)
+  }
+
+  async function handleToggleStock(id: string, currentStock: boolean) {
+    const nextStock = !currentStock
+    try {
+      await supabase.from('menu_items').update({ in_stock: nextStock }).eq('id', id)
+    } catch (err) {}
+
+    setMenuItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i))
+    )
+    triggerToast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`)
+  }
+
+  async function handleDeleteItem(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete '${name}' from your menu?`)) return
+
+    try {
+      await supabase.from('menu_items').delete().eq('id', id)
+    } catch (err) {}
+
+    setMenuItems((prev) => prev.filter((i) => i.id !== id))
+    triggerToast(`Deleted '${name}' from menu.`)
+  }
+
+  const categories = ['All', 'Bowls', 'Wraps', 'Starters', 'Beverages', 'Desserts']
+
+  const filteredItems = menuItems.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCat = selectedCategory === 'All' || item.category === selectedCategory
+    return matchesSearch && matchesCat
+  })
+
+  if (isLoading || !user || role !== 'vendor') {
+    return (
+      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
+        <div className="size-8 border-4 border-[#86a018] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in duration-300">
+          <Sparkles className="size-4 text-[#d9f447]" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Top Vendor Header Navigation Bar */}
+      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
+            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+              crave<span className="text-[#86a018]">.</span>
+            </Link>
+            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
+              VENDOR
+            </span>
+
+            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
+              <Store className="size-4 text-[#86a018] shrink-0" />
+              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+            <Link
+              href="/vendor/dashboard"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Kitchen Orders</span>
+            </Link>
+            <button
+              onClick={() => router.push('/vendor/menu')}
+              className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
+            >
+              Menu Management
+            </button>
+            <Link
+              href="/vendor/sales"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50"
+            >
+              Sales &amp; Earnings
+            </Link>
+            <Link
+              href="/vendor/coupons"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <Percent className="size-3.5 text-purple-600" />
+              <span>Store Offers</span>
+            </Link>
+            <Link
+              href="/vendor/settings"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <Settings className="size-3.5 text-gray-600" />
+              <span>Bank &amp; Settings</span>
+            </Link>
+            <button
+              onClick={() => logout()}
+              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
+              title="Sign Out"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
+        {/* Menu Catalog Hero */}
+        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                Restaurant Menu Management
+              </span>
+              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+                {user?.restaurantName || 'The Green Table'} Dish Catalog
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Add, edit, set pricing, or toggle live dish availability for customer orders.
+              </p>
+            </div>
+
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition"
+            >
+              <Plus className="size-4 text-[#d9f447]" /> Add New Dish
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Chips & Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border ${
+                  selectedCategory === cat
+                    ? 'bg-[#18201c] text-white border-[#18201c]'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative max-w-xs w-full">
+            <Search className="absolute left-3.5 top-2.5 size-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search dishes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-4 text-xs font-medium outline-none focus:border-[#86a018] shadow-xs"
+            />
+          </div>
+        </div>
+
+        {/* Menu Items Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredItems.map((item) => (
+            <div
+              key={item.id}
+              className={`rounded-3xl border p-4 bg-white shadow-xs flex flex-col justify-between transition ${
+                item.in_stock ? 'border-gray-200' : 'border-rose-200 bg-rose-50/20'
+              }`}
+            >
+              <div>
+                <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-75' : ''}`}
+                  />
+                  <span className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-[#18201c] backdrop-blur-md shadow-xs">
+                    {item.category}
+                  </span>
+                  {!item.in_stock && (
+                    <span className="absolute inset-0 grid place-items-center bg-black/60 text-white text-xs font-extrabold uppercase tracking-wider backdrop-blur-xs">
+                      Out of Stock
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-base text-[#18201c] leading-snug">{item.name}</h3>
+                  <span className="font-bold text-base text-[#18201c] shrink-0">₹{item.price}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => handleToggleStock(item.id, item.in_stock)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition border ${
+                    item.in_stock
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                  }`}
+                >
+                  {item.in_stock ? 'In Stock' : 'Out of Stock'}
+                </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEditModal(item)}
+                    className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                    title="Edit Dish"
+                  >
+                    <Edit className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItem(item.id, item.name)}
+                    className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                    title="Delete Dish"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {filteredItems.length === 0 && (
+            <div className="col-span-full rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center text-gray-500">
+              <Utensils className="mx-auto size-12 text-gray-300 mb-2" />
+              <p className="font-bold text-base text-[#18201c]">No Dishes Found</p>
+              <p className="text-xs mt-1">Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add / Edit Dish Modal */}
+      {showItemModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
+                  {editingItem ? 'Edit Dish Details' : 'Create New Menu Item'}
+                </span>
+                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                  {editingItem ? editingItem.name : 'Add Dish to Menu'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowItemModal(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveItem} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Dish Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Avocado Quinoa Harvest Bowl"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-[#18201c]">Category</label>
+                  <select
+                    value={categoryInput}
+                    onChange={(e) => setCategoryInput(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018] bg-white"
+                  >
+                    <option value="Bowls">Bowls</option>
+                    <option value="Wraps">Wraps</option>
+                    <option value="Starters">Starters</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Desserts">Desserts</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Price (₹)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={priceInput}
+                    onChange={(e) => setPriceInput(Number(e.target.value))}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Description / Ingredients</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Organic quinoa topped with wild basil pesto & roasted cherry tomatoes"
+                  value={descInput}
+                  onChange={(e) => setDescInput(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Dish Image URL</label>
+                <input
+                  type="text"
+                  required
+                  value={imageInput}
+                  onChange={(e) => setImageInput(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono text-[11px] outline-none focus:border-[#86a018]"
+                />
+                <div className="mt-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                  <span className="text-[10px] text-gray-500 font-bold shrink-0">Presets:</span>
+                  {PRESET_IMAGES.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setImageInput(p.url)}
+                      className="rounded-lg bg-gray-100 px-2 py-1 text-[10px] font-semibold hover:bg-gray-200 transition shrink-0"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl bg-gray-50 p-4 border border-gray-200">
+                <span className="font-bold text-[#18201c]">In-Stock Availability</span>
+                <button
+                  type="button"
+                  onClick={() => setInStockInput(!inStockInput)}
+                  className={`px-4 py-1.5 rounded-full font-bold transition ${
+                    inStockInput ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                  }`}
+                >
+                  {inStockInput ? 'In Stock' : 'Out of Stock'}
+                </button>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowItemModal(false)}
+                  className="rounded-full border border-gray-300 px-5 py-2.5 font-bold text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#18201c] px-7 py-2.5 font-bold text-white shadow-md hover:bg-[#323d36] transition"
+                >
+                  {editingItem ? 'Save Dish Changes' : 'Add Dish to Menu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

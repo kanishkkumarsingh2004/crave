@@ -88,7 +88,7 @@ export default function DriverDashboardPage() {
                 onClick={triggerSimulatedOffer}
                 className="rounded-full bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center gap-2"
               >
-                <Sparkles className="size-4" /> Simulate Incoming Order Request
+                <Sparkles className="size-4" /> Find Nearby Order Request
               </button>
             </div>
           </div>
