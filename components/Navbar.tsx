@@ -207,7 +207,7 @@ export default function Navbar() {
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
                         >
                           <Zap className="size-4 text-emerald-600 fill-emerald-600" />
-                          craveXP Instamart (10 Min)
+                          craveXP. Instamart (10 Min)
                         </Link>
                         <Link
                           href="/vendor/crave-ep"
@@ -215,7 +215,7 @@ export default function Navbar() {
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] bg-[#f0f3eb] hover:bg-[#e2e7dc]"
                         >
                           <Store className="size-4 text-[#7d9518]" />
-                          craveXP Store Console
+                          craveXP. Console
                         </Link>
                         <Link
                           href="/user/orders"
@@ -258,7 +258,7 @@ export default function Navbar() {
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
                         >
                           <Store className="size-4 text-emerald-600" />
-                          craveXP Store Console
+                          craveXP. Console
                         </Link>
                       </>
                     )}

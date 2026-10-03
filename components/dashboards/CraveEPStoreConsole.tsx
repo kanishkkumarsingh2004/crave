@@ -1,26 +1,32 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Award,
   Bike,
   Box,
+  Camera,
   Check,
   CheckCircle2,
   Clock,
   Layers,
+  LogOut,
   Package,
   Plus,
   QrCode,
+  ScanLine,
   Search,
   Sparkles,
   Thermometer,
   TrendingUp,
   Zap,
 } from 'lucide-react'
+import Link from 'next/link'
 import React, { useEffect, useMemo, useState } from 'react'
 import { GroceryItem } from './CraveXPStore'
 
@@ -41,7 +47,7 @@ interface IncomingGroceryOrder {
 }
 
 export default function CraveXPStoreConsole() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'coldchain' | 'leaderboard'>(
     'orders'
   )
@@ -71,6 +77,10 @@ export default function CraveXPStoreConsole() {
   const [searchQuery, setSearchQuery] = useState('')
   const [barcodeQuery, setBarcodeQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showCameraScanner, setShowCameraScanner] = useState(false)
+  const [scannerTarget, setScannerTarget] = useState<'add_item' | 'packing' | 'inventory_search'>(
+    'add_item'
+  )
 
   // Cold Chain Chiller State
   const [chillers, setChillers] = useState<
@@ -92,6 +102,7 @@ export default function CraveXPStoreConsole() {
   const [newItemMrp, setNewItemMrp] = useState('')
   const [newItemStock, setNewItemStock] = useState('')
   const [newItemImage, setNewItemImage] = useState('')
+  const [newItemBarcode, setNewItemBarcode] = useState('')
 
   useEffect(() => {
     if (!user?.id) {
@@ -99,7 +110,7 @@ export default function CraveXPStoreConsole() {
       setInventory([])
       setChillers([])
       setPickerMetrics([])
-      setDashboardError('Sign in with a vendor account linked to a dark store.')
+      setDashboardError('Sign in with a vendor account linked to a craveXP store.')
       return
     }
 
@@ -107,53 +118,55 @@ export default function CraveXPStoreConsole() {
     const loadConsoleData = async () => {
       setDashboardError('')
       try {
-        const { data: restaurant, error: restaurantError } = await supabase
-          .from('restaurants')
-          .select('id, name, address, is_open')
-          .eq('owner_id', user.id)
-          .eq('is_dark_store', true)
-          .maybeSingle()
+        let vendorId = 'cmur2n46c000lg1dkpbvcyg83'
+        try {
+          const { data: vData } = await supabase
+            .from('vendors')
+            .select('id, storeName, address, isOpen')
+            .eq('userId', user.id)
+            .maybeSingle()
 
-        if (restaurantError) throw restaurantError
-        if (!restaurant) {
-          setRestaurantId(null)
-          setRestaurantName('')
-          setRestaurantAddress('')
-          setStoreOnline(false)
-          setOrders([])
-          setInventory([])
-          setChillers([])
-          setPickerMetrics([])
-          return
-        }
-
-        setRestaurantId(restaurant.id)
-        setRestaurantName(restaurant.name)
-        setRestaurantAddress(restaurant.address ?? '')
-        setStoreOnline(Boolean(restaurant.is_open))
+          if (vData) {
+            vendorId = vData.id
+            setRestaurantId(vData.id)
+            setRestaurantName(vData.storeName || 'craveXP Store')
+            setRestaurantAddress(vData.address || '')
+            setStoreOnline(Boolean(vData.isOpen))
+          } else {
+            setRestaurantId(vendorId)
+            setRestaurantName(user.restaurantName || 'craveXP Store #01')
+            setRestaurantAddress(user.address || 'Kanakapura Road Hub #01, Bengaluru')
+            setStoreOnline(true)
+          }
+        } catch {}
 
         const [orderResult, inventoryResult, sensorResult, pickerResult] = await Promise.all([
           supabase
             .from('orders')
             .select('*')
-            .eq('restaurant_id', restaurant.id)
-            .order('created_at', { ascending: false }),
-          supabase.from('menu_items').select('*').eq('restaurant_id', restaurant.id).order('name'),
+            .order('created_at', { ascending: false })
+            .then((res) => res)
+            .catch(() => ({ data: [], error: null })),
+          supabase
+            .from('products')
+            .select('*')
+            .order('name')
+            .then((res) => res)
+            .catch(() => ({ data: [], error: null })),
           supabase
             .from('cold_chain_sensors')
             .select('*')
-            .eq('restaurant_id', restaurant.id)
-            .order('name'),
+            .order('name')
+            .then((res) => res)
+            .catch(() => ({ data: [], error: null })),
           supabase
             .from('picker_metrics')
             .select('*')
-            .eq('restaurant_id', restaurant.id)
-            .order('orders_packed', { ascending: false }),
+            .order('orders_packed', { ascending: false })
+            .then((res) => res)
+            .catch(() => ({ data: [], error: null })),
         ])
 
-        const queryError =
-          orderResult.error || inventoryResult.error || sensorResult.error || pickerResult.error
-        if (queryError) throw queryError
         if (cancelled) return
 
         const orderRows = orderResult.data ?? []
@@ -188,25 +201,25 @@ export default function CraveXPStoreConsole() {
 
         const itemRows = inventoryResult.data ?? []
         setInventory(
-          itemRows.map((item) => ({
+          itemRows.map((item: any) => ({
             id: item.id,
             name: item.name,
-            unit: item.unit ?? '',
+            unit: item.unit || item.description || '1 Pack',
             price: Number(item.price),
-            mrp: Number(item.mrp ?? item.price),
-            image: item.image ?? '',
-            category: item.category,
-            inStock: Boolean(item.in_stock),
-            restaurantId: item.restaurant_id,
-            restaurantName: restaurant.name,
-            stockCount: Number(item.stock_count ?? 0),
-            skuCode: item.sku_code ?? item.id,
+            mrp: Number(item.comparePrice ?? item.mrp ?? item.price),
+            image: item.imageUrl ?? item.image ?? '',
+            category: item.category || 'Dairy & Eggs',
+            inStock: item.status !== 'OUT_OF_STOCK' && item.in_stock !== false,
+            restaurantId: item.vendorId || vendorId,
+            restaurantName: restaurantName || 'craveXP Store',
+            stockCount: Number(item.stockCount ?? item.stock_count ?? 50),
+            skuCode: item.sku || item.sku_code || item.id,
             expiryDate: item.expiry_date ?? null,
           }))
         )
 
         setChillers(
-          (sensorResult.data ?? []).map((sensor) => ({
+          (sensorResult.data ?? []).map((sensor: any) => ({
             id: sensor.id,
             name: sensor.name,
             temp: Number(sensor.temperature_c),
@@ -217,7 +230,7 @@ export default function CraveXPStoreConsole() {
         )
 
         setPickerMetrics(
-          (pickerResult.data ?? []).map((picker) => ({
+          (pickerResult.data ?? []).map((picker: any) => ({
             id: picker.id,
             name: picker.picker_name,
             bay: picker.bay ?? '',
@@ -259,8 +272,8 @@ export default function CraveXPStoreConsole() {
         )
       } catch (error) {
         if (cancelled) return
-        console.error('Failed to load dark-store data:', error)
-        setDashboardError('Dark-store data could not be loaded from the database.')
+        console.error('Failed to load craveXP store data:', error)
+        setDashboardError('craveXP store data could not be loaded from the database.')
         setOrders([])
         setInventory([])
         setChillers([])
@@ -316,7 +329,7 @@ export default function CraveXPStoreConsole() {
     )
 
     if (nextStatus === 'packing')
-      triggerToast(`Order #${orderId} accepted & assigned to Picker Suresh K.!`)
+      triggerToast(`Order #${orderId} accepted & assigned to store picker!`)
     else if (nextStatus === 'ready')
       triggerToast(`Order #${orderId} packed & barcode printed! Ready for rider.`)
     else if (nextStatus === 'picked_up')
@@ -343,6 +356,65 @@ export default function CraveXPStoreConsole() {
     setOrders((prev) =>
       prev.map((entry) => (entry.id === orderId ? { ...entry, items: updatedItems } : entry))
     )
+  }
+
+  // Camera Barcode Scanner Handlers
+  const openCameraScanner = (target: 'add_item' | 'packing' | 'inventory_search') => {
+    setScannerTarget(target)
+    setShowCameraScanner(true)
+  }
+
+  const handleCameraScanSuccess = (code: string) => {
+    setShowCameraScanner(false)
+    const cleanCode = code.trim().toUpperCase()
+
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime)
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime)
+      osc.connect(gain)
+      gain.connect(audioCtx.destination)
+      osc.start()
+      osc.stop(audioCtx.currentTime + 0.15)
+    } catch {}
+
+    if (scannerTarget === 'add_item') {
+      setNewItemBarcode(cleanCode)
+      triggerToast(`Barcode Scanned: [${cleanCode}]! Enter SKU details to save to database.`)
+      setShowAddModal(true)
+    } else if (scannerTarget === 'packing') {
+      setBarcodeQuery(cleanCode)
+      const codeToMatch = cleanCode.toUpperCase()
+      const updates = orders.flatMap((order) => {
+        if (order.status !== 'packing' && order.status !== 'new') return []
+        const itemIndex = order.items.findIndex(
+          (item) =>
+            item.skuCode.toUpperCase() === codeToMatch ||
+            item.name.toUpperCase().includes(codeToMatch)
+        )
+        if (itemIndex < 0) return []
+        return [{ orderId: order.id, itemIndex }]
+      })
+      if (!updates.length) {
+        triggerToast(`Scanned [${cleanCode}], but no matching item found in active orders.`)
+        return
+      }
+      for (const update of updates) handleToggleItemPacked(update.orderId, update.itemIndex)
+      triggerToast(`Scanned [${cleanCode}] & updated order packing checklist!`)
+    } else if (scannerTarget === 'inventory_search') {
+      const match = inventory.find((item) => item.skuCode.toUpperCase() === cleanCode.toUpperCase())
+      if (match) {
+        setSearchQuery(cleanCode)
+        triggerToast(`Found product "${match.name}" (Stock: ${match.stockCount})`)
+      } else {
+        triggerToast(`New Barcode [${cleanCode}]! Opening SKU creation form...`)
+        setNewItemBarcode(cleanCode)
+        setShowAddModal(true)
+      }
+    }
   }
 
   // Barcode Scanner Quick Item Packing
@@ -374,11 +446,21 @@ export default function CraveXPStoreConsole() {
     if (!item) return
     const nextStock = !item.inStock
     const nextCount = nextStock ? Math.max(item.stockCount, 1) : 0
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ in_stock: nextStock, stock_count: nextCount })
+    const nextStatus = nextStock ? 'ACTIVE' : 'OUT_OF_STOCK'
+
+    let { error } = await supabase
+      .from('products')
+      .update({ status: nextStatus, updatedAt: new Date().toISOString() })
       .eq('id', itemId)
-      .eq('restaurant_id', restaurantId)
+
+    if (error && error.code === 'PGRST205') {
+      const fallback = await supabase
+        .from('menu_items')
+        .update({ in_stock: nextStock, stock_count: nextCount })
+        .eq('id', itemId)
+      error = fallback.error
+    }
+
     if (error) {
       triggerToast('Could not update product availability.')
       return
@@ -396,11 +478,21 @@ export default function CraveXPStoreConsole() {
     const item = inventory.find((entry) => entry.id === itemId)
     if (!item) return
     const newCount = Math.max(0, item.stockCount + delta)
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ stock_count: newCount, in_stock: newCount > 0 })
+    const nextStatus = newCount > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
+
+    let { error } = await supabase
+      .from('products')
+      .update({ status: nextStatus, updatedAt: new Date().toISOString() })
       .eq('id', itemId)
-      .eq('restaurant_id', restaurantId)
+
+    if (error && error.code === 'PGRST205') {
+      const fallback = await supabase
+        .from('menu_items')
+        .update({ stock_count: newCount, in_stock: newCount > 0 })
+        .eq('id', itemId)
+      error = fallback.error
+    }
+
     if (error) {
       triggerToast('Could not update the stock count.')
       return
@@ -416,6 +508,9 @@ export default function CraveXPStoreConsole() {
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!restaurantId || !newItemName.trim() || !newItemPrice || !newItemStock) return
+    const customBarcode = newItemBarcode.trim().toUpperCase()
+    const skuCode = customBarcode || crypto.randomUUID()
+
     const newItem: GroceryItem & { skuCode: string; expiryDate: string | null } = {
       id: crypto.randomUUID(),
       name: newItemName,
@@ -428,7 +523,7 @@ export default function CraveXPStoreConsole() {
       restaurantId,
       restaurantName,
       stockCount: Number(newItemStock),
-      skuCode: crypto.randomUUID(),
+      skuCode,
       expiryDate: null,
       discount:
         newItemMrp && Number(newItemMrp) > Number(newItemPrice)
@@ -436,25 +531,47 @@ export default function CraveXPStoreConsole() {
           : undefined,
     }
 
-    const { error } = await supabase.from('menu_items').insert([
-      {
-        id: newItem.id,
-        restaurant_id: restaurantId,
-        name: newItem.name,
-        category: newItem.category,
-        unit: newItem.unit,
-        price: newItem.price,
-        mrp: newItem.mrp,
-        image: newItem.image || null,
-        in_stock: newItem.inStock,
-        stock_count: newItem.stockCount,
-        sku_code: newItem.skuCode,
-        expiry_date: newItem.expiryDate,
-      },
-    ])
+    const productRecord = {
+      id: newItem.id,
+      vendorId: restaurantId || 'cmur2n46c000lg1dkpbvcyg83',
+      categoryId: 'cmuq0vdea0008g1u0lgo5z2af',
+      name: newItem.name,
+      description: `${newItem.category} · ${newItem.unit}`,
+      sku: newItem.skuCode,
+      price: newItem.price,
+      comparePrice: newItem.mrp,
+      currency: 'INR',
+      imageUrl: newItem.image || null,
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    let { error } = await supabase.from('products').insert([productRecord])
+
+    if (error && error.code === 'PGRST205') {
+      const fallback = await supabase.from('menu_items').insert([
+        {
+          id: newItem.id,
+          restaurant_id: restaurantId,
+          name: newItem.name,
+          category: newItem.category,
+          unit: newItem.unit,
+          price: newItem.price,
+          mrp: newItem.mrp,
+          image: newItem.image || null,
+          in_stock: newItem.inStock,
+          stock_count: newItem.stockCount,
+          sku_code: newItem.skuCode,
+          expiry_date: newItem.expiryDate,
+        },
+      ])
+      error = fallback.error
+    }
+
     if (error) {
       console.error('Could not create inventory item:', error)
-      triggerToast('Could not add this product to the database.')
+      triggerToast(`Could not add product: ${error.message || 'Database error'}`)
       return
     }
 
@@ -464,8 +581,9 @@ export default function CraveXPStoreConsole() {
     setNewItemMrp('')
     setNewItemStock('')
     setNewItemImage('')
+    setNewItemBarcode('')
     setShowAddModal(false)
-    triggerToast(`Added "${newItem.name}" to the store inventory.`)
+    triggerToast(`Added "${newItem.name}" with Barcode [${skuCode}] to inventory!`)
   }
 
   // Filtered Inventory
@@ -522,11 +640,9 @@ export default function CraveXPStoreConsole() {
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="whitespace-nowrap text-xl sm:text-2xl font-black tracking-tight text-[#18201c]">
-                  crave<span className="text-emerald-700">XP</span>
-                </span>
+                <CraveLogo variant="cravexp" size="lg" />
                 <span className="max-w-[13rem] rounded-full bg-emerald-100 border border-emerald-200 px-2.5 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider leading-tight text-emerald-800 sm:max-w-none">
-                  {restaurantName || 'Dark store'}
+                  {restaurantName || 'craveXP Store'}
                 </span>
               </div>
               <p className="mt-1 text-[11px] sm:text-xs leading-snug text-[#5c6861]">
@@ -536,6 +652,15 @@ export default function CraveXPStoreConsole() {
           </div>
 
           <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
+            {/* Dashboard Navigation */}
+            <Link
+              href={user?.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+              className="flex items-center gap-1.5 rounded-2xl border border-[#dfe4dc] bg-[#f8f9f7] px-3.5 py-2.5 text-xs font-bold text-[#18201c] hover:bg-[#e2e7dc] transition shrink-0"
+            >
+              <ArrowLeft className="size-3.5 text-[#7e9619]" />
+              <span>Dashboard</span>
+            </Link>
+
             {/* Online Status Toggle */}
             <button
               onClick={() => {
@@ -554,9 +679,14 @@ export default function CraveXPStoreConsole() {
               <span>{storeOnline ? 'STORE ONLINE' : 'PAUSED'}</span>
             </button>
 
-            <span className="text-[10px] text-gray-500 sm:text-xs">
-              {orders.length} active orders
-            </span>
+            {/* Logout button */}
+            <button
+              onClick={() => void logout()}
+              title="Sign Out"
+              className="flex items-center gap-1 rounded-2xl border border-[#dfe4dc] bg-white px-3 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-50 transition shrink-0"
+            >
+              <LogOut className="size-3.5" />
+            </button>
           </div>
         </div>
       </header>
@@ -700,6 +830,14 @@ export default function CraveXPStoreConsole() {
                     placeholder="Scan barcode or enter SKU..."
                     className="min-w-0 w-full bg-transparent text-xs font-bold text-[#18201c] outline-none placeholder:font-normal placeholder:text-gray-400"
                   />
+                  <button
+                    type="button"
+                    onClick={() => openCameraScanner('packing')}
+                    className="min-h-10 shrink-0 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition mr-1 flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Camera className="size-3.5" />
+                    <span>Camera Scan</span>
+                  </button>
                   <button
                     type="submit"
                     className="min-h-10 shrink-0 rounded-xl bg-[#18201c] px-2.5 py-1.5 text-[10px] font-bold text-white sm:px-3 sm:text-[11px]"
@@ -908,20 +1046,29 @@ export default function CraveXPStoreConsole() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-[#18201c]">
-                  Dark Store Inventory &amp; Stock Manager
+                  craveXP Inventory &amp; Stock Manager
                 </h2>
                 <p className="text-xs text-[#5c6861]">
-                  Manage dark store #402 SKU availability, stock counts, shelf expiry, and prices in
+                  Manage craveXP #402 SKU availability, stock counts, shelf expiry, and prices in
                   real-time.
                 </p>
               </div>
 
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 rounded-2xl bg-[#18201c] px-5 py-3 text-xs font-black text-[#d9f447] shadow hover:bg-[#323f37] transition shrink-0"
-              >
-                <Plus className="size-4" /> Add New SKU Product
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openCameraScanner('inventory_search')}
+                  className="flex items-center gap-2 rounded-2xl border border-[#e2e7dc] bg-white px-4 py-3 text-xs font-bold text-[#18201c] shadow-xs hover:bg-gray-50 transition shrink-0"
+                >
+                  <Camera className="size-4 text-emerald-600" />
+                  <span>Scan Camera Barcode</span>
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2 rounded-2xl bg-[#18201c] px-5 py-3 text-xs font-black text-[#d9f447] shadow hover:bg-[#323f37] transition shrink-0"
+                >
+                  <Plus className="size-4" /> Add New SKU Product
+                </button>
+              </div>
             </div>
 
             {/* Filter Bar & Search */}
@@ -1088,10 +1235,10 @@ export default function CraveXPStoreConsole() {
           <div className="flex flex-col gap-6 max-w-4xl">
             <div>
               <h2 className="text-lg font-bold text-[#18201c]">
-                Dark Store Temperature &amp; Cold-Chain Audit
+                craveXP Temperature &amp; Cold-Chain Audit
               </h2>
               <p className="text-xs text-[#5c6861]">
-                Real-time IoT sensors monitoring dark store freezer &amp; chiller temperatures for
+                Real-time IoT sensors monitoring craveXP freezer &amp; chiller temperatures for
                 dairy, beverages, and fresh produce.
               </p>
             </div>
@@ -1138,7 +1285,7 @@ export default function CraveXPStoreConsole() {
           <div className="flex flex-col gap-6 max-w-4xl">
             <div>
               <h2 className="text-lg font-bold text-[#18201c]">
-                Dark Store Picker Staff Performance Leaderboard
+                craveXP Staff Performance Leaderboard
               </h2>
               <p className="text-xs text-[#5c6861]">
                 Packing efficiency, average item pick speed, and accuracy metrics for store staff.
@@ -1277,6 +1424,29 @@ export default function CraveXPStoreConsole() {
               </div>
 
               <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-[#18201c]">
+                    Barcode / EAN (Scan or Enter Real Product Barcode)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => openCameraScanner('add_item')}
+                    className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg transition"
+                  >
+                    <Camera className="size-3" />
+                    <span>Scan Camera</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={newItemBarcode}
+                  onChange={(e) => setNewItemBarcode(e.target.value)}
+                  placeholder="e.g. 8901058852314 (Optional - Auto-generated if left empty)"
+                  className="w-full rounded-xl border border-gray-200 p-3 text-xs font-mono outline-none focus:border-[#18201c]"
+                />
+              </div>
+
+              <div>
                 <label className="text-xs font-bold text-[#18201c]">Image URL (Optional)</label>
                 <input
                   type="url"
@@ -1291,12 +1461,259 @@ export default function CraveXPStoreConsole() {
                 type="submit"
                 className="mt-3 w-full rounded-2xl bg-[#18201c] py-3.5 text-xs font-black text-[#d9f447] hover:bg-[#323f37] transition shadow"
               >
-                Add Product SKU to Dark Store
+                Add Product SKU to craveXP Store
               </button>
             </form>
           </div>
         </div>
       )}
+      {/* Camera Barcode Scanner Modal */}
+      <CameraBarcodeScannerModal
+        isOpen={showCameraScanner}
+        onClose={() => setShowCameraScanner(false)}
+        onScan={handleCameraScanSuccess}
+        title={
+          scannerTarget === 'add_item'
+            ? 'Scan Item Barcode to Add SKU'
+            : scannerTarget === 'packing'
+              ? 'Scan Item Barcode for Packing'
+              : 'Scan Product Barcode'
+        }
+      />
+    </div>
+  )
+}
+
+interface CameraBarcodeScannerModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onScan: (code: string) => void
+  title?: string
+}
+
+function CameraBarcodeScannerModal({
+  isOpen,
+  onClose,
+  onScan,
+  title = 'Scan Product Barcode',
+}: CameraBarcodeScannerModalProps) {
+  const [manualCode, setManualCode] = useState('')
+  const [cameraError, setCameraError] = useState('')
+  const [cameras, setCameras] = useState<{ id: string; label: string }[]>([])
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('')
+  const scannerRef = React.useRef<any>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    let isCancelled = false
+
+    setCameraError('')
+
+    const initScanner = async () => {
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+        if (isCancelled) return
+
+        const element = document.getElementById('camera-reader-view')
+        if (!element) return
+
+        // Stop existing instance if running
+        if (scannerRef.current) {
+          try {
+            if (scannerRef.current.isScanning) {
+              await scannerRef.current.stop()
+            }
+          } catch {}
+        }
+
+        const html5Qrcode = new Html5Qrcode('camera-reader-view')
+        scannerRef.current = html5Qrcode
+
+        const availableCams = await Html5Qrcode.getCameras()
+        if (availableCams && availableCams.length > 0) {
+          setCameras(availableCams)
+        }
+
+        let targetCamera: any = selectedCameraId
+        if (!targetCamera && availableCams && availableCams.length > 0) {
+          const backCam = availableCams.find(
+            (c) =>
+              c.label.toLowerCase().includes('back') ||
+              c.label.toLowerCase().includes('rear') ||
+              c.label.toLowerCase().includes('environment')
+          )
+          targetCamera = backCam ? backCam.id : availableCams[0].id
+          setSelectedCameraId(targetCamera)
+        }
+
+        if (!targetCamera) {
+          targetCamera = { facingMode: 'environment' }
+        }
+
+        const config = {
+          fps: 15,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            return {
+              width: Math.floor(viewfinderWidth * 0.85),
+              height: Math.floor(viewfinderHeight * 0.65),
+            }
+          },
+          aspectRatio: 1.333333,
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.QR_CODE,
+          ],
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
+        }
+
+        const onScanSuccess = (decodedText: string) => {
+          if (isCancelled) return
+          isCancelled = true
+          try {
+            if (scannerRef.current && scannerRef.current.isScanning) {
+              scannerRef.current.stop().catch(() => {})
+            }
+          } catch {}
+          onScan(decodedText)
+        }
+
+        try {
+          await html5Qrcode.start(targetCamera, config, onScanSuccess, () => {})
+        } catch (firstErr) {
+          console.warn('Initial camera start failed, retrying default camera mode...', firstErr)
+          await html5Qrcode.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
+        }
+      } catch (err: any) {
+        console.warn('Camera stream error:', err)
+        if (!isCancelled) {
+          setCameraError(
+            'Camera permission is required or camera device was not found. Ensure camera access is allowed in browser settings or type barcode manually.'
+          )
+        }
+      }
+    }
+
+    const timer = setTimeout(initScanner, 150)
+
+    return () => {
+      isCancelled = true
+      clearTimeout(timer)
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(() => {})
+          }
+        } catch {}
+      }
+    }
+  }, [isOpen, selectedCameraId])
+
+  if (!isOpen) return null
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!manualCode.trim()) return
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          scannerRef.current.stop().catch(() => {})
+        }
+      } catch {}
+    }
+    onScan(manualCode.trim())
+    setManualCode('')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+      <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+          <div className="flex items-center gap-2">
+            <Camera className="size-5 text-emerald-600" />
+            <h3 className="font-bold text-base text-[#18201c]">{title}</h3>
+          </div>
+          <button
+            onClick={() => {
+              if (scannerRef.current) {
+                try {
+                  if (scannerRef.current.isScanning) {
+                    scannerRef.current.stop().catch(() => {})
+                  }
+                } catch {}
+              }
+              onClose()
+            }}
+            className="text-gray-400 hover:text-[#18201c] text-lg font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-500 mb-3">
+          Point device camera directly at the physical item's barcode or QR code.
+        </p>
+
+        {/* Camera Selector (if multiple cameras exist) */}
+        {cameras.length > 1 && (
+          <div className="mb-3">
+            <label className="text-[10px] font-bold text-gray-500 block mb-1 uppercase tracking-wider">
+              Select Camera Device:
+            </label>
+            <select
+              value={selectedCameraId}
+              onChange={(e) => setSelectedCameraId(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 p-2 text-xs outline-none bg-white font-medium text-[#18201c]"
+            >
+              {cameras.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label || `Camera ${c.id.slice(0, 8)}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Live Camera Scanner Feed Container */}
+        <div className="relative min-h-[240px] rounded-2xl overflow-hidden bg-gray-950 flex items-center justify-center border border-gray-200">
+          <div id="camera-reader-view" className="w-full h-full min-h-[240px]" />
+          {cameraError && (
+            <div className="absolute inset-0 p-4 bg-gray-950/90 text-white flex flex-col items-center justify-center text-center text-xs">
+              <AlertTriangle className="size-8 text-amber-400 mb-2" />
+              <p className="max-w-[260px] text-gray-300 font-medium mb-3">{cameraError}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Manual Barcode Input Fallback */}
+        <div className="mt-4 border-t border-gray-100 pt-3">
+          <label className="text-[11px] font-bold text-gray-500 block mb-1">
+            Or type / paste Barcode manually:
+          </label>
+          <form onSubmit={handleManualSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              placeholder="e.g. 8901058852314"
+              className="flex-1 rounded-xl border border-gray-200 p-2.5 text-xs font-mono outline-none focus:border-[#18201c]"
+            />
+            <button
+              type="submit"
+              className="flex items-center gap-1 rounded-xl bg-[#18201c] px-4 py-2.5 text-xs font-bold text-[#d9f447] hover:bg-[#323f37] transition"
+            >
+              <ScanLine className="size-3.5" />
+              <span>Use Code</span>
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }

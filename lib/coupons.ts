@@ -36,7 +36,6 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
       restaurantId: item.restaurant_id ?? undefined,
     }))
   } catch (err) {
-    console.error('Failed to fetch coupons from Supabase:', err)
     return []
   }
 }

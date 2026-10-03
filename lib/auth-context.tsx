@@ -80,14 +80,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
       })
-      const result = await response.json()
+      const text = await response.text()
+      let result: any = {}
+      try {
+        result = text ? JSON.parse(text) : {}
+      } catch {
+        result = {}
+      }
+
       if (response.ok && result.success && result.user) {
         if (result.session) {
           const { error } = await supabase.auth.setSession({
             access_token: result.session.access_token,
             refresh_token: result.session.refresh_token,
           })
-          if (error) throw error
+          if (error) console.warn('Supabase setSession notice:', error.message)
         }
         setUser(result.user)
         setToken(result.token)

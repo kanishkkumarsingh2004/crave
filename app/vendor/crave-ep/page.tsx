@@ -1,7 +1,6 @@
 'use client'
 
 import CraveXPStoreConsole from '@/components/dashboards/CraveEPStoreConsole'
-import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -23,17 +22,12 @@ export default function CraveXPStorePage() {
         <div className="text-center">
           <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
           <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading craveXP Dark Store Console...
+            Loading craveXP Console...
           </p>
         </div>
       </div>
     )
   }
 
-  return (
-    <>
-      <Navbar />
-      <CraveXPStoreConsole />
-    </>
-  )
+  return <CraveXPStoreConsole />
 }

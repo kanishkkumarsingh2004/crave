@@ -1,6 +1,5 @@
 'use client'
 
-import CraveLogo from '@/components/CraveLogo'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
@@ -14,7 +13,6 @@ import {
   UtensilsCrossed,
   Zap,
 } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -78,7 +76,8 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl mx-auto">
-              Hyper-local food delivery, 15-minute dark store groceries, and gourmet dining deals curated exclusively for{' '}
+              Hyper-local food delivery, 15-minute dark store groceries, and gourmet dining deals
+              curated exclusively for{' '}
               <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">
                 Kanakapura Road
               </span>
@@ -129,7 +128,7 @@ export default function HomePage() {
              ========================================================================= */}
           <div className="mt-16 grid gap-6 md:grid-cols-3">
             {/* ENTRY CARD 1: FOOD DELIVERY */}
-            <div 
+            <div
               onClick={() => handleNavigateCustomer('/user/explore')}
               className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
@@ -151,7 +150,8 @@ export default function HomePage() {
                     FROM TOP LOCAL RESTAURANTS
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
-                    Order hot biryani, pizzas, burgers &amp; authentic South Indian meals from handpicked kitchens.
+                    Order hot biryani, pizzas, burgers &amp; authentic South Indian meals from
+                    handpicked kitchens.
                   </p>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function HomePage() {
             </div>
 
             {/* ENTRY CARD 2: CRAVE XP (INSTAMART / DARK STORE) */}
-            <div 
+            <div
               onClick={() => handleNavigateCustomer('/user/cravexp')}
               className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
@@ -186,10 +186,11 @@ export default function HomePage() {
                     INSTANT GROCERY
                   </h3>
                   <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
-                    CRAVE XP DARK STORE
+                    CRAVE XP STORE
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
-                    Fresh dairy, snacks, beverages, ice creams &amp; daily essentials delivered in under 15 minutes.
+                    Fresh dairy, snacks, beverages, ice creams &amp; daily essentials delivered in
+                    under 15 minutes.
                   </p>
                 </div>
               </div>
@@ -205,7 +206,7 @@ export default function HomePage() {
             </div>
 
             {/* ENTRY CARD 3: DINEOUT & OFFERS */}
-            <div 
+            <div
               onClick={() => handleNavigateCustomer('/user/explore')}
               className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
@@ -227,7 +228,8 @@ export default function HomePage() {
                     CURATED DINING &amp; SPECIALS
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
-                    Discover flat discounts, promo codes, and special restaurant combos near Kanakapura Road.
+                    Discover flat discounts, promo codes, and special restaurant combos near
+                    Kanakapura Road.
                   </p>
                 </div>
               </div>
@@ -256,7 +258,7 @@ export default function HomePage() {
               {/* Eyebrow (Plain Text, Zero Background Pill) */}
               <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
                 <Zap className="size-3.5 text-[#849e16] fill-current" />
-                <span>Introducing Crave XP Dark Store</span>
+                <span>Introducing Crave XP Store</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] tracking-tight leading-tight">
@@ -264,7 +266,8 @@ export default function HomePage() {
               </h2>
 
               <p className="mt-4 text-sm sm:text-base text-[#55635a] font-medium leading-relaxed">
-                Need fresh milk, snacks, beverages, or emergency kitchen ingredients? Our local Kanakapura Road dark store packs and dispatches your order in under 2 minutes.
+                Need fresh milk, snacks, beverages, or emergency kitchen ingredients? Our local
+                Kanakapura Road store packs and dispatches your order in under 2 minutes.
               </p>
 
               {/* Feature Points */}
@@ -274,8 +277,12 @@ export default function HomePage() {
                     1
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c]">Sub-15 Minute Dispatch</h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">Dedicated dark-store pickers pack items instantly from cold storage bays.</p>
+                    <h4 className="text-sm font-extrabold text-[#18201c]">
+                      Sub-15 Minute Dispatch
+                    </h4>
+                    <p className="text-xs text-[#616d66] mt-0.5">
+                      Dedicated pickers pack items instantly from cold storage bays.
+                    </p>
                   </div>
                 </div>
 
@@ -284,8 +291,12 @@ export default function HomePage() {
                     2
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c]">100% Temperature Sealed</h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">IoT sensors monitor dairy and ice cream bags at optimal temperatures.</p>
+                    <h4 className="text-sm font-extrabold text-[#18201c]">
+                      100% Temperature Sealed
+                    </h4>
+                    <p className="text-xs text-[#616d66] mt-0.5">
+                      IoT sensors monitor dairy and ice cream bags at optimal temperatures.
+                    </p>
                   </div>
                 </div>
 
@@ -295,7 +306,9 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-extrabold text-[#18201c]">Live Map Tracking</h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">Watch your express rider navigate straight to your apartment doorstep.</p>
+                    <p className="text-xs text-[#616d66] mt-0.5">
+                      Watch your express rider navigate straight to your apartment doorstep.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -322,7 +335,7 @@ export default function HomePage() {
                       XP
                     </span>
                     <div>
-                      <h3 className="text-xs font-bold text-white">Crave XP Dark Store Console</h3>
+                      <h3 className="text-xs font-bold text-white">Crave XP Console</h3>
                       <p className="text-[10px] text-white/60">Kanakapura Road Hub #01</p>
                     </div>
                   </div>

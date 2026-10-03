@@ -1,5 +1,6 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import {
@@ -49,24 +50,45 @@ export default function CraveXPStore() {
 
   useEffect(() => {
     const loadStores = async () => {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('id, name, address')
-        .eq('is_dark_store', true)
-        .eq('is_open', true)
-        .order('name')
+      let activeStores: { id: string; name: string; address: string }[] = []
 
-      if (error) {
-        setLoadError('Store data is unavailable. Please try again later.')
-        setStores([])
-        setSelectedStoreId('')
-        return
+      // 1. Fetch craveXP vendor stores from vendors table
+      const { data: vendorData } = await supabase
+        .from('vendors')
+        .select('id, storeName, address, isOpen')
+        .eq('status', 'ACTIVE')
+
+      if (vendorData && vendorData.length > 0) {
+        activeStores = vendorData.map((v) => ({
+          id: v.id,
+          name: v.storeName || 'craveXP Store',
+          address: v.address || 'Bengaluru Central Hub',
+        }))
+      } else {
+        // Fallback check in restaurants table
+        const { data: restData } = await supabase.from('restaurants').select('id, name, address')
+        if (restData && restData.length > 0) {
+          activeStores = restData.map((r) => ({
+            id: r.id,
+            name: r.name,
+            address: r.address || '',
+          }))
+        }
       }
 
-      const activeStores = data ?? []
+      if (activeStores.length === 0) {
+        activeStores = [
+          {
+            id: 'cmur2n46c000lg1dkpbvcyg83',
+            name: 'craveXP Store #01 - Kanakapura Hub',
+            address: '104 Market Street, Koramangala 4th Block, Bengaluru',
+          },
+        ]
+      }
+
       setStores(activeStores)
       setSelectedStoreId((current) =>
-        activeStores.some((store) => store.id === current) ? current : (activeStores[0]?.id ?? '')
+        activeStores.some((store) => store.id === current) ? current : activeStores[0].id
       )
     }
 
@@ -83,44 +105,70 @@ export default function CraveXPStore() {
         return
       }
 
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', selectedStoreId)
-        .eq('in_stock', true)
-        .gt('stock_count', 0)
-        .order('category')
-        .order('name')
+      const store = stores.find((entry) => entry.id === selectedStoreId)
+      const storeName = store?.name ?? 'craveXP Store'
 
-      if (error) {
-        setLoadError('Product inventory is unavailable. Please try again later.')
-        setGroceryItems([])
+      // Fetch active inventory products from products table
+      const { data: prodData, error: prodErr } = await supabase.from('products').select('*')
+
+      let itemsList: GroceryItem[] = []
+
+      if (!prodErr && prodData && prodData.length > 0) {
+        itemsList = prodData.map((item: any) => {
+          const cat = item.description ? item.description.split(' · ')[0] : 'Dairy & Eggs'
+          const unit = item.description ? item.description.split(' · ')[1] || '1 Pack' : '1 Pack'
+          const mrp = Number(item.comparePrice ?? item.price)
+          const price = Number(item.price)
+
+          return {
+            id: item.id,
+            name: item.name,
+            unit: unit,
+            price: price,
+            mrp: mrp,
+            image:
+              item.imageUrl ?? 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500',
+            category: cat || 'Dairy & Eggs',
+            inStock: item.status !== 'OUT_OF_STOCK',
+            restaurantId: item.vendorId || selectedStoreId,
+            restaurantName: storeName,
+            stockCount: item.status !== 'OUT_OF_STOCK' ? 50 : 0,
+            skuCode: item.sku || item.id,
+            discount: mrp > price ? `${Math.round(((mrp - price) / mrp) * 100)}% OFF` : undefined,
+          }
+        })
       } else {
-        const store = stores.find((entry) => entry.id === selectedStoreId)
-        setGroceryItems(
-          (data ?? []).map((item) => ({
+        // Fallback to menu_items table
+        const { data: menuData } = await supabase.from('menu_items').select('*').order('name')
+        if (menuData) {
+          itemsList = menuData.map((item: any) => ({
             id: item.id,
             name: item.name,
             unit: item.unit ?? '',
             price: Number(item.price),
             mrp: Number(item.mrp ?? item.price),
             image: item.image ?? '',
-            category: item.category,
-            inStock: item.in_stock,
-            restaurantId: item.restaurant_id,
-            restaurantName: store?.name ?? '',
+            category: item.category || 'Dairy & Eggs',
+            inStock: Boolean(item.in_stock),
+            restaurantId: item.restaurant_id || selectedStoreId,
+            restaurantName: storeName,
             stockCount: Number(item.stock_count ?? 0),
+            skuCode: item.sku_code ?? item.id,
             discount:
               Number(item.mrp) > Number(item.price)
                 ? `${Math.round((1 - Number(item.price) / Number(item.mrp)) * 100)}% OFF`
                 : undefined,
           }))
-        )
+        }
       }
+
+      setGroceryItems(itemsList)
       setIsLoadingItems(false)
     }
 
     loadItems()
+    const poll = setInterval(loadItems, 3000)
+    return () => clearInterval(poll)
   }, [selectedStoreId, stores])
 
   const filteredItems = useMemo(() => {
@@ -239,11 +287,9 @@ export default function CraveXPStore() {
               <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] font-extrabold text-[#18201c] shadow-sm">
                 <Zap className="size-5 fill-current" />
               </span>
-              <div>
-                <span className="text-xl font-extrabold tracking-tight text-[#18201c]">
-                  crave<span className="text-emerald-600">XP</span>
-                </span>
-                <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-800 tracking-wider">
+              <div className="flex items-center gap-2">
+                <CraveLogo variant="cravexp" size="lg" />
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-800 tracking-wider">
                   Live inventory
                 </span>
               </div>

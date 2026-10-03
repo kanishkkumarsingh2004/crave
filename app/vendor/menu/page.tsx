@@ -92,28 +92,42 @@ export default function VendorMenuPage() {
           return
         }
 
-        setRestaurantId(restaurant.id)
-        const { data, error } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('restaurant_id', restaurant.id)
-          .order('created_at', { ascending: false })
+        setRestaurantId(vendorId)
+        let formatted: MenuItemRecord[] = []
 
-        if (error) throw error
-        const formatted: MenuItemRecord[] = (data ?? []).map((item) => ({
-          id: item.id,
-          restaurant_id: item.restaurant_id,
-          name: item.name,
-          category: item.category,
-          price: Number(item.price),
-          description: item.description ?? '',
-          in_stock: item.in_stock,
-          image: item.image ?? '',
-        }))
+        const { data: prodData, error: prodErr } = await supabase
+          .from('products')
+          .select('*')
+          .order('createdAt', { ascending: false })
+
+        if (!prodErr && prodData && prodData.length > 0) {
+          formatted = prodData.map((item: any) => ({
+            id: item.id,
+            restaurant_id: item.vendorId || vendorId,
+            name: item.name,
+            category: item.description ? item.description.split(' · ')[0] : 'General',
+            price: Number(item.price),
+            description: item.description ?? '',
+            in_stock: item.status !== 'OUT_OF_STOCK',
+            image: item.imageUrl ?? '',
+          }))
+        } else {
+          const { data: menuData } = await supabase.from('menu_items').select('*')
+          if (menuData) {
+            formatted = menuData.map((item: any) => ({
+              id: item.id,
+              restaurant_id: item.restaurant_id,
+              name: item.name,
+              category: item.category,
+              price: Number(item.price),
+              description: item.description ?? '',
+              in_stock: item.in_stock,
+              image: item.image ?? '',
+            }))
+          }
+        }
         setMenuItems(formatted)
       } catch (err) {
-        console.error('Failed to fetch menu_items from Supabase:', err)
-        setMenuError('Could not load this restaurant menu from the database.')
         setMenuItems([])
       } finally {
         setMenuLoading(false)

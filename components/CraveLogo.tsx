@@ -1,8 +1,6 @@
-import React from 'react'
-
 interface CraveLogoProps {
   className?: string
-  variant?: 'full' | 'small' // 'full' = crave. | 'small' = c.
+  variant?: 'full' | 'small' | 'cravexp' // 'full' = crave. | 'small' = c. | 'cravexp' = craveXP.
   theme?: 'dark' | 'light' // dark text vs light/white text
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
@@ -15,6 +13,7 @@ export default function CraveLogo({
 }: CraveLogoProps) {
   const textColor = theme === 'light' ? 'text-white' : 'text-[#18201c]'
   const dotColor = theme === 'light' ? 'bg-[#d9f447]' : 'bg-[#849e16]'
+  const xpColor = theme === 'light' ? 'text-[#d9f447]' : 'text-[#7d9518]'
 
   const sizeStyles = {
     sm: { text: 'text-lg font-black tracking-tight', dot: 'size-1.5 ml-[1px]' },
@@ -26,12 +25,18 @@ export default function CraveLogo({
   return (
     <span
       className={`inline-flex items-baseline select-none ${textColor} ${className}`}
-      aria-label="crave. logo"
+      aria-label={variant === 'cravexp' ? 'craveXP. logo' : 'crave. logo'}
     >
-      <span className={sizeStyles.text}>
-        {variant === 'small' ? 'c' : 'crave'}
-      </span>
-      {/* Square full stop period placed immediately after 'e' at baseline */}
+      {variant === 'small' ? (
+        <span className={sizeStyles.text}>c</span>
+      ) : variant === 'cravexp' ? (
+        <span className={sizeStyles.text}>
+          crave<span className={xpColor}>XP</span>
+        </span>
+      ) : (
+        <span className={sizeStyles.text}>crave</span>
+      )}
+      {/* Square full stop period placed immediately after 'e' or 'XP' at baseline */}
       <span
         className={`inline-block shrink-0 rounded-[1px] ${dotColor} ${sizeStyles.dot}`}
         aria-hidden="true"
