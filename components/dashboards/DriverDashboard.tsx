@@ -2,45 +2,6 @@
 
 import { useDriver } from '@/lib/driver-context'
 import {
-  CircleDollarSign,
-  Clock3,
-  MapPinned,
-  Navigation,
-  Radio,
-  ShieldCheck,
-  Wallet,
-} from 'lucide-react'
-
-export default function DriverDashboard() {
-  const { isOnline, activeTask, completedTrips, payoutLogs, savedUpiList } = useDriver()
-
-  const totalEarnings = completedTrips.reduce((sum, trip) => sum + trip.total, 0)
-
-  return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <MiniCard
-          title="Online status"
-          value={isOnline ? 'Available' : 'Offline'}
-          tone="green"
-          icon={<Radio className="size-4" />}
-        />
-        <MiniCard
-          title="This week"
-          value={`₹${totalEarnings}`}
-          tone="amber"
-          icon={<CircleDollarSign className="size-4" />}
-        />
-        <MiniCard
-          title="Saved UPI"
-          value={`${savedUpiList.length} linked`}
-          tone="blue"
-          icon={<Wallet className="size-4" />}
-        />
-'use client'
-
-import { useDriver } from '@/lib/driver-context'
-import {
   ArrowRight,
   CheckCircle2,
   CircleDollarSign,
@@ -264,40 +225,52 @@ export default function DriverDashboard() {
         <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-bold text-[#18201c]">Recent trips</h3>
           <div className="mt-4 space-y-3">
-            {completedTrips.map((trip) => (
-              <div key={trip.id} className="rounded-2xl border border-gray-200 p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-[#18201c]">{trip.order}</div>
-                    <div className="text-[11px] text-gray-500">{trip.restaurant}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-emerald-700">₹{trip.total}</div>
-                    <div className="text-[11px] text-gray-500">{trip.time}</div>
+            {completedTrips.length > 0 ? (
+              completedTrips.map((trip) => (
+                <div key={trip.id} className="rounded-2xl border border-gray-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-[#18201c]">{trip.order}</div>
+                      <div className="text-[11px] text-gray-500">{trip.restaurant}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-emerald-700">₹{trip.total}</div>
+                      <div className="text-[11px] text-gray-500">{trip.time}</div>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
+                No recent completed trips.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-bold text-[#18201c]">Payouts</h3>
           <div className="mt-4 space-y-3">
-            {payoutLogs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-center justify-between rounded-2xl bg-gray-50 p-3"
-              >
-                <div>
-                  <div className="font-bold text-[#18201c]">₹{log.amount}</div>
-                  <div className="text-[11px] text-gray-500">{log.date}</div>
+            {payoutLogs.length > 0 ? (
+              payoutLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between rounded-2xl bg-gray-50 p-3"
+                >
+                  <div>
+                    <div className="font-bold text-[#18201c]">₹{log.amount}</div>
+                    <div className="text-[11px] text-gray-500">{log.date}</div>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                    {log.status}
+                  </span>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-                  {log.status}
-                </span>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
+                No payout logs recorded yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

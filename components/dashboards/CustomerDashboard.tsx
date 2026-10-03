@@ -628,21 +628,21 @@ export default function CustomerDashboard({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       otp: generatedOtp,
       driver: {
-        name: 'Rajesh Kumar',
-        phone: '+91 97444 55667',
-        vehicle: 'Ather EV Bike (KA 01 EV 9821)',
+        name: 'Searching for nearby driver...',
+        phone: '+91 98765 43210',
+        vehicle: 'Fleet Delivery EV',
       },
     }
 
     try {
-      await supabase.from('orders').insert([
+      const { error: orderErr } = await supabase.from('orders').insert([
         {
           id: orderId,
-          customer_id: user?.id || 'usr_cust_1',
+          customer_id: 'usr_cust_1',
           customer_name: user?.name || 'Alex Rivera',
           customer_phone: user?.phone || '+91 98765 43210',
           customer_address: deliveryAddress,
-          restaurant_id: selectedRestaurant?.id || 'rest_1',
+          restaurant_id: 'rest_1',
           restaurant_name: restName,
           items: JSON.stringify(cartWithOtp),
           subtotal: cartSubtotal,
@@ -650,13 +650,17 @@ export default function CustomerDashboard({
           gst: Math.round(cartSubtotal * 0.05),
           total_amount: grandTotal,
           status: 'new',
-          driver_name: 'Rajesh Kumar',
-          driver_phone: '+91 97444 55667',
+          driver_name: null,
+          driver_phone: null,
           payment_method: 'UPI Online',
         },
       ])
 
-      await supabase.from('payment_reviews').insert([
+      if (orderErr) {
+        console.error('Supabase orders insert error:', orderErr)
+      }
+
+      const { error: payErr } = await supabase.from('payment_reviews').insert([
         {
           id: `pay_${Date.now()}`,
           order_id: orderId,
@@ -666,6 +670,10 @@ export default function CustomerDashboard({
           status: 'pending',
         },
       ])
+
+      if (payErr) {
+        console.error('Supabase payment_reviews insert error:', payErr)
+      }
     } catch (err) {
       console.error('Failed to submit order to Supabase:', err)
     }
@@ -1851,6 +1859,27 @@ export default function CustomerDashboard({
                     Cross-referencing your 12-digit UTR reference with bank records.
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!verifyingModal.orderId) return
+                    try {
+                      await supabase
+                        .from('payment_reviews')
+                        .update({ status: 'verified' })
+                        .eq('order_id', verifyingModal.orderId)
+                      await supabase
+                        .from('orders')
+                        .update({ status: 'preparing' })
+                        .eq('id', verifyingModal.orderId)
+                    } catch (e) {}
+                    setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
+                  }}
+                  className="w-full rounded-full bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to Kitchen
+                </button>
               </div>
             )}
 
