@@ -254,7 +254,7 @@ export default function DriverDashboardPage() {
 
             {activeTask.step === 'arrived_customer' && (
               <button
-                onClick={completeDelivery}
+                onClick={() => completeDelivery()}
                 className="mt-2 w-full rounded-full bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-emerald-700 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="size-4 text-white" /> Verify PIN &amp; Complete Delivery

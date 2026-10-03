@@ -1,17 +1,15 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
+import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
-  Clock,
-  DollarSign,
   MapPin,
-  Receipt,
   Search,
-  ShieldCheck,
+  ShoppingBag,
   Star,
-  Thermometer,
   Truck,
   UtensilsCrossed,
   Zap,
@@ -47,8 +45,12 @@ export default function HomePage() {
     )
   }
 
-  const handleStartOrdering = () => {
-    router.push('/login')
+  const handleNavigateCustomer = (path: string) => {
+    if (user) {
+      router.push(path)
+    } else {
+      router.push('/login')
+    }
   }
 
   return (
@@ -56,153 +58,187 @@ export default function HomePage() {
       <Navbar />
 
       {/* =========================================================================
-          HERO SECTION (CLEAN SVG ICONS, ZERO EMOJIS, ZERO OVERLAPPING DOTS)
+          HERO & SEARCH SECTION
          ========================================================================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#f4f7ed] to-[#f8f9f7] pb-16 pt-8 sm:pt-12 lg:pb-24 lg:pt-16">
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#f4f7ed] to-[#f8f9f7] pb-16 pt-8 sm:pt-12 lg:pb-20 lg:pt-14">
         {/* Background Glow */}
-        <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-[520px] w-[780px] -translate-x-1/2 rounded-full bg-[#d9f447]/30 blur-[130px]" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: 'radial-gradient(#18201c 0.75px, transparent 0.75px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
+        <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-[520px] w-[780px] -translate-x-1/2 rounded-full bg-[#d9f447]/25 blur-[130px]" />
 
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
-            {/* Left Hero Content */}
-            <div className="lg:col-span-7">
-              {/* Clean Icon Text Eyebrow (Zero Background Pills) */}
-              <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
-                <MapPin className="size-3.5 text-[#849e16]" />
-                <span>Live on Kanakapura Road, Bengaluru</span>
+          <div className="text-center max-w-3xl mx-auto">
+            {/* Location Eyebrow (Plain Text, Zero Background Pill) */}
+            <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
+              <MapPin className="size-3.5 text-[#849e16]" />
+              <span>Live on Kanakapura Road, Bengaluru</span>
+            </div>
+
+            <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-extrabold leading-[1.05] tracking-tight text-[#18201c]">
+              Order food &amp; groceries. <br />
+              Discover best kitchens. <span className="text-[#849e16]">Crave it!</span>
+            </h1>
+
+            <p className="mt-4 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl mx-auto">
+              Hyper-local food delivery, 15-minute dark store groceries, and gourmet dining deals curated exclusively for{' '}
+              <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">
+                Kanakapura Road
+              </span>
+              .
+            </p>
+
+            {/* Location + Search Bar */}
+            <div className="mt-8 rounded-3xl border-2 border-[#18201c]/10 bg-white p-2.5 shadow-2xl backdrop-blur-md max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                {/* Location Selector */}
+                <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1] sm:max-w-[220px] shrink-0">
+                  <MapPin className="size-4 text-[#849e16] shrink-0" />
+                  <input
+                    type="text"
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    placeholder="Kanakapura Road"
+                    className="w-full bg-transparent text-xs font-bold text-[#18201c] focus:outline-none truncate"
+                  />
+                </div>
+
+                {/* Dish / Kitchen Search Input */}
+                <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1]">
+                  <Search className="size-4 text-[#75827b] shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search biryani, pizza, groceries, or snacks..."
+                    className="w-full bg-transparent text-xs font-medium text-[#18201c] placeholder:text-[#83918a] focus:outline-none"
+                  />
+                </div>
+
+                {/* Primary Find Food Button */}
+                <button
+                  onClick={() => handleNavigateCustomer('/user/explore')}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#18201c] px-6 py-3.5 text-xs font-extrabold text-white shadow-lg transition hover:bg-[#323f37] hover:scale-105 active:scale-95 shrink-0"
+                >
+                  Find Food
+                  <ArrowRight className="size-4 text-[#d9f447]" />
+                </button>
               </div>
+            </div>
+          </div>
 
-              <h1 className="text-[clamp(2.75rem,5.5vw,5.25rem)] font-extrabold leading-[0.95] tracking-tight text-[#18201c]">
-                Great food, <br />
-                delivered <span className="text-[#849e16]">superfast.</span>
-              </h1>
-
-              <p className="mt-5 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl">
-                We focus 100% of our riders, top kitchens, &amp; 18-minute speeds exclusively on{' '}
-                <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">
-                  Kanakapura Road
-                </span>
-                .
-              </p>
-
-              {/* Location + Search Bar */}
-              <div className="mt-8 rounded-3xl border-2 border-[#18201c]/10 bg-white p-2.5 shadow-2xl backdrop-blur-md max-w-2xl">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  {/* Location Selector */}
-                  <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1] sm:max-w-[220px] shrink-0">
-                    <MapPin className="size-4 text-[#849e16] shrink-0" />
-                    <input
-                      type="text"
-                      value={selectedCity}
-                      onChange={(e) => setSelectedCity(e.target.value)}
-                      placeholder="Kanakapura Road"
-                      className="w-full bg-transparent text-xs font-bold text-[#18201c] focus:outline-none truncate"
-                    />
+          {/* =========================================================================
+              CUSTOMER SERVICE ENTRY CARDS (FOOD DELIVERY, CRAVE XP, DINEOUT)
+             ========================================================================= */}
+          <div className="mt-16 grid gap-6 md:grid-cols-3">
+            {/* ENTRY CARD 1: FOOD DELIVERY */}
+            <div 
+              onClick={() => handleNavigateCustomer('/user/explore')}
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                    UP TO 60% OFF
+                  </span>
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#849e16] group-hover:scale-110 transition-transform">
+                    <UtensilsCrossed className="size-6" />
                   </div>
+                </div>
 
-                  {/* Dish / Kitchen Search Input */}
-                  <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1]">
-                    <Search className="size-4 text-[#75827b] shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search biryani, pizza, momos, or burgers..."
-                      className="w-full bg-transparent text-xs font-medium text-[#18201c] placeholder:text-[#83918a] focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Primary Find Food Button */}
-                  <button
-                    onClick={handleStartOrdering}
-                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#18201c] px-6 py-3.5 text-xs font-extrabold text-white shadow-lg transition hover:bg-[#323f37] hover:scale-105 active:scale-95 shrink-0"
-                  >
-                    Find Food
-                    <ArrowRight className="size-4 text-[#d9f447]" />
-                  </button>
+                <div className="mt-6">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                    FOOD DELIVERY
+                  </h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                    FROM TOP LOCAL RESTAURANTS
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                    Order hot biryani, pizzas, burgers &amp; authentic South Indian meals from handpicked kitchens.
+                  </p>
                 </div>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="mt-8 flex flex-wrap items-center gap-6 text-xs font-bold text-[#5e6b63]">
-                <span className="flex items-center gap-2">
-                  <Clock className="size-4 text-[#849e16]" /> 18 Min Kanakapura Express
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                  Order Food Now
                 </span>
-                <span className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-[#849e16]" /> 100% Sealed Packaging
-                </span>
-                <span className="flex items-center gap-2">
-                  <Receipt className="size-4 text-[#849e16]" /> Zero Hidden Charges
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#849e16] group-hover:text-white transition-colors">
+                  <ArrowRight className="size-4" />
                 </span>
               </div>
             </div>
 
-            {/* Right Hero Visual Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-[36px] border-4 border-white bg-[#121815] p-5 shadow-2xl text-white">
-                {/* Header preview */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="grid size-7 place-items-center rounded-lg bg-[#d9f447] text-[#121815] font-extrabold text-xs">
-                      C
-                    </span>
-                    <span className="text-xs font-bold">Kanakapura Drop Radar</span>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/30">
-                    HYPER-LOCAL
+            {/* ENTRY CARD 2: CRAVE XP (INSTAMART / DARK STORE) */}
+            <div 
+              onClick={() => handleNavigateCustomer('/user/cravexp')}
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                    15 MIN EXPRESS DROPS
                   </span>
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] group-hover:scale-110 transition-transform">
+                    <ShoppingBag className="size-6" />
+                  </div>
                 </div>
 
-                {/* Hero Dish Image */}
-                <div className="relative mt-4 overflow-hidden rounded-2xl h-48">
-                  <img
-                    src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80"
-                    alt="The Green Table"
-                    className="h-full w-full object-cover"
-                  />
-                  <span className="absolute bottom-3 right-3 rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-extrabold text-[#121815]">
-                    18 MINS ETA
-                  </span>
-                </div>
-
-                {/* Dish Info */}
-                <div className="mt-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-extrabold text-white">The Green Table</h3>
-                    <span className="flex items-center gap-1 text-xs font-bold text-[#d9f447]">
-                      <Star className="size-3.5 fill-current" /> 4.9
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-white/60">
-                    Konanakunte Cross · Healthy Bowls &amp; Smoothies
+                <div className="mt-6">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                    INSTANT GROCERY
+                  </h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                    CRAVE XP DARK STORE
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                    Fresh dairy, snacks, beverages, ice creams &amp; daily essentials delivered in under 15 minutes.
                   </p>
                 </div>
-
-                {/* Action button inside mock */}
-                <button
-                  onClick={handleStartOrdering}
-                  className="mt-4 w-full rounded-2xl bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c3dc38] transition"
-                >
-                  ORDER NOW — KANAKAPURA MENU
-                </button>
               </div>
 
-              {/* Floating Badge Overlay */}
-              <div className="absolute -bottom-6 -left-6 rounded-2xl bg-white p-3.5 shadow-2xl border border-[#e2e7dc] hidden sm:flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] font-bold">
-                  <Zap className="size-5 fill-current" />
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                  Explore Crave XP Store
                 </span>
-                <div>
-                  <p className="text-xs font-extrabold text-[#18201c]">Instant Metro GPS</p>
-                  <p className="text-[10px] text-[#6b7770]">Live rider path on Kanakapura Rd</p>
+                <span className="grid size-9 place-items-center rounded-full bg-[#849e16] text-white group-hover:bg-[#18201c] group-hover:text-[#d9f447] transition-colors">
+                  <ArrowRight className="size-4" />
+                </span>
+              </div>
+            </div>
+
+            {/* ENTRY CARD 3: DINEOUT & OFFERS */}
+            <div 
+              onClick={() => handleNavigateCustomer('/user/explore')}
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                    UP TO 50% SAVINGS
+                  </span>
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#849e16] group-hover:scale-110 transition-transform">
+                    <Star className="size-6" />
+                  </div>
                 </div>
+
+                <div className="mt-6">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                    TOP OFFERS &amp; DEALS
+                  </h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                    CURATED DINING &amp; SPECIALS
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                    Discover flat discounts, promo codes, and special restaurant combos near Kanakapura Road.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                  View Today&apos;s Offers
+                </span>
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#849e16] group-hover:text-white transition-colors">
+                  <ArrowRight className="size-4" />
+                </span>
               </div>
             </div>
           </div>
@@ -210,147 +246,123 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
-          WHY CUSTOMERS LOVE CRAVE — CREATIVE GRAPHIC CARDS
+          CRAVE XP INSTAMART DEEP DIVE FEATURE SECTION
          ========================================================================= */}
-      <section id="why-crave" className="py-20 lg:py-28 bg-[#f8f9f7]">
+      <section className="py-20 lg:py-24 bg-white border-t border-b border-[#e5e9e1]">
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
-              No Fluff, Just Actual Good Delivery
-            </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-[#18201c] tracking-tight">
-              Why Kanakapura Road Orders on crave.
-            </h2>
-            <p className="mt-3 text-sm text-[#616d66]">
-              We stripped away boring corporate buzzwords and built hyper-local tech that actually
-              works.
-            </p>
-          </div>
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-6">
+              {/* Eyebrow (Plain Text, Zero Background Pill) */}
+              <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
+                <Zap className="size-3.5 text-[#849e16] fill-current" />
+                <span>Introducing Crave XP Dark Store</span>
+              </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            {/* GRAPHIC CARD 1: LIVE RADAR MINI WIDGET */}
-            <div className="group rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between">
-              <div>
-                {/* Graphic Visual Header */}
-                <div className="rounded-3xl bg-[#121815] p-4 text-white shadow-inner relative overflow-hidden mb-6 border border-white/10">
-                  <div className="flex items-center justify-between text-[11px] font-mono text-white/60 mb-2">
-                    <span className="flex items-center gap-1.5 text-[#d9f447]">
-                      <span className="size-2 rounded-full bg-[#d9f447] animate-ping" /> LIVE GPS
-                      RADAR
-                    </span>
-                    <span>14 MIN REMAINING</span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] tracking-tight leading-tight">
+                Instant Grocery Delivery in <span className="text-[#849e16]">15 Minutes.</span>
+              </h2>
+
+              <p className="mt-4 text-sm sm:text-base text-[#55635a] font-medium leading-relaxed">
+                Need fresh milk, snacks, beverages, or emergency kitchen ingredients? Our local Kanakapura Road dark store packs and dispatches your order in under 2 minutes.
+              </p>
+
+              {/* Feature Points */}
+              <div className="mt-8 space-y-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                    1
                   </div>
-
-                  {/* Route Progress Graphic Bar */}
-                  <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden my-3">
-                    <div className="h-full w-3/4 bg-gradient-to-r from-[#849e16] to-[#d9f447] rounded-full animate-pulse" />
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs font-bold text-white">
-                    <span className="flex items-center gap-1">
-                      <UtensilsCrossed className="size-3.5 text-amber-400" /> Kitchen (Prep Done)
-                    </span>
-                    <span className="flex items-center gap-1 text-[#d9f447]">
-                      <Truck className="size-3.5" /> Doorstep
-                    </span>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-[#18201c]">Sub-15 Minute Dispatch</h4>
+                    <p className="text-xs text-[#616d66] mt-0.5">Dedicated dark-store pickers pack items instantly from cold storage bays.</p>
                   </div>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-[#18201c]">Lightning GPS Delivery</h3>
-                <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  No mysterious 45-minute delays near silk board traffic. Our riders focus 100% on
-                  Kanakapura Road corridors for sub-20 minute drops!
-                </p>
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-[#18201c]">100% Temperature Sealed</h4>
+                    <p className="text-xs text-[#616d66] mt-0.5">IoT sensors monitor dairy and ice cream bags at optimal temperatures.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-[#18201c]">Live Map Tracking</h4>
+                    <p className="text-xs text-[#616d66] mt-0.5">Watch your express rider navigate straight to your apartment doorstep.</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-[#f0f4eb] flex items-center justify-between text-xs font-bold text-[#849e16]">
-                <span className="flex items-center gap-1">
-                  <Zap className="size-3.5 text-[#849e16]" /> Avg 18 Min Speed
-                </span>
+              {/* Action Button */}
+              <div className="mt-8">
+                <button
+                  onClick={() => handleNavigateCustomer('/user/cravexp')}
+                  className="inline-flex items-center gap-3 rounded-2xl bg-[#18201c] px-8 py-4 text-xs font-extrabold text-white shadow-xl hover:bg-[#323f37] transition hover:scale-105 active:scale-95"
+                >
+                  <ShoppingBag className="size-4 text-[#d9f447]" />
+                  Enter Crave XP Instamart Store
+                  <ArrowRight className="size-4 text-[#d9f447]" />
+                </button>
               </div>
             </div>
 
-            {/* GRAPHIC CARD 2: TAMPER-PROOF SECURITY TAPE WIDGET */}
-            <div className="group rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500 hover:shadow-2xl relative overflow-hidden flex flex-col justify-between">
-              <div>
-                {/* Graphic Visual Header */}
-                <div className="rounded-3xl bg-emerald-950 p-4 text-white shadow-inner relative overflow-hidden mb-6 border border-emerald-800/40">
-                  {/* Security Tape Strip */}
-                  <div className="flex items-center justify-between rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-2.5 mb-2 text-emerald-300 text-xs font-mono font-bold">
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="size-4 text-emerald-400" /> DIGITAL SEAL OK
+            {/* Right Graphic Preview */}
+            <div className="lg:col-span-6">
+              <div className="rounded-[36px] border-4 border-white bg-gradient-to-br from-[#121815] to-[#1a231f] p-8 text-white shadow-2xl relative overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-xs">
+                      XP
                     </span>
-                    <span className="rounded bg-emerald-400 text-[#121815] px-1.5 py-0.5 text-[9px] font-extrabold">
-                      SEALED
-                    </span>
+                    <div>
+                      <h3 className="text-xs font-bold text-white">Crave XP Dark Store Console</h3>
+                      <p className="text-[10px] text-white/60">Kanakapura Road Hub #01</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-black text-[#18201c]">
+                    15 MIN EXPRESS
+                  </span>
+                </div>
+
+                {/* Items Grid Preview */}
+                <div className="mt-6 grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-white/5 p-4 border border-white/10 flex items-center gap-3">
+                    <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447]">
+                      <ShoppingBag className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Organic Milk 1L</p>
+                      <p className="text-[10px] text-[#d9f447] font-bold">In Stock · ₹68</p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-emerald-200/80 font-medium">
-                    <span className="flex items-center gap-1">
-                      <Thermometer className="size-3.5 text-amber-400" /> 68°C Thermal Bag
-                    </span>
-                    <span>Hygiene 9.9/10</span>
+                  <div className="rounded-2xl bg-white/5 p-4 border border-white/10 flex items-center gap-3">
+                    <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447]">
+                      <Zap className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Cold Brew Coffee</p>
+                      <p className="text-[10px] text-[#d9f447] font-bold">In Stock · ₹120</p>
+                    </div>
                   </div>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-[#18201c]">Tamper-Proof Packaging</h3>
-                <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  Every box is sealed with thermal security tape. Your burger arrives exactly as the
-                  chef cooked it — untampered, hot, and delicious.
-                </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-[#f0f4eb] flex items-center justify-between text-xs font-bold text-emerald-700">
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="size-3.5 text-emerald-600" /> Cleanliness Audit 100%
-                </span>
-              </div>
-            </div>
-
-            {/* GRAPHIC CARD 3: TRANSPARENT RECEIPT WIDGET */}
-            <div className="group rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-purple-500 hover:shadow-2xl relative overflow-hidden flex flex-col justify-between">
-              <div>
-                {/* Graphic Receipt Breakdown Visual */}
-                <div className="rounded-3xl bg-[#f8f9f6] p-4 text-[#18201c] border-2 border-dashed border-[#dce3d5] mb-6 relative">
-                  <div className="flex items-center justify-between text-xs font-extrabold border-b border-[#e2e7dc] pb-2 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Receipt className="size-3.5 text-purple-700" /> BILL BREAKDOWN
-                    </span>
-                    <span className="text-[10px] text-purple-700 font-mono">#CRV-KANAKAPURA</span>
-                  </div>
-
-                  <div className="flex flex-col gap-1 text-xs font-medium text-[#5c6861]">
-                    <div className="flex justify-between">
-                      <span>Artisanal Pizza x 1</span>
-                      <span className="font-bold text-[#18201c]">₹350</span>
-                    </div>
-                    <div className="flex justify-between text-emerald-600">
-                      <span>Delivery Fee</span>
-                      <span className="font-bold">₹0 (WAIVED)</span>
-                    </div>
-                    <div className="flex justify-between text-rose-500 line-through text-[11px]">
-                      <span>Surge Fee / Mystery Charge</span>
-                      <span>₹0</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between text-xs font-extrabold border-t border-[#e2e7dc] pt-2 mt-2 text-[#18201c]">
-                    <span>Total Paid</span>
-                    <span className="text-purple-700 font-extrabold">₹350</span>
-                  </div>
+                {/* Live Status Widget */}
+                <div className="mt-6 rounded-2xl bg-[#d9f447] p-4 text-[#18201c] flex items-center justify-between font-bold text-xs shadow-lg">
+                  <span className="flex items-center gap-2">
+                    <Truck className="size-4" /> Express Rider Assigned
+                  </span>
+                  <span className="rounded-lg bg-[#18201c] text-[#d9f447] px-2.5 py-1 text-[10px] font-mono">
+                    12 MIN ETA
+                  </span>
                 </div>
-
-                <h3 className="text-xl font-extrabold text-[#18201c]">Zero Mystery Charges</h3>
-                <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  What you see on the menu is what leaves your bank account. No last-minute
-                  &quot;platform handling rain tax fee&quot; added at checkout.
-                </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-[#f0f4eb] flex items-center justify-between text-xs font-bold text-purple-700">
-                <span className="flex items-center gap-1">
-                  <DollarSign className="size-3.5 text-purple-700" /> 100% Transparent Price
-                </span>
               </div>
             </div>
           </div>
@@ -371,13 +383,13 @@ export default function HomePage() {
                 No Fake Discounts. Just Actual Good Food.
               </h2>
               <p className="mt-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
-                Experience instant 1-tap reordering, live GPS driver tracking, and gourmet kitchen
+                Experience instant 1-tap ordering, live GPS driver tracking, and gourmet kitchen
                 partners near you.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
-                  onClick={handleStartOrdering}
+                  onClick={() => handleNavigateCustomer('/user/explore')}
                   className="rounded-full bg-[#d9f447] px-8 py-4 text-sm font-extrabold text-[#121815] shadow-xl hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95"
                 >
                   Start Food Order Now
@@ -389,77 +401,9 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
-          FOOTER (DARK ZOMATO-STYLE)
+          COMPREHENSIVE ENTERPRISE FOOTER (ZOMATO STYLE)
          ========================================================================= */}
-      <footer className="bg-black py-16 text-xs text-gray-400">
-        <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
-          {/* Top Brand Logo */}
-          <div className="mb-10 pb-6 border-b border-gray-800/80">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-extrabold">
-                <UtensilsCrossed className="size-5 fill-current" />
-              </span>
-              <span className="text-3xl font-extrabold tracking-tight text-white">
-                crave<span className="text-[#d9f447]">.</span>
-              </span>
-            </Link>
-          </div>
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 mb-12">
-            <div>
-              <p className="font-bold text-white text-sm tracking-wide mb-4">About crave.</p>
-              <p className="text-xs leading-relaxed text-gray-400">
-                Your favorite food delivered in 18 minutes on Kanakapura Road. Hot, fresh, and zero
-                hassle.
-              </p>
-            </div>
-
-            <div>
-              <p className="font-bold text-white text-sm tracking-wide mb-4">For Customers</p>
-              <ul className="flex flex-col gap-2.5">
-                <li>
-                  <button onClick={handleStartOrdering} className="hover:text-white transition">
-                    Explore Kitchens
-                  </button>
-                </li>
-                <li>
-                  <button onClick={handleStartOrdering} className="hover:text-white transition">
-                    My Active Orders
-                  </button>
-                </li>
-                <li>
-                  <button onClick={handleStartOrdering} className="hover:text-white transition">
-                    Track Live Drop
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-bold text-white text-sm tracking-wide mb-4">Company</p>
-              <ul className="flex flex-col gap-2.5">
-                <li className="hover:text-white transition cursor-pointer">About crave.</li>
-                <li className="hover:text-white transition cursor-pointer">Customer Support</li>
-                <li className="hover:text-white transition cursor-pointer">Careers</li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-bold text-white text-sm tracking-wide mb-4">Learn More</p>
-              <ul className="flex flex-col gap-2.5">
-                <li className="hover:text-white transition cursor-pointer">Privacy Policy</li>
-                <li className="hover:text-white transition cursor-pointer">Terms of Service</li>
-                <li className="hover:text-white transition cursor-pointer">Cookie Settings</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-            <p>© 2026 crave. All rights reserved.</p>
-            <p className="text-gray-400">Live on Kanakapura Road Corridor, Bengaluru</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

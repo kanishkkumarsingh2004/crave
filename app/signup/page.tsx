@@ -1,5 +1,7 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
+
 import Navbar, { roleDetails } from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
@@ -83,13 +85,10 @@ export default function SignupPage() {
 
           {/* Header */}
           <div className="text-center">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
-              Join the Network
-            </span>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#18201c] sm:text-3xl">
-              Create Your Account on <span className="text-[#7d9518]">crave.</span>
-            </h1>
-            <p className="mt-1 text-xs text-[#717c76]">
+            <div className="mb-2">
+              <CraveLogo variant="full" size="lg" />
+            </div>
+            <p className="text-xs font-medium text-[#717c76]">
               Sign up as a customer to start ordering from the best kitchens around.
             </p>
           </div>

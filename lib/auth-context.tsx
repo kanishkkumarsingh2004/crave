@@ -17,6 +17,7 @@ export interface UserProfile {
   cuisine?: string
   vehicleType?: string
   licensePlate?: string
+  vehicleNo?: string
 }
 
 interface AuthContextType {
