@@ -58,7 +58,6 @@ export default function AdminPaymentsPage() {
     setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
 
-
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
       <h3 className="text-xl font-bold">UPI Payment References Queue</h3>

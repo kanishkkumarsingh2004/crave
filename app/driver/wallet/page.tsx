@@ -80,7 +80,8 @@ export default function DriverWalletPage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-xs text-gray-500">
-            No payout transaction history yet. Complete delivery drops to accumulate wallet earnings.
+            No payout transaction history yet. Complete delivery drops to accumulate wallet
+            earnings.
           </div>
         )}
       </div>
@@ -117,7 +118,9 @@ export default function DriverWalletPage() {
                     onChange={(e) => setCashoutAmount(e.target.value)}
                     className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm font-bold outline-none focus:border-emerald-600"
                   />
-                  <p className="text-[10px] text-gray-500 mt-1">Available balance: ₹{currentBalance}.00</p>
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Available balance: ₹{currentBalance}.00
+                  </p>
                 </div>
 
                 <div className="rounded-xl bg-gray-50 p-2.5 text-xs text-gray-600 border border-gray-200">

@@ -167,7 +167,8 @@ export default function DriverSettingsPage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-xs text-gray-500">
-            No saved UPI payout handles yet. Register a new UPI VPA ID above for instant 1-click cashouts.
+            No saved UPI payout handles yet. Register a new UPI VPA ID above for instant 1-click
+            cashouts.
           </div>
         )}
       </div>

@@ -65,14 +65,18 @@ export default function DriverDashboard() {
 
             <div className="mt-4 space-y-3 text-xs">
               <h3 className="text-lg font-bold text-[#18201c]">{broadcastOffer.restaurantName}</h3>
-              <p className="text-gray-500 font-medium">Pickup: {broadcastOffer.restaurantAddress}</p>
+              <p className="text-gray-500 font-medium">
+                Pickup: {broadcastOffer.restaurantAddress}
+              </p>
               <div className="rounded-2xl bg-gray-50 p-3 flex justify-between font-bold">
                 <span>Trip Distance:</span>
                 <span className="text-blue-700">{broadcastOffer.distance}</span>
               </div>
               <div className="rounded-2xl bg-emerald-50 p-3 flex justify-between font-bold text-emerald-900 text-sm">
                 <span>Trip Earnings:</span>
-                <span>₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}</span>
+                <span>
+                  ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
+                </span>
               </div>
             </div>
 
@@ -189,9 +193,13 @@ export default function DriverDashboard() {
                       : 'Arrived at Customer Location →'}
                 </button>
               ) : (
-                <form onSubmit={handleOtpSubmit} className="space-y-3 rounded-2xl bg-amber-50 p-4 border border-amber-200">
+                <form
+                  onSubmit={handleOtpSubmit}
+                  className="space-y-3 rounded-2xl bg-amber-50 p-4 border border-amber-200"
+                >
                   <label className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                    <KeyRound className="size-4 text-amber-600" /> Enter Customer Handshake 4-Digit OTP
+                    <KeyRound className="size-4 text-amber-600" /> Enter Customer Handshake 4-Digit
+                    OTP
                   </label>
                   <input
                     type="text"
@@ -201,9 +209,7 @@ export default function DriverDashboard() {
                     onChange={(e) => setOtpValue(e.target.value)}
                     className="w-full rounded-xl border border-amber-300 bg-white p-2.5 font-mono text-center text-base font-bold outline-none"
                   />
-                  {otpError && (
-                    <p className="text-[11px] font-bold text-rose-700">{otpError}</p>
-                  )}
+                  {otpError && <p className="text-[11px] font-bold text-rose-700">{otpError}</p>}
                   <button
                     type="submit"
                     className="w-full rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-1.5"

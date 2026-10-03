@@ -5,13 +5,10 @@ import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
   ArrowUpRight,
-  CheckCircle2,
   Clock3,
   DollarSign,
-  Download,
   LogOut,
   Percent,
-  Receipt,
   Search,
   Store,
   TrendingUp,
@@ -31,36 +28,28 @@ interface OrderRecord {
   items: string
 }
 
+interface SettlementRecord {
+  id: string
+  period: string
+  grossSales: number
+  commissionRate: number
+  commissionAmount: number
+  netPayout: number
+  status: string
+  payoutDate: string
+  transactionRef: string
+}
+
 export default function VendorSalesPage() {
   const { user, role, isLoading, logout } = useAuth()
   const router = useRouter()
 
   const [orders, setOrders] = useState<OrderRecord[]>([])
+  const [settlementsHistory, setSettlementsHistory] = useState<SettlementRecord[]>([])
+  const [restaurantId, setRestaurantId] = useState<string | null>(null)
+  const [commissionRate, setCommissionRate] = useState(0)
+  const [salesError, setSalesError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [settlementsHistory, setSettlementsHistory] = useState([
-    {
-      id: 'set_101',
-      period: '23 Sep 2026 – 29 Sep 2026',
-      grossSales: 148200,
-      commissionRate: 15,
-      commissionAmount: 22230,
-      netPayout: 125970,
-      status: 'settled',
-      payoutDate: '30 Sep 2026',
-      utr: 'UTR89201928312',
-    },
-    {
-      id: 'set_100',
-      period: '16 Sep 2026 – 22 Sep 2026',
-      grossSales: 132400,
-      commissionRate: 15,
-      commissionAmount: 19860,
-      netPayout: 112540,
-      status: 'settled',
-      payoutDate: '23 Sep 2026',
-      utr: 'UTR77109283911',
-    },
-  ])
 
   useEffect(() => {
     if (isLoading) return
@@ -73,21 +62,64 @@ export default function VendorSalesPage() {
 
   useEffect(() => {
     async function loadSalesOrders() {
+      if (!user?.id) return
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (!error && data) {
-          setOrders(data)
+        const { data: restaurant, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('id, commission_rate')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (restaurantError) throw restaurantError
+        if (!restaurant) {
+          setRestaurantId(null)
+          setOrders([])
+          setSettlementsHistory([])
+          return
         }
+
+        setRestaurantId(restaurant.id)
+        setCommissionRate(Number(restaurant.commission_rate ?? 0))
+        const [orderResult, settlementResult] = await Promise.all([
+          supabase
+            .from('orders')
+            .select('*')
+            .eq('restaurant_id', restaurant.id)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('vendor_settlements')
+            .select('*')
+            .eq('restaurant_id', restaurant.id)
+            .order('payout_date', { ascending: false }),
+        ])
+        if (orderResult.error) throw orderResult.error
+        if (settlementResult.error) throw settlementResult.error
+
+        setOrders(orderResult.data ?? [])
+        setSettlementsHistory(
+          (settlementResult.data ?? []).map((settlement) => ({
+            id: settlement.id,
+            period:
+              settlement.period_start && settlement.period_end
+                ? `${settlement.period_start} – ${settlement.period_end}`
+                : (settlement.payout_date ?? ''),
+            grossSales: Number(settlement.gross_sales ?? 0),
+            commissionRate: Number(settlement.commission_rate ?? 0),
+            commissionAmount: Number(settlement.commission_amount ?? 0),
+            netPayout: Number(settlement.net_payout ?? 0),
+            status: settlement.status ?? '',
+            payoutDate: settlement.payout_date ?? '',
+            transactionRef: settlement.transaction_ref ?? '',
+          }))
+        )
       } catch (err) {
         console.error('Failed to load orders for sales:', err)
+        setSalesError('Sales records could not be loaded from the database.')
+        setOrders([])
+        setSettlementsHistory([])
       }
     }
     loadSalesOrders()
-  }, [])
+  }, [user?.id])
 
   if (isLoading || !user || role !== 'vendor') {
     return (
@@ -97,10 +129,7 @@ export default function VendorSalesPage() {
     )
   }
 
-  // Real Sales Calculations from database
-  const completedOrders = orders.filter((o) => o.status === 'completed' || o.status === 'ready' || o.status === 'new' || o.status === 'preparing')
-  const totalGrossSales = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
-  const commissionRate = 15 // 15% Zomato/Swiggy standard
+  const totalGrossSales = orders.reduce((sum, o) => sum + Number(o.subtotal || 0), 0)
   const totalCommission = Math.round((totalGrossSales * commissionRate) / 100)
   const totalNetEarnings = totalGrossSales - totalCommission
 
@@ -116,7 +145,10 @@ export default function VendorSalesPage() {
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+            <Link
+              href="/"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
+            >
               crave<span className="text-[#86a018]">.</span>
             </Link>
             <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
@@ -127,7 +159,9 @@ export default function VendorSalesPage() {
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
               <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+              <span className="truncate max-w-[200px]">
+                {user?.restaurantName || 'Your restaurant'}
+              </span>
             </div>
           </div>
 
@@ -184,9 +218,14 @@ export default function VendorSalesPage() {
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
                 Restaurant Financial Analytics
               </span>
-              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">Sales Revenue &amp; Settlements</h2>
+              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+                Sales Revenue &amp; Settlements
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Financial performance for <strong className="text-[#18201c]">{user?.restaurantName || 'The Green Table'}</strong>
+                Financial performance for{' '}
+                <strong className="text-[#18201c]">
+                  {user?.restaurantName || 'Your restaurant'}
+                </strong>
               </p>
             </div>
             <Link
@@ -210,20 +249,24 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-3 text-2xl font-bold text-[#18201c]">₹{totalGrossSales}</p>
-            <p className="text-[11px] text-gray-500 mt-1">Total revenue across {orders.length} orders</p>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Total revenue across {orders.length} orders
+            </p>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                Platform Commission (15%)
+                Platform Commission ({commissionRate}%)
               </span>
               <div className="grid size-9 place-items-center rounded-2xl bg-amber-50 text-amber-800">
                 <Percent className="size-4" />
               </div>
             </div>
             <p className="mt-3 text-2xl font-bold text-amber-900">-₹{totalCommission}</p>
-            <p className="text-[11px] text-gray-500 mt-1">Standard 15% platform fee</p>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Rate loaded from the restaurant profile
+            </p>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
@@ -236,7 +279,9 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-3 text-2xl font-bold text-emerald-700">₹{totalNetEarnings}</p>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1">Transferrable to bank account</p>
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+              Transferrable to bank account
+            </p>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
@@ -248,8 +293,10 @@ export default function VendorSalesPage() {
                 <Clock3 className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-lg font-bold text-[#18201c]">Every Monday</p>
-            <p className="text-[11px] text-gray-500 mt-1">Automatic NEFT/IMPS transfer</p>
+            <p className="mt-3 text-lg font-bold text-[#18201c]">
+              {orders.filter((order) => order.status === 'completed').length}
+            </p>
+            <p className="text-[11px] text-gray-500 mt-1">Completed orders in database</p>
           </div>
         </div>
 
@@ -258,10 +305,12 @@ export default function VendorSalesPage() {
           <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
             <div>
               <h3 className="text-lg font-bold text-[#18201c]">Weekly Bank Settlements History</h3>
-              <p className="text-xs text-gray-500">Payout records transferred to your registered bank account</p>
+              <p className="text-xs text-gray-500">
+                Payout records transferred to your registered bank account
+              </p>
             </div>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-              Verified Payouts
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-700">
+              {settlementsHistory.length} records
             </span>
           </div>
 
@@ -271,27 +320,40 @@ export default function VendorSalesPage() {
                 <tr>
                   <th className="py-3 px-4">Period</th>
                   <th className="py-3 px-4">Gross Sales</th>
-                  <th className="py-3 px-4">Commission (15%)</th>
+                  <th className="py-3 px-4">Commission</th>
                   <th className="py-3 px-4">Net Payout</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Bank Ref UTR</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
-                {settlementsHistory.map((s) => (
-                  <tr key={s.id} className="hover:bg-gray-50/60 transition">
-                    <td className="py-3.5 px-4 font-bold text-[#18201c]">{s.period}</td>
-                    <td className="py-3.5 px-4 font-semibold text-gray-700">₹{s.grossSales}</td>
-                    <td className="py-3.5 px-4 text-rose-600 font-semibold">-₹{s.commissionAmount}</td>
-                    <td className="py-3.5 px-4 font-bold text-emerald-700">₹{s.netPayout}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                        <CheckCircle2 className="size-3" /> Paid on {s.payoutDate}
-                      </span>
+                {settlementsHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-gray-500">
+                      No settlement records are stored for this restaurant.
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-gray-500">{s.utr}</td>
                   </tr>
-                ))}
+                ) : (
+                  settlementsHistory.map((s) => (
+                    <tr key={s.id} className="hover:bg-gray-50/60 transition">
+                      <td className="py-3.5 px-4 font-bold text-[#18201c]">{s.period || '—'}</td>
+                      <td className="py-3.5 px-4 font-semibold text-gray-700">₹{s.grossSales}</td>
+                      <td className="py-3.5 px-4 text-rose-600 font-semibold">
+                        -₹{s.commissionAmount}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-emerald-700">₹{s.netPayout}</td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-bold text-gray-800">
+                          {s.status || 'Status unavailable'}
+                          {s.payoutDate ? ` · ${s.payoutDate}` : ''}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-500">
+                        {s.transactionRef || '—'}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -330,18 +392,20 @@ export default function VendorSalesPage() {
                     <th className="py-3 px-4">Customer Name</th>
                     <th className="py-3 px-4">Date &amp; Time</th>
                     <th className="py-3 px-4">Order Amount</th>
-                    <th className="py-3 px-4">Net Share (85%)</th>
+                    <th className="py-3 px-4">Net Share</th>
                     <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
                   {filteredOrders.map((o) => {
-                    const gross = o.total_amount || 0
-                    const net = Math.round(gross * 0.85)
+                    const gross = Number(o.subtotal || 0)
+                    const net = Math.round(gross * (1 - commissionRate / 100))
                     return (
                       <tr key={o.id} className="hover:bg-gray-50/60 transition">
                         <td className="py-3.5 px-4 font-mono font-bold text-[#18201c]">#{o.id}</td>
-                        <td className="py-3.5 px-4 font-semibold text-[#18201c]">{o.customer_name || 'Customer'}</td>
+                        <td className="py-3.5 px-4 font-semibold text-[#18201c]">
+                          {o.customer_name || '—'}
+                        </td>
                         <td className="py-3.5 px-4 text-gray-500">
                           {o.created_at
                             ? new Date(o.created_at).toLocaleString([], {
@@ -350,7 +414,7 @@ export default function VendorSalesPage() {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })
-                            : 'Recent'}
+                            : '—'}
                         </td>
                         <td className="py-3.5 px-4 font-bold text-[#18201c]">₹{gross}</td>
                         <td className="py-3.5 px-4 font-bold text-emerald-700">₹{net}</td>

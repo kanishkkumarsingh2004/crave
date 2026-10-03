@@ -78,7 +78,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   const totalEarningsToday = completedTrips.reduce((acc, t) => acc + t.total, 0)
-  const activeDutyTimeText = completedTrips.length > 0 ? `${(completedTrips.length * 1.2).toFixed(1)} hrs` : '0.0 hrs'
+  const activeDutyTimeText =
+    completedTrips.length > 0 ? `${(completedTrips.length * 1.2).toFixed(1)} hrs` : '0.0 hrs'
   const avgPaceText = completedTrips.length > 0 ? '18 mins' : '0 mins'
   const driverInitials = user?.name
     ? user.name

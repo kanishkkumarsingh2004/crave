@@ -24,250 +24,123 @@ interface AuthContextType {
   token: string | null
   role: UserRole
   isLoading: boolean
-  login: (email: string, role?: UserRole) => Promise<boolean>
-  loginAsRole: (role: UserRole) => Promise<void>
-  signup: (userData: Partial<UserProfile> & { role: UserRole }) => Promise<void>
+  login: (email: string, password: string) => Promise<UserProfile | null>
+  signup: (userData: Partial<UserProfile> & { role: UserRole; password: string }) => Promise<{
+    success: boolean
+    message?: string
+    requiresEmailConfirmation?: boolean
+  }>
   logout: () => Promise<void>
-  demoUsers: Record<UserRole, UserProfile>
-}
-
-export const TEST_USERS: Record<UserRole, UserProfile> = {
-  customer: {
-    id: 'usr_cust_1',
-    name: 'Alex Rivera',
-    email: 'alex@example.com',
-    role: 'customer',
-    phone: '+91 98765 43210',
-    address: 'Indiranagar 100ft Rd, Bengaluru',
-    avatar:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-  },
-  vendor: {
-    id: 'usr_vend_1',
-    name: 'Maya Lin (Owner)',
-    email: 'green@table.com',
-    role: 'vendor',
-    restaurantName: 'The Green Table',
-    cuisine: 'Healthy Bowls & Salads',
-    phone: '+91 98111 22334',
-    address: 'Koramangala 5th Block, Bengaluru',
-    avatar:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
-  },
-  driver: {
-    id: 'usr_driv_1',
-    name: 'Rajesh Kumar',
-    email: 'rajesh@express.com',
-    role: 'driver',
-    vehicleType: 'Electric Scooter (Ather 450X)',
-    licensePlate: 'KA 01 EV 9821',
-    phone: '+91 97444 55667',
-    avatar:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-  },
-  admin: {
-    id: 'usr_admin_1',
-    name: 'Sara Vance (Admin)',
-    email: 'admin@crave.com',
-    role: 'admin',
-    phone: '+91 99000 00001',
-    avatar:
-      'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
-  },
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    if (typeof window !== 'undefined') {
-      const savedUser = localStorage.getItem('crave_auth_user')
-      if (savedUser) {
-        try {
-          return JSON.parse(savedUser)
-        } catch (e) {
-          console.error('Failed to parse saved user:', e)
-        }
-      }
-    }
-    return TEST_USERS.customer
-  })
-
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('crave_jwt_token')
-    }
-    return null
-  })
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [token, setToken] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    async function checkCurrentJWT() {
+    let cancelled = false
+    async function restoreSession() {
       try {
-        const savedUser = localStorage.getItem('crave_auth_user')
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser)
-          if (parsed?.email) {
-            const { data, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('email', parsed.email)
-              .maybeSingle()
-
-            if (!error && data) {
-              const profile: UserProfile = {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                role: data.role as UserRole,
-                avatar: data.avatar,
-                phone: data.phone,
-                address: data.address,
-                restaurantName: data.restaurant_name,
-                cuisine: data.cuisine,
-                vehicleType: data.vehicle_type,
-                licensePlate: data.license_plate,
-              }
-              setUser(profile)
-              setIsLoading(false)
-              return
-            }
-          }
-        }
-
-        const res = await fetch('/api/auth/me')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.authenticated && data.user) {
-            setUser(data.user)
-            localStorage.setItem('crave_auth_user', JSON.stringify(data.user))
-            const savedToken = localStorage.getItem('crave_jwt_token')
-            if (savedToken) setToken(savedToken)
-            setIsLoading(false)
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData.session?.access_token
+        if (accessToken) {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+          const result = await response.json()
+          if (response.ok && result.success && result.user && !cancelled) {
+            setUser(result.user)
+            setToken(result.token)
             return
           }
+          await supabase.auth.signOut()
         }
       } catch (err) {
-        console.error('Failed to verify user session:', err)
+        console.error('Failed to restore Supabase session:', err)
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
-
-      setUser(null)
-      setToken(null)
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('crave_jwt_token')
-        localStorage.removeItem('crave_auth_user')
-      }
-      setIsLoading(false)
     }
-
-    checkCurrentJWT()
+    restoreSession()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const login = async (email: string, requestedRole?: UserRole) => {
+  const login = async (email: string, password: string): Promise<UserProfile | null> => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle()
-
-      if (!error && data) {
-        const dbProfile: UserProfile = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          role: data.role as UserRole,
-          avatar: data.avatar,
-          phone: data.phone,
-          address: data.address,
-          restaurantName: data.restaurant_name,
-          cuisine: data.cuisine,
-          vehicleType: data.vehicle_type,
-          licensePlate: data.license_plate,
-        }
-        setUser(dbProfile)
-        localStorage.setItem('crave_auth_user', JSON.stringify(dbProfile))
-        return true
-      }
-
-      const res = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: requestedRole }),
+        body: JSON.stringify({ email: email.trim(), password }),
       })
-      const apiData = await res.json()
-      if (apiData.success && apiData.user) {
-        setUser(apiData.user)
-        setToken(apiData.token)
-        localStorage.setItem('crave_jwt_token', apiData.token)
-        localStorage.setItem('crave_auth_user', JSON.stringify(apiData.user))
+      const result = await response.json()
+      if (response.ok && result.success && result.user) {
+        if (result.session) {
+          const { error } = await supabase.auth.setSession({
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+          })
+          if (error) throw error
+        }
+        setUser(result.user)
+        setToken(result.token)
         setIsLoading(false)
-        return true
+        return result.user as UserProfile
       }
+      return null
     } catch (err) {
       console.error('Login error:', err)
+      return null
     }
-    return false
   }
 
-  const loginAsRole = async (r: UserRole) => {
-    const testUser = TEST_USERS[r]
-    await login(testUser.email, r)
-  }
-
-  const signup = async (userData: Partial<UserProfile> & { role: UserRole }) => {
+  const signup = async (userData: Partial<UserProfile> & { role: UserRole; password: string }) => {
     try {
-      const newId = `usr_${Date.now()}`
-      const newRecord = {
-        id: newId,
-        name: userData.name || 'New User',
-        email: userData.email,
-        role: userData.role,
-        phone: userData.phone || null,
-        address: userData.address || null,
-        avatar:
-          userData.avatar ||
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        restaurant_name: userData.restaurantName || null,
-        cuisine: userData.cuisine || null,
-        vehicle_type: userData.vehicleType || null,
-        license_plate: userData.licensePlate || null,
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.success) {
+        return { success: false, message: result.error || 'Unable to create account.' }
       }
-
-      await supabase.from('users').insert([newRecord])
-
-      const profile: UserProfile = {
-        id: newId,
-        name: newRecord.name,
-        email: newRecord.email!,
-        role: newRecord.role,
-        phone: newRecord.phone || undefined,
-        address: newRecord.address || undefined,
-        avatar: newRecord.avatar,
-        restaurantName: newRecord.restaurant_name || undefined,
-        cuisine: newRecord.cuisine || undefined,
-        vehicleType: newRecord.vehicle_type || undefined,
-        licensePlate: newRecord.license_plate || undefined,
+      if (result.session) {
+        const { error } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        })
+        if (error) throw error
       }
-
-      setUser(profile)
-      localStorage.setItem('crave_auth_user', JSON.stringify(profile))
+      if (result.user) {
+        setUser(result.user)
+        setToken(result.token ?? null)
+      }
+      return {
+        success: true,
+        message: result.message,
+        requiresEmailConfirmation: Boolean(result.requiresEmailConfirmation),
+      }
     } catch (err) {
       console.error('Signup error:', err)
+      return { success: false, message: 'Unable to create account.' }
     }
   }
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await Promise.all([supabase.auth.signOut(), fetch('/api/auth/logout', { method: 'POST' })])
     } catch (err) {
       console.error('Logout error:', err)
     }
     setUser(null)
     setToken(null)
-    localStorage.removeItem('crave_jwt_token')
-    localStorage.removeItem('crave_auth_user')
     setIsLoading(false)
     if (typeof window !== 'undefined') {
       window.location.href = '/login'
@@ -284,10 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         isLoading,
         login,
-        loginAsRole,
         signup,
         logout,
-        demoUsers: TEST_USERS,
       }}
     >
       {children}

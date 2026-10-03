@@ -117,7 +117,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [offerTimer, setOfferTimer] = useState(15)
 
   // Real Mobile GPS
-  const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>([12.9716, 77.5946])
+  const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>([
+    12.9716, 77.5946,
+  ])
   const [gpsStatus, setGpsStatus] = useState<
     'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
   >('connected')
@@ -294,7 +296,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       setBroadcastOffer({
         id: `off_${Date.now()}`,
         orderNumber: `#CXP-${Math.floor(1000 + Math.random() * 9000)}`,
-        restaurantName: '⚡ craveEP Dark Store Hub #402 (10-Min Express)',
+        restaurantName: '⚡ craveXP Dark Store Hub #402 (10-Min Express)',
         restaurantAddress: 'Aisle B3, Indiranagar Micro-Hub',
         customerName: 'Priya Sharma (Instamart Order)',
         customerAddress: 'Tower 4, Skylight Apts, Indiranagar',
@@ -342,10 +344,13 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const cleanId = broadcastOffer.id.replace('#', '')
-      await supabase.from('orders').update({
-        driver_name: 'Verified Driver',
-        driver_phone: '+91 98765 43210',
-      }).eq('id', cleanId)
+      await supabase
+        .from('orders')
+        .update({
+          driver_name: 'Verified Driver',
+          driver_phone: '+91 98765 43210',
+        })
+        .eq('id', cleanId)
     } catch (e) {
       console.error('Failed to update driver assignment in Supabase:', e)
     }
@@ -384,7 +389,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       order: activeTask.orderNumber,
       restaurant: activeTask.restaurantName,
       customer: activeTask.customerName,
- baseEarnings: Math.round(activeTask.payout * 0.7),
+      baseEarnings: Math.round(activeTask.payout * 0.7),
       surge: Math.round(activeTask.payout * 0.3),
       tip: activeTask.tip,
       total: activeTask.payout + activeTask.tip,
@@ -394,7 +399,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const cleanId = activeTask.orderNumber.replace('#', '')
-      supabase.from('orders').update({ status: 'completed' }).eq('id', cleanId).then(() => {})
+      supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', cleanId)
+        .then(() => {})
     } catch (e) {}
 
     setCompletedTrips((prev) => [newTrip, ...prev])
@@ -485,4 +494,3 @@ export function useDriver() {
   }
   return context
 }
-

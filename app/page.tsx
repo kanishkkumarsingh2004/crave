@@ -4,19 +4,13 @@ import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
-  CheckCircle2,
   Clock,
-  Compass,
   DollarSign,
-  Flame,
   Heart,
-  HelpCircle,
   MapPin,
-  PackageCheck,
   Receipt,
   Search,
   ShieldCheck,
-  Sparkles,
   Star,
   Thermometer,
   Truck,
@@ -25,7 +19,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // "What's on your mind?" Category Circles
 const CRAVING_CATEGORIES = [
@@ -140,7 +134,7 @@ const TOP_KITCHENS = [
 ]
 
 export default function HomePage() {
-  const { user, role, loginAsRole, isLoading } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -167,7 +161,7 @@ export default function HomePage() {
   }
 
   const handleStartOrdering = () => {
-    loginAsRole('customer')
+    router.push('/login')
   }
 
   return (
@@ -204,7 +198,11 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-5 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl">
-                We focus 100% of our riders, top kitchens, &amp; 18-minute speeds exclusively on <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">Kanakapura Road</span>.
+                We focus 100% of our riders, top kitchens, &amp; 18-minute speeds exclusively on{' '}
+                <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">
+                  Kanakapura Road
+                </span>
+                .
               </p>
 
               {/* Location + Search Bar */}
@@ -295,7 +293,9 @@ export default function HomePage() {
                       <Star className="size-3.5 fill-current" /> 4.9
                     </span>
                   </div>
-                  <p className="text-[11px] text-white/60">Konanakunte Cross · Healthy Bowls &amp; Smoothies</p>
+                  <p className="text-[11px] text-white/60">
+                    Konanakunte Cross · Healthy Bowls &amp; Smoothies
+                  </p>
                 </div>
 
                 {/* Action button inside mock */}
@@ -473,7 +473,8 @@ export default function HomePage() {
               Why Kanakapura Road Orders on crave.
             </h2>
             <p className="mt-3 text-sm text-[#616d66]">
-              We stripped away boring corporate buzzwords and built hyper-local tech that actually works.
+              We stripped away boring corporate buzzwords and built hyper-local tech that actually
+              works.
             </p>
           </div>
 
@@ -485,7 +486,8 @@ export default function HomePage() {
                 <div className="rounded-3xl bg-[#121815] p-4 text-white shadow-inner relative overflow-hidden mb-6 border border-white/10">
                   <div className="flex items-center justify-between text-[11px] font-mono text-white/60 mb-2">
                     <span className="flex items-center gap-1.5 text-[#d9f447]">
-                      <span className="size-2 rounded-full bg-[#d9f447] animate-ping" /> LIVE GPS RADAR
+                      <span className="size-2 rounded-full bg-[#d9f447] animate-ping" /> LIVE GPS
+                      RADAR
                     </span>
                     <span>14 MIN REMAINING</span>
                   </div>
@@ -507,7 +509,8 @@ export default function HomePage() {
 
                 <h3 className="text-xl font-extrabold text-[#18201c]">Lightning GPS Delivery</h3>
                 <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  No mysterious 45-minute delays near silk board traffic. Our riders focus 100% on Kanakapura Road corridors for sub-20 minute drops!
+                  No mysterious 45-minute delays near silk board traffic. Our riders focus 100% on
+                  Kanakapura Road corridors for sub-20 minute drops!
                 </p>
               </div>
 
@@ -543,7 +546,8 @@ export default function HomePage() {
 
                 <h3 className="text-xl font-extrabold text-[#18201c]">Tamper-Proof Packaging</h3>
                 <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  Every box is sealed with thermal security tape. Your burger arrives exactly as the chef cooked it — untampered, hot, and delicious.
+                  Every box is sealed with thermal security tape. Your burger arrives exactly as the
+                  chef cooked it — untampered, hot, and delicious.
                 </p>
               </div>
 
@@ -589,7 +593,8 @@ export default function HomePage() {
 
                 <h3 className="text-xl font-extrabold text-[#18201c]">Zero Mystery Charges</h3>
                 <p className="mt-2 text-xs leading-relaxed text-[#616d66]">
-                  What you see on the menu is what leaves your bank account. No last-minute &quot;platform handling rain tax fee&quot; added at checkout.
+                  What you see on the menu is what leaves your bank account. No last-minute
+                  &quot;platform handling rain tax fee&quot; added at checkout.
                 </p>
               </div>
 
@@ -617,7 +622,8 @@ export default function HomePage() {
                 No Fake Discounts. Just Actual Good Food.
               </h2>
               <p className="mt-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
-                Experience instant 1-tap reordering, live GPS driver tracking, and gourmet kitchen partners near you.
+                Experience instant 1-tap reordering, live GPS driver tracking, and gourmet kitchen
+                partners near you.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -654,14 +660,13 @@ export default function HomePage() {
             <div>
               <p className="font-bold text-white text-sm tracking-wide mb-4">About crave.</p>
               <p className="text-xs leading-relaxed text-gray-400">
-                Your favorite food delivered in 18 minutes on Kanakapura Road. Hot, fresh, and zero hassle.
+                Your favorite food delivered in 18 minutes on Kanakapura Road. Hot, fresh, and zero
+                hassle.
               </p>
             </div>
 
             <div>
-              <p className="font-bold text-white text-sm tracking-wide mb-4">
-                For Customers
-              </p>
+              <p className="font-bold text-white text-sm tracking-wide mb-4">For Customers</p>
               <ul className="flex flex-col gap-2.5">
                 <li>
                   <button onClick={handleStartOrdering} className="hover:text-white transition">

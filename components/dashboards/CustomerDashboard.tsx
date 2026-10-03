@@ -7,7 +7,6 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  Clock3,
   Compass,
   Copy,
   ExternalLink,
@@ -17,30 +16,24 @@ import {
   LocateFixed,
   MapPin,
   Minus,
-  Navigation,
-  PackageCheck,
   PhoneCall,
   Plus,
-  RotateCcw,
   Search,
   ShoppingBag,
   ShoppingCart,
   Sparkles,
+  Store,
   Tag,
   Trash2,
   User,
-  UtensilsCrossed,
   X,
   Zap,
 } from 'lucide-react'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
-const Mapcn = dynamic(() => import('@/components/ui/mapcn'), { ssr: false })
-
-import { Coupon, getCoupons, validateCoupon } from '@/lib/coupons'
+import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
 import { supabase } from '@/lib/supabase'
 
 interface Restaurant {
@@ -73,6 +66,15 @@ interface CartItem extends MenuItem {
   qty: number
 }
 
+interface CustomerAddress {
+  id: string
+  label: string
+  address: string
+  tag: string
+  lat: number | null
+  lng: number | null
+}
+
 interface PastOrder {
   id: string
   restaurantName: string
@@ -92,80 +94,38 @@ interface PastOrder {
   driverPhone?: string
 }
 
-const samplePastOrders: PastOrder[] = []
-
-const sampleRestaurants: Restaurant[] = [
-  {
-    id: 'rest_1',
-    name: 'The Green Table',
-    cuisine: 'Healthy bowls · Salads · Vegan',
-    rating: '4.9',
-    ratingCount: '1.2k+',
-    eta: '20–25 min',
-    distance: '1.2 km',
-    costForTwo: '₹400 for two',
-    image:
-      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
-    tag: 'Healthy',
-    address: 'Koramangala 5th Block, Bengaluru',
-    offer: '50% OFF up to ₹100',
-    isPureVeg: true,
-  },
-]
-
-const sampleMenuItems: MenuItem[] = [
-  {
-    id: 'menu_1',
-    name: 'Avocado Quinoa Harvest Bowl',
-    detail: 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & pine nuts',
-    price: 289,
-    image:
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-    restaurantName: 'The Green Table',
-  },
-  {
-    id: 'menu_2',
-    name: 'Smoky Paneer Tikka Wrap',
-    detail: 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt',
-    price: 249,
-    image:
-      'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-    restaurantName: 'The Green Table',
-  },
-  {
-    id: 'menu_3',
-    name: 'Steamed Truffle Edamame Momos',
-    detail: 'Delicate dumplings stuffed with smashed edamame and black truffle oil',
-    price: 320,
-    image:
-      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-    restaurantName: 'The Green Table',
-  },
-]
+interface CheckoutConfig {
+  merchantVpa: string
+  deliveryFee: number
+  handlingFee: number
+  freeDeliveryThreshold: number
+  gstRate: number
+}
 
 const categoryList = [
   {
     id: 'All',
     label: 'All Items',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
+    image:
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'Healthy',
     label: 'Healthy Bowls',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=80',
+    image:
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'Wraps',
     label: 'Wraps & Rolls',
-    image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
+    image:
+      'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'Starters',
     label: 'Asian Momos',
-    image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
+    image:
+      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
   },
 ]
 
@@ -216,80 +176,185 @@ export default function CustomerDashboard({
 
   // Cart & Menu State
   const [cart, setCart] = useState<CartItem[]>([])
-  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>(sampleMenuItems)
+  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([])
+  const [restaurantsList, setRestaurantsList] = useState<Restaurant[]>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-  const [pastOrders, setPastOrders] = useState<PastOrder[]>(samplePastOrders)
+  const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
 
-  // Fetch Live Menu Items from Supabase
+  // Fetch Live Restaurants from Supabase
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .order('created_at', { ascending: true })
+        if (error) throw error
+        const parsed: Restaurant[] = (data ?? []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          cuisine: r.cuisine ?? '',
+          rating: r.rating == null ? '' : String(r.rating),
+          ratingCount: r.rating_count == null ? '' : Number(r.rating_count).toLocaleString(),
+          eta: r.delivery_minutes == null ? '' : `${r.delivery_minutes} min`,
+          distance: '',
+          costForTwo: r.cost_for_two == null ? '' : `₹${r.cost_for_two} for two`,
+          image: r.image ?? '',
+          tag: r.cuisine?.split(' ')[0] ?? '',
+          address: r.address ?? '',
+          offer: r.offer ?? undefined,
+          isPureVeg: r.is_pure_veg ?? undefined,
+        }))
+        setRestaurantsList(parsed)
+      } catch (err) {
+        console.error('Failed to fetch restaurants:', err)
+        setRestaurantsList([])
+      }
+    }
+    fetchRestaurants()
+    const interval = setInterval(fetchRestaurants, 10000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Fetch Live Menu Items from Supabase (for the selected restaurant or all)
   useEffect(() => {
     async function fetchLiveMenuItems() {
       try {
-        const { data, error } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('restaurant_id', 'rest_1')
-
-        if (!error && data && data.length > 0) {
-          const parsed: MenuItem[] = data
-            .filter((item) => item.in_stock !== false)
-            .map((item) => ({
-              id: item.id,
-              name: item.name,
-              detail: item.description || '',
-              price: Number(item.price),
-              image:
-                item.image ||
-                'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
-              veg: true,
-              restaurantName: 'The Green Table',
-            }))
-          if (parsed.length > 0) {
-            setMenuItemsList(parsed)
-          }
+        let query = supabase.from('menu_items').select('*')
+        if (selectedRestaurant?.id) {
+          query = query.eq('restaurant_id', selectedRestaurant.id)
         }
-      } catch (err) {}
+        const { data, error } = await query
+        if (error) throw error
+        const parsed: MenuItem[] = (data ?? [])
+          .filter((item) => item.in_stock !== false)
+          .map((item) => ({
+            id: item.id,
+            name: item.name,
+            detail: item.description || '',
+            price: Number(item.price),
+            image: item.image ?? '',
+            veg: Boolean(item.is_veg),
+            restaurantName: selectedRestaurant?.name || item.restaurant_name || '',
+          }))
+        setMenuItemsList(parsed)
+      } catch (err) {
+        console.error('Failed to fetch menu items:', err)
+        setMenuItemsList([])
+      }
     }
     fetchLiveMenuItems()
     const interval = setInterval(fetchLiveMenuItems, 4000)
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedRestaurant?.id])
+
+  // Fetch Past Orders from Supabase for logged-in customer
+  useEffect(() => {
+    if (!user?.id) return
+    async function fetchPastOrders() {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('customer_id', user!.id)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        if (data) {
+          const parsed: PastOrder[] = data.map((o) => {
+            let itemsArr: { name: string; qty: number; price: number }[] = []
+            try {
+              const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+              if (Array.isArray(raw))
+                itemsArr = raw.map((i: any) => ({
+                  name: i.name,
+                  qty: i.qty ?? 1,
+                  price: i.price ?? 0,
+                }))
+            } catch {}
+            const statusMap: Record<string, PastOrder['status']> = {
+              completed: 'Delivered',
+              cancelled: 'Cancelled',
+              new: 'In Progress',
+              preparing: 'In Progress',
+              ready: 'In Progress',
+            }
+            return {
+              id: o.id,
+              restaurantName: o.restaurant_name,
+              restaurantImage: '',
+              items: itemsArr,
+              subtotal: o.subtotal ?? 0,
+              discount: Number(o.discount_amount ?? 0),
+              total: o.total_amount ?? 0,
+              date: o.created_at
+                ? new Date(o.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '',
+              time: o.created_at
+                ? new Date(o.created_at).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '',
+              status: statusMap[o.status] ?? 'In Progress',
+              deliveryTime: '',
+              driverName: o.driver_name || undefined,
+              driverPhone: o.driver_phone || undefined,
+            }
+          })
+          setPastOrders(parsed)
+        }
+      } catch (err) {
+        console.error('Failed to fetch past orders:', err)
+        setPastOrders([])
+      }
+    }
+    fetchPastOrders()
+    const interval = setInterval(fetchPastOrders, 6000)
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   // Saved Addresses State & GPS Map Picker
-  const [savedAddresses, setSavedAddresses] = useState([
-    {
-      id: 'addr-1',
-      label: 'Home',
-      address: 'Indiranagar 100ft Rd, Bengaluru',
-      tag: 'Primary',
-      lat: 12.9716,
-      lng: 77.5946,
-    },
-    {
-      id: 'addr-2',
-      label: 'Work',
-      address: 'Prestige Tech Park, Marathahalli, Bengaluru',
-      tag: 'Office',
-      lat: 12.9366,
-      lng: 77.6953,
-    },
-    {
-      id: 'addr-3',
-      label: 'Apartment',
-      address: 'Orio Lavish PG, Doddakallasandra, Bengaluru',
-      tag: 'Other',
-      lat: 12.8874,
-      lng: 77.5512,
-    },
-  ])
+  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([])
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [gpsDetecting, setGpsDetecting] = useState(false)
-  const [selectedMapPin, setSelectedMapPin] = useState<{ lat: number; lng: number }>({
-    lat: 12.9716,
-    lng: 77.5946,
-  })
+  const [selectedMapPin, setSelectedMapPin] = useState<{ lat: number; lng: number } | null>(null)
   const [newAddressInput, setNewAddressInput] = useState('')
   const [newAddressLabel, setNewAddressLabel] = useState<'Home' | 'Work' | 'Other'>('Home')
+
+  useEffect(() => {
+    if (!user?.id) {
+      setSavedAddresses([])
+      return
+    }
+    const loadAddresses = async () => {
+      const { data, error } = await supabase
+        .from('customer_addresses')
+        .select('*')
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false })
+      if (error) {
+        console.error('Failed to load saved addresses:', error)
+        setSavedAddresses([])
+        return
+      }
+      setSavedAddresses(
+        (data ?? []).map((row) => ({
+          id: row.id,
+          label: row.label,
+          address: row.address,
+          tag: row.is_default ? 'Primary' : row.label,
+          lat: row.latitude == null ? null : Number(row.latitude),
+          lng: row.longitude == null ? null : Number(row.longitude),
+        }))
+      )
+    }
+    loadAddresses()
+  }, [user?.id])
 
   function handleDetectGpsLocation() {
     setGpsDetecting(true)
@@ -298,20 +363,14 @@ export default function CustomerDashboard({
         (pos) => {
           const lat = parseFloat(pos.coords.latitude.toFixed(4))
           const lng = parseFloat(pos.coords.longitude.toFixed(4))
-          const detectedAddr = `${lat}° N, ${lng}° E • Indiranagar 100ft Rd, Bengaluru`
           setSelectedMapPin({ lat, lng })
-          setDeliveryAddress(detectedAddr)
+          setDeliveryAddress(`${lat}, ${lng}`)
           setGpsDetecting(false)
           triggerToast(`GPS Location Detected: ${lat}° N, ${lng}° E`)
         },
         () => {
-          const fallbackLat = 12.9716
-          const fallbackLng = 77.5946
-          const fallbackAddr = `12.9716° N, 77.5946° E • Indiranagar 100ft Rd, Bengaluru`
-          setSelectedMapPin({ lat: fallbackLat, lng: fallbackLng })
-          setDeliveryAddress(fallbackAddr)
           setGpsDetecting(false)
-          triggerToast('GPS Location Detected: Indiranagar, Bengaluru')
+          triggerToast('Could not determine your current location.')
         },
         { timeout: 4000 }
       )
@@ -321,21 +380,40 @@ export default function CustomerDashboard({
     }
   }
 
-  function handleAddNewAddress() {
-    if (!newAddressInput.trim()) {
+  async function handleAddNewAddress() {
+    if (!user?.id || !newAddressInput.trim()) {
       triggerToast('Please enter an address or drop a pin on the map!')
       return
     }
-    const newEntry = {
-      id: `addr-${Date.now()}`,
-      label: newAddressLabel,
-      address: newAddressInput.trim(),
-      tag: newAddressLabel,
-      lat: selectedMapPin.lat,
-      lng: selectedMapPin.lng,
+    const { data, error } = await supabase
+      .from('customer_addresses')
+      .insert([
+        {
+          id: crypto.randomUUID(),
+          customer_id: user.id,
+          label: newAddressLabel,
+          address: newAddressInput.trim(),
+          latitude: selectedMapPin?.lat ?? null,
+          longitude: selectedMapPin?.lng ?? null,
+          is_default: savedAddresses.length === 0,
+        },
+      ])
+      .select('*')
+      .single()
+    if (error || !data) {
+      triggerToast('Could not save this address to your account.')
+      return
+    }
+    const newEntry: CustomerAddress = {
+      id: data.id,
+      label: data.label,
+      address: data.address,
+      tag: data.is_default ? 'Primary' : data.label,
+      lat: data.latitude == null ? null : Number(data.latitude),
+      lng: data.longitude == null ? null : Number(data.longitude),
     }
     setSavedAddresses((prev) => [newEntry, ...prev])
-    setDeliveryAddress(newEntry.address)
+    setDeliveryAddress(data.address)
     setNewAddressInput('')
     setShowLocationModal(false)
     triggerToast(`Address added & set as current delivery location!`)
@@ -343,9 +421,7 @@ export default function CustomerDashboard({
 
   // Profile editing
   const [editAddress, setEditAddress] = useState(false)
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    user?.address || 'Indiranagar 100ft Rd, Bengaluru'
-  )
+  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '')
 
   // Coupon Engine State
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
@@ -358,7 +434,9 @@ export default function CustomerDashboard({
   } | null>(null)
 
   // Payment State & Company UPI ID
-  const [companyUpiId, setCompanyUpiId] = useState('crave@upi')
+  const [companyUpiId, setCompanyUpiId] = useState('')
+  const [companyMerchantName, setCompanyMerchantName] = useState('')
+  const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig | null>(null)
   const [upiId, setUpiId] = useState('')
   const [utrRef, setUtrRef] = useState('')
   const [upiError, setUpiError] = useState('')
@@ -370,15 +448,33 @@ export default function CustomerDashboard({
   useEffect(() => {
     async function loadCompanyUpi() {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('payment_configs')
-          .select('upi_id')
-          .single()
-        if (data?.upi_id) {
-          setCompanyUpiId(data.upi_id)
+          .select(
+            'merchant_vpa, merchant_name, delivery_fee, handling_fee, free_delivery_threshold, gst_rate'
+          )
+          .eq('is_active', true)
+          .maybeSingle()
+        if (error) throw error
+        if (!data) {
+          setCheckoutConfig(null)
+          setCompanyUpiId('')
+          return
         }
-      } catch (e) {
-        // Fallback to crave@upi
+        setCheckoutConfig({
+          merchantVpa: data.merchant_vpa,
+          deliveryFee: Number(data.delivery_fee ?? 0),
+          handlingFee: Number(data.handling_fee ?? 0),
+          freeDeliveryThreshold: Number(data.free_delivery_threshold ?? 0),
+          gstRate: Number(data.gst_rate ?? 0),
+        })
+        setCompanyUpiId(data.merchant_vpa)
+        setCompanyMerchantName(data.merchant_name)
+      } catch (error) {
+        console.error('Failed to load checkout settings:', error)
+        setCheckoutConfig(null)
+        setCompanyUpiId('')
+        setCompanyMerchantName('')
       }
     }
     loadCompanyUpi()
@@ -388,7 +484,9 @@ export default function CustomerDashboard({
   const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
-    setAvailableCoupons(getCoupons().filter((c) => c.isActive))
+    fetchCouponsFromSupabase().then((coupons) => {
+      setAvailableCoupons(coupons.filter((c) => c.isActive))
+    })
   }, [])
 
   function triggerToast(msg: string) {
@@ -414,7 +512,7 @@ export default function CustomerDashboard({
 
   useEffect(() => {
     if (!appliedCoupon) return
-    const res = validateCoupon(appliedCoupon.code, cartSubtotal)
+    const res = validateCoupon(appliedCoupon.code, cartSubtotal, availableCoupons)
     if (res.valid) {
       setCouponDiscount(res.discountAmount)
     } else {
@@ -442,9 +540,10 @@ export default function CustomerDashboard({
 
   // Cart Handlers
   function addToCart(item: MenuItem) {
-    const itemRest = item.restaurantName || selectedRestaurant?.name || 'The Green Table'
+    const itemRest = item.restaurantName || selectedRestaurant?.name
+    if (!itemRest) return
     if (cart.length > 0) {
-      const currentRest = cart[0].restaurantName || selectedRestaurant?.name || 'The Green Table'
+      const currentRest = cart[0].restaurantName || selectedRestaurant?.name || ''
       if (currentRest !== itemRest) {
         setConflictModal({
           open: true,
@@ -469,23 +568,25 @@ export default function CustomerDashboard({
   function handleResolveConflictClear() {
     if (!conflictModal.newItem) return
     const item = conflictModal.newItem
-    const itemRest = item.restaurantName || selectedRestaurant?.name || 'The Green Table'
+    const itemRest = item.restaurantName || selectedRestaurant?.name
+    if (!itemRest) return
     setCart([{ ...item, qty: 1, restaurantName: itemRest }])
     setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })
     triggerToast(`Cart reset. Added ${item.name} from ${itemRest}!`)
   }
 
   function updateItemQty(id: string, delta: number) {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.qty + delta
-            return newQty > 0 ? { ...item, qty: newQty } : null
-          }
-          return item
-        })
-        .filter(Boolean) as CartItem[]
+    setCart(
+      (prev) =>
+        prev
+          .map((item) => {
+            if (item.id === id) {
+              const newQty = item.qty + delta
+              return newQty > 0 ? { ...item, qty: newQty } : null
+            }
+            return item
+          })
+          .filter(Boolean) as CartItem[]
     )
   }
 
@@ -505,7 +606,7 @@ export default function CustomerDashboard({
     const targetCode = codeToApply || couponCodeInput
     if (!targetCode.trim()) return
 
-    const res = validateCoupon(targetCode, cartSubtotal)
+    const res = validateCoupon(targetCode, cartSubtotal, availableCoupons)
     if (res.valid && res.coupon) {
       setAppliedCoupon(res.coupon)
       setCouponDiscount(res.discountAmount)
@@ -523,13 +624,20 @@ export default function CustomerDashboard({
   }
 
   // Price Calculations
-  const deliveryFee = cartSubtotal >= 500 || cartSubtotal === 0 ? 0 : 40
-  const packagingFee = cartSubtotal > 0 ? 25 : 0
-  const grandTotal = Math.max(0, cartSubtotal - couponDiscount + deliveryFee + packagingFee)
+  const deliveryFee =
+    checkoutConfig && cartSubtotal > 0 && cartSubtotal < checkoutConfig.freeDeliveryThreshold
+      ? checkoutConfig.deliveryFee
+      : 0
+  const packagingFee = cartSubtotal > 0 ? (checkoutConfig?.handlingFee ?? 0) : 0
+  const taxAmount = checkoutConfig ? Math.round((cartSubtotal * checkoutConfig.gstRate) / 100) : 0
+  const grandTotal = Math.max(
+    0,
+    cartSubtotal - couponDiscount + deliveryFee + packagingFee + taxAmount
+  )
 
   // Filtered Restaurants Logic
   const filteredRestaurants = useMemo(() => {
-    return sampleRestaurants.filter((rest) => {
+    return restaurantsList.filter((rest) => {
       const matchesSearch =
         rest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         rest.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -542,7 +650,7 @@ export default function CustomerDashboard({
       const matchesFast = fastDeliveryOnly ? parseInt(rest.eta) <= 25 : true
       return matchesSearch && matchesTag && matchesPureVeg && matchesOffers && matchesFast
     })
-  }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
+  }, [restaurantsList, searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
   // 3-Minute Payment Verification Countdown Effect & Realtime Sync
   useEffect(() => {
@@ -608,61 +716,59 @@ export default function CustomerDashboard({
       return
     }
 
-    const orderId = `DRP-${Math.floor(1000 + Math.random() * 9000)}`
-    const restName = selectedRestaurant?.name || 'The Green Table'
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString()
-
-    const cartWithOtp = cart.map((i) => ({ ...i, otp: generatedOtp }))
-
-    const newOrder = {
-      id: orderId,
-      restaurantName: restName,
-      items: cartWithOtp,
-      subtotal: cartSubtotal,
-      discount: couponDiscount,
-      couponCode: appliedCoupon?.code,
-      total: grandTotal,
-      utrRef: cleanUtr,
-      upiId: cleanUpi,
-      statusStep: 1,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      otp: generatedOtp,
-      driver: {
-        name: 'Searching for nearby driver...',
-        phone: '+91 98765 43210',
-        vehicle: 'Fleet Delivery EV',
-      },
+    if (!user?.id || !selectedRestaurant?.id || !deliveryAddress.trim()) {
+      setUtrError('Select a restaurant, sign in, and enter a delivery address.')
+      return
+    }
+    if (!checkoutConfig || !companyUpiId) {
+      setUtrError('Online payment is not configured for this store.')
+      return
     }
 
-    try {
-      const { error: orderErr } = await supabase.from('orders').insert([
-        {
-          id: orderId,
-          customer_id: 'usr_cust_1',
-          customer_name: user?.name || 'Alex Rivera',
-          customer_phone: user?.phone || '+91 98765 43210',
-          customer_address: deliveryAddress,
-          restaurant_id: 'rest_1',
-          restaurant_name: restName,
-          items: JSON.stringify(cartWithOtp),
-          subtotal: cartSubtotal,
-          packaging_fee: packagingFee,
-          gst: Math.round(cartSubtotal * 0.05),
-          total_amount: grandTotal,
-          status: 'new',
-          driver_name: null,
-          driver_phone: null,
-          payment_method: 'UPI Online',
-        },
-      ])
+    const orderId = crypto.randomUUID()
+    const otpBytes = new Uint32Array(1)
+    crypto.getRandomValues(otpBytes)
+    const generatedOtp = String(1000 + (otpBytes[0] % 9000))
+    const restName = selectedRestaurant.name
 
-      if (orderErr) {
-        console.error('Supabase orders insert error:', orderErr)
-      }
+    const cartWithOtp = cart.map((item) => ({
+      ...item,
+      menu_item_id: item.id,
+      otp: generatedOtp,
+    }))
+
+    try {
+      const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .insert([
+          {
+            id: orderId,
+            customer_id: user.id,
+            customer_name: user.name,
+            customer_phone: user?.phone || null,
+            customer_address: deliveryAddress,
+            restaurant_id: selectedRestaurant.id,
+            restaurant_name: restName,
+            items: JSON.stringify(cartWithOtp),
+            subtotal: cartSubtotal,
+            packaging_fee: packagingFee,
+            gst: taxAmount,
+            total_amount: grandTotal,
+            status: 'new',
+            driver_name: null,
+            driver_phone: null,
+            payment_method: 'UPI Online',
+            delivery_otp: generatedOtp,
+          },
+        ])
+        .select('*')
+        .single()
+
+      if (orderErr || !order) throw orderErr ?? new Error('Order insert returned no record.')
 
       const { error: payErr } = await supabase.from('payment_reviews').insert([
         {
-          id: `pay_${Date.now()}`,
+          id: crypto.randomUUID(),
           order_id: orderId,
           utr_ref: cleanUtr,
           customer_vpa: cleanUpi,
@@ -671,37 +777,24 @@ export default function CustomerDashboard({
         },
       ])
 
-      if (payErr) {
-        console.error('Supabase payment_reviews insert error:', payErr)
-      }
+      if (payErr) throw payErr
+
+      setActiveOrder({
+        id: order.id,
+        restaurantName: order.restaurant_name,
+        items: cartWithOtp,
+        subtotal: Number(order.subtotal),
+        total: Number(order.total_amount),
+        statusStep: 1,
+        otp: generatedOtp,
+        driverName: order.driver_name,
+        driverPhone: order.driver_phone,
+      })
     } catch (err) {
       console.error('Failed to submit order to Supabase:', err)
+      setUtrError('The order or payment reference could not be saved. Please retry.')
+      return
     }
-
-    const historyEntry: PastOrder = {
-      id: orderId,
-      restaurantName: restName,
-      restaurantImage:
-        selectedRestaurant?.image ||
-        'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
-      items: cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
-      subtotal: cartSubtotal,
-      discount: couponDiscount,
-      total: grandTotal,
-      couponCode: appliedCoupon?.code,
-      date: new Date().toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'In Progress',
-      deliveryTime: '22 mins',
-      otp: generatedOtp,
-    }
-
-    setPastOrders((prev) => [historyEntry, ...prev])
-    setActiveOrder(newOrder)
 
     setVerifyingModal({
       open: true,
@@ -733,7 +826,10 @@ export default function CustomerDashboard({
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           {/* Left Block: Logo + Location Selector */}
           <div className="flex items-center justify-between lg:justify-start gap-3 min-w-0">
-            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0 hover:opacity-90 transition">
+            <Link
+              href="/"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0 hover:opacity-90 transition"
+            >
               crave<span className="text-[#86a018]">.</span>
             </Link>
 
@@ -756,7 +852,9 @@ export default function CustomerDashboard({
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] truncate mt-0.5">
-                  <span className="truncate max-w-[160px] sm:max-w-[220px] lg:max-w-[280px]">{deliveryAddress}</span>
+                  <span className="truncate max-w-[160px] sm:max-w-[220px] lg:max-w-[280px]">
+                    {deliveryAddress}
+                  </span>
                   <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
                 </div>
               </div>
@@ -856,7 +954,8 @@ export default function CustomerDashboard({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-300 max-w-lg">
-                    Milk, Eggs, Bread, Cold Drinks, Chips &amp; Fresh Veggies delivered from our nearest dark store in 10 minutes.
+                    Milk, Eggs, Bread, Cold Drinks, Chips &amp; Fresh Veggies delivered from our
+                    nearest dark store in 10 minutes.
                   </p>
                 </div>
               </div>
@@ -969,7 +1068,9 @@ export default function CustomerDashboard({
                     <Flame className="size-4 text-amber-500 fill-amber-500" /> Signature Dishes
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Freshly prepared gourmet dishes at The Green Table.
+                    {selectedRestaurant?.name
+                      ? `Menu items from ${selectedRestaurant.name}.`
+                      : 'Menu items from available restaurants.'}
                   </p>
                 </div>
               </div>
@@ -981,14 +1082,18 @@ export default function CustomerDashboard({
                     className="rounded-2xl border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 transition"
                   >
                     <div>
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-36 w-full rounded-xl object-cover"
-                      />
-                      <p className="mt-3 font-bold text-sm text-[#18201c]">
-                        {item.name}
-                      </p>
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-36 w-full rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="grid h-36 w-full place-items-center rounded-xl bg-gray-100 text-gray-400">
+                          <ShoppingBag className="size-8" />
+                        </div>
+                      )}
+                      <p className="mt-3 font-bold text-sm text-[#18201c]">{item.name}</p>
                       <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.detail}</p>
                     </div>
 
@@ -1011,81 +1116,102 @@ export default function CustomerDashboard({
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-bold text-lg text-[#18201c]">
-                    Tested Kitchen ({filteredRestaurants.length})
+                    Restaurants ({filteredRestaurants.length})
                   </h3>
-                  <p className="text-xs text-gray-500">
-                    Live tested kitchen available for ordering.
-                  </p>
+                  <p className="text-xs text-gray-500">Available restaurants from the database.</p>
                 </div>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredRestaurants.map((rest) => (
-                  <div
-                    key={rest.id}
-                    onClick={() => setSelectedRestaurant(rest)}
-                    className="group cursor-pointer overflow-hidden rounded-3xl border border-[#e1e6df] bg-white transition hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="relative h-48 w-full overflow-hidden">
-                        <img
-                          src={rest.image}
-                          alt={rest.name}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute left-3 top-3 flex items-center gap-1.5">
-                          <span className="rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4f5f15] backdrop-blur-md shadow-xs">
-                            {rest.tag}
-                          </span>
-                          {rest.isPureVeg && (
-                            <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow-xs">
-                              Pure Veg
+                {filteredRestaurants.length === 0 ? (
+                  <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+                    No restaurants match these filters.
+                  </p>
+                ) : (
+                  filteredRestaurants.map((rest) => (
+                    <div
+                      key={rest.id}
+                      onClick={() => setSelectedRestaurant(rest)}
+                      className="group cursor-pointer overflow-hidden rounded-3xl border border-[#e1e6df] bg-white transition hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="relative h-48 w-full overflow-hidden">
+                          {rest.image ? (
+                            <img
+                              src={rest.image}
+                              alt={rest.name}
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="grid size-full place-items-center bg-gray-100 text-gray-400">
+                              <MapPin className="size-8" />
+                            </div>
+                          )}
+                          <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                            {rest.tag && (
+                              <span className="rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4f5f15] backdrop-blur-md shadow-xs">
+                                {rest.tag}
+                              </span>
+                            )}
+                            {rest.isPureVeg && (
+                              <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow-xs">
+                                Pure Veg
+                              </span>
+                            )}
+                          </div>
+
+                          {rest.eta && (
+                            <span className="absolute bottom-3 right-3 rounded-full bg-[#18201c] px-3 py-1 text-[10px] font-bold text-white shadow-xs">
+                              {rest.eta}
+                            </span>
+                          )}
+
+                          {rest.offer && (
+                            <span className="absolute bottom-3 left-3 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-extrabold text-[#18201c] shadow-md flex items-center gap-1">
+                              <Tag className="size-3" /> {rest.offer}
                             </span>
                           )}
                         </div>
 
-                        <span className="absolute bottom-3 right-3 rounded-full bg-[#18201c] px-3 py-1 text-[10px] font-bold text-white shadow-xs">
-                          {rest.eta}
-                        </span>
+                        <div className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-bold text-base tracking-tight text-[#18201c]">
+                                {rest.name}
+                              </h3>
+                              <p className="mt-0.5 text-xs text-[#737e77]">{rest.cuisine}</p>
+                            </div>
+                          </div>
 
-                        {rest.offer && (
-                          <span className="absolute bottom-3 left-3 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-extrabold text-[#18201c] shadow-md flex items-center gap-1">
-                            <Tag className="size-3" /> {rest.offer}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-bold text-base tracking-tight text-[#18201c]">
-                              {rest.name}
-                            </h3>
-                            <p className="mt-0.5 text-xs text-[#737e77]">{rest.cuisine}</p>
+                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#737e77]">
+                            {rest.address && (
+                              <span className="flex min-w-0 items-center gap-1 truncate">
+                                <MapPin className="size-3.5 shrink-0 text-[#8aa31c]" />
+                                {rest.address}
+                              </span>
+                            )}
+                            {rest.costForTwo && (
+                              <span className="shrink-0 font-semibold text-gray-600">
+                                {rest.costForTwo}
+                              </span>
+                            )}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="mt-3 flex items-center justify-between text-xs text-[#737e77]">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="size-3.5 text-[#8aa31c]" /> {rest.address} ({rest.distance})
+                      <div className="p-4 pt-0">
+                        <div className="flex items-center justify-between border-t border-[#f0f3eb] pt-3 text-xs">
+                          <span className="text-emerald-700 font-semibold text-[11px]">
+                            {rest.eta ? `Delivery · ${rest.eta}` : 'Delivery time unavailable'}
                           </span>
-                          <span className="font-semibold text-gray-600">{rest.costForTwo}</span>
+                          <span className="font-bold text-[#86a018] group-hover:underline flex items-center gap-1">
+                            View Menu <ArrowRight className="size-3" />
+                          </span>
                         </div>
                       </div>
                     </div>
-
-                    <div className="p-4 pt-0">
-                      <div className="flex items-center justify-between border-t border-[#f0f3eb] pt-3 text-xs">
-                        <span className="text-emerald-700 font-semibold text-[11px]">
-                          Express Delivery
-                        </span>
-                        <span className="font-bold text-[#86a018] group-hover:underline flex items-center gap-1">
-                          View Menu <ArrowRight className="size-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -1121,11 +1247,17 @@ export default function CustomerDashboard({
                     className="overflow-hidden rounded-3xl border border-[#e1e6df] bg-white shadow-xs"
                   >
                     <div className="flex items-center gap-4 border-b border-[#f0f3ec] p-5">
-                      <img
-                        src={order.restaurantImage}
-                        alt={order.restaurantName}
-                        className="size-14 rounded-2xl object-cover shrink-0"
-                      />
+                      {order.restaurantImage ? (
+                        <img
+                          src={order.restaurantImage}
+                          alt={order.restaurantName}
+                          className="size-14 rounded-2xl object-cover shrink-0"
+                        />
+                      ) : (
+                        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gray-100 text-gray-400">
+                          <Store className="size-5" />
+                        </span>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
@@ -1203,9 +1335,12 @@ export default function CustomerDashboard({
                     <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
                       <span>Verified Customer Account</span>
                     </div>
-                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">{user?.name || 'Customer Account'}</h2>
+                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
+                      {user?.name || 'Customer Account'}
+                    </h2>
                     <p className="mt-0.5 text-xs text-gray-300 font-medium">
-                      {user?.email || 'authenticated@crave.com'} {user?.phone ? `• ${user.phone}` : ''}
+                      {user?.email || 'authenticated@crave.com'}{' '}
+                      {user?.phone ? `• ${user.phone}` : ''}
                     </p>
                   </div>
                 </div>
@@ -1221,20 +1356,20 @@ export default function CustomerDashboard({
               <div className="mt-6 grid grid-cols-2 divide-x divide-[#2a3831] border-t border-[#2a3831] pt-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white">
-                    {pastOrders.filter((o) => o.status === 'Delivered' || o.status === 'In Progress').length}
+                    {
+                      pastOrders.filter(
+                        (o) => o.status === 'Delivered' || o.status === 'In Progress'
+                      ).length
+                    }
                   </p>
-                  <p className="text-xs text-gray-400 font-medium mt-1">
-                    Orders Placed
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Orders Placed</p>
                 </div>
 
                 <div className="text-center">
                   <p className="text-2xl font-bold text-[#d9f447]">
                     ₹{pastOrders.reduce((a, o) => a + (o.discount || 0), 0)}
                   </p>
-                  <p className="text-xs text-gray-400 font-medium mt-1">
-                    Total Savings
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Total Savings</p>
                 </div>
               </div>
             </div>
@@ -1244,7 +1379,8 @@ export default function CustomerDashboard({
                 <div>
                   <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 mb-4">
                     <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                      <User className="size-4 text-[#18201c]" /> Personal Details &amp; Delivery Address
+                      <User className="size-4 text-[#18201c]" /> Personal Details &amp; Delivery
+                      Address
                     </h3>
                     <button
                       onClick={() => setEditAddress(!editAddress)}
@@ -1318,23 +1454,28 @@ export default function CustomerDashboard({
 
                   <div className="space-y-3 text-xs">
                     <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
-                      <p className="font-bold text-[#18201c]">End-to-End Encryption &amp; Security</p>
+                      <p className="font-bold text-[#18201c]">
+                        End-to-End Encryption &amp; Security
+                      </p>
                       <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        All user accounts, delivery coordinates, and payment records are secured using TLS encryption and Supabase PostgreSQL Row Level Security (RLS).
+                        All user accounts, delivery coordinates, and payment records are secured
+                        using TLS encryption and Supabase PostgreSQL Row Level Security (RLS).
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
                       <p className="font-bold text-[#18201c]">Zero Third-Party Data Selling</p>
                       <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        crave. never sells, rents, or trades your personal phone number, location history, or order data to external advertising networks.
+                        crave. never sells, rents, or trades your personal phone number, location
+                        history, or order data to external advertising networks.
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
                       <p className="font-bold text-[#18201c]">Payment Verification</p>
                       <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        Payment UTR references submitted for manual verification are cleared directly with verified platform admin records and purged after processing.
+                        Payment UTR references submitted for manual verification are cleared
+                        directly with verified platform admin records and purged after processing.
                       </p>
                     </div>
                   </div>
@@ -1380,29 +1521,45 @@ export default function CustomerDashboard({
                     Order Status Steps:
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-semibold">
-                    <div className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 1 ? 'text-[#18201c]' : 'text-gray-400'}`}>
+                    <div
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 1 ? 'text-[#18201c]' : 'text-gray-400'}`}
+                    >
                       <span className="grid size-9 place-items-center rounded-full font-bold bg-[#d9f447] text-[#18201c]">
                         {activeOrder.statusStep > 1 ? <Check className="size-4" /> : '1'}
                       </span>
                       <span className="text-[11px]">1. Confirmed</span>
                     </div>
 
-                    <div className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 2 ? 'text-[#18201c]' : 'text-gray-400'}`}>
-                      <span className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 2 ? 'bg-[#d9f447] text-[#18201c]' : 'bg-gray-100 text-gray-400'}`}>
+                    <div
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 2 ? 'text-[#18201c]' : 'text-gray-400'}`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 2 ? 'bg-[#d9f447] text-[#18201c]' : 'bg-gray-100 text-gray-400'}`}
+                      >
                         {activeOrder.statusStep > 2 ? <Check className="size-4" /> : '2'}
                       </span>
                       <span className="text-[11px]">2. Kitchen Cooking</span>
                     </div>
 
-                    <div className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 3 ? 'text-[#18201c]' : 'text-gray-400'}`}>
-                      <span className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 3 ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <div
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 3 ? 'text-[#18201c]' : 'text-gray-400'}`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 3 ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400'}`}
+                      >
                         {activeOrder.statusStep > 3 ? <Check className="size-4" /> : '3'}
                       </span>
-                      <span className="text-[11px] font-bold text-emerald-700">3. Out for Delivery</span>
+                      <span className="text-[11px] font-bold text-emerald-700">
+                        3. Out for Delivery
+                      </span>
                     </div>
 
-                    <div className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 4 ? 'text-[#18201c]' : 'text-gray-400'}`}>
-                      <span className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep === 4 ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <div
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 4 ? 'text-[#18201c]' : 'text-gray-400'}`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep === 4 ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}
+                      >
                         4
                       </span>
                       <span className="text-[11px]">4. Delivered</span>
@@ -1414,23 +1571,23 @@ export default function CustomerDashboard({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                        <Compass className="size-5 text-emerald-600 animate-spin" style={{ animationDuration: '6s' }} />
+                        <Compass
+                          className="size-5 text-emerald-600 animate-spin"
+                          style={{ animationDuration: '6s' }}
+                        />
                         Live Rider Delivery Route
                       </h4>
                       <p className="text-xs text-[#737e77]">
-                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}.
+                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}
+                        .
                       </p>
                     </div>
                   </div>
 
-                  <Mapcn
-                    pickupCoords={[12.9784, 77.6408]}
-                    dropoffCoords={[12.9352, 77.6245]}
-                    driverCoords={[12.958, 77.632]}
-                    restaurantName={activeOrder.restaurantName}
-                    customerAddress={deliveryAddress}
-                    height="h-72 sm:h-80 lg:h-[380px]"
-                  />
+                  <div className="grid h-48 place-items-center rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-xs text-gray-500 sm:h-56">
+                    Live route mapping is unavailable until this order has stored restaurant,
+                    customer, and rider coordinates.
+                  </div>
                 </div>
 
                 <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1440,25 +1597,20 @@ export default function CustomerDashboard({
                     </div>
                     <div>
                       <p className="text-xs text-[#737e77]">Assigned Delivery Partner</p>
-                      <p className="font-bold text-sm text-[#18201c]">{activeOrder.driver.name}</p>
-                      <p className="text-xs text-[#849a17]">{activeOrder.driver.vehicle}</p>
+                      <p className="font-bold text-sm text-[#18201c]">
+                        {activeOrder.driverName || 'Awaiting driver assignment'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href={`tel:${activeOrder.driver.phone}`}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs"
-                    >
-                      <PhoneCall className="size-3.5 text-[#829b14]" />
-                      Call Partner
-                    </a>
-                    {activeOrder.statusStep < 4 && (
-                      <button
-                        onClick={handleMarkDelivered}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-xs"
+                    {activeOrder.driverPhone && (
+                      <a
+                        href={`tel:${activeOrder.driverPhone}`}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs"
                       >
-                        <CheckCircle2 className="size-3.5" /> Mark Delivered
-                      </button>
+                        <PhoneCall className="size-3.5 text-[#829b14]" />
+                        Call Partner
+                      </a>
                     )}
                   </div>
                 </div>
@@ -1470,7 +1622,8 @@ export default function CustomerDashboard({
                 </div>
                 <h3 className="mt-4 text-xl font-bold">No Active Order Right Now</h3>
                 <p className="mt-1 text-xs text-[#747e78] max-w-sm mx-auto">
-                  Browse your favourite dishes and place an order to see live delivery tracking here.
+                  Browse your favourite dishes and place an order to see live delivery tracking
+                  here.
                 </p>
                 <button
                   onClick={() => navigateToTab('explore')}
@@ -1737,35 +1890,46 @@ export default function CustomerDashboard({
             ) : (
               <form onSubmit={handleCheckoutSubmit} className="mt-4 flex flex-col gap-4">
                 {/* Company UPI Box */}
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                        Company Official UPI ID
-                      </p>
-                      <p className="font-mono text-base font-bold text-emerald-950 mt-0.5">
-                        {companyUpiId}
-                      </p>
+                {checkoutConfig && companyUpiId ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                          {companyMerchantName || 'Merchant UPI'}
+                        </p>
+                        <p className="font-mono text-base font-bold text-emerald-950 mt-0.5">
+                          {companyUpiId}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopyCompanyUpi}
+                        className="flex items-center gap-1 rounded-xl bg-white border border-emerald-300 px-3 py-1.5 font-bold text-emerald-900 shadow-xs hover:bg-emerald-100 transition"
+                      >
+                        <Copy className="size-3.5" /> Copy
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyCompanyUpi}
-                      className="flex items-center gap-1 rounded-xl bg-white border border-emerald-300 px-3 py-1.5 font-bold text-emerald-900 shadow-xs hover:bg-emerald-100 transition"
-                    >
-                      <Copy className="size-3.5" /> Copy
-                    </button>
-                  </div>
 
-                  <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center justify-between">
-                    <span className="text-[11px] text-emerald-800">Amount to pay: <strong>₹{grandTotal}</strong></span>
-                    <a
-                      href={`upi://pay?pa=${encodeURIComponent(companyUpiId)}&pn=Crave%20Food&am=${grandTotal}&cu=INR`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-emerald-950 underline hover:text-emerald-700"
-                    >
-                      Open UPI App <ExternalLink className="size-3" />
-                    </a>
+                    <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center justify-between">
+                      <span className="text-[11px] text-emerald-800">
+                        Amount to pay: <strong>₹{grandTotal}</strong>
+                      </span>
+                      <a
+                        href={`upi://pay?pa=${encodeURIComponent(companyUpiId)}&pn=${encodeURIComponent(companyMerchantName)}&am=${grandTotal}&cu=INR`}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-950 underline hover:text-emerald-700"
+                      >
+                        Open UPI App <ExternalLink className="size-3" />
+                      </a>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <p
+                    role="alert"
+                    className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900"
+                  >
+                    Online payment settings are not configured. Contact the platform administrator.
+                  </p>
+                )}
 
                 <div className="rounded-2xl bg-[#f8f9f6] p-4 text-xs">
                   <div className="flex justify-between py-1 text-[#65716a]">
@@ -1773,8 +1937,8 @@ export default function CustomerDashboard({
                     <span>₹{cartSubtotal}</span>
                   </div>
                   <div className="flex justify-between py-1 text-[#65716a]">
-                    <span>Delivery &amp; Taxes</span>
-                    <span>₹{deliveryFee + packagingFee}</span>
+                    <span>Delivery, packaging &amp; taxes</span>
+                    <span>₹{deliveryFee + packagingFee + taxAmount}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-[#e2e7dd] font-bold text-sm text-[#18201c]">
                     <span>Total Amount</span>
@@ -1787,7 +1951,7 @@ export default function CustomerDashboard({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. yourname@upi"
+                    placeholder="Enter your UPI VPA"
                     value={upiId}
                     onChange={(e) => {
                       setUpiId(e.target.value)
@@ -1795,7 +1959,9 @@ export default function CustomerDashboard({
                     }}
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 text-xs outline-none focus:border-[#86a018] font-medium"
                   />
-                  {upiError && <p className="mt-1 text-[11px] font-bold text-rose-600">{upiError}</p>}
+                  {upiError && (
+                    <p className="mt-1 text-[11px] font-bold text-rose-600">{upiError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1806,7 +1972,7 @@ export default function CustomerDashboard({
                     type="text"
                     required
                     maxLength={12}
-                    placeholder="e.g. 428190021389"
+                    placeholder="Enter the bank UTR reference"
                     value={utrRef}
                     onChange={(e) => {
                       setUtrRef(e.target.value.replace(/\D/g, ''))
@@ -1814,12 +1980,15 @@ export default function CustomerDashboard({
                     }}
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 text-xs outline-none focus:border-[#86a018] font-mono font-bold"
                   />
-                  {utrError && <p className="mt-1 text-[11px] font-bold text-rose-600">{utrError}</p>}
+                  {utrError && (
+                    <p className="mt-1 text-[11px] font-bold text-rose-600">{utrError}</p>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md"
+                  disabled={!checkoutConfig || !companyUpiId}
+                  className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit Order &amp; Start Verification (₹{grandTotal})
                 </button>
@@ -1839,7 +2008,8 @@ export default function CustomerDashboard({
 
             <h3 className="mt-4 text-xl font-bold text-[#18201c]">Verifying Payment Details</h3>
             <p className="mt-1 text-xs text-gray-500">
-              Order ID: <strong className="font-mono text-[#18201c]">{verifyingModal.orderId}</strong>
+              Order ID:{' '}
+              <strong className="font-mono text-[#18201c]">{verifyingModal.orderId}</strong>
             </p>
 
             {verifyingModal.status === 'verifying' && (
@@ -1852,8 +2022,7 @@ export default function CustomerDashboard({
                     {Math.floor(verifyingModal.timer / 60)
                       .toString()
                       .padStart(2, '0')}
-                    :
-                    {(verifyingModal.timer % 60).toString().padStart(2, '0')}
+                    :{(verifyingModal.timer % 60).toString().padStart(2, '0')}
                   </p>
                   <p className="mt-2 text-[11px] text-gray-500">
                     Cross-referencing your 12-digit UTR reference with bank records.
@@ -1887,7 +2056,8 @@ export default function CustomerDashboard({
               <div className="mt-5 rounded-2xl bg-emerald-50 p-4 border border-emerald-200">
                 <p className="text-sm font-bold text-emerald-900">✓ Payment Approved!</p>
                 <p className="text-xs text-emerald-700 mt-1">
-                  Your order has been accepted and dispatched to the kitchen. Redirecting to live tracking...
+                  Your order has been accepted and dispatched to the kitchen. Redirecting to live
+                  tracking...
                 </p>
               </div>
             )}
@@ -1902,7 +2072,9 @@ export default function CustomerDashboard({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setVerifyingModal({ open: false, timer: 180, orderId: '', status: 'verifying' })}
+                  onClick={() =>
+                    setVerifyingModal({ open: false, timer: 180, orderId: '', status: 'verifying' })
+                  }
                   className="w-full rounded-full bg-[#18201c] py-2.5 text-xs font-bold text-white"
                 >
                   Close &amp; Retry UTR
@@ -1953,7 +2125,9 @@ export default function CustomerDashboard({
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-sm">
-                      {gpsDetecting ? 'Detecting Precise GPS Location...' : 'Use Current GPS Location'}
+                      {gpsDetecting
+                        ? 'Detecting Precise GPS Location...'
+                        : 'Use Current GPS Location'}
                     </p>
                     <p className="text-xs text-emerald-700">
                       Auto-detect latitude &amp; longitude via browser geolocation
@@ -1970,51 +2144,69 @@ export default function CustomerDashboard({
                   Saved Addresses ({savedAddresses.length})
                 </h4>
                 <div className="space-y-3">
-                  {savedAddresses.map((addr) => {
-                    const isSelected = deliveryAddress === addr.address
-                    return (
-                      <div
-                        key={addr.id}
-                        onClick={() => {
-                          setDeliveryAddress(addr.address)
-                          setSelectedMapPin({ lat: addr.lat, lng: addr.lng })
-                          setShowLocationModal(false)
-                          triggerToast(`Switched delivery address to ${addr.label}!`)
-                        }}
-                        className={`flex items-start justify-between rounded-2xl p-4 border cursor-pointer transition ${
-                          isSelected
-                            ? 'border-[#18201c] bg-[#18201c]/5 shadow-xs'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`grid size-9 place-items-center rounded-xl shrink-0 mt-0.5 ${
-                            isSelected ? 'bg-[#18201c] text-white' : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            <MapPin className="size-4" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-[#18201c]">{addr.label}</span>
-                              <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded-md">
-                                {addr.tag}
-                              </span>
+                  {savedAddresses.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-gray-300 p-4 text-xs text-gray-500">
+                      No saved addresses yet.
+                    </p>
+                  ) : (
+                    savedAddresses.map((addr) => {
+                      const isSelected = deliveryAddress === addr.address
+                      return (
+                        <div
+                          key={addr.id}
+                          onClick={() => {
+                            setDeliveryAddress(addr.address)
+                            setSelectedMapPin(
+                              addr.lat != null && addr.lng != null
+                                ? { lat: addr.lat, lng: addr.lng }
+                                : null
+                            )
+                            setShowLocationModal(false)
+                            triggerToast(`Switched delivery address to ${addr.label}!`)
+                          }}
+                          className={`flex items-start justify-between rounded-2xl p-4 border cursor-pointer transition ${
+                            isSelected
+                              ? 'border-[#18201c] bg-[#18201c]/5 shadow-xs'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`grid size-9 place-items-center rounded-xl shrink-0 mt-0.5 ${
+                                isSelected ? 'bg-[#18201c] text-white' : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              <MapPin className="size-4" />
                             </div>
-                            <p className="text-xs text-gray-600 mt-1 font-medium">{addr.address}</p>
-                            <p className="text-[10px] font-mono text-gray-400 mt-0.5">
-                              Coordinates: {addr.lat}&deg; N, {addr.lng}&deg; E
-                            </p>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-sm text-[#18201c]">
+                                  {addr.label}
+                                </span>
+                                <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded-md">
+                                  {addr.tag}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 mt-1 font-medium">
+                                {addr.address}
+                              </p>
+                              {addr.lat != null && addr.lng != null && (
+                                <p className="mt-0.5 font-mono text-[10px] text-gray-400">
+                                  Coordinates: {addr.lat}&deg; N, {addr.lng}&deg; E
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
 
-                        {isSelected && (
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
+                          {isSelected && (
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
               </div>
 
@@ -2024,22 +2216,13 @@ export default function CustomerDashboard({
                     Interactive Map Pin Placement
                   </h4>
                   <span className="text-xs font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                    {selectedMapPin.lat.toFixed(4)}&deg; N, {selectedMapPin.lng.toFixed(4)}&deg; E
+                    {selectedMapPin
+                      ? `${selectedMapPin.lat.toFixed(4)}, ${selectedMapPin.lng.toFixed(4)}`
+                      : 'GPS not selected'}
                   </span>
                 </div>
 
-                <div
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    const x = (e.clientX - rect.left) / rect.width
-                    const y = (e.clientY - rect.top) / rect.height
-                    const newLat = parseFloat((12.9 + y * 0.1).toFixed(4))
-                    const newLng = parseFloat((77.5 + x * 0.2).toFixed(4))
-                    setSelectedMapPin({ lat: newLat, lng: newLng })
-                    setNewAddressInput(`Dropped Pin (${newLat}° N, ${newLng}° E) • Indiranagar, Bengaluru`)
-                  }}
-                  className="relative h-48 w-full rounded-2xl overflow-hidden border border-gray-300 bg-[#e5e9e2] cursor-crosshair shadow-inner group"
-                >
+                <div className="relative h-48 w-full rounded-2xl overflow-hidden border border-gray-300 bg-[#e5e9e2] shadow-inner">
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#18201c_1px,transparent_1px)] [background-size:16px_16px]" />
                   <div className="absolute top-1/2 left-0 right-0 h-4 bg-white/70 -translate-y-1/2" />
                   <div className="absolute left-1/3 top-0 bottom-0 w-4 bg-white/70" />
@@ -2050,19 +2233,19 @@ export default function CustomerDashboard({
                       <MapPin className="size-5" />
                     </div>
                     <span className="mt-1 text-[10px] font-bold bg-[#18201c] text-white px-2 py-0.5 rounded-md shadow-md">
-                      Drop Location
+                      {selectedMapPin ? 'Current GPS Position' : 'GPS Position Required'}
                     </span>
                   </div>
 
                   <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-gray-700 shadow-xs border border-gray-200">
-                    Click anywhere on map canvas to shift drop pin location
+                    Use device GPS to record coordinates. Enter the complete address below.
                   </div>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50 space-y-3">
                 <h4 className="text-xs font-bold text-[#18201c]">Add New Custom Address</h4>
-                
+
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-gray-500 font-semibold">Label:</span>
                   {(['Home', 'Work', 'Other'] as const).map((lbl) => (

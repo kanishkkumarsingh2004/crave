@@ -1,17 +1,6 @@
--- Supabase Schema Initialization & Test Accounts Seed Script for crave.
--- Run this script in the Supabase SQL Editor (https://supabase.com/dashboard/project/yjzlpqzegqxznmmfovjt/sql)
-
--- 1. Reset existing tables (Clears old database contents)
-DROP TABLE IF EXISTS payment_reviews CASCADE;
-DROP TABLE IF EXISTS vendor_settlements CASCADE;
-DROP TABLE IF EXISTS coupons CASCADE;
-DROP TABLE IF EXISTS orders CASCADE;
-DROP TABLE IF EXISTS menu_items CASCADE;
-DROP TABLE IF EXISTS restaurants CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
--- 2. Create Core Tables
-CREATE TABLE users (
+-- Idempotent Supabase schema setup. This file creates structure only; it never
+-- drops tables or inserts sample/demo business records.
+CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
@@ -26,7 +15,7 @@ CREATE TABLE users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE restaurants (
+CREATE TABLE IF NOT EXISTS restaurants (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   cuisine TEXT NOT NULL,
@@ -38,7 +27,7 @@ CREATE TABLE restaurants (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE menu_items (
+CREATE TABLE IF NOT EXISTS menu_items (
   id TEXT PRIMARY KEY,
   restaurant_id TEXT REFERENCES restaurants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -50,7 +39,7 @@ CREATE TABLE menu_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
   customer_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   customer_name TEXT NOT NULL,
@@ -70,7 +59,7 @@ CREATE TABLE orders (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE coupons (
+CREATE TABLE IF NOT EXISTS coupons (
   id TEXT PRIMARY KEY,
   code TEXT UNIQUE NOT NULL,
   description TEXT NOT NULL,
@@ -85,7 +74,7 @@ CREATE TABLE coupons (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE vendor_settlements (
+CREATE TABLE IF NOT EXISTS vendor_settlements (
   id TEXT PRIMARY KEY,
   restaurant_name TEXT NOT NULL,
   gross_sales INT NOT NULL,
@@ -96,7 +85,7 @@ CREATE TABLE vendor_settlements (
   payout_date DATE DEFAULT CURRENT_DATE
 );
 
-CREATE TABLE payment_reviews (
+CREATE TABLE IF NOT EXISTS payment_reviews (
   id TEXT PRIMARY KEY,
   order_id TEXT NOT NULL,
   utr_ref TEXT NOT NULL,
@@ -106,34 +95,133 @@ CREATE TABLE payment_reviews (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Seed ONLY Test Accounts (Customer, Vendor, Rider/Driver, Admin)
-INSERT INTO users (id, name, email, role, phone, address, avatar, restaurant_name, cuisine, vehicle_type, license_plate) VALUES
-  ('usr_cust_1', 'Alex Rivera', 'alex@example.com', 'customer', '+91 98765 43210', 'Indiranagar 100ft Rd, Bengaluru', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', NULL, NULL, NULL, NULL),
-  ('usr_vend_1', 'Maya Lin (Owner)', 'green@table.com', 'vendor', '+91 98111 22334', 'Koramangala 5th Block, Bengaluru', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80', 'The Green Table', 'Healthy Bowls & Salads', NULL, NULL),
-  ('usr_driv_1', 'Rajesh Kumar', 'rajesh@express.com', 'driver', '+91 97444 55667', 'HSR Layout, Bengaluru', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', NULL, NULL, 'Electric Scooter (Ather 450X)', 'KA 01 EV 9821'),
-  ('usr_admin_1', 'Sara Vance (Admin)', 'admin@crave.com', 'admin', '+91 99000 00001', 'CRAVE HQ, Indiranagar', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80', NULL, NULL, NULL, NULL);
+ALTER TABLE restaurants
+  ADD COLUMN IF NOT EXISTS image TEXT,
+  ADD COLUMN IF NOT EXISTS is_pure_veg BOOLEAN,
+  ADD COLUMN IF NOT EXISTS is_dark_store BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS is_open BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS rating_count INTEGER,
+  ADD COLUMN IF NOT EXISTS cost_for_two INTEGER,
+  ADD COLUMN IF NOT EXISTS delivery_minutes INTEGER,
+  ADD COLUMN IF NOT EXISTS offer TEXT,
+  ADD COLUMN IF NOT EXISTS latitude NUMERIC,
+  ADD COLUMN IF NOT EXISTS longitude NUMERIC,
+  ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS bank_account_name TEXT,
+  ADD COLUMN IF NOT EXISTS bank_name TEXT,
+  ADD COLUMN IF NOT EXISTS bank_account_number TEXT,
+  ADD COLUMN IF NOT EXISTS bank_ifsc TEXT,
+  ADD COLUMN IF NOT EXISTS payout_vpa TEXT,
+  ADD COLUMN IF NOT EXISTS fssai_license TEXT;
 
--- 4. Seed Essential Initial Test Data
-INSERT INTO restaurants (id, name, cuisine, rating, commission_rate, payment_model, address, owner_id) VALUES
-  ('rest_1', 'The Green Table', 'Healthy Bowls & Salads', 4.9, 15, 'commission', 'Koramangala 5th Block, Bengaluru', 'usr_vend_1');
+ALTER TABLE menu_items
+  ADD COLUMN IF NOT EXISTS is_veg BOOLEAN,
+  ADD COLUMN IF NOT EXISTS unit TEXT,
+  ADD COLUMN IF NOT EXISTS mrp INTEGER,
+  ADD COLUMN IF NOT EXISTS stock_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sku_code TEXT,
+  ADD COLUMN IF NOT EXISTS expiry_date DATE;
 
-INSERT INTO menu_items (id, restaurant_id, name, category, price, description, in_stock, image) VALUES
-  ('menu_1', 'rest_1', 'Avocado Quinoa Harvest Bowl', 'Bowls', 289, 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & pine nuts', TRUE, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80'),
-  ('menu_2', 'rest_1', 'Smoky Paneer Tikka Wrap', 'Wraps', 249, 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt', TRUE, 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80'),
-  ('menu_3', 'rest_1', 'Steamed Truffle Edamame Momos', 'Starters', 320, 'Delicate dumplings stuffed with smashed edamame and black truffle oil', TRUE, 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80');
+ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS delivery_otp TEXT,
+  ADD COLUMN IF NOT EXISTS picker_name TEXT,
+  ADD COLUMN IF NOT EXISTS tip INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS discount_amount INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS coupon_code TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_latitude NUMERIC,
+  ADD COLUMN IF NOT EXISTS delivery_longitude NUMERIC,
+  ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
 
-INSERT INTO orders (id, customer_id, customer_name, customer_phone, customer_address, restaurant_id, restaurant_name, items, subtotal, packaging_fee, gst, total_amount, status, driver_name, driver_phone, payment_method) VALUES
-  ('DRP-9021', 'usr_cust_1', 'Alex Rivera', '+91 98765 43210', 'Flat 402, Sunshine Heights, Indiranagar', 'rest_1', 'The Green Table', '[{"name": "Avocado Quinoa Harvest Bowl", "qty": 2, "price": 289}, {"name": "Smoky Paneer Tikka Wrap", "qty": 1, "price": 249}]', 827, 30, 41, 898, 'new', NULL, NULL, 'UPI Online'),
-  ('DRP-8840', 'usr_cust_1', 'Priya Sharma', '+91 98450 11223', 'Villa 12, Palm Meadows, Whitefield', 'rest_1', 'The Green Table', '[{"name": "Steamed Truffle Edamame Momos", "qty": 3, "price": 320}]', 960, 20, 48, 1028, 'preparing', 'Rajesh Kumar', '+91 97444 55667', 'UPI Online'),
-  ('DRP-8712', 'usr_cust_1', 'Karan Patel', '+91 99100 55443', 'Block C, Koramangala 5th Block', 'rest_1', 'The Green Table', '[{"name": "Avocado Quinoa Harvest Bowl", "qty": 1, "price": 289}]', 289, 15, 14, 318, 'ready', 'Rajesh Kumar', '+91 97444 55667', 'UPI Online');
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+ALTER TABLE orders ADD CONSTRAINT orders_status_check
+  CHECK (status IN ('new', 'preparing', 'packing', 'ready', 'picked_up', 'completed', 'cancelled'));
 
-INSERT INTO coupons (id, code, description, discount_type, discount_value, min_order_amount, max_discount, usage_limit, used_count, is_active, expiry_date) VALUES
-  ('c_1', 'CRAVE50', '50% OFF up to ₹100 on first 3 orders', 'percentage', 50, 199, 100, 1000, 142, TRUE, '2026-12-31'),
-  ('c_2', 'FREEDEL', 'Flat ₹40 OFF Delivery Fee on orders above ₹299', 'flat', 40, 299, 40, 500, 89, TRUE, '2026-11-30');
+ALTER TABLE coupons
+  ADD COLUMN IF NOT EXISTS restaurant_id TEXT REFERENCES restaurants(id) ON DELETE CASCADE;
 
-INSERT INTO vendor_settlements (id, restaurant_name, gross_sales, commission_rate, commission_amount, net_payout, status) VALUES
-  ('set_1', 'The Green Table', 148200, 15, 22230, 125970, 'settled');
+ALTER TABLE vendor_settlements
+  ADD COLUMN IF NOT EXISTS restaurant_id TEXT REFERENCES restaurants(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS period_start DATE,
+  ADD COLUMN IF NOT EXISTS period_end DATE,
+  ADD COLUMN IF NOT EXISTS transaction_ref TEXT;
 
-INSERT INTO payment_reviews (id, order_id, utr_ref, customer_vpa, amount, status) VALUES
-  ('pay_1', '#CRV-9021', '428190021389', 'alex@upi', 867, 'pending');
+CREATE TABLE IF NOT EXISTS customer_addresses (
+  id TEXT PRIMARY KEY,
+  customer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  address TEXT NOT NULL,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payment_configs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  merchant_vpa TEXT NOT NULL,
+  merchant_name TEXT NOT NULL,
+  merchant_category_code TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE customer_addresses
+  ADD COLUMN IF NOT EXISTS latitude NUMERIC,
+  ADD COLUMN IF NOT EXISTS longitude NUMERIC;
+
+ALTER TABLE payment_configs
+  ADD COLUMN IF NOT EXISTS delivery_fee INTEGER,
+  ADD COLUMN IF NOT EXISTS handling_fee INTEGER,
+  ADD COLUMN IF NOT EXISTS free_delivery_threshold INTEGER,
+  ADD COLUMN IF NOT EXISTS gst_rate NUMERIC;
+
+CREATE TABLE IF NOT EXISTS driver_upi_accounts (
+  id TEXT PRIMARY KEY,
+  driver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  vpa TEXT NOT NULL,
+  bank_name TEXT,
+  is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS driver_payouts (
+  id TEXT PRIMARY KEY,
+  driver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  transaction_ref TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS driver_incentives (
+  id TEXT PRIMARY KEY,
+  driver_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  reward_amount INTEGER NOT NULL,
+  starts_at TIMESTAMPTZ,
+  ends_at TIMESTAMPTZ,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS cold_chain_sensors (
+  id TEXT PRIMARY KEY,
+  restaurant_id TEXT NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  temperature_c NUMERIC NOT NULL,
+  target_temperature_c NUMERIC,
+  status TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS picker_metrics (
+  id TEXT PRIMARY KEY,
+  restaurant_id TEXT NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  picker_name TEXT NOT NULL,
+  bay TEXT,
+  orders_packed INTEGER NOT NULL DEFAULT 0,
+  average_pick_seconds INTEGER,
+  accuracy_rate NUMERIC,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
