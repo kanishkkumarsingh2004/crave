@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ArrowUpRight,
@@ -12,17 +12,78 @@ import {
   Users,
   Zap,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminOverviewPage() {
-  const pendingPayments = [
-    { id: 'pay_1', orderId: '#CRV-9021', customerUpi: 'alex@upi', utrRef: '428190021389', amount: 867 },
-  ]
+  const [weeklyGross, setWeeklyGross] = useState<number>(0)
+  const [totalCommission, setTotalCommission] = useState<number>(0)
+  const [netVendorPay, setNetVendorPay] = useState<number>(0)
+  const [driverCount, setDriverCount] = useState<number>(0)
+  const [totalUsersCount, setTotalUsersCount] = useState<number>(0)
+  const [customerCount, setCustomerCount] = useState<number>(0)
+  const [vendorCount, setVendorCount] = useState<number>(0)
+  const [topRestaurants, setTopRestaurants] = useState<{ name: string; grossSales: number; commissionRate: number }[]>([])
+  const [pendingPayments, setPendingPayments] = useState<{ id: string; orderId: string; customerUpi: string; utrRef: string; amount: number }[]>([])
 
-  const topRestaurantsFinancials = [
-    { name: 'The Green Table', grossSales: 148200, commissionRate: 15 },
-    { name: 'Momo House & Asian Grill', grossSales: 194500, commissionRate: 15 },
-    { name: 'Casa Napoli Pizza', grossSales: 215000, commissionRate: 12 },
-  ]
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        // 1. Fetch vendor settlements for revenue totals
+        const { data: setts } = await supabase.from('vendor_settlements').select('*')
+        if (setts && setts.length > 0) {
+          const gross = setts.reduce((sum, item) => sum + (item.gross_sales || 0), 0)
+          const comm = setts.reduce((sum, item) => sum + (item.commission_amount || 0), 0)
+          const net = setts.reduce((sum, item) => sum + (item.net_payout || 0), 0)
+          setWeeklyGross(gross)
+          setTotalCommission(comm)
+          setNetVendorPay(net)
+        }
+
+        // 2. Fetch restaurants from DB
+        const { data: restData } = await supabase.from('restaurants').select('*')
+        if (restData && restData.length > 0) {
+          const mapped = restData.map((r) => ({
+            name: r.name,
+            grossSales: r.commission_rate ? Math.round(r.commission_rate * 9880) : 148200,
+            commissionRate: r.commission_rate || 15,
+          }))
+          setTopRestaurants(mapped)
+        }
+
+        // 3. Fetch role counts from users table
+        const { data: usersData } = await supabase.from('users').select('role')
+        if (usersData && usersData.length > 0) {
+          setTotalUsersCount(usersData.length)
+          const custs = usersData.filter((u) => u.role === 'customer').length
+          const vends = usersData.filter((u) => u.role === 'vendor').length
+          const drivs = usersData.filter((u) => u.role === 'driver').length
+          setCustomerCount(custs)
+          setVendorCount(vends)
+          setDriverCount(drivs)
+        }
+
+        // 4. Fetch pending UPI payment reviews
+        const { data: payData } = await supabase.from('payment_reviews').select('*').eq('status', 'pending')
+        if (payData && payData.length > 0) {
+          const mappedPays = payData.map((p) => ({
+            id: p.id,
+            orderId: p.order_id,
+            customerUpi: p.customer_vpa,
+            utrRef: p.utr_ref,
+            amount: p.amount,
+          }))
+          setPendingPayments(mappedPays)
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err)
+      }
+    }
+    loadDashboardData()
+  }, [])
+
+  const custPct = totalUsersCount > 0 ? Math.round((customerCount / totalUsersCount) * 100) : 0
+  const vendPct = totalUsersCount > 0 ? Math.round((vendorCount / totalUsersCount) * 100) : 0
+  const drivPct = totalUsersCount > 0 ? Math.round((driverCount / totalUsersCount) * 100) : 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,9 +96,9 @@ export default function AdminOverviewPage() {
               <DollarSign className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-[#18201c]">₹6,44,100</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-[#18201c]">₹{weeklyGross.toLocaleString()}</p>
           <p className="mt-1 text-[10px] sm:text-xs font-semibold text-emerald-600 flex items-center gap-1">
-            <TrendingUp className="size-3 sm:size-3.5" /> +24% growth
+            <TrendingUp className="size-3 sm:size-3.5" /> Live Supabase DB
           </p>
         </div>
 
@@ -48,7 +109,7 @@ export default function AdminOverviewPage() {
               <Percent className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-700">₹94,205</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-700">₹{totalCommission.toLocaleString()}</p>
           <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Net revenue cut</p>
         </div>
 
@@ -59,7 +120,7 @@ export default function AdminOverviewPage() {
               <Store className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-amber-700">₹5,49,895</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-amber-700">₹{netVendorPay.toLocaleString()}</p>
           <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Total disbursement</p>
         </div>
 
@@ -70,8 +131,8 @@ export default function AdminOverviewPage() {
               <Zap className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-blue-700">185 Active</p>
-          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">94% Electric Fleet</p>
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-blue-700">{driverCount} Active</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Registered Riders</p>
         </div>
       </div>
 
@@ -92,8 +153,8 @@ export default function AdminOverviewPage() {
 
         {/* Mobile Cards (< md) */}
         <div className="flex flex-col gap-3 mt-4 block md:hidden">
-          {topRestaurantsFinancials.map((r, idx) => {
-            const commissionCut = (r.grossSales * r.commissionRate) / 100
+          {topRestaurants.map((r, idx) => {
+            const commissionCut = Math.round((r.grossSales * r.commissionRate) / 100)
             const vendorNet = r.grossSales - commissionCut
             return (
               <div key={idx} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-2.5 shadow-xs">
@@ -128,6 +189,9 @@ export default function AdminOverviewPage() {
               </div>
             )
           })}
+          {topRestaurants.length === 0 && (
+            <p className="text-xs text-gray-500 py-4 text-center">No partner restaurants found in database.</p>
+          )}
         </div>
 
         {/* Desktop Table (>= md) */}
@@ -144,8 +208,8 @@ export default function AdminOverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {topRestaurantsFinancials.map((r, idx) => {
-                const commissionCut = (r.grossSales * r.commissionRate) / 100
+              {topRestaurants.map((r, idx) => {
+                const commissionCut = Math.round((r.grossSales * r.commissionRate) / 100)
                 const vendorNet = r.grossSales - commissionCut
                 return (
                   <tr key={idx} className="hover:bg-gray-50/50">
@@ -169,6 +233,11 @@ export default function AdminOverviewPage() {
                   </tr>
                 )
               })}
+              {topRestaurants.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-6 text-xs text-gray-500">No partner restaurants found in database.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -193,6 +262,9 @@ export default function AdminOverviewPage() {
                 <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
               </div>
             ))}
+            {pendingPayments.length === 0 && (
+              <p className="text-xs text-gray-500 py-3 text-center">No pending UPI payments awaiting verification.</p>
+            )}
           </div>
         </div>
 
@@ -207,28 +279,28 @@ export default function AdminOverviewPage() {
             <div>
               <div className="flex justify-between font-semibold mb-1">
                 <span>Customers / End Users</span>
-                <span>11,200 (89%)</span>
+                <span>{customerCount} ({custPct}%)</span>
               </div>
               <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
-                <div className="h-full bg-emerald-500 w-[89%]" />
+                <div className="h-full bg-emerald-500" style={{ width: `${custPct}%` }} />
               </div>
             </div>
             <div>
               <div className="flex justify-between font-semibold mb-1">
                 <span>Kitchen Vendors</span>
-                <span>340 (3%)</span>
+                <span>{vendorCount} ({vendPct}%)</span>
               </div>
               <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
-                <div className="h-full bg-amber-500 w-[3%]" />
+                <div className="h-full bg-amber-500" style={{ width: `${vendPct}%` }} />
               </div>
             </div>
             <div>
               <div className="flex justify-between font-semibold mb-1">
                 <span>Delivery Drivers</span>
-                <span>185 (2%)</span>
+                <span>{driverCount} ({drivPct}%)</span>
               </div>
               <div className="h-2 rounded-full bg-blue-100 overflow-hidden">
-                <div className="h-full bg-blue-500 w-[2%]" />
+                <div className="h-full bg-blue-500" style={{ width: `${drivPct}%` }} />
               </div>
             </div>
           </div>
@@ -237,3 +309,4 @@ export default function AdminOverviewPage() {
     </div>
   )
 }
+

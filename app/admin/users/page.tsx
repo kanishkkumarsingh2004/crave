@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   AlertCircle,
   ArrowRight,
@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 import { UserRole } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 
 export interface MenuItem {
   id: string
@@ -88,12 +89,80 @@ export default function AdminUsersPage() {
     status: 'active',
   })
 
-  function handleCreateUser(e: React.FormEvent) {
+  useEffect(() => {
+    async function loadSupabaseUsers() {
+      try {
+        const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false })
+        if (!error && data && data.length > 0) {
+          const loaded: AccountRecord[] = data.map((u) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role as UserRole,
+            status: 'active',
+            joinedDate: new Date(u.created_at || Date.now()).toISOString().split('T')[0],
+            detail: u.restaurant_name ? `${u.cuisine || 'Kitchen'} · ${u.address || ''}` : u.address || `${u.role.toUpperCase()} Account`,
+            vendorData: u.role === 'vendor' ? {
+              id: u.id,
+              name: u.restaurant_name || u.name,
+              ownerName: u.name,
+              email: u.email,
+              phone: u.phone || '+91 98111 22334',
+              cuisine: u.cuisine || 'Multi-Cuisine',
+              address: u.address || 'Bengaluru',
+              fssaiLicense: '#11223344556677',
+              bankAccount: 'HDFC Bank ••• 9821',
+              ifscCode: 'HDFC0001234',
+              paymentModel: 'commission',
+              commissionRate: 15,
+              kitchenStatus: 'open',
+              menu: [
+                {
+                  id: 'm1',
+                  name: 'Avocado Quinoa Harvest Bowl',
+                  category: 'Bowls',
+                  isVeg: true,
+                  basePrice: 240,
+                  markupPrice: 240,
+                  inStock: true,
+                  description: 'Organic avocado, roasted chickpea, baby spinach, tahini dressing.',
+                },
+              ]
+            } : undefined
+          }))
+          setAccounts(loaded)
+        }
+      } catch (err) {
+        console.error('Failed to load users from Supabase:', err)
+      }
+    }
+    loadSupabaseUsers()
+  }, [])
+
+  async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault()
     if (!newUserForm.name || !newUserForm.email) return
 
+    const newId = 'usr_' + Date.now()
+    const dbRecord = {
+      id: newId,
+      name: newUserForm.name,
+      email: newUserForm.email,
+      role: newUserForm.role,
+      phone: newUserForm.phone || null,
+      address: 'Bengaluru, India',
+      restaurant_name: newUserForm.role === 'vendor' ? newUserForm.name : null,
+      cuisine: newUserForm.role === 'vendor' ? (newUserForm.detail || 'Multi-Cuisine') : null,
+    }
+
+    try {
+      await supabase.from('users').insert([dbRecord])
+    } catch (err) {
+      console.error('Failed to insert user to Supabase:', err)
+    }
+
     const newAcc: AccountRecord = {
-      id: 'u_' + Date.now(),
+      id: newId,
       name: newUserForm.name,
       email: newUserForm.email,
       role: newUserForm.role,
@@ -168,192 +237,7 @@ export default function AdminUsersPage() {
     description: '',
   })
 
-  const [accounts, setAccounts] = useState<AccountRecord[]>([
-    {
-      id: 'u1',
-      name: 'Alex Rivera',
-      email: 'alex@example.com',
-      role: 'customer',
-      status: 'active',
-      joinedDate: '2026-09-12',
-      detail: '14 drops completed',
-    },
-    {
-      id: 'v_1',
-      name: 'The Green Table',
-      email: 'green@table.com',
-      role: 'vendor',
-      status: 'active',
-      joinedDate: '2026-08-01',
-      detail: 'FSSAI Verified #1122',
-      vendorData: {
-        id: 'v_1',
-        name: 'The Green Table',
-        ownerName: 'Maya Lin',
-        email: 'green@table.com',
-        phone: '+91 98111 22334',
-        cuisine: 'Healthy Bowls & Salads',
-        address: '100ft Rd, Indiranagar, Bengaluru',
-        fssaiLicense: '#11223344556677',
-        bankAccount: 'HDFC Bank •••• 9821',
-        ifscCode: 'HDFC0001234',
-        paymentModel: 'commission',
-        commissionRate: 15,
-        kitchenStatus: 'open',
-        menu: [
-          {
-            id: 'm1',
-            name: 'Avocado Quinoa Harvest Bowl',
-            category: 'Bowls',
-            isVeg: true,
-            basePrice: 240,
-            markupPrice: 240,
-            inStock: true,
-            description: 'Organic avocado, roasted chickpea, baby spinach, tahini dressing.',
-          },
-          {
-            id: 'm2',
-            name: 'Tofu & Kale Caesar Wrap',
-            category: 'Wraps',
-            isVeg: true,
-            basePrice: 190,
-            markupPrice: 190,
-            inStock: true,
-            description: 'Grilled protein tofu, garlic kale chips, wholewheat tortilla.',
-          },
-          {
-            id: 'm3',
-            name: 'Green Goddess Detox Smoothie',
-            category: 'Beverages',
-            isVeg: true,
-            basePrice: 140,
-            markupPrice: 140,
-            inStock: true,
-            description: 'Celery, green apple, cucumber, chia seeds.',
-          },
-        ],
-      },
-    },
-    {
-      id: 'v_2',
-      name: 'Momo House & Asian Grill',
-      email: 'momo@house.com',
-      role: 'vendor',
-      status: 'active',
-      joinedDate: '2026-08-05',
-      detail: 'Markup Partner Model',
-      vendorData: {
-        id: 'v_2',
-        name: 'Momo House & Asian Grill',
-        ownerName: 'Tenzin Norbu',
-        email: 'momo@house.com',
-        phone: '+91 98450 11223',
-        cuisine: 'Asian · Dumplings · Noodles',
-        address: '5th Block, Koramangala, Bengaluru',
-        fssaiLicense: '#22334455667788',
-        bankAccount: 'ICICI Bank •••• 4412',
-        ifscCode: 'ICIC0000982',
-        paymentModel: 'markup',
-        commissionRate: 15,
-        kitchenStatus: 'open',
-        menu: [
-          {
-            id: 'm4',
-            name: 'Steamed Chicken Darjeeling Momos (8pcs)',
-            category: 'Starters',
-            isVeg: false,
-            basePrice: 130, // Vendor gets ₹130
-            markupPrice: 180, // Platform sells for ₹180 (Profit ₹50/order)
-            inStock: true,
-            description: 'Handcrafted momos served with spicy red chili chutney.',
-          },
-          {
-            id: 'm5',
-            name: 'Wok Tossed Chili Garlic Noodles',
-            category: 'Mains',
-            isVeg: true,
-            basePrice: 160, // Vendor gets ₹160
-            markupPrice: 220, // Platform sells for ₹220 (Profit ₹60/order)
-            inStock: true,
-            description: 'Hand-pulled noodles tossed with scallions and garlic Szechuan paste.',
-          },
-          {
-            id: 'm6',
-            name: 'Crispy Veg Spring Rolls',
-            category: 'Starters',
-            isVeg: true,
-            basePrice: 110, // Vendor gets ₹110
-            markupPrice: 160, // Platform sells for ₹160 (Profit ₹50/order)
-            inStock: false,
-            description: 'Glass noodles, wood ear mushrooms, sweet plum dip.',
-          },
-        ],
-      },
-    },
-    {
-      id: 'u3',
-      name: 'Rajesh Kumar',
-      email: 'rajesh@express.com',
-      role: 'driver',
-      status: 'active',
-      joinedDate: '2026-08-15',
-      detail: 'Ather 450X EV Bike',
-    },
-    {
-      id: 'u4',
-      name: 'Sara Vance',
-      email: 'admin@crave.com',
-      role: 'admin',
-      status: 'active',
-      joinedDate: '2026-01-01',
-      detail: 'Master System Admin',
-    },
-    {
-      id: 'v_3',
-      name: 'Spice Route Bistro',
-      email: 'spice@route.com',
-      role: 'vendor',
-      status: 'pending',
-      joinedDate: '2026-10-02',
-      detail: 'Awaiting License Review',
-      vendorData: {
-        id: 'v_3',
-        name: 'Spice Route Bistro',
-        ownerName: 'Rohan Deshmukh',
-        email: 'spice@route.com',
-        phone: '+91 98777 66554',
-        cuisine: 'North Indian · Biryani',
-        address: 'HSR Layout Sector 1, Bengaluru',
-        fssaiLicense: '#44556677889900',
-        bankAccount: 'SBI •••• 5590',
-        ifscCode: 'SBIN0004821',
-        paymentModel: 'commission',
-        commissionRate: 18,
-        kitchenStatus: 'closed',
-        menu: [
-          {
-            id: 'm7',
-            name: 'Butter Chicken Kathi Roll',
-            category: 'Wraps',
-            isVeg: false,
-            basePrice: 190,
-            markupPrice: 190,
-            inStock: true,
-            description: 'Tandoori chicken tikka rolled in flaky rumali bread.',
-          },
-        ],
-      },
-    },
-    {
-      id: 'u6',
-      name: 'Vikram Singh',
-      email: 'vikram@delivery.com',
-      role: 'driver',
-      status: 'pending',
-      joinedDate: '2026-10-02',
-      detail: 'Awaiting Driving License Verification',
-    },
-  ])
+  const [accounts, setAccounts] = useState<AccountRecord[]>([])
 
   function toggleAccountStatus(id: string) {
     setAccounts((prev) =>
@@ -666,49 +550,48 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{acc.email}</td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
-                        acc.role === 'vendor'
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#18201c]">
                       {acc.role}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        acc.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : acc.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {acc.status}
-                    </span>
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <span
+                        className={`size-2 rounded-full ${
+                          acc.status === 'active'
+                            ? 'bg-emerald-500'
+                            : acc.status === 'pending'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
+                        }`}
+                      />
+                      <span
+                        className={
+                          acc.status === 'active'
+                            ? 'text-emerald-700 font-bold'
+                            : acc.status === 'pending'
+                            ? 'text-amber-700 font-bold'
+                            : 'text-rose-700 font-bold'
+                        }
+                      >
+                        {acc.status}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
                     {acc.vendorData ? (
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${
-                          acc.vendorData.paymentModel === 'markup'
-                            ? 'bg-purple-50 text-purple-800 border-purple-200'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        }`}
-                      >
-                        <Tag className="size-3" />
+                      <span className="text-xs font-semibold text-[#18201c] flex items-center gap-1.5">
+                        <Tag className="size-3.5 text-[#859d19]" />
                         {acc.vendorData.paymentModel === 'markup'
                           ? 'Price Markup Model'
                           : `Commission (${acc.vendorData.commissionRate}%)`}
                       </span>
                     ) : (
-                      <span className="text-gray-500">{acc.detail}</span>
+                      <span className="text-xs text-gray-500 font-medium">{acc.detail}</span>
                     )}
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-3">
                       {acc.vendorData && (
                         <button
                           onClick={() => {
@@ -716,18 +599,18 @@ export default function AdminUsersPage() {
                             setIsAddingDish(false)
                             setEditingDishId(null)
                           }}
-                          className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-bold text-white hover:bg-black transition shadow-sm"
+                          className="mac-btn-secondary text-xs py-1.5 px-3"
                         >
-                          <ChefHat className="size-3.5 text-[#d9f447]" /> Restaurant Overview & Menu
+                          <ChefHat className="size-3.5 text-[#859d19]" /> Overview & Menu
                         </button>
                       )}
 
                       <button
                         onClick={() => toggleAccountStatus(acc.id)}
-                        className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${
+                        className={`text-xs font-bold transition-all px-2 py-1 ${
                           acc.status === 'active'
-                            ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            ? 'text-rose-600 hover:text-rose-800 hover:underline'
+                            : 'text-emerald-600 hover:text-emerald-800 hover:underline'
                         }`}
                       >
                         {acc.status === 'active' ? 'Suspend' : 'Activate'}

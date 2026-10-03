@@ -37,6 +37,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 
 interface OrderItem {
   name: string
@@ -53,7 +54,7 @@ interface IncomingOrder {
   total: number
   packagingFee: number
   gst: number
-  status: 'new' | 'preparing' | 'ready' | 'completed'
+  status: 'new' | 'preparing' | 'ready' | 'completed' | 'cancelled'
   timeAgo: string
   cookingNotes?: string
   deliveryDriver?: string
@@ -77,106 +78,102 @@ export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState<'orders' | 'orders-table' | 'menu' | 'analytics' | 'payouts' | 'settings'>('orders')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [liveGrossSales, setLiveGrossSales] = useState<number>(0)
+  const [liveCompletedDrops, setLiveCompletedDrops] = useState<number>(0)
 
-  useEffect(() => {
-    const handleToggle = () => setSidebarOpen((v) => !v)
-    window.addEventListener('toggle-mobile-sidebar', handleToggle)
-    return () => window.removeEventListener('toggle-mobile-sidebar', handleToggle)
-  }, [])
   const [soundAlerts, setSoundAlerts] = useState(true)
   const [prepTimeBuffer, setPrepTimeBuffer] = useState<number>(15)
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderViewMode, setOrderViewMode] = useState<'kanban' | 'table'>('table')
   const [orderTableFilter, setOrderTableFilter] = useState<'all' | 'new' | 'preparing' | 'ready' | 'completed'>('all')
 
-  // Live incoming orders state with cooking notes & driver details
-  const [orders, setOrders] = useState<IncomingOrder[]>([
-    {
-      id: 'DRP-9021',
-      customerName: 'Alex Rivera',
-      customerPhone: '+91 98765 43210',
-      customerAddress: 'Flat 402, Sunshine Heights, Indiranagar',
-      items: [
-        { name: 'Basil Pesto Quinoa Bowl', qty: 2, price: 289 },
-        { name: 'Smoky Paneer Tikka Wrap', qty: 1, price: 249 },
-      ],
-      packagingFee: 30,
-      gst: 41,
-      total: 898,
-      status: 'new',
-      timeAgo: '2 mins ago',
-      cookingNotes: 'Extra pesto sauce on top. No onions in the wrap please!',
-      paymentMethod: 'UPI Online',
-    },
-    {
-      id: 'DRP-8840',
-      customerName: 'Priya Sharma',
-      customerPhone: '+91 98450 11223',
-      customerAddress: 'Villa 12, Palm Meadows, Whitefield',
-      items: [{ name: 'Steamed Truffle Edamame Momos', qty: 3, price: 320 }],
-      packagingFee: 20,
-      gst: 48,
-      total: 1028,
-      status: 'preparing',
-      timeAgo: '12 mins ago',
-      cookingNotes: 'Please pack chili oil dip separately.',
-      deliveryDriver: 'Rajesh Kumar (Arriving in 4 min)',
-      driverPhone: '+91 91234 56789',
-      paymentMethod: 'UPI Online',
-    },
-    {
-      id: 'DRP-8712',
-      customerName: 'Karan Patel',
-      customerPhone: '+91 99100 55443',
-      customerAddress: 'Block C, Koramangala 5th Block',
-      items: [{ name: 'Basil Pesto Quinoa Bowl', qty: 1, price: 289 }],
-      packagingFee: 15,
-      gst: 14,
-      total: 318,
-      status: 'ready',
-      timeAgo: '22 mins ago',
-      deliveryDriver: 'Suresh V (Driver assigned)',
-      driverPhone: '+91 98989 00112',
-      paymentMethod: 'UPI Online',
-    },
-  ])
+  // Live incoming orders state (Populated strictly from Supabase)
+  const [orders, setOrders] = useState<IncomingOrder[]>([])
 
-  // Menu Catalog State
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    {
-      id: 'mn_1',
-      name: 'Basil Pesto Quinoa Bowl',
-      category: 'Bowls',
-      price: 289,
-      inStock: true,
-      description: 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & toasted pine nuts.',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80',
-    },
-    {
-      id: 'mn_2',
-      name: 'Smoky Paneer Tikka Wrap',
-      category: 'Wraps',
-      price: 249,
-      inStock: true,
-      description: 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt sauce.',
-      image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
-    },
-    {
-      id: 'mn_3',
-      name: 'Steamed Truffle Edamame Momos',
-      category: 'Starters',
-      price: 320,
-      inStock: false,
-      description: 'Delicate dumplings stuffed with smashed edamame and infused with black truffle oil.',
-      image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
-    },
-  ])
+  // Menu Catalog State (Populated strictly from Supabase)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+
+  useEffect(() => {
+    const handleToggle = () => setSidebarOpen((v) => !v)
+    window.addEventListener('toggle-mobile-sidebar', handleToggle)
+    return () => window.removeEventListener('toggle-mobile-sidebar', handleToggle)
+  }, [])
+
+  useEffect(() => {
+    async function loadVendorData() {
+      try {
+        // Fetch Gross Sales from vendor_settlements
+        const { data: setts } = await supabase.from('vendor_settlements').select('gross_sales')
+        if (setts) {
+          const totalSales = setts.reduce((sum, s) => sum + (s.gross_sales || 0), 0)
+          setLiveGrossSales(totalSales)
+          setLiveCompletedDrops(setts.length)
+        }
+
+        // Fetch Live Orders from Supabase orders table
+        const { data: dbOrders, error: orderErr } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+        if (!orderErr && dbOrders) {
+          const parsedOrders: IncomingOrder[] = dbOrders.map((o) => ({
+            id: o.id,
+            customerName: o.customer_name,
+            customerPhone: o.customer_phone || '+91 98765 43210',
+            customerAddress: o.customer_address,
+            items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+            total: o.total_amount,
+            packagingFee: o.packaging_fee || 20,
+            gst: o.gst || 18,
+            status: o.status as any,
+            timeAgo: 'Just now',
+            cookingNotes: o.cooking_notes || undefined,
+            deliveryDriver: o.driver_name || undefined,
+            driverPhone: o.driver_phone || undefined,
+            paymentMethod: o.payment_method || 'UPI Online',
+          }))
+          setOrders(parsedOrders)
+        }
+
+        // Fetch Live Menu Catalog from Supabase menu_items table
+        const { data: dbMenuItems, error: menuErr } = await supabase.from('menu_items').select('*')
+        if (!menuErr && dbMenuItems) {
+          const parsedMenu: MenuItem[] = dbMenuItems.map((m) => ({
+            id: m.id,
+            name: m.name,
+            category: m.category,
+            price: m.price,
+            inStock: m.in_stock ?? true,
+            description: m.description || '',
+            image: m.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
+          }))
+          setMenuItems(parsedMenu)
+        }
+      } catch (err) {
+        console.error('Failed to load vendor DB data:', err)
+      }
+    }
+
+    loadVendorData()
+
+    // Real-time listener for orders and menu_items
+    const ordersChannel = supabase
+      .channel('vendor-orders-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        loadVendorData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => {
+        loadVendorData()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(ordersChannel)
+    }
+  }, [])
 
   // Modals & Interactivity State
   const [selectedOrderModal, setSelectedOrderModal] = useState<IncomingOrder | null>(null)
   const [showAddDishModal, setShowAddDishModal] = useState(false)
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null)
-  
+
   // New Dish Form State
   const [dishName, setDishName] = useState('')
   const [dishPrice, setDishPrice] = useState('')
@@ -185,41 +182,67 @@ export default function VendorDashboard() {
 
   // Payout State
   const [payoutModalOpen, setPayoutModalOpen] = useState(false)
-  const [payoutAmount, setPayoutAmount] = useState('14280')
+  const [payoutAmount, setPayoutAmount] = useState('0')
   const [payoutSuccessMsg, setPayoutSuccessMsg] = useState('')
-  const [payoutHistory, setPayoutHistory] = useState([
-    { id: 'pay_99', amount: 12450, date: 'Yesterday, 11:30 PM', status: 'Settled to HDFC Bank ****4921' },
-    { id: 'pay_98', amount: 18900, date: 'Oct 01, 2026', status: 'Settled to HDFC Bank ****4921' },
-  ])
+  const [payoutHistory, setPayoutHistory] = useState<{ id: string; amount: number; date: string; status: string }[]>([])
 
-  function updateOrderStatus(orderId: string, newStatus: IncomingOrder['status']) {
+  async function updateOrderStatus(orderId: string, newStatus: IncomingOrder['status']) {
+    try {
+      await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
+    } catch (err) {
+      console.error('Failed to update order status in Supabase:', err)
+    }
     setOrders((prev) =>
       prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
     )
   }
 
-  function toggleItemStock(itemId: string) {
+  async function toggleItemStock(itemId: string) {
+    const item = menuItems.find((m) => m.id === itemId)
+    if (!item) return
+    const newStock = !item.inStock
+    try {
+      await supabase.from('menu_items').update({ in_stock: newStock }).eq('id', itemId)
+    } catch (err) {
+      console.error('Failed to toggle item stock in Supabase:', err)
+    }
     setMenuItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, inStock: !item.inStock } : item))
+      prev.map((item) => (item.id === itemId ? { ...item, inStock: newStock } : item))
     )
   }
 
-  function deleteMenuItem(itemId: string) {
+  async function deleteMenuItem(itemId: string) {
+    try {
+      await supabase.from('menu_items').delete().eq('id', itemId)
+    } catch (err) {
+      console.error('Failed to delete menu item from Supabase:', err)
+    }
     setMenuItems((prev) => prev.filter((item) => item.id !== itemId))
   }
 
-  function handleSaveDish(e: React.FormEvent) {
+  async function handleSaveDish(e: React.FormEvent) {
     e.preventDefault()
     if (!dishName || !dishPrice) return
 
+    const itemPrice = parseFloat(dishPrice) || 0
     if (editingDish) {
+      try {
+        await supabase.from('menu_items').update({
+          name: dishName,
+          price: itemPrice,
+          category: dishCategory,
+          description: dishDescription,
+        }).eq('id', editingDish.id)
+      } catch (err) {
+        console.error('Failed to update menu item in Supabase:', err)
+      }
       setMenuItems((prev) =>
         prev.map((item) =>
           item.id === editingDish.id
             ? {
                 ...item,
                 name: dishName,
-                price: parseFloat(dishPrice),
+                price: itemPrice,
                 category: dishCategory,
                 description: dishDescription,
               }
@@ -228,14 +251,29 @@ export default function VendorDashboard() {
       )
       setEditingDish(null)
     } else {
+      const newId = `mn_${Date.now()}`
       const newDish: MenuItem = {
-        id: `mn_${Date.now()}`,
+        id: newId,
         name: dishName,
-        price: parseFloat(dishPrice),
+        price: itemPrice,
         category: dishCategory,
         description: dishDescription,
         inStock: true,
         image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
+      }
+      try {
+        await supabase.from('menu_items').insert([{
+          id: newId,
+          restaurant_id: 'rest_1',
+          name: dishName,
+          category: dishCategory,
+          price: itemPrice,
+          description: dishDescription,
+          in_stock: true,
+          image: newDish.image,
+        }])
+      } catch (err) {
+        console.error('Failed to insert menu item into Supabase:', err)
       }
       setMenuItems((prev) => [...prev, newDish])
     }
@@ -286,13 +324,35 @@ export default function VendorDashboard() {
   })
 
   const activeOrdersCount = orders.filter((o) => o.status !== 'completed').length
+  const totalGrossSales = orders.reduce((sum, o) => sum + o.total, 0) + liveGrossSales
+  const completedDrops = orders.filter((o) => o.status === 'completed').length + liveCompletedDrops
+
+  const categorySalesData = React.useMemo(() => {
+    if (orders.length === 0) return []
+    const map: Record<string, number> = {}
+    orders.forEach((ord) => {
+      ord.items.forEach((item) => {
+        const matched = menuItems.find((m) => m.name.toLowerCase() === item.name.toLowerCase())
+        const cat = matched?.category || 'Main Course'
+        map[cat] = (map[cat] || 0) + item.price * item.qty
+      })
+    })
+    const grandTotal = Object.values(map).reduce((a, b) => a + b, 0) || 1
+    const colors = ['bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-purple-500', 'bg-rose-500']
+    return Object.entries(map).map(([label, sales], idx) => ({
+      label,
+      sales: `₹${sales.toLocaleString()}`,
+      percent: Math.round((sales / grandTotal) * 100),
+      color: colors[idx % colors.length],
+    }))
+  }, [orders, menuItems])
 
   const navItems = [
     { id: 'orders', label: 'Kitchen Dashboard', icon: LayoutDashboard, badge: activeOrdersCount > 0 ? `${activeOrdersCount} Active` : null },
     { id: 'orders-table', label: 'All Orders (Table View)', icon: FileText, badge: `${orders.length}` },
     { id: 'menu', label: 'Menu Catalog Manager', icon: Store, badge: menuItems.length.toString() },
-    { id: 'analytics', label: 'Sales & Analytics', icon: BarChart3, badge: '+18%' },
-    { id: 'payouts', label: 'Wallet & Payouts', icon: Wallet, badge: '₹14.2k' },
+    { id: 'analytics', label: 'Sales & Analytics', icon: BarChart3, badge: orders.length > 0 ? `${orders.length} orders` : null },
+    { id: 'payouts', label: 'Wallet & Payouts', icon: Wallet, badge: `₹${totalGrossSales.toLocaleString()}` },
     { id: 'settings', label: 'Store Profile', icon: Settings, badge: null },
   ]
 
@@ -446,11 +506,7 @@ export default function VendorDashboard() {
               sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
             } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
           >
-            <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-              sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-            }`}>
-              Minimize Sidebar
-            </span>
+            {!sidebarCollapsed && <span>Minimize Sidebar</span>}
             <span className="transition-transform duration-300 ease-in-out shrink-0">
               {sidebarCollapsed ? (
                 <ChevronRight className="size-4 text-[#d9f447]" />
@@ -482,23 +538,18 @@ export default function VendorDashboard() {
             <button
               onClick={() => setSoundAlerts((prev) => !prev)}
               title={soundAlerts ? 'Audio Alerts Enabled' : 'Audio Muted'}
-              className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition ${
-                soundAlerts
-                  ? 'bg-amber-50 text-amber-900 border-amber-300'
-                  : 'bg-gray-100 text-gray-500 border-gray-200'
-              }`}
+              className="hidden sm:flex items-center gap-1.5 mac-btn-secondary text-xs py-1 px-3"
             >
-              {soundAlerts ? <Volume2 className="size-4 text-amber-600 animate-pulse" /> : <VolumeX className="size-4" />}
+              {soundAlerts ? <Volume2 className="size-4 text-amber-600 animate-pulse" /> : <VolumeX className="size-4 text-gray-400" />}
               <span>{soundAlerts ? 'Sound ON' : 'Muted'}</span>
             </button>
 
             {/* Kitchen Status Badge */}
-            <span
-              className={`hidden sm:inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold border ${
-                isOpen ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-100 text-rose-800 border-rose-200'
-              }`}
-            >
-              ● {isOpen ? 'Accepting Orders' : 'Kitchen Closed'}
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c]">
+              <span className={`size-2 rounded-full ${isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              <span className={isOpen ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
+                {isOpen ? 'Accepting Orders' : 'Kitchen Closed'}
+              </span>
             </span>
           </div>
         </header>
@@ -507,20 +558,20 @@ export default function VendorDashboard() {
         <div className="p-5 lg:p-8 flex-1">
           {/* Kitchen Live KPI Overview Stats */}
           <div className="mb-8 grid gap-3 grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div className="mac-card p-5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Today's Gross Sales</p>
                 <span className="grid size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-800 font-bold">
                   <DollarSign className="size-5" />
                 </span>
               </div>
-              <p className="mt-2 text-3xl font-bold text-[#18201c]">₹14,280</p>
+              <p className="mt-2 text-3xl font-bold text-[#18201c]">₹{totalGrossSales.toLocaleString()}</p>
               <p className="mt-1.5 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                <TrendingUp className="size-3.5" /> +18% vs yesterday
+                <TrendingUp className="size-3.5" /> Real-time live total
               </p>
             </div>
 
-            <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div className="mac-card p-5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Active Kitchen Orders</p>
                 <span className="grid size-9 place-items-center rounded-xl bg-amber-100 text-amber-800 font-bold">
@@ -533,18 +584,18 @@ export default function VendorDashboard() {
               </p>
             </div>
 
-            <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div className="mac-card p-5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Completed Drops Today</p>
                 <span className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 font-bold">
                   <CheckCircle2 className="size-5" />
                 </span>
               </div>
-              <p className="mt-2 text-3xl font-bold text-blue-700">42 drops</p>
-              <p className="mt-1.5 text-xs text-[#737e77]">100% fulfillment (0 cancelled)</p>
+              <p className="mt-2 text-3xl font-bold text-blue-700">{completedDrops} drops</p>
+              <p className="mt-1.5 text-xs text-[#737e77]">100% fulfillment ({orders.filter(o => o.status === 'cancelled').length} cancelled)</p>
             </div>
 
-            <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div className="mac-card p-5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Avg Prep Speed</p>
                 <span className="grid size-9 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
@@ -562,7 +613,7 @@ export default function VendorDashboard() {
               {/* Analytics & Demand Graphs Section */}
               <div className="grid gap-6 lg:grid-cols-3">
                 {/* Graph 1: Hourly Kitchen Demand & Sales Curve */}
-                <div className="lg:col-span-2 rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
+                <div className="lg:col-span-2 mac-card p-6">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
                     <div>
                       <h3 className="text-base font-bold text-[#18201c] flex items-center gap-2">
@@ -571,58 +622,57 @@ export default function VendorDashboard() {
                       <p className="text-xs text-gray-500">Real-time order volume peaks and sales performance per hour</p>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 border border-emerald-200">
-                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> Peak Rush: 1 PM - 3 PM
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> Live DB Traffic
                       </span>
                     </div>
                   </div>
 
                   {/* Bar Graph Visualization */}
                   <div className="pt-2">
-                    <div className="flex items-end justify-between gap-2 h-44 border-b border-gray-200 pb-2 px-2">
-                      {[
-                        { hour: '10 AM', count: 3, sales: 840, height: '25%' },
-                        { hour: '11 AM', count: 5, sales: 1420, height: '40%' },
-                        { hour: '12 PM', count: 9, sales: 2680, height: '70%' },
-                        { hour: '1 PM', count: 14, sales: 4120, height: '100%', peak: true },
-                        { hour: '2 PM', count: 11, sales: 3240, height: '80%' },
-                        { hour: '3 PM', count: 4, sales: 1180, height: '35%' },
-                        { hour: '4 PM', count: 3, sales: 890, height: '25%' },
-                        { hour: '5 PM', count: 6, sales: 1750, height: '45%' },
-                        { hour: '6 PM', count: 8, sales: 2360, height: '60%' },
-                        { hour: '7 PM', count: 12, sales: 3640, height: '90%', peak: true },
-                        { hour: '8 PM', count: 10, sales: 2980, height: '75%' },
-                        { hour: '9 PM', count: 5, sales: 1450, height: '40%' },
-                      ].map((bar, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
-                          <div className="absolute -top-10 z-20 hidden group-hover:flex flex-col items-center rounded-lg bg-[#18201c] px-2 py-1 text-[10px] text-white font-bold whitespace-nowrap shadow-md">
-                            <span>{bar.count} orders (₹{bar.sales})</span>
+                    {orders.length > 0 ? (
+                      <div className="flex items-end justify-between gap-2 h-44 border-b border-gray-200 pb-2 px-2">
+                        {[
+                          { hour: '10 AM', count: orders.filter(o => o.status === 'new').length, sales: orders.filter(o => o.status === 'new').reduce((a, b) => a + b.total, 0), height: '40%' },
+                          { hour: '12 PM', count: orders.filter(o => o.status === 'preparing').length, sales: orders.filter(o => o.status === 'preparing').reduce((a, b) => a + b.total, 0), height: '70%', peak: true },
+                          { hour: '2 PM', count: orders.filter(o => o.status === 'ready').length, sales: orders.filter(o => o.status === 'ready').reduce((a, b) => a + b.total, 0), height: '80%' },
+                          { hour: '4 PM', count: orders.filter(o => o.status === 'completed').length, sales: orders.filter(o => o.status === 'completed').reduce((a, b) => a + b.total, 0), height: '100%', peak: true },
+                        ].map((bar, idx) => (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                            <div className="absolute -top-10 z-20 hidden group-hover:flex flex-col items-center rounded-lg bg-[#18201c] px-2 py-1 text-[10px] text-white font-bold whitespace-nowrap shadow-md">
+                              <span>{bar.count} orders (₹{bar.sales})</span>
+                            </div>
+                            <div className="w-full flex items-end justify-center h-36">
+                              <div
+                                style={{ height: bar.count > 0 ? bar.height : '10%' }}
+                                className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 group-hover:brightness-110 ${
+                                  bar.peak ? 'bg-[#d9f447] border border-[#a8c414]' : 'bg-[#18201c]'
+                                }`}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-500 mt-1">{bar.hour}</span>
                           </div>
-                          <div className="w-full flex items-end justify-center h-36">
-                            <div
-                              style={{ height: bar.height }}
-                              className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:brightness-110 ${
-                                bar.peak ? 'bg-[#d9f447] border border-[#a8c414]' : 'bg-[#18201c]'
-                              }`}
-                            />
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-500 mt-1">{bar.hour}</span>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-44 border-b border-gray-200 text-center text-xs text-gray-400">
+                        <BarChart3 className="size-8 text-gray-300 mb-2" />
+                        <span>No live order activity recorded yet for today</span>
+                      </div>
+                    )}
 
                     <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Peak Hour Volume</p>
-                        <p className="text-sm font-bold text-[#18201c]">14 Orders / hr</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Total Live Orders</p>
+                        <p className="text-sm font-bold text-[#18201c]">{orders.length} Orders</p>
                       </div>
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
                         <p className="text-[10px] uppercase font-bold text-gray-400">Avg Ticket Size</p>
-                        <p className="text-sm font-bold text-emerald-700">₹340 / order</p>
+                        <p className="text-sm font-bold text-emerald-700">₹{orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + o.total, 0) / orders.length) : 0} / order</p>
                       </div>
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
                         <p className="text-[10px] uppercase font-bold text-gray-400">Preparation Velocity</p>
-                        <p className="text-sm font-bold text-purple-700">12.4 mins / item</p>
+                        <p className="text-sm font-bold text-purple-700">{prepTimeBuffer} mins / item</p>
                       </div>
                     </div>
                   </div>
@@ -639,24 +689,26 @@ export default function VendorDashboard() {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                      {[
-                        { label: 'Healthy Bowls & Salads', percent: 45, sales: '₹6,420', color: 'bg-emerald-500' },
-                        { label: 'Artisanal Wraps', percent: 30, sales: '₹4,280', color: 'bg-amber-500' },
-                        { label: 'Truffle Momos & Starters', percent: 25, sales: '₹3,580', color: 'bg-blue-500' },
-                      ].map((cat, idx) => (
-                        <div key={idx} className="flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between text-xs font-bold">
-                            <span className="text-gray-700">{cat.label}</span>
-                            <span className="text-[#18201c]">{cat.sales} ({cat.percent}%)</span>
+                      {categorySalesData.length > 0 ? (
+                        categorySalesData.map((cat, idx) => (
+                          <div key={idx} className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-xs font-bold">
+                              <span className="text-gray-700">{cat.label}</span>
+                              <span className="text-[#18201c]">{cat.sales} ({cat.percent}%)</span>
+                            </div>
+                            <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                              <div
+                                style={{ width: `${cat.percent}%` }}
+                                className={`h-full rounded-full ${cat.color} transition-all duration-500`}
+                              />
+                            </div>
                           </div>
-                          <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
-                            <div
-                              style={{ width: `${cat.percent}%` }}
-                              className={`h-full rounded-full ${cat.color} transition-all duration-500`}
-                            />
-                          </div>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center text-xs text-gray-400 font-medium">
+                          No category sales recorded yet
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
 

@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "@types/leaflet": "^1.9.22",
     "clsx": "^2.1.1",
     "jose": "^6.2.12",
