@@ -103,7 +103,11 @@ export function validateCoupon(
   }
 
   if (!found.isActive) {
-    return { valid: false, discountAmount: 0, message: `Coupon code '${cleanCode}' has been deactivated.` }
+    return {
+      valid: false,
+      discountAmount: 0,
+      message: `Coupon code '${cleanCode}' has been deactivated.`,
+    }
   }
 
   // Check expiry

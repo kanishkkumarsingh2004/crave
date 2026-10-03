@@ -1,24 +1,21 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import Navbar, { roleDetails } from '@/components/Navbar'
+import { useAuth, UserRole } from '@/lib/auth-context'
 import {
   ArrowRight,
   Bike,
-  CheckCircle2,
   Clock3,
-  LocateFixed,
   PackageCheck,
   ShieldCheck,
   ShoppingBag,
   Star,
   Store,
   UtensilsCrossed,
-  Zap,
 } from 'lucide-react'
-import Navbar, { roleDetails } from '@/components/Navbar'
-import { useAuth, UserRole } from '@/lib/auth-context'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 const featuredRestaurants = [
   {
@@ -26,7 +23,8 @@ const featuredRestaurants = [
     cuisine: 'Healthy bowls · Salads',
     rating: '4.8',
     eta: '25–30 min',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
     tag: 'Healthy',
   },
   {
@@ -34,7 +32,8 @@ const featuredRestaurants = [
     cuisine: 'Asian · Dumplings',
     rating: '4.7',
     eta: '20–25 min',
-    image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=900&q=85',
     tag: 'Popular',
   },
   {
@@ -42,29 +41,30 @@ const featuredRestaurants = [
     cuisine: 'Italian · Pizza',
     rating: '4.9',
     eta: '30–35 min',
-    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=85',
     tag: 'Top rated',
   },
 ]
 
 export default function HomePage() {
-  const { user, role, loginAsRole } = useAuth()
+  const { user, role, loginAsRole, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (user) {
+    if (!isLoading && user) {
       const targetDashboard = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
       router.replace(targetDashboard)
     }
-  }, [user, role, router])
+  }, [user, role, isLoading, router])
 
-  if (user) {
+  if (isLoading || user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">
           <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
           <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Redirecting to your {role} Dashboard...
+            {user ? `Redirecting to your ${role} Dashboard...` : 'Loading crave...'}
           </p>
         </div>
       </div>
@@ -84,13 +84,16 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-[clamp(2.8rem,5.5vw,5.5rem)] font-bold leading-[.92] tracking-tight">
-            Satisfy your<br />
-            <span className="text-[#89a217]">crave.</span><br />
+            Satisfy your
+            <br />
+            <span className="text-[#89a217]">crave.</span>
+            <br />
             On its way.
           </h1>
 
           <p className="mt-6 text-base leading-7 text-[#647169]">
-            The unified food platform connecting <span className="font-bold text-[#18201c]">Customers</span>,{' '}
+            The unified food platform connecting{' '}
+            <span className="font-bold text-[#18201c]">Customers</span>,{' '}
             <span className="font-bold text-[#18201c]">Vendors</span>,{' '}
             <span className="font-bold text-[#18201c]">Drivers</span>, and{' '}
             <span className="font-bold text-[#18201c]">Admins</span> seamlessly.
@@ -123,7 +126,13 @@ export default function HomePage() {
 
         {/* Hero Visual */}
         <div className="relative min-h-[420px] overflow-hidden rounded-[36px] bg-[#e1e9d3] p-6 lg:min-h-[520px]">
-          <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'radial-gradient(#849c38 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+          <div
+            className="absolute inset-0 opacity-40"
+            style={{
+              backgroundImage: 'radial-gradient(#849c38 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          />
 
           <div className="relative z-10 flex h-full flex-col justify-between">
             <div className="flex items-center justify-between rounded-2xl bg-white/90 p-3.5 backdrop-blur-md shadow-lg">
@@ -168,8 +177,12 @@ export default function HomePage() {
 
             <div className="rounded-2xl border border-white/80 bg-white/90 p-4 backdrop-blur-md flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#819289]">Live Order #CRV-9021</p>
-                <p className="text-xs font-bold text-[#18201c]">The Green Table ➔ Alex Rivera (8 min away)</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#819289]">
+                  Live Order #CRV-9021
+                </p>
+                <p className="text-xs font-bold text-[#18201c]">
+                  The Green Table ➔ Alex Rivera (8 min away)
+                </p>
               </div>
               <span className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-bold text-[#18201c]">
                 On Route 🛵
@@ -190,7 +203,8 @@ export default function HomePage() {
               Engineered for Every Stakeholder
             </h2>
             <p className="mt-2 text-sm text-[#6f7a73]">
-              Whether ordering, cooking, delivering, or managing — crave. delivers a customized dashboard.
+              Whether ordering, cooking, delivering, or managing — crave. delivers a customized
+              dashboard.
             </p>
           </div>
 
@@ -202,7 +216,8 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">1. Customer User</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Discover top kitchens, customize dishes, pay via secure UPI, and track live delivery routes.
+                  Discover top kitchens, customize dishes, pay via secure UPI, and track live
+                  delivery routes.
                 </p>
               </div>
               <Link
@@ -240,7 +255,8 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">3. Delivery Driver</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Duty status toggle, active trip navigation, step-by-step confirmation, and earnings ledger.
+                  Duty status toggle, active trip navigation, step-by-step confirmation, and
+                  earnings ledger.
                 </p>
               </div>
               <Link
@@ -259,7 +275,8 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">4. System Admin</h3>
                 <p className="mt-2 text-xs leading-5 text-[#6c7771]">
-                  Network stats, user management across all 4 roles, UPI verification queue, and sidebar control.
+                  Network stats, user management across all 4 roles, UPI verification queue, and
+                  sidebar control.
                 </p>
               </div>
               <Link
@@ -279,7 +296,9 @@ export default function HomePage() {
         <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#799017]">Local Top Picks</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#799017]">
+                Local Top Picks
+              </p>
               <h2 className="mt-1 text-3xl font-bold tracking-tight">Popular Kitchens on crave.</h2>
             </div>
             <Link
@@ -292,9 +311,16 @@ export default function HomePage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {featuredRestaurants.map((rest) => (
-              <div key={rest.name} className="group overflow-hidden rounded-3xl border border-[#e1e6df] bg-white">
+              <div
+                key={rest.name}
+                className="group overflow-hidden rounded-3xl border border-[#e1e6df] bg-white"
+              >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={rest.image} alt={rest.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <img
+                    src={rest.image}
+                    alt={rest.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
                   <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-[#4f5f15]">
                     {rest.tag}
                   </span>

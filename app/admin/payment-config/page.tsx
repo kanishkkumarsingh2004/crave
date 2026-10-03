@@ -1,26 +1,18 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
 import {
-  AlertCircle,
-  ArrowRight,
-  Calculator,
-  Check,
   CheckCircle2,
   CloudRain,
-  Copy,
-  CreditCard,
-  DollarSign,
   Flame,
   Percent,
   QrCode,
   Save,
   ShieldCheck,
-  Sliders,
   Sparkles,
   Truck,
   Zap,
 } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
 
 function handleNumInput(val: string): number | '' {
   if (val === '') return ''
@@ -179,13 +171,15 @@ export default function AdminPaymentConfigPage() {
             Payment, Delivery & Surge Charge Playground
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Configure receiver UPI credentials, thank you messages, platform service fees, and test live order payouts.
+            Configure receiver UPI credentials, thank you messages, platform service fees, and test
+            live order payouts.
           </p>
         </div>
 
         {savedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
-            <CheckCircle2 className="size-4 text-emerald-700" /> All UPI Credentials, Thank You Message & Playground Saved!
+            <CheckCircle2 className="size-4 text-emerald-700" /> All UPI Credentials, Thank You
+            Message & Playground Saved!
           </div>
         )}
       </div>
@@ -196,7 +190,8 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 1: Platform Fees & Commission */}
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <Percent className="size-4 text-[#859d19]" /> Platform Service Fees & Vendor Commission
+              <Percent className="size-4 text-[#859d19]" /> Platform Service Fees & Vendor
+              Commission
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
               Set revenue share rates and order handling charges.
@@ -267,7 +262,9 @@ export default function AdminPaymentConfigPage() {
                   onChange={(e) => setBaseDeliveryFee(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Fixed rate for first {getNum(baseDistanceKm)} km</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Fixed rate for first {getNum(baseDistanceKm)} km
+                </p>
               </div>
 
               <div>
@@ -293,18 +290,24 @@ export default function AdminPaymentConfigPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Free Delivery Order Threshold (₹)</label>
+                <label className="font-bold text-[#18201c]">
+                  Free Delivery Order Threshold (₹)
+                </label>
                 <input
                   type="number"
                   value={freeDeliveryThreshold}
                   onChange={(e) => setFreeDeliveryThreshold(handleNumInput(e.target.value))}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Free delivery for orders above this</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Free delivery for orders above this
+                </p>
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-[#18201c]">Driver Payout Share (% of delivery fee)</label>
+                <label className="font-bold text-[#18201c]">
+                  Driver Payout Share (% of delivery fee)
+                </label>
                 <div className="mt-1.5 flex items-center gap-4">
                   <input
                     type="range"
@@ -328,7 +331,8 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 3: Surge Pricing & Weather Charges */}
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <Zap className="size-4 text-amber-500 fill-amber-500" /> Dynamic Surge Pricing & Weather Charges
+              <Zap className="size-4 text-amber-500 fill-amber-500" /> Dynamic Surge Pricing &
+              Weather Charges
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
               Control surge multipliers for high demand periods, heavy rain, or peak rush hours.
@@ -337,7 +341,9 @@ export default function AdminPaymentConfigPage() {
             <div className="mt-5 flex flex-col gap-5 text-xs">
               {/* Surge Multiplier Cards */}
               <div>
-                <label className="font-bold text-[#18201c] mb-2 block">Rush Demand Surge Multiplier</label>
+                <label className="font-bold text-[#18201c] mb-2 block">
+                  Rush Demand Surge Multiplier
+                </label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { label: '1.0x (Normal)', val: 1.0 },
@@ -383,7 +389,9 @@ export default function AdminPaymentConfigPage() {
                     </button>
                   </div>
                   <div className="mt-3">
-                    <label className="text-[10px] font-bold text-blue-800">Rain Bonus Fee (₹)</label>
+                    <label className="text-[10px] font-bold text-blue-800">
+                      Rain Bonus Fee (₹)
+                    </label>
                     <input
                       type="number"
                       value={rainFee}
@@ -413,7 +421,9 @@ export default function AdminPaymentConfigPage() {
                     </button>
                   </div>
                   <div className="mt-3">
-                    <label className="text-[10px] font-bold text-purple-800">Night Surge Fee (₹)</label>
+                    <label className="text-[10px] font-bold text-purple-800">
+                      Night Surge Fee (₹)
+                    </label>
                     <input
                       type="number"
                       value={nightSurgeFee}
@@ -429,10 +439,12 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 4: UPI Receiver Credentials & Customer Thank You Message */}
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI & Confirmation Configs
+              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI & Confirmation
+              Configs
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              Configure the receiver UPI ID, business payee name, and thank you message shown after checkout.
+              Configure the receiver UPI ID, business payee name, and thank you message shown after
+              checkout.
             </p>
 
             <div className="mt-4 flex flex-col gap-4 text-xs">
@@ -475,7 +487,8 @@ export default function AdminPaymentConfigPage() {
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-medium outline-none focus:border-[#86a018]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">
-                  Custom message shown to customers after completing payment and submitting their 12-digit UTR reference.
+                  Custom message shown to customers after completing payment and submitting their
+                  12-digit UTR reference.
                 </p>
               </div>
             </div>
@@ -500,7 +513,8 @@ export default function AdminPaymentConfigPage() {
             </div>
             <h3 className="mt-2 text-xl font-bold text-[#18201c]">Dynamic Pricing Playground</h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              Simulate an order to test real-time fee breakdowns, surge pricing, vendor cut, and driver payouts.
+              Simulate an order to test real-time fee breakdowns, surge pricing, vendor cut, and
+              driver payouts.
             </p>
 
             {/* Test Controls */}
@@ -552,7 +566,10 @@ export default function AdminPaymentConfigPage() {
 
               {testDistanceKm > getNum(baseDistanceKm) && (
                 <div className="flex justify-between text-white/70">
-                  <span>Extra Distance ({(testDistanceKm - getNum(baseDistanceKm)).toFixed(1)}km @ ₹{getNum(perKmRate)}/km)</span>
+                  <span>
+                    Extra Distance ({(testDistanceKm - getNum(baseDistanceKm)).toFixed(1)}km @ ₹
+                    {getNum(perKmRate)}/km)
+                  </span>
                   <span>+₹{(testDistanceKm - getNum(baseDistanceKm)) * getNum(perKmRate)}</span>
                 </div>
               )}
@@ -588,7 +605,9 @@ export default function AdminPaymentConfigPage() {
 
               {/* Settlement Payout Split */}
               <div className="mt-4 pt-4 border-t border-white/15 space-y-2 text-[11px]">
-                <p className="font-bold text-white/50 uppercase tracking-wider text-[9px]">Settlement Payout Split</p>
+                <p className="font-bold text-white/50 uppercase tracking-wider text-[9px]">
+                  Settlement Payout Split
+                </p>
                 <div className="flex justify-between text-amber-300">
                   <span>🏪 Kitchen Vendor Payout ({100 - getNum(vendorCommission)}%):</span>
                   <span className="font-bold">₹{playgroundCalc.vendorPayout}</span>

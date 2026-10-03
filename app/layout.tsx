@@ -1,10 +1,15 @@
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
+import { cn } from '@/lib/utils'
+import type { Metadata, Viewport } from 'next'
+import { Geist } from 'next/font/google'
+import './globals.css'
+
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'crave. | Next-Gen Multi-Role Food Delivery Platform',
-  description: 'Instant food delivery platform connecting Customers, Kitchen Vendors, Delivery Drivers, and System Admins in real-time.',
+  description:
+    'Instant food delivery platform connecting Customers, Kitchen Vendors, Delivery Drivers, and System Admins in real-time.',
 }
 
 export const viewport: Viewport = {
@@ -18,11 +23,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn('font-sans', geist.variable)}>
       <body className="antialiased bg-[#f8f9f7] text-[#18201c]" suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

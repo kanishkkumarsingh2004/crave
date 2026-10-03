@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
@@ -25,11 +25,17 @@ export async function GET(request: Request) {
 
     const payload = await verifyToken(token)
     if (!payload) {
-      return NextResponse.json({ authenticated: false, user: null, message: 'Invalid or expired JWT' }, { status: 401 })
+      return NextResponse.json(
+        { authenticated: false, user: null, message: 'Invalid or expired JWT' },
+        { status: 401 }
+      )
     }
 
     return NextResponse.json({ authenticated: true, user: payload })
   } catch (error) {
-    return NextResponse.json({ authenticated: false, error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { authenticated: false, error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

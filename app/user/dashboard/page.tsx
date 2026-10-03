@@ -1,28 +1,34 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
-import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
 import { ShieldAlert } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function UserDashboardPage() {
-  const { user, role } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (user && role !== 'customer') {
+    if (isLoading) return
+
+    if (!user) {
+      router.replace('/login')
+    } else if (role !== 'customer') {
       router.replace(`/${role}/dashboard`)
     }
-  }, [user, role, router])
+  }, [user, role, isLoading, router])
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Authentication Required</p>
-          <p className="mt-2 text-sm font-semibold">Loading user dashboard...</p>
+          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
+            Loading Customer Dashboard...
+          </p>
         </div>
       </div>
     )

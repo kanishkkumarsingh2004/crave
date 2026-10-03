@@ -1,24 +1,27 @@
 'use client'
 
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useAuth, UserRole } from '@/lib/auth-context'
 import {
   Bike,
   ChevronDown,
+  Compass,
+  LayoutDashboard,
   LogOut,
   Menu,
   ShieldCheck,
   ShoppingBag,
   Store,
-  X,
-  LayoutDashboard,
   UtensilsCrossed,
-  Compass,
+  X,
 } from 'lucide-react'
-import { useAuth, UserRole } from '@/lib/auth-context'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import React, { useState } from 'react'
 
-export const roleDetails: Record<UserRole, { title: string; badge: string; color: string; bg: string; icon: React.ElementType }> = {
+export const roleDetails: Record<
+  UserRole,
+  { title: string; badge: string; color: string; bg: string; icon: React.ElementType }
+> = {
   customer: {
     title: 'Customer',
     badge: 'Customer View',
@@ -50,14 +53,12 @@ export const roleDetails: Record<UserRole, { title: string; badge: string; color
 }
 
 export default function Navbar() {
-  const { user, role, loginAsRole, logout } = useAuth()
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false)
+  const { user, role, logout } = useAuth()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  const CurrentRoleIcon = roleDetails[role]?.icon || ShoppingBag
   const currentDashboardLink = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
   const logoTargetLink = user ? currentDashboardLink : '/'
 
@@ -74,56 +75,6 @@ export default function Navbar() {
               crave<span className="text-[#869c18]">.</span>
             </span>
           </Link>
-
-          {/* Role selector pill */}
-          <div className="relative hidden md:block">
-            <button
-              onClick={() => setShowRoleDropdown((v) => !v)}
-              className="flex items-center gap-2 rounded-full border border-[#dfe4dc] bg-[#f8f9f7] px-3.5 py-1.5 text-xs font-semibold text-[#18201c] transition hover:bg-[#edf2e6]"
-            >
-              <CurrentRoleIcon className="size-3.5 text-[#738814]" />
-              <span>{roleDetails[role]?.badge}</span>
-              <ChevronDown className="size-3 text-[#78827c]" />
-            </button>
-
-            {showRoleDropdown && (
-              <div className="absolute left-0 top-11 z-50 w-60 rounded-2xl border border-[#e2e6df] bg-white p-2 shadow-2xl">
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#88928a]">
-                  Switch Demo Perspective
-                </div>
-                {(Object.keys(roleDetails) as UserRole[]).map((rKey) => {
-                  const info = roleDetails[rKey]
-                  const IconComponent = info.icon
-                  const isSelected = role === rKey
-                  const targetUrl = rKey === 'customer' ? '/user/dashboard' : `/${rKey}/dashboard`
-                  return (
-                    <button
-                      key={rKey}
-                      onClick={async () => {
-                        await loginAsRole(rKey)
-                        setShowRoleDropdown(false)
-                        router.push(targetUrl)
-                      }}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition ${
-                        isSelected ? 'bg-[#f0f5db] text-[#18201c] font-bold' : 'hover:bg-[#f5f7f2] text-[#4d5651]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className={`grid size-7 place-items-center rounded-lg ${info.bg}`}>
-                          <IconComponent className={`size-3.5 ${info.color}`} />
-                        </span>
-                        <div className="text-left">
-                          <p className="font-semibold text-xs leading-none">{info.title}</p>
-                          <p className="text-[10px] text-[#7d8781] mt-0.5">{info.badge}</p>
-                        </div>
-                      </div>
-                      {isSelected && <span className="size-2 rounded-full bg-[#8fa71c]" />}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Center navigation links */}
@@ -153,13 +104,22 @@ export default function Navbar() {
           ) : (
             /* Unauthenticated Nav Items */
             <>
-              <Link href="/" className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}>
+              <Link
+                href="/"
+                className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}
+              >
                 Explore
               </Link>
-              <Link href="/login" className={`transition hover:text-[#18201c] ${pathname === '/login' ? 'text-[#18201c] font-bold' : ''}`}>
+              <Link
+                href="/login"
+                className={`transition hover:text-[#18201c] ${pathname === '/login' ? 'text-[#18201c] font-bold' : ''}`}
+              >
                 Login
               </Link>
-              <Link href="/signup" className={`transition hover:text-[#18201c] ${pathname === '/signup' ? 'text-[#18201c] font-bold' : ''}`}>
+              <Link
+                href="/signup"
+                className={`transition hover:text-[#18201c] ${pathname === '/signup' ? 'text-[#18201c] font-bold' : ''}`}
+              >
                 Sign Up
               </Link>
             </>
@@ -175,7 +135,11 @@ export default function Navbar() {
                 className="flex items-center gap-2.5 rounded-full border border-[#dbe1d7] bg-white p-1 pr-3 transition hover:bg-[#f4f7f1]"
               >
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="size-7 rounded-full object-cover" />
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="size-7 rounded-full object-cover"
+                  />
                 ) : (
                   <span className="grid size-7 place-items-center rounded-full bg-[#d9f447] text-xs font-bold text-[#18201c]">
                     {user.name.charAt(0)}
@@ -183,7 +147,9 @@ export default function Navbar() {
                 )}
                 <div className="hidden text-left sm:block">
                   <p className="text-xs font-bold leading-none text-[#18201c]">{user.name}</p>
-                  <p className="mt-0.5 text-[10px] font-medium capitalize text-[#75817a]">{user.role}</p>
+                  <p className="mt-0.5 text-[10px] font-medium capitalize text-[#75817a]">
+                    {user.role}
+                  </p>
                 </div>
                 <ChevronDown className="size-3.5 text-[#88928a]" />
               </button>
@@ -193,7 +159,9 @@ export default function Navbar() {
                   <div className="border-b border-[#eff2ed] px-3 py-2.5">
                     <p className="text-xs font-bold text-[#18201c]">{user.name}</p>
                     <p className="text-[11px] text-[#78827c] truncate">{user.email}</p>
-                    <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${roleDetails[user.role]?.bg} ${roleDetails[user.role]?.color}`}>
+                    <span
+                      className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${roleDetails[user.role]?.bg} ${roleDetails[user.role]?.color}`}
+                    >
                       {user.role} Account
                     </span>
                   </div>
@@ -249,7 +217,11 @@ export default function Navbar() {
             className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
             aria-label="Toggle menu"
           >
-            {showMobileMenu ? <X className="size-4 text-[#18201c]" /> : <Menu className="size-4 text-[#18201c]" />}
+            {showMobileMenu ? (
+              <X className="size-4 text-[#18201c]" />
+            ) : (
+              <Menu className="size-4 text-[#18201c]" />
+            )}
           </button>
         </div>
       </nav>
@@ -259,19 +231,49 @@ export default function Navbar() {
         <div className="border-t border-[#e2e6de] bg-white px-5 py-4 lg:hidden">
           <div className="flex flex-col gap-3 text-xs font-semibold">
             {user ? (
-              <Link href={currentDashboardLink} onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c] flex items-center justify-between">
-                <span>Dashboard</span>
-                <span className="rounded-full bg-[#f0f5db] px-2 py-0.5 text-[10px] text-[#718714] capitalize">{role}</span>
-              </Link>
+              <>
+                <Link
+                  href={currentDashboardLink}
+                  onClick={() => setShowMobileMenu(false)}
+                  className="py-1 text-[#18201c] flex items-center justify-between"
+                >
+                  <span>Dashboard</span>
+                  <span className="rounded-full bg-[#f0f5db] px-2 py-0.5 text-[10px] text-[#718714] capitalize">
+                    {role}
+                  </span>
+                </Link>
+                <button
+                  onClick={async () => {
+                    await logout()
+                    setShowMobileMenu(false)
+                    router.push('/login')
+                  }}
+                  className="py-1 text-rose-600 font-semibold text-left"
+                >
+                  Sign Out
+                </button>
+              </>
             ) : (
               <>
-                <Link href="/" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                <Link
+                  href="/"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="py-1 text-[#18201c]"
+                >
                   Explore
                 </Link>
-                <Link href="/login" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                <Link
+                  href="/login"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="py-1 text-[#18201c]"
+                >
                   Login
                 </Link>
-                <Link href="/signup" onClick={() => setShowMobileMenu(false)} className="py-1 text-[#18201c]">
+                <Link
+                  href="/signup"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="py-1 text-[#18201c]"
+                >
                   Sign Up
                 </Link>
               </>

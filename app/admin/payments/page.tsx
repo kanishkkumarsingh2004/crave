@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 interface PaymentReference {
   id: string
@@ -14,15 +14,37 @@ interface PaymentReference {
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<PaymentReference[]>([
-    { id: 'pay_1', orderId: '#CRV-9021', customerUpi: 'alex@upi', utrRef: '428190021389', amount: 867, submittedAt: '5 mins ago', status: 'pending' },
-    { id: 'pay_2', orderId: '#CRV-8840', customerUpi: 'priya@okhdfc', utrRef: '992011283741', amount: 960, submittedAt: '20 mins ago', status: 'verified' },
-    { id: 'pay_3', orderId: '#CRV-8712', customerUpi: 'karan@icici', utrRef: '109283746519', amount: 289, submittedAt: '45 mins ago', status: 'verified' },
+    {
+      id: 'pay_1',
+      orderId: '#CRV-9021',
+      customerUpi: 'alex@upi',
+      utrRef: '428190021389',
+      amount: 867,
+      submittedAt: '5 mins ago',
+      status: 'pending',
+    },
+    {
+      id: 'pay_2',
+      orderId: '#CRV-8840',
+      customerUpi: 'priya@okhdfc',
+      utrRef: '992011283741',
+      amount: 960,
+      submittedAt: '20 mins ago',
+      status: 'verified',
+    },
+    {
+      id: 'pay_3',
+      orderId: '#CRV-8712',
+      customerUpi: 'karan@icici',
+      utrRef: '109283746519',
+      amount: 289,
+      submittedAt: '45 mins ago',
+      status: 'verified',
+    },
   ])
 
   function verifyPayment(id: string, status: 'verified' | 'rejected') {
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    )
+    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
 
   return (
@@ -35,13 +57,18 @@ export default function AdminPaymentsPage() {
       {/* Mobile Responsive Payment Cards */}
       <div className="flex flex-col gap-3 mt-6 block md:hidden">
         {payments.map((p) => (
-          <div key={p.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+          <div
+            key={p.id}
+            className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+          >
             <div className="flex items-center justify-between">
               <span className="font-bold text-sm text-[#18201c]">{p.orderId}</span>
               <span className="font-bold text-[#18201c] text-sm">₹{p.amount}</span>
             </div>
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">{p.utrRef}</span>
+              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">
+                {p.utrRef}
+              </span>
               <span className="text-[11px]">{p.submittedAt}</span>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
@@ -85,14 +112,20 @@ export default function AdminPaymentsPage() {
           <tbody className="divide-y divide-gray-100 bg-white">
             {payments.map((p) => (
               <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
-                <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">{p.orderId}</td>
-                <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">{p.utrRef}</td>
+                <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">
+                  {p.orderId}
+                </td>
+                <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">
+                  {p.utrRef}
+                </td>
                 <td className="px-5 py-4 text-xs whitespace-nowrap">
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
                     {p.submittedAt}
                   </span>
                 </td>
-                <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">₹{p.amount}</td>
+                <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">
+                  ₹{p.amount}
+                </td>
                 <td className="px-5 py-4 text-right whitespace-nowrap">
                   <div className="flex items-center justify-end gap-2">
                     <button

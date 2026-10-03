@@ -1,11 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import {
-  BarChart3,
   Activity,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -21,10 +19,12 @@ import {
   UtensilsCrossed,
   X,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, role, loginAsRole, logout } = useAuth()
+  const { user, role, loginAsRole, logout, isLoading } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -32,18 +32,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [showRoleMenu, setShowRoleMenu] = useState(false)
 
   useEffect(() => {
-    if (user && role !== 'admin') {
+    if (isLoading) return
+
+    if (!user) {
+      router.replace('/login')
+    } else if (role !== 'admin') {
       const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
       router.replace(redirectPath)
     }
-  }, [user, role, router])
+  }, [user, role, isLoading, router])
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Authentication Required</p>
-          <p className="mt-2 text-sm font-semibold">Checking admin permissions...</p>
+          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
+            Loading Admin Console...
+          </p>
         </div>
       </div>
     )
@@ -84,19 +90,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Admin Full-Height Left Sidebar with Smooth Expand/Collapse/Slide Animations */}
       <aside
         className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:sticky lg:top-0 lg:h-screen lg:left-0 lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0 shadow-2xl w-72 border-l border-[#202923]' : 'translate-x-full lg:shadow-none'
+          sidebarOpen
+            ? 'translate-x-0 shadow-2xl w-72 border-l border-[#202923]'
+            : 'translate-x-full lg:shadow-none'
         } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
-        <div className={`flex flex-col gap-6 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}>
+        <div
+          className={`flex flex-col gap-6 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}
+        >
           {/* Logo & Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4 pt-1">
-            <Link href="/admin/dashboard" className="flex items-center gap-2.5 group min-w-0" title={sidebarCollapsed ? 'crave. Admin' : undefined}>
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center gap-2.5 group min-w-0"
+              title={sidebarCollapsed ? 'crave. Admin' : undefined}
+            >
               <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)] shrink-0 transition-transform duration-300 group-hover:scale-105">
                 <UtensilsCrossed className="size-5 fill-current" />
               </span>
-              <div className={`flex items-center gap-1.5 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden lg:hidden' : 'opacity-100 max-w-[160px]'
-              }`}>
+              <div
+                className={`flex items-center gap-1.5 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                  sidebarCollapsed
+                    ? 'opacity-0 max-w-0 hidden lg:hidden'
+                    : 'opacity-100 max-w-[160px]'
+                }`}
+              >
                 <span className="text-lg font-bold tracking-tight text-white leading-none">
                   crave<span className="text-[#d9f447]">.</span>
                 </span>
@@ -116,14 +134,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1">
-            <p className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-              sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
-            }`}>
+            <p
+              className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
+              }`}
+            >
               Management & Controls
             </p>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || (item.href === '/admin/dashboard' && pathname === '/admin')
+              const isActive =
+                pathname === item.href ||
+                (item.href === '/admin/dashboard' && pathname === '/admin')
               return (
                 <Link
                   key={item.href}
@@ -138,10 +160,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <Icon className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`} />
-                  <span className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
-                    sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[170px]'
-                  }`}>
+                  <Icon
+                    className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`}
+                  />
+                  <span
+                    className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
+                      sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[170px]'
+                    }`}
+                  >
                     {item.label}
                   </span>
                 </Link>
@@ -152,15 +178,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Sidebar Bottom Profile & Single Minimize Arrow Button */}
         <div className="border-t border-white/10 p-3.5 flex flex-col gap-2 transition-all duration-300 ease-in-out">
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}>
+          <div
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="grid size-8 place-items-center rounded-lg bg-purple-950 text-purple-300 font-bold border border-purple-800 text-xs shrink-0" title={user?.name || 'Sara Vance'}>
+              <span
+                className="grid size-8 place-items-center rounded-lg bg-purple-950 text-purple-300 font-bold border border-purple-800 text-xs shrink-0"
+                title={user?.name || 'Sara Vance'}
+              >
                 SV
               </span>
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-              }`}>
-                <p className="text-xs font-bold text-white truncate">{user?.name || 'Sara Vance'}</p>
+              <div
+                className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
+                  sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+                }`}
+              >
+                <p className="text-xs font-bold text-white truncate">
+                  {user?.name || 'Sara Vance'}
+                </p>
                 <p className="text-[10px] text-white/50 truncate">Master Admin</p>
               </div>
             </div>
@@ -183,9 +218,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
             } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
           >
-            <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-              sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-            }`}>
+            <span
+              className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+              }`}
+            >
               Minimize Sidebar
             </span>
             <span className="transition-transform duration-300 ease-in-out">
@@ -208,9 +245,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
                 Admin Command Center
               </p>
-              <h1 className="text-lg font-bold tracking-tight text-[#18201c]">
-                {pageTitle}
-              </h1>
+              <h1 className="text-lg font-bold tracking-tight text-[#18201c]">{pageTitle}</h1>
             </div>
           </div>
 

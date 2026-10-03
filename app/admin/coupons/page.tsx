@@ -1,24 +1,20 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { Coupon, getCoupons, saveCoupons } from '@/lib/coupons'
 import {
+  Check,
+  CheckCircle2,
+  DollarSign,
+  Edit3,
   Plus,
   Search,
+  Sparkles,
   Tag,
-  Edit3,
   Trash2,
-  CheckCircle2,
-  XCircle,
-  Clock3,
-  Percent,
-  DollarSign,
   TrendingUp,
   X,
-  Check,
-  AlertCircle,
-  Sparkles,
 } from 'lucide-react'
-import { Coupon, getCoupons, saveCoupons, initialCoupons } from '@/lib/coupons'
+import React, { useEffect, useState } from 'react'
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -59,8 +55,18 @@ export default function AdminCouponsPage() {
     const formattedCode = code.trim().toUpperCase()
     const dVal = typeof discountValue === 'number' ? discountValue : parseFloat(discountValue)
     const mOrder = typeof minOrderAmount === 'number' ? minOrderAmount : parseFloat(minOrderAmount)
-    const mMax = maxDiscount !== '' ? (typeof maxDiscount === 'number' ? maxDiscount : parseFloat(maxDiscount)) : undefined
-    const uLimit = usageLimit !== '' ? (typeof usageLimit === 'number' ? usageLimit : parseInt(usageLimit as any)) : undefined
+    const mMax =
+      maxDiscount !== ''
+        ? typeof maxDiscount === 'number'
+          ? maxDiscount
+          : parseFloat(maxDiscount)
+        : undefined
+    const uLimit =
+      usageLimit !== ''
+        ? typeof usageLimit === 'number'
+          ? usageLimit
+          : parseInt(usageLimit as any)
+        : undefined
 
     let updated: Coupon[]
     if (editingCoupon) {
@@ -85,7 +91,9 @@ export default function AdminCouponsPage() {
       const newCoupon: Coupon = {
         id: `coup_${Date.now()}`,
         code: formattedCode,
-        description: description || `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`,
+        description:
+          description ||
+          `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`,
         discountType,
         discountValue: dVal,
         minOrderAmount: mOrder,
@@ -109,7 +117,9 @@ export default function AdminCouponsPage() {
     setCoupons(updated)
     saveCoupons(updated)
     const item = coupons.find((c) => c.id === id)
-    showToast(`Coupon '${item?.code}' status toggled to ${!item?.isActive ? 'Active' : 'Inactive'}.`)
+    showToast(
+      `Coupon '${item?.code}' status toggled to ${!item?.isActive ? 'Active' : 'Inactive'}.`
+    )
   }
 
   function deleteCoupon(id: string) {
@@ -160,11 +170,7 @@ export default function AdminCouponsPage() {
       c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.description.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus =
-      statusFilter === 'all'
-        ? true
-        : statusFilter === 'active'
-        ? c.isActive
-        : !c.isActive
+      statusFilter === 'all' ? true : statusFilter === 'active' ? c.isActive : !c.isActive
     return matchesQuery && matchesStatus
   })
 
@@ -195,7 +201,9 @@ export default function AdminCouponsPage() {
             </span>
             <span className="text-xs text-gray-500">Global Customer Discount Codes</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#18201c]">Coupons &amp; Discounts Manager</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#18201c]">
+            Coupons &amp; Discounts Manager
+          </h1>
           <p className="mt-0.5 text-xs text-gray-600">
             Create, edit, deactivate, and monitor performance of platform promo codes.
           </p>
@@ -213,7 +221,9 @@ export default function AdminCouponsPage() {
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Promo Codes</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Total Promo Codes
+            </p>
             <Tag className="size-4 text-purple-600" />
           </div>
           <p className="mt-2 text-3xl font-bold text-[#18201c]">{coupons.length}</p>
@@ -222,7 +232,9 @@ export default function AdminCouponsPage() {
 
         <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Active Coupons</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Active Coupons
+            </p>
             <CheckCircle2 className="size-4 text-emerald-600" />
           </div>
           <p className="mt-2 text-3xl font-bold text-emerald-700">{activeCount}</p>
@@ -231,19 +243,27 @@ export default function AdminCouponsPage() {
 
         <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Redemptions</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Total Redemptions
+            </p>
             <TrendingUp className="size-4 text-blue-600" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-blue-700">{totalRedemptions.toLocaleString('en-IN')}</p>
+          <p className="mt-2 text-3xl font-bold text-blue-700">
+            {totalRedemptions.toLocaleString('en-IN')}
+          </p>
           <p className="mt-1 text-xs text-gray-500">Orders processed with discounts</p>
         </div>
 
         <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Discount Savings</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Total Discount Savings
+            </p>
             <DollarSign className="size-4 text-amber-600" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-amber-700">₹{totalDiscountGiven.toLocaleString('en-IN')}</p>
+          <p className="mt-2 text-3xl font-bold text-amber-700">
+            ₹{totalDiscountGiven.toLocaleString('en-IN')}
+          </p>
           <p className="mt-1 text-xs text-gray-500">Customer savings delivered</p>
         </div>
       </div>
@@ -267,7 +287,9 @@ export default function AdminCouponsPage() {
               key={st}
               onClick={() => setStatusFilter(st)}
               className={`rounded-xl px-4 py-1.5 capitalize transition ${
-                statusFilter === st ? 'bg-[#121815] text-white shadow-sm' : 'text-gray-600 hover:text-black'
+                statusFilter === st
+                  ? 'bg-[#121815] text-white shadow-sm'
+                  : 'text-gray-600 hover:text-black'
               }`}
             >
               {st}
@@ -310,7 +332,9 @@ export default function AdminCouponsPage() {
                     )}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    <div>Min Order: <strong className="text-[#18201c]">₹{c.minOrderAmount}</strong></div>
+                    <div>
+                      Min Order: <strong className="text-[#18201c]">₹{c.minOrderAmount}</strong>
+                    </div>
                     {c.maxDiscount && (
                       <div className="text-[11px] text-gray-500">Cap: ₹{c.maxDiscount}</div>
                     )}
@@ -368,7 +392,10 @@ export default function AdminCouponsPage() {
       {/* Mobile Coupon Cards View (block md:hidden) */}
       <div className="block md:hidden flex flex-col gap-4">
         {filteredCoupons.map((c) => (
-          <div key={c.id} className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm flex flex-col gap-3">
+          <div
+            key={c.id}
+            className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm flex flex-col gap-3"
+          >
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <span className="rounded-xl bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 border border-purple-200 font-mono">
                 🏷️ {c.code}
@@ -389,7 +416,9 @@ export default function AdminCouponsPage() {
               <div>
                 <span className="text-[10px] text-gray-500 font-bold uppercase">Discount</span>
                 <p className="font-bold text-[#18201c]">
-                  {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `Flat ₹${c.discountValue} OFF`}
+                  {c.discountType === 'percentage'
+                    ? `${c.discountValue}% OFF`
+                    : `Flat ₹${c.discountValue} OFF`}
                 </p>
               </div>
               <div>
@@ -483,7 +512,9 @@ export default function AdminCouponsPage() {
                     required
                     placeholder={discountType === 'percentage' ? '50' : '100'}
                     value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setDiscountValue(e.target.value === '' ? '' : parseFloat(e.target.value))
+                    }
                     className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#121815]"
                   />
                 </div>
@@ -495,7 +526,9 @@ export default function AdminCouponsPage() {
                     required
                     placeholder="199"
                     value={minOrderAmount}
-                    onChange={(e) => setMinOrderAmount(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setMinOrderAmount(e.target.value === '' ? '' : parseFloat(e.target.value))
+                    }
                     className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#121815]"
                   />
                 </div>
@@ -506,7 +539,9 @@ export default function AdminCouponsPage() {
                     type="number"
                     placeholder="120"
                     value={maxDiscount}
-                    onChange={(e) => setMaxDiscount(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setMaxDiscount(e.target.value === '' ? '' : parseFloat(e.target.value))
+                    }
                     className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#121815]"
                   />
                 </div>
@@ -529,7 +564,9 @@ export default function AdminCouponsPage() {
                     type="number"
                     placeholder="e.g. 500"
                     value={usageLimit}
-                    onChange={(e) => setUsageLimit(e.target.value === '' ? '' : parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setUsageLimit(e.target.value === '' ? '' : parseInt(e.target.value))
+                    }
                     className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none"
                   />
                 </div>
@@ -538,7 +575,9 @@ export default function AdminCouponsPage() {
               <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Active Status</p>
-                  <p className="text-[11px] text-gray-500">Customers can use this coupon immediately in cart</p>
+                  <p className="text-[11px] text-gray-500">
+                    Customers can use this coupon immediately in cart
+                  </p>
                 </div>
                 <input
                   type="checkbox"
