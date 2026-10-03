@@ -460,7 +460,7 @@ export default function CraveXPStore() {
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-900 flex items-center justify-between">
-                    <span>⚡ 10-Minute Dark Store Express Drop</span>
+                    <span>10-Minute Dark Store Express Drop</span>
                     <span className="text-emerald-700">FREE over ₹299</span>
                   </div>
 

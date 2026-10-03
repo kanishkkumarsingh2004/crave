@@ -45,11 +45,17 @@ export default function AdminPaymentsPage() {
   async function verifyPayment(id: string, status: 'verified' | 'rejected') {
     try {
       await supabase.from('payment_reviews').update({ status }).eq('id', id)
+      const target = payments.find((p) => p.id === id)
+      if (target && status === 'verified') {
+        const cleanOrderId = target.orderId.replace('#', '')
+        await supabase.from('orders').update({ status: 'preparing' }).eq('id', cleanOrderId)
+      }
     } catch (err) {
       console.error('Failed to update payment status in Supabase:', err)
     }
     setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
+
 
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">

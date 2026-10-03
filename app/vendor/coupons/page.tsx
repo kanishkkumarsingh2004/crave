@@ -1,18 +1,21 @@
 'use client'
 
-import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { Coupon, getCoupons, saveCoupons } from '@/lib/coupons'
 import {
+  ArrowLeft,
   Check,
   CheckCircle2,
   ChefHat,
   Copy,
   DollarSign,
   Edit3,
+  LogOut,
   Plus,
   Search,
+  Settings,
   Sparkles,
+  Store,
   Tag,
   Trash2,
   TrendingUp,
@@ -20,10 +23,12 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 export default function VendorCouponsPage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const router = useRouter()
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
@@ -217,8 +222,68 @@ export default function VendorCouponsPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex flex-col justify-between">
-      <div>
-        <Navbar />
+      {/* Top Vendor Header Navigation Bar */}
+      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
+            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+              crave<span className="text-[#86a018]">.</span>
+            </Link>
+            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
+              VENDOR
+            </span>
+
+            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
+              <Store className="size-4 text-[#86a018] shrink-0" />
+              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+            <Link
+              href="/vendor/dashboard"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Kitchen Orders</span>
+            </Link>
+            <Link
+              href="/vendor/menu"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50"
+            >
+              Menu Management
+            </Link>
+            <Link
+              href="/vendor/sales"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50"
+            >
+              Sales &amp; Earnings
+            </Link>
+            <button
+              onClick={() => router.push('/vendor/coupons')}
+              className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
+            >
+              Store Offers
+            </button>
+            <Link
+              href="/vendor/settings"
+              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              <Settings className="size-3.5 text-gray-600" />
+              <span>Bank &amp; Settings</span>
+            </Link>
+            <button
+              onClick={() => logout && logout()}
+              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
+              title="Sign Out"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
         <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8 space-y-6">
           {/* Toast Notification */}
@@ -732,7 +797,6 @@ export default function VendorCouponsPage() {
             </div>
           )}
         </main>
-      </div>
 
       <footer className="py-6 text-center text-xs text-gray-400 border-t border-gray-200 bg-white">
         © 2026 crave. Kitchen Promotions &amp; Coupon Management Console.
