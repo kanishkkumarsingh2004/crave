@@ -8,24 +8,27 @@ import {
   Activity,
   ArrowUpRight,
   BarChart3,
-  ChevronLeft,
-  ChevronRight,
+  CheckCircle2,
   CreditCard,
+  Crown,
   DollarSign,
-  LayoutDashboard,
-  LogOut,
-  Menu,
+  Edit3,
   Plus,
+  RefreshCw,
   Search,
   Settings,
   ShieldCheck,
+  Sparkles,
   Store,
+  Tag,
+  Trash2,
   TrendingUp,
   Users,
+  Utensils,
   X,
   Zap,
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 
 interface AccountRecord {
   id: string
@@ -35,6 +38,15 @@ interface AccountRecord {
   status: 'active' | 'pending' | 'suspended'
   joinedDate: string
   detail: string
+  phone?: string
+  address?: string
+  restaurantName?: string
+  cuisine?: string
+  commissionRate?: number
+  paymentModel?: 'commission' | 'markup'
+  vendorType?: 'Restaurant Vendor' | 'XP Store'
+  totalSpent?: number
+  totalOrders?: number
 }
 
 interface PaymentReference {
@@ -47,132 +59,214 @@ interface PaymentReference {
   status: 'pending' | 'verified' | 'rejected'
 }
 
+interface ProductItem {
+  id: string
+  vendorId: string
+  categoryId?: string
+  name: string
+  description?: string
+  sku?: string
+  price: number
+  comparePrice?: number
+  currency: string
+  imageUrl?: string
+  status: 'ACTIVE' | 'OUT_OF_STOCK'
+  categoryName?: string
+}
+
+interface VendorStore {
+  id: string
+  userId: string
+  storeName: string
+  description?: string
+  address?: string
+  status: string
+  isOpen: boolean
+  commissionRate?: number
+  commissionType?: string
+  bannerUrl?: string
+}
+
 export default function AdminDashboard() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'analytics' | 'users' | 'payments' | 'system' | 'settings'
-  >('overview')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all')
+    'overview' | 'analytics' | 'users' | 'menu-pricing' | 'payments' | 'system' | 'settings'
+  >('users')
+
+  // Sub-tabs in User Management
+  const [userTab, setUserTab] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>('vendors')
   const [searchQuery, setSearchQuery] = useState('')
+  const [toastMsg, setToastMsg] = useState('')
 
-  // Add User Modal State
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
-  const [newUserForm, setNewUserForm] = useState<{
-    name: string
-    email: string
-    role: UserRole
-    phone: string
-    detail: string
-    status: 'active' | 'pending'
-  }>({
-    name: '',
-    email: '',
-    role: 'customer',
-    phone: '',
-    detail: '',
-    status: 'active',
-  })
-
-  function handleCreateUser(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newUserForm.name || !newUserForm.email) return
-
-    const newId = `usr_${Date.now()}`
-    const newAcc: AccountRecord = {
-      id: newId,
-      name: newUserForm.name,
-      email: newUserForm.email,
-      role: newUserForm.role,
-      status: newUserForm.status,
-      joinedDate: new Date().toISOString().split('T')[0],
-      detail: newUserForm.detail || `${newUserForm.role.toUpperCase()} Account`,
-    }
-
-    // Insert to Supabase
-    supabase
-      .from('users')
-      .insert([
-        {
-          id: newId,
-          name: newUserForm.name,
-          email: newUserForm.email,
-          role: newUserForm.role,
-          phone: newUserForm.phone || null,
-          avatar: null,
-        },
-      ])
-      .then(({ error }) => {
-        if (error) console.error('Failed to create user in Supabase:', error)
-      })
-
-    setAccounts((prev) => [newAcc, ...prev])
-    setIsAddUserOpen(false)
-    setNewUserForm({
-      name: '',
-      email: '',
-      role: 'customer',
-      phone: '',
-      detail: '',
-      status: 'active',
-    })
-  }
-
-  // Accounts data
+  // Data States
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
+  const [vendorsList, setVendorsList] = useState<VendorStore[]>([])
   const [accountsLoading, setAccountsLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        setAccountsLoading(true)
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false })
-        if (!error && data) {
-          const parsed: AccountRecord[] = data.map((u) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            role: u.role as UserRole,
-            status: 'active' as const,
-            joinedDate: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : '',
-            detail:
-              u.role === 'vendor'
-                ? u.restaurant_name || 'Vendor Account'
-                : u.role === 'driver'
-                  ? u.vehicle_type || 'Driver Account'
-                  : u.role === 'admin'
-                    ? 'System Admin'
-                    : u.address || 'Customer Account',
-          }))
-          setAccounts(parsed)
-        }
-      } catch (err) {
-        console.error('Failed to fetch accounts:', err)
-      } finally {
-        setAccountsLoading(false)
-      }
-    }
-    fetchAccounts()
-    const interval = setInterval(fetchAccounts, 10000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Payment queue
   const [payments, setPayments] = useState<PaymentReference[]>([])
 
-  useEffect(() => {
-    async function fetchPayments() {
-      try {
-        const { data, error } = await supabase
-          .from('payment_reviews')
-          .select('*')
-          .order('created_at', { ascending: false })
-        if (!error && data) {
-          const parsed: PaymentReference[] = data.map((p) => ({
+  // Vendor Onboarding Modal State
+  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false)
+  const [vendorSubmitting, setVendorSubmitting] = useState(false)
+  const [newVendorForm, setNewVendorForm] = useState({
+    ownerName: '',
+    email: '',
+    password: '',
+    storeName: '',
+    vendorType: 'Restaurant Vendor' as 'Restaurant Vendor' | 'XP Store',
+    cuisine: '',
+    phone: '',
+    address: '',
+    commissionRate: 15,
+    paymentModel: 'commission' as 'commission' | 'markup',
+    bannerUrl: '',
+  })
+
+  // Admin Menu & Price Alteration Drawer / Modal State
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false)
+  const [selectedVendorForMenu, setSelectedVendorForMenu] = useState<VendorStore | null>(null)
+  const [vendorProducts, setVendorProducts] = useState<ProductItem[]>([])
+  const [productsLoading, setProductsLoading] = useState(false)
+
+  // Edit Product Modal inside Menu Drawer
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null)
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false)
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    categoryName: 'General',
+    price: '' as number | '',
+    comparePrice: '' as number | '',
+    imageUrl: '',
+    sku: '',
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+  })
+
+  // Delete Store Confirmation State
+  const [deleteConfirmVendor, setDeleteConfirmVendor] = useState<{ id: string; name: string; email?: string } | null>(null)
+  const [isDeletingVendor, setIsDeletingVendor] = useState<boolean>(false)
+
+  function triggerToast(msg: string) {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(''), 3500)
+  }
+
+  // Scrub and fetch real database records from Supabase
+  const fetchAccountsAndVendors = async () => {
+    try {
+      setAccountsLoading(true)
+
+      // 1. Fetch real vendors table records
+      const { data: vendorsData } = await supabase.from('vendors').select('*')
+
+      // 2. Fetch real users table records
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      const realVendorsList: VendorStore[] = vendorsData
+        ? vendorsData.map((v) => ({
+            id: v.id,
+            userId: v.userId,
+            storeName: v.storeName || 'Unnamed Store',
+            description: v.description,
+            address: v.address,
+            status: v.status || 'ACTIVE',
+            isOpen: v.isOpen ?? true,
+            commissionRate: v.commissionRate ?? 15,
+            commissionType: v.commissionType || 'COMMISSION',
+            bannerUrl: v.bannerUrl,
+          }))
+        : []
+
+      setVendorsList(realVendorsList)
+
+      const combinedAccounts: AccountRecord[] = []
+
+      // Add users from public.users
+      if (usersData && usersData.length > 0) {
+        usersData.forEach((u) => {
+          const matchedVendor = realVendorsList.find((v) => v.userId === u.id || v.id === u.id)
+          const isXP = matchedVendor?.description?.toLowerCase().includes('xp') || u.cuisine?.toLowerCase().includes('xp')
+
+          combinedAccounts.push({
+            id: u.id,
+            name: u.name || 'User Account',
+            email: u.email || 'no-email@crave.com',
+            role: (u.role as UserRole) || 'customer',
+            status: 'active',
+            joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Recently',
+            detail:
+              u.role === 'vendor'
+                ? matchedVendor?.storeName || u.restaurant_name || 'Kitchen Vendor'
+                : u.role === 'driver'
+                  ? u.vehicle_type || 'Delivery Agent'
+                  : u.role === 'admin'
+                    ? 'System Super Admin'
+                    : u.address || 'Registered Customer',
+            phone: u.phone || undefined,
+            address: u.address || undefined,
+            restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
+            cuisine: u.cuisine || undefined,
+            commissionRate: Number(u.commission_rate || matchedVendor?.commissionRate || 15),
+            paymentModel:
+              u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP'
+                ? 'markup'
+                : 'commission',
+            vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
+            totalSpent: Number(u.total_spent || 0),
+            totalOrders: Number(u.total_orders || 0),
+          })
+        })
+      }
+
+      // Add all real vendors from public.vendors if not already added
+      if (realVendorsList.length > 0) {
+        realVendorsList.forEach((v) => {
+          const exists = combinedAccounts.some((a) => a.id === v.id || a.id === v.userId)
+          if (!exists) {
+            const isXP = v.description?.toLowerCase().includes('xp') || v.storeName?.toLowerCase().includes('xp')
+            combinedAccounts.push({
+              id: v.id,
+              name: v.storeName || 'Store Vendor',
+              email: `${v.storeName.toLowerCase().replace(/[^a-z0-9]/g, '')}@crave.com`,
+              role: 'vendor',
+              status: v.status ? (v.status.toLowerCase() as any) : 'active',
+              joinedDate: 'Active',
+              detail: v.storeName,
+              phone: undefined,
+              address: v.address || 'Bengaluru, India',
+              restaurantName: v.storeName,
+              cuisine: v.description ? v.description.split('·')[1]?.trim() || v.description : 'Multi-Cuisine',
+              commissionRate: v.commissionRate || 15,
+              paymentModel: v.commissionType === 'MARKUP' ? 'markup' : 'commission',
+              vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
+              totalSpent: 0,
+              totalOrders: 0,
+            })
+          }
+        })
+      }
+
+      setAccounts(combinedAccounts)
+    } catch (err) {
+      console.error('Failed to scrub DB records:', err)
+    } finally {
+      setAccountsLoading(false)
+    }
+  }
+
+  // Fetch Payment Queue
+  const fetchPayments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_reviews')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        setPayments(
+          data.map((p) => ({
             id: p.id,
             orderId: p.order_id,
             customerUpi: p.customer_vpa,
@@ -186,824 +280,1385 @@ export default function AdminDashboard() {
               : 'Just now',
             status: (p.status as 'pending' | 'verified' | 'rejected') || 'pending',
           }))
-          setPayments(parsed)
-        }
-      } catch (err) {
-        console.error('Failed to fetch payment reviews:', err)
+        )
       }
+    } catch (err) {
+      console.error('Failed to fetch payments:', err)
     }
+  }
+
+  useEffect(() => {
+    fetchAccountsAndVendors()
     fetchPayments()
-    const interval = setInterval(fetchPayments, 5000)
-    return () => clearInterval(interval)
+    const timer = setInterval(() => {
+      fetchAccountsAndVendors()
+      fetchPayments()
+    }, 12000)
+    return () => clearInterval(timer)
   }, [])
 
-  function toggleAccountStatus(id: string) {
+  // Admin Vendor Onboarding Handler
+  async function handleOnboardVendor(e: FormEvent) {
+    e.preventDefault()
+    if (!newVendorForm.ownerName || !newVendorForm.email || !newVendorForm.password || !newVendorForm.storeName) {
+      triggerToast('Please fill in all required vendor onboarding fields.')
+      return
+    }
+
+    setVendorSubmitting(true)
+
+    try {
+      const res = await fetch('/api/admin/create-vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newVendorForm.ownerName,
+          email: newVendorForm.email,
+          password: newVendorForm.password,
+          storeName: newVendorForm.storeName,
+          vendorType: newVendorForm.vendorType,
+          cuisine: newVendorForm.cuisine,
+          phone: newVendorForm.phone,
+          address: newVendorForm.address,
+          commissionRate: newVendorForm.commissionRate,
+          paymentModel: newVendorForm.paymentModel,
+          bannerUrl: newVendorForm.bannerUrl,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Vendor creation failed')
+      }
+
+      triggerToast(`🎉 ${newVendorForm.storeName} successfully onboarded as ${newVendorForm.vendorType}!`)
+      setIsAddVendorOpen(false)
+
+      setNewVendorForm({
+        ownerName: '',
+        email: '',
+        password: '',
+        storeName: '',
+        vendorType: 'Restaurant Vendor',
+        cuisine: '',
+        phone: '',
+        address: '',
+        commissionRate: 15,
+        paymentModel: 'commission',
+        bannerUrl: '',
+      })
+
+      fetchAccountsAndVendors()
+    } catch (err: any) {
+      console.error('Vendor onboarding error:', err)
+      triggerToast(err.message || 'Could not onboard vendor. Try again.')
+    } finally {
+      setVendorSubmitting(false)
+    }
+  }
+
+  // Admin Delete Vendor Handler
+  async function handleDeleteVendor(vendorId: string, email?: string, name?: string) {
+    setIsDeletingVendor(true)
+    try {
+      const res = await fetch('/api/admin/delete-vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId, email }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to delete vendor')
+      }
+      triggerToast(`🗑️ Store '${name || 'Vendor'}' has been permanently deleted!`)
+      setDeleteConfirmVendor(null)
+      fetchAccountsAndVendors()
+    } catch (err: any) {
+      console.error('Delete vendor error:', err)
+      triggerToast(err.message || 'Could not delete store.')
+    } finally {
+      setIsDeletingVendor(false)
+    }
+  }
+
+  // Fetch Vendor Products for Menu & Pricing Drawer
+  async function openMenuDrawerForVendor(vendor: VendorStore) {
+    setSelectedVendorForMenu(vendor)
+    setIsMenuDrawerOpen(true)
+    setProductsLoading(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('vendorId', vendor.id)
+        .order('createdAt', { ascending: false })
+
+      if (!error && data) {
+        setVendorProducts(
+          data.map((p) => ({
+            id: p.id,
+            vendorId: p.vendorId,
+            categoryId: p.categoryId,
+            name: p.name,
+            description: p.description,
+            sku: p.sku,
+            price: Number(p.price),
+            comparePrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+            currency: p.currency || 'INR',
+            imageUrl: p.imageUrl,
+            status: p.status || 'ACTIVE',
+            categoryName: p.description?.includes('·') ? p.description.split('·')[0].trim() : 'General',
+          }))
+        )
+      } else {
+        setVendorProducts([])
+      }
+    } catch (err) {
+      console.error('Failed to load vendor products:', err)
+      setVendorProducts([])
+    } finally {
+      setProductsLoading(false)
+    }
+  }
+
+  // Save Product Changes / Add New Product
+  async function handleSaveProduct(e: FormEvent) {
+    e.preventDefault()
+    if (!selectedVendorForMenu || !productForm.name || productForm.price === '') return
+
+    const isEdit = !!editingProduct
+    const prodId = editingProduct ? editingProduct.id : crypto.randomUUID()
+    const finalPrice = Number(productForm.price)
+    const finalComparePrice = productForm.comparePrice !== '' ? Number(productForm.comparePrice) : null
+
+    try {
+      if (isEdit) {
+        const { error } = await supabase
+          .from('products')
+          .update({
+            name: productForm.name,
+            description: `${productForm.categoryName} · ${productForm.description || ''}`,
+            price: finalPrice,
+            comparePrice: finalComparePrice,
+            imageUrl: productForm.imageUrl || null,
+            status: productForm.status,
+            sku: productForm.sku || `SKU-${Date.now()}`,
+            updatedAt: new Date().toISOString(),
+          })
+          .eq('id', prodId)
+
+        if (error) throw error
+        triggerToast(`Updated product '${productForm.name}' pricing & details!`)
+      } else {
+        const { error } = await supabase.from('products').insert([
+          {
+            id: prodId,
+            vendorId: selectedVendorForMenu.id,
+            name: productForm.name,
+            description: `${productForm.categoryName} · ${productForm.description || ''}`,
+            price: finalPrice,
+            comparePrice: finalComparePrice,
+            currency: 'INR',
+            imageUrl:
+              productForm.imageUrl ||
+              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+            status: productForm.status,
+            sku: productForm.sku || `SKU-${Date.now()}`,
+            isArchived: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ])
+
+        if (error) throw error
+        triggerToast(`Added '${productForm.name}' to ${selectedVendorForMenu.storeName}'s catalog!`)
+      }
+
+      setIsAddProductOpen(false)
+      setEditingProduct(null)
+      openMenuDrawerForVendor(selectedVendorForMenu)
+    } catch (err: any) {
+      console.error('Failed to save product:', err)
+      triggerToast('Error saving product: ' + err.message)
+    }
+  }
+
+  // Quick Discount Application Preset (e.g., 20% OFF)
+  function applyQuickDiscount(percent: number) {
+    if (productForm.price === '' && productForm.comparePrice === '') return
+
+    const baseMRP =
+      productForm.comparePrice !== ''
+        ? Number(productForm.comparePrice)
+        : Number(productForm.price || 0)
+
+    if (baseMRP <= 0) return
+
+    const discountedPrice = Math.round(baseMRP * (1 - percent / 100))
+    setProductForm({
+      ...productForm,
+      comparePrice: baseMRP,
+      price: discountedPrice,
+    })
+    triggerToast(`Applied ${percent}% OFF! Price set to ₹${discountedPrice} (Original ₹${baseMRP})`)
+  }
+
+  // Toggle Account Status
+  function toggleAccountStatus(id: string, currentStatus: string) {
+    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active'
     setAccounts((prev) =>
-      prev.map((acc) => {
-        if (acc.id === id) {
-          const nextStatus = acc.status === 'active' ? 'suspended' : 'active'
-          // Persist status in Supabase (no 'status' column, so note: you'd add one to schema)
-          // For now update local state only unless schema is extended
-          return { ...acc, status: nextStatus }
-        }
-        return acc
-      })
+      prev.map((acc) => (acc.id === id ? { ...acc, status: nextStatus as any } : acc))
     )
+    triggerToast(`Account status updated to ${nextStatus.toUpperCase()}`)
   }
 
-  function verifyPayment(id: string, status: 'verified' | 'rejected') {
-    supabase
-      .from('payment_reviews')
-      .update({ status })
-      .eq('id', id)
-      .then(({ error }) => {
-        if (error) console.error('Failed to update payment status in Supabase:', error)
-      })
-    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
-  }
+  // Filtered lists for tabs
+  const vendorAccounts = accounts.filter(
+    (a) =>
+      a.role === 'vendor' &&
+      (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.restaurantName && a.restaurantName.toLowerCase().includes(searchQuery.toLowerCase())))
+  )
 
-  const filteredAccounts = accounts.filter((acc) => {
-    const matchesRole = selectedRoleFilter === 'all' || acc.role === selectedRoleFilter
-    const matchesQuery =
-      acc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      acc.email.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesRole && matchesQuery
-  })
+  const customerAccounts = accounts.filter(
+    (a) =>
+      a.role === 'customer' &&
+      (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
-  const pendingPaymentsCount = payments.filter((p) => p.status === 'pending').length
+  const driverAccounts = accounts.filter(
+    (a) =>
+      a.role === 'driver' &&
+      (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
-  const navItems = [
-    { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard, badge: null },
-    { id: 'analytics', label: 'Platform Analytics', icon: BarChart3, badge: 'Insights' },
-    { id: 'users', label: 'User Accounts', icon: Users, badge: accounts.length.toString() },
-    {
-      id: 'payments',
-      label: 'Payment Review Queue',
-      icon: CreditCard,
-      badge: pendingPaymentsCount > 0 ? `${pendingPaymentsCount} Pending` : null,
-    },
-    { id: 'system', label: 'System Health Logs', icon: Activity, badge: 'Live' },
-    { id: 'settings', label: 'Admin Settings', icon: Settings, badge: null },
-  ]
+  const adminAccounts = accounts.filter(
+    (a) =>
+      a.role === 'admin' &&
+      (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
+  const topSpenders = [...customerAccounts]
+    .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
+    .slice(0, 5)
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9f7] text-[#18201c]">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-[#18201c]/50 backdrop-blur-sm lg:hidden"
-        />
+    <div className="space-y-6 max-w-[1600px] mx-auto">
+      {/* Toast Notification Banner */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in duration-300">
+          <Sparkles className="size-4 text-[#d9f447]" />
+          <span>{toastMsg}</span>
+        </div>
       )}
 
-      {/* Admin Sidebar Navigation Panel */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col justify-between border-r border-[#e3e8de] bg-[#18201c] text-white transition-all duration-300 lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}
-      >
-        <div className={`flex flex-col gap-6 ${sidebarCollapsed ? 'p-2' : 'p-5'}`}>
-          {/* Sidebar Top Branding */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-5">
-            <div
-              className="flex items-center gap-3 min-w-0"
-              title={sidebarCollapsed ? 'crave. Admin' : undefined}
-            >
-              <span className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-[0_4px_20px_rgba(217,244,71,0.4)] shrink-0">
-                <ShieldCheck className="size-6" />
-              </span>
-              {!sidebarCollapsed && (
-                <div className="min-w-0 overflow-hidden">
-                  <h2 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">
-                    crave<span className="text-[#d9f447]">.</span> Admin
-                  </h2>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
-                    Command Center
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="grid size-8 place-items-center rounded-full bg-white/10 text-white lg:hidden"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          {/* Sidebar Navigation Items */}
-          <nav className="flex flex-col gap-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-              return (
-                <button
-                  key={item.id}
-                  title={sidebarCollapsed ? item.label : undefined}
-                  onClick={() => {
-                    setActiveTab(item.id as any)
-                    setSidebarOpen(false)
-                  }}
-                  className={`flex items-center ${
-                    sidebarCollapsed ? 'justify-center px-0 py-3' : 'justify-between px-4 py-3'
-                  } rounded-2xl text-xs font-bold transition ${
-                    isActive
-                      ? 'bg-[#d9f447] text-[#18201c] shadow-md'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon
-                      className={`size-4 shrink-0 ${isActive ? 'text-[#18201c]' : 'text-[#d9f447]'}`}
-                    />
-                    {!sidebarCollapsed && <span>{item.label}</span>}
-                  </div>
-                  {!sidebarCollapsed && item.badge && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        isActive ? 'bg-[#18201c] text-white' : 'bg-white/15 text-[#d9f447]'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </nav>
+      {/* Navigation Sub-Header Bar */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-4">
+        <div>
+          <h2 className="text-xl font-extrabold text-[#18201c]">Platform Accounts &amp; Stores</h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer insights &amp; live Supabase sync.
+          </p>
         </div>
 
-        {/* Sidebar Footer User Profile & Single Bottom Minimize Button */}
-        <div className="border-t border-white/10 p-5 flex flex-col gap-3">
-          <div
-            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} rounded-2xl bg-white/5 p-3`}
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className="grid size-9 place-items-center rounded-xl bg-purple-950 text-purple-300 font-bold border border-purple-800 shrink-0"
-                title={user?.name || 'Sara Vance'}
-              >
-                SV
-              </span>
-              {!sidebarCollapsed && (
-                <div>
-                  <p className="text-xs font-bold text-white">{user?.name || 'Sara Vance'}</p>
-                  <p className="text-[10px] text-white/60">Master Admin</p>
-                </div>
-              )}
-            </div>
-            {!sidebarCollapsed && (
-              <button
-                onClick={() => logout()}
-                title="Sign Out"
-                className="grid size-8 place-items-center rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition"
-              >
-                <LogOut className="size-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Bottom Single Minimize Toggle Arrow Button */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
-            className={`hidden lg:flex items-center ${
-              sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
-            } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition`}
+            onClick={fetchAccountsAndVendors}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
           >
-            {!sidebarCollapsed && <span>Minimize Sidebar</span>}
-            {sidebarCollapsed ? (
-              <ChevronRight className="size-4 text-[#d9f447]" />
-            ) : (
-              <ChevronLeft className="size-4 text-[#d9f447]" />
-            )}
+            <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Supabase Data
           </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] bg-white/90 px-5 py-4 backdrop-blur-md lg:px-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white lg:hidden"
-            >
-              <Menu className="size-5 text-[#18201c]" />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#18201c] capitalize">
-                {activeTab.replace('-', ' ')}
-              </h1>
-              <p className="text-xs text-[#737e77]">Live network controls & security monitoring</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3.5 py-1 text-xs font-bold text-purple-900">
-              <ShieldCheck className="size-3.5 text-purple-700" /> System Control Active
-            </span>
-          </div>
-        </header>
-
-        {/* Dashboard Content Container */}
-        <div className="p-5 lg:p-8 flex-1">
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === 'overview' && (
-            <div className="flex flex-col gap-6">
-              {/* Metric Cards */}
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
-                      Total Network Sales
-                    </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-purple-100 text-purple-800">
-                      <DollarSign className="size-4" />
-                    </span>
-                  </div>
-                  <p className="mt-3 text-3xl font-bold text-[#18201c]">
-                    ₹
-                    {payments
-                      .reduce((s, p) => s + (p.status === 'verified' ? p.amount : 0), 0)
-                      .toLocaleString('en-IN')}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                    <TrendingUp className="size-3.5" /> Verified payments total
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
-                      Active Registered Users
-                    </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-blue-100 text-blue-800">
-                      <Users className="size-4" />
-                    </span>
-                  </div>
-                  <p className="mt-3 text-3xl font-bold text-[#18201c]">{accounts.length}</p>
-                  <p className="mt-1 text-xs text-[#737e77]">Across 4 ecosystem roles</p>
-                </div>
-
-                <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
-                      Verified Kitchens
-                    </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
-                      <Store className="size-4" />
-                    </span>
-                  </div>
-                  <p className="mt-3 text-3xl font-bold text-amber-700">
-                    {accounts.filter((a) => a.role === 'vendor').length} Partners
-                  </p>
-                  <p className="mt-1 text-xs text-[#737e77]">Kitchen vendor accounts</p>
-                </div>
-
-                <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
-                      Delivery Fleet
-                    </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
-                      <Zap className="size-4" />
-                    </span>
-                  </div>
-                  <p className="mt-3 text-3xl font-bold text-emerald-700">
-                    {accounts.filter((a) => a.role === 'driver').length} Drivers
-                  </p>
-                  <p className="mt-1 text-xs text-[#737e77]">Registered in fleet</p>
-                </div>
-              </div>
-
-              {/* Action Quick Links */}
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-                    <h3 className="font-bold text-base text-[#18201c]">
-                      Pending Verification Queue
-                    </h3>
-                    <button
-                      onClick={() => setActiveTab('payments')}
-                      className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1"
-                    >
-                      View All <ArrowUpRight className="size-3.5" />
-                    </button>
-                  </div>
-                  <div className="mt-4 flex flex-col gap-3">
-                    {payments
-                      .filter((p) => p.status === 'pending')
-                      .slice(0, 5)
-                      .map((pay) => (
-                        <div
-                          key={pay.id}
-                          className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] p-3 text-xs"
-                        >
-                          <div>
-                            <p className="font-bold text-[#18201c]">
-                              {pay.orderId} · UTR: {pay.utrRef}
-                            </p>
-                            <p className="text-[11px] text-gray-500">
-                              Customer VPA: {pay.customerUpi}
-                            </p>
-                          </div>
-                          <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
-                        </div>
-                      ))}
-                    {payments.filter((p) => p.status === 'pending').length === 0 && (
-                      <p className="text-xs text-gray-500 text-center py-4">No pending payments</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-                    <h3 className="font-bold text-base text-[#18201c]">
-                      Role Distribution breakdown
-                    </h3>
-                    <button
-                      onClick={() => setActiveTab('users')}
-                      className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1"
-                    >
-                      Manage Accounts <ArrowUpRight className="size-3.5" />
-                    </button>
-                  </div>
-                  <div className="mt-4 space-y-3 text-xs">
-                    {(['customer', 'vendor', 'driver', 'admin'] as const).map((r) => {
-                      const count = accounts.filter((a) => a.role === r).length
-                      const pct =
-                        accounts.length > 0 ? Math.round((count / accounts.length) * 100) : 0
-                      const colors: Record<string, string> = {
-                        customer: 'bg-emerald-500',
-                        vendor: 'bg-amber-500',
-                        driver: 'bg-blue-500',
-                        admin: 'bg-purple-500',
-                      }
-                      const bgs: Record<string, string> = {
-                        customer: 'bg-emerald-100',
-                        vendor: 'bg-amber-100',
-                        driver: 'bg-blue-100',
-                        admin: 'bg-purple-100',
-                      }
-                      return (
-                        <div key={r}>
-                          <div className="flex justify-between font-semibold mb-1 capitalize">
-                            <span>
-                              {r === 'customer'
-                                ? 'Customers'
-                                : r === 'vendor'
-                                  ? 'Kitchen Vendors'
-                                  : r === 'driver'
-                                    ? 'Delivery Drivers'
-                                    : 'Admins'}
-                            </span>
-                            <span>
-                              {count} ({pct}%)
-                            </span>
-                          </div>
-                          <div className={`h-2 rounded-full overflow-hidden ${bgs[r]}`}>
-                            <div
-                              className={`h-full rounded-full ${colors[r]}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 1.5: ANALYTICS */}
-          {activeTab === 'analytics' && <AdminAnalyticsPage />}
-
-          {/* TAB 2: USER ACCOUNTS MANAGEMENT */}
-          {activeTab === 'users' && (
-            <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">
-                <div>
-                  <h3 className="text-xl font-bold">Registered User Accounts</h3>
-                  <p className="text-xs text-[#737e77]">
-                    Manage accounts across Customer, Vendor, Driver, and Admin roles.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 size-3.5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search name or email..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="rounded-full border border-[#dfe4dc] py-1.5 pl-8 pr-3 text-xs outline-none"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-1 rounded-full bg-gray-100 p-1 text-xs">
-                    {['all', 'customer', 'vendor', 'driver', 'admin'].map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setSelectedRoleFilter(r)}
-                        className={`rounded-full px-3 py-1 text-[11px] font-bold capitalize transition ${
-                          selectedRoleFilter === r ? 'bg-[#18201c] text-white' : 'text-gray-600'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => setIsAddUserOpen(true)}
-                    className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-[#323d36]"
-                  >
-                    <Plus className="size-4" /> Add User
-                  </button>
-                </div>
-              </div>
-
-              {/* Mobile Responsive Account Cards (visible on mobile screens < md) */}
-              <div className="flex flex-col gap-3.5 mt-6 block md:hidden">
-                {filteredAccounts.map((acc) => (
-                  <div
-                    key={acc.id}
-                    className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-sm text-[#18201c]">{acc.name}</p>
-                        <p className="text-xs text-gray-500 font-medium">{acc.email}</p>
-                      </div>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase shrink-0 ${
-                          acc.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : acc.status === 'pending'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {acc.status}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-3 text-xs">
-                      <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-gray-800">
-                        Role: {acc.role}
-                      </span>
-                      <span className="text-gray-500 font-medium truncate max-w-[180px]">
-                        {acc.detail}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-end pt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => toggleAccountStatus(acc.id)}
-                        className={`rounded-full px-3.5 py-1.5 text-xs font-bold border transition ${
-                          acc.status === 'active'
-                            ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                        }`}
-                      >
-                        {acc.status === 'active' ? 'Suspend Account' : 'Activate Account'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop & Tablet Table (Hidden on small mobile screens, horizontally scrollable with min-width) */}
-              <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
-                <table className="w-full text-left text-xs border-collapse min-w-[850px]">
-                  <thead className="border-b border-gray-200 bg-gray-50/80 text-gray-500 uppercase font-semibold text-[10px] tracking-wider">
-                    <tr>
-                      <th className="px-4 py-3.5 whitespace-nowrap">User / Name</th>
-                      <th className="px-4 py-3.5 whitespace-nowrap">Email Address</th>
-                      <th className="px-4 py-3.5 whitespace-nowrap">Role Type</th>
-                      <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
-                      <th className="px-4 py-3.5 whitespace-nowrap">Details</th>
-                      <th className="px-4 py-3.5 whitespace-nowrap text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {filteredAccounts.map((acc) => (
-                      <tr key={acc.id} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">
-                          {acc.name}
-                        </td>
-                        <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{acc.email}</td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold uppercase text-gray-800">
-                            {acc.role}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                              acc.status === 'active'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : acc.status === 'pending'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-rose-100 text-rose-800'
-                            }`}
-                          >
-                            {acc.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
-                          {acc.detail}
-                        </td>
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => toggleAccountStatus(acc.id)}
-                            className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${
-                              acc.status === 'active'
-                                ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            }`}
-                          >
-                            {acc.status === 'active' ? 'Suspend' : 'Activate'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: PAYMENT REVIEW */}
-          {activeTab === 'payments' && (
-            <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-              <h3 className="text-xl font-bold">UPI Payment References Queue</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">
-                Review customer-submitted 12-digit UTR numbers before releasing funds to vendors.
-              </p>
-
-              {/* Mobile Payment Cards */}
-              <div className="flex flex-col gap-3 mt-6 block md:hidden">
-                {payments.map((p) => (
-                  <div
-                    key={p.id}
-                    className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-[#18201c]">{p.orderId}</span>
-                      <span className="font-bold text-[#18201c] text-sm">₹{p.amount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">
-                        {p.utrRef}
-                      </span>
-                      <span className="text-[11px]">{p.submittedAt}</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => verifyPayment(p.id, 'verified')}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition shadow-sm ${
-                          p.status === 'verified'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                        }`}
-                      >
-                        {p.status === 'verified' ? '✓ Approved' : 'Approve'}
-                      </button>
-                      <button
-                        onClick={() => verifyPayment(p.id, 'rejected')}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition shadow-sm ${
-                          p.status === 'rejected'
-                            ? 'bg-rose-600 text-white'
-                            : 'bg-rose-50 text-rose-700 border border-rose-300'
-                        }`}
-                      >
-                        {p.status === 'rejected' ? '✕ Rejected' : 'Reject'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop Table */}
-              <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
-                <table className="w-full text-left text-sm border-collapse min-w-[650px]">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50/80 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      <th className="px-5 py-3.5 whitespace-nowrap">Order ID</th>
-                      <th className="px-5 py-3.5 whitespace-nowrap">UTR Ref</th>
-                      <th className="px-5 py-3.5 whitespace-nowrap">Submitted</th>
-                      <th className="px-5 py-3.5 text-right whitespace-nowrap">Amount</th>
-                      <th className="px-5 py-3.5 text-right whitespace-nowrap">Status / Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {payments.map((p) => (
-                      <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">
-                          {p.orderId}
-                        </td>
-                        <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">
-                          {p.utrRef}
-                        </td>
-                        <td className="px-5 py-4 text-xs whitespace-nowrap">
-                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
-                            {p.submittedAt}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">
-                          ₹{p.amount}
-                        </td>
-                        <td className="px-5 py-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => verifyPayment(p.id, 'verified')}
-                              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
-                                p.status === 'verified'
-                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30'
-                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white'
-                              }`}
-                            >
-                              {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
-                            </button>
-                            <button
-                              onClick={() => verifyPayment(p.id, 'rejected')}
-                              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
-                                p.status === 'rejected'
-                                  ? 'bg-rose-600 text-white ring-2 ring-rose-600/30'
-                                  : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white'
-                              }`}
-                            >
-                              {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: SYSTEM HEALTH */}
-          {activeTab === 'system' && (
-            <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-              <h3 className="text-xl font-bold">System Health & Live Monitoring</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">
-                Real-time API gateway status, JWT token verifications, and audit logs.
-              </p>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
-                  <p className="text-xs font-bold text-emerald-900">API Gateway Status</p>
-                  <p className="text-lg font-bold text-emerald-700 mt-1">Operational (99.98%)</p>
-                </div>
-                <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4">
-                  <p className="text-xs font-bold text-blue-900">JWT Authentication</p>
-                  <p className="text-lg font-bold text-blue-700 mt-1">Active & Secured</p>
-                </div>
-                <div className="rounded-2xl bg-purple-50 border border-purple-200 p-4">
-                  <p className="text-xs font-bold text-purple-900">Database Connection</p>
-                  <p className="text-lg font-bold text-purple-700 mt-1">Healthy (12ms latency)</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SETTINGS */}
-          {activeTab === 'settings' && <AdminSettingsPage />}
+          <button
+            onClick={() => setIsAddVendorOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-black transition"
+          >
+            <Plus className="size-4 text-[#d9f447]" /> + Onboard New Store Vendor
+          </button>
         </div>
       </div>
 
-      {/* Create New User Modal */}
-      {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
+      {/* Sub-Tabs: Vendors | Customers | Drivers | Admins | Menu & Price Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-xs">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => {
+              setActiveTab('users')
+              setUserTab('vendors')
+            }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+              activeTab === 'users' && userTab === 'vendors'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Store className="size-4 text-amber-400" />
+            <span>Vendors ({vendorAccounts.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('users')
+              setUserTab('customers')
+            }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+              activeTab === 'users' && userTab === 'customers'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Users className="size-4 text-emerald-400" />
+            <span>Customers ({customerAccounts.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('users')
+              setUserTab('drivers')
+            }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+              activeTab === 'users' && userTab === 'drivers'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Zap className="size-4 text-blue-400" />
+            <span>Drivers ({driverAccounts.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('users')
+              setUserTab('admins')
+            }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+              activeTab === 'users' && userTab === 'admins'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <ShieldCheck className="size-4 text-purple-400" />
+            <span>Admins ({adminAccounts.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('menu-pricing')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+              activeTab === 'menu-pricing'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Utensils className="size-4 text-[#d9f447]" />
+            <span>Menu &amp; Price Controls</span>
+          </button>
+        </div>
+
+        <div className="relative max-w-xs w-full">
+          <Search className="absolute left-3 top-2.5 size-3.5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search store, owner or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-xs font-medium outline-none focus:border-[#86a018] focus:bg-white"
+          />
+        </div>
+      </div>
+
+      {/* SUB-TAB 1: VENDORS TABLE */}
+      {activeTab === 'users' && userTab === 'vendors' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-[#18201c]">Registered Store Vendors</h3>
+              <p className="text-[11px] text-gray-500">
+                Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access menus.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsAddVendorOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black transition"
+            >
+              <Plus className="size-3.5 text-[#d9f447]" /> + Onboard New Store
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+            <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="px-4 py-3.5 w-[25%]">Store &amp; Owner</th>
+                  <th className="px-4 py-3.5 w-[18%]">Vendor Category</th>
+                  <th className="px-4 py-3.5 w-[25%]">Contact &amp; Address</th>
+                  <th className="px-4 py-3.5 w-[12%]">Pricing Model</th>
+                  <th className="px-4 py-3.5 w-[10%]">Status</th>
+                  <th className="px-4 py-3.5 w-[10%] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {vendorAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500">
+                      No vendor stores currently registered in Supabase database. Click &apos;+ Onboard New Store&apos; to add one.
+                    </td>
+                  </tr>
+                ) : (
+                  vendorAccounts.map((account) => {
+                    const matchedVendor = vendorsList.find((v) => v.id === account.id || v.userId === account.id)
+                    const isXPStore = account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
+
+                    return (
+                      <tr key={account.id} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                          <div className="flex items-center gap-3">
+                            <div className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
+                              isXPStore ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              <Store className="size-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm text-[#18201c] truncate">
+                                {account.restaurantName || account.detail}
+                              </p>
+                              <p className="text-[11px] font-normal text-gray-500 truncate">
+                                {account.name} · <span className="font-mono">{account.email}</span>
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span
+                            className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                              isXPStore
+                                ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                                : 'bg-amber-100 text-amber-900 border border-amber-200'
+                            }`}
+                          >
+                            {isXPStore ? 'XP Store' : 'Restaurant Vendor'}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-gray-600">
+                          <p className="font-medium text-xs text-gray-800">{account.phone || 'Phone N/A'}</p>
+                          <p className="text-[11px] text-gray-500 truncate max-w-[240px]">
+                            {account.address || 'Bengaluru, India'}
+                          </p>
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap font-medium text-xs text-gray-800">
+                          {account.paymentModel === 'markup' ? (
+                            <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-800">
+                              Price Markup
+                            </span>
+                          ) : (
+                            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                              Commission ({account.commissionRate}%)
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                              account.status === 'active'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            <span className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                            {account.status}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2">
+                            {matchedVendor && (
+                              <button
+                                onClick={() => openMenuDrawerForVendor(matchedVendor)}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-black transition whitespace-nowrap"
+                              >
+                                <Utensils className="size-3.5 text-[#d9f447]" /> Manage Menu &amp; Prices
+                              </button>
+                            )}
+                            <button
+                              onClick={() => toggleAccountStatus(account.id, account.status)}
+                              className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${
+                                account.status === 'active'
+                                  ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              }`}
+                            >
+                              {account.status === 'active' ? 'Suspend' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() =>
+                                setDeleteConfirmVendor({
+                                  id: account.id,
+                                  name: account.restaurantName || account.detail || account.name,
+                                  email: account.email,
+                                })
+                              }
+                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition whitespace-nowrap flex items-center gap-1"
+                              title="Delete Store & Account"
+                            >
+                              <Trash2 className="size-3.5" /> Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 2: CUSTOMERS */}
+      {activeTab === 'users' && userTab === 'customers' && (
+        <div className="space-y-6">
+          {topSpenders.length > 0 && (
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-950 to-[#18201c] p-5 text-white shadow-md">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
+                    <Crown className="size-5" />
+                  </span>
+                  <div>
+                    <h4 className="text-base font-extrabold text-white">VIP Spending Customers</h4>
+                    <p className="text-[11px] text-white/70">Real customer accounts ordered by lifetime spend</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  Active Sync
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {topSpenders.slice(0, 3).map((cust, idx) => (
+                  <div key={cust.id} className="rounded-xl bg-white/10 p-3.5 backdrop-blur-md border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-md bg-[#d9f447] px-2 py-0.5 text-[9px] font-black text-[#18201c]">
+                        #{idx + 1} SPENDER
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-300">
+                        {cust.totalOrders} Orders
+                      </span>
+                    </div>
+                    <p className="mt-2 font-bold text-sm text-white truncate">{cust.name}</p>
+                    <p className="text-[11px] text-white/70 truncate">{cust.email}</p>
+                    <p className="mt-1.5 text-lg font-extrabold text-[#d9f447]">
+                      ₹{cust.totalSpent?.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Customer Directory Table */}
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+            <table className="w-full text-left text-xs border-collapse min-w-[900px]">
+              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="px-4 py-3.5 w-[25%]">Customer Name</th>
+                  <th className="px-4 py-3.5 w-[25%]">Email &amp; Contact</th>
+                  <th className="px-4 py-3.5 w-[25%]">Delivery Address</th>
+                  <th className="px-4 py-3.5 w-[15%]">Total Spend</th>
+                  <th className="px-4 py-3.5 w-[10%]">Status</th>
+                  <th className="px-4 py-3.5 w-[10%] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {customerAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500">
+                      No customer accounts currently stored in Supabase users table.
+                    </td>
+                  </tr>
+                ) : (
+                  customerAccounts.map((account) => (
+                    <tr key={account.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                        <div className="flex items-center gap-2.5">
+                          <div className="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-800 font-bold shrink-0">
+                            <Users className="size-4" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-[#18201c]">{account.name}</p>
+                            <p className="text-[11px] font-normal text-gray-500">Joined: {account.joinedDate}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3.5 text-gray-600">
+                        <p className="font-semibold">{account.email}</p>
+                        <p className="text-[11px] text-gray-500">{account.phone || 'Phone N/A'}</p>
+                      </td>
+
+                      <td className="px-4 py-3.5 text-gray-600 truncate max-w-[200px]">
+                        {account.address || 'Bengaluru, India'}
+                      </td>
+
+                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                        ₹{account.totalSpent?.toLocaleString('en-IN')} ({account.totalOrders} orders)
+                      </td>
+
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            account.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {account.status}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => toggleAccountStatus(account.id, account.status)}
+                          className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
+                            account.status === 'active'
+                              ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {account.status === 'active' ? 'Suspend' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 3: DRIVERS */}
+      {activeTab === 'users' && userTab === 'drivers' && (
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+            <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+              <tr>
+                <th className="px-4 py-3.5">Driver Name</th>
+                <th className="px-4 py-3.5">Contact Email &amp; Phone</th>
+                <th className="px-4 py-3.5">Vehicle Details</th>
+                <th className="px-4 py-3.5">Status</th>
+                <th className="px-4 py-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {driverAccounts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
+                    No driver accounts found in Supabase users table.
+                  </td>
+                </tr>
+              ) : (
+                driverAccounts.map((driver) => (
+                  <tr key={driver.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3.5 font-bold text-[#18201c]">{driver.name}</td>
+                    <td className="px-4 py-3.5 text-gray-600">
+                      {driver.email} · {driver.phone || 'Phone N/A'}
+                    </td>
+                    <td className="px-4 py-3.5 text-gray-600 font-semibold">{driver.detail}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        Active Partner
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => toggleAccountStatus(driver.id, driver.status)}
+                        className="rounded-xl border border-gray-200 px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:bg-gray-50"
+                      >
+                        Toggle Status
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* SUB-TAB 4: ADMINS */}
+      {activeTab === 'users' && userTab === 'admins' && (
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+            <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+              <tr>
+                <th className="px-4 py-3.5">Admin Name</th>
+                <th className="px-4 py-3.5">Email</th>
+                <th className="px-4 py-3.5">Role Privileges</th>
+                <th className="px-4 py-3.5">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {adminAccounts.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-xs text-gray-500">
+                    No admin records found in Supabase users table.
+                  </td>
+                </tr>
+              ) : (
+                adminAccounts.map((adm) => (
+                  <tr key={adm.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3.5 font-bold text-[#18201c]">{adm.name}</td>
+                    <td className="px-4 py-3.5 text-gray-600">{adm.email}</td>
+                    <td className="px-4 py-3.5 font-bold text-purple-800">Super Administrator</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-900">
+                        Active Admin
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* TAB 2.5: ADMIN MENU & PRICING CONTROLS TAB */}
+      {activeTab === 'menu-pricing' && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-[#18201c]">Create New User Account</h3>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                  Master Catalog &amp; Pricing Controls
+                </span>
+                <h3 className="text-lg font-bold text-[#18201c] mt-0.5">
+                  Store Menu &amp; Price Alteration Controls
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Admin can access any store menu, alter regular item prices, and set percentage or flat discounts.
+                </p>
+              </div>
+            </div>
+
+            {/* Vendor Selector Grid */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {vendorsList.map((vendor) => (
+                <div
+                  key={vendor.id}
+                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xs flex flex-col justify-between hover:border-[#86a018] transition"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-200">
+                        {vendor.description?.toLowerCase().includes('xp') ? 'XP Store' : 'Restaurant'}
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-700">
+                        {vendor.commissionRate}% Cut
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-base text-[#18201c]">{vendor.storeName}</h4>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">{vendor.address || 'Bengaluru, India'}</p>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2">
+                    <button
+                      onClick={() => openMenuDrawerForVendor(vendor)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#18201c] px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-black transition"
+                    >
+                      <Utensils className="size-4 text-[#d9f447]" /> Menu &amp; Prices
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmVendor({ id: vendor.id, name: vendor.storeName })}
+                      className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100 transition shrink-0"
+                      title="Delete Store"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {vendorsList.length === 0 && (
+                <div className="col-span-full p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                  No stores in Supabase database. Click &apos;+ Onboard Restaurant Vendor&apos; to add a new Restaurant or XP Store.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VENDOR ONBOARDING MODAL (ADMIN ONLY) */}
+      {isAddVendorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                  Admin Exclusive Flow
+                </span>
+                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                  Onboard New Restaurant / XP Store Vendor
+                </h3>
                 <p className="text-xs text-gray-500">
-                  Add a new Customer, Vendor, Driver, or Admin account to the platform.
+                  Register vendor credentials, store profile, cuisine, and commission model in Supabase.
                 </p>
               </div>
               <button
-                onClick={() => setIsAddUserOpen(false)}
+                onClick={() => setIsAddVendorOpen(false)}
                 className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="mt-5 flex flex-col gap-4 text-xs">
-              <div>
-                <label className="font-bold text-[#18201c]">Full Name / Business Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Rahul Sharma or Biryani Blues"
-                  value={newUserForm.name}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-              </div>
+            <form onSubmit={handleOnboardVendor} className="mt-5 space-y-4 text-xs">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Store Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Biryani Blues or craveXP Koramangala"
+                    value={newVendorForm.storeName}
+                    onChange={(e) => setNewVendorForm({ ...newVendorForm, storeName: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </div>
 
-              <div>
-                <label className="font-bold text-[#18201c]">Email Address *</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@domain.com"
-                  value={newUserForm.email}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
+                <div>
+                  <label className="font-bold text-[#18201c]">Vendor Category Type *</label>
+                  <select
+                    value={newVendorForm.vendorType}
+                    onChange={(e) =>
+                      setNewVendorForm({
+                        ...newVendorForm,
+                        vendorType: e.target.value as 'Restaurant Vendor' | 'XP Store',
+                      })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                  >
+                    <option value="Restaurant Vendor">Restaurant Vendor (Food &amp; Dining)</option>
+                    <option value="XP Store">XP Store (craveXP 10-Min Dark Store)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Account Role *</label>
-                  <select
-                    value={newUserForm.role}
-                    onChange={(e) =>
-                      setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })
-                    }
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
-                  >
-                    <option value="customer">Customer</option>
-                    <option value="vendor">Kitchen Vendor</option>
-                    <option value="driver">Delivery Driver</option>
-                    <option value="admin">System Admin</option>
-                  </select>
+                  <label className="font-bold text-[#18201c]">Owner / Contact Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Vikram Sharma"
+                    value={newVendorForm.ownerName}
+                    onChange={(e) => setNewVendorForm({ ...newVendorForm, ownerName: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Initial Status *</label>
-                  <select
-                    value={newUserForm.status}
+                  <label className="font-bold text-[#18201c]">Cuisine / Store Specialties *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. North Indian, Biryani or Express Grocery"
+                    value={newVendorForm.cuisine}
+                    onChange={(e) => setNewVendorForm({ ...newVendorForm, cuisine: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </div>
+              </div>
+
+              {/* Login Credentials Section */}
+              <div className="rounded-xl bg-amber-50/60 p-4 border border-amber-200 space-y-3">
+                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="size-4 text-amber-700" /> Vendor Account Login Credentials
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="font-bold text-gray-700">Vendor Login Email *</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="vendor@store.com"
+                      value={newVendorForm.email}
+                      onChange={(e) => setNewVendorForm({ ...newVendorForm, email: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700">Initial Password *</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={newVendorForm.password}
+                      onChange={(e) => setNewVendorForm({ ...newVendorForm, password: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="+91 98765 43210"
+                    value={newVendorForm.phone}
+                    onChange={(e) => setNewVendorForm({ ...newVendorForm, phone: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Commission Rate (%)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={newVendorForm.commissionRate}
                     onChange={(e) =>
-                      setNewUserForm({
-                        ...newUserForm,
-                        status: e.target.value as 'active' | 'pending',
-                      })
+                      setNewVendorForm({ ...newVendorForm, commissionRate: Number(e.target.value) })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
-                  >
-                    <option value="active">Active</option>
-                    <option value="pending">Pending Verification</option>
-                  </select>
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018]"
+                  />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Phone Number</label>
+                <label className="font-bold text-[#18201c]">Store Address / Location</label>
                 <input
                   type="text"
-                  placeholder="+91 98765 43210"
-                  value={newUserForm.phone}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  placeholder="104 Market St, Koramangala 4th Block, Bengaluru"
+                  value={newVendorForm.address}
+                  onChange={(e) => setNewVendorForm({ ...newVendorForm, address: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
                 />
               </div>
 
-              <div>
-                <label className="font-bold text-[#18201c]">Detail / Description</label>
-                <input
-                  type="text"
-                  placeholder={
-                    newUserForm.role === 'vendor'
-                      ? 'e.g. North Indian & Mughlai'
-                      : newUserForm.role === 'driver'
-                        ? 'e.g. Ather 450X EV'
-                        : 'e.g. Premium Customer'
-                  }
-                  value={newUserForm.detail}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, detail: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-              </div>
-
-              <div className="mt-4 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => setIsAddUserOpen(false)}
-                  className="rounded-full border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50"
+                  onClick={() => setIsAddVendorOpen(false)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#18201c] px-5 py-2 font-bold text-white shadow-md hover:bg-black"
+                  disabled={vendorSubmitting}
+                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black transition flex items-center gap-2"
                 >
-                  Create User Account
+                  {vendorSubmitting ? (
+                    <>
+                      <span className="size-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Onboarding Vendor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4 text-[#d9f447]" /> Onboard Vendor
+                    </>
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN MENU & PRICE ALTERATION DRAWER / MODAL */}
+      {isMenuDrawerOpen && selectedVendorForMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col justify-between">
+            <div>
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-900">
+                      {selectedVendorForMenu.description?.toLowerCase().includes('xp') ? 'XP Store' : 'Restaurant'}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700">
+                      {selectedVendorForMenu.commissionRate}% Commission Rate
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-[#18201c] mt-1">
+                    {selectedVendorForMenu.storeName} — Menu &amp; Price Controls
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Admin can alter regular prices, set compare prices (discounts), or add new items directly.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingProduct(null)
+                      setProductForm({
+                        name: '',
+                        description: '',
+                        categoryName: 'General',
+                        price: '',
+                        comparePrice: '',
+                        imageUrl: '',
+                        sku: '',
+                        status: 'ACTIVE',
+                      })
+                      setIsAddProductOpen(true)
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black"
+                  >
+                    <Plus className="size-3.5 text-[#d9f447]" /> + Add Item for Vendor
+                  </button>
+                  <button
+                    onClick={() => setIsMenuDrawerOpen(false)}
+                    className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Products Table */}
+              <div className="mt-5 space-y-4">
+                {productsLoading ? (
+                  <div className="p-8 text-center text-xs text-gray-500">
+                    Loading store products from Supabase database...
+                  </div>
+                ) : vendorProducts.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                    No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos; to create one.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-gray-200">
+                    <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+                      <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 uppercase font-bold text-[10px] tracking-wider">
+                        <tr>
+                          <th className="px-4 py-3">Product / Item</th>
+                          <th className="px-4 py-3">Selling Price</th>
+                          <th className="px-4 py-3">Original MRP</th>
+                          <th className="px-4 py-3">Discount Badge</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {vendorProducts.map((product) => {
+                          const hasDiscount =
+                            product.comparePrice && product.comparePrice > product.price
+                          const discountPct = hasDiscount
+                            ? Math.round(
+                                ((product.comparePrice! - product.price) / product.comparePrice!) * 100
+                              )
+                            : 0
+
+                          return (
+                            <tr key={product.id} className="hover:bg-gray-50/80 transition-colors">
+                              <td className="px-4 py-3 font-bold text-[#18201c]">
+                                <div className="flex items-center gap-3">
+                                  {product.imageUrl ? (
+                                    <img
+                                      src={product.imageUrl}
+                                      alt={product.name}
+                                      className="size-9 rounded-lg object-cover border border-gray-200 shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="grid size-9 place-items-center rounded-lg bg-gray-100 text-gray-400 shrink-0">
+                                      <Utensils className="size-4" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-bold text-sm text-[#18201c]">{product.name}</p>
+                                    <p className="text-[11px] font-normal text-gray-500 line-clamp-1">
+                                      {product.description || 'No description'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 font-bold text-sm text-[#18201c] whitespace-nowrap">
+                                ₹{product.price}
+                              </td>
+
+                              <td className="px-4 py-3 text-gray-500 font-medium whitespace-nowrap">
+                                {product.comparePrice ? (
+                                  <span className="line-through">₹{product.comparePrice}</span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                {hasDiscount ? (
+                                  <span className="rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-800 border border-rose-200">
+                                    {discountPct}% OFF
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-gray-400">Regular</span>
+                                )}
+                              </td>
+
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span
+                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                    product.status === 'ACTIVE'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-rose-100 text-rose-800'
+                                  }`}
+                                >
+                                  {product.status}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                <button
+                                  onClick={() => {
+                                    setEditingProduct(product)
+                                    setProductForm({
+                                      name: product.name,
+                                      description: product.description?.includes('·')
+                                        ? product.description.split('·')[1].trim()
+                                        : product.description || '',
+                                      categoryName: product.categoryName || 'General',
+                                      price: product.price,
+                                      comparePrice: product.comparePrice || '',
+                                      imageUrl: product.imageUrl || '',
+                                      sku: product.sku || '',
+                                      status: product.status,
+                                    })
+                                    setIsAddProductOpen(true)
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-gray-800 hover:bg-gray-200 transition"
+                                >
+                                  <Edit3 className="size-3.5 text-amber-600" /> Alter Price / Edit
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setIsMenuDrawerOpen(false)}
+                className="rounded-xl border border-gray-300 px-5 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+              >
+                Close Drawer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT / ADD PRODUCT MODAL FOR ADMIN */}
+      {isAddProductOpen && selectedVendorForMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                  Admin Price &amp; Menu Modifier
+                </span>
+                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                  {editingProduct ? `Alter '${editingProduct.name}' Price` : 'Add New Product to Store'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAddProductOpen(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Product Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              {/* Price & Compare Price Alteration Box */}
+              <div className="rounded-xl bg-gray-50 p-3.5 border border-gray-200 space-y-3">
+                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
+                  <Tag className="size-4 text-amber-600" /> Admin Pricing &amp; Discount Presets
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700">Selling Price (₹) *</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={productForm.price}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          price: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2 font-extrabold text-sm outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700">Original MRP / Compare (₹)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 200"
+                      value={productForm.comparePrice}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          comparePrice: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2 font-bold text-sm outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Discount Tool */}
+                <div className="pt-1">
+                  <p className="text-[10px] font-bold text-gray-500 mb-1">Quick Discount Presets:</p>
+                  <div className="flex items-center gap-2">
+                    {[10, 20, 30, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => applyQuickDiscount(pct)}
+                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-800 hover:bg-[#18201c] hover:text-white transition"
+                      >
+                        {pct}% OFF
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Description / Notes</label>
+                <input
+                  type="text"
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Product Image URL</label>
+                <input
+                  type="url"
+                  value={productForm.imageUrl}
+                  onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-mono text-[11px] outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3 border border-gray-200">
+                <span className="font-bold text-[#18201c]">Product In-Stock Status</span>
+                <select
+                  value={productForm.status}
+                  onChange={(e) =>
+                    setProductForm({
+                      ...productForm,
+                      status: e.target.value as 'ACTIVE' | 'INACTIVE',
+                    })
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-1 font-bold outline-none text-xs"
+                >
+                  <option value="ACTIVE">Active (In Stock)</option>
+                  <option value="INACTIVE">Out of Stock</option>
+                </select>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddProductOpen(false)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black"
+                >
+                  Save Product &amp; Update Prices
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE STORE CONFIRMATION MODAL */}
+      {deleteConfirmVendor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-rose-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-100 text-rose-700">
+              <Trash2 className="size-6" />
+            </div>
+            <h3 className="mt-4 text-center text-lg font-bold text-[#18201c]">
+              Delete Store / Restaurant?
+            </h3>
+            <p className="mt-2 text-center text-xs text-gray-600 leading-relaxed">
+              Are you sure you want to permanently delete store{' '}
+              <strong className="text-gray-900">{deleteConfirmVendor.name}</strong>
+              {deleteConfirmVendor.email ? ` (${deleteConfirmVendor.email})` : ''}?
+              This action will erase the store, owner account, and all associated menu items from Supabase.
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmVendor(null)}
+                disabled={isDeletingVendor}
+                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  handleDeleteVendor(
+                    deleteConfirmVendor.id,
+                    deleteConfirmVendor.email,
+                    deleteConfirmVendor.name
+                  )
+                }
+                disabled={isDeletingVendor}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 transition flex items-center justify-center gap-2"
+              >
+                {isDeletingVendor ? 'Deleting...' : 'Yes, Delete Store'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -151,110 +151,66 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval)
   }, [broadcastOffer, offerTimer])
 
-  // Poll Supabase for live orders matching nearest driver using Haversine
+  // Poll /api/orders for live orders matching driver queue
   useEffect(() => {
     if (!isOnline || activeTask || broadcastOffer) return
 
     const checkLiveOrders = async () => {
       try {
-        const { data: dbOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .in('status', ['preparing', 'ready'])
-          .is('driver_name', null)
-          .limit(3)
+        const res = await fetch('/api/orders')
+        const json = await res.json()
 
-        if (dbOrders && dbOrders.length > 0) {
-          const target = dbOrders[0]
-          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
-          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
+        if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
+          // Find active orders needing driver pickup
+          const availableOrders = json.orders.filter(
+            (o: any) =>
+              o.status !== 'delivered' &&
+              o.status !== 'completed' &&
+              o.status !== 'cancelled' &&
+              (!o.driver_name || o.driver_name === 'Unassigned')
+          )
 
-          // Calculate Haversine distance to restaurant
-          const restLat = 12.9352 // Koramangala
-          const restLng = 77.6245
-          const distKm = calculateHaversineDistance(driverLat, driverLng, restLat, restLng)
+          if (availableOrders.length > 0) {
+            const target = availableOrders[availableOrders.length - 1]
+            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
+            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
 
-          let itemsArr = []
-          try {
-            itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items
-          } catch (e) {}
+            const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
 
-          let parsedOtp = '4921'
-          if (Array.isArray(itemsArr) && itemsArr.length > 0 && itemsArr[0].otp) {
-            parsedOtp = itemsArr[0].otp
+            let itemsArr: any[] = []
+            try {
+              itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+            } catch (e) {}
+
+            const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+            const calcPayout = Math.max(60, Math.round(Number(target.total_amount ?? 250) * 0.15) + 35)
+
+            setOfferTimer(25)
+            setBroadcastOffer({
+              id: target.id,
+              orderNumber: `#${target.id.slice(0, 8)}`,
+              restaurantName: target.restaurant_name || 'Crave Kitchen Store',
+              restaurantAddress: target.customer_address ? `Kitchen near ${target.customer_address}` : 'Koramangala 5th Block, Bengaluru',
+              customerName: target.customer_name || 'Customer',
+              customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
+              basePayout: calcPayout,
+              surgeBonus: 25,
+              tip: 30,
+              distance: `${distKm || 1.8} km`,
+              itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+              otp: String(realOtp),
+            })
           }
-
-          setOfferTimer(20)
-          setBroadcastOffer({
-            id: target.id,
-            orderNumber: `#${target.id}`,
-            restaurantName: target.restaurant_name || 'The Green Table',
-            restaurantAddress: 'Koramangala 5th Block, Bengaluru',
-            customerName: target.customer_name || 'Alex Rivera',
-            customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-            basePayout: Math.round(Number(target.total_amount ?? 300) * 0.15) + 40,
-            surgeBonus: 25,
-            tip: 30,
-            distance: `${distKm || 2.4} km`,
-            itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 2,
-            otp: parsedOtp,
-          })
         }
       } catch (err) {
         console.error('Failed to query live orders for driver:', err)
       }
     }
 
-    const timer = setInterval(checkLiveOrders, 8000)
+    checkLiveOrders()
+    const timer = setInterval(checkLiveOrders, 4000)
     return () => clearInterval(timer)
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
-
-  // GPS Watcher Effect
-  useEffect(() => {
-    if (!isOnline) {
-      setGpsStatus('idle')
-      return
-    }
-
-    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
-      setGpsStatus('connected')
-      return
-    }
-
-    setGpsStatus('acquiring')
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-        const accuracy = position.coords.accuracy
-        setDriverGpsCoords([lat, lng])
-        setGpsAccuracy(Math.round(accuracy))
-        setGpsStatus('connected')
-        setLastGpsUpdate(
-          new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        )
-      },
-      (error) => {
-        console.warn('Mobile GPS error / fallback to Bengaluru center:', error.message)
-        setGpsStatus('connected')
-        setDriverGpsCoords([12.9716, 77.5946])
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 5000,
-      }
-    )
-
-    return () => {
-      navigator.geolocation.clearWatch(watchId)
-    }
-  }, [isOnline])
 
   function requestMobileGps() {
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
@@ -264,8 +220,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     setGpsStatus('acquiring')
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
+        const lat = parseFloat(position.coords.latitude.toFixed(6))
+        const lng = parseFloat(position.coords.longitude.toFixed(6))
         setDriverGpsCoords([lat, lng])
         setGpsAccuracy(Math.round(position.coords.accuracy))
         setGpsStatus('connected')
@@ -279,56 +235,66 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       },
       (err) => {
         setGpsStatus('connected')
-        setDriverGpsCoords([12.9716, 77.5946])
+        setDriverGpsCoords([12.6817, 77.4729])
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
 
-  function triggerSimulatedOffer() {
-    setOfferTimer(15)
-    const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
-    const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
-    const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9784, 77.6408)
+  async function triggerSimulatedOffer() {
+    try {
+      const res = await fetch('/api/orders')
+      const json = await res.json()
+      if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
+        const availableOrders = json.orders.filter(
+          (o: any) =>
+            o.status !== 'delivered' &&
+            o.status !== 'completed' &&
+            o.status !== 'cancelled'
+        )
+        if (availableOrders.length > 0) {
+          const target = availableOrders[availableOrders.length - 1]
+          let itemsArr: any[] = []
+          try {
+            itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+          } catch (e) {}
 
-    const isDarkStoreOffer = Math.random() > 0.4
-    if (isDarkStoreOffer) {
-      setBroadcastOffer({
-        id: `off_${Date.now()}`,
-        orderNumber: `#CXP-${Math.floor(1000 + Math.random() * 9000)}`,
-        restaurantName: '⚡ craveXP Dark Store Hub #402 (10-Min Express)',
-        restaurantAddress: 'Aisle B3, Indiranagar Micro-Hub',
-        customerName: 'Priya Sharma (Instamart Order)',
-        customerAddress: 'Tower 4, Skylight Apts, Indiranagar',
-        basePayout: 110,
-        surgeBonus: 50,
-        tip: 60,
-        distance: `${distKm} km`,
-        itemsCount: 5,
-        otp: '4921',
-      })
-    } else {
-      setBroadcastOffer({
-        id: `off_${Date.now()}`,
-        orderNumber: `#DRP-${Math.floor(1000 + Math.random() * 9000)}`,
-        restaurantName: 'Subway Fresh',
-        restaurantAddress: 'CMH Road, Indiranagar',
-        customerName: 'Ananya Roy',
-        customerAddress: 'Sobha Crimson, HAL 2nd Stage',
-        basePayout: 95,
-        surgeBonus: 40,
-        tip: 50,
-        distance: `${distKm + 1.2} km`,
-        itemsCount: 2,
-        otp: '4921',
-      })
+          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+          const calcPayout = Math.max(60, Math.round(Number(target.total_amount ?? 250) * 0.15) + 35)
+
+          setOfferTimer(25)
+          setBroadcastOffer({
+            id: target.id,
+            orderNumber: `#${target.id.slice(0, 8)}`,
+            restaurantName: target.restaurant_name || 'Crave Kitchen Store',
+            restaurantAddress: target.customer_address ? `Kitchen near ${target.customer_address}` : 'Koramangala, Bengaluru',
+            customerName: target.customer_name || 'Customer',
+            customerAddress: target.customer_address || 'Indiranagar',
+            basePayout: calcPayout,
+            surgeBonus: 25,
+            tip: 30,
+            distance: '1.8 km',
+            itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+            otp: String(realOtp),
+          })
+          return
+        }
+      }
+    } catch (e) {}
+
+    // No real customer orders available - do NOT trigger fake offer
+    setBroadcastOffer(null)
+    if (typeof window !== 'undefined') {
+      alert('No active real customer orders currently waiting for pickup in the queue. Please place an order as a customer first!')
     }
   }
 
   async function acceptBroadcastOffer() {
     if (!broadcastOffer) return
-    setActiveTask({
-      id: `task_${Date.now()}`,
+
+    const realId = broadcastOffer.id
+    const task: DeliveryTask = {
+      id: realId,
       orderNumber: broadcastOffer.orderNumber,
       restaurantName: broadcastOffer.restaurantName,
       restaurantAddress: broadcastOffer.restaurantAddress,
@@ -339,20 +305,33 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       tip: broadcastOffer.tip,
       distance: broadcastOffer.distance,
       step: 'assigned',
-      otp: broadcastOffer.otp || '4921',
-    })
+      otp: broadcastOffer.otp || '1234',
+    }
+
+    setActiveTask(task)
 
     try {
-      const cleanId = broadcastOffer.id.replace('#', '')
+      await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: realId,
+          status: 'out_for_delivery',
+          driver_name: 'Verified Delivery Partner',
+          driver_phone: '+91 98765 43210',
+        }),
+      })
+
       await supabase
         .from('orders')
         .update({
-          driver_name: 'Verified Driver',
+          driver_name: 'Verified Delivery Partner',
           driver_phone: '+91 98765 43210',
+          status: 'out_for_delivery',
         })
-        .eq('id', cleanId)
+        .eq('id', realId)
     } catch (e) {
-      console.error('Failed to update driver assignment in Supabase:', e)
+      console.error('Failed to update driver assignment:', e)
     }
 
     setBroadcastOffer(null)
@@ -365,8 +344,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     } else if (activeTask.step === 'at_restaurant') {
       setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
       try {
-        const cleanId = activeTask.orderNumber.replace('#', '')
-        await supabase.from('orders').update({ status: 'ready' }).eq('id', cleanId)
+        await fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: activeTask.id,
+            status: 'out_for_delivery',
+          }),
+        })
       } catch (e) {}
     } else if (activeTask.step === 'picked_up') {
       setActiveTask((prev) => (prev ? { ...prev, step: 'arrived_customer' } : null))
@@ -376,11 +361,13 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   function completeDelivery(otpInput?: string): { success: boolean; message: string } {
     if (!activeTask) return { success: false, message: 'No active delivery task.' }
 
-    const expectedOtp = activeTask.otp || '4921'
-    if (otpInput && otpInput.trim() !== expectedOtp.trim()) {
+    const expectedOtp = String(activeTask.otp || '1234').trim()
+    const providedOtp = String(otpInput || '').trim()
+
+    if (providedOtp && providedOtp !== expectedOtp) {
       return {
         success: false,
-        message: `Incorrect OTP (${otpInput}). Ask customer for the 4-digit OTP shown on their tracking screen.`,
+        message: `Incorrect OTP (${providedOtp}). Expected ${expectedOtp}. Ask customer for the 4-digit OTP from their live tracking screen.`,
       }
     }
 
@@ -398,11 +385,19 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const cleanId = activeTask.orderNumber.replace('#', '')
+      fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: activeTask.id,
+          status: 'delivered',
+        }),
+      }).catch(() => {})
+
       supabase
         .from('orders')
         .update({ status: 'completed' })
-        .eq('id', cleanId)
+        .eq('id', activeTask.id)
         .then(() => {})
     } catch (e) {}
 

@@ -197,14 +197,15 @@ export default function CraveXPStore() {
   }
 
   const updateItemQty = (item: GroceryItem, delta: number) => {
+    const itemStock = item.stockCount && item.stockCount > 0 ? item.stockCount : 50
     setCart((prev) => {
       const existing = prev.find((c) => c.item.id === item.id)
       if (!existing) {
-        if (
-          delta > 0 &&
-          item.stockCount > 0 &&
-          (!prev.length || prev[0].item.restaurantId === item.restaurantId)
-        ) {
+        if (delta > 0) {
+          // If cart contains items from a different store, reset cart with new store's item
+          if (prev.length > 0 && item.restaurantId && prev[0].item.restaurantId !== item.restaurantId) {
+            return [{ item, qty: 1 }]
+          }
           return [...prev, { item, qty: 1 }]
         }
         return prev
@@ -213,7 +214,7 @@ export default function CraveXPStore() {
       if (newQty <= 0) {
         return prev.filter((c) => c.item.id !== item.id)
       }
-      if (newQty > item.stockCount) return prev
+      if (newQty > itemStock) return prev
       return prev.map((c) => (c.item.id === item.id ? { ...c, qty: newQty } : c))
     })
   }

@@ -24,19 +24,25 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErrorMsg('')
 
     if (password !== confirmPassword) {
       setErrorMsg('Passwords do not match.')
       return
     }
 
-    await signup({
+    const res = await signup({
       name,
       email,
       role: 'customer',
       password,
       phone,
     })
+
+    if (res && !res.success) {
+      setErrorMsg(res.message || 'Unable to complete registration.')
+      return
+    }
 
     router.push('/user/dashboard')
   }
