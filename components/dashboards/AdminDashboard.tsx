@@ -1,38 +1,30 @@
 'use client'
 
-import React, { useState } from 'react'
+import AdminAnalyticsPage from '@/app/admin/analytics/page'
+import AdminSettingsPage from '@/app/admin/settings/page'
+import { useAuth, UserRole } from '@/lib/auth-context'
 import {
+  Activity,
+  ArrowUpRight,
   BarChart3,
-  Check,
-  CheckCircle2,
-  Clock3,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   DollarSign,
   LayoutDashboard,
   LogOut,
   Menu,
-  MenuSquare,
+  Plus,
   Search,
   Settings,
   ShieldCheck,
-  ShoppingBag,
-  Sliders,
   Store,
-  UserCheck,
+  TrendingUp,
   Users,
   X,
   Zap,
-  Activity,
-  AlertTriangle,
-  ArrowUpRight,
-  TrendingUp,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react'
-import { useAuth, UserRole } from '@/lib/auth-context'
-import AdminSettingsPage from '@/app/admin/settings/page'
-import AdminAnalyticsPage from '@/app/admin/analytics/page'
+import React, { useState } from 'react'
 
 interface AccountRecord {
   id: string
@@ -56,7 +48,9 @@ interface PaymentReference {
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'users' | 'payments' | 'system' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'analytics' | 'users' | 'payments' | 'system' | 'settings'
+  >('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all')
@@ -108,19 +102,91 @@ export default function AdminDashboard() {
 
   // Accounts data
   const [accounts, setAccounts] = useState<AccountRecord[]>([
-    { id: 'u1', name: 'Alex Rivera', email: 'alex@example.com', role: 'customer', status: 'active', joinedDate: '2026-09-12', detail: '14 drops completed' },
-    { id: 'u2', name: 'The Green Table (Maya Lin)', email: 'green@table.com', role: 'vendor', status: 'active', joinedDate: '2026-08-01', detail: 'FSSAI Verified #1122' },
-    { id: 'u3', name: 'Rajesh Kumar', email: 'rajesh@express.com', role: 'driver', status: 'active', joinedDate: '2026-08-15', detail: 'Ather 450X EV Bike' },
-    { id: 'u4', name: 'Sara Vance', email: 'admin@drop.com', role: 'admin', status: 'active', joinedDate: '2026-01-01', detail: 'Master System Admin' },
-    { id: 'u5', name: 'Spice Route Bistro', email: 'spice@route.com', role: 'vendor', status: 'pending', joinedDate: '2026-10-02', detail: 'Awaiting License Review' },
-    { id: 'u6', name: 'Vikram Singh', email: 'vikram@delivery.com', role: 'driver', status: 'pending', joinedDate: '2026-10-02', detail: 'Awaiting Driving License Verification' },
+    {
+      id: 'u1',
+      name: 'Alex Rivera',
+      email: 'alex@example.com',
+      role: 'customer',
+      status: 'active',
+      joinedDate: '2026-09-12',
+      detail: '14 drops completed',
+    },
+    {
+      id: 'u2',
+      name: 'The Green Table (Maya Lin)',
+      email: 'green@table.com',
+      role: 'vendor',
+      status: 'active',
+      joinedDate: '2026-08-01',
+      detail: 'FSSAI Verified #1122',
+    },
+    {
+      id: 'u3',
+      name: 'Rajesh Kumar',
+      email: 'rajesh@express.com',
+      role: 'driver',
+      status: 'active',
+      joinedDate: '2026-08-15',
+      detail: 'Ather 450X EV Bike',
+    },
+    {
+      id: 'u4',
+      name: 'Sara Vance',
+      email: 'admin@drop.com',
+      role: 'admin',
+      status: 'active',
+      joinedDate: '2026-01-01',
+      detail: 'Master System Admin',
+    },
+    {
+      id: 'u5',
+      name: 'Spice Route Bistro',
+      email: 'spice@route.com',
+      role: 'vendor',
+      status: 'pending',
+      joinedDate: '2026-10-02',
+      detail: 'Awaiting License Review',
+    },
+    {
+      id: 'u6',
+      name: 'Vikram Singh',
+      email: 'vikram@delivery.com',
+      role: 'driver',
+      status: 'pending',
+      joinedDate: '2026-10-02',
+      detail: 'Awaiting Driving License Verification',
+    },
   ])
 
   // Payment queue
   const [payments, setPayments] = useState<PaymentReference[]>([
-    { id: 'pay_1', orderId: '#DRP-9021', customerUpi: 'alex@upi', utrRef: '428190021389', amount: 867, submittedAt: '5 mins ago', status: 'pending' },
-    { id: 'pay_2', orderId: '#DRP-8840', customerUpi: 'priya@okhdfc', utrRef: '992011283741', amount: 960, submittedAt: '20 mins ago', status: 'verified' },
-    { id: 'pay_3', orderId: '#DRP-8712', customerUpi: 'karan@icici', utrRef: '109283746519', amount: 289, submittedAt: '45 mins ago', status: 'verified' },
+    {
+      id: 'pay_1',
+      orderId: '#DRP-9021',
+      customerUpi: 'alex@upi',
+      utrRef: '428190021389',
+      amount: 867,
+      submittedAt: '5 mins ago',
+      status: 'pending',
+    },
+    {
+      id: 'pay_2',
+      orderId: '#DRP-8840',
+      customerUpi: 'priya@okhdfc',
+      utrRef: '992011283741',
+      amount: 960,
+      submittedAt: '20 mins ago',
+      status: 'verified',
+    },
+    {
+      id: 'pay_3',
+      orderId: '#DRP-8712',
+      customerUpi: 'karan@icici',
+      utrRef: '109283746519',
+      amount: 289,
+      submittedAt: '45 mins ago',
+      status: 'verified',
+    },
   ])
 
   function toggleAccountStatus(id: string) {
@@ -136,14 +202,14 @@ export default function AdminDashboard() {
   }
 
   function verifyPayment(id: string, status: 'verified' | 'rejected') {
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    )
+    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
 
   const filteredAccounts = accounts.filter((acc) => {
     const matchesRole = selectedRoleFilter === 'all' || acc.role === selectedRoleFilter
-    const matchesQuery = acc.name.toLowerCase().includes(searchQuery.toLowerCase()) || acc.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesQuery =
+      acc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      acc.email.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesRole && matchesQuery
   })
 
@@ -153,7 +219,12 @@ export default function AdminDashboard() {
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard, badge: null },
     { id: 'analytics', label: 'Platform Analytics', icon: BarChart3, badge: 'Insights' },
     { id: 'users', label: 'User Accounts', icon: Users, badge: accounts.length.toString() },
-    { id: 'payments', label: 'Payment Review Queue', icon: CreditCard, badge: pendingPaymentsCount > 0 ? `${pendingPaymentsCount} Pending` : null },
+    {
+      id: 'payments',
+      label: 'Payment Review Queue',
+      icon: CreditCard,
+      badge: pendingPaymentsCount > 0 ? `${pendingPaymentsCount} Pending` : null,
+    },
     { id: 'system', label: 'System Health Logs', icon: Activity, badge: 'Live' },
     { id: 'settings', label: 'Admin Settings', icon: Settings, badge: null },
   ]
@@ -177,18 +248,25 @@ export default function AdminDashboard() {
         <div className={`flex flex-col gap-6 ${sidebarCollapsed ? 'p-2' : 'p-5'}`}>
           {/* Sidebar Top Branding */}
           <div className="flex items-center justify-between border-b border-white/10 pb-5">
-            <div className="flex items-center gap-3 min-w-0" title={sidebarCollapsed ? 'crave. Admin' : undefined}>
+            <div
+              className="flex items-center gap-3 min-w-0"
+              title={sidebarCollapsed ? 'crave. Admin' : undefined}
+            >
               <span className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-[0_4px_20px_rgba(217,244,71,0.4)] shrink-0">
                 <ShieldCheck className="size-6" />
               </span>
               {!sidebarCollapsed && (
                 <div className="min-w-0 overflow-hidden">
-                  <h2 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">crave<span className="text-[#d9f447]">.</span> Admin</h2>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Command Center</p>
+                  <h2 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">
+                    crave<span className="text-[#d9f447]">.</span> Admin
+                  </h2>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
+                    Command Center
+                  </p>
                 </div>
               )}
             </div>
-            
+
             <button
               onClick={() => setSidebarOpen(false)}
               className="grid size-8 place-items-center rounded-full bg-white/10 text-white lg:hidden"
@@ -219,7 +297,9 @@ export default function AdminDashboard() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`size-4 shrink-0 ${isActive ? 'text-[#18201c]' : 'text-[#d9f447]'}`} />
+                    <Icon
+                      className={`size-4 shrink-0 ${isActive ? 'text-[#18201c]' : 'text-[#d9f447]'}`}
+                    />
                     {!sidebarCollapsed && <span>{item.label}</span>}
                   </div>
                   {!sidebarCollapsed && item.badge && (
@@ -239,9 +319,14 @@ export default function AdminDashboard() {
 
         {/* Sidebar Footer User Profile & Single Bottom Minimize Button */}
         <div className="border-t border-white/10 p-5 flex flex-col gap-3">
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} rounded-2xl bg-white/5 p-3`}>
+          <div
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} rounded-2xl bg-white/5 p-3`}
+          >
             <div className="flex items-center gap-3">
-              <span className="grid size-9 place-items-center rounded-xl bg-purple-950 text-purple-300 font-bold border border-purple-800 shrink-0" title={user?.name || 'Sara Vance'}>
+              <span
+                className="grid size-9 place-items-center rounded-xl bg-purple-950 text-purple-300 font-bold border border-purple-800 shrink-0"
+                title={user?.name || 'Sara Vance'}
+              >
                 SV
               </span>
               {!sidebarCollapsed && (
@@ -295,9 +380,7 @@ export default function AdminDashboard() {
               <h1 className="text-xl font-bold tracking-tight text-[#18201c] capitalize">
                 {activeTab.replace('-', ' ')}
               </h1>
-              <p className="text-xs text-[#737e77]">
-                Live network controls & security monitoring
-              </p>
+              <p className="text-xs text-[#737e77]">Live network controls & security monitoring</p>
             </div>
           </div>
 
@@ -317,7 +400,9 @@ export default function AdminDashboard() {
               <div className="grid gap-4 sm:grid-cols-4">
                 <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Total Network Sales</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                      Total Network Sales
+                    </span>
                     <span className="grid size-8 place-items-center rounded-xl bg-purple-100 text-purple-800">
                       <DollarSign className="size-4" />
                     </span>
@@ -330,7 +415,9 @@ export default function AdminDashboard() {
 
                 <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Active Registered Users</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                      Active Registered Users
+                    </span>
                     <span className="grid size-8 place-items-center rounded-xl bg-blue-100 text-blue-800">
                       <Users className="size-4" />
                     </span>
@@ -341,7 +428,9 @@ export default function AdminDashboard() {
 
                 <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Verified Kitchens</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                      Verified Kitchens
+                    </span>
                     <span className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
                       <Store className="size-4" />
                     </span>
@@ -352,13 +441,15 @@ export default function AdminDashboard() {
 
                 <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Delivery Fleet</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                      Delivery Fleet
+                    </span>
                     <span className="grid size-8 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
                       <Zap className="size-4" />
                     </span>
                   </div>
                   <p className="mt-3 text-3xl font-bold text-emerald-700">185 Active</p>
-                  <p className="mt-1 text-xs text-[#737e77]">94% Electric Fleet</p>
+                  <p className="mt-1 text-xs text-[#737e77]">94% Fleet</p>
                 </div>
               </div>
 
@@ -366,28 +457,47 @@ export default function AdminDashboard() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-                    <h3 className="font-bold text-base text-[#18201c]">Pending Verification Queue</h3>
-                    <button onClick={() => setActiveTab('payments')} className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1">
+                    <h3 className="font-bold text-base text-[#18201c]">
+                      Pending Verification Queue
+                    </h3>
+                    <button
+                      onClick={() => setActiveTab('payments')}
+                      className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1"
+                    >
                       View All <ArrowUpRight className="size-3.5" />
                     </button>
                   </div>
                   <div className="mt-4 flex flex-col gap-3">
-                    {payments.filter((p) => p.status === 'pending').map((pay) => (
-                      <div key={pay.id} className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] p-3 text-xs">
-                        <div>
-                          <p className="font-bold text-[#18201c]">{pay.orderId} · UTR: {pay.utrRef}</p>
-                          <p className="text-[11px] text-gray-500">Customer VPA: {pay.customerUpi}</p>
+                    {payments
+                      .filter((p) => p.status === 'pending')
+                      .map((pay) => (
+                        <div
+                          key={pay.id}
+                          className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] p-3 text-xs"
+                        >
+                          <div>
+                            <p className="font-bold text-[#18201c]">
+                              {pay.orderId} · UTR: {pay.utrRef}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              Customer VPA: {pay.customerUpi}
+                            </p>
+                          </div>
+                          <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
                         </div>
-                        <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
 
                 <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-                    <h3 className="font-bold text-base text-[#18201c]">Role Distribution breakdown</h3>
-                    <button onClick={() => setActiveTab('users')} className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1">
+                    <h3 className="font-bold text-base text-[#18201c]">
+                      Role Distribution breakdown
+                    </h3>
+                    <button
+                      onClick={() => setActiveTab('users')}
+                      className="text-xs font-bold text-[#86a018] hover:underline flex items-center gap-1"
+                    >
                       Manage Accounts <ArrowUpRight className="size-3.5" />
                     </button>
                   </div>
@@ -426,9 +536,7 @@ export default function AdminDashboard() {
           )}
 
           {/* TAB 1.5: ANALYTICS */}
-          {activeTab === 'analytics' && (
-            <AdminAnalyticsPage />
-          )}
+          {activeTab === 'analytics' && <AdminAnalyticsPage />}
 
           {/* TAB 2: USER ACCOUNTS MANAGEMENT */}
           {activeTab === 'users' && (
@@ -436,7 +544,9 @@ export default function AdminDashboard() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">
                 <div>
                   <h3 className="text-xl font-bold">Registered User Accounts</h3>
-                  <p className="text-xs text-[#737e77]">Manage accounts across Customer, Vendor, Driver, and Admin roles.</p>
+                  <p className="text-xs text-[#737e77]">
+                    Manage accounts across Customer, Vendor, Driver, and Admin roles.
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -477,7 +587,10 @@ export default function AdminDashboard() {
               {/* Mobile Responsive Account Cards (visible on mobile screens < md) */}
               <div className="flex flex-col gap-3.5 mt-6 block md:hidden">
                 {filteredAccounts.map((acc) => (
-                  <div key={acc.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+                  <div
+                    key={acc.id}
+                    className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-bold text-sm text-[#18201c]">{acc.name}</p>
@@ -488,8 +601,8 @@ export default function AdminDashboard() {
                           acc.status === 'active'
                             ? 'bg-emerald-100 text-emerald-800'
                             : acc.status === 'pending'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-rose-100 text-rose-800'
                         }`}
                       >
                         {acc.status}
@@ -500,7 +613,9 @@ export default function AdminDashboard() {
                       <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-gray-800">
                         Role: {acc.role}
                       </span>
-                      <span className="text-gray-500 font-medium truncate max-w-[180px]">{acc.detail}</span>
+                      <span className="text-gray-500 font-medium truncate max-w-[180px]">
+                        {acc.detail}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-end pt-2 border-t border-gray-100">
@@ -535,7 +650,9 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-gray-100 bg-white">
                     {filteredAccounts.map((acc) => (
                       <tr key={acc.id} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">{acc.name}</td>
+                        <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">
+                          {acc.name}
+                        </td>
                         <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{acc.email}</td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold uppercase text-gray-800">
@@ -548,14 +665,16 @@ export default function AdminDashboard() {
                               acc.status === 'active'
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : acc.status === 'pending'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-rose-100 text-rose-800'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-rose-100 text-rose-800'
                             }`}
                           >
                             {acc.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{acc.detail}</td>
+                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
+                          {acc.detail}
+                        </td>
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
                           <button
                             onClick={() => toggleAccountStatus(acc.id)}
@@ -580,18 +699,25 @@ export default function AdminDashboard() {
           {activeTab === 'payments' && (
             <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
               <h3 className="text-xl font-bold">UPI Payment References Queue</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">Review customer-submitted 12-digit UTR numbers before releasing funds to vendors.</p>
+              <p className="text-xs text-[#737e77] mt-0.5">
+                Review customer-submitted 12-digit UTR numbers before releasing funds to vendors.
+              </p>
 
               {/* Mobile Payment Cards */}
               <div className="flex flex-col gap-3 mt-6 block md:hidden">
                 {payments.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+                  <div
+                    key={p.id}
+                    className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-sm text-[#18201c]">{p.orderId}</span>
                       <span className="font-bold text-[#18201c] text-sm">₹{p.amount}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">{p.utrRef}</span>
+                      <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">
+                        {p.utrRef}
+                      </span>
                       <span className="text-[11px]">{p.submittedAt}</span>
                     </div>
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
@@ -635,14 +761,20 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-gray-100 bg-white">
                     {payments.map((p) => (
                       <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">{p.orderId}</td>
-                        <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">{p.utrRef}</td>
+                        <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">
+                          {p.orderId}
+                        </td>
+                        <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">
+                          {p.utrRef}
+                        </td>
                         <td className="px-5 py-4 text-xs whitespace-nowrap">
                           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
                             {p.submittedAt}
                           </span>
                         </td>
-                        <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">₹{p.amount}</td>
+                        <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">
+                          ₹{p.amount}
+                        </td>
                         <td className="px-5 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <button
@@ -679,8 +811,10 @@ export default function AdminDashboard() {
           {activeTab === 'system' && (
             <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
               <h3 className="text-xl font-bold">System Health & Live Monitoring</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">Real-time API gateway status, JWT token verifications, and audit logs.</p>
-              
+              <p className="text-xs text-[#737e77] mt-0.5">
+                Real-time API gateway status, JWT token verifications, and audit logs.
+              </p>
+
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
                   <p className="text-xs font-bold text-emerald-900">API Gateway Status</p>
@@ -699,9 +833,7 @@ export default function AdminDashboard() {
           )}
 
           {/* TAB 5: SETTINGS */}
-          {activeTab === 'settings' && (
-            <AdminSettingsPage />
-          )}
+          {activeTab === 'settings' && <AdminSettingsPage />}
         </div>
       </div>
 
@@ -712,7 +844,9 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
               <div>
                 <h3 className="text-lg font-bold text-[#18201c]">Create New User Account</h3>
-                <p className="text-xs text-gray-500">Add a new Customer, Vendor, Driver, or Admin account to the platform.</p>
+                <p className="text-xs text-gray-500">
+                  Add a new Customer, Vendor, Driver, or Admin account to the platform.
+                </p>
               </div>
               <button
                 onClick={() => setIsAddUserOpen(false)}
@@ -752,7 +886,9 @@ export default function AdminDashboard() {
                   <label className="font-bold text-[#18201c]">Account Role *</label>
                   <select
                     value={newUserForm.role}
-                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })}
+                    onChange={(e) =>
+                      setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
                   >
                     <option value="customer">Customer</option>
@@ -766,7 +902,12 @@ export default function AdminDashboard() {
                   <label className="font-bold text-[#18201c]">Initial Status *</label>
                   <select
                     value={newUserForm.status}
-                    onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as 'active' | 'pending' })}
+                    onChange={(e) =>
+                      setNewUserForm({
+                        ...newUserForm,
+                        status: e.target.value as 'active' | 'pending',
+                      })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
                   >
                     <option value="active">Active</option>
@@ -794,8 +935,8 @@ export default function AdminDashboard() {
                     newUserForm.role === 'vendor'
                       ? 'e.g. North Indian & Mughlai'
                       : newUserForm.role === 'driver'
-                      ? 'e.g. Ather 450X EV'
-                      : 'e.g. Premium Customer'
+                        ? 'e.g. Ather 450X EV'
+                        : 'e.g. Premium Customer'
                   }
                   value={newUserForm.detail}
                   onChange={(e) => setNewUserForm({ ...newUserForm, detail: e.target.value })}

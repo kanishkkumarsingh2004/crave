@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -42,12 +44,12 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
 }
 
 :root {
   color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -78,6 +80,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 .dark {
@@ -158,5 +162,39 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+  }
+  .maplibregl-popup-tip {
+    @apply hidden!;
+  }
+  .maplibregl-ctrl-group {
+    @apply bg-white! border border-slate-200! rounded-xl! shadow-lg! overflow-hidden!;
+  }
+  .maplibregl-ctrl-group button {
+    @apply bg-white! text-slate-800! w-8! h-8! border-b border-slate-100! hover:bg-slate-100! transition-colors!;
+  }
+  .maplibregl-ctrl-group button:last-child {
+    @apply border-b-0!;
+  }
+  .maplibregl-ctrl-icon {
+    filter: brightness(0.15) contrast(1.5) !important;
+  }
+  .dark .maplibregl-ctrl-group {
+    @apply bg-slate-900! border-slate-800!;
+  }
+  .dark .maplibregl-ctrl-group button {
+    @apply bg-slate-900! text-slate-100! border-slate-800! hover:bg-slate-800!;
+  }
+  .dark .maplibregl-ctrl-icon {
+    filter: invert(1) brightness(1.5) !important;
+  }
+  .maplibregl-ctrl-attrib,
+  .maplibregl-ctrl-attrib-button {
+    display: none !important;
+  }
+  html {
+    @apply font-sans;
   }
 }

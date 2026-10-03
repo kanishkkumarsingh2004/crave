@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function DashboardRedirectPage() {
-  const { user, role } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    if (isLoading) return
+
     if (!user) {
       router.replace('/login')
       return
@@ -16,7 +18,7 @@ export default function DashboardRedirectPage() {
 
     const targetPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
     router.replace(targetPath)
-  }, [user, role, router])
+  }, [user, role, isLoading, router])
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">

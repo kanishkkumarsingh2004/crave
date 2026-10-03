@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createToken, JWTPayload } from '@/lib/jwt'
+import { NextResponse } from 'next/server'
 
 const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
   'alex@example.com': {
@@ -9,7 +9,8 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     role: 'customer',
     phone: '+91 98765 43210',
     address: 'Indiranagar 100ft Rd, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
   },
   'green@table.com': {
     id: 'usr_vend_1',
@@ -20,7 +21,8 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     cuisine: 'Healthy Bowls & Salads',
     phone: '+91 98111 22334',
     address: 'Koramangala 5th Block, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
   },
   'rajesh@express.com': {
     id: 'usr_driv_1',
@@ -30,7 +32,8 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     vehicleType: 'Electric Scooter (Ather 450X)',
     licensePlate: 'KA 01 EV 9821',
     phone: '+91 97444 55667',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
   },
   'admin@crave.com': {
     id: 'usr_admin_1',
@@ -38,7 +41,8 @@ const DEMO_ACCOUNTS: Record<string, JWTPayload> = {
     email: 'admin@crave.com',
     role: 'admin',
     phone: '+91 99000 00001',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
   },
 }
 
@@ -62,7 +66,9 @@ export async function POST(request: Request) {
         email: lowerEmail,
         role: targetRole,
         ...(targetRole === 'vendor' ? { restaurantName: 'My Kitchen' } : {}),
-        ...(targetRole === 'driver' ? { vehicleType: 'EV Bike', licensePlate: 'KA 05 AB 1234' } : {}),
+        ...(targetRole === 'driver'
+          ? { vehicleType: 'EV Bike', licensePlate: 'KA 05 AB 1234' }
+          : {}),
       }
     } else if (role) {
       userPayload.role = role

@@ -1,29 +1,25 @@
 'use client'
 
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import Navbar, { roleDetails } from '@/components/Navbar'
+import { useAuth, UserRole } from '@/lib/auth-context'
 import {
   ArrowRight,
   Bike,
   Building,
-  CheckCircle2,
   FileText,
   Lock,
   Mail,
   MapPin,
   Phone,
-  ShieldCheck,
-  ShoppingBag,
   Store,
   User,
-  Zap,
 } from 'lucide-react'
-import { useAuth, UserRole } from '@/lib/auth-context'
-import Navbar, { roleDetails } from '@/components/Navbar'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { user, signup, logout } = useAuth()
   const router = useRouter()
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('customer')
@@ -54,7 +50,8 @@ export default function SignupPage() {
       licensePlate: selectedRole === 'driver' ? licensePlate : undefined,
     })
 
-    const targetPath = selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
+    const targetPath =
+      selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
     router.push(targetPath)
   }
 
@@ -64,6 +61,42 @@ export default function SignupPage() {
 
       <main className="mx-auto my-10 w-full max-w-xl px-4">
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xl sm:p-8">
+          {/* Active Session Notification */}
+          {user && (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-2 rounded-full bg-amber-500 animate-pulse" />
+                  <p className="font-bold text-amber-950">
+                    Currently logged in as <span className="underline">{user.name}</span> (
+                    {roleDetails[user.role]?.title || user.role})
+                  </p>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  Submitting this form will register and log you into a new account.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href={user.role === 'customer' ? '/user/dashboard' : `/${user.role}/dashboard`}
+                    className="rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36]"
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await logout()
+                      router.push('/signup')
+                    }}
+                    className="rounded-xl border border-amber-300 bg-white px-3.5 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-50"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="text-center">
             <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6d8213]">
@@ -101,7 +134,9 @@ export default function SignupPage() {
                     <span className={`grid size-9 place-items-center rounded-xl ${info.bg}`}>
                       <IconComponent className={`size-4 ${info.color}`} />
                     </span>
-                    <span className="mt-2 text-xs font-bold text-[#18201c] capitalize">{info.title}</span>
+                    <span className="mt-2 text-xs font-bold text-[#18201c] capitalize">
+                      {info.title}
+                    </span>
                     <span className="text-[9px] text-gray-500 font-normal">{info.badge}</span>
                   </button>
                 )
@@ -113,7 +148,8 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             <div className="rounded-2xl bg-[#f8f9f6] p-3 text-xs font-bold text-[#717c76] border border-[#e1e6df]">
               Signing up as:{' '}
-              <span className="text-[#18201c] capitalize font-extrabold">{selectedRole}</span> account
+              <span className="text-[#18201c] capitalize font-extrabold">{selectedRole}</span>{' '}
+              account
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

@@ -1,28 +1,34 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth-context'
 import VendorDashboard from '@/components/dashboards/VendorDashboard'
+import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function VendorDashboardPage() {
-  const { user, role } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (user && role !== 'vendor') {
+    if (isLoading) return
+
+    if (!user) {
+      router.replace('/login')
+    } else if (role !== 'vendor') {
       const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
       router.replace(redirectPath)
     }
-  }, [user, role, router])
+  }, [user, role, isLoading, router])
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Authentication Required</p>
-          <p className="mt-2 text-sm font-semibold">Checking kitchen console permissions...</p>
+          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
+            Loading Kitchen Console...
+          </p>
         </div>
       </div>
     )
@@ -37,10 +43,13 @@ export default function VendorDashboardPage() {
           </div>
           <h2 className="mt-4 text-xl font-bold text-[#18201c]">Access Denied</h2>
           <p className="mt-2 text-xs text-gray-600">
-            You are logged in as <span className="font-bold capitalize">{role}</span>. Vendor Console is restricted to kitchen owners.
+            You are logged in as <span className="font-bold capitalize">{role}</span>. Vendor
+            Console is restricted to kitchen owners.
           </p>
           <button
-            onClick={() => router.push(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)}
+            onClick={() =>
+              router.push(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
+            }
             className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
           >
             Go to Your {role} Dashboard

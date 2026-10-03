@@ -1,28 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
 import {
-  ShieldCheck,
-  Building2,
-  DollarSign,
-  Truck,
-  Bell,
-  Lock,
-  CheckCircle2,
-  Save,
-  RotateCcw,
   AlertTriangle,
-  Sliders,
-  Smartphone,
-  Globe,
-  Mail,
-  Phone,
+  Bell,
+  CheckCircle2,
+  DollarSign,
   FileCheck,
-  ToggleLeft,
-  ToggleRight,
-  Sparkles,
-  RefreshCw
+  Globe,
+  Lock,
+  RotateCcw,
+  Save,
+  Truck,
 } from 'lucide-react'
+import React, { useState } from 'react'
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<
@@ -111,13 +101,15 @@ export default function AdminSettingsPage() {
             Admin Security & Platform Master Settings
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Manage system-wide parameters, order fees, delivery thresholds, security rules, and onboarding policies.
+            Manage system-wide parameters, order fees, delivery thresholds, security rules, and
+            onboarding policies.
           </p>
         </div>
 
         {savedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2.5 text-xs font-bold text-emerald-900 border border-emerald-300 shadow-sm animate-fade-in">
-            <CheckCircle2 className="size-4 text-emerald-700" /> System Settings Saved & Applied Globally!
+            <CheckCircle2 className="size-4 text-emerald-700" /> System Settings Saved & Applied
+            Globally!
           </div>
         )}
       </div>
@@ -238,7 +230,9 @@ export default function AdminSettingsPage() {
 
               {isMaintenanceMode && (
                 <div className="mt-3 pt-3 border-t border-amber-200">
-                  <label className="font-bold text-amber-900">Public Maintenance Notice Message</label>
+                  <label className="font-bold text-amber-900">
+                    Public Maintenance Notice Message
+                  </label>
                   <textarea
                     rows={2}
                     value={maintenanceNotice}
@@ -256,10 +250,12 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <DollarSign className="size-4 text-[#859d19]" /> Global Revenue & Order Fee Parameters
+                <DollarSign className="size-4 text-[#859d19]" /> Global Revenue & Order Fee
+                Parameters
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Configure commission rates, handling fees, minimum order thresholds, and GST tax percentages.
+                Configure commission rates, handling fees, minimum order thresholds, and GST tax
+                percentages.
               </p>
             </div>
 
@@ -285,7 +281,9 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setHandlingCharge(parseFloat(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Payment & processing handling charge</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Payment & processing handling charge
+                </p>
               </div>
 
               <div>
@@ -309,7 +307,9 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setPackagingCap(parseFloat(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Upper cap on packaging container fee</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Upper cap on packaging container fee
+                </p>
               </div>
 
               <div>
@@ -321,7 +321,9 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setGstRate(parseFloat(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Statutory GST percentage for invoices</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Statutory GST percentage for invoices
+                </p>
               </div>
             </div>
           </div>
@@ -469,7 +471,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-[#18201c]">Require Admin 2-Factor Authentication</p>
-                  <p className="text-[10px] text-gray-500">Enforce OTP verification for all admin logins</p>
+                  <p className="text-[10px] text-gray-500">
+                    Enforce OTP verification for all admin logins
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -590,7 +594,8 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <FileCheck className="size-4 text-[#859d19]" /> Kitchen Vendor & Delivery Partner Rules
+                <FileCheck className="size-4 text-[#859d19]" /> Kitchen Vendor & Delivery Partner
+                Rules
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Compliance requirements and registration approval workflows.

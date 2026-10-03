@@ -1,24 +1,14 @@
 'use client'
 
-import React, { useState } from 'react'
+import Navbar, { roleDetails } from '@/components/Navbar'
+import { useAuth, UserRole } from '@/lib/auth-context'
+import { ArrowRight, Lock, Mail, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowRight,
-  Bike,
-  CheckCircle2,
-  Lock,
-  Mail,
-  ShieldCheck,
-  ShoppingBag,
-  Store,
-  Zap,
-} from 'lucide-react'
-import { useAuth, UserRole } from '@/lib/auth-context'
-import Navbar, { roleDetails } from '@/components/Navbar'
+import React, { useState } from 'react'
 
 export default function LoginPage() {
-  const { login, loginAsRole, demoUsers } = useAuth()
+  const { user, login, loginAsRole, logout, demoUsers } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,7 +23,8 @@ export default function LoginPage() {
     }
     const success = await login(email.trim(), selectedRole)
     if (success) {
-      const targetPath = selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
+      const targetPath =
+        selectedRole === 'customer' ? '/user/dashboard' : `/${selectedRole}/dashboard`
       router.push(targetPath)
     }
   }
@@ -50,6 +41,43 @@ export default function LoginPage() {
 
       <main className="mx-auto my-12 w-full max-w-md px-4">
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xl sm:p-8">
+          {/* Active Session Notification */}
+          {user && (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-2 rounded-full bg-amber-500 animate-pulse" />
+                  <p className="font-bold text-amber-950">
+                    Currently logged in as <span className="underline">{user.name}</span> (
+                    {roleDetails[user.role]?.title || user.role})
+                  </p>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  Select a demo role below to switch accounts instantly, or sign out to use custom
+                  credentials.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href={user.role === 'customer' ? '/user/dashboard' : `/${user.role}/dashboard`}
+                    className="rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36]"
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await logout()
+                      router.push('/login')
+                    }}
+                    className="rounded-xl border border-amber-300 bg-white px-3.5 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-50"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="text-center">
             <div className="mx-auto inline-grid size-12 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md">
@@ -84,7 +112,9 @@ export default function LoginPage() {
                     </span>
                     <div>
                       <p className="capitalize text-[11px] leading-tight">{info.title}</p>
-                      <p className="text-[9px] text-gray-500 font-normal">{demoUsers[r].name.split(' ')[0]}</p>
+                      <p className="text-[9px] text-gray-500 font-normal">
+                        {demoUsers[r].name.split(' ')[0]}
+                      </p>
                     </div>
                   </button>
                 )
@@ -135,7 +165,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-[#18201c] mb-1.5 block">Select Login Role</label>
+              <label className="text-xs font-bold text-[#18201c] mb-1.5 block">
+                Select Login Role
+              </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value as UserRole)}

@@ -1,43 +1,37 @@
 'use client'
 
-import React, { useState, useMemo, FormEvent, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
   Bike,
   Check,
-  CheckCircle2,
-  ChevronRight,
   Clock3,
   Compass,
-  DollarSign,
   Filter,
   Flame,
-  Heart,
-  Info,
   LocateFixed,
   MapPin,
   Minus,
-  Navigation,
   PackageCheck,
   Percent,
   PhoneCall,
   Plus,
   RotateCcw,
   Search,
-  ShieldCheck,
   ShoppingBag,
   ShoppingCart,
   Sparkles,
   Star,
-  Store,
   Tag,
   Trash2,
-  TrendingUp,
-  Utensils,
   X,
   Zap,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
+import dynamic from 'next/dynamic'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
+
+const Mapcn = dynamic(() => import('@/components/ui/mapcn'), { ssr: false })
+
 import { Coupon, getCoupons, validateCoupon } from '@/lib/coupons'
 
 interface Restaurant {
@@ -80,7 +74,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '25–30 min',
     distance: '1.2 km',
     costForTwo: '₹400 for two',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
     tag: 'Healthy',
     address: '100ft Rd, Indiranagar',
     offer: '50% OFF up to ₹120',
@@ -95,7 +90,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '20–25 min',
     distance: '2.4 km',
     costForTwo: '₹350 for two',
-    image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=900&q=85',
     tag: 'Popular',
     address: '5th Block, Koramangala',
     offer: 'Flat ₹100 OFF',
@@ -109,7 +105,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '30–35 min',
     distance: '3.1 km',
     costForTwo: '₹600 for two',
-    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=85',
     tag: 'Top rated',
     address: 'Church Street, Mg Road',
     offer: '20% OFF up to ₹200',
@@ -123,7 +120,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '15–20 min',
     distance: '1.8 km',
     costForTwo: '₹300 for two',
-    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=900&q=85',
     tag: 'Fast Delivery',
     address: 'HAL 2nd Stage, Indiranagar',
     offer: 'Flat ₹50 OFF',
@@ -137,7 +135,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '15–25 min',
     distance: '1.5 km',
     costForTwo: '₹250 for two',
-    image: 'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=900&q=85',
     tag: 'Trending',
     address: 'CMH Road, Indiranagar',
     offer: '50% OFF up to ₹100',
@@ -152,7 +151,8 @@ const sampleRestaurants: Restaurant[] = [
     eta: '25–30 min',
     distance: '2.0 km',
     costForTwo: '₹450 for two',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=85',
     tag: 'Gourmet',
     address: '80ft Rd, Koramangala',
     offer: '20% OFF',
@@ -165,7 +165,8 @@ const sampleMenuItems: MenuItem[] = [
     name: 'Basil Pesto Quinoa Bowl',
     detail: 'Roasted zucchini, cherry tomatoes, pesto, toasted seeds',
     price: 289,
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
+    image:
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
     veg: true,
     restaurantName: 'The Green Table',
   },
@@ -174,7 +175,8 @@ const sampleMenuItems: MenuItem[] = [
     name: 'Smoky Paneer Tikka Wrap',
     detail: 'Charred paneer, pickled onion, mint chutney in wheat wrap',
     price: 249,
-    image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85',
+    image:
+      'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85',
     veg: true,
     restaurantName: 'The Green Table',
   },
@@ -183,7 +185,8 @@ const sampleMenuItems: MenuItem[] = [
     name: 'Steamed Truffle Edamame Momos',
     detail: 'Thin wheat skin filled with edamame & wild mushrooms',
     price: 320,
-    image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85',
+    image:
+      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85',
     veg: true,
     restaurantName: 'Momo House & Asian Grill',
   },
@@ -192,7 +195,8 @@ const sampleMenuItems: MenuItem[] = [
     name: 'Artisan Woodfired Margherita Pizza',
     detail: 'San Marzano tomato sauce, fresh buffalo mozzarella, fresh basil',
     price: 420,
-    image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=500&q=85',
+    image:
+      'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=500&q=85',
     veg: true,
     restaurantName: 'Casa Napoli Woodfired Pizza',
   },
@@ -201,7 +205,8 @@ const sampleMenuItems: MenuItem[] = [
     name: 'Iced Uji Matcha Boba Latte',
     detail: 'Ceremonial grade Japanese matcha with organic oat milk & tapioca pearls',
     price: 220,
-    image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=500&q=85',
+    image:
+      'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=500&q=85',
     veg: true,
     restaurantName: 'Boba & Artisan Brews',
   },
@@ -234,20 +239,43 @@ export default function CustomerDashboard() {
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders'>('explore')
-  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '100ft Rd, Indiranagar, Bengaluru')
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    user?.address || '100ft Rd, Indiranagar, Bengaluru'
+  )
 
   // Coupon Engine State
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
   const [couponCodeInput, setCouponCodeInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [couponMessage, setCouponMessage] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
 
   // Payment State
   const [upiId, setUpiId] = useState('')
   const [utrRef, setUtrRef] = useState('')
   const [paymentDone, setPaymentDone] = useState(false)
-  const [activeOrder, setActiveOrder] = useState<any>(null)
+  const [activeOrder, setActiveOrder] = useState<any>({
+    id: 'DRP-8812',
+    restaurantName: 'The Green Table (Indiranagar)',
+    items: [
+      { name: 'Basil Pesto Quinoa Bowl', price: 289, qty: 1 },
+      { name: 'Smoky Paneer Tikka Wrap', price: 249, qty: 1 },
+    ],
+    subtotal: 538,
+    discount: 50,
+    couponCode: 'BLINK50',
+    total: 513,
+    statusStep: 3, // Step 3: Picked from Counter (Live Road Route Map active!)
+    timestamp: '1:15 PM',
+    driver: {
+      name: 'Rajesh Kumar',
+      phone: '+91 97444 55667',
+      vehicle: 'Ather EV Bike (KA 01 EV 9821)',
+    },
+  })
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState('')
@@ -295,16 +323,17 @@ export default function CustomerDashboard() {
   }
 
   function updateItemQty(id: string, delta: number) {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.qty + delta
-            return newQty > 0 ? { ...item, qty: newQty } : null
-          }
-          return item
-        })
-        .filter(Boolean) as CartItem[]
+    setCart(
+      (prev) =>
+        prev
+          .map((item) => {
+            if (item.id === id) {
+              const newQty = item.qty + delta
+              return newQty > 0 ? { ...item, qty: newQty } : null
+            }
+            return item
+          })
+          .filter(Boolean) as CartItem[]
     )
   }
 
@@ -365,13 +394,21 @@ export default function CustomerDashboard() {
         rest.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) ||
         rest.address.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const matchesTag = selectedTag === 'All' || rest.tag.toLowerCase() === selectedTag.toLowerCase()
+      const matchesTag =
+        selectedTag === 'All' || rest.tag.toLowerCase() === selectedTag.toLowerCase()
       const matchesPureVeg = pureVegOnly ? rest.isPureVeg : true
       const matchesOffers = offersOnly ? Boolean(rest.offer) : true
       const matchesFast = fastDeliveryOnly ? parseInt(rest.eta) <= 20 : true
       const matchesHighRating = highRatingOnly ? parseFloat(rest.rating) >= 4.8 : true
 
-      return matchesSearch && matchesTag && matchesPureVeg && matchesOffers && matchesFast && matchesHighRating
+      return (
+        matchesSearch &&
+        matchesTag &&
+        matchesPureVeg &&
+        matchesOffers &&
+        matchesFast &&
+        matchesHighRating
+      )
     })
   }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly, highRatingOnly])
 
@@ -389,7 +426,7 @@ export default function CustomerDashboard() {
       total: grandTotal,
       utrRef,
       upiId,
-      status: 'Placed',
+      statusStep: 3, // Picked from counter -> live road route map enabled!
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       driver: {
         name: 'Rajesh Kumar',
@@ -460,7 +497,9 @@ export default function CustomerDashboard() {
               <button
                 onClick={() => setActiveTab('explore')}
                 className={`rounded-xl px-4 py-2 transition ${
-                  activeTab === 'explore' ? 'bg-white text-[#18201c] shadow-sm' : 'text-[#65716a] hover:text-[#18201c]'
+                  activeTab === 'explore'
+                    ? 'bg-white text-[#18201c] shadow-sm'
+                    : 'text-[#65716a] hover:text-[#18201c]'
                 }`}
               >
                 Explore Kitchens
@@ -468,7 +507,9 @@ export default function CustomerDashboard() {
               <button
                 onClick={() => setActiveTab('live-order')}
                 className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition ${
-                  activeTab === 'live-order' ? 'bg-white text-[#18201c] shadow-sm' : 'text-[#65716a] hover:text-[#18201c]'
+                  activeTab === 'live-order'
+                    ? 'bg-white text-[#18201c] shadow-sm'
+                    : 'text-[#65716a] hover:text-[#18201c]'
                 }`}
               >
                 <Bike className="size-3.5 text-[#859f17]" />
@@ -490,7 +531,9 @@ export default function CustomerDashboard() {
                   <Tag className="size-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">Savings &amp; Cashback</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">
+                    Savings &amp; Cashback
+                  </p>
                   <p className="text-base font-bold text-[#18201c]">₹150 Credit Active</p>
                 </div>
               </div>
@@ -510,7 +553,9 @@ export default function CustomerDashboard() {
                   <Zap className="size-5 text-blue-600 fill-blue-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">Avg Delivery Speed</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">
+                    Avg Delivery Speed
+                  </p>
                   <p className="text-base font-bold text-blue-900">22 mins Ultra Fast</p>
                 </div>
               </div>
@@ -520,7 +565,9 @@ export default function CustomerDashboard() {
                   <ShoppingBag className="size-5 text-amber-700" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-500">Total Completed Drops</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">
+                    Total Completed Drops
+                  </p>
                   <p className="text-base font-bold text-[#18201c]">12 Orders Placed</p>
                 </div>
               </div>
@@ -539,7 +586,9 @@ export default function CustomerDashboard() {
                   <Percent className="size-5 text-amber-200" />
                 </div>
                 <h3 className="mt-3 text-lg font-bold">50% OFF Up to ₹120</h3>
-                <p className="text-xs text-amber-100 mt-0.5">Valid on healthy bowls, salads &amp; vegan kitchens.</p>
+                <p className="text-xs text-amber-100 mt-0.5">
+                  Valid on healthy bowls, salads &amp; vegan kitchens.
+                </p>
                 <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
                   1-Click Apply Code <ArrowRight className="size-3.5" />
                 </div>
@@ -556,7 +605,9 @@ export default function CustomerDashboard() {
                   <Sparkles className="size-5 text-purple-200" />
                 </div>
                 <h3 className="mt-3 text-lg font-bold">Flat ₹100 OFF Discount</h3>
-                <p className="text-xs text-purple-100 mt-0.5">Applicable on orders above ₹299 across all stores.</p>
+                <p className="text-xs text-purple-100 mt-0.5">
+                  Applicable on orders above ₹299 across all stores.
+                </p>
                 <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
                   1-Click Apply Code <ArrowRight className="size-3.5" />
                 </div>
@@ -570,8 +621,12 @@ export default function CustomerDashboard() {
                   <Bike className="size-5 text-emerald-200" />
                 </div>
                 <h3 className="mt-3 text-lg font-bold">₹0 Delivery Fee</h3>
-                <p className="text-xs text-emerald-100 mt-0.5">Automatically applied on all orders above ₹500.</p>
-                <div className="mt-3 font-bold text-xs text-emerald-200">Unlocked automatically</div>
+                <p className="text-xs text-emerald-100 mt-0.5">
+                  Automatically applied on all orders above ₹500.
+                </p>
+                <div className="mt-3 font-bold text-xs text-emerald-200">
+                  Unlocked automatically
+                </div>
               </div>
             </div>
 
@@ -585,7 +640,9 @@ export default function CustomerDashboard() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
                     Recent Order History
                   </span>
-                  <h4 className="font-bold text-sm text-[#18201c]">The Green Table — Basil Pesto Bowl + Paneer Wrap</h4>
+                  <h4 className="font-bold text-sm text-[#18201c]">
+                    The Green Table — Basil Pesto Bowl + Paneer Wrap
+                  </h4>
                   <p className="text-xs text-gray-500">Ordered 2 days ago · ₹538 Total</p>
                 </div>
               </div>
@@ -637,7 +694,9 @@ export default function CustomerDashboard() {
                 <button
                   onClick={() => setPureVegOnly(!pureVegOnly)}
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
-                    pureVegOnly ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    pureVegOnly
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   🟢 Pure Veg
@@ -645,7 +704,9 @@ export default function CustomerDashboard() {
                 <button
                   onClick={() => setOffersOnly(!offersOnly)}
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
-                    offersOnly ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    offersOnly
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   🏷️ Offers Only
@@ -653,7 +714,9 @@ export default function CustomerDashboard() {
                 <button
                   onClick={() => setFastDeliveryOnly(!fastDeliveryOnly)}
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
-                    fastDeliveryOnly ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    fastDeliveryOnly
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   ⚡ Under 25 Mins
@@ -661,7 +724,9 @@ export default function CustomerDashboard() {
                 <button
                   onClick={() => setHighRatingOnly(!highRatingOnly)}
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
-                    highRatingOnly ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    highRatingOnly
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   ⭐ Top Rated (4.8+)
@@ -674,9 +739,12 @@ export default function CustomerDashboard() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="font-bold text-base text-[#18201c] flex items-center gap-1.5">
-                    <Flame className="size-4 text-amber-500 fill-amber-500" /> Trending Dishes Near You
+                    <Flame className="size-4 text-amber-500 fill-amber-500" /> Trending Dishes Near
+                    You
                   </h3>
-                  <p className="text-xs text-gray-500">Add popular dishes directly to your basket in 1-click.</p>
+                  <p className="text-xs text-gray-500">
+                    Add popular dishes directly to your basket in 1-click.
+                  </p>
                 </div>
               </div>
 
@@ -687,8 +755,14 @@ export default function CustomerDashboard() {
                     className="rounded-2xl border border-gray-200 bg-white p-3 flex flex-col justify-between shadow-xs hover:border-gray-300 transition"
                   >
                     <div>
-                      <img src={item.image} alt={item.name} className="h-24 w-full rounded-xl object-cover" />
-                      <p className="mt-2 font-bold text-xs text-[#18201c] line-clamp-1">{item.name}</p>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-24 w-full rounded-xl object-cover"
+                      />
+                      <p className="mt-2 font-bold text-xs text-[#18201c] line-clamp-1">
+                        {item.name}
+                      </p>
                       <p className="text-[10px] text-gray-500">{item.restaurantName}</p>
                     </div>
 
@@ -713,7 +787,9 @@ export default function CustomerDashboard() {
                   <h3 className="font-bold text-lg text-[#18201c]">
                     Featured Kitchens ({filteredRestaurants.length})
                   </h3>
-                  <p className="text-xs text-gray-500">Handpicked top rated restaurants delivering to Indiranagar.</p>
+                  <p className="text-xs text-gray-500">
+                    Handpicked top rated restaurants delivering to Indiranagar.
+                  </p>
                 </div>
               </div>
 
@@ -756,7 +832,9 @@ export default function CustomerDashboard() {
                       <div className="p-4">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="font-bold text-base tracking-tight text-[#18201c]">{rest.name}</h3>
+                            <h3 className="font-bold text-base tracking-tight text-[#18201c]">
+                              {rest.name}
+                            </h3>
                             <p className="mt-0.5 text-xs text-[#737e77]">{rest.cuisine}</p>
                           </div>
                           <span className="flex items-center gap-1 rounded-full bg-[#f1f6d9] px-2.5 py-1 text-[11px] font-bold text-[#5c6e12]">
@@ -767,7 +845,8 @@ export default function CustomerDashboard() {
 
                         <div className="mt-3 flex items-center justify-between text-xs text-[#737e77]">
                           <span className="flex items-center gap-1">
-                            <MapPin className="size-3.5 text-[#8aa31c]" /> {rest.address} ({rest.distance})
+                            <MapPin className="size-3.5 text-[#8aa31c]" /> {rest.address} (
+                            {rest.distance})
                           </span>
                           <span className="font-semibold text-gray-600">{rest.costForTwo}</span>
                         </div>
@@ -777,7 +856,9 @@ export default function CustomerDashboard() {
                     <div className="p-4 pt-0">
                       <div className="flex items-center justify-between border-t border-[#f0f3eb] pt-3 text-xs">
                         <span className="text-emerald-700 font-semibold text-[11px]">
-                          {rest.distance === '1.2 km' || rest.distance === '1.5 km' ? '⚡ Free Express Delivery' : 'Standard Delivery'}
+                          {rest.distance === '1.2 km' || rest.distance === '1.5 km'
+                            ? '⚡ Free Express Delivery'
+                            : 'Standard Delivery'}
                         </span>
                         <span className="font-bold text-[#86a018] group-hover:underline flex items-center gap-1">
                           View Menu <ArrowRight className="size-3" />
@@ -790,8 +871,12 @@ export default function CustomerDashboard() {
                 {filteredRestaurants.length === 0 && (
                   <div className="col-span-3 rounded-3xl border border-gray-200 bg-white p-12 text-center text-gray-500">
                     <Search className="mx-auto size-12 text-gray-300 mb-2" />
-                    <p className="font-bold text-base text-[#18201c]">No Kitchens Found Matching Filters</p>
-                    <p className="text-xs mt-1">Try resetting your search query or dietary filters.</p>
+                    <p className="font-bold text-base text-[#18201c]">
+                      No Kitchens Found Matching Filters
+                    </p>
+                    <p className="text-xs mt-1">
+                      Try resetting your search query or dietary filters.
+                    </p>
                   </div>
                 )}
               </div>
@@ -801,76 +886,204 @@ export default function CustomerDashboard() {
 
         {/* Live Order Tracking View */}
         {activeTab === 'live-order' && (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto flex flex-col gap-6">
             {activeOrder ? (
               <div className="overflow-hidden rounded-3xl border border-[#dfe5db] bg-white shadow-lg">
+                {/* Header Banner */}
                 <div className="bg-[#18201c] p-6 text-white">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>
-                      <span className="inline-block rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#18201c]">
-                        Live Order #{activeOrder.id}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#18201c]">
+                          Live Order #{activeOrder.id}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-700/50">
+                          {activeOrder.statusStep === 1 && 'Order Confirmed'}
+                          {activeOrder.statusStep === 2 && 'Kitchen Cooking'}
+                          {activeOrder.statusStep === 3 && 'Picked from Counter • Out for Delivery'}
+                          {activeOrder.statusStep === 4 && 'Delivered to Doorstep'}
+                        </span>
+                      </div>
                       <h2 className="mt-2 text-2xl font-bold">{activeOrder.restaurantName}</h2>
                       <p className="mt-1 text-xs text-white/70">
                         Placed at {activeOrder.timestamp} · Total ₹{activeOrder.total}
                         {activeOrder.couponCode && (
-                          <span className="ml-2 text-[#d9f447]">({activeOrder.couponCode} applied)</span>
+                          <span className="ml-2 text-[#d9f447]">
+                            ({activeOrder.couponCode} applied)
+                          </span>
                         )}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-[#d9f447]">Estimated Delivery</p>
-                      <p className="text-xl font-bold">18 - 22 mins</p>
+                      <p className="text-xl font-extrabold">18 - 22 mins</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Progress Steps */}
-                <div className="p-6">
-                  <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="grid size-10 place-items-center rounded-full bg-[#d9f447] text-[#18201c] font-bold">
-                        1
+                {/* Progress Steps Tracker */}
+                <div className="p-6 border-b border-gray-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">
+                    Order Status Steps (Click any step to toggle view):
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-semibold">
+                    <button
+                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 1 }))}
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition ${
+                        activeOrder.statusStep >= 1 ? 'text-[#18201c]' : 'text-gray-400'
+                      }`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold transition ${
+                          activeOrder.statusStep === 1
+                            ? 'bg-[#d9f447] text-[#18201c] ring-4 ring-[#d9f447]/20 scale-105'
+                            : activeOrder.statusStep > 1
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-gray-100 text-gray-400'
+                        }`}
+                      >
+                        {activeOrder.statusStep > 1 ? <Check className="size-4" /> : '1'}
                       </span>
-                      <span className="text-[#18201c]">Order Confirmed</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="grid size-10 place-items-center rounded-full bg-[#f1f6db] text-[#718815] font-bold">
-                        2
+                      <span className="text-[11px]">1. Confirmed</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 2 }))}
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition ${
+                        activeOrder.statusStep >= 2 ? 'text-[#18201c]' : 'text-gray-400'
+                      }`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold transition ${
+                          activeOrder.statusStep === 2
+                            ? 'bg-[#d9f447] text-[#18201c] ring-4 ring-[#d9f447]/20 scale-105'
+                            : activeOrder.statusStep > 2
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-gray-100 text-gray-400'
+                        }`}
+                      >
+                        {activeOrder.statusStep > 2 ? <Check className="size-4" /> : '2'}
                       </span>
-                      <span className="text-[#18201c]">Kitchen Cooking</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2 opacity-60">
-                      <span className="grid size-10 place-items-center rounded-full bg-gray-100 text-gray-500 font-bold">
-                        3
+                      <span className="text-[11px]">2. Kitchen Cooking</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 3 }))}
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition ${
+                        activeOrder.statusStep >= 3 ? 'text-[#18201c]' : 'text-gray-400'
+                      }`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold transition ${
+                          activeOrder.statusStep === 3
+                            ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20 scale-105 animate-pulse'
+                            : activeOrder.statusStep > 3
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-gray-100 text-gray-400'
+                        }`}
+                      >
+                        {activeOrder.statusStep > 3 ? <Check className="size-4" /> : '3'}
                       </span>
-                      <span>Out for Delivery</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2 opacity-60">
-                      <span className="grid size-10 place-items-center rounded-full bg-gray-100 text-gray-500 font-bold">
+                      <span className="text-[11px] font-bold text-emerald-700">
+                        3. Picked from Counter
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 4 }))}
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition ${
+                        activeOrder.statusStep >= 4 ? 'text-[#18201c]' : 'text-gray-400'
+                      }`}
+                    >
+                      <span
+                        className={`grid size-9 place-items-center rounded-full font-bold transition ${
+                          activeOrder.statusStep === 4
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-100 text-gray-400'
+                        }`}
+                      >
                         4
                       </span>
-                      <span>Delivered</span>
-                    </div>
-                  </div>
-
-                  {/* Driver Details Card */}
-                  <div className="mt-8 rounded-2xl border border-[#e3e8de] bg-[#f8f9f6] p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white">
-                        <Bike className="size-6 text-[#d9f447]" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#737e77]">Assigned Delivery Partner</p>
-                        <p className="font-bold text-sm text-[#18201c]">{activeOrder.driver.name}</p>
-                        <p className="text-xs text-[#849a17]">{activeOrder.driver.vehicle}</p>
-                      </div>
-                    </div>
-                    <button className="flex items-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c]">
-                      <PhoneCall className="size-3.5 text-[#829b14]" />
-                      Call Driver
+                      <span className="text-[11px]">4. Delivered</span>
                     </button>
                   </div>
+                </div>
+
+                {/* LIVE MAP TRACKING CARD — UNLOCKED WHEN ORDER IS PICKED FROM COUNTER (statusStep >= 3) */}
+                {activeOrder.statusStep >= 3 ? (
+                  <div className="p-6 bg-[#f8f9f6] border-b border-gray-200 flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-base text-[#18201c] flex items-center gap-2">
+                          <Compass
+                            className="size-5 text-emerald-600 animate-spin"
+                            style={{ animationDuration: '6s' }}
+                          />
+                          Live Rider Parcel Tracking — Store to Customer Doorstep
+                        </h4>
+                        <p className="text-xs text-[#737e77]">
+                          Parcel collected from {activeOrder.restaurantName} counter. Tracking rider
+                          moving live on road to {deliveryAddress}.
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 border border-emerald-300 shrink-0">
+                        <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
+                        Live Road GPS Route Active
+                      </span>
+                    </div>
+
+                    {/* Mapcn Component with OSRM Road Route */}
+                    <Mapcn
+                      pickupCoords={[12.9784, 77.6408]}
+                      dropoffCoords={[12.9352, 77.6245]}
+                      driverCoords={[12.958, 77.632]}
+                      restaurantName={activeOrder.restaurantName}
+                      customerAddress={deliveryAddress}
+                      height="h-72 sm:h-80 lg:h-[380px]"
+                    />
+                  </div>
+                ) : (
+                  /* BEFORE PICKUP STATE (Step 1 & 2) */
+                  <div className="p-8 text-center bg-gray-50/70 border-b border-gray-200">
+                    <div className="mx-auto size-14 rounded-full bg-amber-100 text-amber-800 grid place-items-center mb-3">
+                      <Clock3 className="size-7 animate-spin" style={{ animationDuration: '8s' }} />
+                    </div>
+                    <h4 className="font-bold text-base text-[#18201c]">
+                      Order Being Prepared in Kitchen
+                    </h4>
+                    <p className="text-xs text-gray-500 max-w-md mx-auto mt-1">
+                      Your meal is currently being freshly cooked at the kitchen counter. Live map
+                      tracking will automatically unlock as soon as the rider picks up your parcel
+                      from the counter!
+                    </p>
+                    <button
+                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 3 }))}
+                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition"
+                    >
+                      <PackageCheck className="size-4" /> Simulate Rider Picking Order from Counter
+                    </button>
+                  </div>
+                )}
+
+                {/* Driver Details Card */}
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white shrink-0">
+                      <Bike className="size-6 text-[#d9f447]" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#737e77]">Assigned Delivery Partner</p>
+                      <p className="font-bold text-sm text-[#18201c]">{activeOrder.driver.name}</p>
+                      <p className="text-xs text-[#849a17]">{activeOrder.driver.vehicle}</p>
+                    </div>
+                  </div>
+                  <a
+                    href={`tel:${activeOrder.driver.phone}`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs shrink-0"
+                  >
+                    <PhoneCall className="size-3.5 text-[#829b14]" />
+                    Call Delivery Partner
+                  </a>
                 </div>
               </div>
             ) : (
@@ -880,7 +1093,8 @@ export default function CustomerDashboard() {
                 </div>
                 <h3 className="mt-4 text-xl font-bold">No Active Order Right Now</h3>
                 <p className="mt-1 text-xs text-[#747e78] max-w-sm mx-auto">
-                  Browse your favourite restaurants and place an order to see live delivery tracking here.
+                  Browse your favourite restaurants and place an order to see live delivery tracking
+                  here.
                 </p>
                 <button
                   onClick={() => setActiveTab('explore')}
@@ -903,8 +1117,12 @@ export default function CustomerDashboard() {
                 <span className="rounded-full bg-[#f1f6d9] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#5a6d10]">
                   {selectedRestaurant.tag}
                 </span>
-                <h2 className="mt-1 text-2xl font-bold text-[#18201c]">{selectedRestaurant.name}</h2>
-                <p className="text-xs text-[#747f78]">{selectedRestaurant.cuisine} · {selectedRestaurant.address}</p>
+                <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+                  {selectedRestaurant.name}
+                </h2>
+                <p className="text-xs text-[#747f78]">
+                  {selectedRestaurant.cuisine} · {selectedRestaurant.address}
+                </p>
               </div>
               <button
                 onClick={() => setSelectedRestaurant(null)}
@@ -919,8 +1137,15 @@ export default function CustomerDashboard() {
               {sampleMenuItems.map((item) => {
                 const inCart = cart.find((i) => i.id === item.id)
                 return (
-                  <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-[#e5e9e1] p-3 transition hover:border-[#a8be2b]">
-                    <img src={item.image} alt={item.name} className="size-20 rounded-xl object-cover shrink-0" />
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 rounded-2xl border border-[#e5e9e1] p-3 transition hover:border-[#a8be2b]"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="size-20 rounded-xl object-cover shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-[#18201c]">{item.name}</h4>
                       <p className="text-xs text-[#727d76] line-clamp-2 mt-0.5">{item.detail}</p>
@@ -929,11 +1154,17 @@ export default function CustomerDashboard() {
 
                     {inCart ? (
                       <div className="flex items-center gap-2 rounded-full bg-[#18201c] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
-                        <button onClick={() => updateItemQty(item.id, -1)} className="hover:text-[#d9f447]">
+                        <button
+                          onClick={() => updateItemQty(item.id, -1)}
+                          className="hover:text-[#d9f447]"
+                        >
                           <Minus className="size-3.5" />
                         </button>
                         <span>{inCart.qty}</span>
-                        <button onClick={() => updateItemQty(item.id, 1)} className="hover:text-[#d9f447]">
+                        <button
+                          onClick={() => updateItemQty(item.id, 1)}
+                          className="hover:text-[#d9f447]"
+                        >
                           <Plus className="size-3.5" />
                         </button>
                       </div>
@@ -981,7 +1212,9 @@ export default function CustomerDashboard() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] bg-[#f1f6da] px-2.5 py-0.5 rounded-full">
                     Your Shopping Basket
                   </span>
-                  <h3 className="text-xl font-bold text-[#18201c] mt-1">Items in Cart ({totalCartItemCount})</h3>
+                  <h3 className="text-xl font-bold text-[#18201c] mt-1">
+                    Items in Cart ({totalCartItemCount})
+                  </h3>
                 </div>
                 <button
                   onClick={() => setShowCartDrawer(false)}
@@ -1000,7 +1233,11 @@ export default function CustomerDashboard() {
                       className="flex items-center justify-between rounded-2xl border border-gray-200 p-3 bg-gray-50/50"
                     >
                       <div className="flex items-center gap-3">
-                        <img src={item.image} alt={item.name} className="size-12 rounded-xl object-cover" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="size-12 rounded-xl object-cover"
+                        />
                         <div>
                           <p className="font-bold text-xs text-[#18201c]">{item.name}</p>
                           <p className="text-[11px] text-gray-500">₹{item.price} each</p>
@@ -1009,15 +1246,23 @@ export default function CustomerDashboard() {
 
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-2.5 py-1 text-xs font-bold shadow-xs">
-                          <button onClick={() => updateItemQty(item.id, -1)} className="text-gray-600 hover:text-black">
+                          <button
+                            onClick={() => updateItemQty(item.id, -1)}
+                            className="text-gray-600 hover:text-black"
+                          >
                             <Minus className="size-3" />
                           </button>
                           <span>{item.qty}</span>
-                          <button onClick={() => updateItemQty(item.id, 1)} className="text-gray-600 hover:text-black">
+                          <button
+                            onClick={() => updateItemQty(item.id, 1)}
+                            className="text-gray-600 hover:text-black"
+                          >
                             <Plus className="size-3" />
                           </button>
                         </div>
-                        <span className="font-bold text-xs text-[#18201c] w-12 text-right">₹{item.price * item.qty}</span>
+                        <span className="font-bold text-xs text-[#18201c] w-12 text-right">
+                          ₹{item.price * item.qty}
+                        </span>
                         <button
                           onClick={() => removeFromCart(item.id)}
                           className="text-rose-500 hover:text-rose-700 transition"
@@ -1114,9 +1359,15 @@ export default function CustomerDashboard() {
                               onClick={() => handleApplyCouponCode(c.code)}
                               className="group flex items-center gap-1.5 rounded-xl border border-purple-300 bg-white px-3 py-1.5 text-[11px] font-bold text-purple-950 shadow-xs hover:bg-purple-900 hover:text-white transition"
                             >
-                              <span className="font-mono text-purple-700 group-hover:text-amber-300">{c.code}</span>
+                              <span className="font-mono text-purple-700 group-hover:text-amber-300">
+                                {c.code}
+                              </span>
                               <span className="text-[9px] text-gray-500 group-hover:text-purple-200">
-                                ({c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`})
+                                (
+                                {c.discountType === 'percentage'
+                                  ? `${c.discountValue}% OFF`
+                                  : `₹${c.discountValue} OFF`}
+                                )
                               </span>
                             </button>
                           ))}
@@ -1184,7 +1435,8 @@ export default function CustomerDashboard() {
                   }}
                   className="flex-1 rounded-full bg-[#18201c] py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition flex items-center justify-center gap-2"
                 >
-                  Proceed to Payment (₹{grandTotal}) <ArrowRight className="size-4 text-[#d9f447]" />
+                  Proceed to Payment (₹{grandTotal}){' '}
+                  <ArrowRight className="size-4 text-[#d9f447]" />
                 </button>
               </div>
             )}
@@ -1198,10 +1450,15 @@ export default function CustomerDashboard() {
           <div className="w-full max-w-[500px] rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between border-b border-[#eff2ec] pb-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">Secure Checkout</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
+                  Secure Checkout
+                </p>
                 <h3 className="text-xl font-bold">Complete Payment</h3>
               </div>
-              <button onClick={() => setShowCheckoutModal(false)} className="grid size-8 place-items-center rounded-full bg-gray-100">
+              <button
+                onClick={() => setShowCheckoutModal(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100"
+              >
                 <X className="size-4" />
               </button>
             </div>
@@ -1212,7 +1469,9 @@ export default function CustomerDashboard() {
                   <Check className="size-8" />
                 </div>
                 <h4 className="mt-4 text-xl font-bold">Payment Submitted!</h4>
-                <p className="mt-1 text-xs text-[#737e77]">Your reference UTR has been logged. Preparing your food!</p>
+                <p className="mt-1 text-xs text-[#737e77]">
+                  Your reference UTR has been logged. Preparing your food!
+                </p>
               </div>
             ) : (
               <form onSubmit={handleCheckoutSubmit} className="mt-4 flex flex-col gap-4">
@@ -1250,7 +1509,9 @@ export default function CustomerDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-[#18201c]">12-digit UTR / Payment Ref Number</label>
+                  <label className="text-xs font-bold text-[#18201c]">
+                    12-digit UTR / Payment Ref Number
+                  </label>
                   <input
                     type="text"
                     required

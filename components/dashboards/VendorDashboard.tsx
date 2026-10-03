@@ -1,9 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useAuth } from '@/lib/auth-context'
 import {
-  AlertCircle,
   BarChart3,
   Check,
   CheckCircle2,
@@ -13,30 +11,25 @@ import {
   Clock3,
   DollarSign,
   Edit3,
-  Eye,
   FileText,
   LayoutDashboard,
   LogOut,
-  Menu,
-  Phone,
   Plus,
   Power,
   Search,
   Settings,
-  ShieldCheck,
-  Sliders,
-  Sparkles,
   Store,
+  Tag,
   Trash2,
   TrendingUp,
-  Utensils,
   UtensilsCrossed,
   Volume2,
   VolumeX,
   Wallet,
   X,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
+import Link from 'next/link'
+import React, { useEffect, useState } from 'react'
 
 interface OrderItem {
   name: string
@@ -74,7 +67,9 @@ interface MenuItem {
 export default function VendorDashboard() {
   const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(true)
-  const [activeTab, setActiveTab] = useState<'orders' | 'orders-table' | 'menu' | 'analytics' | 'payouts' | 'settings'>('orders')
+  const [activeTab, setActiveTab] = useState<
+    'orders' | 'orders-table' | 'menu' | 'coupons' | 'analytics' | 'payouts' | 'settings'
+  >('orders')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
@@ -87,7 +82,9 @@ export default function VendorDashboard() {
   const [prepTimeBuffer, setPrepTimeBuffer] = useState<number>(15)
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderViewMode, setOrderViewMode] = useState<'kanban' | 'table'>('table')
-  const [orderTableFilter, setOrderTableFilter] = useState<'all' | 'new' | 'preparing' | 'ready' | 'completed'>('all')
+  const [orderTableFilter, setOrderTableFilter] = useState<
+    'all' | 'new' | 'preparing' | 'ready' | 'completed'
+  >('all')
 
   // Live incoming orders state with cooking notes & driver details
   const [orders, setOrders] = useState<IncomingOrder[]>([
@@ -149,8 +146,10 @@ export default function VendorDashboard() {
       category: 'Bowls',
       price: 289,
       inStock: true,
-      description: 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & toasted pine nuts.',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80',
+      description:
+        'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & toasted pine nuts.',
+      image:
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80',
     },
     {
       id: 'mn_2',
@@ -158,8 +157,10 @@ export default function VendorDashboard() {
       category: 'Wraps',
       price: 249,
       inStock: true,
-      description: 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt sauce.',
-      image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
+      description:
+        'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt sauce.',
+      image:
+        'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
     },
     {
       id: 'mn_3',
@@ -167,8 +168,10 @@ export default function VendorDashboard() {
       category: 'Starters',
       price: 320,
       inStock: false,
-      description: 'Delicate dumplings stuffed with smashed edamame and infused with black truffle oil.',
-      image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
+      description:
+        'Delicate dumplings stuffed with smashed edamame and infused with black truffle oil.',
+      image:
+        'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
     },
   ])
 
@@ -176,7 +179,7 @@ export default function VendorDashboard() {
   const [selectedOrderModal, setSelectedOrderModal] = useState<IncomingOrder | null>(null)
   const [showAddDishModal, setShowAddDishModal] = useState(false)
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null)
-  
+
   // New Dish Form State
   const [dishName, setDishName] = useState('')
   const [dishPrice, setDishPrice] = useState('')
@@ -188,7 +191,12 @@ export default function VendorDashboard() {
   const [payoutAmount, setPayoutAmount] = useState('14280')
   const [payoutSuccessMsg, setPayoutSuccessMsg] = useState('')
   const [payoutHistory, setPayoutHistory] = useState([
-    { id: 'pay_99', amount: 12450, date: 'Yesterday, 11:30 PM', status: 'Settled to HDFC Bank ****4921' },
+    {
+      id: 'pay_99',
+      amount: 12450,
+      date: 'Yesterday, 11:30 PM',
+      status: 'Settled to HDFC Bank ****4921',
+    },
     { id: 'pay_98', amount: 18900, date: 'Oct 01, 2026', status: 'Settled to HDFC Bank ****4921' },
   ])
 
@@ -235,7 +243,8 @@ export default function VendorDashboard() {
         category: dishCategory,
         description: dishDescription,
         inStock: true,
-        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
+        image:
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
       }
       setMenuItems((prev) => [...prev, newDish])
     }
@@ -258,7 +267,9 @@ export default function VendorDashboard() {
   function handleRequestPayout() {
     if (!payoutAmount || parseFloat(payoutAmount) <= 0) return
     const amount = parseFloat(payoutAmount)
-    setPayoutSuccessMsg(`₹${amount.toLocaleString('en-IN')} has been transferred to your registered Bank Account!`)
+    setPayoutSuccessMsg(
+      `₹${amount.toLocaleString('en-IN')} has been transferred to your registered Bank Account!`
+    )
     setPayoutHistory((prev) => [
       {
         id: `pay_${Date.now()}`,
@@ -288,9 +299,20 @@ export default function VendorDashboard() {
   const activeOrdersCount = orders.filter((o) => o.status !== 'completed').length
 
   const navItems = [
-    { id: 'orders', label: 'Kitchen Dashboard', icon: LayoutDashboard, badge: activeOrdersCount > 0 ? `${activeOrdersCount} Active` : null },
-    { id: 'orders-table', label: 'All Orders (Table View)', icon: FileText, badge: `${orders.length}` },
+    {
+      id: 'orders',
+      label: 'Kitchen Dashboard',
+      icon: LayoutDashboard,
+      badge: activeOrdersCount > 0 ? `${activeOrdersCount} Active` : null,
+    },
+    {
+      id: 'orders-table',
+      label: 'All Orders (Table View)',
+      icon: FileText,
+      badge: `${orders.length}`,
+    },
     { id: 'menu', label: 'Menu Catalog Manager', icon: Store, badge: menuItems.length.toString() },
+    { id: 'coupons', label: 'Store Coupons & Offers', icon: Tag, badge: 'Promo' },
     { id: 'analytics', label: 'Sales & Analytics', icon: BarChart3, badge: '+18%' },
     { id: 'payouts', label: 'Wallet & Payouts', icon: Wallet, badge: '₹14.2k' },
     { id: 'settings', label: 'Store Profile', icon: Settings, badge: null },
@@ -308,157 +330,196 @@ export default function VendorDashboard() {
 
       {/* Vendor Sidebar Navigation (Matching Admin Theme & Colors) */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:sticky lg:top-0 lg:h-screen lg:left-0 lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0 shadow-2xl w-72 border-l border-[#202923]' : 'translate-x-full lg:shadow-none'
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:left-0 lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 ${
+          sidebarOpen
+            ? 'translate-x-0 shadow-2xl w-72 border-l border-[#202923]'
+            : 'translate-x-full lg:shadow-none'
         } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
-        <div className={`flex flex-col gap-6 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}>
-          {/* Logo & Header matching Admin */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 pt-1">
-            <Link href="/vendor/dashboard" className="flex items-center gap-2.5 group min-w-0" title={sidebarCollapsed ? (user?.restaurantName || 'The Green Table') : undefined}>
-              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)] shrink-0 transition-transform duration-300 group-hover:scale-105">
-                <UtensilsCrossed className="size-5 fill-current" />
-              </span>
-              <div className={`flex items-center gap-1.5 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden lg:hidden' : 'opacity-100 max-w-[160px]'
-              }`}>
-                <span className="text-lg font-bold tracking-tight text-white leading-none">
-                  crave<span className="text-[#d9f447]">.</span>
-                </span>
-                <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-amber-300 border border-amber-500/30">
-                  Vendor
-                </span>
-              </div>
-            </Link>
-
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="grid size-7 place-items-center rounded-lg bg-white/10 text-white lg:hidden transition hover:bg-white/20"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          {/* Kitchen Online/Offline Toggle inside Sidebar */}
-          <button
-            onClick={() => setIsOpen((prev) => !prev)}
-            title={sidebarCollapsed ? (isOpen ? 'Kitchen Open' : 'Kitchen Closed') : undefined}
-            className={`flex items-center ${
-              sidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
-            } rounded-xl text-xs font-bold transition shadow-sm ${
-              isOpen ? 'bg-emerald-500 text-[#121815]' : 'bg-rose-600 text-white'
-            }`}
+        <div className="flex flex-col justify-between h-full min-h-0">
+          <div
+            className={`flex-1 min-h-0 flex flex-col gap-6 overflow-y-auto no-scrollbar transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}
           >
-            <span className="flex items-center gap-2 min-w-0">
-              <Power className="size-4 shrink-0" />
-              <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[120px]'
-              }`}>
-                Kitchen Status
-              </span>
-            </span>
-            <span className={`uppercase text-[10px] tracking-wider font-extrabold transition-all duration-300 ease-in-out shrink-0 ${
-              sidebarCollapsed ? 'hidden' : 'block'
-            }`}>
-              {isOpen ? 'OPEN' : 'CLOSED'}
-            </span>
-          </button>
-
-          {/* Navigation Links */}
-          <nav className="flex flex-col gap-1">
-            <p className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-              sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
-            }`}>
-              Kitchen Management
-            </p>
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-              return (
-                <button
-                  key={item.id}
-                  title={sidebarCollapsed ? item.label : undefined}
-                  onClick={() => {
-                    setActiveTab(item.id as any)
-                    setSidebarOpen(false)
-                  }}
-                  className={`flex items-center ${
-                    sidebarCollapsed ? 'justify-center px-0 py-3' : 'justify-between px-3.5 py-2.5'
-                  } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
-                    isActive
-                      ? 'bg-[#d9f447] text-[#121815] font-bold shadow-md'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+            {/* Logo & Header matching Admin */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 pt-1">
+              <Link
+                href="/vendor/dashboard"
+                className="flex items-center gap-2.5 group min-w-0"
+                title={sidebarCollapsed ? user?.restaurantName || 'The Green Table' : undefined}
+              >
+                <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)] shrink-0 transition-transform duration-300 group-hover:scale-105">
+                  <UtensilsCrossed className="size-5 fill-current" />
+                </span>
+                <div
+                  className={`flex items-center gap-1.5 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                    sidebarCollapsed
+                      ? 'opacity-0 max-w-0 hidden lg:hidden'
+                      : 'opacity-100 max-w-[160px]'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Icon className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`} />
-                    <span className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
-                      sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[150px]'
-                    }`}>
-                      {item.label}
-                    </span>
-                  </div>
-                  {item.badge && !sidebarCollapsed && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold shrink-0 ${
-                        isActive ? 'bg-[#121815] text-white' : 'bg-white/15 text-[#d9f447]'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </nav>
-        </div>
+                  <span className="text-lg font-bold tracking-tight text-white leading-none">
+                    crave<span className="text-[#d9f447]">.</span>
+                  </span>
+                  <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-amber-300 border border-amber-500/30">
+                    Vendor
+                  </span>
+                </div>
+              </Link>
 
-        {/* Sidebar Bottom Profile & Single Minimize Toggle Arrow Button */}
-        <div className="border-t border-white/10 p-3.5 flex flex-col gap-2 transition-all duration-300 ease-in-out bg-[#121815] shrink-0">
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="grid size-8 place-items-center rounded-lg bg-amber-950 text-amber-300 font-bold border border-amber-800 text-xs shrink-0" title={user?.name || 'Maya Lin'}>
-                ML
-              </span>
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-              }`}>
-                <p className="text-xs font-bold text-white truncate">{user?.name || 'Maya Lin'}</p>
-                <p className="text-[10px] text-white/50 truncate">Owner / Partner</p>
-              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="grid size-7 place-items-center rounded-lg bg-white/10 text-white lg:hidden transition hover:bg-white/20"
+              >
+                <X className="size-4" />
+              </button>
             </div>
+
+            {/* Kitchen Online/Offline Toggle inside Sidebar */}
             <button
-              onClick={() => logout()}
-              title="Sign Out"
-              className={`grid size-7 place-items-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
-                sidebarCollapsed ? 'hidden' : 'block'
+              onClick={() => setIsOpen((prev) => !prev)}
+              title={sidebarCollapsed ? (isOpen ? 'Kitchen Open' : 'Kitchen Closed') : undefined}
+              className={`flex items-center ${
+                sidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
+              } rounded-xl text-xs font-bold transition shadow-sm ${
+                isOpen ? 'bg-emerald-500 text-[#121815]' : 'bg-rose-600 text-white'
               }`}
             >
-              <LogOut className="size-3.5" />
+              <span className="flex items-center gap-2 min-w-0">
+                <Power className="size-4 shrink-0" />
+                <span
+                  className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                    sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[120px]'
+                  }`}
+                >
+                  Kitchen Status
+                </span>
+              </span>
+              <span
+                className={`uppercase text-[10px] tracking-wider font-extrabold transition-all duration-300 ease-in-out shrink-0 ${
+                  sidebarCollapsed ? 'hidden' : 'block'
+                }`}
+              >
+                {isOpen ? 'OPEN' : 'CLOSED'}
+              </span>
             </button>
+
+            {/* Navigation Links */}
+            <nav className="flex flex-col gap-1">
+              <p
+                className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                  sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
+                }`}
+              >
+                Kitchen Management
+              </p>
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeTab === item.id
+                return (
+                  <button
+                    key={item.id}
+                    title={sidebarCollapsed ? item.label : undefined}
+                    onClick={() => {
+                      setActiveTab(item.id as any)
+                      setSidebarOpen(false)
+                    }}
+                    className={`flex items-center ${
+                      sidebarCollapsed
+                        ? 'justify-center px-0 py-3'
+                        : 'justify-between px-3.5 py-2.5'
+                    } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
+                      isActive
+                        ? 'bg-[#d9f447] text-[#121815] font-bold shadow-md'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`}
+                      />
+                      <span
+                        className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
+                          sidebarCollapsed
+                            ? 'opacity-0 max-w-0 hidden'
+                            : 'opacity-100 max-w-[150px]'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                    {item.badge && !sidebarCollapsed && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-bold shrink-0 ${
+                          isActive ? 'bg-[#121815] text-white' : 'bg-white/15 text-[#d9f447]'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
           </div>
 
-          {/* Bottom Single Minimize Toggle Arrow Button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
-            className={`hidden lg:flex items-center ${
-              sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
-            } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
-          >
-            <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-              sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-            }`}>
-              Minimize Sidebar
-            </span>
-            <span className="transition-transform duration-300 ease-in-out shrink-0">
-              {sidebarCollapsed ? (
-                <ChevronRight className="size-4 text-[#d9f447]" />
-              ) : (
-                <ChevronLeft className="size-4 text-[#d9f447]" />
-              )}
-            </span>
-          </button>
+          {/* Sidebar Bottom Profile & Single Minimize Toggle Arrow Button */}
+          <div className="border-t border-white/10 p-3.5 flex flex-col gap-2 transition-all duration-300 ease-in-out bg-[#121815] shrink-0">
+            <div
+              className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span
+                  className="grid size-8 place-items-center rounded-lg bg-amber-950 text-amber-300 font-bold border border-amber-800 text-xs shrink-0"
+                  title={user?.name || 'Maya Lin'}
+                >
+                  ML
+                </span>
+                <div
+                  className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
+                    sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+                  }`}
+                >
+                  <p className="text-xs font-bold text-white truncate">
+                    {user?.name || 'Maya Lin'}
+                  </p>
+                  <p className="text-[10px] text-white/50 truncate">Owner / Partner</p>
+                </div>
+              </div>
+              <button
+                onClick={() => logout()}
+                title="Sign Out"
+                className={`grid size-7 place-items-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
+                  sidebarCollapsed ? 'hidden' : 'block'
+                }`}
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
+
+            {/* Bottom Single Minimize Toggle Arrow Button */}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
+              className={`hidden lg:flex items-center ${
+                sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
+              } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
+            >
+              <span
+                className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                  sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
+                }`}
+              >
+                Minimize Sidebar
+              </span>
+              <span className="transition-transform duration-300 ease-in-out shrink-0">
+                {sidebarCollapsed ? (
+                  <ChevronRight className="size-4 text-[#d9f447]" />
+                ) : (
+                  <ChevronLeft className="size-4 text-[#d9f447]" />
+                )}
+              </span>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -472,7 +533,12 @@ export default function VendorDashboard() {
                 KITCHEN CONSOLE
               </p>
               <h1 className="text-lg font-bold tracking-tight text-[#18201c] capitalize">
-                {user?.restaurantName || 'The Green Table'} — {activeTab === 'orders' ? 'Kitchen Dashboard' : activeTab === 'orders-table' ? 'All Orders Manager' : activeTab.replace('-', ' ')}
+                {user?.restaurantName || 'The Green Table'} —{' '}
+                {activeTab === 'orders'
+                  ? 'Kitchen Dashboard'
+                  : activeTab === 'orders-table'
+                    ? 'All Orders Manager'
+                    : activeTab.replace('-', ' ')}
               </h1>
             </div>
           </div>
@@ -488,14 +554,20 @@ export default function VendorDashboard() {
                   : 'bg-gray-100 text-gray-500 border-gray-200'
               }`}
             >
-              {soundAlerts ? <Volume2 className="size-4 text-amber-600 animate-pulse" /> : <VolumeX className="size-4" />}
+              {soundAlerts ? (
+                <Volume2 className="size-4 text-amber-600 animate-pulse" />
+              ) : (
+                <VolumeX className="size-4" />
+              )}
               <span>{soundAlerts ? 'Sound ON' : 'Muted'}</span>
             </button>
 
             {/* Kitchen Status Badge */}
             <span
               className={`hidden sm:inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold border ${
-                isOpen ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-100 text-rose-800 border-rose-200'
+                isOpen
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                  : 'bg-rose-100 text-rose-800 border-rose-200'
               }`}
             >
               ● {isOpen ? 'Accepting Orders' : 'Kitchen Closed'}
@@ -509,7 +581,9 @@ export default function VendorDashboard() {
           <div className="mb-8 grid gap-3 grid-cols-2 lg:grid-cols-4">
             <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Today's Gross Sales</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                  Today's Gross Sales
+                </p>
                 <span className="grid size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-800 font-bold">
                   <DollarSign className="size-5" />
                 </span>
@@ -522,20 +596,26 @@ export default function VendorDashboard() {
 
             <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Active Kitchen Orders</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                  Active Kitchen Orders
+                </p>
                 <span className="grid size-9 place-items-center rounded-xl bg-amber-100 text-amber-800 font-bold">
                   <ChefHat className="size-5" />
                 </span>
               </div>
               <p className="mt-2 text-3xl font-bold text-amber-600">{activeOrdersCount} Active</p>
               <p className="mt-1.5 text-xs text-[#737e77]">
-                {orders.filter(o => o.status === 'new').length} New · {orders.filter(o => o.status === 'preparing').length} Cooking · {orders.filter(o => o.status === 'ready').length} Ready
+                {orders.filter((o) => o.status === 'new').length} New ·{' '}
+                {orders.filter((o) => o.status === 'preparing').length} Cooking ·{' '}
+                {orders.filter((o) => o.status === 'ready').length} Ready
               </p>
             </div>
 
             <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Completed Drops Today</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                  Completed Drops Today
+                </p>
                 <span className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 font-bold">
                   <CheckCircle2 className="size-5" />
                 </span>
@@ -546,7 +626,9 @@ export default function VendorDashboard() {
 
             <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">Avg Prep Speed</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+                  Avg Prep Speed
+                </p>
                 <span className="grid size-9 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
                   <Clock3 className="size-5" />
                 </span>
@@ -566,13 +648,17 @@ export default function VendorDashboard() {
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
                     <div>
                       <h3 className="text-base font-bold text-[#18201c] flex items-center gap-2">
-                        <TrendingUp className="size-4 text-emerald-600" /> Hourly Demand & Sales Curve (Today)
+                        <TrendingUp className="size-4 text-emerald-600" /> Hourly Demand & Sales
+                        Curve (Today)
                       </h3>
-                      <p className="text-xs text-gray-500">Real-time order volume peaks and sales performance per hour</p>
+                      <p className="text-xs text-gray-500">
+                        Real-time order volume peaks and sales performance per hour
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 border border-emerald-200">
-                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> Peak Rush: 1 PM - 3 PM
+                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> Peak
+                        Rush: 1 PM - 3 PM
                       </span>
                     </div>
                   </div>
@@ -594,9 +680,14 @@ export default function VendorDashboard() {
                         { hour: '8 PM', count: 10, sales: 2980, height: '75%' },
                         { hour: '9 PM', count: 5, sales: 1450, height: '40%' },
                       ].map((bar, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                        <div
+                          key={idx}
+                          className="flex-1 flex flex-col items-center gap-1 group relative"
+                        >
                           <div className="absolute -top-10 z-20 hidden group-hover:flex flex-col items-center rounded-lg bg-[#18201c] px-2 py-1 text-[10px] text-white font-bold whitespace-nowrap shadow-md">
-                            <span>{bar.count} orders (₹{bar.sales})</span>
+                            <span>
+                              {bar.count} orders (₹{bar.sales})
+                            </span>
                           </div>
                           <div className="w-full flex items-end justify-center h-36">
                             <div
@@ -606,22 +697,30 @@ export default function VendorDashboard() {
                               }`}
                             />
                           </div>
-                          <span className="text-[10px] font-bold text-gray-500 mt-1">{bar.hour}</span>
+                          <span className="text-[10px] font-bold text-gray-500 mt-1">
+                            {bar.hour}
+                          </span>
                         </div>
                       ))}
                     </div>
 
                     <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Peak Hour Volume</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">
+                          Peak Hour Volume
+                        </p>
                         <p className="text-sm font-bold text-[#18201c]">14 Orders / hr</p>
                       </div>
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Avg Ticket Size</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">
+                          Avg Ticket Size
+                        </p>
                         <p className="text-sm font-bold text-emerald-700">₹340 / order</p>
                       </div>
                       <div className="rounded-2xl bg-gray-50 p-2.5 border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Preparation Velocity</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">
+                          Preparation Velocity
+                        </p>
                         <p className="text-sm font-bold text-purple-700">12.4 mins / item</p>
                       </div>
                     </div>
@@ -640,14 +739,31 @@ export default function VendorDashboard() {
 
                     <div className="flex flex-col gap-4">
                       {[
-                        { label: 'Healthy Bowls & Salads', percent: 45, sales: '₹6,420', color: 'bg-emerald-500' },
-                        { label: 'Artisanal Wraps', percent: 30, sales: '₹4,280', color: 'bg-amber-500' },
-                        { label: 'Truffle Momos & Starters', percent: 25, sales: '₹3,580', color: 'bg-blue-500' },
+                        {
+                          label: 'Healthy Bowls & Salads',
+                          percent: 45,
+                          sales: '₹6,420',
+                          color: 'bg-emerald-500',
+                        },
+                        {
+                          label: 'Artisanal Wraps',
+                          percent: 30,
+                          sales: '₹4,280',
+                          color: 'bg-amber-500',
+                        },
+                        {
+                          label: 'Truffle Momos & Starters',
+                          percent: 25,
+                          sales: '₹3,580',
+                          color: 'bg-blue-500',
+                        },
                       ].map((cat, idx) => (
                         <div key={idx} className="flex flex-col gap-1.5">
                           <div className="flex items-center justify-between text-xs font-bold">
                             <span className="text-gray-700">{cat.label}</span>
-                            <span className="text-[#18201c]">{cat.sales} ({cat.percent}%)</span>
+                            <span className="text-[#18201c]">
+                              {cat.sales} ({cat.percent}%)
+                            </span>
                           </div>
                           <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
                             <div
@@ -666,22 +782,26 @@ export default function VendorDashboard() {
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       <div className="rounded-xl bg-amber-50 p-2 border border-amber-200">
                         <p className="text-[10px] font-bold text-amber-800">New</p>
-                        <p className="text-base font-extrabold text-amber-900">{orders.filter(o => o.status === 'new').length}</p>
+                        <p className="text-base font-extrabold text-amber-900">
+                          {orders.filter((o) => o.status === 'new').length}
+                        </p>
                       </div>
                       <div className="rounded-xl bg-blue-50 p-2 border border-blue-200">
                         <p className="text-[10px] font-bold text-blue-800">Cooking</p>
-                        <p className="text-base font-extrabold text-blue-900">{orders.filter(o => o.status === 'preparing').length}</p>
+                        <p className="text-base font-extrabold text-blue-900">
+                          {orders.filter((o) => o.status === 'preparing').length}
+                        </p>
                       </div>
                       <div className="rounded-xl bg-emerald-50 p-2 border border-emerald-200">
                         <p className="text-[10px] font-bold text-emerald-800">Ready</p>
-                        <p className="text-base font-extrabold text-emerald-900">{orders.filter(o => o.status === 'ready').length}</p>
+                        <p className="text-base font-extrabold text-emerald-900">
+                          {orders.filter((o) => o.status === 'ready').length}
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-
             </div>
           )}
 
@@ -727,10 +847,26 @@ export default function VendorDashboard() {
                   <div className="flex flex-wrap items-center gap-2">
                     {[
                       { id: 'all', label: 'All Orders', count: orders.length },
-                      { id: 'new', label: 'New Needs Acceptance', count: orders.filter((o) => o.status === 'new').length },
-                      { id: 'preparing', label: 'In Kitchen (Cooking)', count: orders.filter((o) => o.status === 'preparing').length },
-                      { id: 'ready', label: 'Ready for Pickup', count: orders.filter((o) => o.status === 'ready').length },
-                      { id: 'completed', label: 'Completed Drops', count: orders.filter((o) => o.status === 'completed').length },
+                      {
+                        id: 'new',
+                        label: 'New Needs Acceptance',
+                        count: orders.filter((o) => o.status === 'new').length,
+                      },
+                      {
+                        id: 'preparing',
+                        label: 'In Kitchen (Cooking)',
+                        count: orders.filter((o) => o.status === 'preparing').length,
+                      },
+                      {
+                        id: 'ready',
+                        label: 'Ready for Pickup',
+                        count: orders.filter((o) => o.status === 'ready').length,
+                      },
+                      {
+                        id: 'completed',
+                        label: 'Completed Drops',
+                        count: orders.filter((o) => o.status === 'completed').length,
+                      },
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -742,9 +878,13 @@ export default function VendorDashboard() {
                         }`}
                       >
                         <span>{tab.label}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                          orderTableFilter === tab.id ? 'bg-[#d9f447] text-[#121815]' : 'bg-gray-200 text-gray-700'
-                        }`}>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                            orderTableFilter === tab.id
+                              ? 'bg-[#d9f447] text-[#121815]'
+                              : 'bg-gray-200 text-gray-700'
+                          }`}
+                        >
                           {tab.count}
                         </span>
                       </button>
@@ -752,7 +892,8 @@ export default function VendorDashboard() {
                   </div>
 
                   <span className="text-xs font-bold text-gray-500">
-                    Showing {tableFilteredOrders.length} order{tableFilteredOrders.length !== 1 ? 's' : ''}
+                    Showing {tableFilteredOrders.length} order
+                    {tableFilteredOrders.length !== 1 ? 's' : ''}
                   </span>
                 </div>
 
@@ -784,7 +925,10 @@ export default function VendorDashboard() {
                           <td className="py-3.5 px-4 min-w-[180px]">
                             <p className="font-bold text-[#18201c]">{ord.customerName}</p>
                             <p className="text-[11px] text-gray-500">{ord.customerPhone}</p>
-                            <p className="text-[10px] text-gray-400 truncate max-w-[200px]" title={ord.customerAddress}>
+                            <p
+                              className="text-[10px] text-gray-400 truncate max-w-[200px]"
+                              title={ord.customerAddress}
+                            >
                               {ord.customerAddress}
                             </p>
                           </td>
@@ -792,7 +936,8 @@ export default function VendorDashboard() {
                             <div className="flex flex-col gap-0.5 text-xs text-[#2f3833]">
                               {ord.items.map((it, idx) => (
                                 <span key={idx} className="font-semibold">
-                                  {it.qty}x {it.name} <span className="text-gray-400 font-normal">(₹{it.price})</span>
+                                  {it.qty}x {it.name}{' '}
+                                  <span className="text-gray-400 font-normal">(₹{it.price})</span>
                                 </span>
                               ))}
                             </div>
@@ -810,23 +955,35 @@ export default function VendorDashboard() {
                             {ord.timeAgo}
                           </td>
                           <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase border ${
-                              ord.status === 'new'
-                                ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase border ${
+                                ord.status === 'new'
+                                  ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                  : ord.status === 'preparing'
+                                    ? 'bg-blue-100 text-blue-900 border-blue-300'
+                                    : ord.status === 'ready'
+                                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                      : 'bg-gray-100 text-gray-700 border-gray-300'
+                              }`}
+                            >
+                              <span
+                                className={`size-1.5 rounded-full ${
+                                  ord.status === 'new'
+                                    ? 'bg-amber-500 animate-pulse'
+                                    : ord.status === 'preparing'
+                                      ? 'bg-blue-500 animate-spin'
+                                      : ord.status === 'ready'
+                                        ? 'bg-emerald-500'
+                                        : 'bg-gray-400'
+                                }`}
+                              />
+                              {ord.status === 'new'
+                                ? 'Needs Acceptance'
                                 : ord.status === 'preparing'
-                                ? 'bg-blue-100 text-blue-900 border-blue-300'
-                                : ord.status === 'ready'
-                                ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                                : 'bg-gray-100 text-gray-700 border-gray-300'
-                            }`}>
-                              <span className={`size-1.5 rounded-full ${
-                                ord.status === 'new' ? 'bg-amber-500 animate-pulse' :
-                                ord.status === 'preparing' ? 'bg-blue-500 animate-spin' :
-                                ord.status === 'ready' ? 'bg-emerald-500' : 'bg-gray-400'
-                              }`} />
-                              {ord.status === 'new' ? 'Needs Acceptance' :
-                               ord.status === 'preparing' ? 'In Kitchen' :
-                               ord.status === 'ready' ? 'Ready for Pickup' : 'Completed'}
+                                  ? 'In Kitchen'
+                                  : ord.status === 'ready'
+                                    ? 'Ready for Pickup'
+                                    : 'Completed'}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
@@ -840,7 +997,12 @@ export default function VendorDashboard() {
                               </button>
                               <select
                                 value={ord.status}
-                                onChange={(e) => updateOrderStatus(ord.id, e.target.value as IncomingOrder['status'])}
+                                onChange={(e) =>
+                                  updateOrderStatus(
+                                    ord.id,
+                                    e.target.value as IncomingOrder['status']
+                                  )
+                                }
                                 className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-[#18201c] cursor-pointer outline-none focus:border-[#18201c] transition shadow-2xs"
                               >
                                 <option value="new">Status: New</option>
@@ -854,7 +1016,10 @@ export default function VendorDashboard() {
                       ))}
                       {tableFilteredOrders.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-xs font-semibold text-gray-500">
+                          <td
+                            colSpan={7}
+                            className="py-8 text-center text-xs font-semibold text-gray-500"
+                          >
                             No orders match the selected filter.
                           </td>
                         </tr>
@@ -872,7 +1037,9 @@ export default function VendorDashboard() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">
                 <div>
                   <h3 className="text-xl font-bold">Dish Catalog & Availability</h3>
-                  <p className="text-xs text-[#737e77]">Toggle stock status in real-time, edit prices, or publish new dishes.</p>
+                  <p className="text-xs text-[#737e77]">
+                    Toggle stock status in real-time, edit prices, or publish new dishes.
+                  </p>
                 </div>
                 <button
                   onClick={() => {
@@ -890,18 +1057,29 @@ export default function VendorDashboard() {
 
               <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {menuItems.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[#e5e9e1] p-4 flex flex-col justify-between bg-white shadow-sm hover:border-gray-300 transition">
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-[#e5e9e1] p-4 flex flex-col justify-between bg-white shadow-sm hover:border-gray-300 transition"
+                  >
                     <div>
                       <div className="flex gap-4 items-start">
-                        <img src={item.image} alt={item.name} className="size-16 rounded-xl object-cover shrink-0" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="size-16 rounded-xl object-cover shrink-0"
+                        />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">{item.category}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
+                            {item.category}
+                          </span>
                           <h4 className="font-bold text-sm text-[#18201c] truncate">{item.name}</h4>
                           <p className="text-xs font-bold text-[#18201c] mt-0.5">₹{item.price}</p>
                         </div>
                       </div>
                       {item.description && (
-                        <p className="mt-3 text-xs text-gray-500 line-clamp-2">{item.description}</p>
+                        <p className="mt-3 text-xs text-gray-500 line-clamp-2">
+                          {item.description}
+                        </p>
                       )}
                     </div>
 
@@ -909,7 +1087,9 @@ export default function VendorDashboard() {
                       <button
                         onClick={() => toggleItemStock(item.id)}
                         className={`rounded-full px-3 py-1 text-[10px] font-bold transition ${
-                          item.inStock ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                          item.inStock
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                            : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
                         }`}
                       >
                         {item.inStock ? 'In Stock' : 'Out of Stock'}
@@ -938,22 +1118,95 @@ export default function VendorDashboard() {
             </div>
           )}
 
+          {/* TAB: STORE COUPONS */}
+          {activeTab === 'coupons' && (
+            <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-[#18201c]">
+                    Store Promo Codes &amp; Discount Offers
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Attract new diners and boost order volume with store-specific coupons.
+                  </p>
+                </div>
+                <Link
+                  href="/vendor/coupons"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#323d36] transition"
+                >
+                  <Tag className="size-4 text-[#d9f447]" /> Manage All Store Coupons
+                </Link>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-extrabold text-amber-950">
+                      HEALTHY20
+                    </span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-amber-900">
+                    20% OFF on all gourmet bowls
+                  </p>
+                  <p className="mt-1 text-[11px] text-amber-700">Min Order: ₹249 · Cap: ₹150</p>
+                </div>
+
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-extrabold text-blue-950">
+                      FREEDEL40
+                    </span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-blue-900">Flat ₹40 OFF delivery fee</p>
+                  <p className="mt-1 text-[11px] text-blue-700">Min Order: ₹299</p>
+                </div>
+
+                <div className="rounded-2xl border border-purple-200 bg-purple-50/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-extrabold text-purple-950">BITE50</span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-purple-900">50% OFF welcome meal</p>
+                  <p className="mt-1 text-[11px] text-purple-700">Min Order: ₹199 · Cap: ₹100</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: ANALYTICS */}
           {activeTab === 'analytics' && (
             <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
               <h3 className="text-xl font-bold">Kitchen Performance & Revenue Trends</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">Detailed analytics on peak hours and top selling menu items.</p>
+              <p className="text-xs text-[#737e77] mt-0.5">
+                Detailed analytics on peak hours and top selling menu items.
+              </p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl border border-gray-200 p-5 bg-gradient-to-br from-emerald-50/50 to-white">
                   <h4 className="font-bold text-sm text-[#18201c]">Top Selling Dish</h4>
-                  <p className="text-lg font-bold text-emerald-700 mt-1">Basil Pesto Quinoa Bowl (142 orders)</p>
-                  <p className="text-xs text-gray-500 mt-1">Generates 34% of your total kitchen revenue.</p>
+                  <p className="text-lg font-bold text-emerald-700 mt-1">
+                    Basil Pesto Quinoa Bowl (142 orders)
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Generates 34% of your total kitchen revenue.
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-gray-200 p-5 bg-gradient-to-br from-amber-50/50 to-white">
                   <h4 className="font-bold text-sm text-[#18201c]">Peak Order Hour</h4>
-                  <p className="text-lg font-bold text-amber-700 mt-1">1:00 PM – 2:30 PM (Lunch Rush)</p>
-                  <p className="text-xs text-gray-500 mt-1">Average order rate: 18 orders/hr during rush.</p>
+                  <p className="text-lg font-bold text-amber-700 mt-1">
+                    1:00 PM – 2:30 PM (Lunch Rush)
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Average order rate: 18 orders/hr during rush.
+                  </p>
                 </div>
               </div>
             </div>
@@ -967,8 +1220,13 @@ export default function VendorDashboard() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md">
                     Instant Bank Settlement
                   </span>
-                  <h3 className="text-xl font-bold text-[#18201c] mt-1">Kitchen Wallet & Balance</h3>
-                  <p className="text-xs text-[#737e77]">Transfer collected customer payments straight to your registered UPI or Bank Account.</p>
+                  <h3 className="text-xl font-bold text-[#18201c] mt-1">
+                    Kitchen Wallet & Balance
+                  </h3>
+                  <p className="text-xs text-[#737e77]">
+                    Transfer collected customer payments straight to your registered UPI or Bank
+                    Account.
+                  </p>
                 </div>
 
                 <button
@@ -996,7 +1254,9 @@ export default function VendorDashboard() {
                       {payoutHistory.map((p) => (
                         <tr key={p.id}>
                           <td className="py-3 px-3 font-mono font-bold">{p.id}</td>
-                          <td className="py-3 px-3 font-bold text-emerald-700">₹{p.amount.toLocaleString('en-IN')}</td>
+                          <td className="py-3 px-3 font-bold text-emerald-700">
+                            ₹{p.amount.toLocaleString('en-IN')}
+                          </td>
                           <td className="py-3 px-3 text-gray-600">{p.date}</td>
                           <td className="py-3 px-3">
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
@@ -1016,7 +1276,9 @@ export default function VendorDashboard() {
           {activeTab === 'settings' && (
             <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm max-w-2xl">
               <h3 className="text-xl font-bold">Store & Kitchen Details</h3>
-              <p className="text-xs text-[#737e77] mt-0.5">Update restaurant name, address, cuisine specialization, and contact information.</p>
+              <p className="text-xs text-[#737e77] mt-0.5">
+                Update restaurant name, address, cuisine specialization, and contact information.
+              </p>
 
               <div className="mt-6 flex flex-col gap-4 text-xs">
                 <div>
@@ -1076,7 +1338,9 @@ export default function VendorDashboard() {
                 <div>
                   <p className="font-bold text-[#18201c]">{selectedOrderModal.customerName}</p>
                   <p className="text-gray-500">{selectedOrderModal.customerPhone}</p>
-                  <p className="text-gray-600 text-[11px] mt-1">{selectedOrderModal.customerAddress}</p>
+                  <p className="text-gray-600 text-[11px] mt-1">
+                    {selectedOrderModal.customerAddress}
+                  </p>
                 </div>
                 <div className="text-right">
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
@@ -1095,7 +1359,9 @@ export default function VendorDashboard() {
                 <span className="font-bold text-gray-500 uppercase text-[10px]">Order Items</span>
                 {selectedOrderModal.items.map((it, idx) => (
                   <div key={idx} className="flex justify-between font-semibold">
-                    <span>{it.qty}x {it.name}</span>
+                    <span>
+                      {it.qty}x {it.name}
+                    </span>
                     <span>₹{it.price * it.qty}</span>
                   </div>
                 ))}
@@ -1136,7 +1402,9 @@ export default function VendorDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-3">
-              <h3 className="font-bold text-lg">{editingDish ? 'Edit Dish Catalog Item' : 'Add Dish to Menu'}</h3>
+              <h3 className="font-bold text-lg">
+                {editingDish ? 'Edit Dish Catalog Item' : 'Add Dish to Menu'}
+              </h3>
               <button
                 onClick={() => setShowAddDishModal(false)}
                 className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
@@ -1209,7 +1477,9 @@ export default function VendorDashboard() {
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-3">
               <div>
                 <h3 className="font-bold text-lg text-[#18201c]">Instant Kitchen Withdrawal</h3>
-                <p className="text-xs text-gray-500">Transfer funds directly to registered bank account.</p>
+                <p className="text-xs text-gray-500">
+                  Transfer funds directly to registered bank account.
+                </p>
               </div>
               <button
                 onClick={() => setPayoutModalOpen(false)}
@@ -1227,7 +1497,9 @@ export default function VendorDashboard() {
             ) : (
               <div className="mt-4 flex flex-col gap-4">
                 <div className="rounded-2xl bg-amber-50 p-4 border border-amber-200">
-                  <span className="text-[10px] font-bold uppercase text-amber-800">Available Balance</span>
+                  <span className="text-[10px] font-bold uppercase text-amber-800">
+                    Available Balance
+                  </span>
                   <p className="text-2xl font-bold text-[#18201c] mt-0.5">₹14,280</p>
                 </div>
 
@@ -1260,4 +1532,3 @@ export default function VendorDashboard() {
     </div>
   )
 }
-

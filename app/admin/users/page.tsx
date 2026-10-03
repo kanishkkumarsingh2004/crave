@@ -1,18 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import { UserRole } from '@/lib/auth-context'
 import {
-  AlertCircle,
-  ArrowRight,
-  Check,
   CheckCircle2,
   ChefHat,
   DollarSign,
   Edit3,
-  Eye,
   Plus,
-  Power,
-  RefreshCw,
   Search,
   Sliders,
   Sparkles,
@@ -22,7 +16,7 @@ import {
   Utensils,
   X,
 } from 'lucide-react'
-import { UserRole } from '@/lib/auth-context'
+import React, { useState } from 'react'
 
 export interface MenuItem {
   id: string
@@ -368,7 +362,11 @@ export default function AdminUsersPage() {
   }
 
   // Update payment mode for vendor
-  function updateVendorPaymentModel(vendorId: string, model: 'commission' | 'markup', rate?: number) {
+  function updateVendorPaymentModel(
+    vendorId: string,
+    model: 'commission' | 'markup',
+    rate?: number
+  ) {
     setAccounts((prev) =>
       prev.map((acc) => {
         if (acc.id === vendorId && acc.vendorData) {
@@ -512,7 +510,8 @@ export default function AdminUsersPage() {
           <div>
             <h3 className="text-xl font-bold text-[#18201c]">Registered User & Vendor Accounts</h3>
             <p className="text-xs text-[#737e77]">
-              Manage accounts across Customer, Vendor, Driver, and Admin roles. Open vendor overview to alter payment modes & menu items.
+              Manage accounts across Customer, Vendor, Driver, and Admin roles. Open vendor overview
+              to alter payment modes & menu items.
             </p>
           </div>
 
@@ -534,7 +533,9 @@ export default function AdminUsersPage() {
                   key={r}
                   onClick={() => setSelectedRoleFilter(r)}
                   className={`rounded-full px-3 py-1 text-[11px] font-bold capitalize transition ${
-                    selectedRoleFilter === r ? 'bg-[#18201c] text-white' : 'text-gray-600 hover:text-[#18201c]'
+                    selectedRoleFilter === r
+                      ? 'bg-[#18201c] text-white'
+                      : 'text-gray-600 hover:text-[#18201c]'
                   }`}
                 >
                   {r}
@@ -554,7 +555,10 @@ export default function AdminUsersPage() {
         {/* Mobile Responsive Account Cards (visible on mobile screens < md) */}
         <div className="flex flex-col gap-3.5 mt-6 block md:hidden">
           {filteredAccounts.map((acc) => (
-            <div key={acc.id} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs">
+            <div
+              key={acc.id}
+              className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {acc.role === 'vendor' && (
@@ -572,8 +576,8 @@ export default function AdminUsersPage() {
                     acc.status === 'active'
                       ? 'bg-emerald-100 text-emerald-800'
                       : acc.status === 'pending'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
                   }`}
                 >
                   {acc.status}
@@ -682,8 +686,8 @@ export default function AdminUsersPage() {
                         acc.status === 'active'
                           ? 'bg-emerald-100 text-emerald-800'
                           : acc.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
                       }`}
                     >
                       {acc.status}
@@ -765,7 +769,8 @@ export default function AdminUsersPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Owner: {activeVendorModal.ownerName} · {activeVendorModal.cuisine} · {activeVendorModal.phone}
+                    Owner: {activeVendorModal.ownerName} · {activeVendorModal.cuisine} ·{' '}
+                    {activeVendorModal.phone}
                   </p>
                 </div>
               </div>
@@ -786,7 +791,9 @@ export default function AdminUsersPage() {
                   <div className="flex items-center gap-2">
                     <Sliders className="size-5 text-purple-700" />
                     <div>
-                      <h4 className="font-bold text-sm text-[#18201c]">Payment & Revenue Settlement Mode</h4>
+                      <h4 className="font-bold text-sm text-[#18201c]">
+                        Payment & Revenue Settlement Mode
+                      </h4>
                       <p className="text-xs text-gray-600">
                         Select how platform earns revenue from this restaurant:
                       </p>
@@ -794,7 +801,10 @@ export default function AdminUsersPage() {
                   </div>
 
                   <span className="rounded-full bg-purple-200/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-purple-900">
-                    Current: {activeVendorModal.paymentModel === 'commission' ? `${activeVendorModal.commissionRate}% Commission Cut` : 'Price Markup Model'}
+                    Current:{' '}
+                    {activeVendorModal.paymentModel === 'commission'
+                      ? `${activeVendorModal.commissionRate}% Commission Cut`
+                      : 'Price Markup Model'}
                   </span>
                 </div>
 
@@ -813,18 +823,23 @@ export default function AdminUsersPage() {
                         <span className="grid size-7 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
                           <DollarSign className="size-4" />
                         </span>
-                        <span className="font-bold text-xs text-[#18201c]">Option 1: Percentage Commission</span>
+                        <span className="font-bold text-xs text-[#18201c]">
+                          Option 1: Percentage Commission
+                        </span>
                       </div>
                       {activeVendorModal.paymentModel === 'commission' && (
                         <CheckCircle2 className="size-4 text-emerald-600" />
                       )}
                     </div>
                     <p className="mt-2 text-[11px] text-gray-600 leading-relaxed">
-                      We deduct an agreed commission cut (e.g. <strong>15%</strong>) from total order sales. The restaurant receives 85% net payout.
+                      We deduct an agreed commission cut (e.g. <strong>15%</strong>) from total
+                      order sales. The restaurant receives 85% net payout.
                     </p>
                     {activeVendorModal.paymentModel === 'commission' && (
                       <div className="mt-3 flex items-center gap-2 pt-2 border-t border-gray-100">
-                        <span className="text-xs font-semibold text-gray-600">Commission Rate:</span>
+                        <span className="text-xs font-semibold text-gray-600">
+                          Commission Rate:
+                        </span>
                         <input
                           type="number"
                           value={activeVendorModal.commissionRate}
@@ -856,14 +871,17 @@ export default function AdminUsersPage() {
                         <span className="grid size-7 place-items-center rounded-xl bg-purple-100 text-purple-800">
                           <Sparkles className="size-4" />
                         </span>
-                        <span className="font-bold text-xs text-[#18201c]">Option 2: Item Price Markup</span>
+                        <span className="font-bold text-xs text-[#18201c]">
+                          Option 2: Item Price Markup
+                        </span>
                       </div>
                       {activeVendorModal.paymentModel === 'markup' && (
                         <CheckCircle2 className="size-4 text-purple-600" />
                       )}
                     </div>
                     <p className="mt-2 text-[11px] text-gray-600 leading-relaxed">
-                      We negotiate fixed agreed dish cost with vendor (e.g. ₹130) and list on app with markup price (e.g. ₹180). We keep 100% of markup profit!
+                      We negotiate fixed agreed dish cost with vendor (e.g. ₹130) and list on app
+                      with markup price (e.g. ₹180). We keep 100% of markup profit!
                     </p>
                     {activeVendorModal.paymentModel === 'markup' && (
                       <div className="mt-3 text-[11px] font-bold text-purple-800 pt-2 border-t border-purple-100">
@@ -878,7 +896,9 @@ export default function AdminUsersPage() {
               <div>
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                   <div>
-                    <h4 className="font-bold text-base text-[#18201c]">Restaurant Menu ({activeVendorModal.menu.length} Dishes)</h4>
+                    <h4 className="font-bold text-base text-[#18201c]">
+                      Restaurant Menu ({activeVendorModal.menu.length} Dishes)
+                    </h4>
                     <p className="text-xs text-gray-500">
                       Add, edit, alter pricing parameters, or toggle item availability.
                     </p>
@@ -925,7 +945,8 @@ export default function AdminUsersPage() {
                             name="vegNonveg"
                             checked={newDish.isVeg}
                             onChange={() => setNewDish({ ...newDish, isVeg: true })}
-                          /> Veg
+                          />{' '}
+                          Veg
                         </label>
                         <label className="flex items-center gap-1 cursor-pointer font-semibold text-rose-700">
                           <input
@@ -933,7 +954,8 @@ export default function AdminUsersPage() {
                             name="vegNonveg"
                             checked={!newDish.isVeg}
                             onChange={() => setNewDish({ ...newDish, isVeg: false })}
-                          /> Non-Veg
+                          />{' '}
+                          Non-Veg
                         </label>
                       </div>
                     </div>
@@ -998,24 +1020,37 @@ export default function AdminUsersPage() {
 
                     if (isEditing) {
                       return (
-                        <div key={item.id} className="rounded-2xl border border-blue-300 bg-blue-50/40 p-4 space-y-3">
-                          <h5 className="font-bold text-xs text-blue-900">Editing Dish: {item.name}</h5>
+                        <div
+                          key={item.id}
+                          className="rounded-2xl border border-blue-300 bg-blue-50/40 p-4 space-y-3"
+                        >
+                          <h5 className="font-bold text-xs text-blue-900">
+                            Editing Dish: {item.name}
+                          </h5>
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                              <label className="text-[10px] font-bold text-gray-500">Dish Name</label>
+                              <label className="text-[10px] font-bold text-gray-500">
+                                Dish Name
+                              </label>
                               <input
                                 type="text"
                                 value={editDishData.name}
-                                onChange={(e) => setEditDishData({ ...editDishData, name: e.target.value })}
+                                onChange={(e) =>
+                                  setEditDishData({ ...editDishData, name: e.target.value })
+                                }
                                 className="w-full mt-1 rounded-xl border border-gray-300 px-3 py-1 text-xs outline-none bg-white"
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] font-bold text-gray-500">Category</label>
+                              <label className="text-[10px] font-bold text-gray-500">
+                                Category
+                              </label>
                               <input
                                 type="text"
                                 value={editDishData.category}
-                                onChange={(e) => setEditDishData({ ...editDishData, category: e.target.value })}
+                                onChange={(e) =>
+                                  setEditDishData({ ...editDishData, category: e.target.value })
+                                }
                                 className="w-full mt-1 rounded-xl border border-gray-300 px-3 py-1 text-xs outline-none bg-white"
                               />
                             </div>
@@ -1023,23 +1058,33 @@ export default function AdminUsersPage() {
 
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                              <label className="text-[10px] font-bold text-gray-500">Base Agreed Cost (₹)</label>
+                              <label className="text-[10px] font-bold text-gray-500">
+                                Base Agreed Cost (₹)
+                              </label>
                               <input
                                 type="number"
                                 value={editDishData.basePrice}
                                 onChange={(e) =>
-                                  setEditDishData({ ...editDishData, basePrice: parseFloat(e.target.value) || 0 })
+                                  setEditDishData({
+                                    ...editDishData,
+                                    basePrice: parseFloat(e.target.value) || 0,
+                                  })
                                 }
                                 className="w-full mt-1 rounded-xl border border-gray-300 px-3 py-1 text-xs outline-none bg-white font-bold"
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] font-bold text-gray-500">Customer Listing Price (₹)</label>
+                              <label className="text-[10px] font-bold text-gray-500">
+                                Customer Listing Price (₹)
+                              </label>
                               <input
                                 type="number"
                                 value={editDishData.markupPrice}
                                 onChange={(e) =>
-                                  setEditDishData({ ...editDishData, markupPrice: parseFloat(e.target.value) || 0 })
+                                  setEditDishData({
+                                    ...editDishData,
+                                    markupPrice: parseFloat(e.target.value) || 0,
+                                  })
                                 }
                                 className="w-full mt-1 rounded-xl border border-gray-300 px-3 py-1 text-xs outline-none bg-white font-bold"
                               />
@@ -1072,7 +1117,9 @@ export default function AdminUsersPage() {
                         <div className="flex items-start gap-3">
                           <span
                             className={`mt-0.5 grid size-4 place-items-center rounded-sm border ${
-                              item.isVeg ? 'border-emerald-600 text-emerald-600' : 'border-rose-600 text-rose-600'
+                              item.isVeg
+                                ? 'border-emerald-600 text-emerald-600'
+                                : 'border-rose-600 text-rose-600'
                             }`}
                           >
                             <span
@@ -1087,7 +1134,9 @@ export default function AdminUsersPage() {
                                 {item.category}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">{item.description}</p>
+                            <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
+                              {item.description}
+                            </p>
                           </div>
                         </div>
 
@@ -1102,7 +1151,9 @@ export default function AdminUsersPage() {
                             ) : (
                               <p className="text-[10px] text-emerald-700 font-semibold">
                                 Vendor gets ~₹
-                                {Math.round(item.markupPrice * (1 - activeVendorModal.commissionRate / 100))}
+                                {Math.round(
+                                  item.markupPrice * (1 - activeVendorModal.commissionRate / 100)
+                                )}
                               </p>
                             )}
                           </div>
@@ -1155,7 +1206,8 @@ export default function AdminUsersPage() {
             {/* Modal Footer */}
             <div className="mt-4 flex items-center justify-between border-t border-[#f0f3ec] pt-4 text-xs">
               <span className="text-gray-500">
-                FSSAI License: <strong className="text-[#18201c]">{activeVendorModal.fssaiLicense}</strong> · Bank:{' '}
+                FSSAI License:{' '}
+                <strong className="text-[#18201c]">{activeVendorModal.fssaiLicense}</strong> · Bank:{' '}
                 <strong className="text-[#18201c]">{activeVendorModal.bankAccount}</strong>
               </span>
 
@@ -1177,7 +1229,9 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
               <div>
                 <h3 className="text-lg font-bold text-[#18201c]">Create New User Account</h3>
-                <p className="text-xs text-gray-500">Add a new Customer, Vendor, Driver, or Admin account to the platform.</p>
+                <p className="text-xs text-gray-500">
+                  Add a new Customer, Vendor, Driver, or Admin account to the platform.
+                </p>
               </div>
               <button
                 onClick={() => setIsAddUserOpen(false)}
@@ -1217,7 +1271,9 @@ export default function AdminUsersPage() {
                   <label className="font-bold text-[#18201c]">Account Role *</label>
                   <select
                     value={newUserForm.role}
-                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })}
+                    onChange={(e) =>
+                      setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
                   >
                     <option value="customer">Customer</option>
@@ -1231,7 +1287,12 @@ export default function AdminUsersPage() {
                   <label className="font-bold text-[#18201c]">Initial Status *</label>
                   <select
                     value={newUserForm.status}
-                    onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as 'active' | 'pending' })}
+                    onChange={(e) =>
+                      setNewUserForm({
+                        ...newUserForm,
+                        status: e.target.value as 'active' | 'pending',
+                      })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white capitalize"
                   >
                     <option value="active">Active</option>
@@ -1259,8 +1320,8 @@ export default function AdminUsersPage() {
                     newUserForm.role === 'vendor'
                       ? 'e.g. North Indian & Mughlai'
                       : newUserForm.role === 'driver'
-                      ? 'e.g. Ather 450X EV'
-                      : 'e.g. Premium Customer'
+                        ? 'e.g. Ather 450X EV'
+                        : 'e.g. Premium Customer'
                   }
                   value={newUserForm.detail}
                   onChange={(e) => setNewUserForm({ ...newUserForm, detail: e.target.value })}

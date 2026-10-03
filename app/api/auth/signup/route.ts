@@ -1,10 +1,20 @@
-import { NextResponse } from 'next/server'
 import { createToken, JWTPayload } from '@/lib/jwt'
+import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, role, phone, address, restaurantName, cuisine, vehicleType, licensePlate } = body
+    const {
+      name,
+      email,
+      role,
+      phone,
+      address,
+      restaurantName,
+      cuisine,
+      vehicleType,
+      licensePlate,
+    } = body
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 })

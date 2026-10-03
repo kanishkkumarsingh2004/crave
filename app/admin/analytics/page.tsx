@@ -1,27 +1,22 @@
 'use client'
 
-import React, { useState } from 'react'
 import {
   BarChart3,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  ShoppingBag,
-  Users,
-  Award,
   Clock,
-  ArrowUpRight,
-  Calendar,
-  Filter,
+  DollarSign,
   PieChart,
-  Store,
-  Zap,
+  ShoppingBag,
   Sparkles,
-  ChevronDown
+  Store,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
+import { useState } from 'react'
 
 export default function AdminAnalyticsPage() {
-  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'quarter' | 'year'>('month')
+  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'quarter' | 'year'>(
+    'month'
+  )
 
   const monthlyRevenueData = [
     { month: 'Jan', revenue: 9.2, orders: 18400 },
@@ -39,26 +34,86 @@ export default function AdminAnalyticsPage() {
   const maxRevenue = Math.max(...monthlyRevenueData.map((d) => d.revenue))
 
   const topVendors = [
-    { name: 'The Green Table', revenue: '₹2,45,000', orders: '1,420', rating: '4.9 ★', model: '15% Commission' },
-    { name: 'Momo House & Asian Grill', revenue: '₹1,98,400', orders: '1,280', rating: '4.8 ★', model: 'Price Markup' },
-    { name: 'Spice Route Bistro', revenue: '₹1,76,200', orders: '940', rating: '4.7 ★', model: '15% Commission' },
-    { name: 'Biryani Blues Express', revenue: '₹1,54,000', orders: '1,150', rating: '4.8 ★', model: '12% Commission' },
-    { name: 'Urban Juice & Bowl Co.', revenue: '₹1,22,800', orders: '890', rating: '4.9 ★', model: '15% Commission' },
+    {
+      name: 'The Green Table',
+      revenue: '₹2,45,000',
+      orders: '1,420',
+      rating: '4.9 ★',
+      model: '15% Commission',
+    },
+    {
+      name: 'Momo House & Asian Grill',
+      revenue: '₹1,98,400',
+      orders: '1,280',
+      rating: '4.8 ★',
+      model: 'Price Markup',
+    },
+    {
+      name: 'Spice Route Bistro',
+      revenue: '₹1,76,200',
+      orders: '940',
+      rating: '4.7 ★',
+      model: '15% Commission',
+    },
+    {
+      name: 'Biryani Blues Express',
+      revenue: '₹1,54,000',
+      orders: '1,150',
+      rating: '4.8 ★',
+      model: '12% Commission',
+    },
+    {
+      name: 'Urban Juice & Bowl Co.',
+      revenue: '₹1,22,800',
+      orders: '890',
+      rating: '4.9 ★',
+      model: '15% Commission',
+    },
   ]
 
   const categoryBreakdown = [
     { name: 'Biryani & Rice Bowls', percentage: 35, revenue: '₹5,19,000', color: 'bg-[#d9f447]' },
-    { name: 'Healthy Salads & Bowls', percentage: 22, revenue: '₹3,26,200', color: 'bg-emerald-500' },
-    { name: 'Momos & Asian Street Food', percentage: 18, revenue: '₹2,66,900', color: 'bg-amber-500' },
+    {
+      name: 'Healthy Salads & Bowls',
+      percentage: 22,
+      revenue: '₹3,26,200',
+      color: 'bg-emerald-500',
+    },
+    {
+      name: 'Momos & Asian Street Food',
+      percentage: 18,
+      revenue: '₹2,66,900',
+      color: 'bg-amber-500',
+    },
     { name: 'Desserts & Smoothies', percentage: 15, revenue: '₹2,22,400', color: 'bg-purple-500' },
     { name: 'Fast Food & Burgers', percentage: 10, revenue: '₹1,48,400', color: 'bg-blue-500' },
   ]
 
   const hourlyDistribution = [
-    { label: 'Breakfast (7 AM - 11 AM)', percent: 15, count: '4,860 orders', color: 'bg-amber-400' },
-    { label: 'Lunch Rush (12 PM - 3 PM)', percent: 42, count: '13,629 orders', color: 'bg-emerald-500' },
-    { label: 'Evening Snacks (4 PM - 7 PM)', percent: 18, count: '5,841 orders', color: 'bg-blue-500' },
-    { label: 'Dinner & Late Night (8 PM - 12 AM)', percent: 25, count: '8,120 orders', color: 'bg-purple-500' },
+    {
+      label: 'Breakfast (7 AM - 11 AM)',
+      percent: 15,
+      count: '4,860 orders',
+      color: 'bg-amber-400',
+    },
+    {
+      label: 'Lunch Rush (12 PM - 3 PM)',
+      percent: 42,
+      count: '13,629 orders',
+      color: 'bg-emerald-500',
+    },
+    {
+      label: 'Evening Snacks (4 PM - 7 PM)',
+      percent: 18,
+      count: '5,841 orders',
+      color: 'bg-blue-500',
+    },
+    {
+      label: 'Dinner & Late Night (8 PM - 12 AM)',
+      percent: 25,
+      count: '8,120 orders',
+      color: 'bg-purple-500',
+    },
   ]
 
   return (
@@ -73,7 +128,8 @@ export default function AdminAnalyticsPage() {
             Platform Analytics & Financial Insights
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Real-time revenue growth, order distribution, category performance, and kitchen partner metrics.
+            Real-time revenue growth, order distribution, category performance, and kitchen partner
+            metrics.
           </p>
         </div>
 
@@ -105,53 +161,65 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Gross Platform Revenue</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Gross Platform Revenue
+            </span>
             <span className="grid size-9 place-items-center rounded-2xl bg-[#f1f6d9] text-[#6a8014]">
               <DollarSign className="size-5" />
             </span>
           </div>
           <p className="mt-3 text-2xl font-bold text-[#18201c]">₹14,82,900</p>
           <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-            <TrendingUp className="size-3.5" /> +18.4% <span className="text-gray-400 font-normal">vs last month</span>
+            <TrendingUp className="size-3.5" /> +18.4%{' '}
+            <span className="text-gray-400 font-normal">vs last month</span>
           </div>
         </div>
 
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Completed Orders</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Total Completed Orders
+            </span>
             <span className="grid size-9 place-items-center rounded-2xl bg-blue-50 text-blue-700">
               <ShoppingBag className="size-5" />
             </span>
           </div>
           <p className="mt-3 text-2xl font-bold text-[#18201c]">32,450</p>
           <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-            <TrendingUp className="size-3.5" /> +12.1% <span className="text-gray-400 font-normal">vs last month</span>
+            <TrendingUp className="size-3.5" /> +12.1%{' '}
+            <span className="text-gray-400 font-normal">vs last month</span>
           </div>
         </div>
 
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Average Order Value (AOV)</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Average Order Value (AOV)
+            </span>
             <span className="grid size-9 place-items-center rounded-2xl bg-purple-50 text-purple-700">
               <Sparkles className="size-5" />
             </span>
           </div>
           <p className="mt-3 text-2xl font-bold text-[#18201c]">₹456.80</p>
           <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-            <TrendingUp className="size-3.5" /> +4.2% <span className="text-gray-400 font-normal">higher basket value</span>
+            <TrendingUp className="size-3.5" /> +4.2%{' '}
+            <span className="text-gray-400 font-normal">higher basket value</span>
           </div>
         </div>
 
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Active Platform Users</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Active Platform Users
+            </span>
             <span className="grid size-9 place-items-center rounded-2xl bg-amber-50 text-amber-700">
               <Users className="size-5" />
             </span>
           </div>
           <p className="mt-3 text-2xl font-bold text-[#18201c]">12,480</p>
           <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-            <TrendingUp className="size-3.5" /> +8.5% <span className="text-gray-400 font-normal">new registrations</span>
+            <TrendingUp className="size-3.5" /> +8.5%{' '}
+            <span className="text-gray-400 font-normal">new registrations</span>
           </div>
         </div>
       </div>
@@ -161,7 +229,8 @@ export default function AdminAnalyticsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f0f3ec] pb-4 gap-2">
           <div>
             <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-              <BarChart3 className="size-5 text-[#859d19]" /> Monthly Revenue & Order Growth Trend (Lakhs INR)
+              <BarChart3 className="size-5 text-[#859d19]" /> Monthly Revenue & Order Growth Trend
+              (Lakhs INR)
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
               Gross sales trajectory across 2026 calendar months. Peak revenue recorded in October.
@@ -179,7 +248,10 @@ export default function AdminAnalyticsPage() {
             const isHighest = d.revenue === maxRevenue
 
             return (
-              <div key={d.month} className="flex flex-1 flex-col items-center gap-2 h-full justify-end group">
+              <div
+                key={d.month}
+                className="flex flex-1 flex-col items-center gap-2 h-full justify-end group"
+              >
                 <div className="text-[10px] font-bold text-gray-500 opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
                   ₹{d.revenue}L
                 </div>
@@ -269,7 +341,10 @@ export default function AdminAnalyticsPage() {
         {/* Mobile Cards (< md) */}
         <div className="flex flex-col gap-3 mt-4 block md:hidden">
           {topVendors.map((v, idx) => (
-            <div key={v.name} className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-2 shadow-xs">
+            <div
+              key={v.name}
+              className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-2 shadow-xs"
+            >
               <div className="flex items-center justify-between">
                 <span className="font-bold text-sm text-[#18201c] flex items-center gap-1.5">
                   <span className="grid size-5 place-items-center rounded-full bg-gray-100 font-mono text-[10px] text-gray-700">
@@ -281,11 +356,15 @@ export default function AdminAnalyticsPage() {
               </div>
               <div className="flex items-center justify-between border-t border-gray-100 pt-2 text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Revenue</span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                    Revenue
+                  </span>
                   <span className="font-bold text-emerald-700">{v.revenue}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Orders</span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                    Orders
+                  </span>
                   <span className="font-semibold text-gray-700 font-mono">{v.orders}</span>
                 </div>
                 <div>
@@ -318,10 +397,18 @@ export default function AdminAnalyticsPage() {
                     </span>
                     {v.name}
                   </td>
-                  <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">{v.revenue}</td>
-                  <td className="px-4 py-3.5 text-gray-600 font-mono whitespace-nowrap">{v.orders}</td>
-                  <td className="px-4 py-3.5 font-bold text-amber-600 whitespace-nowrap">{v.rating}</td>
-                  <td className="px-4 py-3.5 text-right font-medium text-gray-500 whitespace-nowrap">{v.model}</td>
+                  <td className="px-4 py-3.5 font-bold text-[#18201c] whitespace-nowrap">
+                    {v.revenue}
+                  </td>
+                  <td className="px-4 py-3.5 text-gray-600 font-mono whitespace-nowrap">
+                    {v.orders}
+                  </td>
+                  <td className="px-4 py-3.5 font-bold text-amber-600 whitespace-nowrap">
+                    {v.rating}
+                  </td>
+                  <td className="px-4 py-3.5 text-right font-medium text-gray-500 whitespace-nowrap">
+                    {v.model}
+                  </td>
                 </tr>
               ))}
             </tbody>
