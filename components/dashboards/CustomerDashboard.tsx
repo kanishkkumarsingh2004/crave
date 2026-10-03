@@ -2,13 +2,16 @@
 
 import { useAuth } from '@/lib/auth-context'
 import {
+  Navigation,
   ArrowRight,
   Bike,
   Check,
+  CheckCircle2,
   Clock3,
   Compass,
   Filter,
   Flame,
+  History,
   LocateFixed,
   MapPin,
   Minus,
@@ -21,9 +24,10 @@ import {
   ShoppingBag,
   ShoppingCart,
   Sparkles,
-  Star,
   Tag,
   Trash2,
+  User,
+  UtensilsCrossed,
   X,
   Zap,
 } from 'lucide-react'
@@ -64,6 +68,114 @@ interface MenuItem {
 interface CartItem extends MenuItem {
   qty: number
 }
+
+interface PastOrder {
+  id: string
+  restaurantName: string
+  restaurantImage: string
+  items: { name: string; qty: number; price: number }[]
+  subtotal: number
+  discount: number
+  total: number
+  couponCode?: string
+  date: string
+  time: string
+  status: 'Delivered' | 'Cancelled' | 'In Progress'
+  deliveryTime: string
+  trackStep?: number // 0=Placed, 1=Preparing, 2=Picked Up, 3=On the way
+  otp?: string
+  driverName?: string
+  driverPhone?: string
+}
+
+const samplePastOrders: PastOrder[] = [
+  {
+    id: 'DRP-8812',
+    restaurantName: 'The Green Table (Indiranagar)',
+    restaurantImage:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
+    items: [
+      { name: 'Basil Pesto Quinoa Bowl', qty: 1, price: 289 },
+      { name: 'Smoky Paneer Tikka Wrap', qty: 1, price: 249 },
+    ],
+    subtotal: 538,
+    discount: 50,
+    total: 513,
+    couponCode: 'BLINK50',
+    date: '3 Oct 2026',
+    time: '1:45 PM',
+    status: 'In Progress',
+    deliveryTime: '—',
+    trackStep: 2,
+    otp: '4921',
+    driverName: 'Rajesh Kumar',
+    driverPhone: '+91 97444 55667',
+  },
+  {
+    id: 'DRP-7741',
+    restaurantName: 'The Green Table',
+    restaurantImage:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
+    items: [
+      { name: 'Basil Pesto Quinoa Bowl', qty: 1, price: 289 },
+      { name: 'Smoky Paneer Tikka Wrap', qty: 1, price: 249 },
+    ],
+    subtotal: 538,
+    discount: 50,
+    total: 513,
+    couponCode: 'BLINK50',
+    date: '1 Oct 2026',
+    time: '1:15 PM',
+    status: 'Delivered',
+    deliveryTime: '22 mins',
+  },
+  {
+    id: 'DRP-6920',
+    restaurantName: 'Casa Napoli Woodfired Pizza',
+    restaurantImage:
+      'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=85',
+    items: [{ name: 'Artisan Woodfired Margherita Pizza', qty: 2, price: 420 }],
+    subtotal: 840,
+    discount: 100,
+    total: 765,
+    couponCode: 'WELCOME100',
+    date: '28 Sep 2026',
+    time: '7:30 PM',
+    status: 'Delivered',
+    deliveryTime: '34 mins',
+  },
+  {
+    id: 'DRP-5883',
+    restaurantName: 'Bengaluru Spice Club',
+    restaurantImage:
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=900&q=85',
+    items: [{ name: 'Dum Biryani Royal', qty: 1, price: 380 }],
+    subtotal: 380,
+    discount: 0,
+    total: 405,
+    date: '25 Sep 2026',
+    time: '12:45 PM',
+    status: 'Delivered',
+    deliveryTime: '18 mins',
+  },
+  {
+    id: 'DRP-5190',
+    restaurantName: 'Boba & Artisan Brews',
+    restaurantImage:
+      'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=900&q=85',
+    items: [
+      { name: 'Iced Uji Matcha Boba Latte', qty: 2, price: 220 },
+      { name: 'Brown Sugar Milk Tea', qty: 1, price: 199 },
+    ],
+    subtotal: 639,
+    discount: 0,
+    total: 639,
+    date: '20 Sep 2026',
+    time: '4:20 PM',
+    status: 'Cancelled',
+    deliveryTime: '—',
+  },
+]
 
 const sampleRestaurants: Restaurant[] = [
   {
@@ -223,7 +335,11 @@ const categoryList = [
   { id: 'Trending', label: 'Boba & Shakes', icon: '🥤' },
 ]
 
-export default function CustomerDashboard() {
+export default function CustomerDashboard({
+  initialTab = 'explore',
+}: {
+  initialTab?: 'explore' | 'live-order' | 'orders' | 'profile'
+}) {
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string>('All')
@@ -233,13 +349,25 @@ export default function CustomerDashboard() {
   const [pureVegOnly, setPureVegOnly] = useState(false)
   const [offersOnly, setOffersOnly] = useState(false)
   const [fastDeliveryOnly, setFastDeliveryOnly] = useState(false)
-  const [highRatingOnly, setHighRatingOnly] = useState(false)
+  const [promoSlide, setPromoSlide] = useState(0)
+  const PROMO_COUNT = 3
+  // Track Order modal
+  const [trackingOrder, setTrackingOrder] = useState<PastOrder | null>(null)
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPromoSlide((prev) => (prev + 1) % PROMO_COUNT)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [])
   // Cart State
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders'>('explore')
+  const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders' | 'profile'>(initialTab)
+  const [pastOrders, setPastOrders] = useState<PastOrder[]>(samplePastOrders)
+  // Profile editing
+  const [editAddress, setEditAddress] = useState(false)
   const [deliveryAddress, setDeliveryAddress] = useState(
     user?.address || '100ft Rd, Indiranagar, Bengaluru'
   )
@@ -400,18 +528,15 @@ export default function CustomerDashboard() {
       const matchesPureVeg = pureVegOnly ? rest.isPureVeg : true
       const matchesOffers = offersOnly ? Boolean(rest.offer) : true
       const matchesFast = fastDeliveryOnly ? parseInt(rest.eta) <= 20 : true
-      const matchesHighRating = highRatingOnly ? parseFloat(rest.rating) >= 4.8 : true
-
       return (
         matchesSearch &&
         matchesTag &&
         matchesPureVeg &&
         matchesOffers &&
-        matchesFast &&
-        matchesHighRating
+        matchesFast
       )
     })
-  }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly, highRatingOnly])
+  }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
   async function handleCheckoutSubmit(e: FormEvent) {
     e.preventDefault()
@@ -429,7 +554,7 @@ export default function CustomerDashboard() {
       total: grandTotal,
       utrRef,
       upiId,
-      statusStep: 3, // Picked from counter -> live road route map enabled!
+      statusStep: 1,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       driver: {
         name: 'Rajesh Kumar',
@@ -470,17 +595,43 @@ export default function CustomerDashboard() {
       console.error('Failed to submit order to Supabase:', err)
     }
 
+    // Also add to past orders history
+    const historyEntry: PastOrder = {
+      id: orderId,
+      restaurantName: restName,
+      restaurantImage: selectedRestaurant?.image ||
+        'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
+      items: cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+      subtotal: cartSubtotal,
+      discount: couponDiscount,
+      total: grandTotal,
+      couponCode: appliedCoupon?.code,
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'Delivered',
+      deliveryTime: '22 mins',
+    }
+    setPastOrders((prev) => [historyEntry, ...prev])
+
     setActiveOrder(newOrder)
     setPaymentDone(true)
     setTimeout(() => {
       setCart([])
       setAppliedCoupon(null)
       setCouponDiscount(0)
+      setUpiId('')
+      setUtrRef('')
+      setPaymentDone(false)
       setShowCheckoutModal(false)
       setShowCartDrawer(false)
       setSelectedRestaurant(null)
       setActiveTab('live-order')
-    }, 1500)
+    }, 1800)
+  }
+
+  function handleMarkDelivered() {
+    setActiveOrder((prev: any) => ({ ...prev, statusStep: 4 }))
+    triggerToast('Order marked as delivered! 🎉')
   }
 
   return (
@@ -494,7 +645,7 @@ export default function CustomerDashboard() {
       )}
 
       {/* Top Header Navigation Banner */}
-      <div className="border-b border-[#e6eae2] bg-white px-4 py-4 sm:px-6 lg:px-8 shadow-xs">
+      <div className="sticky top-0 z-30 border-b border-[#e6eae2] bg-white/95 backdrop-blur-md px-4 py-4 sm:px-6 lg:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -528,20 +679,20 @@ export default function CustomerDashboard() {
             </button>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-1.5 rounded-2xl bg-[#f0f3eb] p-1.5 text-xs font-bold">
+            <div className="flex items-center gap-1 rounded-2xl bg-[#f0f3eb] p-1.5 text-xs font-bold flex-wrap">
               <button
                 onClick={() => setActiveTab('explore')}
-                className={`rounded-xl px-4 py-2 transition ${
+                className={`rounded-xl px-3 py-2 transition ${
                   activeTab === 'explore'
                     ? 'bg-white text-[#18201c] shadow-sm'
                     : 'text-[#65716a] hover:text-[#18201c]'
                 }`}
               >
-                Explore Kitchens
+                🍽️ Explore
               </button>
               <button
                 onClick={() => setActiveTab('live-order')}
-                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition ${
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
                   activeTab === 'live-order'
                     ? 'bg-white text-[#18201c] shadow-sm'
                     : 'text-[#65716a] hover:text-[#18201c]'
@@ -549,7 +700,31 @@ export default function CustomerDashboard() {
               >
                 <Bike className="size-3.5 text-[#859f17]" />
                 Track Drop
-                {activeOrder && <span className="size-2 rounded-full bg-[#8fa71c] animate-pulse" />}
+                {activeOrder && activeOrder.statusStep < 4 && (
+                  <span className="size-2 rounded-full bg-[#8fa71c] animate-pulse" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
+                  activeTab === 'orders'
+                    ? 'bg-white text-[#18201c] shadow-sm'
+                    : 'text-[#65716a] hover:text-[#18201c]'
+                }`}
+              >
+                <History className="size-3.5" />
+                Orders
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
+                  activeTab === 'profile'
+                    ? 'bg-white text-[#18201c] shadow-sm'
+                    : 'text-[#65716a] hover:text-[#18201c]'
+                }`}
+              >
+                <User className="size-3.5" />
+                Profile
               </button>
             </div>
           </div>
@@ -575,7 +750,7 @@ export default function CustomerDashboard() {
 
               <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 shadow-xs flex items-center gap-3">
                 <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
-                  <Star className="size-5 fill-purple-600 text-purple-600" />
+                  <Sparkles className="size-5 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase text-gray-500">Member Status</p>
@@ -608,60 +783,84 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            {/* Promotional Offer Banners Banner Grid */}
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* Promotional Offer Banners — Auto Carousel */}
+            <div className="relative overflow-hidden rounded-3xl">
+              {/* Track */}
               <div
-                onClick={() => handleApplyCouponCode('BLINK50')}
-                className="group cursor-pointer overflow-hidden rounded-3xl border border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 p-5 text-white shadow-sm transition hover:shadow-lg"
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${promoSlide * 100}%)` }}
               >
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100 backdrop-blur-md">
-                    Promo Code: BLINK50
-                  </span>
-                  <Percent className="size-5 text-amber-200" />
+                {/* Slide 1 — BLINK50 */}
+                <div
+                  onClick={() => handleApplyCouponCode('BLINK50')}
+                  className="min-w-full group cursor-pointer overflow-hidden rounded-3xl border border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 p-5 text-white shadow-sm transition hover:shadow-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100 backdrop-blur-md">
+                      Promo Code: BLINK50
+                    </span>
+                    <Percent className="size-5 text-amber-200" />
+                  </div>
+                  <h3 className="mt-3 text-lg font-bold">50% OFF Up to ₹120</h3>
+                  <p className="text-xs text-amber-100 mt-0.5">
+                    Valid on healthy bowls, salads &amp; vegan kitchens.
+                  </p>
+                  <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
+                    1-Click Apply Code <ArrowRight className="size-3.5" />
+                  </div>
                 </div>
-                <h3 className="mt-3 text-lg font-bold">50% OFF Up to ₹120</h3>
-                <p className="text-xs text-amber-100 mt-0.5">
-                  Valid on healthy bowls, salads &amp; vegan kitchens.
-                </p>
-                <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
-                  1-Click Apply Code <ArrowRight className="size-3.5" />
+
+                {/* Slide 2 — WELCOME100 */}
+                <div
+                  onClick={() => handleApplyCouponCode('WELCOME100')}
+                  className="min-w-full group cursor-pointer overflow-hidden rounded-3xl border border-purple-300 bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white shadow-sm transition hover:shadow-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-100 backdrop-blur-md">
+                      Promo Code: WELCOME100
+                    </span>
+                    <Sparkles className="size-5 text-purple-200" />
+                  </div>
+                  <h3 className="mt-3 text-lg font-bold">Flat ₹100 OFF Discount</h3>
+                  <p className="text-xs text-purple-100 mt-0.5">
+                    Applicable on orders above ₹299 across all stores.
+                  </p>
+                  <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
+                    1-Click Apply Code <ArrowRight className="size-3.5" />
+                  </div>
+                </div>
+
+                {/* Slide 3 — Free Delivery */}
+                <div className="min-w-full overflow-hidden rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-600 to-teal-700 p-5 text-white shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-100 backdrop-blur-md">
+                      Free Delivery Guarantee
+                    </span>
+                    <Bike className="size-5 text-emerald-200" />
+                  </div>
+                  <h3 className="mt-3 text-lg font-bold">₹0 Delivery Fee</h3>
+                  <p className="text-xs text-emerald-100 mt-0.5">
+                    Automatically applied on all orders above ₹500.
+                  </p>
+                  <div className="mt-3 font-bold text-xs text-emerald-200">
+                    Unlocked automatically
+                  </div>
                 </div>
               </div>
 
-              <div
-                onClick={() => handleApplyCouponCode('WELCOME100')}
-                className="group cursor-pointer overflow-hidden rounded-3xl border border-purple-300 bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white shadow-sm transition hover:shadow-lg"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-100 backdrop-blur-md">
-                    Promo Code: WELCOME100
-                  </span>
-                  <Sparkles className="size-5 text-purple-200" />
-                </div>
-                <h3 className="mt-3 text-lg font-bold">Flat ₹100 OFF Discount</h3>
-                <p className="text-xs text-purple-100 mt-0.5">
-                  Applicable on orders above ₹299 across all stores.
-                </p>
-                <div className="mt-3 font-bold text-xs text-white group-hover:underline flex items-center gap-1">
-                  1-Click Apply Code <ArrowRight className="size-3.5" />
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-600 to-teal-700 p-5 text-white shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-100 backdrop-blur-md">
-                    Free Delivery Guarantee
-                  </span>
-                  <Bike className="size-5 text-emerald-200" />
-                </div>
-                <h3 className="mt-3 text-lg font-bold">₹0 Delivery Fee</h3>
-                <p className="text-xs text-emerald-100 mt-0.5">
-                  Automatically applied on all orders above ₹500.
-                </p>
-                <div className="mt-3 font-bold text-xs text-emerald-200">
-                  Unlocked automatically
-                </div>
+              {/* Dot Indicators + Progress bar */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                {Array.from({ length: PROMO_COUNT }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPromoSlide(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === promoSlide
+                        ? 'w-6 h-2 bg-white'
+                        : 'w-2 h-2 bg-white/50 hover:bg-white/80'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
 
@@ -755,16 +954,6 @@ export default function CustomerDashboard() {
                   }`}
                 >
                   ⚡ Under 25 Mins
-                </button>
-                <button
-                  onClick={() => setHighRatingOnly(!highRatingOnly)}
-                  className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
-                    highRatingOnly
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  ⭐ Top Rated (4.8+)
                 </button>
               </div>
             </div>
@@ -872,10 +1061,6 @@ export default function CustomerDashboard() {
                             </h3>
                             <p className="mt-0.5 text-xs text-[#737e77]">{rest.cuisine}</p>
                           </div>
-                          <span className="flex items-center gap-1 rounded-full bg-[#f1f6d9] px-2.5 py-1 text-[11px] font-bold text-[#5c6e12]">
-                            <Star className="size-3 fill-[#8ea71b] text-[#8ea71b]" />
-                            {rest.rating} ({rest.ratingCount})
-                          </span>
                         </div>
 
                         <div className="mt-3 flex items-center justify-between text-xs text-[#737e77]">
@@ -915,6 +1100,256 @@ export default function CustomerDashboard() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Orders History Tab */}
+        {activeTab === 'orders' && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="text-2xl font-bold text-[#18201c]">Your Orders</h2>
+              <p className="mt-0.5 text-xs text-gray-500">{pastOrders.length} orders placed</p>
+            </div>
+
+            {pastOrders.length === 0 ? (
+              <div className="rounded-3xl border border-[#e1e6df] bg-white p-16 text-center">
+                <ShoppingBag className="mx-auto size-14 text-gray-200 mb-3" />
+                <p className="font-bold text-[#18201c]">No Orders Yet</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Your order history will appear here after your first order.
+                </p>
+                <button
+                  onClick={() => setActiveTab('explore')}
+                  className="mt-5 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
+                >
+                  Explore Kitchens
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {pastOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="overflow-hidden rounded-3xl border border-[#e1e6df] bg-white shadow-xs"
+                  >
+                    {/* Order Header */}
+                    <div className="flex items-center gap-4 border-b border-[#f0f3ec] p-5">
+                      <img
+                        src={order.restaurantImage}
+                        alt={order.restaurantName}
+                        className="size-14 rounded-2xl object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                order.status === 'Delivered'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : order.status === 'In Progress'
+                                    ? 'bg-blue-100 text-blue-800 animate-pulse'
+                                    : 'bg-rose-100 text-rose-800'
+                              }`}
+                            >
+                              {order.status === 'Delivered' ? (
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle2 className="size-3" /> Delivered
+                                </span>
+                              ) : order.status === 'In Progress' ? (
+                                <span className="flex items-center gap-1">
+                                  <Bike className="size-3" /> Out for Delivery
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <X className="size-3" /> Cancelled
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-[10px] text-gray-400">#{order.id}</span>
+                          </div>
+                        <h3 className="mt-1 font-bold text-sm text-[#18201c] truncate">
+                          {order.restaurantName}
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          {order.date} · {order.time}
+                          {order.deliveryTime !== '—' && (
+                            <span className="ml-2 text-emerald-700 font-semibold">
+                              · 🚀 Delivered in {order.deliveryTime}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-base text-[#18201c]">₹{order.total}</p>
+                        {order.discount > 0 && (
+                          <p className="text-[10px] text-emerald-700 font-semibold">-₹{order.discount} saved</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="px-5 py-3 border-b border-[#f5f6f3]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Items Ordered</p>
+                      <div className="flex flex-col gap-1">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-xs">
+                            <span className="text-gray-700">
+                              {item.qty}× {item.name}
+                            </span>
+                            <span className="font-semibold text-[#18201c]">₹{item.price * item.qty}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 px-5 py-4">
+                      {order.status === 'In Progress' && (
+                        <button
+                          onClick={() => setTrackingOrder(order)}
+                          className="flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+                        >
+                          <Navigation className="size-3.5" /> Track Order
+                        </button>
+                      )}
+                      {order.status !== 'In Progress' && (
+                        <button
+                          onClick={() => {
+                            const reorderCart: CartItem[] = order.items.map((item, i) => ({
+                              id: `reorder_${order.id}_${i}`,
+                              name: item.name,
+                              detail: '',
+                              price: item.price,
+                              image:
+                                'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
+                              veg: true,
+                              qty: item.qty,
+                            }))
+                            setCart(reorderCart)
+                            triggerToast('Previous order added to cart!')
+                            setShowCartDrawer(true)
+                          }}
+                          className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#323d36] transition"
+                        >
+                          <RotateCcw className="size-3.5 text-[#d9f447]" /> Reorder
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="max-w-2xl flex flex-col gap-6">
+            {/* Profile Card */}
+            <div className="overflow-hidden rounded-3xl border border-[#e1e6df] bg-white shadow-xs">
+              <div className="bg-gradient-to-r from-[#18201c] to-[#2d3d30] p-6 text-white">
+                <div className="flex items-center gap-4">
+                  <div className="grid size-16 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] font-black text-2xl shrink-0">
+                    {(user?.name || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Customer Profile</p>
+                    <h2 className="text-xl font-bold">{user?.name || 'Alex Rivera'}</h2>
+                    <p className="text-xs text-white/70">{user?.email || 'alex@blinkbite.app'}</p>
+                  </div>
+                  <div className="ml-auto text-right">
+                    <span className="rounded-full bg-amber-400/20 border border-amber-400/40 px-3 py-1 text-xs font-bold text-amber-300">
+                      🏅 Gold Foodie
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 divide-x divide-[#f0f3ec] border-t border-[#f0f3ec]">
+                <div className="p-4 text-center">
+                  <p className="text-xl font-bold text-[#18201c]">{pastOrders.filter((o) => o.status === 'Delivered').length}</p>
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">Orders</p>
+                </div>
+                <div className="p-4 text-center">
+                  <p className="text-xl font-bold text-emerald-700">
+                    ₹{pastOrders.reduce((a, o) => a + o.discount, 0)}
+                  </p>
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">Total Saved</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Address Card */}
+            <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm text-[#18201c] flex items-center gap-2">
+                  <MapPin className="size-4 text-[#86a018]" /> Saved Delivery Address
+                </h3>
+                <button
+                  onClick={() => setEditAddress(!editAddress)}
+                  className="text-[11px] font-bold text-[#86a018] hover:underline"
+                >
+                  {editAddress ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+
+              {editAddress ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className="flex-1 rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 text-xs outline-none focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/40"
+                  />
+                  <button
+                    onClick={() => setEditAddress(false)}
+                    className="rounded-xl bg-[#18201c] px-4 py-2 text-xs font-bold text-white hover:bg-[#323d36] transition"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-[#f8f9f6] border border-[#e8ece3] p-3 flex items-center gap-3">
+                  <LocateFixed className="size-5 text-[#86a018] shrink-0" />
+                  <p className="text-xs font-semibold text-[#18201c]">{deliveryAddress}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Preferences */}
+            <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-xs">
+              <h3 className="font-bold text-sm text-[#18201c] flex items-center gap-2 mb-4">
+                <UtensilsCrossed className="size-4 text-[#86a018]" /> Food Preferences
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {['Pure Veg', 'Healthy Bowls', 'Fast Delivery', 'Top Rated', 'Offers & Deals'].map((pref) => (
+                  <span
+                    key={pref}
+                    className="rounded-full border border-[#d5e07a] bg-[#f7fce0] px-3.5 py-1.5 text-[11px] font-bold text-[#5a6d10]"
+                  >
+                    {pref}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Loyalty Points */}
+            <div className="rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Blinkbite Rewards</p>
+                  <h3 className="text-2xl font-black text-amber-900 mt-0.5">1,240 pts</h3>
+                  <p className="text-xs text-amber-700 mt-1">Redeem 500 pts = ₹50 cashback</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl">🏅</div>
+                  <p className="text-[10px] font-bold text-amber-600 mt-1">Gold Member</p>
+                </div>
+              </div>
+              <div className="mt-4 bg-amber-200/50 rounded-full h-2">
+                <div className="bg-amber-500 rounded-full h-2" style={{ width: '62%' }} />
+              </div>
+              <p className="mt-1.5 text-[10px] text-amber-700">760 pts to Platinum</p>
             </div>
           </div>
         )}
@@ -1091,16 +1526,18 @@ export default function CustomerDashboard() {
                       tracking will automatically unlock as soon as the rider picks up your parcel
                       from the counter!
                     </p>
-                    <button
-                      onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 3 }))}
-                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition"
-                    >
-                      <PackageCheck className="size-4" /> Simulate Rider Picking Order from Counter
-                    </button>
+                    <div className="mt-5 flex items-center gap-3 justify-center">
+                      <button
+                        onClick={() => setActiveOrder((prev: any) => ({ ...prev, statusStep: 3 }))}
+                        className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition"
+                      >
+                        <PackageCheck className="size-4" /> Simulate Rider Picking Order
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Driver Details Card */}
+                {/* Driver Details + Delivered Button */}
                 <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white shrink-0">
@@ -1112,13 +1549,28 @@ export default function CustomerDashboard() {
                       <p className="text-xs text-[#849a17]">{activeOrder.driver.vehicle}</p>
                     </div>
                   </div>
-                  <a
-                    href={`tel:${activeOrder.driver.phone}`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs shrink-0"
-                  >
-                    <PhoneCall className="size-3.5 text-[#829b14]" />
-                    Call Delivery Partner
-                  </a>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={`tel:${activeOrder.driver.phone}`}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs"
+                    >
+                      <PhoneCall className="size-3.5 text-[#829b14]" />
+                      Call Partner
+                    </a>
+                    {activeOrder.statusStep >= 3 && activeOrder.statusStep < 4 && (
+                      <button
+                        onClick={handleMarkDelivered}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-xs"
+                      >
+                        <CheckCircle2 className="size-3.5" /> Mark Delivered
+                      </button>
+                    )}
+                    {activeOrder.statusStep === 4 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-4 py-2 text-xs font-bold">
+                        <Check className="size-3.5" /> Order Delivered!
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1568,6 +2020,148 @@ export default function CustomerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Track Order Modal */}
+      {trackingOrder && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#18201c]/70 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0f3ec] shrink-0">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Live Tracking</p>
+                <h3 className="font-bold text-base text-[#18201c]">Order #{trackingOrder.id}</h3>
+                <p className="text-[11px] text-gray-500">{trackingOrder.restaurantName}</p>
+              </div>
+              <button
+                onClick={() => setTrackingOrder(null)}
+                className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 flex flex-col gap-5 p-5">
+
+              {/* 4-Step Status Timeline */}
+              {(() => {
+                const steps = [
+                  { label: 'Order Placed', icon: CheckCircle2, color: 'emerald' },
+                  { label: 'Preparing', icon: Clock3, color: 'amber' },
+                  { label: 'Picked Up', icon: PackageCheck, color: 'blue' },
+                  { label: 'On the way', icon: Bike, color: 'blue' },
+                ]
+                const step = trackingOrder.trackStep ?? 2
+                return (
+                  <div className="flex items-center justify-between gap-1">
+                    {steps.map((s, i) => {
+                      const Icon = s.icon
+                      const done = i <= step
+                      const active = i === step
+                      return (
+                        <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                          <div
+                            className={`grid size-9 place-items-center rounded-full transition ${
+                              active
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-110'
+                                : done
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-gray-100 text-gray-300'
+                            }`}
+                          >
+                            <Icon className="size-4" />
+                          </div>
+                          <span className={`text-[9px] font-bold text-center leading-tight ${active ? 'text-blue-700' : done ? 'text-emerald-700' : 'text-gray-400'}`}>
+                            {s.label}
+                          </span>
+                          {i < steps.length - 1 && (
+                            <div className={`absolute hidden`} />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+
+              {/* Progress Bar */}
+              <div className="h-1.5 bg-gray-100 rounded-full -mt-2">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-700"
+                  style={{ width: `${(((trackingOrder.trackStep ?? 2) + 1) / 4) * 100}%` }}
+                />
+              </div>
+
+              {/* Map */}
+              <div className="rounded-2xl overflow-hidden h-44 border border-[#e1e6df] relative">
+                <Mapcn className="w-full h-full" />
+                {/* Driver pin overlay */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 pointer-events-none">
+                  <div className="grid size-10 place-items-center rounded-full bg-blue-600 text-white shadow-xl border-2 border-white animate-bounce">
+                    <Bike className="size-5" />
+                  </div>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-blue-800 shadow border border-blue-200">
+                    {trackingOrder.driverName || 'Rajesh Kumar'} • ~8 mins
+                  </span>
+                </div>
+              </div>
+
+              {/* Driver Info */}
+              <div className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] border border-[#e8ece3] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-700 font-bold text-xs shrink-0">
+                    {(trackingOrder.driverName || 'RK').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#18201c]">{trackingOrder.driverName || 'Rajesh Kumar'}</p>
+                    <p className="text-[10px] text-gray-500">Your delivery partner</p>
+                  </div>
+                </div>
+                <a
+                  href={`tel:${trackingOrder.driverPhone || '+919744455667'}`}
+                  className="flex items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition"
+                >
+                  <PhoneCall className="size-3.5" /> Call
+                </a>
+              </div>
+
+              {/* OTP + QR Code */}
+              <div className="rounded-2xl border border-[#e1e6df] bg-white p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Delivery OTP — Share with driver
+                  </p>
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    {(trackingOrder.otp || '4921').split('').map((digit, i) => (
+                      <span
+                        key={i}
+                        className="grid size-12 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] text-2xl font-black tracking-widest shadow-md"
+                      >
+                        {digit}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] text-gray-400">
+                    Only share when driver arrives at your door
+                  </p>
+                </div>
+
+                {/* QR Code */}
+                <div className="shrink-0 flex flex-col items-center gap-1">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${trackingOrder.otp || '4921'}&bgcolor=ffffff&color=18201c&margin=4`}
+                    alt={`QR for OTP ${trackingOrder.otp || '4921'}`}
+                    className="size-[90px] rounded-xl border border-[#e1e6df] shadow-sm"
+                  />
+                  <span className="text-[9px] text-gray-400 font-semibold">Scan QR</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

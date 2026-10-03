@@ -6,7 +6,7 @@ import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-export default function UserDashboardPage() {
+export default function UserExplorePage() {
   const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
@@ -26,7 +26,7 @@ export default function UserDashboardPage() {
         <div className="text-center">
           <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
           <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading Customer Dashboard...
+            Loading Explore...
           </p>
         </div>
       </div>
@@ -55,5 +55,5 @@ export default function UserDashboardPage() {
     )
   }
 
-  return <CustomerDashboard />
+  return <CustomerDashboard initialTab="explore" />
 }
