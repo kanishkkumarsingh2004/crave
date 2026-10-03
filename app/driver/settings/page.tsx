@@ -68,7 +68,7 @@ export default function DriverSettingsPage() {
                 required
                 value={newUpiVpa}
                 onChange={(e) => setNewUpiVpa(e.target.value)}
-                placeholder="e.g. rajesh.kumar@okicici or 9876543210@paytm"
+                placeholder="e.g. drivername@upi or mobile@paytm"
                 className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
               />
             </div>
@@ -106,64 +106,70 @@ export default function DriverSettingsPage() {
       <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
         <h3 className="text-lg font-bold text-[#18201c] mb-4">Saved UPI Payout Destinations</h3>
 
-        <div className="flex flex-col gap-3">
-          {savedUpiList.map((upi) => (
-            <div
-              key={upi.id}
-              className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition ${
-                upi.isPrimary
-                  ? 'border-emerald-400 bg-emerald-50/60 shadow-xs'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="primaryUpi"
-                  checked={upi.isPrimary}
-                  onChange={() => setPrimaryUpi(upi.id)}
-                  className="size-4 accent-emerald-600 cursor-pointer"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-sm text-[#18201c]">{upi.vpa}</span>
-                    {upi.isPrimary && (
-                      <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[9px] font-extrabold uppercase">
-                        Default Payout
-                      </span>
-                    )}
-                    {upi.isVerified && (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-300">
-                        ✓ NPCI Verified
-                      </span>
-                    )}
+        {savedUpiList.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {savedUpiList.map((upi) => (
+              <div
+                key={upi.id}
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition ${
+                  upi.isPrimary
+                    ? 'border-emerald-400 bg-emerald-50/60 shadow-xs'
+                    : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="primaryUpi"
+                    checked={upi.isPrimary}
+                    onChange={() => setPrimaryUpi(upi.id)}
+                    className="size-4 accent-emerald-600 cursor-pointer"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-sm text-[#18201c]">{upi.vpa}</span>
+                      {upi.isPrimary && (
+                        <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                          Default Payout
+                        </span>
+                      )}
+                      {upi.isVerified && (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-300">
+                          ✓ NPCI Verified
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{upi.bankName}</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">{upi.bankName}</p>
+                </div>
+
+                <div className="flex items-center gap-3 mt-3 sm:mt-0 justify-end">
+                  {!upi.isPrimary && (
+                    <button
+                      onClick={() => setPrimaryUpi(upi.id)}
+                      className="text-xs font-bold text-emerald-700 hover:underline"
+                    >
+                      Make Primary
+                    </button>
+                  )}
+                  {!upi.isPrimary && (
+                    <button
+                      onClick={() => deleteUpiId(upi.id)}
+                      className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-100 transition"
+                      title="Delete UPI handle"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 mt-3 sm:mt-0 justify-end">
-                {!upi.isPrimary && (
-                  <button
-                    onClick={() => setPrimaryUpi(upi.id)}
-                    className="text-xs font-bold text-emerald-700 hover:underline"
-                  >
-                    Make Primary
-                  </button>
-                )}
-                {!upi.isPrimary && (
-                  <button
-                    onClick={() => deleteUpiId(upi.id)}
-                    className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-100 transition"
-                    title="Delete UPI handle"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-xs text-gray-500">
+            No saved UPI payout handles yet. Register a new UPI VPA ID above for instant 1-click cashouts.
+          </div>
+        )}
       </div>
 
       {/* Bank Account Direct Transfer Fallback */}
@@ -178,14 +184,16 @@ export default function DriverSettingsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 text-xs flex flex-col gap-1.5">
             <p className="text-gray-500 font-bold uppercase">Account Holder</p>
-            <p className="font-bold text-sm text-[#18201c]">{user?.name || 'Rajesh Kumar'}</p>
-            <p className="text-gray-600">Bank Name: ICICI Bank Ltd</p>
+            <p className="font-bold text-sm text-[#18201c]">{user?.name || 'Driver Partner'}</p>
+            <p className="text-gray-600">Bank Name: Partner Primary Bank</p>
           </div>
 
           <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 text-xs flex flex-col gap-1.5">
             <p className="text-gray-500 font-bold uppercase">Account &amp; IFSC</p>
-            <p className="font-mono font-bold text-sm text-[#18201c]">•••• •••• 4921</p>
-            <p className="text-gray-600 font-mono">IFSC: ICIC0001024</p>
+            <p className="font-mono font-bold text-sm text-[#18201c]">
+              •••• •••• {user?.id ? user.id.slice(-4) : '0000'}
+            </p>
+            <p className="text-gray-600 font-mono">IFSC: Verified Bank IFSC</p>
           </div>
         </div>
       </div>

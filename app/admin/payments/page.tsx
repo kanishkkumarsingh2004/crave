@@ -40,6 +40,8 @@ export default function AdminPaymentsPage() {
       }
     }
     loadLivePayments()
+    const timer = setInterval(loadLivePayments, 3000)
+    return () => clearInterval(timer)
   }, [])
 
   async function verifyPayment(id: string, status: 'verified' | 'rejected') {

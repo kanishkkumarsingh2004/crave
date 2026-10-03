@@ -78,6 +78,16 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   const totalEarningsToday = completedTrips.reduce((acc, t) => acc + t.total, 0)
+  const activeDutyTimeText = completedTrips.length > 0 ? `${(completedTrips.length * 1.2).toFixed(1)} hrs` : '0.0 hrs'
+  const avgPaceText = completedTrips.length > 0 ? '18 mins' : '0 mins'
+  const driverInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'DP'
 
   const navItems = [
     {
@@ -98,8 +108,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       icon: Wallet,
       badge: `₹${totalEarningsToday}`,
     },
-    { href: '/driver/incentives', label: 'Quests & Surge', icon: Target, badge: '+₹200' },
-    { href: '/driver/profile', label: 'Vehicle & Profile', icon: User, badge: 'Vehicle' },
+    {
+      href: '/driver/incentives',
+      label: 'Quests & Surge',
+      icon: Target,
+      badge: completedTrips.length > 0 ? `+₹${completedTrips.length * 20}` : '0',
+    },
+    { href: '/driver/profile', label: 'Vehicle & Profile', icon: User, badge: 'Profile' },
     { href: '/driver/settings', label: 'UPI Payout Settings', icon: Settings, badge: 'UPI' },
   ]
 
@@ -260,9 +275,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2.5 min-w-0">
                 <span
                   className="grid size-8 place-items-center rounded-lg bg-blue-950 text-blue-300 font-bold border border-blue-800 text-xs shrink-0"
-                  title={user?.name || 'Rajesh Kumar'}
+                  title={user?.name || 'Driver Partner'}
                 >
-                  RK
+                  {driverInitials}
                 </span>
                 <div
                   className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
@@ -270,9 +285,11 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <p className="text-xs font-bold text-white truncate">
-                    {user?.name || 'Rajesh Kumar'}
+                    {user?.name || 'Driver Partner'}
                   </p>
-                  <p className="text-[10px] text-white/50 truncate">KA 01 EV 9821</p>
+                  <p className="text-[10px] text-white/50 truncate">
+                    {user?.vehicleNo || 'EV Fleet Vehicle'}
+                  </p>
                 </div>
               </div>
               <button
@@ -324,7 +341,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <p className="text-xs text-[#737e77]">
               Vehicle:{' '}
               <span className="font-semibold text-[#18201c]">
-                {user?.vehicleType || 'Electric Scooter (Ather 450X)'}
+                {user?.vehicleType || 'Commercial EV Scooter'}
               </span>
             </p>
           </div>
@@ -393,7 +410,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   </p>
                 </div>
                 <p className="mt-2 text-[11px] sm:text-xs text-emerald-600 font-semibold truncate">
-                  100% On-time score
+                  {completedTrips.length > 0 ? '100% On-time score' : '0 deliveries today'}
                 </p>
               </div>
 
@@ -408,11 +425,11 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     </span>
                   </div>
                   <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c]">
-                    4.5 hrs
+                    {activeDutyTimeText}
                   </p>
                 </div>
                 <p className="mt-2 text-[11px] sm:text-xs text-blue-600 font-semibold truncate">
-                  Online &amp; Accepting Drops
+                  {completedTrips.length > 0 ? 'Online & Accepting Drops' : 'Duty Ready'}
                 </p>
               </div>
 
@@ -427,11 +444,11 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     </span>
                   </div>
                   <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c]">
-                    18 mins
+                    {avgPaceText}
                   </p>
                 </div>
                 <p className="mt-2 text-[11px] sm:text-xs text-emerald-600 font-medium truncate">
-                  Optimal route efficiency
+                  {completedTrips.length > 0 ? 'Optimal route efficiency' : 'No drops recorded'}
                 </p>
               </div>
             </div>

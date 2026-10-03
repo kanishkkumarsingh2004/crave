@@ -5,16 +5,24 @@ import { Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function DriverWalletPage() {
-  const { payoutLogs, handleInstantCashout, savedUpiList } = useDriver()
+  const { completedTrips, payoutLogs, handleInstantCashout, savedUpiList } = useDriver()
+  const totalEarnings = completedTrips.reduce((acc, t) => acc + t.total, 0)
+  const totalPayouts = payoutLogs.reduce((acc, p) => acc + p.amount, 0)
+  const currentBalance = Math.max(0, totalEarnings - totalPayouts)
+
   const [cashoutModalOpen, setCashoutModalOpen] = useState(false)
-  const [cashoutAmount, setCashoutAmount] = useState('1480')
+  const [cashoutAmount, setCashoutAmount] = useState('0')
   const [cashoutSuccess, setCashoutSuccess] = useState('')
 
-  const primaryVpa = savedUpiList.find((u) => u.isPrimary)?.vpa || 'rajesh.kumar@okicici'
+  const primaryVpa = savedUpiList.find((u) => u.isPrimary)?.vpa || 'registered-vpa@upi'
 
   function onConfirmCashout() {
     if (!cashoutAmount || parseFloat(cashoutAmount) <= 0) return
     const amt = parseFloat(cashoutAmount)
+    if (amt > currentBalance) {
+      alert('Cashout amount cannot exceed available wallet balance.')
+      return
+    }
     const success = handleInstantCashout(amt)
     if (success) {
       setCashoutSuccess(`₹${amt} successfully transferred to your UPI VPA (${primaryVpa})!`)
@@ -32,14 +40,22 @@ export default function DriverWalletPage() {
           <p className="text-xs font-bold uppercase tracking-wider text-[#d9f447]">
             Available Wallet Balance
           </p>
-          <h2 className="text-4xl font-extrabold mt-1 text-white">₹1,480.00</h2>
+          <h2 className="text-4xl font-extrabold mt-1 text-white">₹{currentBalance}.00</h2>
           <p className="text-xs text-white/60 mt-1">
             Direct Bank / UPI VPA Instant Transfer Available ({primaryVpa})
           </p>
         </div>
         <button
-          onClick={() => setCashoutModalOpen(true)}
-          className="rounded-full bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition shrink-0"
+          onClick={() => {
+            setCashoutAmount(currentBalance.toString())
+            setCashoutModalOpen(true)
+          }}
+          disabled={currentBalance <= 0}
+          className={`rounded-full px-6 py-3 text-xs font-extrabold shadow-md transition shrink-0 ${
+            currentBalance > 0
+              ? 'bg-[#d9f447] text-[#121815] hover:bg-[#c2dc3a]'
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+          }`}
         >
           Request Instant Payout
         </button>
@@ -47,20 +63,26 @@ export default function DriverWalletPage() {
 
       <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
         <h3 className="text-lg font-bold text-[#18201c] mb-4">Payout Transaction History</h3>
-        <div className="flex flex-col gap-3">
-          {payoutLogs.map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-xs"
-            >
-              <div>
-                <p className="font-bold text-[#18201c]">{tx.status}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{tx.date}</p>
+        {payoutLogs.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {payoutLogs.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-xs"
+              >
+                <div>
+                  <p className="font-bold text-[#18201c]">{tx.status}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{tx.date}</p>
+                </div>
+                <span className="font-extrabold text-emerald-700 text-sm">₹{tx.amount}</span>
               </div>
-              <span className="font-extrabold text-emerald-700 text-sm">₹{tx.amount}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-xs text-gray-500">
+            No payout transaction history yet. Complete delivery drops to accumulate wallet earnings.
+          </div>
+        )}
       </div>
 
       {/* INSTANT CASHOUT MODAL */}
@@ -95,7 +117,7 @@ export default function DriverWalletPage() {
                     onChange={(e) => setCashoutAmount(e.target.value)}
                     className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm font-bold outline-none focus:border-emerald-600"
                   />
-                  <p className="text-[10px] text-gray-500 mt-1">Available balance: ₹1,480.00</p>
+                  <p className="text-[10px] text-gray-500 mt-1">Available balance: ₹{currentBalance}.00</p>
                 </div>
 
                 <div className="rounded-xl bg-gray-50 p-2.5 text-xs text-gray-600 border border-gray-200">

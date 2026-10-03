@@ -128,78 +128,13 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [completedSummaryModal, setCompletedSummaryModal] = useState<CompletedTripItem | null>(null)
 
   // Completed Trips
-  const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([
-    {
-      id: 'trip_1',
-      order: '#DRP-8812',
-      restaurant: 'The Green Table',
-      customer: 'Priya Sharma',
-      baseEarnings: 65,
-      surge: 20,
-      tip: 30,
-      total: 115,
-      time: '1:15 PM',
-      distance: '2.8 km',
-    },
-    {
-      id: 'trip_2',
-      order: '#DRP-8790',
-      restaurant: 'Momo House & Asian Grill',
-      customer: 'Karan Patel',
-      baseEarnings: 75,
-      surge: 15,
-      tip: 40,
-      total: 130,
-      time: '12:30 PM',
-      distance: '3.4 km',
-    },
-    {
-      id: 'trip_3',
-      order: '#DRP-8640',
-      restaurant: 'Casa Napoli Pizza',
-      customer: 'Rohan Mehta',
-      baseEarnings: 80,
-      surge: 30,
-      tip: 25,
-      total: 135,
-      time: '11:45 AM',
-      distance: '4.1 km',
-    },
-  ])
+  const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([])
 
   // UPI Saved List
-  const [savedUpiList, setSavedUpiList] = useState<SavedUpiItem[]>([
-    {
-      id: 'upi_1',
-      vpa: 'rajesh.kumar@okicici',
-      bankName: 'ICICI Bank Ltd',
-      isPrimary: true,
-      isVerified: true,
-    },
-    {
-      id: 'upi_2',
-      vpa: '9876543210@paytm',
-      bankName: 'Paytm Payments Bank',
-      isPrimary: false,
-      isVerified: true,
-    },
-  ])
+  const [savedUpiList, setSavedUpiList] = useState<SavedUpiItem[]>([])
 
   // Payout Logs
-  const [payoutLogs, setPayoutLogs] = useState<PayoutLogItem[]>([
-    {
-      id: 'tx_901',
-      amount: 1250,
-      date: 'Yesterday, 11:59 PM',
-      status: 'Transferred to rajesh.kumar@okicici',
-    },
-    {
-      id: 'tx_899',
-      amount: 1680,
-      date: 'Oct 01, 2026',
-      status: 'Transferred to rajesh.kumar@okicici',
-    },
-  ])
+  const [payoutLogs, setPayoutLogs] = useState<PayoutLogItem[]>([])
 
   // Broadcast Offer Timer
   useEffect(() => {
@@ -408,8 +343,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     try {
       const cleanId = broadcastOffer.id.replace('#', '')
       await supabase.from('orders').update({
-        driver_name: 'Rajesh Kumar',
-        driver_phone: '+91 97444 55667',
+        driver_name: 'Verified Driver',
+        driver_phone: '+91 98765 43210',
       }).eq('id', cleanId)
     } catch (e) {
       console.error('Failed to update driver assignment in Supabase:', e)
@@ -449,7 +384,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       order: activeTask.orderNumber,
       restaurant: activeTask.restaurantName,
       customer: activeTask.customerName,
-      baseEarnings: Math.round(activeTask.payout * 0.7),
+ baseEarnings: Math.round(activeTask.payout * 0.7),
       surge: Math.round(activeTask.payout * 0.3),
       tip: activeTask.tip,
       total: activeTask.payout + activeTask.tip,
@@ -495,7 +430,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   function handleInstantCashout(amount: number) {
     if (amount <= 0) return false
-    const primaryVpa = savedUpiList.find((u) => u.isPrimary)?.vpa || 'rajesh.kumar@okicici'
+    const primaryVpa = savedUpiList.find((u) => u.isPrimary)?.vpa || 'registered-vpa@upi'
     setPayoutLogs((prev) => [
       {
         id: `tx_${Date.now()}`,

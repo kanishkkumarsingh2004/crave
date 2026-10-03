@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -234,9 +235,53 @@ export default function CraveXPStore() {
     })
   }
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (cart.length === 0) return
     setOrderPlaced(true)
+    const orderId = `CXP-${Math.floor(1000 + Math.random() * 9000)}`
+    const itemsFormatted = cart.map((c) => ({
+      name: c.item.name,
+      qty: c.qty,
+      price: c.item.price,
+      otp: '4921',
+    }))
+
+    try {
+      await supabase.from('orders').insert([
+        {
+          id: orderId,
+          customer_id: 'usr_cust_1',
+          customer_name: user?.name || 'Alex Rivera',
+          customer_phone: user?.phone || '+91 98765 43210',
+          customer_address: 'Indiranagar 100ft Rd, Bengaluru',
+          restaurant_id: 'rest_1',
+          restaurant_name: '⚡ craveEP Dark Store Hub #402 (10-Min Express)',
+          items: JSON.stringify(itemsFormatted),
+          subtotal: cartSubtotal,
+          packaging_fee: handlingFee,
+          gst: Math.round(cartSubtotal * 0.05),
+          total_amount: grandTotal,
+          status: 'new',
+          driver_name: null,
+          driver_phone: null,
+          payment_method: 'UPI Online',
+        },
+      ])
+
+      await supabase.from('payment_reviews').insert([
+        {
+          id: `pay_${Date.now()}`,
+          order_id: orderId,
+          utr_ref: '428190021389',
+          customer_vpa: user?.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
+          amount: grandTotal,
+          status: 'verified',
+        },
+      ])
+    } catch (e) {
+      console.error('Failed to submit craveXP order:', e)
+    }
+
     setTimeout(() => {
       setCart([])
       setOrderPlaced(false)
