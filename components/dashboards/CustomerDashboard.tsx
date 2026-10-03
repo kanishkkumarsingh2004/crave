@@ -1037,9 +1037,8 @@ export default function CustomerDashboard({
     <div className="min-h-screen bg-[#f8f9f7] pb-24 text-[#18201c]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4 duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMessage}</span>
+        <div className="fixed top-20 right-5 z-50 flex items-center rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#18201c] shadow-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300">
+          <span>{toastMessage.replace(/^[^\w\s]+\s*/, '')}</span>
         </div>
       )}
 

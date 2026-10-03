@@ -37,8 +37,24 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [token, setToken] = useState<string | null>(null)
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('crave_user')
+        return saved ? JSON.parse(saved) : null
+      } catch (e) {
+        return null
+      }
+    }
+    return null
+  })
+
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('crave_token')
+    }
+    return null
+  })
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
@@ -46,6 +62,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false
     async function restoreSession() {
       try {
+        const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
+        const savedToken = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
+
+        if (savedUserStr) {
+          try {
+            const parsed = JSON.parse(savedUserStr)
+            if (parsed && parsed.id && !cancelled) {
+              setUser(parsed)
+              setToken(savedToken ?? 'local-token')
+              setIsLoading(false)
+              return
+            }
+          } catch (e) {}
+        }
+
         const { data: sessionData } = await supabase.auth.getSession()
         const accessToken = sessionData.session?.access_token
         if (accessToken) {
@@ -57,6 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (response.ok && result.success && result.user && !cancelled) {
             setUser(result.user)
             setToken(result.token)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('crave_user', JSON.stringify(result.user))
+              localStorage.setItem('crave_token', result.token ?? '')
+            }
             return
           }
           await supabase.auth.signOut()
@@ -98,6 +133,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setUser(result.user)
         setToken(result.token)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('crave_user', JSON.stringify(result.user))
+          localStorage.setItem('crave_token', result.token ?? '')
+        }
         setIsLoading(false)
         return result.user as UserProfile
       }
@@ -129,6 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result.user) {
         setUser(result.user)
         setToken(result.token ?? null)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('crave_user', JSON.stringify(result.user))
+          localStorage.setItem('crave_token', result.token ?? '')
+        }
       }
       return {
         success: true,
@@ -143,6 +186,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('crave_user')
+        localStorage.removeItem('crave_token')
+      }
       await Promise.all([supabase.auth.signOut(), fetch('/api/auth/logout', { method: 'POST' })])
     } catch (err) {
       console.error('Logout error:', err)
