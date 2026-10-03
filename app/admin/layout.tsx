@@ -250,8 +250,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3.5 py-1 text-xs font-bold text-purple-900">
-              <ShieldCheck className="size-3.5 text-purple-700" /> Master Admin Access
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c]">
+              <ShieldCheck className="size-4 text-[#859d19]" /> Master Admin Access
             </span>
 
             {/* Mobile 3 Lines Menu Button placed on the RIGHT side */}
@@ -265,8 +265,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+        {/* Page Content - Generous Spacious Admin Padding */}
+        <main className="p-6 sm:p-8 lg:p-10 flex-1 bg-[#F8F8F6]">{children}</main>
       </div>
     </div>
   )

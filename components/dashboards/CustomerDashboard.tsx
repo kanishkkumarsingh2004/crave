@@ -33,6 +33,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 const Mapcn = dynamic(() => import('@/components/ui/mapcn'), { ssr: false })
 
 import { Coupon, getCoupons, validateCoupon } from '@/lib/coupons'
+import { supabase } from '@/lib/supabase'
 
 interface Restaurant {
   id: string
@@ -412,13 +413,15 @@ export default function CustomerDashboard() {
     })
   }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly, highRatingOnly])
 
-  function handleCheckoutSubmit(e: FormEvent) {
+  async function handleCheckoutSubmit(e: FormEvent) {
     e.preventDefault()
     if (!utrRef.trim() || !upiId.trim()) return
 
+    const orderId = `DRP-${Math.floor(1000 + Math.random() * 9000)}`
+    const restName = selectedRestaurant?.name || 'The Green Table'
     const newOrder = {
-      id: `DRP-${Math.floor(1000 + Math.random() * 9000)}`,
-      restaurantName: selectedRestaurant?.name || 'The Green Table',
+      id: orderId,
+      restaurantName: restName,
       items: cart,
       subtotal: cartSubtotal,
       discount: couponDiscount,
@@ -433,6 +436,38 @@ export default function CustomerDashboard() {
         phone: '+91 97444 55667',
         vehicle: 'Ather EV Bike (KA 01 EV 9821)',
       },
+    }
+
+    try {
+      await supabase.from('orders').insert([{
+        id: orderId,
+        customer_id: user?.id || 'usr_cust_1',
+        customer_name: user?.name || 'Alex Rivera',
+        customer_phone: user?.phone || '+91 98765 43210',
+        customer_address: deliveryAddress,
+        restaurant_id: selectedRestaurant?.id || 'rest_1',
+        restaurant_name: restName,
+        items: JSON.stringify(cart),
+        subtotal: cartSubtotal,
+        packaging_fee: packagingFee,
+        gst: Math.round(cartSubtotal * 0.05),
+        total_amount: grandTotal,
+        status: 'new',
+        driver_name: 'Rajesh Kumar',
+        driver_phone: '+91 97444 55667',
+        payment_method: 'UPI Online',
+      }])
+
+      await supabase.from('payment_reviews').insert([{
+        id: `pay_${Date.now()}`,
+        order_id: orderId,
+        utr_ref: utrRef,
+        customer_vpa: upiId,
+        amount: grandTotal,
+        status: 'pending',
+      }])
+    } catch (err) {
+      console.error('Failed to submit order to Supabase:', err)
     }
 
     setActiveOrder(newOrder)
