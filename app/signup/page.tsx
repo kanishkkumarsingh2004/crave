@@ -99,7 +99,7 @@ export default function SignupPage() {
 
           {/* Header */}
           <div className="text-center">
-            <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6d8213]">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
               Join the Network
             </span>
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#18201c] sm:text-3xl">

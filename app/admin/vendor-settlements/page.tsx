@@ -1,6 +1,5 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
@@ -14,6 +13,7 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface VendorFinancialRecord {
   id: string
@@ -141,7 +141,7 @@ export default function VendorSettlementsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] pb-5">
         <div>
-          <span className="rounded-full bg-[#f1f6d9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6a8014]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
             Restaurant Payouts & Commission Control
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c]">

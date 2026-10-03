@@ -1,9 +1,9 @@
 'use client'
 
-import { CheckCircle2, ChevronRight, Plus, Search, SlidersHorizontal, Store, Trash2, UserCog, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { UserRole } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
+import { ChevronRight, Plus, Search, Store, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 type AccountStatus = 'active' | 'pending' | 'suspended'
 
@@ -35,7 +35,10 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const { data: users } = await supabase.from('users').select('*').order('created_at', { ascending: false })
+        const { data: users } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false })
         if (users) {
           setAccounts(
             users.map((user) => ({
@@ -104,7 +107,7 @@ export default function AdminUsersPage() {
 
   const toggleStatus = (id: string) => {
     setAccounts((prev) =>
-      prev.map((account) => 
+      prev.map((account) =>
         account.id === id
           ? {
               ...account,
@@ -183,7 +186,11 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="grid size-9 place-items-center rounded-full bg-[#f1f6d9] text-[#6a8014]">
-                          {account.role === 'vendor' ? <Store className="size-4" /> : <Users className="size-4" />}
+                          {account.role === 'vendor' ? (
+                            <Store className="size-4" />
+                          ) : (
+                            <Users className="size-4" />
+                          )}
                         </div>
                         <div>
                           <div className="font-bold text-[#18201c]">{account.name}</div>
@@ -241,7 +248,10 @@ export default function AdminUsersPage() {
                 <h3 className="text-xl font-bold text-[#18201c]">Add new user</h3>
                 <p className="text-xs text-gray-500">Create a user or vendor account</p>
               </div>
-              <button onClick={() => setAddOpen(false)} className="rounded-full bg-gray-100 p-2 text-gray-600">
+              <button
+                onClick={() => setAddOpen(false)}
+                className="rounded-full bg-gray-100 p-2 text-gray-600"
+              >
                 ×
               </button>
             </div>
@@ -289,10 +299,16 @@ export default function AdminUsersPage() {
               />
 
               <div className="flex justify-end gap-3 pt-2">
-                <button onClick={() => setAddOpen(false)} className="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold text-gray-700">
+                <button
+                  onClick={() => setAddOpen(false)}
+                  className="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold text-gray-700"
+                >
                   Cancel
                 </button>
-                <button onClick={handleCreate} className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white">
+                <button
+                  onClick={handleCreate}
+                  className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white"
+                >
                   Save account
                 </button>
               </div>

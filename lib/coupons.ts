@@ -47,7 +47,10 @@ const LOCAL_STORAGE_KEY = 'crave_admin_coupons'
 
 export async function fetchCouponsFromSupabase(): Promise<Coupon[]> {
   try {
-    const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
     if (!error && data && data.length > 0) {
       const parsed: Coupon[] = data.map((item) => ({
         id: item.id,

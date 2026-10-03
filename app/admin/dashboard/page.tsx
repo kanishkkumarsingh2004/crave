@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 import {
   Activity,
   ArrowUpRight,
@@ -18,8 +18,8 @@ import {
   Users,
   Zap,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 const ADMIN_SECTION_LINKS = [
   {
@@ -260,13 +260,22 @@ export default function AdminDashboardPage() {
               <ShieldCheck className="size-5 text-[#859d19]" />
             </div>
             <div className="mt-4 flex flex-col gap-3 text-sm">
-              <Link href="/admin/users" className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]">
+              <Link
+                href="/admin/users"
+                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+              >
                 Review user accounts
               </Link>
-              <Link href="/admin/payments" className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]">
+              <Link
+                href="/admin/payments"
+                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+              >
                 Review payment references
               </Link>
-              <Link href="/admin/settings" className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]">
+              <Link
+                href="/admin/settings"
+                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+              >
                 Update platform settings
               </Link>
             </div>
@@ -300,8 +309,12 @@ function SummaryCard({
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{title}</span>
-        <span className={`grid size-9 place-items-center rounded-2xl ${colors[accent]}`}>{icon}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          {title}
+        </span>
+        <span className={`grid size-9 place-items-center rounded-2xl ${colors[accent]}`}>
+          {icon}
+        </span>
       </div>
       <p className="mt-4 text-2xl font-bold text-[#18201c]">{value}</p>
       <p className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
@@ -333,7 +346,10 @@ function RoleBar({
         <span>{count}</span>
       </div>
       <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-        <div className={`h-full rounded-full ${colors[color]}`} style={{ width: count ? '100%' : '0%' }} />
+        <div
+          className={`h-full rounded-full ${colors[color]}`}
+          style={{ width: count ? '100%' : '0%' }}
+        />
       </div>
     </div>
   )

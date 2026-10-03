@@ -1,8 +1,17 @@
 'use client'
 
-import { BarChart3, Clock3, DollarSign, PieChart, ShoppingBag, Star, Store, TrendingUp, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  BarChart3,
+  DollarSign,
+  PieChart,
+  ShoppingBag,
+  Star,
+  Store,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export default function AdminAnalyticsPage() {
   const [liveGrossRevenue, setLiveGrossRevenue] = useState(0)
@@ -22,7 +31,9 @@ export default function AdminAnalyticsPage() {
         if (settlements && settlements.length > 0) {
           const gross = settlements.reduce((sum, row) => sum + Number(row.gross_sales ?? 0), 0)
           setLiveGrossRevenue(gross)
-          setLiveCompletedOrders(settlements.reduce((sum, row) => sum + Number(row.orders ?? 0), 0) || 1280)
+          setLiveCompletedOrders(
+            settlements.reduce((sum, row) => sum + Number(row.orders ?? 0), 0) || 1280
+          )
         }
 
         const { data: restaurants } = await supabase.from('restaurants').select('*')
@@ -51,7 +62,9 @@ export default function AdminAnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-[#e2e7dd] pb-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">Executive intelligence</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
+            Executive intelligence
+          </p>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c]">Platform analytics</h2>
         </div>
         <div className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
@@ -95,8 +108,13 @@ export default function AdminAnalyticsPage() {
           <div className="mt-6 flex h-56 items-end gap-3">
             {[42, 58, 60, 74, 88, 96, 80, 102].map((value, index) => (
               <div key={index} className="flex flex-1 flex-col items-center gap-2">
-                <div className="w-full rounded-t-2xl bg-gradient-to-t from-[#d9f447] to-[#8aa4c3]" style={{ height: `${value}%` }} />
-                <span className="text-[10px] font-bold uppercase text-gray-500">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'][index]}</span>
+                <div
+                  className="w-full rounded-t-2xl bg-gradient-to-t from-[#d9f447] to-[#8aa4c3]"
+                  style={{ height: `${value}%` }}
+                />
+                <span className="text-[10px] font-bold uppercase text-gray-500">
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'][index]}
+                </span>
               </div>
             ))}
           </div>
@@ -120,7 +138,10 @@ export default function AdminAnalyticsPage() {
                   <span>{item.percent}%</span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-                  <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.percent}%` }} />
+                  <div
+                    className={`h-full rounded-full ${item.color}`}
+                    style={{ width: `${item.percent}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -138,7 +159,10 @@ export default function AdminAnalyticsPage() {
 
         <div className="space-y-3">
           {topVendors.map((vendor, index) => (
-            <div key={vendor.name} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 p-3">
+            <div
+              key={vendor.name}
+              className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 p-3"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid size-9 place-items-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
                   #{index + 1}
@@ -170,12 +194,26 @@ export default function AdminAnalyticsPage() {
   )
 }
 
-function MetricCard({ title, value, trend, icon }: { title: string; value: string; trend: string; icon: React.ReactNode }) {
+function MetricCard({
+  title,
+  value,
+  trend,
+  icon,
+}: {
+  title: string
+  value: string
+  trend: string
+  icon: React.ReactNode
+}) {
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{title}</span>
-        <span className="grid size-9 place-items-center rounded-2xl bg-[#f1f6d9] text-[#6a8014]">{icon}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          {title}
+        </span>
+        <span className="grid size-9 place-items-center rounded-2xl bg-[#f1f6d9] text-[#6a8014]">
+          {icon}
+        </span>
       </div>
       <p className="mt-4 text-2xl font-bold text-[#18201c]">{value}</p>
       <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">

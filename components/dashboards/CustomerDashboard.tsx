@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/lib/auth-context'
 import {
-  Navigation,
   ArrowRight,
   Bike,
   Check,
@@ -15,6 +14,7 @@ import {
   LocateFixed,
   MapPin,
   Minus,
+  Navigation,
   PackageCheck,
   Percent,
   PhoneCall,
@@ -32,6 +32,7 @@ import {
   Zap,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 const Mapcn = dynamic(() => import('@/components/ui/mapcn'), { ssr: false })
@@ -341,6 +342,33 @@ export default function CustomerDashboard({
   initialTab?: 'explore' | 'live-order' | 'orders' | 'profile'
 }) {
   const { user } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const currentTabFromPath = useMemo(() => {
+    if (pathname.includes('/user/track')) return 'live-order'
+    if (pathname.includes('/user/orders')) return 'orders'
+    if (pathname.includes('/user/profile')) return 'profile'
+    if (pathname.includes('/user/explore')) return 'explore'
+    return initialTab
+  }, [pathname, initialTab])
+
+  const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders' | 'profile'>(
+    currentTabFromPath
+  )
+
+  useEffect(() => {
+    setActiveTab(currentTabFromPath)
+  }, [currentTabFromPath])
+
+  const navigateToTab = (tab: 'explore' | 'live-order' | 'orders' | 'profile') => {
+    setActiveTab(tab)
+    if (tab === 'explore') router.push('/user/explore')
+    else if (tab === 'live-order') router.push('/user/track')
+    else if (tab === 'orders') router.push('/user/orders')
+    else if (tab === 'profile') router.push('/user/profile')
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string>('All')
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
@@ -364,7 +392,6 @@ export default function CustomerDashboard({
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders' | 'profile'>(initialTab)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>(samplePastOrders)
   // Profile editing
   const [editAddress, setEditAddress] = useState(false)
@@ -528,13 +555,7 @@ export default function CustomerDashboard({
       const matchesPureVeg = pureVegOnly ? rest.isPureVeg : true
       const matchesOffers = offersOnly ? Boolean(rest.offer) : true
       const matchesFast = fastDeliveryOnly ? parseInt(rest.eta) <= 20 : true
-      return (
-        matchesSearch &&
-        matchesTag &&
-        matchesPureVeg &&
-        matchesOffers &&
-        matchesFast
-      )
+      return matchesSearch && matchesTag && matchesPureVeg && matchesOffers && matchesFast
     })
   }, [searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
@@ -564,33 +585,37 @@ export default function CustomerDashboard({
     }
 
     try {
-      await supabase.from('orders').insert([{
-        id: orderId,
-        customer_id: user?.id || 'usr_cust_1',
-        customer_name: user?.name || 'Alex Rivera',
-        customer_phone: user?.phone || '+91 98765 43210',
-        customer_address: deliveryAddress,
-        restaurant_id: selectedRestaurant?.id || 'rest_1',
-        restaurant_name: restName,
-        items: JSON.stringify(cart),
-        subtotal: cartSubtotal,
-        packaging_fee: packagingFee,
-        gst: Math.round(cartSubtotal * 0.05),
-        total_amount: grandTotal,
-        status: 'new',
-        driver_name: 'Rajesh Kumar',
-        driver_phone: '+91 97444 55667',
-        payment_method: 'UPI Online',
-      }])
+      await supabase.from('orders').insert([
+        {
+          id: orderId,
+          customer_id: user?.id || 'usr_cust_1',
+          customer_name: user?.name || 'Alex Rivera',
+          customer_phone: user?.phone || '+91 98765 43210',
+          customer_address: deliveryAddress,
+          restaurant_id: selectedRestaurant?.id || 'rest_1',
+          restaurant_name: restName,
+          items: JSON.stringify(cart),
+          subtotal: cartSubtotal,
+          packaging_fee: packagingFee,
+          gst: Math.round(cartSubtotal * 0.05),
+          total_amount: grandTotal,
+          status: 'new',
+          driver_name: 'Rajesh Kumar',
+          driver_phone: '+91 97444 55667',
+          payment_method: 'UPI Online',
+        },
+      ])
 
-      await supabase.from('payment_reviews').insert([{
-        id: `pay_${Date.now()}`,
-        order_id: orderId,
-        utr_ref: utrRef,
-        customer_vpa: upiId,
-        amount: grandTotal,
-        status: 'pending',
-      }])
+      await supabase.from('payment_reviews').insert([
+        {
+          id: `pay_${Date.now()}`,
+          order_id: orderId,
+          utr_ref: utrRef,
+          customer_vpa: upiId,
+          amount: grandTotal,
+          status: 'pending',
+        },
+      ])
     } catch (err) {
       console.error('Failed to submit order to Supabase:', err)
     }
@@ -599,14 +624,19 @@ export default function CustomerDashboard({
     const historyEntry: PastOrder = {
       id: orderId,
       restaurantName: restName,
-      restaurantImage: selectedRestaurant?.image ||
+      restaurantImage:
+        selectedRestaurant?.image ||
         'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85',
       items: cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
       subtotal: cartSubtotal,
       discount: couponDiscount,
       total: grandTotal,
       couponCode: appliedCoupon?.code,
-      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      date: new Date().toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'Delivered',
       deliveryTime: '22 mins',
@@ -625,7 +655,7 @@ export default function CustomerDashboard({
       setShowCheckoutModal(false)
       setShowCartDrawer(false)
       setSelectedRestaurant(null)
-      setActiveTab('live-order')
+      navigateToTab('live-order')
     }, 1800)
   }
 
@@ -681,7 +711,7 @@ export default function CustomerDashboard({
             {/* Navigation Tabs */}
             <div className="flex items-center gap-1 rounded-2xl bg-[#f0f3eb] p-1.5 text-xs font-bold flex-wrap">
               <button
-                onClick={() => setActiveTab('explore')}
+                onClick={() => navigateToTab('explore')}
                 className={`rounded-xl px-3 py-2 transition ${
                   activeTab === 'explore'
                     ? 'bg-white text-[#18201c] shadow-sm'
@@ -691,7 +721,7 @@ export default function CustomerDashboard({
                 🍽️ Explore
               </button>
               <button
-                onClick={() => setActiveTab('live-order')}
+                onClick={() => navigateToTab('live-order')}
                 className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
                   activeTab === 'live-order'
                     ? 'bg-white text-[#18201c] shadow-sm'
@@ -705,7 +735,7 @@ export default function CustomerDashboard({
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('orders')}
+                onClick={() => navigateToTab('orders')}
                 className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
                   activeTab === 'orders'
                     ? 'bg-white text-[#18201c] shadow-sm'
@@ -716,7 +746,7 @@ export default function CustomerDashboard({
                 Orders
               </button>
               <button
-                onClick={() => setActiveTab('profile')}
+                onClick={() => navigateToTab('profile')}
                 className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition ${
                   activeTab === 'profile'
                     ? 'bg-white text-[#18201c] shadow-sm'
@@ -1142,31 +1172,31 @@ export default function CustomerDashboard({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                                order.status === 'Delivered'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : order.status === 'In Progress'
-                                    ? 'bg-blue-100 text-blue-800 animate-pulse'
-                                    : 'bg-rose-100 text-rose-800'
-                              }`}
-                            >
-                              {order.status === 'Delivered' ? (
-                                <span className="flex items-center gap-1">
-                                  <CheckCircle2 className="size-3" /> Delivered
-                                </span>
-                              ) : order.status === 'In Progress' ? (
-                                <span className="flex items-center gap-1">
-                                  <Bike className="size-3" /> Out for Delivery
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1">
-                                  <X className="size-3" /> Cancelled
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-[10px] text-gray-400">#{order.id}</span>
-                          </div>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              order.status === 'Delivered'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : order.status === 'In Progress'
+                                  ? 'bg-blue-100 text-blue-800 animate-pulse'
+                                  : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {order.status === 'Delivered' ? (
+                              <span className="flex items-center gap-1">
+                                <CheckCircle2 className="size-3" /> Delivered
+                              </span>
+                            ) : order.status === 'In Progress' ? (
+                              <span className="flex items-center gap-1">
+                                <Bike className="size-3" /> Out for Delivery
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <X className="size-3" /> Cancelled
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[10px] text-gray-400">#{order.id}</span>
+                        </div>
                         <h3 className="mt-1 font-bold text-sm text-[#18201c] truncate">
                           {order.restaurantName}
                         </h3>
@@ -1182,21 +1212,27 @@ export default function CustomerDashboard({
                       <div className="text-right shrink-0">
                         <p className="font-bold text-base text-[#18201c]">₹{order.total}</p>
                         {order.discount > 0 && (
-                          <p className="text-[10px] text-emerald-700 font-semibold">-₹{order.discount} saved</p>
+                          <p className="text-[10px] text-emerald-700 font-semibold">
+                            -₹{order.discount} saved
+                          </p>
                         )}
                       </div>
                     </div>
 
                     {/* Order Items */}
                     <div className="px-5 py-3 border-b border-[#f5f6f3]">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Items Ordered</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
+                        Items Ordered
+                      </p>
                       <div className="flex flex-col gap-1">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-xs">
                             <span className="text-gray-700">
                               {item.qty}× {item.name}
                             </span>
-                            <span className="font-semibold text-[#18201c]">₹{item.price * item.qty}</span>
+                            <span className="font-semibold text-[#18201c]">
+                              ₹{item.price * item.qty}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1253,7 +1289,9 @@ export default function CustomerDashboard({
                     {(user?.name || 'A').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Customer Profile</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">
+                      Customer Profile
+                    </p>
                     <h2 className="text-xl font-bold">{user?.name || 'Alex Rivera'}</h2>
                     <p className="text-xs text-white/70">{user?.email || 'alex@blinkbite.app'}</p>
                   </div>
@@ -1267,7 +1305,9 @@ export default function CustomerDashboard({
 
               <div className="grid grid-cols-2 divide-x divide-[#f0f3ec] border-t border-[#f0f3ec]">
                 <div className="p-4 text-center">
-                  <p className="text-xl font-bold text-[#18201c]">{pastOrders.filter((o) => o.status === 'Delivered').length}</p>
+                  <p className="text-xl font-bold text-[#18201c]">
+                    {pastOrders.filter((o) => o.status === 'Delivered').length}
+                  </p>
                   <p className="text-[10px] text-gray-500 font-semibold uppercase">Orders</p>
                 </div>
                 <div className="p-4 text-center">
@@ -1322,14 +1362,16 @@ export default function CustomerDashboard({
                 <UtensilsCrossed className="size-4 text-[#86a018]" /> Food Preferences
               </h3>
               <div className="flex flex-wrap gap-2">
-                {['Pure Veg', 'Healthy Bowls', 'Fast Delivery', 'Top Rated', 'Offers & Deals'].map((pref) => (
-                  <span
-                    key={pref}
-                    className="rounded-full border border-[#d5e07a] bg-[#f7fce0] px-3.5 py-1.5 text-[11px] font-bold text-[#5a6d10]"
-                  >
-                    {pref}
-                  </span>
-                ))}
+                {['Pure Veg', 'Healthy Bowls', 'Fast Delivery', 'Top Rated', 'Offers & Deals'].map(
+                  (pref) => (
+                    <span
+                      key={pref}
+                      className="rounded-full border border-[#d5e07a] bg-[#f7fce0] px-3.5 py-1.5 text-[11px] font-bold text-[#5a6d10]"
+                    >
+                      {pref}
+                    </span>
+                  )
+                )}
               </div>
             </div>
 
@@ -1337,7 +1379,9 @@ export default function CustomerDashboard({
             <div className="rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5 shadow-xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Blinkbite Rewards</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                    Blinkbite Rewards
+                  </p>
                   <h3 className="text-2xl font-black text-amber-900 mt-0.5">1,240 pts</h3>
                   <p className="text-xs text-amber-700 mt-1">Redeem 500 pts = ₹50 cashback</p>
                 </div>
@@ -2025,11 +2069,12 @@ export default function CustomerDashboard({
       {trackingOrder && (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#18201c]/70 p-0 sm:p-4 backdrop-blur-sm">
           <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
-
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0f3ec] shrink-0">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Live Tracking</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                  Live Tracking
+                </p>
                 <h3 className="font-bold text-base text-[#18201c]">Order #{trackingOrder.id}</h3>
                 <p className="text-[11px] text-gray-500">{trackingOrder.restaurantName}</p>
               </div>
@@ -2042,7 +2087,6 @@ export default function CustomerDashboard({
             </div>
 
             <div className="overflow-y-auto flex-1 flex flex-col gap-5 p-5">
-
               {/* 4-Step Status Timeline */}
               {(() => {
                 const steps = [
@@ -2071,12 +2115,12 @@ export default function CustomerDashboard({
                           >
                             <Icon className="size-4" />
                           </div>
-                          <span className={`text-[9px] font-bold text-center leading-tight ${active ? 'text-blue-700' : done ? 'text-emerald-700' : 'text-gray-400'}`}>
+                          <span
+                            className={`text-[9px] font-bold text-center leading-tight ${active ? 'text-blue-700' : done ? 'text-emerald-700' : 'text-gray-400'}`}
+                          >
                             {s.label}
                           </span>
-                          {i < steps.length - 1 && (
-                            <div className={`absolute hidden`} />
-                          )}
+                          {i < steps.length - 1 && <div className={`absolute hidden`} />}
                         </div>
                       )
                     })}
@@ -2110,10 +2154,16 @@ export default function CustomerDashboard({
               <div className="flex items-center justify-between rounded-2xl bg-[#f8f9f6] border border-[#e8ece3] px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-700 font-bold text-xs shrink-0">
-                    {(trackingOrder.driverName || 'RK').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {(trackingOrder.driverName || 'RK')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#18201c]">{trackingOrder.driverName || 'Rajesh Kumar'}</p>
+                    <p className="text-xs font-bold text-[#18201c]">
+                      {trackingOrder.driverName || 'Rajesh Kumar'}
+                    </p>
                     <p className="text-[10px] text-gray-500">Your delivery partner</p>
                   </div>
                 </div>
@@ -2156,12 +2206,10 @@ export default function CustomerDashboard({
                   <span className="text-[9px] text-gray-400 font-semibold">Scan QR</span>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   )
 }

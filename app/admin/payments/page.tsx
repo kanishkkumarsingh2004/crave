@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
 
 interface PaymentReference {
   id: string
@@ -19,7 +19,10 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     async function loadLivePayments() {
       try {
-        const { data, error } = await supabase.from('payment_reviews').select('*').order('created_at', { ascending: false })
+        const { data, error } = await supabase
+          .from('payment_reviews')
+          .select('*')
+          .order('created_at', { ascending: false })
         if (!error && data && data.length > 0) {
           const loaded: PaymentReference[] = data.map((p) => ({
             id: p.id,
@@ -45,9 +48,7 @@ export default function AdminPaymentsPage() {
     } catch (err) {
       console.error('Failed to update payment status in Supabase:', err)
     }
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    )
+    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
 
   return (

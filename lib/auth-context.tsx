@@ -1,7 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export type UserRole = 'customer' | 'vendor' | 'driver' | 'admin'
 
