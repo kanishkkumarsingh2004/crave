@@ -82,24 +82,47 @@ export default function Navbar() {
           {user ? (
             /* Authenticated Nav Items */
             <>
-              <Link
-                href={currentDashboardLink}
-                className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
-                  pathname.includes('dashboard') ? 'text-[#18201c] font-bold' : ''
-                }`}
-              >
-                <LayoutDashboard className="size-3.5 text-[#859d19]" />
-                Dashboard ({roleDetails[role]?.title})
-              </Link>
-              <Link
-                href={currentDashboardLink}
-                className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
-                  pathname === '/' ? 'text-[#18201c] font-bold' : ''
-                }`}
-              >
-                <Compass className="size-3.5 text-[#859d19]" />
-                Explore Kitchens
-              </Link>
+              {role === 'customer' ? (
+                <>
+                  <Link
+                    href="/user/explore"
+                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                      pathname.includes('/user/explore') || pathname.includes('/user/dashboard') ? 'text-[#18201c] font-bold' : ''
+                    }`}
+                  >
+                    <Compass className="size-3.5 text-[#859d19]" />
+                    Explore Kitchens
+                  </Link>
+                  <Link
+                    href="/user/orders"
+                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                      pathname.includes('/user/orders') ? 'text-[#18201c] font-bold' : ''
+                    }`}
+                  >
+                    <ShoppingBag className="size-3.5 text-[#859d19]" />
+                    My Orders
+                  </Link>
+                  <Link
+                    href="/user/track"
+                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                      pathname.includes('/user/track') ? 'text-[#18201c] font-bold' : ''
+                    }`}
+                  >
+                    <Bike className="size-3.5 text-[#859d19]" />
+                    Track Live Drop
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href={currentDashboardLink}
+                  className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                    pathname.includes('dashboard') ? 'text-[#18201c] font-bold' : ''
+                  }`}
+                >
+                  <LayoutDashboard className="size-3.5 text-[#859d19]" />
+                  Dashboard ({roleDetails[role]?.title})
+                </Link>
+              )}
             </>
           ) : (
             /* Unauthenticated Nav Items */
@@ -108,20 +131,14 @@ export default function Navbar() {
                 href="/"
                 className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}
               >
-                Explore
+                Explore Cravings
               </Link>
-              <Link
-                href="/login"
-                className={`transition hover:text-[#18201c] ${pathname === '/login' ? 'text-[#18201c] font-bold' : ''}`}
+              <a
+                href="#why-crave"
+                className="transition hover:text-[#18201c]"
               >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className={`transition hover:text-[#18201c] ${pathname === '/signup' ? 'text-[#18201c] font-bold' : ''}`}
-              >
-                Sign Up
-              </Link>
+                Why crave.
+              </a>
             </>
           )}
         </div>
@@ -166,14 +183,51 @@ export default function Navbar() {
                     </span>
                   </div>
 
-                  <Link
-                    href={currentDashboardLink}
-                    onClick={() => setShowUserDropdown(false)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
-                  >
-                    <LayoutDashboard className="size-4 text-[#7d9518]" />
-                    Go to Dashboard
-                  </Link>
+                  {user.role === 'customer' ? (
+                    <>
+                      <Link
+                        href="/user/explore"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
+                      >
+                        <Compass className="size-4 text-[#7d9518]" />
+                        Explore Kitchens
+                      </Link>
+                      <Link
+                        href="/user/orders"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                      >
+                        <ShoppingBag className="size-4 text-[#7d9518]" />
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/user/track"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                      >
+                        <Bike className="size-4 text-[#7d9518]" />
+                        Track Order
+                      </Link>
+                      <Link
+                        href="/user/profile"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                      >
+                        <LayoutDashboard className="size-4 text-[#7d9518]" />
+                        My Profile Settings
+                      </Link>
+                    </>
+                  ) : (
+                    <Link
+                      href={currentDashboardLink}
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
+                    >
+                      <LayoutDashboard className="size-4 text-[#7d9518]" />
+                      Go to Dashboard
+                    </Link>
+                  )}
 
                   <button
                     onClick={async () => {
@@ -181,7 +235,7 @@ export default function Navbar() {
                       setShowUserDropdown(false)
                       router.push('/login')
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 border-t border-[#eff2ed] mt-1 pt-2"
                   >
                     <LogOut className="size-4" />
                     Sign Out

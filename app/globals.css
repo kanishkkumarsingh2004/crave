@@ -202,15 +202,15 @@
 /* macOS 26 / iOS Design System Components - Outlined & Spacious Padding */
 @layer components {
   .mac-card {
-    background: #FFFFFF;
-    border: 1px solid #CFE1BC;
+    background: #ffffff;
+    border: 1px solid #cfe1bc;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
     transition: border-color 0.15s ease-in-out;
   }
   .mac-card:hover {
-    border-color: #85C441;
+    border-color: #85c441;
   }
 
   .mac-btn-primary {
@@ -219,13 +219,13 @@
     justify-content: center;
     gap: 0.5rem;
     border-radius: 9999px;
-    background-color: #C1EA31;
-    color: #1A1A1A;
+    background-color: #c1ea31;
+    color: #1a1a1a;
     font-weight: 700;
     padding: 0.6rem 1.35rem;
     font-size: 0.75rem;
     letter-spacing: -0.015em;
-    border: 1px solid #A8D61A;
+    border: 1px solid #a8d61a;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
@@ -233,7 +233,7 @@
   }
   .mac-btn-primary:hover {
     background-color: #b5de28;
-    color: #1A1A1A;
+    color: #1a1a1a;
     transform: scale(1.02);
   }
   .mac-btn-primary:active {
@@ -246,22 +246,22 @@
     justify-content: center;
     gap: 0.5rem;
     border-radius: 9999px;
-    background-color: #FFFFFF;
-    color: #1A1A1A;
+    background-color: #ffffff;
+    color: #1a1a1a;
     font-weight: 600;
     padding: 0.6rem 1.35rem;
     font-size: 0.75rem;
     letter-spacing: -0.015em;
-    border: 1px solid #CFE1BC;
+    border: 1px solid #cfe1bc;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
     user-select: none;
   }
   .mac-btn-secondary:hover {
-    background-color: #F8F8F6;
-    border-color: #85C441;
-    color: #1A1A1A;
+    background-color: #f8f8f6;
+    border-color: #85c441;
+    color: #1a1a1a;
     transform: scale(1.02);
   }
   .mac-btn-secondary:active {
@@ -274,8 +274,8 @@
     justify-content: center;
     gap: 0.5rem;
     border-radius: 9999px;
-    background-color: #1C1C1E;
-    color: #FFFFFF;
+    background-color: #1c1c1e;
+    color: #ffffff;
     font-weight: 700;
     padding: 0.6rem 1.35rem;
     font-size: 0.75rem;
@@ -287,7 +287,7 @@
     user-select: none;
   }
   .mac-btn-dark:hover {
-    background-color: #2C2C2E;
+    background-color: #2c2c2e;
     transform: scale(1.02);
   }
   .mac-btn-dark:active {
@@ -296,18 +296,18 @@
 
   .mac-input {
     border-radius: 0.75rem;
-    border: 1px solid #CFE1BC;
-    background-color: #FFFFFF;
+    border: 1px solid #cfe1bc;
+    background-color: #ffffff;
     padding: 0.6rem 1rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1a1a1a;
     box-shadow: none;
     transition: all 0.15s ease-in-out;
   }
   .mac-input:focus {
     outline: none;
-    border-color: #1A1A1A;
+    border-color: #1a1a1a;
   }
 
   .mac-badge-outline {
@@ -316,10 +316,10 @@
     gap: 0.375rem;
     border-radius: 9999px;
     background-color: transparent;
-    border: 1px solid #CFE1BC;
+    border: 1px solid #cfe1bc;
     padding: 0.25rem 0.625rem;
     font-size: 0.65rem;
     font-weight: 700;
-    color: #1A1A1A;
+    color: #1a1a1a;
   }
 }

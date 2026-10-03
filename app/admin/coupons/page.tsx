@@ -141,7 +141,9 @@ export default function AdminCouponsPage() {
       showToast(`Coupon '${formattedCode}' updated successfully!`)
     } else {
       const newId = `c_${Date.now()}`
-      const descStr = description || `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`
+      const descStr =
+        description ||
+        `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`
       const dbRecord = {
         id: newId,
         code: formattedCode,
