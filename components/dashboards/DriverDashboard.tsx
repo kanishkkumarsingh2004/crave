@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 
 const Mapcn = dynamic(() => import('@/components/ui/mapcn'), { ssr: false })
 
@@ -98,87 +99,64 @@ export default function DriverDashboard() {
   }, [])
 
   // Broadcast Offer Radar Alert Modal
-  const [broadcastOffer, setBroadcastOffer] = useState<BroadcastOrderOffer | null>({
-    id: 'off_998',
-    orderNumber: '#DRP-9104',
-    restaurantName: 'Truffles Bistro',
-    restaurantAddress: '12th Main Rd, Indiranagar',
-    customerName: 'Siddharth V',
-    customerAddress: 'Tower B, Prestigetech Park, Marathahalli',
-    basePayout: 80,
-    surgeBonus: 35,
-    tip: 40,
-    distance: '4.1 km',
-    itemsCount: 3,
-  })
+  const [broadcastOffer, setBroadcastOffer] = useState<BroadcastOrderOffer | null>(null)
   const [offerTimer, setOfferTimer] = useState(15)
 
   // Active Task Step Progress
-  const [activeTask, setActiveTask] = useState<DeliveryTask>({
-    id: 'task_102',
-    orderNumber: '#DRP-9021',
-    restaurantName: 'The Green Table',
-    restaurantAddress: '100ft Rd, Indiranagar',
-    customerName: 'Alex Rivera',
-    customerAddress: 'Flat 402, Sunshine Apts, Domlur',
-    customerPhone: '+91 98765 43210',
-    payout: 85,
-    tip: 30,
-    distance: '3.2 km',
-    step: 'assigned',
-  })
+  const [activeTask, setActiveTask] = useState<DeliveryTask | null>(null)
 
   // Completed Trips List
-  const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([
-    {
-      id: 'trip_1',
-      order: '#DRP-8812',
-      restaurant: 'The Green Table',
-      customer: 'Priya Sharma',
-      baseEarnings: 65,
-      surge: 20,
-      tip: 30,
-      total: 115,
-      time: '1:15 PM',
-      rating: 5,
-      distance: '2.8 km',
-    },
-    {
-      id: 'trip_2',
-      order: '#DRP-8790',
-      restaurant: 'Momo House & Asian Grill',
-      customer: 'Karan Patel',
-      baseEarnings: 75,
-      surge: 15,
-      tip: 40,
-      total: 130,
-      time: '12:30 PM',
-      rating: 5,
-      distance: '3.4 km',
-    },
-    {
-      id: 'trip_3',
-      order: '#DRP-8640',
-      restaurant: 'Casa Napoli Pizza',
-      customer: 'Rohan Mehta',
-      baseEarnings: 80,
-      surge: 30,
-      tip: 25,
-      total: 135,
-      time: '11:45 AM',
-      rating: 4.9,
-      distance: '4.1 km',
-    },
-  ])
+  const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([])
+
+  useEffect(() => {
+    async function loadDriverData() {
+      try {
+        const { data: dbOrders } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+        if (dbOrders && dbOrders.length > 0) {
+          const activeOrd = dbOrders.find((o) => o.status === 'preparing' || o.status === 'ready' || o.status === 'new')
+          if (activeOrd) {
+            setActiveTask({
+              id: activeOrd.id,
+              orderNumber: activeOrd.id,
+              restaurantName: activeOrd.restaurant_name,
+              restaurantAddress: 'Koramangala 5th Block, Bengaluru',
+              customerName: activeOrd.customer_name,
+              customerAddress: activeOrd.customer_address,
+              customerPhone: activeOrd.customer_phone || '+91 98765 43210',
+              payout: 85,
+              tip: 30,
+              distance: '3.2 km',
+              step: activeOrd.status === 'ready' ? 'picked_up' : 'assigned',
+            })
+          }
+          const doneOrds = dbOrders.filter((o) => o.status === 'completed')
+          const mappedDone: CompletedTripItem[] = doneOrds.map((o) => ({
+            id: o.id,
+            order: o.id,
+            restaurant: o.restaurant_name,
+            customer: o.customer_name,
+            baseEarnings: 65,
+            surge: 20,
+            tip: 30,
+            total: 115,
+            time: 'Today',
+            rating: 5.0,
+            distance: '3.5 km',
+          }))
+          setCompletedTrips(mappedDone)
+        }
+      } catch (err) {
+        console.error('Failed to load driver orders from Supabase:', err)
+      }
+    }
+    loadDriverData()
+  }, [])
 
   // Wallet State
   const [cashoutModalOpen, setCashoutModalOpen] = useState(false)
-  const [cashoutAmount, setCashoutAmount] = useState('1480')
+  const [cashoutAmount, setCashoutAmount] = useState('0')
   const [cashoutSuccess, setCashoutSuccess] = useState('')
-  const [payoutLogs, setPayoutLogs] = useState([
-    { id: 'tx_901', amount: 1250, date: 'Yesterday, 11:59 PM', status: 'Transferred to rajesh.kumar@okicici' },
-    { id: 'tx_899', amount: 1680, date: 'Oct 01, 2026', status: 'Transferred to rajesh.kumar@okicici' },
-  ])
+  const [payoutLogs, setPayoutLogs] = useState<Array<{ id: string; amount: number; date: string; status: string }>>([])
 
   // Quick SMS Drawer
   const [smsDrawerOpen, setSmsDrawerOpen] = useState(false)
@@ -220,24 +198,26 @@ export default function DriverDashboard() {
   }
 
   function advanceStep() {
+    if (!activeTask) return
     if (activeTask.step === 'assigned') {
-      setActiveTask((prev) => ({ ...prev, step: 'at_restaurant' }))
+      setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
     } else if (activeTask.step === 'at_restaurant') {
-      setActiveTask((prev) => ({ ...prev, step: 'picked_up' }))
+      setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
     } else if (activeTask.step === 'picked_up') {
-      setActiveTask((prev) => ({ ...prev, step: 'delivered' }))
+      const currentTask = activeTask
+      setActiveTask((prev) => (prev ? { ...prev, step: 'delivered' } : null))
       const newTrip: CompletedTripItem = {
         id: `trip_${Date.now()}`,
-        order: activeTask.orderNumber,
-        restaurant: activeTask.restaurantName,
-        customer: activeTask.customerName,
-        baseEarnings: Math.round(activeTask.payout * 0.7),
-        surge: Math.round(activeTask.payout * 0.3),
-        tip: activeTask.tip,
-        total: activeTask.payout + activeTask.tip,
+        order: currentTask.orderNumber,
+        restaurant: currentTask.restaurantName,
+        customer: currentTask.customerName,
+        baseEarnings: Math.round(currentTask.payout * 0.7),
+        surge: Math.round(currentTask.payout * 0.3),
+        tip: currentTask.tip,
+        total: currentTask.payout + currentTask.tip,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         rating: 5,
-        distance: activeTask.distance,
+        distance: currentTask.distance,
       }
       setCompletedTrips((prev) => [newTrip, ...prev])
     }
@@ -263,6 +243,7 @@ export default function DriverDashboard() {
   }
 
   function sendQuickSms(templateText: string) {
+    if (!activeTask) return
     setSentSmsMsg(`SMS Sent to ${activeTask.customerName}: "${templateText}"`)
     setTimeout(() => {
       setSentSmsMsg('')
@@ -290,7 +271,7 @@ export default function DriverDashboard() {
   const totalEarningsToday = completedTrips.reduce((acc, t) => acc + t.total, 0)
 
   const navItems = [
-    { id: 'active-trip', label: 'Active Delivery Task', icon: Bike, badge: activeTask.step !== 'delivered' ? 'Active' : null },
+    { id: 'active-trip', label: 'Active Delivery Task', icon: Bike, badge: activeTask && activeTask.step !== 'delivered' ? 'Active' : null },
     { id: 'history', label: 'Trip History Log', icon: History, badge: completedTrips.length.toString() },
     { id: 'wallet', label: 'Wallet & Earnings', icon: Wallet, badge: `₹${totalEarningsToday}` },
     { id: 'incentives', label: 'Quests & Surge', icon: Target, badge: '+₹200' },
@@ -445,12 +426,8 @@ export default function DriverDashboard() {
                 sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
               } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out`}
             >
-              <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-              }`}>
-                Minimize Sidebar
-              </span>
-              <span className="transition-transform duration-300 ease-in-out">
+              {!sidebarCollapsed && <span>Minimize Sidebar</span>}
+              <span className="transition-transform duration-300 ease-in-out shrink-0">
                 {sidebarCollapsed ? (
                   <ChevronRight className="size-4 text-[#d9f447]" />
                 ) : (
@@ -562,137 +539,151 @@ export default function DriverDashboard() {
 
           {/* TAB 1: ACTIVE TRIP & NAVIGATION */}
           {activeTab === 'active-trip' && (
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="md:col-span-2 rounded-3xl border border-blue-200 bg-white p-4 sm:p-6 shadow-md">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#f0f3ec] pb-3 sm:pb-4">
-                  <div className="min-w-0 flex-1">
-                    <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold text-blue-800 uppercase tracking-wider">
-                      Active Task
-                    </span>
-                    <h3 className="mt-1 text-base sm:text-xl font-bold text-[#18201c] truncate">
-                      Order {activeTask.orderNumber} ({activeTask.distance})
-                    </h3>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] sm:text-xs text-[#737e77] font-semibold">Trip Payout</p>
-                    <p className="text-base sm:text-xl font-extrabold text-emerald-700">₹{activeTask.payout + activeTask.tip}</p>
-                  </div>
-                </div>
-
-                {/* Step Progress Visualizer */}
-                <div className="mt-6 flex flex-col gap-5">
-                  {/* Step 1: Restaurant Pickup */}
-                  <div
-                    className={`rounded-2xl p-4 border transition ${
-                      activeTask.step === 'assigned' || activeTask.step === 'at_restaurant'
-                        ? 'border-amber-400 bg-amber-50/70 shadow-sm'
-                        : 'border-gray-200 bg-gray-50 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
-                          Step 1: Kitchen Pickup Location
-                        </span>
-                        <h4 className="font-bold text-base text-[#18201c] mt-0.5">{activeTask.restaurantName}</h4>
-                        <p className="text-xs text-[#6e7771] flex items-center gap-1 mt-1">
-                          <MapPin className="size-3.5 text-amber-600" /> {activeTask.restaurantAddress}
-                        </p>
-                      </div>
-                      <a
-                        href={`https://maps.google.com/?q=${encodeURIComponent(activeTask.restaurantAddress)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-full border border-amber-400 bg-white px-3.5 py-1.5 text-xs font-bold text-amber-900 flex items-center gap-1 shadow-sm hover:bg-amber-50"
-                      >
-                        <Navigation className="size-3 text-amber-700" /> GPS Map
-                      </a>
+            activeTask ? (
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="md:col-span-2 rounded-3xl border border-blue-200 bg-white p-4 sm:p-6 shadow-md">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#f0f3ec] pb-3 sm:pb-4">
+                    <div className="min-w-0 flex-1">
+                      <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold text-blue-800 uppercase tracking-wider">
+                        Active Task
+                      </span>
+                      <h3 className="mt-1 text-base sm:text-xl font-bold text-[#18201c] truncate">
+                        Order {activeTask.orderNumber} ({activeTask.distance})
+                      </h3>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] sm:text-xs text-[#737e77] font-semibold">Trip Payout</p>
+                      <p className="text-base sm:text-xl font-extrabold text-emerald-700">₹{activeTask.payout + activeTask.tip}</p>
                     </div>
                   </div>
 
-                  {/* Step 2: Customer Dropoff */}
-                  <div
-                    className={`rounded-2xl p-4 border transition ${
-                      activeTask.step === 'picked_up'
-                        ? 'border-blue-400 bg-blue-50/70 shadow-sm'
-                        : 'border-gray-200 bg-gray-50 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
-                          Step 2: Customer Doorbell Dropoff
-                        </span>
-                        <h4 className="font-bold text-base text-[#18201c] mt-0.5">{activeTask.customerName}</h4>
-                        <p className="text-xs text-[#6e7771] flex items-center gap-1 mt-1">
-                          <MapPin className="size-3.5 text-blue-600" /> {activeTask.customerAddress}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSmsDrawerOpen(true)}
-                          className="rounded-full border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-900 flex items-center gap-1 shadow-sm hover:bg-blue-50"
-                        >
-                          <MessageSquare className="size-3 text-blue-600" /> SMS
-                        </button>
+                  {/* Step Progress Visualizer */}
+                  <div className="mt-6 flex flex-col gap-5">
+                    {/* Step 1: Restaurant Pickup */}
+                    <div
+                      className={`rounded-2xl p-4 border transition ${
+                        activeTask.step === 'assigned' || activeTask.step === 'at_restaurant'
+                          ? 'border-amber-400 bg-amber-50/70 shadow-sm'
+                          : 'border-gray-200 bg-gray-50 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
+                            Step 1: Kitchen Pickup Location
+                          </span>
+                          <h4 className="font-bold text-base text-[#18201c] mt-0.5">{activeTask.restaurantName}</h4>
+                          <p className="text-xs text-[#6e7771] flex items-center gap-1 mt-1">
+                            <MapPin className="size-3.5 text-amber-600" /> {activeTask.restaurantAddress}
+                          </p>
+                        </div>
                         <a
-                          href={`tel:${activeTask.customerPhone}`}
-                          className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white flex items-center gap-1 shadow-sm hover:bg-blue-700"
+                          href={`https://maps.google.com/?q=${encodeURIComponent(activeTask.restaurantAddress)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-amber-400 bg-white px-3.5 py-1.5 text-xs font-bold text-amber-900 flex items-center gap-1 shadow-sm hover:bg-amber-50"
                         >
-                          <PhoneCall className="size-3" /> Call
+                          <Navigation className="size-3 text-amber-700" /> GPS Map
                         </a>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Advance Action Button */}
-                  {activeTask.step !== 'delivered' ? (
-                    <button
-                      onClick={advanceStep}
-                      className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#323d36]"
+                    {/* Step 2: Customer Dropoff */}
+                    <div
+                      className={`rounded-2xl p-4 border transition ${
+                        activeTask.step === 'picked_up'
+                          ? 'border-blue-400 bg-blue-50/70 shadow-sm'
+                          : 'border-gray-200 bg-gray-50 opacity-60'
+                      }`}
                     >
-                      {activeTask.step === 'assigned' && 'Arrived at Restaurant Kitchen'}
-                      {activeTask.step === 'at_restaurant' && 'Confirm Picked up Order Bag from Counter'}
-                      {activeTask.step === 'picked_up' && 'Mark Delivered to Customer'}
-                    </button>
-                  ) : (
-                    <div className="rounded-2xl bg-emerald-100 p-4 text-center text-emerald-900 font-bold text-xs flex items-center justify-center gap-2">
-                      <CheckCircle2 className="size-5 text-emerald-600" />
-                      Trip Completed! Payout credited to your wallet balance.
-                    </div>
-                  )}
-                </div>
-              </div>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+                            Step 2: Customer Doorbell Dropoff
+                          </span>
+                          <h4 className="font-bold text-base text-[#18201c] mt-0.5">{activeTask.customerName}</h4>
+                          <p className="text-xs text-[#6e7771] flex items-center gap-1 mt-1">
+                            <MapPin className="size-3.5 text-blue-600" /> {activeTask.customerAddress}
+                          </p>
+                        </div>
 
-              {/* Route Map Simulation Card */}
-              <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 flex flex-col justify-between shadow-sm">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="font-bold text-sm text-[#18201c]">Live Delivery Route</h4>
-                      <p className="text-xs text-[#737e77]">Indiranagar &amp; Koramangala Radar</p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSmsDrawerOpen(true)}
+                            className="rounded-full border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-900 flex items-center gap-1 shadow-sm hover:bg-blue-50"
+                          >
+                            <MessageSquare className="size-3 text-blue-600" /> SMS
+                          </button>
+                          <a
+                            href={`tel:${activeTask.customerPhone}`}
+                            className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white flex items-center gap-1 shadow-sm hover:bg-blue-700"
+                          >
+                            <PhoneCall className="size-3" /> Call
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                      <span className="size-2 rounded-full bg-emerald-500 animate-ping" /> GPS Live
-                    </span>
+
+                    {/* Advance Action Button */}
+                    {activeTask.step !== 'delivered' ? (
+                      <button
+                        onClick={advanceStep}
+                        className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white shadow-md transition hover:bg-[#323d36]"
+                      >
+                        {activeTask.step === 'assigned' && 'Arrived at Restaurant Kitchen'}
+                        {activeTask.step === 'at_restaurant' && 'Confirm Picked up Order Bag from Counter'}
+                        {activeTask.step === 'picked_up' && 'Mark Delivered to Customer'}
+                      </button>
+                    ) : (
+                      <div className="rounded-2xl bg-emerald-100 p-4 text-center text-emerald-900 font-bold text-xs flex items-center justify-center gap-2">
+                        <CheckCircle2 className="size-5 text-emerald-600" />
+                        Trip Completed! Payout credited to your wallet balance.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Route Map Simulation Card */}
+                <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 flex flex-col justify-between shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="font-bold text-sm text-[#18201c]">Live Delivery Route</h4>
+                        <p className="text-xs text-[#737e77]">Indiranagar &amp; Koramangala Radar</p>
+                      </div>
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        <span className="size-2 rounded-full bg-emerald-500 animate-ping" /> GPS Live
+                      </span>
+                    </div>
+
+                    <Mapcn
+                      pickupCoords={[12.9784, 77.6408]}
+                      dropoffCoords={[12.9352, 77.6245]}
+                      driverCoords={[12.9580, 77.6320]}
+                      restaurantName={activeTask.restaurantName || 'FreshBite Kitchen (Indiranagar)'}
+                      customerAddress={activeTask.customerAddress || 'Koramangala 4th Block'}
+                    />
                   </div>
 
-                  <Mapcn
-                    pickupCoords={[12.9784, 77.6408]}
-                    dropoffCoords={[12.9352, 77.6245]}
-                    driverCoords={[12.9580, 77.6320]}
-                    restaurantName={activeTask?.restaurantName || 'FreshBite Kitchen (Indiranagar)'}
-                    customerAddress={activeTask?.customerAddress || 'Koramangala 4th Block'}
-                  />
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-[#f0f3ec] text-xs text-[#737e77] flex justify-between items-center">
-                  <span>Next Automatic Cashout:</span>
-                  <span className="font-bold text-[#18201c]">Tonight at 11:59 PM</span>
+                  <div className="mt-4 pt-4 border-t border-[#f0f3ec] text-xs text-[#737e77] flex justify-between items-center">
+                    <span>Next Automatic Cashout:</span>
+                    <span className="font-bold text-[#18201c]">Tonight at 11:59 PM</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-3xl border border-[#dfe4dc] bg-white p-12 text-center shadow-sm">
+                <Bike className="mx-auto size-12 text-gray-400" />
+                <h3 className="mt-4 text-lg font-bold text-[#18201c]">No Active Delivery Task</h3>
+                <p className="mt-1 text-sm text-[#737e77]">You are online and ready to receive incoming orders.</p>
+                <button
+                  onClick={triggerSimulatedOffer}
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#18201c] px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36]"
+                >
+                  <Sparkles className="size-4 text-[#d9f447]" /> Test Radar Order Broadcast
+                </button>
+              </div>
+            )
           )}
 
           {/* TAB 2: TRIP HISTORY LOG */}
@@ -992,7 +983,7 @@ export default function DriverDashboard() {
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
                 <h3 className="font-bold text-base text-[#18201c]">Quick SMS Templates</h3>
-                <p className="text-xs text-gray-500">Send instant updates to {activeTask.customerName}</p>
+                <p className="text-xs text-gray-500">Send instant updates to {activeTask?.customerName || 'Customer'}</p>
               </div>
               <button
                 onClick={() => setSmsDrawerOpen(false)}

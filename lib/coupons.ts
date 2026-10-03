@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase'
+
 export interface Coupon {
   id: string
   code: string
@@ -14,58 +16,60 @@ export interface Coupon {
 
 export const initialCoupons: Coupon[] = [
   {
-    id: 'coup_1',
-    code: 'BLINK50',
-    description: '50% OFF up to ₹120 on orders above ₹199',
+    id: 'c_1',
+    code: 'CRAVE50',
+    description: '50% OFF up to ₹100 on first 3 orders',
     discountType: 'percentage',
     discountValue: 50,
     minOrderAmount: 199,
-    maxDiscount: 120,
+    maxDiscount: 100,
     expiryDate: '2026-12-31',
     usageLimit: 1000,
-    usedCount: 248,
-    isActive: true,
-  },
-  {
-    id: 'coup_2',
-    code: 'WELCOME100',
-    description: 'Flat ₹100 OFF on your order above ₹299',
-    discountType: 'flat',
-    discountValue: 100,
-    minOrderAmount: 299,
-    expiryDate: '2026-12-31',
-    usageLimit: 500,
     usedCount: 142,
     isActive: true,
   },
   {
-    id: 'coup_3',
-    code: 'SUPER20',
-    description: '20% OFF up to ₹200 on premium gourmet bowls',
-    discountType: 'percentage',
-    discountValue: 20,
-    minOrderAmount: 399,
-    maxDiscount: 200,
-    expiryDate: '2026-11-30',
-    usageLimit: 300,
-    usedCount: 89,
-    isActive: true,
-  },
-  {
-    id: 'coup_4',
-    code: 'SAVEMORE',
-    description: 'Flat ₹50 OFF on quick snacks above ₹149',
+    id: 'c_2',
+    code: 'FREEDEL',
+    description: 'Flat ₹40 OFF Delivery Fee on orders above ₹299',
     discountType: 'flat',
-    discountValue: 50,
-    minOrderAmount: 149,
-    expiryDate: '2026-10-31',
-    usageLimit: 200,
-    usedCount: 64,
+    discountValue: 40,
+    minOrderAmount: 299,
+    maxDiscount: 40,
+    expiryDate: '2026-11-30',
+    usageLimit: 500,
+    usedCount: 89,
     isActive: true,
   },
 ]
 
-const LOCAL_STORAGE_KEY = 'blinkbite_admin_coupons'
+const LOCAL_STORAGE_KEY = 'crave_admin_coupons'
+
+export async function fetchCouponsFromSupabase(): Promise<Coupon[]> {
+  try {
+    const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    if (!error && data && data.length > 0) {
+      const parsed: Coupon[] = data.map((item) => ({
+        id: item.id,
+        code: item.code,
+        description: item.description,
+        discountType: item.discount_type as 'percentage' | 'flat',
+        discountValue: item.discount_value,
+        minOrderAmount: item.min_order_amount,
+        maxDiscount: item.max_discount || undefined,
+        expiryDate: item.expiry_date || '2026-12-31',
+        usageLimit: item.usage_limit || undefined,
+        usedCount: item.used_count || 0,
+        isActive: item.is_active ?? true,
+      }))
+      saveCoupons(parsed)
+      return parsed
+    }
+  } catch (err) {
+    console.error('Failed to fetch coupons from Supabase:', err)
+  }
+  return getCoupons()
+}
 
 export function getCoupons(): Coupon[] {
   if (typeof window === 'undefined') return initialCoupons
@@ -106,7 +110,6 @@ export function validateCoupon(
     return { valid: false, discountAmount: 0, message: `Coupon code '${cleanCode}' has been deactivated.` }
   }
 
-  // Check expiry
   if (found.expiryDate) {
     const today = new Date().toISOString().split('T')[0]
     if (found.expiryDate < today) {
@@ -132,7 +135,6 @@ export function validateCoupon(
     discount = found.discountValue
   }
 
-  // Ensure discount does not exceed subtotal
   discount = Math.min(discount, subtotal)
 
   return {
