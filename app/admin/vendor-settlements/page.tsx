@@ -1,5 +1,7 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
   Clock3,
@@ -12,7 +14,6 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
 
 interface VendorFinancialRecord {
   id: string
@@ -42,88 +43,41 @@ export default function VendorSettlementsPage() {
   const [settlementProcessedSuccess, setSettlementProcessedSuccess] = useState(false)
 
   // Restaurants list with financial data
-  const [vendors, setVendors] = useState<VendorFinancialRecord[]>([
-    {
-      id: 'v_1',
-      name: 'The Green Table',
-      ownerName: 'Maya Lin',
-      email: 'green@table.com',
-      phone: '+91 98111 22334',
-      cuisine: 'Healthy Bowls & Salads',
-      address: '100ft Rd, Indiranagar, Bengaluru',
-      fssaiLicense: '#11223344556677',
-      bankAccount: 'HDFC •••• 9821',
-      ifscCode: 'HDFC0001234',
-      weeklyGrossSales: 148200,
-      commissionRate: 15,
-      packagingCapFee: 20,
-      promoSubsidyPct: 5,
-      settlementStatus: 'pending',
-      kitchenStatus: 'open',
-      activeOrdersCount: 3,
-      completedDropsCount: 42,
-    },
-    {
-      id: 'v_2',
-      name: 'Momo House & Asian Grill',
-      ownerName: 'Tenzin Norbu',
-      email: 'momo@house.com',
-      phone: '+91 98450 11223',
-      cuisine: 'Asian · Dumplings · Noodles',
-      address: '5th Block, Koramangala, Bengaluru',
-      fssaiLicense: '#22334455667788',
-      bankAccount: 'ICICI •••• 4412',
-      ifscCode: 'ICIC0000982',
-      weeklyGrossSales: 194500,
-      commissionRate: 15,
-      packagingCapFee: 25,
-      promoSubsidyPct: 0,
-      settlementStatus: 'pending',
-      kitchenStatus: 'open',
-      activeOrdersCount: 5,
-      completedDropsCount: 58,
-    },
-    {
-      id: 'v_3',
-      name: 'Casa Napoli Woodfired Pizza',
-      ownerName: 'Marco Rossi',
-      email: 'casa@napoli.com',
-      phone: '+91 99100 55443',
-      cuisine: 'Italian · Artisan Pizza · Pasta',
-      address: 'Church Street, Mg Road, Bengaluru',
-      fssaiLicense: '#33445566778899',
-      bankAccount: 'AXIS •••• 1092',
-      ifscCode: 'UTIB0000551',
-      weeklyGrossSales: 215000,
-      commissionRate: 12, // Preferred lower rate
-      packagingCapFee: 30,
-      promoSubsidyPct: 10,
-      settlementStatus: 'settled',
-      kitchenStatus: 'open',
-      activeOrdersCount: 2,
-      completedDropsCount: 74,
-    },
-    {
-      id: 'v_4',
-      name: 'Spice Route Bistro',
-      ownerName: 'Rohan Deshmukh',
-      email: 'spice@route.com',
-      phone: '+91 98777 66554',
-      cuisine: 'North Indian · Biryani',
-      address: 'HSR Layout Sector 1, Bengaluru',
-      fssaiLicense: '#44556677889900',
-      bankAccount: 'SBI •••• 5590',
-      ifscCode: 'SBIN0004821',
-      weeklyGrossSales: 86400,
-      commissionRate: 18,
-      packagingCapFee: 15,
-      promoSubsidyPct: 0,
-      settlementStatus: 'settled',
-      kitchenStatus: 'closed',
-      activeOrdersCount: 0,
-      completedDropsCount: 28,
-    },
-  ])
+  const [vendors, setVendors] = useState<VendorFinancialRecord[]>([])
+
+  useEffect(() => {
+    async function loadLiveSettlements() {
+      try {
+        const { data: setts } = await supabase.from('vendor_settlements').select('*')
+        if (setts && setts.length > 0) {
+          const loaded: VendorFinancialRecord[] = setts.map((s) => ({
+            id: s.id,
+            name: s.restaurant_name,
+            ownerName: 'Maya Lin',
+            email: 'green@table.com',
+            phone: '+91 98111 22334',
+            cuisine: 'Healthy Bowls & Salads',
+            address: 'Koramangala 5th Block, Bengaluru',
+            fssaiLicense: '#11223344556677',
+            bankAccount: 'HDFC •••• 9821',
+            ifscCode: 'HDFC0001234',
+            weeklyGrossSales: s.gross_sales,
+            commissionRate: s.commission_rate,
+            packagingCapFee: 20,
+            promoSubsidyPct: 0,
+            settlementStatus: s.status === 'settled' ? 'settled' : 'pending',
+            kitchenStatus: 'open',
+            activeOrdersCount: 2,
+            completedDropsCount: 38,
+          }))
+          setVendors(loaded)
+        }
+      } catch (err) {
+        console.error('Failed to load settlements from Supabase:', err)
+      }
+    }
+    loadLiveSettlements()
+  }, [])
 
   // Filtered vendors
   const filteredVendors = vendors.filter((v) => {

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export type UserRole = 'customer' | 'vendor' | 'driver' | 'admin'
 
@@ -30,7 +31,7 @@ interface AuthContextType {
   demoUsers: Record<UserRole, UserProfile>
 }
 
-const DEMO_USERS: Record<UserRole, UserProfile> = {
+export const TEST_USERS: Record<UserRole, UserProfile> = {
   customer: {
     id: 'usr_cust_1',
     name: 'Alex Rivera',
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-    return DEMO_USERS.customer
+    return TEST_USERS.customer
   })
 
   const [token, setToken] = useState<string | null>(() => {
@@ -104,6 +105,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function checkCurrentJWT() {
       try {
+        const savedUser = localStorage.getItem('crave_auth_user')
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser)
+          if (parsed?.email) {
+            const { data, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('email', parsed.email)
+              .maybeSingle()
+
+            if (!error && data) {
+              const profile: UserProfile = {
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                role: data.role as UserRole,
+                avatar: data.avatar,
+                phone: data.phone,
+                address: data.address,
+                restaurantName: data.restaurant_name,
+                cuisine: data.cuisine,
+                vehicleType: data.vehicle_type,
+                licensePlate: data.license_plate,
+              }
+              setUser(profile)
+              setIsLoading(false)
+              return
+            }
+          }
+        }
+
         const res = await fetch('/api/auth/me')
         if (res.ok) {
           const data = await res.json()
@@ -117,10 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (err) {
-        console.error('Failed to verify JWT:', err)
+        console.error('Failed to verify user session:', err)
       }
 
-      // If token is invalid or missing, clear cached state
       setUser(null)
       setToken(null)
       if (typeof window !== 'undefined') {
@@ -135,17 +166,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, requestedRole?: UserRole) => {
     try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (!error && data) {
+        const dbProfile: UserProfile = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role as UserRole,
+          avatar: data.avatar,
+          phone: data.phone,
+          address: data.address,
+          restaurantName: data.restaurant_name,
+          cuisine: data.cuisine,
+          vehicleType: data.vehicle_type,
+          licensePlate: data.license_plate,
+        }
+        setUser(dbProfile)
+        localStorage.setItem('crave_auth_user', JSON.stringify(dbProfile))
+        return true
+      }
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, role: requestedRole }),
       })
-      const data = await res.json()
-      if (data.success && data.user) {
-        setUser(data.user)
-        setToken(data.token)
-        localStorage.setItem('crave_jwt_token', data.token)
-        localStorage.setItem('crave_auth_user', JSON.stringify(data.user))
+      const apiData = await res.json()
+      if (apiData.success && apiData.user) {
+        setUser(apiData.user)
+        setToken(apiData.token)
+        localStorage.setItem('crave_jwt_token', apiData.token)
+        localStorage.setItem('crave_auth_user', JSON.stringify(apiData.user))
         setIsLoading(false)
         return true
       }
@@ -156,25 +212,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const loginAsRole = async (r: UserRole) => {
-    const demoUser = DEMO_USERS[r]
-    await login(demoUser.email, r)
+    const testUser = TEST_USERS[r]
+    await login(testUser.email, r)
   }
 
   const signup = async (userData: Partial<UserProfile> & { role: UserRole }) => {
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      })
-      const data = await res.json()
-      if (data.success && data.user) {
-        setUser(data.user)
-        setToken(data.token)
-        localStorage.setItem('crave_jwt_token', data.token)
-        localStorage.setItem('crave_auth_user', JSON.stringify(data.user))
-        setIsLoading(false)
+      const newId = `usr_${Date.now()}`
+      const newRecord = {
+        id: newId,
+        name: userData.name || 'New User',
+        email: userData.email,
+        role: userData.role,
+        phone: userData.phone || null,
+        address: userData.address || null,
+        avatar:
+          userData.avatar ||
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        restaurant_name: userData.restaurantName || null,
+        cuisine: userData.cuisine || null,
+        vehicle_type: userData.vehicleType || null,
+        license_plate: userData.licensePlate || null,
       }
+
+      await supabase.from('users').insert([newRecord])
+
+      const profile: UserProfile = {
+        id: newId,
+        name: newRecord.name,
+        email: newRecord.email!,
+        role: newRecord.role,
+        phone: newRecord.phone || undefined,
+        address: newRecord.address || undefined,
+        avatar: newRecord.avatar,
+        restaurantName: newRecord.restaurant_name || undefined,
+        cuisine: newRecord.cuisine || undefined,
+        vehicleType: newRecord.vehicle_type || undefined,
+        licensePlate: newRecord.license_plate || undefined,
+      }
+
+      setUser(profile)
+      localStorage.setItem('crave_auth_user', JSON.stringify(profile))
     } catch (err) {
       console.error('Signup error:', err)
     }
@@ -209,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginAsRole,
         signup,
         logout,
-        demoUsers: DEMO_USERS,
+        demoUsers: TEST_USERS,
       }}
     >
       {children}

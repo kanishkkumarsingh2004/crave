@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 interface PaymentReference {
   id: string
@@ -13,38 +14,40 @@ interface PaymentReference {
 }
 
 export default function AdminPaymentsPage() {
-  const [payments, setPayments] = useState<PaymentReference[]>([
-    {
-      id: 'pay_1',
-      orderId: '#CRV-9021',
-      customerUpi: 'alex@upi',
-      utrRef: '428190021389',
-      amount: 867,
-      submittedAt: '5 mins ago',
-      status: 'pending',
-    },
-    {
-      id: 'pay_2',
-      orderId: '#CRV-8840',
-      customerUpi: 'priya@okhdfc',
-      utrRef: '992011283741',
-      amount: 960,
-      submittedAt: '20 mins ago',
-      status: 'verified',
-    },
-    {
-      id: 'pay_3',
-      orderId: '#CRV-8712',
-      customerUpi: 'karan@icici',
-      utrRef: '109283746519',
-      amount: 289,
-      submittedAt: '45 mins ago',
-      status: 'verified',
-    },
-  ])
+  const [payments, setPayments] = useState<PaymentReference[]>([])
 
-  function verifyPayment(id: string, status: 'verified' | 'rejected') {
-    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
+  useEffect(() => {
+    async function loadLivePayments() {
+      try {
+        const { data, error } = await supabase.from('payment_reviews').select('*').order('created_at', { ascending: false })
+        if (!error && data && data.length > 0) {
+          const loaded: PaymentReference[] = data.map((p) => ({
+            id: p.id,
+            orderId: p.order_id,
+            customerUpi: p.customer_vpa || 'alex@upi',
+            utrRef: p.utr_ref,
+            amount: p.amount,
+            submittedAt: 'Just now',
+            status: p.status as 'pending' | 'verified' | 'rejected',
+          }))
+          setPayments(loaded)
+        }
+      } catch (err) {
+        console.error('Failed to load payment reviews from Supabase:', err)
+      }
+    }
+    loadLivePayments()
+  }, [])
+
+  async function verifyPayment(id: string, status: 'verified' | 'rejected') {
+    try {
+      await supabase.from('payment_reviews').update({ status }).eq('id', id)
+    } catch (err) {
+      console.error('Failed to update payment status in Supabase:', err)
+    }
+    setPayments((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status } : p))
+    )
   }
 
   return (
