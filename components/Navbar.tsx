@@ -1,5 +1,6 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import {
   Bike,
@@ -69,13 +70,8 @@ export default function Navbar() {
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex items-center gap-6">
-            <Link href={logoTargetLink} className="flex items-center gap-2.5 group">
-              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shadow-[0_4px_16px_rgba(217,244,71,0.4)] transition group-hover:scale-105">
-                <UtensilsCrossed className="size-5 fill-current" />
-              </span>
-              <span className="text-xl font-bold tracking-tight text-[#18201c]">
-                crave<span className="text-[#869c18]">.</span>
-              </span>
+            <Link href={logoTargetLink} className="flex items-center gap-2 group">
+              <CraveLogo variant="full" size="md" />
             </Link>
           </div>
 

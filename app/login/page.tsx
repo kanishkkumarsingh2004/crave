@@ -1,5 +1,7 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
+
 import Navbar, { roleDetails } from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Zap } from 'lucide-react'
@@ -77,13 +79,10 @@ export default function LoginPage() {
 
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto inline-grid size-12 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md">
-              <Zap className="size-6 fill-current" />
+            <div className="mb-2">
+              <CraveLogo variant="full" size="lg" />
             </div>
-            <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#18201c]">
-              Welcome Back to <span className="text-[#7d9518]">crave.</span>
-            </h1>
-            <p className="mt-1 text-xs text-[#717c76]">Sign in to your account.</p>
+            <p className="text-xs font-medium text-[#717c76]">Sign in to your account</p>
           </div>
 
           {/* Regular Login Form */}
