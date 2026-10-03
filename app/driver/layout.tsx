@@ -109,12 +109,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       icon: Wallet,
       badge: `₹${totalEarningsToday}`,
     },
-    {
-      href: '/driver/incentives',
-      label: 'Quests & Surge',
-      icon: Target,
-      badge: completedTrips.length > 0 ? `+₹${completedTrips.length * 20}` : '0',
-    },
     { href: '/driver/profile', label: 'Vehicle & Profile', icon: User, badge: 'Profile' },
     { href: '/driver/settings', label: 'UPI Payout Settings', icon: Settings, badge: 'UPI' },
   ]
@@ -497,17 +491,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <span className="text-[9px]">Wallet</span>
           </Link>
 
-          <Link
-            href="/driver/incentives"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
-              pathname === '/driver/incentives'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Target className="size-4" />
-            <span className="text-[9px]">Quests</span>
-          </Link>
 
           <Link
             href="/driver/settings"

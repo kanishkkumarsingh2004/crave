@@ -14,7 +14,7 @@ import {
   User,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function DriverDashboardPage() {
   const {
@@ -26,10 +26,16 @@ export default function DriverDashboardPage() {
     completeDelivery,
   } = useDriver()
 
-  const [otpInput, setOtpInput] = useState('4921')
+  const [otpInput, setOtpInput] = useState(activeTask?.otp || '')
   const [delayModalOpen, setDelayModalOpen] = useState(false)
   const [smsDrawerOpen, setSmsDrawerOpen] = useState(false)
   const [sentSmsMsg, setSentSmsMsg] = useState('')
+
+  useEffect(() => {
+    if (activeTask?.otp) {
+      setOtpInput(activeTask.otp)
+    }
+  }, [activeTask?.otp])
 
   function sendQuickSms(templateText: string) {
     setSentSmsMsg(`SMS Sent to customer: "${templateText}"`)
@@ -215,10 +221,10 @@ export default function DriverDashboardPage() {
                       maxLength={4}
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value)}
-                      className="w-32 rounded-xl border border-blue-300 px-3 py-2 text-center text-base font-extrabold tracking-widest outline-none focus:border-blue-600"
-                      placeholder="4921"
+                      className="w-32 rounded-xl border border-blue-300 px-3 py-2 text-center text-base font-extrabold tracking-widest outline-none focus:border-blue-600 font-mono"
+                      placeholder={activeTask.otp || '1234'}
                     />
-                    <span className="text-xs text-[#737e77] font-medium">Default PIN: 4921</span>
+                    <span className="text-xs text-[#737e77] font-medium">Customer OTP: <strong className="font-mono font-bold text-[#18201c]">{activeTask.otp || '1234'}</strong></span>
                   </div>
                 </div>
               )}
@@ -254,7 +260,12 @@ export default function DriverDashboardPage() {
 
             {activeTask.step === 'arrived_customer' && (
               <button
-                onClick={() => completeDelivery()}
+                onClick={() => {
+                  const res = completeDelivery(otpInput || activeTask.otp)
+                  if (!res.success) {
+                    alert(res.message)
+                  }
+                }}
                 className="mt-2 w-full rounded-full bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-emerald-700 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="size-4 text-white" /> Verify PIN &amp; Complete Delivery

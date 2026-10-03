@@ -19,6 +19,23 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     async function loadLivePayments() {
       try {
+        const res = await fetch('/api/orders')
+        const json = await res.json()
+        if (json.success && Array.isArray(json.orders)) {
+          const utrOrders = json.orders.filter((o: any) => o.utr_ref || o.customer_vpa)
+          const loaded: PaymentReference[] = utrOrders.map((o: any) => ({
+            id: o.id,
+            orderId: o.id,
+            customerUpi: o.customer_vpa || 'customer@upi',
+            utrRef: o.utr_ref || '123456789012',
+            amount: o.total_amount,
+            submittedAt: 'Just now',
+            status: (o.payment_status || 'pending') as 'pending' | 'verified' | 'rejected',
+          }))
+          setPayments(loaded)
+          return
+        }
+
         const { data, error } = await supabase
           .from('payment_reviews')
           .select('*')
@@ -27,7 +44,7 @@ export default function AdminPaymentsPage() {
           const loaded: PaymentReference[] = data.map((p) => ({
             id: p.id,
             orderId: p.order_id,
-            customerUpi: p.customer_vpa || 'alex@upi',
+            customerUpi: p.customer_vpa || 'customer@upi',
             utrRef: p.utr_ref,
             amount: p.amount,
             submittedAt: 'Just now',
@@ -36,7 +53,7 @@ export default function AdminPaymentsPage() {
           setPayments(loaded)
         }
       } catch (err) {
-        console.error('Failed to load payment reviews from Supabase:', err)
+        console.error('Failed to load payment reviews:', err)
       }
     }
     loadLivePayments()
@@ -46,14 +63,19 @@ export default function AdminPaymentsPage() {
 
   async function verifyPayment(id: string, status: 'verified' | 'rejected') {
     try {
-      await supabase.from('payment_reviews').update({ status }).eq('id', id)
-      const target = payments.find((p) => p.id === id)
-      if (target && status === 'verified') {
-        const cleanOrderId = target.orderId.replace('#', '')
-        await supabase.from('orders').update({ status: 'preparing' }).eq('id', cleanOrderId)
-      }
+      await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: id,
+          payment_status: status,
+          status: status === 'verified' ? 'preparing' : 'cancelled',
+        }),
+      })
+
+      await supabase.from('payment_reviews').update({ status }).eq('order_id', id)
     } catch (err) {
-      console.error('Failed to update payment status in Supabase:', err)
+      console.error('Failed to update payment status:', err)
     }
     setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }

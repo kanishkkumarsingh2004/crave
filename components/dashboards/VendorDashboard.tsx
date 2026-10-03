@@ -23,12 +23,16 @@ import { useEffect, useState } from 'react'
 interface KitchenOrder {
   id: string
   customerName: string
+  customerPhone?: string
   itemsText: string
   subtotal: number
   totalAmount: number
   status: string
+  paymentStatus: string
   time: string
   address: string
+  deliveryOtp?: string
+  utrRef?: string
 }
 
 export default function VendorDashboard() {
@@ -39,39 +43,67 @@ export default function VendorDashboard() {
 
   const loadLiveKitchenOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (!error && data) {
-        const parsed: KitchenOrder[] = data.map((o) => {
-          let itemNames = 'Order Items'
-          try {
-            const arr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-            if (Array.isArray(arr)) {
-              itemNames = arr.map((i: any) => `${i.qty || 1}x ${i.name}`).join(', ')
-            }
-          } catch (e) {}
-
-          return {
-            id: o.id,
-            customerName: o.customer_name || 'Customer',
-            itemsText: itemNames,
-            subtotal: o.subtotal || 0,
-            totalAmount: o.total_amount || 0,
-            status: o.status || 'new',
-            time: o.created_at
-              ? new Date(o.created_at).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : 'Just now',
-            address: o.customer_address || 'Bengaluru',
-          }
-        })
-        setKitchenOrders(parsed)
+      let ordersData: any[] = []
+      const res = await fetch('/api/orders')
+      const json = await res.json()
+      if (json.success && Array.isArray(json.orders)) {
+        ordersData = json.orders
+      } else {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (!error && data) {
+          ordersData = data
+        }
       }
+
+      const vendorId = user?.restaurantId || user?.id
+      if (vendorId && ordersData.length > 0) {
+        const vendorFiltered = ordersData.filter(
+          (o) =>
+            o.restaurant_id === vendorId ||
+            o.vendor_id === vendorId ||
+            (user?.restaurantName && o.restaurant_name === user.restaurantName)
+        )
+        if (vendorFiltered.length > 0) {
+          ordersData = vendorFiltered
+        }
+      }
+
+      const parsed: KitchenOrder[] = ordersData.map((o: any) => {
+        let itemNames = 'Order Items'
+        try {
+          const arr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+          if (Array.isArray(arr)) {
+            itemNames = arr.map((i: any) => `${i.qty || 1}x ${i.name}`).join(', ')
+          }
+        } catch (e) {}
+
+        const formattedTime =
+          o.createdAt || o.created_at
+            ? new Date(o.createdAt || o.created_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'Just now'
+
+        return {
+          id: o.id,
+          customerName: o.customer_name || 'Customer',
+          customerPhone: o.customer_phone || undefined,
+          itemsText: itemNames,
+          subtotal: Number(o.subtotal || 0),
+          totalAmount: Number(o.total_amount || 0),
+          status: o.status || 'new',
+          paymentStatus: o.payment_status || 'pending',
+          time: formattedTime,
+          address: o.customer_address || 'Bengaluru',
+          deliveryOtp: o.delivery_otp || undefined,
+          utrRef: o.utr_ref || undefined,
+        }
+      })
+      setKitchenOrders(parsed)
     } catch (err) {
       console.error('Failed to load kitchen orders:', err)
     }
@@ -79,12 +111,20 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     loadLiveKitchenOrders()
-    const timer = setInterval(loadLiveKitchenOrders, 5000)
+    const timer = setInterval(loadLiveKitchenOrders, 3000)
     return () => clearInterval(timer)
-  }, [])
+  }, [user?.id, user?.restaurantId, user?.restaurantName])
 
   const updateOrderStatus = async (orderId: string, nextStatus: string) => {
     try {
+      await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          status: nextStatus,
+        }),
+      })
       await supabase.from('orders').update({ status: nextStatus }).eq('id', orderId)
     } catch (err) {
       console.error('Failed to update kitchen order status:', err)
@@ -333,52 +373,78 @@ export default function VendorDashboard() {
                     key={order.id}
                     className="rounded-2xl border border-gray-200 p-4 bg-white shadow-xs space-y-3"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
                       <div>
-                        <span className="font-mono text-xs font-bold text-gray-500">
-                          #{order.id}
-                        </span>
-                        <h4 className="font-bold text-sm text-[#18201c]">{order.customerName}</h4>
-                        <p className="text-[11px] text-gray-500">
-                          {order.address} · {order.time}
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-gray-500">
+                            #{order.id.slice(0, 8)}...
+                          </span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${
+                              order.paymentStatus === 'verified'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {order.paymentStatus === 'verified' ? '✓ Payment Verified' : '⏳ Payment Pending'}
+                          </span>
+                          {order.deliveryOtp && (
+                            <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-mono font-black text-[#18201c]">
+                              OTP: {order.deliveryOtp}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-base text-[#18201c] mt-1">{order.customerName}</h4>
+                        <p className="text-xs text-gray-500">
+                          {order.address} · <span className="font-semibold text-gray-700">{order.time}</span>
                         </p>
+                        {order.utrRef && (
+                          <p className="text-[10px] font-mono text-gray-400 mt-0.5">
+                            UTR: {order.utrRef}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-emerald-700">
+                        <span className="text-base font-black text-emerald-700">
                           ₹{order.totalAmount}
                         </span>
                         <div className="mt-1">
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                              order.status === 'ready'
-                                ? 'bg-emerald-100 text-emerald-800'
+                            className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                              order.status === 'ready' || order.status === 'out_for_delivery'
+                                ? 'bg-emerald-600 text-white'
                                 : order.status === 'preparing'
-                                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                  : 'bg-blue-100 text-blue-800'
+                                  ? 'bg-amber-500 text-white'
+                                  : order.status === 'delivered'
+                                    ? 'bg-gray-800 text-white'
+                                    : 'bg-blue-600 text-white'
                             }`}
                           >
-                            {order.status}
+                            {order.status === 'new' && 'New Order'}
+                            {order.status === 'preparing' && 'Kitchen Cooking'}
+                            {order.status === 'ready' && 'Ready for Pickup'}
+                            {order.status === 'out_for_delivery' && 'Out for Delivery'}
+                            {order.status === 'delivered' && 'Delivered'}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <p className="text-xs font-medium text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <p className="text-xs font-semibold text-gray-800 bg-[#f8f9f7] p-3 rounded-xl border border-gray-200">
                       🍱 {order.itemsText}
                     </p>
 
-                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
-                      {order.status === 'new' && (
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                      {(order.status === 'new' || order.status === 'preparing') && (
                         <button
                           type="button"
                           onClick={() => updateOrderStatus(order.id, 'preparing')}
                           className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition flex items-center gap-1.5"
                         >
-                          <CookingPot className="size-3.5 text-[#d9f447]" /> Accept &amp; Start
-                          Preparing
+                          <CookingPot className="size-3.5 text-[#d9f447]" /> Start Preparing
                         </button>
                       )}
-                      {order.status === 'preparing' && (
+                      {(order.status === 'new' || order.status === 'preparing') && (
                         <button
                           type="button"
                           onClick={() => updateOrderStatus(order.id, 'ready')}
@@ -387,9 +453,27 @@ export default function VendorDashboard() {
                           <CheckCircle2 className="size-3.5" /> Mark Ready for Pickup
                         </button>
                       )}
-                      {order.status === 'ready' && (
-                        <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                          <PackageCheck className="size-4" /> Ready for Driver Pickup
+                      {(order.status === 'ready' || order.status === 'preparing') && (
+                        <button
+                          type="button"
+                          onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}
+                          className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition flex items-center gap-1.5"
+                        >
+                          <PackageCheck className="size-3.5" /> Dispatch Out for Delivery
+                        </button>
+                      )}
+                      {order.status === 'out_for_delivery' && (
+                        <button
+                          type="button"
+                          onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          className="rounded-full bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="size-3.5" /> Mark Delivered
+                        </button>
+                      )}
+                      {order.status === 'delivered' && (
+                        <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
+                          <CheckCircle2 className="size-4 text-emerald-600" /> Order Completed &amp; Delivered
                         </span>
                       )}
                     </div>
