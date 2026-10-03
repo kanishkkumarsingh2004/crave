@@ -49,7 +49,10 @@ export default function PoliciesIndexPage() {
     >
       <div className="space-y-6">
         <p className="text-gray-700 text-sm leading-relaxed">
-          Welcome to the <strong className="text-[#18201c]">crave.</strong> Trust &amp; Legal Center. Below you will find all legal agreements, privacy frameworks, and regulatory disclosures governing the crave. food delivery app, Crave XP Instamart network, merchant portal, and rider platforms.
+          Welcome to the <strong className="text-[#18201c]">crave.</strong> Trust &amp; Legal
+          Center. Below you will find all legal agreements, privacy frameworks, and regulatory
+          disclosures governing the crave. food delivery app, Crave XP Instamart network, merchant
+          portal, and rider platforms.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2 pt-2">
@@ -69,9 +72,7 @@ export default function PoliciesIndexPage() {
                     <span>{card.title}</span>
                     <ArrowRight className="size-4 text-gray-400 group-hover:text-[#849e16] group-hover:translate-x-1 transition" />
                   </h3>
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {card.desc}
-                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed">{card.desc}</p>
                 </div>
               </Link>
             )

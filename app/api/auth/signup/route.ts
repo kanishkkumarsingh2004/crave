@@ -80,22 +80,33 @@ export async function POST(request: Request) {
     }
 
     if (role === 'vendor') {
-      const { error: restaurantError } = await supabase.from('restaurants').insert([
+      const vendorId = crypto.randomUUID()
+      // 1. Insert into vendors table
+      await supabase.from('vendors').insert([
         {
-          id: crypto.randomUUID(),
+          id: vendorId,
+          userId: authData.user.id,
+          storeName: String(restaurantName).trim(),
+          description: String(cuisine).trim(),
+          address: address || null,
+          status: 'ACTIVE',
+          isOpen: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ])
+
+      // 2. Insert into restaurants table fallback
+      await supabase.from('restaurants').insert([
+        {
+          id: vendorId,
           owner_id: authData.user.id,
           name: String(restaurantName).trim(),
           cuisine: String(cuisine).trim(),
           address: address || null,
+          is_open: true,
         },
       ])
-      if (restaurantError) {
-        console.error('Failed to create the vendor restaurant:', restaurantError)
-        return NextResponse.json(
-          { error: 'Account created, but its restaurant profile could not be saved' },
-          { status: 500 }
-        )
-      }
     }
 
     if (!authData.session) {

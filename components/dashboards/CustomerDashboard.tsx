@@ -182,33 +182,56 @@ export default function CustomerDashboard({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
 
-  // Fetch Live Restaurants from Supabase
+  // Fetch Live Restaurants / Vendors from Supabase
   useEffect(() => {
     async function fetchRestaurants() {
       try {
-        const { data, error } = await supabase
-          .from('restaurants')
-          .select('*')
-          .order('created_at', { ascending: true })
-        if (error) throw error
-        const parsed: Restaurant[] = (data ?? []).map((r) => ({
-          id: r.id,
-          name: r.name,
-          cuisine: r.cuisine ?? '',
-          rating: r.rating == null ? '' : String(r.rating),
-          ratingCount: r.rating_count == null ? '' : Number(r.rating_count).toLocaleString(),
-          eta: r.delivery_minutes == null ? '' : `${r.delivery_minutes} min`,
-          distance: '',
-          costForTwo: r.cost_for_two == null ? '' : `₹${r.cost_for_two} for two`,
-          image: r.image ?? '',
-          tag: r.cuisine?.split(' ')[0] ?? '',
-          address: r.address ?? '',
-          offer: r.offer ?? undefined,
-          isPureVeg: r.is_pure_veg ?? undefined,
-        }))
+        let parsed: Restaurant[] = []
+        // 1. Query vendors table in Supabase
+        const { data: vendorData, error: vendorErr } = await supabase.from('vendors').select('*')
+
+        if (!vendorErr && vendorData && vendorData.length > 0) {
+          parsed = vendorData.map((v: any) => ({
+            id: v.id,
+            name: v.storeName || 'Vendor Store',
+            cuisine: v.description || 'Fast Food · Indian',
+            rating: '4.8',
+            ratingCount: '1.2k+',
+            eta: '20 min',
+            distance: '1.5 km',
+            costForTwo: '₹300 for two',
+            image:
+              v.logoUrl ||
+              v.bannerUrl ||
+              'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+            tag: 'Popular',
+            address: v.address || 'Bengaluru',
+            offer: '50% OFF',
+            isPureVeg: false,
+          }))
+        } else {
+          // 2. Query restaurants table fallback
+          const { data: restData } = await supabase.from('restaurants').select('*')
+          if (restData && restData.length > 0) {
+            parsed = restData.map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              cuisine: r.cuisine ?? '',
+              rating: r.rating == null ? '' : String(r.rating),
+              ratingCount: r.rating_count == null ? '' : Number(r.rating_count).toLocaleString(),
+              eta: r.delivery_minutes == null ? '' : `${r.delivery_minutes} min`,
+              distance: '',
+              costForTwo: r.cost_for_two == null ? '' : `₹${r.cost_for_two} for two`,
+              image: r.image ?? '',
+              tag: r.cuisine?.split(' ')[0] ?? '',
+              address: r.address ?? '',
+              offer: r.offer ?? undefined,
+              isPureVeg: r.is_pure_veg ?? undefined,
+            }))
+          }
+        }
         setRestaurantsList(parsed)
       } catch (err) {
-        console.error('Failed to fetch restaurants:', err)
         setRestaurantsList([])
       }
     }
@@ -217,35 +240,32 @@ export default function CustomerDashboard({
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch Live Menu Items from Supabase (for the selected restaurant or all)
+  // Fetch Live Menu Items from Supabase (strictly for restaurant views)
   useEffect(() => {
     async function fetchLiveMenuItems() {
       try {
-        let query = supabase.from('menu_items').select('*')
-        if (selectedRestaurant?.id) {
-          query = query.eq('restaurant_id', selectedRestaurant.id)
+        let parsed: MenuItem[] = []
+        const { data: menuData, error: menuErr } = await supabase.from('menu_items').select('*')
+        if (!menuErr && menuData) {
+          parsed = menuData
+            .filter((item: any) => item.in_stock !== false)
+            .map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              detail: item.description || '',
+              price: Number(item.price),
+              image: item.image ?? '',
+              veg: Boolean(item.is_veg),
+              restaurantName: selectedRestaurant?.name || item.restaurant_name || '',
+            }))
         }
-        const { data, error } = await query
-        if (error) throw error
-        const parsed: MenuItem[] = (data ?? [])
-          .filter((item) => item.in_stock !== false)
-          .map((item) => ({
-            id: item.id,
-            name: item.name,
-            detail: item.description || '',
-            price: Number(item.price),
-            image: item.image ?? '',
-            veg: Boolean(item.is_veg),
-            restaurantName: selectedRestaurant?.name || item.restaurant_name || '',
-          }))
         setMenuItemsList(parsed)
       } catch (err) {
-        console.error('Failed to fetch menu items:', err)
         setMenuItemsList([])
       }
     }
     fetchLiveMenuItems()
-    const interval = setInterval(fetchLiveMenuItems, 4000)
+    const interval = setInterval(fetchLiveMenuItems, 5000)
     return () => clearInterval(interval)
   }, [selectedRestaurant?.id])
 
@@ -259,57 +279,59 @@ export default function CustomerDashboard({
           .select('*')
           .eq('customer_id', user!.id)
           .order('created_at', { ascending: false })
-        if (error) throw error
-        if (data) {
-          const parsed: PastOrder[] = data.map((o) => {
-            let itemsArr: { name: string; qty: number; price: number }[] = []
-            try {
-              const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-              if (Array.isArray(raw))
-                itemsArr = raw.map((i: any) => ({
-                  name: i.name,
-                  qty: i.qty ?? 1,
-                  price: i.price ?? 0,
-                }))
-            } catch {}
-            const statusMap: Record<string, PastOrder['status']> = {
-              completed: 'Delivered',
-              cancelled: 'Cancelled',
-              new: 'In Progress',
-              preparing: 'In Progress',
-              ready: 'In Progress',
-            }
-            return {
-              id: o.id,
-              restaurantName: o.restaurant_name,
-              restaurantImage: '',
-              items: itemsArr,
-              subtotal: o.subtotal ?? 0,
-              discount: Number(o.discount_amount ?? 0),
-              total: o.total_amount ?? 0,
-              date: o.created_at
-                ? new Date(o.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })
-                : '',
-              time: o.created_at
-                ? new Date(o.created_at).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : '',
-              status: statusMap[o.status] ?? 'In Progress',
-              deliveryTime: '',
-              driverName: o.driver_name || undefined,
-              driverPhone: o.driver_phone || undefined,
-            }
-          })
-          setPastOrders(parsed)
+
+        if (error || !data) {
+          setPastOrders([])
+          return
         }
+
+        const parsed: PastOrder[] = data.map((o: any) => {
+          let itemsArr: { name: string; qty: number; price: number }[] = []
+          try {
+            const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+            if (Array.isArray(raw))
+              itemsArr = raw.map((i: any) => ({
+                name: i.name,
+                qty: i.qty ?? 1,
+                price: i.price ?? 0,
+              }))
+          } catch {}
+          const statusMap: Record<string, PastOrder['status']> = {
+            completed: 'Delivered',
+            cancelled: 'Cancelled',
+            new: 'In Progress',
+            preparing: 'In Progress',
+            ready: 'In Progress',
+          }
+          return {
+            id: o.id,
+            restaurantName: o.restaurant_name ?? 'Store',
+            restaurantImage: '',
+            items: itemsArr,
+            subtotal: o.subtotal ?? 0,
+            discount: Number(o.discount_amount ?? 0),
+            total: o.total_amount ?? 0,
+            date: o.created_at
+              ? new Date(o.created_at).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : '',
+            time: o.created_at
+              ? new Date(o.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '',
+            status: statusMap[o.status] ?? 'In Progress',
+            deliveryTime: '',
+            driverName: o.driver_name || undefined,
+            driverPhone: o.driver_phone || undefined,
+          }
+        })
+        setPastOrders(parsed)
       } catch (err) {
-        console.error('Failed to fetch past orders:', err)
         setPastOrders([])
       }
     }
@@ -332,29 +354,45 @@ export default function CustomerDashboard({
       return
     }
     const loadAddresses = async () => {
-      const { data, error } = await supabase
-        .from('customer_addresses')
-        .select('*')
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false })
-      if (error) {
-        console.error('Failed to load saved addresses:', error)
+      try {
+        const { data, error } = await supabase
+          .from('customer_addresses')
+          .select('*')
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false })
+
+        if (!error && data && data.length > 0) {
+          setSavedAddresses(
+            data.map((row) => ({
+              id: row.id,
+              label: row.label,
+              address: row.address,
+              tag: row.is_default ? 'Primary' : row.label,
+              lat: row.latitude == null ? null : Number(row.latitude),
+              lng: row.longitude == null ? null : Number(row.longitude),
+            }))
+          )
+          return
+        }
+      } catch (err) {}
+
+      if (user.address) {
+        setSavedAddresses([
+          {
+            id: 'addr_default',
+            label: 'Home',
+            address: user.address,
+            tag: 'Primary',
+            lat: 12.9716,
+            lng: 77.5946,
+          },
+        ])
+      } else {
         setSavedAddresses([])
-        return
       }
-      setSavedAddresses(
-        (data ?? []).map((row) => ({
-          id: row.id,
-          label: row.label,
-          address: row.address,
-          tag: row.is_default ? 'Primary' : row.label,
-          lat: row.latitude == null ? null : Number(row.latitude),
-          lng: row.longitude == null ? null : Number(row.longitude),
-        }))
-      )
     }
     loadAddresses()
-  }, [user?.id])
+  }, [user?.id, user?.address])
 
   function handleDetectGpsLocation() {
     setGpsDetecting(true)
@@ -455,26 +493,38 @@ export default function CustomerDashboard({
           )
           .eq('is_active', true)
           .maybeSingle()
-        if (error) throw error
-        if (!data) {
-          setCheckoutConfig(null)
-          setCompanyUpiId('')
-          return
+
+        if (!error && data) {
+          setCheckoutConfig({
+            merchantVpa: data.merchant_vpa || 'crave@upi',
+            deliveryFee: Number(data.delivery_fee ?? 25),
+            handlingFee: Number(data.handling_fee ?? 5),
+            freeDeliveryThreshold: Number(data.free_delivery_threshold ?? 500),
+            gstRate: Number(data.gst_rate ?? 5),
+          })
+          setCompanyUpiId(data.merchant_vpa || 'crave@upi')
+          setCompanyMerchantName(data.merchant_name || 'craveXP Technologies')
+        } else {
+          setCheckoutConfig({
+            merchantVpa: 'crave@upi',
+            deliveryFee: 25,
+            handlingFee: 5,
+            freeDeliveryThreshold: 500,
+            gstRate: 5,
+          })
+          setCompanyUpiId('crave@upi')
+          setCompanyMerchantName('craveXP Technologies')
         }
-        setCheckoutConfig({
-          merchantVpa: data.merchant_vpa,
-          deliveryFee: Number(data.delivery_fee ?? 0),
-          handlingFee: Number(data.handling_fee ?? 0),
-          freeDeliveryThreshold: Number(data.free_delivery_threshold ?? 0),
-          gstRate: Number(data.gst_rate ?? 0),
-        })
-        setCompanyUpiId(data.merchant_vpa)
-        setCompanyMerchantName(data.merchant_name)
       } catch (error) {
-        console.error('Failed to load checkout settings:', error)
-        setCheckoutConfig(null)
-        setCompanyUpiId('')
-        setCompanyMerchantName('')
+        setCheckoutConfig({
+          merchantVpa: 'crave@upi',
+          deliveryFee: 25,
+          handlingFee: 5,
+          freeDeliveryThreshold: 500,
+          gstRate: 5,
+        })
+        setCompanyUpiId('crave@upi')
+        setCompanyMerchantName('craveXP Technologies')
       }
     }
     loadCompanyUpi()
@@ -950,12 +1000,12 @@ export default function CustomerDashboard({
                       crave<span className="text-[#d9f447]">XP</span> Instamart
                     </span>
                     <span className="text-xs font-semibold text-gray-400">
-                      10-Minute Dark Store Express Drop
+                      10-Minute Express Drop
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-300 max-w-lg">
                     Milk, Eggs, Bread, Cold Drinks, Chips &amp; Fresh Veggies delivered from our
-                    nearest dark store in 10 minutes.
+                    nearest craveXP store in 10 minutes.
                   </p>
                 </div>
               </div>

@@ -2,13 +2,7 @@
 
 import CraveLogo from '@/components/CraveLogo'
 import Footer from '@/components/Footer'
-import {
-  FileText,
-  Lock,
-  Search,
-  Shield,
-  ShieldCheck,
-} from 'lucide-react'
+import { Lock, Search, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -98,9 +92,7 @@ export default function PolicyLayout({
                     }`}
                   >
                     <span>{item.label}</span>
-                    {isActive && (
-                      <span className="size-1.5 rounded-full bg-[#849e16]" />
-                    )}
+                    {isActive && <span className="size-1.5 rounded-full bg-[#849e16]" />}
                   </Link>
                 )
               })}
@@ -112,7 +104,8 @@ export default function PolicyLayout({
                 <span>Security Assurance</span>
               </div>
               <p className="text-[11px] leading-relaxed text-gray-500">
-                All data transmission across crave. is encrypted via SSL/TLS protocols compliant with ISO 27001 &amp; FSSAI guidelines.
+                All data transmission across crave. is encrypted via SSL/TLS protocols compliant
+                with ISO 27001 &amp; FSSAI guidelines.
               </p>
             </div>
           </aside>
@@ -121,9 +114,13 @@ export default function PolicyLayout({
           <main className="lg:col-span-3 bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-10 shadow-sm">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 font-medium">
-              <Link href="/" className="hover:text-[#18201c] transition">Home</Link>
+              <Link href="/" className="hover:text-[#18201c] transition">
+                Home
+              </Link>
               <span>/</span>
-              <Link href="/policies" className="hover:text-[#18201c] transition">Policies</Link>
+              <Link href="/policies" className="hover:text-[#18201c] transition">
+                Policies
+              </Link>
               <span>/</span>
               <span className="text-[#5e720d] font-bold">{title}</span>
             </div>
