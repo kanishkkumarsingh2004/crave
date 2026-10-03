@@ -1,6 +1,7 @@
 'use client'
 
 import { Coupon, getCoupons, saveCoupons } from '@/lib/coupons'
+import { supabase } from '@/lib/supabase'
 import {
   Check,
   CheckCircle2,
@@ -15,6 +16,36 @@ import {
   X,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+
+const fetchCouponsFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      const parsed: Coupon[] = data.map((item) => ({
+        id: item.id,
+        code: item.code,
+        description: item.description,
+        discountType: item.discount_type as 'percentage' | 'flat',
+        discountValue: item.discount_value,
+        minOrderAmount: item.min_order_amount,
+        maxDiscount: item.max_discount || undefined,
+        expiryDate: item.expiry_date || '2026-12-31',
+        usageLimit: item.usage_limit || undefined,
+        usedCount: item.used_count || 0,
+        isActive: item.is_active ?? true,
+      }))
+      saveCoupons(parsed)
+      return parsed
+    }
+  } catch (err) {
+    console.error('Failed to fetch coupons from Supabase:', err)
+  }
+  return getCoupons()
+}
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -40,7 +71,11 @@ export default function AdminCouponsPage() {
   const [toastMsg, setToastMsg] = useState('')
 
   useEffect(() => {
-    setCoupons(getCoupons())
+    async function load() {
+      const data = await fetchCouponsFromSupabase()
+      setCoupons(data)
+    }
+    load()
   }, [])
 
   function showToast(msg: string) {
@@ -48,7 +83,7 @@ export default function AdminCouponsPage() {
     setTimeout(() => setToastMsg(''), 3000)
   }
 
-  function handleSaveCoupon(e: React.FormEvent) {
+  async function handleSaveCoupon(e: React.FormEvent) {
     e.preventDefault()
     if (!code.trim() || !discountValue || !minOrderAmount) return
 
@@ -70,6 +105,23 @@ export default function AdminCouponsPage() {
 
     let updated: Coupon[]
     if (editingCoupon) {
+      const dbRecord = {
+        code: formattedCode,
+        description,
+        discount_type: discountType,
+        discount_value: dVal,
+        min_order_amount: mOrder,
+        max_discount: mMax || null,
+        expiry_date: expiryDate || '2026-12-31',
+        usage_limit: uLimit || null,
+        is_active: isActive,
+      }
+      try {
+        await supabase.from('coupons').update(dbRecord).eq('id', editingCoupon.id)
+      } catch (err) {
+        console.error('Failed to update coupon in Supabase:', err)
+      }
+
       updated = coupons.map((c) =>
         c.id === editingCoupon.id
           ? {
@@ -88,12 +140,32 @@ export default function AdminCouponsPage() {
       )
       showToast(`Coupon '${formattedCode}' updated successfully!`)
     } else {
-      const newCoupon: Coupon = {
-        id: `coup_${Date.now()}`,
+      const newId = `c_${Date.now()}`
+      const descStr = description || `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`
+      const dbRecord = {
+        id: newId,
         code: formattedCode,
-        description:
-          description ||
-          `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`,
+        description: descStr,
+        discount_type: discountType,
+        discount_value: dVal,
+        min_order_amount: mOrder,
+        max_discount: mMax || null,
+        usage_limit: uLimit || null,
+        used_count: 0,
+        is_active: true,
+        expiry_date: expiryDate || '2026-12-31',
+      }
+
+      try {
+        await supabase.from('coupons').insert([dbRecord])
+      } catch (err) {
+        console.error('Failed to insert coupon into Supabase:', err)
+      }
+
+      const newCoupon: Coupon = {
+        id: newId,
+        code: formattedCode,
+        description: descStr,
         discountType,
         discountValue: dVal,
         minOrderAmount: mOrder,
@@ -112,19 +184,29 @@ export default function AdminCouponsPage() {
     closeModal()
   }
 
-  function toggleCouponActive(id: string) {
-    const updated = coupons.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c))
+  async function toggleCouponActive(id: string) {
+    const item = coupons.find((c) => c.id === id)
+    if (!item) return
+    const newStatus = !item.isActive
+    try {
+      await supabase.from('coupons').update({ is_active: newStatus }).eq('id', id)
+    } catch (err) {
+      console.error('Failed to toggle coupon in Supabase:', err)
+    }
+    const updated = coupons.map((c) => (c.id === id ? { ...c, isActive: newStatus } : c))
     setCoupons(updated)
     saveCoupons(updated)
-    const item = coupons.find((c) => c.id === id)
-    showToast(
-      `Coupon '${item?.code}' status toggled to ${!item?.isActive ? 'Active' : 'Inactive'}.`
-    )
+    showToast(`Coupon '${item.code}' status toggled to ${newStatus ? 'Active' : 'Inactive'}.`)
   }
 
-  function deleteCoupon(id: string) {
+  async function deleteCoupon(id: string) {
     const item = coupons.find((c) => c.id === id)
     if (!confirm(`Are you sure you want to delete coupon '${item?.code}'?`)) return
+    try {
+      await supabase.from('coupons').delete().eq('id', id)
+    } catch (err) {
+      console.error('Failed to delete coupon in Supabase:', err)
+    }
     const updated = coupons.filter((c) => c.id !== id)
     setCoupons(updated)
     saveCoupons(updated)
@@ -397,8 +479,9 @@ export default function AdminCouponsPage() {
             className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm flex flex-col gap-3"
           >
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="rounded-xl bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 border border-purple-200 font-mono">
-                🏷️ {c.code}
+              <span className="rounded-xl bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 border border-purple-200 font-mono flex items-center gap-1.5">
+                <Tag className="size-3.5 text-purple-700" />
+                {c.code}
               </span>
               <button
                 onClick={() => toggleCouponActive(c.id)}
