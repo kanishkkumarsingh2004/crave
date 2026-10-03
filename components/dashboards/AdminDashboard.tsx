@@ -3,6 +3,7 @@
 import AdminAnalyticsPage from '@/app/admin/analytics/page'
 import AdminSettingsPage from '@/app/admin/settings/page'
 import { useAuth, UserRole } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import {
   Activity,
   ArrowUpRight,
@@ -24,7 +25,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface AccountRecord {
   id: string
@@ -78,8 +79,9 @@ export default function AdminDashboard() {
     e.preventDefault()
     if (!newUserForm.name || !newUserForm.email) return
 
+    const newId = `usr_${Date.now()}`
     const newAcc: AccountRecord = {
-      id: 'u_' + Date.now(),
+      id: newId,
       name: newUserForm.name,
       email: newUserForm.email,
       role: newUserForm.role,
@@ -87,6 +89,23 @@ export default function AdminDashboard() {
       joinedDate: new Date().toISOString().split('T')[0],
       detail: newUserForm.detail || `${newUserForm.role.toUpperCase()} Account`,
     }
+
+    // Insert to Supabase
+    supabase
+      .from('users')
+      .insert([
+        {
+          id: newId,
+          name: newUserForm.name,
+          email: newUserForm.email,
+          role: newUserForm.role,
+          phone: newUserForm.phone || null,
+          avatar: null,
+        },
+      ])
+      .then(({ error }) => {
+        if (error) console.error('Failed to create user in Supabase:', error)
+      })
 
     setAccounts((prev) => [newAcc, ...prev])
     setIsAddUserOpen(false)
@@ -101,99 +120,90 @@ export default function AdminDashboard() {
   }
 
   // Accounts data
-  const [accounts, setAccounts] = useState<AccountRecord[]>([
-    {
-      id: 'u1',
-      name: 'Alex Rivera',
-      email: 'alex@example.com',
-      role: 'customer',
-      status: 'active',
-      joinedDate: '2026-09-12',
-      detail: '14 drops completed',
-    },
-    {
-      id: 'u2',
-      name: 'The Green Table (Maya Lin)',
-      email: 'green@table.com',
-      role: 'vendor',
-      status: 'active',
-      joinedDate: '2026-08-01',
-      detail: 'FSSAI Verified #1122',
-    },
-    {
-      id: 'u3',
-      name: 'Rajesh Kumar',
-      email: 'rajesh@express.com',
-      role: 'driver',
-      status: 'active',
-      joinedDate: '2026-08-15',
-      detail: 'Ather 450X EV Bike',
-    },
-    {
-      id: 'u4',
-      name: 'Sara Vance',
-      email: 'admin@drop.com',
-      role: 'admin',
-      status: 'active',
-      joinedDate: '2026-01-01',
-      detail: 'Master System Admin',
-    },
-    {
-      id: 'u5',
-      name: 'Spice Route Bistro',
-      email: 'spice@route.com',
-      role: 'vendor',
-      status: 'pending',
-      joinedDate: '2026-10-02',
-      detail: 'Awaiting License Review',
-    },
-    {
-      id: 'u6',
-      name: 'Vikram Singh',
-      email: 'vikram@delivery.com',
-      role: 'driver',
-      status: 'pending',
-      joinedDate: '2026-10-02',
-      detail: 'Awaiting Driving License Verification',
-    },
-  ])
+  const [accounts, setAccounts] = useState<AccountRecord[]>([])
+  const [accountsLoading, setAccountsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchAccounts() {
+      try {
+        setAccountsLoading(true)
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (!error && data) {
+          const parsed: AccountRecord[] = data.map((u) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role as UserRole,
+            status: 'active' as const,
+            joinedDate: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : '',
+            detail:
+              u.role === 'vendor'
+                ? u.restaurant_name || 'Vendor Account'
+                : u.role === 'driver'
+                  ? u.vehicle_type || 'Driver Account'
+                  : u.role === 'admin'
+                    ? 'System Admin'
+                    : u.address || 'Customer Account',
+          }))
+          setAccounts(parsed)
+        }
+      } catch (err) {
+        console.error('Failed to fetch accounts:', err)
+      } finally {
+        setAccountsLoading(false)
+      }
+    }
+    fetchAccounts()
+    const interval = setInterval(fetchAccounts, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Payment queue
-  const [payments, setPayments] = useState<PaymentReference[]>([
-    {
-      id: 'pay_1',
-      orderId: '#DRP-9021',
-      customerUpi: 'alex@upi',
-      utrRef: '428190021389',
-      amount: 867,
-      submittedAt: '5 mins ago',
-      status: 'pending',
-    },
-    {
-      id: 'pay_2',
-      orderId: '#DRP-8840',
-      customerUpi: 'priya@okhdfc',
-      utrRef: '992011283741',
-      amount: 960,
-      submittedAt: '20 mins ago',
-      status: 'verified',
-    },
-    {
-      id: 'pay_3',
-      orderId: '#DRP-8712',
-      customerUpi: 'karan@icici',
-      utrRef: '109283746519',
-      amount: 289,
-      submittedAt: '45 mins ago',
-      status: 'verified',
-    },
-  ])
+  const [payments, setPayments] = useState<PaymentReference[]>([])
+
+  useEffect(() => {
+    async function fetchPayments() {
+      try {
+        const { data, error } = await supabase
+          .from('payment_reviews')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (!error && data) {
+          const parsed: PaymentReference[] = data.map((p) => ({
+            id: p.id,
+            orderId: p.order_id,
+            customerUpi: p.customer_vpa,
+            utrRef: p.utr_ref,
+            amount: p.amount,
+            submittedAt: p.created_at
+              ? new Date(p.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'Just now',
+            status: (p.status as 'pending' | 'verified' | 'rejected') || 'pending',
+          }))
+          setPayments(parsed)
+        }
+      } catch (err) {
+        console.error('Failed to fetch payment reviews:', err)
+      }
+    }
+    fetchPayments()
+    const interval = setInterval(fetchPayments, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   function toggleAccountStatus(id: string) {
     setAccounts((prev) =>
       prev.map((acc) => {
         if (acc.id === id) {
           const nextStatus = acc.status === 'active' ? 'suspended' : 'active'
+          // Persist status in Supabase (no 'status' column, so note: you'd add one to schema)
+          // For now update local state only unless schema is extended
           return { ...acc, status: nextStatus }
         }
         return acc
@@ -202,6 +212,13 @@ export default function AdminDashboard() {
   }
 
   function verifyPayment(id: string, status: 'verified' | 'rejected') {
+    supabase
+      .from('payment_reviews')
+      .update({ status })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) console.error('Failed to update payment status in Supabase:', error)
+      })
     setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
   }
 
@@ -407,9 +424,14 @@ export default function AdminDashboard() {
                       <DollarSign className="size-4" />
                     </span>
                   </div>
-                  <p className="mt-3 text-3xl font-bold text-[#18201c]">₹4,28,900</p>
+                  <p className="mt-3 text-3xl font-bold text-[#18201c]">
+                    ₹
+                    {payments
+                      .reduce((s, p) => s + (p.status === 'verified' ? p.amount : 0), 0)
+                      .toLocaleString('en-IN')}
+                  </p>
                   <p className="mt-1 text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                    <TrendingUp className="size-3.5" /> +24% growth this week
+                    <TrendingUp className="size-3.5" /> Verified payments total
                   </p>
                 </div>
 
@@ -422,7 +444,7 @@ export default function AdminDashboard() {
                       <Users className="size-4" />
                     </span>
                   </div>
-                  <p className="mt-3 text-3xl font-bold text-[#18201c]">12,480</p>
+                  <p className="mt-3 text-3xl font-bold text-[#18201c]">{accounts.length}</p>
                   <p className="mt-1 text-xs text-[#737e77]">Across 4 ecosystem roles</p>
                 </div>
 
@@ -435,8 +457,10 @@ export default function AdminDashboard() {
                       <Store className="size-4" />
                     </span>
                   </div>
-                  <p className="mt-3 text-3xl font-bold text-amber-700">340 Partners</p>
-                  <p className="mt-1 text-xs text-[#737e77]">2 awaiting approval</p>
+                  <p className="mt-3 text-3xl font-bold text-amber-700">
+                    {accounts.filter((a) => a.role === 'vendor').length} Partners
+                  </p>
+                  <p className="mt-1 text-xs text-[#737e77]">Kitchen vendor accounts</p>
                 </div>
 
                 <div className="rounded-3xl border border-[#e2e7dc] bg-white p-5 shadow-sm">
@@ -448,8 +472,10 @@ export default function AdminDashboard() {
                       <Zap className="size-4" />
                     </span>
                   </div>
-                  <p className="mt-3 text-3xl font-bold text-emerald-700">185 Active</p>
-                  <p className="mt-1 text-xs text-[#737e77]">94% Fleet</p>
+                  <p className="mt-3 text-3xl font-bold text-emerald-700">
+                    {accounts.filter((a) => a.role === 'driver').length} Drivers
+                  </p>
+                  <p className="mt-1 text-xs text-[#737e77]">Registered in fleet</p>
                 </div>
               </div>
 
@@ -470,6 +496,7 @@ export default function AdminDashboard() {
                   <div className="mt-4 flex flex-col gap-3">
                     {payments
                       .filter((p) => p.status === 'pending')
+                      .slice(0, 5)
                       .map((pay) => (
                         <div
                           key={pay.id}
@@ -486,6 +513,9 @@ export default function AdminDashboard() {
                           <span className="font-bold text-sm text-[#18201c]">₹{pay.amount}</span>
                         </div>
                       ))}
+                    {payments.filter((p) => p.status === 'pending').length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-4">No pending payments</p>
+                    )}
                   </div>
                 </div>
 
@@ -502,33 +532,47 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                   <div className="mt-4 space-y-3 text-xs">
-                    <div>
-                      <div className="flex justify-between font-semibold mb-1">
-                        <span>Customers / End Users</span>
-                        <span>11,200 (89%)</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
-                        <div className="h-full bg-emerald-500 w-[89%]" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between font-semibold mb-1">
-                        <span>Kitchen Vendors</span>
-                        <span>340 (3%)</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
-                        <div className="h-full bg-amber-500 w-[3%]" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between font-semibold mb-1">
-                        <span>Delivery Drivers</span>
-                        <span>185 (2%)</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-blue-100 overflow-hidden">
-                        <div className="h-full bg-blue-500 w-[2%]" />
-                      </div>
-                    </div>
+                    {(['customer', 'vendor', 'driver', 'admin'] as const).map((r) => {
+                      const count = accounts.filter((a) => a.role === r).length
+                      const pct =
+                        accounts.length > 0 ? Math.round((count / accounts.length) * 100) : 0
+                      const colors: Record<string, string> = {
+                        customer: 'bg-emerald-500',
+                        vendor: 'bg-amber-500',
+                        driver: 'bg-blue-500',
+                        admin: 'bg-purple-500',
+                      }
+                      const bgs: Record<string, string> = {
+                        customer: 'bg-emerald-100',
+                        vendor: 'bg-amber-100',
+                        driver: 'bg-blue-100',
+                        admin: 'bg-purple-100',
+                      }
+                      return (
+                        <div key={r}>
+                          <div className="flex justify-between font-semibold mb-1 capitalize">
+                            <span>
+                              {r === 'customer'
+                                ? 'Customers'
+                                : r === 'vendor'
+                                  ? 'Kitchen Vendors'
+                                  : r === 'driver'
+                                    ? 'Delivery Drivers'
+                                    : 'Admins'}
+                            </span>
+                            <span>
+                              {count} ({pct}%)
+                            </span>
+                          </div>
+                          <div className={`h-2 rounded-full overflow-hidden ${bgs[r]}`}>
+                            <div
+                              className={`h-full rounded-full ${colors[r]}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </div>

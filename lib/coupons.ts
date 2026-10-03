@@ -12,96 +12,41 @@ export interface Coupon {
   usageLimit?: number
   usedCount: number
   isActive: boolean
+  restaurantId?: string
 }
 
-export const initialCoupons: Coupon[] = [
-  {
-    id: 'c_1',
-    code: 'CRAVE50',
-    description: '50% OFF up to ₹100 on first 3 orders',
-    discountType: 'percentage',
-    discountValue: 50,
-    minOrderAmount: 199,
-    maxDiscount: 100,
-    expiryDate: '2026-12-31',
-    usageLimit: 1000,
-    usedCount: 142,
-    isActive: true,
-  },
-  {
-    id: 'c_2',
-    code: 'FREEDEL',
-    description: 'Flat ₹40 OFF Delivery Fee on orders above ₹299',
-    discountType: 'flat',
-    discountValue: 40,
-    minOrderAmount: 299,
-    maxDiscount: 40,
-    expiryDate: '2026-11-30',
-    usageLimit: 500,
-    usedCount: 89,
-    isActive: true,
-  },
-]
-
-const LOCAL_STORAGE_KEY = 'crave_admin_coupons'
-
-export async function fetchCouponsFromSupabase(): Promise<Coupon[]> {
+export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<Coupon[]> {
   try {
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (!error && data && data.length > 0) {
-      const parsed: Coupon[] = data.map((item) => ({
-        id: item.id,
-        code: item.code,
-        description: item.description,
-        discountType: item.discount_type as 'percentage' | 'flat',
-        discountValue: item.discount_value,
-        minOrderAmount: item.min_order_amount,
-        maxDiscount: item.max_discount || undefined,
-        expiryDate: item.expiry_date || '2026-12-31',
-        usageLimit: item.usage_limit || undefined,
-        usedCount: item.used_count || 0,
-        isActive: item.is_active ?? true,
-      }))
-      saveCoupons(parsed)
-      return parsed
-    }
+    let query = supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    if (restaurantId) query = query.eq('restaurant_id', restaurantId)
+    const { data, error } = await query
+    if (error) throw error
+    return (data ?? []).map((item) => ({
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      discountType: item.discount_type as 'percentage' | 'flat',
+      discountValue: Number(item.discount_value),
+      minOrderAmount: Number(item.min_order_amount),
+      maxDiscount: item.max_discount == null ? undefined : Number(item.max_discount),
+      expiryDate: item.expiry_date ?? '',
+      usageLimit: item.usage_limit == null ? undefined : Number(item.usage_limit),
+      usedCount: Number(item.used_count ?? 0),
+      isActive: Boolean(item.is_active),
+      restaurantId: item.restaurant_id ?? undefined,
+    }))
   } catch (err) {
     console.error('Failed to fetch coupons from Supabase:', err)
-  }
-  return getCoupons()
-}
-
-export function getCoupons(): Coupon[] {
-  if (typeof window === 'undefined') return initialCoupons
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (saved) {
-      return JSON.parse(saved)
-    }
-  } catch (e) {
-    console.error('Failed to parse coupons from localStorage', e)
-  }
-  return initialCoupons
-}
-
-export function saveCoupons(coupons: Coupon[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(coupons))
-  } catch (e) {
-    console.error('Failed to save coupons to localStorage', e)
+    return []
   }
 }
 
 export function validateCoupon(
   code: string,
   subtotal: number,
-  couponsList?: Coupon[]
+  couponsList: Coupon[] = []
 ): { valid: boolean; discountAmount: number; coupon?: Coupon; message: string } {
-  const coupons = couponsList || getCoupons()
+  const coupons = couponsList
   const cleanCode = code.trim().toUpperCase()
   const found = coupons.find((c) => c.code.toUpperCase() === cleanCode)
 

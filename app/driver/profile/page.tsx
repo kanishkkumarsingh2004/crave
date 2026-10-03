@@ -17,7 +17,9 @@ export default function DriverProfilePage() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50 text-xs flex flex-col gap-2">
           <p className="font-bold text-gray-700 text-xs uppercase">Vehicle Info</p>
-          <p className="font-semibold text-sm text-[#18201c]">{user?.vehicleType || 'Commercial EV Delivery Scooter'}</p>
+          <p className="font-semibold text-sm text-[#18201c]">
+            {user?.vehicleType || 'Commercial EV Delivery Scooter'}
+          </p>
           <p className="text-gray-600">Reg No: {user?.vehicleNo || 'EV Fleet Vehicle'}</p>
           <p className="text-gray-600">Type: Commercial Two-Wheeler</p>
         </div>

@@ -58,7 +58,8 @@ export default function DriverHistoryPage() {
         </div>
       ) : (
         <div className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-xs text-gray-500">
-          No completed trips recorded today. Turn duty status ON to accept delivery orders and view trip history logs.
+          No completed trips recorded today. Turn duty status ON to accept delivery orders and view
+          trip history logs.
         </div>
       )}
     </div>

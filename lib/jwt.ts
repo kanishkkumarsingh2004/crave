@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'crave-secret-jwt-key-bengaluru-2026-secure-token'
-)
+const jwtSecret = process.env.JWT_SECRET
+if (!jwtSecret) throw new Error('JWT_SECRET must be configured in the environment.')
+const JWT_SECRET = new TextEncoder().encode(jwtSecret)
 
 export interface JWTPayload {
   id: string

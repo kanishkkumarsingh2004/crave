@@ -1,30 +1,21 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
-  Zap,
+  ArrowRight,
+  MapPin,
+  Minus,
+  Plus,
+  Search,
   ShoppingBag,
   ShoppingCart,
-  Search,
-  Plus,
-  Minus,
-  ArrowRight,
-  Clock,
-  ShieldCheck,
-  Sparkles,
-  CheckCircle2,
-  Trash2,
-  MapPin,
-  UtensilsCrossed,
   Store,
-  ChevronRight,
-  Truck,
-  RotateCcw
+  Zap,
 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 
 export interface GroceryItem {
   id: string
@@ -35,152 +26,11 @@ export interface GroceryItem {
   image: string
   category: string
   inStock: boolean
+  restaurantId: string
+  restaurantName: string
+  stockCount: number
   discount?: string
 }
-
-export const SAMPLE_GROCERY_ITEMS: GroceryItem[] = [
-  {
-    id: 'g1',
-    name: 'Amul Taaza Toned Fresh Milk',
-    unit: '500 ml',
-    price: 27,
-    mrp: 28,
-    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=500&q=80',
-    category: 'Dairy & Eggs',
-    inStock: true,
-    discount: '4% OFF',
-  },
-  {
-    id: 'g2',
-    name: 'Farm Fresh White Eggs (6 Pcs)',
-    unit: '6 units',
-    price: 48,
-    mrp: 56,
-    image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80',
-    category: 'Dairy & Eggs',
-    inStock: true,
-    discount: '14% OFF',
-  },
-  {
-    id: 'g3',
-    name: 'Harvest Gold 100% Atta Bread',
-    unit: '400 g',
-    price: 40,
-    mrp: 45,
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80',
-    category: 'Dairy & Eggs',
-    inStock: true,
-    discount: '11% OFF',
-  },
-  {
-    id: 'g4',
-    name: 'Fresh Organic Robusta Bananas',
-    unit: '500 g (3-4 pcs)',
-    price: 34,
-    mrp: 42,
-    image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=500&q=80',
-    category: 'Fruits & Veggies',
-    inStock: true,
-    discount: '19% OFF',
-  },
-  {
-    id: 'g5',
-    name: 'Fresh Local Hybrid Tomatoes',
-    unit: '1 kg',
-    price: 38,
-    mrp: 48,
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=500&q=80',
-    category: 'Fruits & Veggies',
-    inStock: true,
-    discount: '20% OFF',
-  },
-  {
-    id: 'g6',
-    name: "Lay's India's Magic Masala Chips",
-    unit: '50 g',
-    price: 20,
-    mrp: 20,
-    image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=500&q=80',
-    category: 'Snacks & Munchies',
-    inStock: true,
-  },
-  {
-    id: 'g7',
-    name: 'Coca-Cola Soft Drink Original Taste',
-    unit: '750 ml',
-    price: 40,
-    mrp: 45,
-    image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=500&q=80',
-    category: 'Drinks & Juices',
-    inStock: true,
-    discount: '11% OFF',
-  },
-  {
-    id: 'g8',
-    name: 'Tropicana 100% Real Orange Juice',
-    unit: '1 L Pack',
-    price: 118,
-    mrp: 145,
-    image: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=500&q=80',
-    category: 'Drinks & Juices',
-    inStock: true,
-    discount: '18% OFF',
-  },
-  {
-    id: 'g9',
-    name: 'Maggi 2-Minute Masala Instant Noodles',
-    unit: '280 g (Pack of 4)',
-    price: 56,
-    mrp: 60,
-    image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&w=500&q=80',
-    category: 'Instant Food',
-    inStock: true,
-    discount: '6% OFF',
-  },
-  {
-    id: 'g10',
-    name: 'Surf Excel Easy Wash Detergent Powder',
-    unit: '1 kg',
-    price: 139,
-    mrp: 155,
-    image: 'https://images.unsplash.com/photo-1585842378054-ee2e52f94ba2?auto=format&fit=crop&w=500&q=80',
-    category: 'Cleaning & Household',
-    inStock: true,
-    discount: '10% OFF',
-  },
-  {
-    id: 'g11',
-    name: 'Dettol Original Skincare Handwash',
-    unit: '200 ml Refill',
-    price: 89,
-    mrp: 99,
-    image: 'https://images.unsplash.com/photo-1608248597359-0a6e088a5316?auto=format&fit=crop&w=500&q=80',
-    category: 'Personal Care',
-    inStock: true,
-    discount: '10% OFF',
-  },
-  {
-    id: 'g12',
-    name: 'Mother Dairy Fresh Paneer',
-    unit: '200 g',
-    price: 92,
-    mrp: 95,
-    image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=500&q=80',
-    category: 'Dairy & Eggs',
-    inStock: true,
-  },
-]
-
-const CATEGORIES = [
-  'All Items',
-  'Dairy & Eggs',
-  'Fruits & Veggies',
-  'Snacks & Munchies',
-  'Drinks & Juices',
-  'Instant Food',
-  'Cleaning & Household',
-  'Personal Care',
-]
 
 export default function CraveXPStore() {
   const { user } = useAuth()
@@ -190,31 +40,109 @@ export default function CraveXPStore() {
   const [cart, setCart] = useState<{ item: GroceryItem; qty: number }[]>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([])
+  const [stores, setStores] = useState<{ id: string; name: string; address: string }[]>([])
+  const [selectedStoreId, setSelectedStoreId] = useState('')
+  const [isLoadingItems, setIsLoadingItems] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [orderError, setOrderError] = useState('')
+
+  useEffect(() => {
+    const loadStores = async () => {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, address')
+        .eq('is_dark_store', true)
+        .eq('is_open', true)
+        .order('name')
+
+      if (error) {
+        setLoadError('Store data is unavailable. Please try again later.')
+        setStores([])
+        setSelectedStoreId('')
+        return
+      }
+
+      const activeStores = data ?? []
+      setStores(activeStores)
+      setSelectedStoreId((current) =>
+        activeStores.some((store) => store.id === current) ? current : (activeStores[0]?.id ?? '')
+      )
+    }
+
+    loadStores()
+  }, [])
+
+  useEffect(() => {
+    const loadItems = async () => {
+      setIsLoadingItems(true)
+      setLoadError('')
+      if (!selectedStoreId) {
+        setGroceryItems([])
+        setIsLoadingItems(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('restaurant_id', selectedStoreId)
+        .eq('in_stock', true)
+        .gt('stock_count', 0)
+        .order('category')
+        .order('name')
+
+      if (error) {
+        setLoadError('Product inventory is unavailable. Please try again later.')
+        setGroceryItems([])
+      } else {
+        const store = stores.find((entry) => entry.id === selectedStoreId)
+        setGroceryItems(
+          (data ?? []).map((item) => ({
+            id: item.id,
+            name: item.name,
+            unit: item.unit ?? '',
+            price: Number(item.price),
+            mrp: Number(item.mrp ?? item.price),
+            image: item.image ?? '',
+            category: item.category,
+            inStock: item.in_stock,
+            restaurantId: item.restaurant_id,
+            restaurantName: store?.name ?? '',
+            stockCount: Number(item.stock_count ?? 0),
+            discount:
+              Number(item.mrp) > Number(item.price)
+                ? `${Math.round((1 - Number(item.price) / Number(item.mrp)) * 100)}% OFF`
+                : undefined,
+          }))
+        )
+      }
+      setIsLoadingItems(false)
+    }
+
+    loadItems()
+  }, [selectedStoreId, stores])
 
   const filteredItems = useMemo(() => {
-    return SAMPLE_GROCERY_ITEMS.filter((i) => {
-      const matchesCat =
-        selectedCategory === 'All Items' || i.category === selectedCategory
+    return groceryItems.filter((i) => {
+      const matchesCat = selectedCategory === 'All Items' || i.category === selectedCategory
       const matchesSearch =
         i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         i.category.toLowerCase().includes(searchQuery.toLowerCase())
       return matchesCat && matchesSearch
     })
-  }, [selectedCategory, searchQuery])
+  }, [groceryItems, selectedCategory, searchQuery])
 
-  const cartTotalItems = useMemo(
-    () => cart.reduce((sum, c) => sum + c.qty, 0),
-    [cart]
+  const categories = useMemo(
+    () => ['All Items', ...new Set(groceryItems.map((item) => item.category))],
+    [groceryItems]
   )
 
-  const cartSubtotal = useMemo(
-    () => cart.reduce((sum, c) => sum + c.item.price * c.qty, 0),
-    [cart]
-  )
+  const cartTotalItems = useMemo(() => cart.reduce((sum, c) => sum + c.qty, 0), [cart])
 
-  const deliveryFee = cartSubtotal >= 299 || cartSubtotal === 0 ? 0 : 25
-  const handlingFee = cartSubtotal > 0 ? 15 : 0
-  const grandTotal = cartSubtotal + deliveryFee + handlingFee
+  const cartSubtotal = useMemo(() => cart.reduce((sum, c) => sum + c.item.price * c.qty, 0), [cart])
+
+  const grandTotal = cartSubtotal
 
   const getItemQty = (id: string) => {
     return cart.find((c) => c.item.id === id)?.qty || 0
@@ -224,62 +152,73 @@ export default function CraveXPStore() {
     setCart((prev) => {
       const existing = prev.find((c) => c.item.id === item.id)
       if (!existing) {
-        if (delta > 0) return [...prev, { item, qty: 1 }]
+        if (
+          delta > 0 &&
+          item.stockCount > 0 &&
+          (!prev.length || prev[0].item.restaurantId === item.restaurantId)
+        ) {
+          return [...prev, { item, qty: 1 }]
+        }
         return prev
       }
       const newQty = existing.qty + delta
       if (newQty <= 0) {
         return prev.filter((c) => c.item.id !== item.id)
       }
+      if (newQty > item.stockCount) return prev
       return prev.map((c) => (c.item.id === item.id ? { ...c, qty: newQty } : c))
     })
   }
 
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return
+    setOrderError('')
+    if (!user?.id) {
+      setOrderError('Sign in with a customer account before placing an order.')
+      return
+    }
+    const store = stores.find((entry) => entry.id === cart[0].item.restaurantId)
+    if (!store || cart.some(({ item }) => item.restaurantId !== store.id)) {
+      setOrderError('All items in an order must come from the same store.')
+      return
+    }
+
     setOrderPlaced(true)
-    const orderId = `CXP-${Math.floor(1000 + Math.random() * 9000)}`
+    const orderId = crypto.randomUUID()
     const itemsFormatted = cart.map((c) => ({
       name: c.item.name,
       qty: c.qty,
       price: c.item.price,
-      otp: '4921',
+      menu_item_id: c.item.id,
     }))
 
     try {
-      await supabase.from('orders').insert([
+      const { error } = await supabase.from('orders').insert([
         {
           id: orderId,
-          customer_id: 'usr_cust_1',
-          customer_name: user?.name || 'Alex Rivera',
-          customer_phone: user?.phone || '+91 98765 43210',
-          customer_address: 'Indiranagar 100ft Rd, Bengaluru',
-          restaurant_id: 'rest_1',
-          restaurant_name: '⚡ craveEP Dark Store Hub #402 (10-Min Express)',
+          customer_id: user.id,
+          customer_name: user.name,
+          customer_phone: user.phone || null,
+          customer_address: user.address || null,
+          restaurant_id: store.id,
+          restaurant_name: store.name,
           items: JSON.stringify(itemsFormatted),
           subtotal: cartSubtotal,
-          packaging_fee: handlingFee,
-          gst: Math.round(cartSubtotal * 0.05),
+          packaging_fee: 0,
+          gst: 0,
           total_amount: grandTotal,
           status: 'new',
           driver_name: null,
           driver_phone: null,
-          payment_method: 'UPI Online',
+          payment_method: 'Cash on delivery',
         },
       ])
-
-      await supabase.from('payment_reviews').insert([
-        {
-          id: `pay_${Date.now()}`,
-          order_id: orderId,
-          utr_ref: '428190021389',
-          customer_vpa: user?.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
-          amount: grandTotal,
-          status: 'verified',
-        },
-      ])
-    } catch (e) {
-      console.error('Failed to submit craveXP order:', e)
+      if (error) throw error
+    } catch (error) {
+      console.error('Failed to submit craveXP order:', error)
+      setOrderError('The order could not be saved. Please try again.')
+      setOrderPlaced(false)
+      return
     }
 
     setTimeout(() => {
@@ -305,7 +244,7 @@ export default function CraveXPStore() {
                   crave<span className="text-emerald-600">XP</span>
                 </span>
                 <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-800 tracking-wider">
-                  10 Min Instamart
+                  Live inventory
                 </span>
               </div>
             </Link>
@@ -313,7 +252,9 @@ export default function CraveXPStore() {
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#5a665f]">
             <MapPin className="size-4 text-emerald-600" />
-            <span>Delivering in <strong>10 mins</strong> to <strong>Kanakapura Road</strong></span>
+            <span className="max-w-48 truncate">
+              {stores.find((store) => store.id === selectedStoreId)?.address || 'No active store'}
+            </span>
           </div>
 
           <button
@@ -334,7 +275,7 @@ export default function CraveXPStore() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search milk, bread, eggs, chips, cold drinks, veggies..."
+              placeholder="Search live products..."
               className="w-full bg-transparent text-xs font-medium outline-none placeholder:text-gray-400"
             />
             {searchQuery && (
@@ -354,23 +295,17 @@ export default function CraveXPStore() {
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#121815] via-[#1a2520] to-[#121815] p-6 sm:p-8 text-white shadow-xl border-2 border-emerald-500/30">
           <div className="relative z-10 max-w-xl">
             <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-[#d9f447] mb-2">
-              <Zap className="size-4 text-[#d9f447]" /> Hyper-Fast Grocery Delivery
+              <Zap className="size-4 text-[#d9f447]" /> Store inventory
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              crave<span className="text-[#d9f447]">XP</span> 10-Minute Dark Store
+              crave<span className="text-[#d9f447]">XP</span> Grocery Store
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-gray-300">
-              Fresh vegetables, cold dairy, snacks, beverages &amp; home essentials picked from our nearest Kanakapura dark store in under 180 seconds.
+              Browse and order products currently available in active stores.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-xs font-bold text-emerald-300">
               <span className="flex items-center gap-1">
-                <Clock className="size-4" /> 10 Mins Guaranteed
-              </span>
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="size-4 text-emerald-400" /> 100% Quality Checked
-              </span>
-              <span className="flex items-center gap-1">
-                <Truck className="size-4" /> Free Delivery over ₹299
+                <Store className="size-4" /> {stores.length} active stores
               </span>
             </div>
           </div>
@@ -379,8 +314,27 @@ export default function CraveXPStore() {
 
       {/* Categories Bar */}
       <section className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6">
+        {stores.length > 1 && (
+          <label className="mb-4 flex items-center gap-3 text-xs font-bold text-gray-700">
+            Store
+            <select
+              value={selectedStoreId}
+              onChange={(event) => {
+                setCart([])
+                setSelectedStoreId(event.target.value)
+              }}
+              className="min-w-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs"
+            >
+              {stores.map((store) => (
+                <option key={store.id} value={store.id}>
+                  {store.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -400,77 +354,99 @@ export default function CraveXPStore() {
       <section className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-[#18201c]">
-            {selectedCategory === 'All Items' ? 'Top Daily Essentials' : selectedCategory} ({filteredItems.length})
+            {selectedCategory === 'All Items' ? 'Available Products' : selectedCategory} (
+            {filteredItems.length})
           </h2>
-          <span className="text-xs text-gray-500 font-semibold">
-            Showing instant 10-min stock
-          </span>
+          <span className="text-xs text-gray-500 font-semibold">Live store inventory</span>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {filteredItems.map((item) => {
-            const qty = getItemQty(item.id)
-            return (
-              <div
-                key={item.id}
-                className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[#e2e7dc] bg-white p-3.5 shadow-xs transition hover:border-emerald-500 hover:shadow-lg"
-              >
-                <div>
-                  <div className="relative h-32 w-full overflow-hidden rounded-xl bg-gray-50">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    {item.discount && (
-                      <span className="absolute top-2 left-2 rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-extrabold text-white">
-                        {item.discount}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    {item.unit}
-                  </p>
-                  <h3 className="mt-0.5 text-xs font-bold text-[#18201c] line-clamp-2 leading-snug">
-                    {item.name}
-                  </h3>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between pt-2 border-t border-[#f0f4eb]">
+          {isLoadingItems ? (
+            <p className="col-span-full py-12 text-center text-sm text-gray-500">
+              Loading live inventory...
+            </p>
+          ) : loadError ? (
+            <p
+              role="alert"
+              className="col-span-full rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-800"
+            >
+              {loadError}
+            </p>
+          ) : filteredItems.length === 0 ? (
+            <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+              {stores.length === 0
+                ? 'No active grocery stores are available.'
+                : 'No matching in-stock products are available.'}
+            </p>
+          ) : (
+            filteredItems.map((item) => {
+              const qty = getItemQty(item.id)
+              return (
+                <div
+                  key={item.id}
+                  className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[#e2e7dc] bg-white p-3.5 shadow-xs transition hover:border-emerald-500 hover:shadow-lg"
+                >
                   <div>
-                    <span className="text-xs font-extrabold text-[#18201c]">
-                      ₹{item.price}
-                    </span>
-                    {item.mrp > item.price && (
-                      <span className="ml-1 text-[10px] text-gray-400 line-through font-normal">
-                        ₹{item.mrp}
-                      </span>
-                    )}
+                    <div className="relative h-32 w-full overflow-hidden rounded-xl bg-gray-50">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="grid size-full place-items-center text-gray-400">
+                          <ShoppingBag className="size-8" />
+                        </div>
+                      )}
+                      {item.discount && (
+                        <span className="absolute top-2 left-2 rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-extrabold text-white">
+                          {item.discount}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      {item.unit}
+                    </p>
+                    <h3 className="mt-0.5 text-xs font-bold text-[#18201c] line-clamp-2 leading-snug">
+                      {item.name}
+                    </h3>
                   </div>
 
-                  {qty === 0 ? (
-                    <button
-                      onClick={() => updateItemQty(item, 1)}
-                      className="flex items-center gap-1 rounded-xl border-2 border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800 hover:bg-emerald-600 hover:text-white transition"
-                    >
-                      <Plus className="size-3.5" /> ADD
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2 rounded-xl bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow">
-                      <button onClick={() => updateItemQty(item, -1)}>
-                        <Minus className="size-3" />
-                      </button>
-                      <span>{qty}</span>
-                      <button onClick={() => updateItemQty(item, 1)}>
-                        <Plus className="size-3" />
-                      </button>
+                  <div className="mt-3 flex items-center justify-between pt-2 border-t border-[#f0f4eb]">
+                    <div>
+                      <span className="text-xs font-extrabold text-[#18201c]">₹{item.price}</span>
+                      {item.mrp > item.price && (
+                        <span className="ml-1 text-[10px] text-gray-400 line-through font-normal">
+                          ₹{item.mrp}
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {qty === 0 ? (
+                      <button
+                        onClick={() => updateItemQty(item, 1)}
+                        className="flex items-center gap-1 rounded-xl border-2 border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800 hover:bg-emerald-600 hover:text-white transition"
+                      >
+                        <Plus className="size-3.5" /> ADD
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-xl bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow">
+                        <button onClick={() => updateItemQty(item, -1)}>
+                          <Minus className="size-3" />
+                        </button>
+                        <span>{qty}</span>
+                        <button onClick={() => updateItemQty(item, 1)}>
+                          <Plus className="size-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </section>
 
@@ -499,14 +475,14 @@ export default function CraveXPStore() {
                   <ShoppingBag className="mx-auto size-12 text-gray-300 mb-3" />
                   <p className="text-sm font-bold text-gray-700">Your craveXP cart is empty</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Add milk, snacks, beverages &amp; essentials for 10-minute delivery.
+                    Add products from the current store inventory.
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-900 flex items-center justify-between">
-                    <span>10-Minute Dark Store Express Drop</span>
-                    <span className="text-emerald-700">FREE over ₹299</span>
+                    <span>{cart[0]?.item.restaurantName}</span>
+                    <span className="text-emerald-700">Pay on delivery</span>
                   </div>
 
                   {cart.map(({ item, qty }) => (
@@ -515,13 +491,21 @@ export default function CraveXPStore() {
                       className="flex items-center justify-between rounded-2xl border border-gray-200 p-3"
                     >
                       <div className="flex items-center gap-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="size-12 rounded-xl object-cover"
-                        />
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="size-12 rounded-xl object-cover"
+                          />
+                        ) : (
+                          <span className="grid size-12 place-items-center rounded-xl bg-gray-100 text-gray-400">
+                            <ShoppingBag className="size-5" />
+                          </span>
+                        )}
                         <div>
-                          <p className="text-xs font-bold text-[#18201c] line-clamp-1">{item.name}</p>
+                          <p className="text-xs font-bold text-[#18201c] line-clamp-1">
+                            {item.name}
+                          </p>
                           <p className="text-[10px] text-gray-500">{item.unit}</p>
                           <p className="text-xs font-extrabold text-[#18201c] mt-0.5">
                             ₹{item.price * qty}
@@ -547,16 +531,6 @@ export default function CraveXPStore() {
                       <span>Item Total</span>
                       <span className="font-bold text-[#18201c]">₹{cartSubtotal}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Delivery Fee</span>
-                      <span className="font-bold text-emerald-700">
-                        {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Handling &amp; Packaging</span>
-                      <span className="font-bold text-[#18201c]">₹{handlingFee}</span>
-                    </div>
                     <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-extrabold text-[#18201c]">
                       <span>To Pay</span>
                       <span className="text-emerald-700">₹{grandTotal}</span>
@@ -568,16 +542,21 @@ export default function CraveXPStore() {
 
             {cart.length > 0 && (
               <div className="border-t border-gray-200 p-4">
+                {orderError && (
+                  <p role="alert" className="mb-3 text-xs text-rose-700">
+                    {orderError}
+                  </p>
+                )}
                 <button
                   onClick={handlePlaceOrder}
                   disabled={orderPlaced}
                   className="w-full rounded-2xl bg-[#18201c] py-3.5 text-xs font-extrabold text-[#d9f447] shadow-xl hover:bg-[#323f37] transition flex items-center justify-center gap-2"
                 >
                   {orderPlaced ? (
-                    <span>Placing 10-Min Order...</span>
+                    <span>Saving order...</span>
                   ) : (
                     <>
-                      <span>Place 10-Min Order · ₹{grandTotal}</span>
+                      <span>Place Order · Pay on Delivery · ₹{grandTotal}</span>
                       <ArrowRight className="size-4" />
                     </>
                   )}

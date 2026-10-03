@@ -2,7 +2,6 @@
 
 import { supabase } from '@/lib/supabase'
 import {
-  Activity,
   ArrowUpRight,
   BarChart3,
   CreditCard,
@@ -10,7 +9,6 @@ import {
   LayoutDashboard,
   Percent,
   QrCode,
-  Settings,
   ShieldCheck,
   Store,
   Tag,
@@ -24,7 +22,7 @@ import { useEffect, useState } from 'react'
 const ADMIN_SECTION_LINKS = [
   {
     href: '/vendor/crave-ep',
-    label: 'craveEP Dark Store Hub',
+    label: 'craveXP Dark Store Hub',
     description: 'Manage 10-min grocery inventory, cold-chain IoT, pickers & barcode dispatch.',
     icon: Zap,
   },
@@ -168,17 +166,18 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* CRAVEEP DARK STORE LIVE OPERATIONS BANNER */}
+      {/* CRAVEXP DARK STORE LIVE OPERATIONS BANNER */}
       <div className="rounded-3xl border border-[#d9f447]/60 bg-gradient-to-r from-[#18201c] to-[#25322b] p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 px-3 py-1 text-[10px] font-extrabold text-[#d9f447] uppercase tracking-wider">
-            <Zap className="size-3.5 fill-[#d9f447]" /> craveEP Instamart Dark Store Command Center
+            <Zap className="size-3.5 fill-[#d9f447]" /> craveXP Instamart Dark Store Command Center
           </div>
           <h3 className="text-xl font-extrabold tracking-tight text-white">
             10-Minute Dark Store Fleet &amp; IoT Cold-Chain Monitoring
           </h3>
           <p className="text-xs text-[#a3b3a9] leading-relaxed">
-            4 active fulfillment hubs • 98.6% SLA speed compliance • Live picker staff leaderboard &amp; auto-replenishment active.
+            4 active fulfillment hubs • 98.6% SLA speed compliance • Live picker staff leaderboard
+            &amp; auto-replenishment active.
           </p>
         </div>
 
@@ -195,7 +194,7 @@ export default function AdminDashboardPage() {
             href="/vendor/crave-ep"
             className="rounded-full bg-[#d9f447] px-5 py-3 text-xs font-black text-[#121815] shadow-lg hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
           >
-            Manage craveEP Console <ArrowUpRight className="size-4" />
+            Manage craveXP Console <ArrowUpRight className="size-4" />
           </Link>
         </div>
       </div>

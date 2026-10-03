@@ -1,6 +1,6 @@
 'use client'
 
-import { Coupon, getCoupons, saveCoupons } from '@/lib/coupons'
+import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
 import { supabase } from '@/lib/supabase'
 import {
   Check,
@@ -16,36 +16,6 @@ import {
   X,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-
-const fetchCouponsFromSupabase = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      const parsed: Coupon[] = data.map((item) => ({
-        id: item.id,
-        code: item.code,
-        description: item.description,
-        discountType: item.discount_type as 'percentage' | 'flat',
-        discountValue: item.discount_value,
-        minOrderAmount: item.min_order_amount,
-        maxDiscount: item.max_discount || undefined,
-        expiryDate: item.expiry_date || '2026-12-31',
-        usageLimit: item.usage_limit || undefined,
-        usedCount: item.used_count || 0,
-        isActive: item.is_active ?? true,
-      }))
-      saveCoupons(parsed)
-      return parsed
-    }
-  } catch (err) {
-    console.error('Failed to fetch coupons from Supabase:', err)
-  }
-  return getCoupons()
-}
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -112,14 +82,17 @@ export default function AdminCouponsPage() {
         discount_value: dVal,
         min_order_amount: mOrder,
         max_discount: mMax || null,
-        expiry_date: expiryDate || '2026-12-31',
+        expiry_date: expiryDate || null,
         usage_limit: uLimit || null,
         is_active: isActive,
       }
       try {
-        await supabase.from('coupons').update(dbRecord).eq('id', editingCoupon.id)
+        const { error } = await supabase.from('coupons').update(dbRecord).eq('id', editingCoupon.id)
+        if (error) throw error
       } catch (err) {
         console.error('Failed to update coupon in Supabase:', err)
+        showToast('Could not update the coupon in the database.')
+        return
       }
 
       updated = coupons.map((c) =>
@@ -132,7 +105,7 @@ export default function AdminCouponsPage() {
               discountValue: dVal,
               minOrderAmount: mOrder,
               maxDiscount: mMax,
-              expiryDate: expiryDate || '2026-12-31',
+              expiryDate,
               usageLimit: uLimit,
               isActive,
             }
@@ -140,7 +113,7 @@ export default function AdminCouponsPage() {
       )
       showToast(`Coupon '${formattedCode}' updated successfully!`)
     } else {
-      const newId = `c_${Date.now()}`
+      const newId = crypto.randomUUID()
       const descStr =
         description ||
         `${discountType === 'percentage' ? `${dVal}% OFF` : `₹${dVal} OFF`} on orders above ₹${mOrder}`
@@ -155,13 +128,16 @@ export default function AdminCouponsPage() {
         usage_limit: uLimit || null,
         used_count: 0,
         is_active: true,
-        expiry_date: expiryDate || '2026-12-31',
+        expiry_date: expiryDate || null,
       }
 
       try {
-        await supabase.from('coupons').insert([dbRecord])
+        const { error } = await supabase.from('coupons').insert([dbRecord])
+        if (error) throw error
       } catch (err) {
         console.error('Failed to insert coupon into Supabase:', err)
+        showToast('Could not create the coupon in the database.')
+        return
       }
 
       const newCoupon: Coupon = {
@@ -172,7 +148,7 @@ export default function AdminCouponsPage() {
         discountValue: dVal,
         minOrderAmount: mOrder,
         maxDiscount: mMax,
-        expiryDate: expiryDate || '2026-12-31',
+        expiryDate,
         usageLimit: uLimit,
         usedCount: 0,
         isActive: true,
@@ -181,8 +157,7 @@ export default function AdminCouponsPage() {
       showToast(`New Coupon '${formattedCode}' created and published!`)
     }
 
-    setCoupons(updated)
-    saveCoupons(updated)
+    setCoupons(await fetchCouponsFromSupabase())
     closeModal()
   }
 
@@ -191,13 +166,14 @@ export default function AdminCouponsPage() {
     if (!item) return
     const newStatus = !item.isActive
     try {
-      await supabase.from('coupons').update({ is_active: newStatus }).eq('id', id)
+      const { error } = await supabase.from('coupons').update({ is_active: newStatus }).eq('id', id)
+      if (error) throw error
     } catch (err) {
       console.error('Failed to toggle coupon in Supabase:', err)
+      showToast('Could not update coupon status.')
+      return
     }
-    const updated = coupons.map((c) => (c.id === id ? { ...c, isActive: newStatus } : c))
-    setCoupons(updated)
-    saveCoupons(updated)
+    setCoupons(await fetchCouponsFromSupabase())
     showToast(`Coupon '${item.code}' status toggled to ${newStatus ? 'Active' : 'Inactive'}.`)
   }
 
@@ -205,13 +181,14 @@ export default function AdminCouponsPage() {
     const item = coupons.find((c) => c.id === id)
     if (!confirm(`Are you sure you want to delete coupon '${item?.code}'?`)) return
     try {
-      await supabase.from('coupons').delete().eq('id', id)
+      const { error } = await supabase.from('coupons').delete().eq('id', id)
+      if (error) throw error
     } catch (err) {
       console.error('Failed to delete coupon in Supabase:', err)
+      showToast('Could not delete coupon.')
+      return
     }
-    const updated = coupons.filter((c) => c.id !== id)
-    setCoupons(updated)
-    saveCoupons(updated)
+    setCoupons(await fetchCouponsFromSupabase())
     showToast(`Coupon '${item?.code}' deleted successfully.`)
   }
 
@@ -223,7 +200,7 @@ export default function AdminCouponsPage() {
     setDiscountValue('')
     setMinOrderAmount('')
     setMaxDiscount('')
-    setExpiryDate('2026-12-31')
+    setExpiryDate('')
     setUsageLimit('')
     setIsActive(true)
     setShowModal(true)

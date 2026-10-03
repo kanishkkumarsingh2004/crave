@@ -17,7 +17,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 interface KitchenOrder {
@@ -34,6 +34,7 @@ interface KitchenOrder {
 export default function VendorDashboard() {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
 
   const loadLiveKitchenOrders = async () => {
@@ -61,7 +62,10 @@ export default function VendorDashboard() {
             totalAmount: o.total_amount || 0,
             status: o.status || 'new',
             time: o.created_at
-              ? new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              ? new Date(o.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
               : 'Just now',
             address: o.customer_address || 'Bengaluru',
           }
@@ -90,7 +94,9 @@ export default function VendorDashboard() {
     )
   }
 
-  const openCount = kitchenOrders.filter((o) => o.status === 'new' || o.status === 'preparing').length
+  const openCount = kitchenOrders.filter(
+    (o) => o.status === 'new' || o.status === 'preparing'
+  ).length
   const readyCount = kitchenOrders.filter((o) => o.status === 'ready').length
   const totalDailyRevenue = kitchenOrders.reduce((acc, o) => acc + o.totalAmount, 0)
 
@@ -102,13 +108,72 @@ export default function VendorDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16">
+    <div className="min-h-screen bg-[#f8f9f7] pb-16 text-[#18201c] lg:pl-64">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-[#202923] bg-[#121815] text-white lg:flex">
+        <div className="border-b border-white/10 p-6">
+          <Link href="/vendor/dashboard" className="flex items-center gap-2.5">
+            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815]">
+              <UtensilsCrossed className="size-5" />
+            </span>
+            <span className="text-xl font-black tracking-tight">
+              crave<span className="text-[#d9f447]">.</span>
+            </span>
+          </Link>
+          <div className="mt-5 rounded-xl bg-white/5 px-3 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Vendor</p>
+            <p className="mt-1 truncate text-sm font-bold">
+              {user?.restaurantName || 'The Green Table'}
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-1 p-4" aria-label="Vendor navigation">
+          {[
+            { href: '/vendor/dashboard', label: 'Kitchen Orders', icon: ShoppingBag },
+            { href: '/vendor/menu', label: 'Menu Management', icon: UtensilsCrossed },
+            { href: '/vendor/sales', label: 'Sales & Earnings', icon: ChartColumn },
+            { href: '/vendor/coupons', label: 'Store Offers', icon: Percent },
+            { href: '/vendor/settings', label: 'Bank & Settings', icon: Settings },
+          ].map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+                  isActive
+                    ? 'bg-[#d9f447] text-[#121815]'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span>{label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-4">
+          <button
+            onClick={() => logout()}
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10"
+          >
+            <LogOut className="size-4" />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
       {/* Top Vendor Header Navigation Bar */}
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Brand Logo & Kitchen Name */}
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+            <Link
+              href="/"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
+            >
               crave<span className="text-[#86a018]">.</span>
             </Link>
             <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
@@ -119,12 +184,14 @@ export default function VendorDashboard() {
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
               <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+              <span className="truncate max-w-[200px]">
+                {user?.restaurantName || 'The Green Table'}
+              </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto text-xs font-bold lg:hidden">
             <button
               onClick={() => router.push('/vendor/dashboard')}
               className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
@@ -186,7 +253,9 @@ export default function VendorDashboard() {
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
                 Managing kitchen operations for{' '}
-                <strong className="text-[#18201c]">{user?.restaurantName || 'The Green Table'}</strong>
+                <strong className="text-[#18201c]">
+                  {user?.restaurantName || 'The Green Table'}
+                </strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -203,7 +272,10 @@ export default function VendorDashboard() {
         {/* 4 Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {orderStats.map((item) => (
-            <div key={item.label} className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+            <div
+              key={item.label}
+              className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   {item.label}
@@ -263,12 +335,18 @@ export default function VendorDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-mono text-xs font-bold text-gray-500">#{order.id}</span>
+                        <span className="font-mono text-xs font-bold text-gray-500">
+                          #{order.id}
+                        </span>
                         <h4 className="font-bold text-sm text-[#18201c]">{order.customerName}</h4>
-                        <p className="text-[11px] text-gray-500">{order.address} · {order.time}</p>
+                        <p className="text-[11px] text-gray-500">
+                          {order.address} · {order.time}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-emerald-700">₹{order.totalAmount}</span>
+                        <span className="text-sm font-bold text-emerald-700">
+                          ₹{order.totalAmount}
+                        </span>
                         <div className="mt-1">
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
@@ -296,7 +374,8 @@ export default function VendorDashboard() {
                           onClick={() => updateOrderStatus(order.id, 'preparing')}
                           className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition flex items-center gap-1.5"
                         >
-                          <CookingPot className="size-3.5 text-[#d9f447]" /> Accept &amp; Start Preparing
+                          <CookingPot className="size-3.5 text-[#d9f447]" /> Accept &amp; Start
+                          Preparing
                         </button>
                       )}
                       {order.status === 'preparing' && (

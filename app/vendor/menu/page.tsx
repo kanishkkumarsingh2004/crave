@@ -4,13 +4,8 @@ import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
-  ArrowUpRight,
-  CheckCircle2,
   Edit,
-  Flame,
   LogOut,
-  Minus,
-  PackageCheck,
   Percent,
   Plus,
   Search,
@@ -37,55 +32,14 @@ interface MenuItemRecord {
   veg?: boolean
 }
 
-const PRESET_IMAGES = [
-  { label: 'Harvest Bowl', url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85' },
-  { label: 'Paneer Wrap', url: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85' },
-  { label: 'Asian Momos', url: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85' },
-  { label: 'Salad & Greens', url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=500&q=85' },
-  { label: 'Matcha Drink', url: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=500&q=85' },
-]
-
-const INITIAL_GREEN_TABLE_ITEMS: MenuItemRecord[] = [
-  {
-    id: 'menu_1',
-    restaurant_id: 'rest_1',
-    name: 'Avocado Quinoa Harvest Bowl',
-    category: 'Bowls',
-    price: 289,
-    description: 'Organic quinoa topped with wild basil pesto, roasted cherry tomatoes & pine nuts',
-    in_stock: true,
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-  },
-  {
-    id: 'menu_2',
-    restaurant_id: 'rest_1',
-    name: 'Smoky Paneer Tikka Wrap',
-    category: 'Wraps',
-    price: 249,
-    description: 'Char-grilled cottage cheese wrapped in whole wheat tortilla with mint yogurt',
-    in_stock: true,
-    image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-  },
-  {
-    id: 'menu_3',
-    restaurant_id: 'rest_1',
-    name: 'Steamed Truffle Edamame Momos',
-    category: 'Starters',
-    price: 320,
-    description: 'Delicate dumplings stuffed with smashed edamame and black truffle oil',
-    in_stock: true,
-    image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=85',
-    veg: true,
-  },
-]
-
 export default function VendorMenuPage() {
   const { user, role, isLoading, logout } = useAuth()
   const router = useRouter()
 
-  const [menuItems, setMenuItems] = useState<MenuItemRecord[]>(INITIAL_GREEN_TABLE_ITEMS)
+  const [restaurantId, setRestaurantId] = useState<string | null>(null)
+  const [menuItems, setMenuItems] = useState<MenuItemRecord[]>([])
+  const [menuLoading, setMenuLoading] = useState(true)
+  const [menuError, setMenuError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [toastMsg, setToastMsg] = useState('')
@@ -97,9 +51,9 @@ export default function VendorMenuPage() {
   // Form Fields
   const [nameInput, setNameInput] = useState('')
   const [categoryInput, setCategoryInput] = useState('Bowls')
-  const [priceInput, setPriceInput] = useState(249)
+  const [priceInput, setPriceInput] = useState<number | ''>('')
   const [descInput, setDescInput] = useState('')
-  const [imageInput, setImageInput] = useState(PRESET_IMAGES[0].url)
+  const [imageInput, setImageInput] = useState('')
   const [isVegInput, setIsVegInput] = useState(true)
   const [inStockInput, setInStockInput] = useState(true)
 
@@ -112,35 +66,61 @@ export default function VendorMenuPage() {
     }
   }, [user, role, isLoading, router])
 
-  // Fetch Live Menu Items from Supabase
+  // Load this vendor's menu only; an empty query must not leave placeholder rows visible.
   useEffect(() => {
     async function loadLiveMenu() {
+      if (!user?.id) {
+        setMenuItems([])
+        setRestaurantId(null)
+        setMenuLoading(false)
+        return
+      }
+
+      setMenuLoading(true)
+      setMenuError('')
       try {
+        const { data: restaurant, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+
+        if (restaurantError) throw restaurantError
+        if (!restaurant) {
+          setRestaurantId(null)
+          setMenuItems([])
+          return
+        }
+
+        setRestaurantId(restaurant.id)
         const { data, error } = await supabase
           .from('menu_items')
           .select('*')
-          .eq('restaurant_id', 'rest_1')
+          .eq('restaurant_id', restaurant.id)
+          .order('created_at', { ascending: false })
 
-        if (!error && data && data.length > 0) {
-          const formatted: MenuItemRecord[] = data.map((item) => ({
-            id: item.id,
-            restaurant_id: item.restaurant_id || 'rest_1',
-            name: item.name,
-            category: item.category || 'Bowls',
-            price: Number(item.price),
-            description: item.description || '',
-            in_stock: item.in_stock !== false,
-            image: item.image || PRESET_IMAGES[0].url,
-            veg: true,
-          }))
-          setMenuItems(formatted)
-        }
+        if (error) throw error
+        const formatted: MenuItemRecord[] = (data ?? []).map((item) => ({
+          id: item.id,
+          restaurant_id: item.restaurant_id,
+          name: item.name,
+          category: item.category,
+          price: Number(item.price),
+          description: item.description ?? '',
+          in_stock: item.in_stock,
+          image: item.image ?? '',
+        }))
+        setMenuItems(formatted)
       } catch (err) {
         console.error('Failed to fetch menu_items from Supabase:', err)
+        setMenuError('Could not load this restaurant menu from the database.')
+        setMenuItems([])
+      } finally {
+        setMenuLoading(false)
       }
     }
     loadLiveMenu()
-  }, [])
+  }, [user?.id])
 
   function triggerToast(msg: string) {
     setToastMsg(msg)
@@ -151,9 +131,9 @@ export default function VendorMenuPage() {
     setEditingItem(null)
     setNameInput('')
     setCategoryInput('Bowls')
-    setPriceInput(249)
+    setPriceInput('')
     setDescInput('')
-    setImageInput(PRESET_IMAGES[0].url)
+    setImageInput('')
     setIsVegInput(true)
     setInStockInput(true)
     setShowItemModal(true)
@@ -173,24 +153,24 @@ export default function VendorMenuPage() {
 
   async function handleSaveItem(e: FormEvent) {
     e.preventDefault()
-    if (!nameInput.trim()) return
+    if (!nameInput.trim() || priceInput === '' || !restaurantId) return
 
-    const newItemId = editingItem ? editingItem.id : `menu_${Date.now()}`
+    const newItemId = editingItem ? editingItem.id : crypto.randomUUID()
     const itemData: MenuItemRecord = {
       id: newItemId,
-      restaurant_id: 'rest_1',
+      restaurant_id: restaurantId,
       name: nameInput.trim(),
       category: categoryInput,
       price: Number(priceInput),
       description: descInput.trim(),
       in_stock: inStockInput,
-      image: imageInput || PRESET_IMAGES[0].url,
+      image: imageInput.trim(),
       veg: isVegInput,
     }
 
     try {
       if (editingItem) {
-        await supabase
+        const { error } = await supabase
           .from('menu_items')
           .update({
             name: itemData.name,
@@ -201,22 +181,27 @@ export default function VendorMenuPage() {
             image: itemData.image,
           })
           .eq('id', editingItem.id)
+          .eq('restaurant_id', restaurantId)
+        if (error) throw error
       } else {
-        await supabase.from('menu_items').insert([
+        const { error } = await supabase.from('menu_items').insert([
           {
             id: newItemId,
-            restaurant_id: 'rest_1',
+            restaurant_id: restaurantId,
             name: itemData.name,
             category: itemData.category,
             price: itemData.price,
             description: itemData.description,
             in_stock: itemData.in_stock,
-            image: itemData.image,
+            image: itemData.image || null,
           },
         ])
+        if (error) throw error
       }
     } catch (err) {
       console.error('Failed to save menu item to Supabase:', err)
+      triggerToast('Could not save the menu item. Please try again.')
+      return
     }
 
     if (editingItem) {
@@ -231,23 +216,41 @@ export default function VendorMenuPage() {
   }
 
   async function handleToggleStock(id: string, currentStock: boolean) {
+    if (!restaurantId) return
     const nextStock = !currentStock
     try {
-      await supabase.from('menu_items').update({ in_stock: nextStock }).eq('id', id)
-    } catch (err) {}
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ in_stock: nextStock })
+        .eq('id', id)
+        .eq('restaurant_id', restaurantId)
+      if (error) throw error
+    } catch (err) {
+      console.error('Failed to update menu item stock:', err)
+      triggerToast('Could not update availability. Please try again.')
+      return
+    }
 
-    setMenuItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i))
-    )
+    setMenuItems((prev) => prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i)))
     triggerToast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`)
   }
 
   async function handleDeleteItem(id: string, name: string) {
     if (!confirm(`Are you sure you want to delete '${name}' from your menu?`)) return
+    if (!restaurantId) return
 
     try {
-      await supabase.from('menu_items').delete().eq('id', id)
-    } catch (err) {}
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', id)
+        .eq('restaurant_id', restaurantId)
+      if (error) throw error
+    } catch (err) {
+      console.error('Failed to delete menu item:', err)
+      triggerToast('Could not delete the menu item. Please try again.')
+      return
+    }
 
     setMenuItems((prev) => prev.filter((i) => i.id !== id))
     triggerToast(`Deleted '${name}' from menu.`)
@@ -285,7 +288,10 @@ export default function VendorMenuPage() {
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+            <Link
+              href="/"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
+            >
               crave<span className="text-[#86a018]">.</span>
             </Link>
             <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
@@ -296,7 +302,9 @@ export default function VendorMenuPage() {
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
               <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+              <span className="truncate max-w-[200px]">
+                {user?.restaurantName || 'Your restaurant'}
+              </span>
             </div>
           </div>
 
@@ -354,7 +362,7 @@ export default function VendorMenuPage() {
                 Restaurant Menu Management
               </span>
               <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
-                {user?.restaurantName || 'The Green Table'} Dish Catalog
+                {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
                 Add, edit, set pricing, or toggle live dish availability for customer orders.
@@ -363,6 +371,7 @@ export default function VendorMenuPage() {
 
             <button
               onClick={openAddModal}
+              disabled={!restaurantId}
               className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition"
             >
               <Plus className="size-4 text-[#d9f447]" /> Add New Dish
@@ -402,75 +411,106 @@ export default function VendorMenuPage() {
 
         {/* Menu Items Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className={`rounded-3xl border p-4 bg-white shadow-xs flex flex-col justify-between transition ${
-                item.in_stock ? 'border-gray-200' : 'border-rose-200 bg-rose-50/20'
-              }`}
+          {menuLoading ? (
+            <p className="col-span-full rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+              Loading menu from the database...
+            </p>
+          ) : menuError ? (
+            <p
+              role="alert"
+              className="col-span-full rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-800"
             >
-              <div>
-                <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-75' : ''}`}
-                  />
-                  <span className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-[#18201c] backdrop-blur-md shadow-xs">
-                    {item.category}
-                  </span>
-                  {!item.in_stock && (
-                    <span className="absolute inset-0 grid place-items-center bg-black/60 text-white text-xs font-extrabold uppercase tracking-wider backdrop-blur-xs">
-                      Out of Stock
+              {menuError}
+            </p>
+          ) : !restaurantId ? (
+            <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+              No restaurant is linked to this vendor account yet.
+            </p>
+          ) : filteredItems.length === 0 ? (
+            <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+              No menu items are stored for this restaurant yet.
+            </p>
+          ) : (
+            filteredItems.map((item) => (
+              <div
+                key={item.id}
+                className={`rounded-3xl border p-4 bg-white shadow-xs flex flex-col justify-between transition ${
+                  item.in_stock ? 'border-gray-200' : 'border-rose-200 bg-rose-50/20'
+                }`}
+              >
+                <div>
+                  <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-75' : ''}`}
+                      />
+                    ) : (
+                      <div className="grid size-full place-items-center bg-gray-100 text-gray-400">
+                        <Utensils className="size-8" aria-hidden="true" />
+                      </div>
+                    )}
+                    <span className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-[#18201c] backdrop-blur-md shadow-xs">
+                      {item.category}
                     </span>
-                  )}
+                    {!item.in_stock && (
+                      <span className="absolute inset-0 grid place-items-center bg-black/60 text-white text-xs font-extrabold uppercase tracking-wider backdrop-blur-xs">
+                        Out of Stock
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-base text-[#18201c] leading-snug">{item.name}</h3>
+                    <span className="font-bold text-base text-[#18201c] shrink-0">
+                      ₹{item.price}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                 </div>
 
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-base text-[#18201c] leading-snug">{item.name}</h3>
-                  <span className="font-bold text-base text-[#18201c] shrink-0">₹{item.price}</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => handleToggleStock(item.id, item.in_stock)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition border ${
-                    item.in_stock
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                      : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                  }`}
-                >
-                  {item.in_stock ? 'In Stock' : 'Out of Stock'}
-                </button>
-
-                <div className="flex items-center gap-1">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                   <button
-                    onClick={() => openEditModal(item)}
-                    className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                    title="Edit Dish"
+                    type="button"
+                    onClick={() => handleToggleStock(item.id, item.in_stock)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold transition border ${
+                      item.in_stock
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                    }`}
                   >
-                    <Edit className="size-3.5" />
+                    {item.in_stock ? 'In Stock' : 'Out of Stock'}
                   </button>
-                  <button
-                    onClick={() => handleDeleteItem(item.id, item.name)}
-                    className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
-                    title="Delete Dish"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                      title="Edit Dish"
+                    >
+                      <Edit className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(item.id, item.name)}
+                      className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                      title="Delete Dish"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           {filteredItems.length === 0 && (
             <div className="col-span-full rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center text-gray-500">
               <Utensils className="mx-auto size-12 text-gray-300 mb-2" />
               <p className="font-bold text-base text-[#18201c]">No Dishes Found</p>
-              <p className="text-xs mt-1">Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.</p>
+              <p className="text-xs mt-1">
+                Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.
+              </p>
             </div>
           )}
         </div>
@@ -533,7 +573,9 @@ export default function VendorMenuPage() {
                     required
                     min={1}
                     value={priceInput}
-                    onChange={(e) => setPriceInput(Number(e.target.value))}
+                    onChange={(e) =>
+                      setPriceInput(e.target.value === '' ? '' : Number(e.target.value))
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018]"
                   />
                 </div>
@@ -553,25 +595,11 @@ export default function VendorMenuPage() {
               <div>
                 <label className="font-bold text-[#18201c]">Dish Image URL</label>
                 <input
-                  type="text"
-                  required
+                  type="url"
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono text-[11px] outline-none focus:border-[#86a018]"
                 />
-                <div className="mt-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  <span className="text-[10px] text-gray-500 font-bold shrink-0">Presets:</span>
-                  {PRESET_IMAGES.map((p) => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => setImageInput(p.url)}
-                      className="rounded-lg bg-gray-100 px-2 py-1 text-[10px] font-semibold hover:bg-gray-200 transition shrink-0"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 p-4 border border-gray-200">

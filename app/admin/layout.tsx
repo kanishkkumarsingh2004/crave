@@ -24,7 +24,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, role, loginAsRole, logout, isLoading } = useAuth()
+  const { user, role, logout, isLoading } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)

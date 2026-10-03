@@ -1,16 +1,13 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
   Building2,
-  CheckCircle2,
-  CreditCard,
   FileText,
   LogOut,
-  MapPin,
   Percent,
-  PhoneCall,
   Save,
   ShieldCheck,
   Sparkles,
@@ -26,17 +23,19 @@ export default function VendorSettingsPage() {
   const router = useRouter()
 
   const [toastMsg, setToastMsg] = useState('')
-  const [kitchenOpen, setKitchenOpen] = useState(true)
+  const [restaurantId, setRestaurantId] = useState<string | null>(null)
+  const [kitchenOpen, setKitchenOpen] = useState(false)
+  const [settingsLoading, setSettingsLoading] = useState(true)
 
   // Bank & Profile Form State
-  const [accountHolder, setAccountHolder] = useState('Maya Lin (The Green Table)')
-  const [bankName, setBankName] = useState('HDFC Bank Ltd')
-  const [accountNumber, setAccountNumber] = useState('50100293819281')
-  const [ifscCode, setIfscCode] = useState('HDFC0001234')
-  const [payoutUpi, setPayoutUpi] = useState('greentable@hdfcbank')
-  const [fssaiLicense, setFssaiLicense] = useState('11223344556677')
-  const [phone, setPhone] = useState(user?.phone || '+91 98111 22334')
-  const [address, setAddress] = useState(user?.address || 'Koramangala 5th Block, Bengaluru')
+  const [accountHolder, setAccountHolder] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [ifscCode, setIfscCode] = useState('')
+  const [payoutUpi, setPayoutUpi] = useState('')
+  const [fssaiLicense, setFssaiLicense] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
 
   useEffect(() => {
     if (isLoading) return
@@ -47,6 +46,44 @@ export default function VendorSettingsPage() {
     }
   }, [user, role, isLoading, router])
 
+  useEffect(() => {
+    if (!user?.id || role !== 'vendor') return
+    const loadSettings = async () => {
+      setSettingsLoading(true)
+      const { data: restaurant, error } = await supabase
+        .from('restaurants')
+        .select(
+          'id, bank_account_name, bank_name, bank_account_number, bank_ifsc, payout_vpa, fssai_license, is_open, address'
+        )
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      if (error || !restaurant) {
+        setRestaurantId(null)
+        setAccountHolder('')
+        setBankName('')
+        setAccountNumber('')
+        setIfscCode('')
+        setPayoutUpi('')
+        setFssaiLicense('')
+        setKitchenOpen(false)
+        setSettingsLoading(false)
+        return
+      }
+      setRestaurantId(restaurant.id)
+      setAccountHolder(restaurant.bank_account_name ?? '')
+      setBankName(restaurant.bank_name ?? '')
+      setAccountNumber(restaurant.bank_account_number ?? '')
+      setIfscCode(restaurant.bank_ifsc ?? '')
+      setPayoutUpi(restaurant.payout_vpa ?? '')
+      setFssaiLicense(restaurant.fssai_license ?? '')
+      setKitchenOpen(Boolean(restaurant.is_open))
+      setAddress(restaurant.address ?? user.address ?? '')
+      setPhone(user.phone ?? '')
+      setSettingsLoading(false)
+    }
+    loadSettings()
+  }, [user?.id, role])
+
   if (isLoading || !user || role !== 'vendor') {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
@@ -55,10 +92,49 @@ export default function VendorSettingsPage() {
     )
   }
 
-  function handleSaveSettings(e: FormEvent) {
+  async function handleSaveSettings(e: FormEvent) {
     e.preventDefault()
+    if (!restaurantId || !user?.id) return
+    const { error: restaurantError } = await supabase
+      .from('restaurants')
+      .update({
+        bank_account_name: accountHolder || null,
+        bank_name: bankName || null,
+        bank_account_number: accountNumber || null,
+        bank_ifsc: ifscCode || null,
+        payout_vpa: payoutUpi || null,
+        fssai_license: fssaiLicense || null,
+        address: address || null,
+      })
+      .eq('id', restaurantId)
+      .eq('owner_id', user.id)
+    const { error: userError } = await supabase
+      .from('users')
+      .update({ phone: phone || null, address: address || null })
+      .eq('id', user.id)
+    if (restaurantError || userError) {
+      setToastMsg('Could not save settings to the database.')
+      setTimeout(() => setToastMsg(''), 3500)
+      return
+    }
     setToastMsg('Bank account details & kitchen settings saved!')
     setTimeout(() => setToastMsg(''), 3500)
+  }
+
+  async function handleToggleKitchen() {
+    if (!restaurantId || !user?.id) return
+    const nextStatus = !kitchenOpen
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ is_open: nextStatus })
+      .eq('id', restaurantId)
+      .eq('owner_id', user.id)
+    if (error) {
+      setToastMsg('Could not update store availability.')
+      setTimeout(() => setToastMsg(''), 3000)
+      return
+    }
+    setKitchenOpen(nextStatus)
   }
 
   return (
@@ -75,7 +151,10 @@ export default function VendorSettingsPage() {
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link href="/" className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0">
+            <Link
+              href="/"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
+            >
               crave<span className="text-[#86a018]">.</span>
             </Link>
             <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
@@ -86,7 +165,9 @@ export default function VendorSettingsPage() {
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
               <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">{user?.restaurantName || 'The Green Table'}</span>
+              <span className="truncate max-w-[200px]">
+                {user?.restaurantName || 'Your restaurant'}
+              </span>
             </div>
           </div>
 
@@ -141,11 +222,13 @@ export default function VendorSettingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
-                Restaurant Payout Settings (Zomato / Swiggy Model)
+                Restaurant Profile &amp; Payout Settings
               </span>
-              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">Bank Profile &amp; Kitchen Settings</h2>
+              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+                Bank Profile &amp; Kitchen Settings
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Manage bank account details for automated weekly payout transfers.
+                Manage the contact, payout, and availability details stored for this restaurant.
               </p>
             </div>
 
@@ -153,15 +236,10 @@ export default function VendorSettingsPage() {
               <span className="text-xs font-bold text-[#18201c]">Accepting Orders:</span>
               <button
                 type="button"
-                onClick={() => {
-                  setKitchenOpen(!kitchenOpen)
-                  setToastMsg(`Kitchen status set to ${!kitchenOpen ? 'OPEN' : 'CLOSED'}`)
-                  setTimeout(() => setToastMsg(''), 3000)
-                }}
+                onClick={handleToggleKitchen}
+                disabled={!restaurantId || settingsLoading}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                  kitchenOpen
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-rose-600 text-white'
+                  kitchenOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
                 }`}
               >
                 {kitchenOpen ? 'ONLINE' : 'OFFLINE'}
@@ -180,7 +258,9 @@ export default function VendorSettingsPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#18201c]">Payout Bank Account</h3>
-                <p className="text-xs text-gray-500">Weekly net sales earnings will be directly remitted here</p>
+                <p className="text-xs text-gray-500">
+                  Bank details stored on your restaurant profile
+                </p>
               </div>
             </div>
 
@@ -230,7 +310,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-[#18201c]">Primary Payout UPI VPA (Optional)</label>
+                <label className="font-bold text-[#18201c]">
+                  Primary Payout UPI VPA (Optional)
+                </label>
                 <input
                   type="text"
                   value={payoutUpi}
@@ -244,9 +326,13 @@ export default function VendorSettingsPage() {
             <div className="rounded-2xl bg-emerald-50 p-4 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-3">
               <ShieldCheck className="size-5 text-emerald-700 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Bank Account Status: Verified &amp; Active</p>
+                <p className="font-bold">
+                  {accountNumber ? 'Bank details saved' : 'Bank details not configured'}
+                </p>
                 <p className="mt-0.5 text-emerald-800">
-                  Payouts are automatically computed every Sunday 11:59 PM and deposited to this account by Monday afternoon.
+                  {accountNumber
+                    ? 'Current bank information is loaded from the restaurant profile.'
+                    : 'Add payout details and save them to the restaurant profile.'}
                 </p>
               </div>
             </div>
@@ -259,7 +345,9 @@ export default function VendorSettingsPage() {
                 <FileText className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#18201c]">FSSAI License &amp; Store Details</h3>
+                <h3 className="text-lg font-bold text-[#18201c]">
+                  FSSAI License &amp; Store Details
+                </h3>
                 <p className="text-xs text-gray-500">Government compliance and pickup address</p>
               </div>
             </div>
