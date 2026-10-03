@@ -1,7 +1,6 @@
 'use client'
 
 import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
-import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -56,12 +55,5 @@ export default function UserDashboardPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-[#f8f9f7]">
-      <Navbar />
-      <main>
-        <CustomerDashboard />
-      </main>
-    </div>
-  )
+  return <CustomerDashboard />
 }
