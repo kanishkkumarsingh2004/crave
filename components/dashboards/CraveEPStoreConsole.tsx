@@ -230,12 +230,15 @@ export default function CraveXPStoreConsole() {
           .filter((value: any): value is number => value != null)
         setAveragePickSeconds(
           pickTimes.length
-            ? Math.round(pickTimes.reduce((sum: number, value: number) => sum + value, 0) / pickTimes.length)
+            ? Math.round(
+                pickTimes.reduce((sum: number, value: number) => sum + value, 0) / pickTimes.length
+              )
             : null
         )
         setAverageAccuracy(
           accuracyValues.length
-            ? accuracyValues.reduce((sum: number, value: number) => sum + value, 0) / accuracyValues.length
+            ? accuracyValues.reduce((sum: number, value: number) => sum + value, 0) /
+                accuracyValues.length
             : null
         )
 
@@ -243,7 +246,8 @@ export default function CraveXPStoreConsole() {
         setDailyRevenue(
           orderRows
             .filter(
-              (order: any) => order.created_at && new Date(order.created_at).toDateString() === today
+              (order: any) =>
+                order.created_at && new Date(order.created_at).toDateString() === today
             )
             .reduce((sum: number, order: any) => sum + Number(order.total_amount ?? 0), 0)
         )
