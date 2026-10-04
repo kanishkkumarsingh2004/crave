@@ -52,7 +52,7 @@ export default function VendorSettlementsPage() {
       try {
         const { data: setts } = await supabase.from('vendor_settlements').select('*')
         if (setts && setts.length > 0) {
-          const loaded: VendorFinancialRecord[] = setts.map((s) => ({
+          const loaded: VendorFinancialRecord[] = setts.map((s: any) => ({
             id: s.id,
             name: s.restaurant_name,
             ownerName: 'Verified Partner Store',
@@ -90,26 +90,28 @@ export default function VendorSettlementsPage() {
             restaurantMap[rName].count += 1
           })
 
-          const computed: VendorFinancialRecord[] = Object.values(restaurantMap).map((item, idx) => ({
-            id: `v_settle_${idx + 1}`,
-            name: item.name,
-            ownerName: 'Verified Partner Store',
-            email: 'partner@crave.com',
-            phone: '+91 98765 43212',
-            cuisine: 'Multi-Cuisine & Fast Food',
-            address: 'Bengaluru, India',
-            fssaiLicense: `#112233445${idx + 10}`,
-            bankAccount: `HDFC •••• ${4000 + idx * 111}`,
-            ifscCode: 'HDFC0001234',
-            weeklyGrossSales: item.gross,
-            commissionRate: activeCfg.vendorCommission,
-            packagingCapFee: activeCfg.packagingCap,
-            promoSubsidyPct: 0,
-            settlementStatus: 'pending',
-            kitchenStatus: 'open',
-            activeOrdersCount: 0,
-            completedDropsCount: item.count,
-          }))
+          const computed: VendorFinancialRecord[] = Object.values(restaurantMap).map(
+            (item, idx) => ({
+              id: `v_settle_${idx + 1}`,
+              name: item.name,
+              ownerName: 'Verified Partner Store',
+              email: 'partner@crave.com',
+              phone: '+91 98765 43212',
+              cuisine: 'Multi-Cuisine & Fast Food',
+              address: 'Bengaluru, India',
+              fssaiLicense: `#112233445${idx + 10}`,
+              bankAccount: `HDFC •••• ${4000 + idx * 111}`,
+              ifscCode: 'HDFC0001234',
+              weeklyGrossSales: item.gross,
+              commissionRate: activeCfg.vendorCommission,
+              packagingCapFee: activeCfg.packagingCap,
+              promoSubsidyPct: 0,
+              settlementStatus: 'pending',
+              kitchenStatus: 'open',
+              activeOrdersCount: 0,
+              completedDropsCount: item.count,
+            })
+          )
           setVendors(computed)
           return
         }

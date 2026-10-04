@@ -67,12 +67,14 @@ export async function listOrders(filters?: {
 
   // 3. Fallback to local store
   const localOrders = getOrders()
-  return localOrders.filter((o) => {
-    if (filters?.customerId && o.customer_id !== filters.customerId) return false
-    if (filters?.restaurantId && o.restaurant_id !== filters.restaurantId) return false
-    if (filters?.status && o.status !== filters.status) return false
-    return true
-  }).slice(0, filters?.limit)
+  return localOrders
+    .filter((o) => {
+      if (filters?.customerId && o.customer_id !== filters.customerId) return false
+      if (filters?.restaurantId && o.restaurant_id !== filters.restaurantId) return false
+      if (filters?.status && o.status !== filters.status) return false
+      return true
+    })
+    .slice(0, filters?.limit)
 }
 
 export async function countOrders(filters?: {
@@ -157,7 +159,11 @@ export async function createOrder(data: {
   // 2. Try Supabase REST
   try {
     const { utr_ref, customer_vpa, ...insertData } = data
-    const { data: created, error } = await supabase.from('orders').insert([insertData]).select().single()
+    const { data: created, error } = await supabase
+      .from('orders')
+      .insert([insertData])
+      .select()
+      .single()
     if (!error && created) return created
   } catch (sbErr) {}
 
@@ -178,7 +184,10 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
     try {
       const { data } = await supabase
         .from('orders')
-        .update({ status, ...(status === 'completed' ? { delivered_at: new Date().toISOString() } : {}) })
+        .update({
+          status,
+          ...(status === 'completed' ? { delivered_at: new Date().toISOString() } : {}),
+        })
         .eq('id', id)
         .select()
         .single()
@@ -230,7 +239,12 @@ export async function updateOrder(
   } catch (e) {
     // Try Supabase
     try {
-      const { data: updated } = await supabase.from('orders').update(data as any).eq('id', id).select().single()
+      const { data: updated } = await supabase
+        .from('orders')
+        .update(data as any)
+        .eq('id', id)
+        .select()
+        .single()
       if (updated) return updated
     } catch {}
     return { id, ...data }
@@ -256,7 +270,10 @@ export async function getOrdersRevenue(restaurantId?: string) {
     }
   } catch {
     const orders = await listOrders({ restaurantId, status: 'completed' as OrderStatus })
-    const totalRevenue = orders.reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
+    const totalRevenue = orders.reduce(
+      (sum: number, o: any) => sum + (Number(o.total_amount) || 0),
+      0
+    )
     const foodRevenue = orders.reduce((sum: number, o: any) => sum + (Number(o.subtotal) || 0), 0)
     return { totalRevenue, foodRevenue, orderCount: orders.length }
   }

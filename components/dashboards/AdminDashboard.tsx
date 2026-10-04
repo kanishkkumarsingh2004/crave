@@ -269,7 +269,7 @@ export default function AdminDashboard() {
 
       if (!error && data) {
         setPayments(
-          data.map((p) => ({
+          data.map((p: any) => ({
             id: p.id,
             orderId: p.order_id,
             customerUpi: p.customer_vpa,

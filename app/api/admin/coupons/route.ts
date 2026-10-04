@@ -1,17 +1,13 @@
-import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/dal/coupons'
 import type { DiscountType } from '@prisma/client'
+import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const restaurantId = searchParams.get('restaurantId')
 
-    const coupons = await prisma.coupon.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
-      orderBy: { created_at: 'desc' },
-    })
-
+    const coupons = await listCoupons(restaurantId ?? undefined)
     return NextResponse.json({ success: true, coupons })
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Failed to load coupons' }, { status: 500 })
@@ -21,24 +17,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const coupon = await prisma.coupon.create({
-      data: {
-        id: body.id || crypto.randomUUID(),
-        code: body.code,
-        description: body.description,
-        discount_type: body.discount_type as DiscountType,
-        discount_value: Number(body.discount_value),
-        min_order_amount: Number(body.min_order_amount),
-        max_discount: body.max_discount != null ? Number(body.max_discount) : null,
-        usage_limit: body.usage_limit != null ? Number(body.usage_limit) : null,
-        expiry_date: body.expiry_date ? new Date(body.expiry_date) : null,
-        is_active: body.is_active ?? true,
-        restaurant_id: body.restaurant_id || null,
-      },
+    const coupon = await createCoupon({
+      id: body.id || crypto.randomUUID(),
+      code: body.code,
+      description: body.description,
+      discount_type: body.discount_type as DiscountType,
+      discount_value: Number(body.discount_value),
+      min_order_amount: Number(body.min_order_amount),
+      max_discount: body.max_discount != null ? Number(body.max_discount) : undefined,
+      usage_limit: body.usage_limit != null ? Number(body.usage_limit) : undefined,
+      expiry_date: body.expiry_date ? new Date(body.expiry_date) : undefined,
+      is_active: body.is_active ?? true,
+      restaurant_id: body.restaurant_id || undefined,
     })
     return NextResponse.json({ success: true, coupon })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to create coupon' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to create coupon' },
+      { status: 500 }
+    )
   }
 }
 
@@ -51,16 +48,16 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Coupon ID required' }, { status: 400 })
     }
 
-    // Convert date strings if present
     if (data.expiry_date) data.expiry_date = new Date(data.expiry_date)
     if (data.discount_value != null) data.discount_value = Number(data.discount_value)
-    if (data.min_order_amount != null) data.min_order_amount = Number(data.min_order_amount)
-    if (data.max_discount != null) data.max_discount = Number(data.max_discount)
 
-    const coupon = await prisma.coupon.update({ where: { id }, data })
+    const coupon = await updateCoupon(id, data)
     return NextResponse.json({ success: true, coupon })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to update coupon' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to update coupon' },
+      { status: 500 }
+    )
   }
 }
 
@@ -73,9 +70,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Coupon ID required' }, { status: 400 })
     }
 
-    await prisma.coupon.delete({ where: { id } })
+    await deleteCoupon(id)
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to delete coupon' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to delete coupon' },
+      { status: 500 }
+    )
   }
 }

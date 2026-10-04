@@ -50,7 +50,7 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
 
     if (error || !data) return []
 
-    return data.map((item) => ({
+    return data.map((item: any) => ({
       id: item.id,
       code: item.code,
       description: item.description,

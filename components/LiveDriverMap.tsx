@@ -188,8 +188,7 @@ export default function LiveDriverMap({
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {
-        attribution:
-          'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, OpenStreetMap',
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, OpenStreetMap',
         maxZoom: 16,
       }
     ).addTo(map)
@@ -301,7 +300,9 @@ export default function LiveDriverMap({
       driverMarkerRef.current.setLatLng(driverPos)
       driverMarkerRef.current.setIcon(arrowIcon)
     } else {
-      driverMarkerRef.current = L.marker(driverPos, { icon: arrowIcon, zIndexOffset: 1000 }).addTo(map)
+      driverMarkerRef.current = L.marker(driverPos, { icon: arrowIcon, zIndexOffset: 1000 }).addTo(
+        map
+      )
     }
   }, [driverPos, headingAngle])
 
@@ -351,7 +352,11 @@ export default function LiveDriverMap({
               <p className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
                 <span>{driverName || 'Verified Delivery Partner'}</span>
                 <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-700/50">
-                  {statusStep >= 3 ? 'Picked Up • On the Way' : statusStep === 2 ? 'At Kitchen' : 'Order Assigned'}
+                  {statusStep >= 3
+                    ? 'Picked Up • On the Way'
+                    : statusStep === 2
+                      ? 'At Kitchen'
+                      : 'Order Assigned'}
                 </span>
               </p>
               <p className="text-[10px] text-emerald-300/90 font-medium truncate max-w-[280px] sm:max-w-[360px] mt-0.5 flex items-center gap-1">
@@ -361,7 +366,9 @@ export default function LiveDriverMap({
             </div>
           </div>
           <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 border-[#27272a] pt-1.5 sm:pt-0">
-            <p className="text-[10px] font-bold text-[#d9f447] uppercase tracking-wider">Street Route</p>
+            <p className="text-[10px] font-bold text-[#d9f447] uppercase tracking-wider">
+              Street Route
+            </p>
             <p className="text-xs font-extrabold text-white">{distanceText}</p>
           </div>
         </div>

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export const roleDetails: Record<
   UserRole,
@@ -58,11 +58,67 @@ export default function Navbar() {
   const { user, role, logout } = useAuth()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const currentDashboardLink = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
   const logoTargetLink = user ? currentDashboardLink : '/'
+
+  if (!mounted) {
+    return (
+      <>
+        <header className="sticky top-0 z-50 border-b border-[#e5e9e1] bg-white/90 backdrop-blur-md">
+          <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
+                <CraveLogo variant="full" size="md" />
+              </Link>
+            </div>
+            <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] lg:flex">
+              <Link href="/" className="transition hover:text-[#18201c]" suppressHydrationWarning>
+                Explore Cravings
+              </Link>
+              <a
+                href="#why-crave"
+                className="transition hover:text-[#18201c]"
+                suppressHydrationWarning
+              >
+                Why crave.
+              </a>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden items-center gap-2 sm:flex">
+                <Link
+                  href="/login"
+                  className="rounded-full border border-[#dfe4dc] bg-white px-4 py-2 text-xs font-semibold text-[#18201c] transition hover:bg-[#f3f6ee]"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#323c36]"
+                >
+                  Sign up
+                </Link>
+              </div>
+              <button
+                onClick={() => setShowMobileMenu((v) => !v)}
+                className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
+                aria-label="Toggle menu"
+              >
+                <Menu className="size-4 text-[#18201c]" />
+              </button>
+            </div>
+          </nav>
+        </header>
+      </>
+    )
+  }
 
   return (
     <>

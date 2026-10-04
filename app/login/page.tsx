@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function LoginPage() {
   const { user, login, logout } = useAuth()
@@ -16,6 +16,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -46,7 +51,7 @@ export default function LoginPage() {
       <main className="mx-auto my-12 w-full max-w-md px-4">
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xl sm:p-8">
           {/* Active Session Notification */}
-          {user && (
+          {user && mounted && (
             <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs">
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">

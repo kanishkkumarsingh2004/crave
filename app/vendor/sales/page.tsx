@@ -96,7 +96,7 @@ export default function VendorSalesPage() {
 
         setOrders((orderResult.data as any) ?? [])
         setSettlementsHistory(
-          (settlementResult.data ?? []).map((settlement) => ({
+          (settlementResult.data ?? []).map((settlement: any) => ({
             id: settlement.id,
             period:
               settlement.period_start && settlement.period_end

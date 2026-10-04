@@ -89,14 +89,18 @@ export async function POST(request: Request) {
     const paymentConfig = getActiveConfig()
 
     // ─── Live Billing Split Calculation ──────────────────────
-    const restaurant = restaurant_id ? await findRestaurantById(restaurant_id).catch(() => null) : null
+    const restaurant = restaurant_id
+      ? await findRestaurantById(restaurant_id).catch(() => null)
+      : null
     const commissionRate = restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15
     const foodSubtotal = Number(subtotal) || 0
     const commissionAmount = Math.round((foodSubtotal * commissionRate) / 100)
     const capPackaging = Math.min(Number(packaging_fee) || 0, paymentConfig.packagingCap || 20)
     const vendorNetPayout = foodSubtotal - commissionAmount + capPackaging
 
-    const actualDeliveryFee = Number(delivery_fee != null ? delivery_fee : paymentConfig.baseDeliveryFee)
+    const actualDeliveryFee = Number(
+      delivery_fee != null ? delivery_fee : paymentConfig.baseDeliveryFee
+    )
     const driverPayout =
       Math.round(actualDeliveryFee * (paymentConfig.driverPayoutShare / 100)) + (Number(tip) || 0)
     const platformProfit =
@@ -237,7 +241,9 @@ export async function PATCH(request: Request) {
       ...(driver_lat != null && { delivery_latitude: driver_lat }),
       ...(driver_lng != null && { delivery_longitude: driver_lng }),
       ...(status === 'completed' && { delivered_at: new Date() }),
-      ...(payment_status || paymentStatus ? { payment_status: payment_status || paymentStatus } : {}),
+      ...(payment_status || paymentStatus
+        ? { payment_status: payment_status || paymentStatus }
+        : {}),
     })
 
     // Sync payment status to payment_reviews
@@ -254,7 +260,8 @@ export async function PATCH(request: Request) {
         const paymentConfig = getActiveConfig()
         const deliveryFee = paymentConfig.baseDeliveryFee
         const driverPayoutAmount =
-          Math.round(deliveryFee * (paymentConfig.driverPayoutShare / 100)) + (Number((existing as any).tip) || 0)
+          Math.round(deliveryFee * (paymentConfig.driverPayoutShare / 100)) +
+          (Number((existing as any).tip) || 0)
 
         if (driver_id || driver_name) {
           await createDriverPayout({
