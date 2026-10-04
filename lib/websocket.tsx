@@ -97,10 +97,7 @@ export function useWebSocket({
   return { connected, sendMessage }
 }
 
-export function useOrderUpdates(
-  customerId: string | undefined,
-  onOrders: (orders: any[]) => void
-) {
+export function useOrderUpdates(customerId: string | undefined, onOrders: (orders: any[]) => void) {
   return useWebSocket({
     channels: ['order_update'],
     customerId,
@@ -165,10 +162,7 @@ export function useApprovalUpdates(
   })
 }
 
-export function useDriverLocation(
-  orderId: string | undefined,
-  onLocation: (data: any) => void
-) {
+export function useDriverLocation(orderId: string | undefined, onLocation: (data: any) => void) {
   return useWebSocket({
     channels: ['driver_location'],
     customerId: orderId,

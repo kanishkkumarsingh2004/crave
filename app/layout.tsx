@@ -1,4 +1,6 @@
 import { AuthProvider } from '@/lib/auth-context'
+import { ToastProvider } from '@/lib/toast-context'
+import { Toaster } from '@/components/ui/Toaster'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
@@ -25,7 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={cn('font-sans', geist.variable)}>
       <body className="antialiased bg-[#f8f9f7] text-[#18201c]" suppressHydrationWarning>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>
+            {children}
+            <Toaster />
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )

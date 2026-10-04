@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
@@ -35,6 +36,7 @@ interface MenuItemRecord {
 export default function VendorMenuPage() {
   const { user, role, isLoading, logout } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
 
   const [restaurantId, setRestaurantId] = useState<string | null>(null)
   const [menuItems, setMenuItems] = useState<MenuItemRecord[]>([])
@@ -42,7 +44,6 @@ export default function VendorMenuPage() {
   const [menuError, setMenuError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [toastMsg, setToastMsg] = useState('')
 
   // Modal State for Adding / Editing Dish
   const [showItemModal, setShowItemModal] = useState(false)
@@ -180,8 +181,8 @@ export default function VendorMenuPage() {
   }, [user?.id])
 
   function triggerToast(msg: string) {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(''), 3000)
+    const isError = /could not|failed|error|unable|invalid/i.test(msg)
+    toast(msg, isError ? 'error' : 'success')
   }
 
   function openAddModal() {
@@ -373,14 +374,6 @@ export default function VendorMenuPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
       {/* Top Vendor Header Navigation Bar */}
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

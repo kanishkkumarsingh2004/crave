@@ -1,6 +1,7 @@
 'use client'
 
 import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   Check,
@@ -37,8 +38,7 @@ export default function AdminCouponsPage() {
   const [usageLimit, setUsageLimit] = useState<number | ''>('')
   const [isActive, setIsActive] = useState(true)
 
-  // Notification Banner
-  const [toastMsg, setToastMsg] = useState('')
+  const { toast } = useToast()
 
   useEffect(() => {
     async function load() {
@@ -49,8 +49,8 @@ export default function AdminCouponsPage() {
   }, [])
 
   function showToast(msg: string) {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(''), 3000)
+    const isError = /could not|failed|error|unable/i.test(msg)
+    toast(msg, isError ? 'error' : 'success')
   }
 
   async function handleSaveCoupon(e: React.FormEvent) {
@@ -245,14 +245,6 @@ export default function AdminCouponsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#121815] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4 duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
       {/* Header Banner */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] bg-white p-6 shadow-sm">
         <div>
