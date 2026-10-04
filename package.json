@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
     "build": "next build",
     "start": "node server.js",
     "db:push": "prisma db push",
