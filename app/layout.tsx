@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/lib/auth-context'
+import { LanguageProvider } from '@/lib/language-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { Toaster } from '@/components/ui/Toaster'
 import { cn } from '@/lib/utils'
@@ -28,10 +29,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn('font-sans', geist.variable)}>
       <body className="antialiased bg-[#f8f9f7] text-[#18201c]" suppressHydrationWarning>
         <AuthProvider>
-          <ToastProvider>
-            {children}
-            <Toaster />
-          </ToastProvider>
+          <LanguageProvider>
+            <ToastProvider>
+              {children}
+              <Toaster />
+            </ToastProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

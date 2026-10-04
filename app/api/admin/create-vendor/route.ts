@@ -44,7 +44,8 @@ export async function POST(request: Request) {
     const vendorId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
 
     const finalUserId = userId
-    const vendorRole = vendorType === 'CraveXP Store Vendor' ? 'cravexp_store_vendor' : 'restaurant_vendor'
+    const vendorRole =
+      vendorType === 'CraveXP Store Vendor' ? 'cravexp_store_vendor' : 'restaurant_vendor'
 
     // Insert user record via Prisma
     try {

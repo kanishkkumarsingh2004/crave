@@ -26,6 +26,8 @@ export interface UserProfile {
   vehicleType?: string
   licensePlate?: string
   vehicleNo?: string
+  /** ISO 639-1 locale code — synced from DB on login, e.g. 'en' | 'kn' */
+  locale?: string
 }
 
 interface AuthContextType {
@@ -93,7 +95,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
-
       } catch (err) {
         console.error('Failed to restore local session:', err)
       } finally {

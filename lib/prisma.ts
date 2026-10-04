@@ -13,7 +13,9 @@ function createPrismaClient(): PrismaClientType {
     return null as any
   }
   if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL is missing. Configure local PostgreSQL before using database features.')
+    console.error(
+      'DATABASE_URL is missing. Configure local PostgreSQL before using database features.'
+    )
     return null as any
   }
   try {

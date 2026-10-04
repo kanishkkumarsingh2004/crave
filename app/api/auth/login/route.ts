@@ -41,23 +41,21 @@ export async function POST(request: Request) {
 
     const userPayload: JWTPayload = {
       id: profile.id,
-      name:
-        profile.name || email.split('@')[0] || 'User',
-      email: profile.email,
-      role: profile.role,
-      phone: profile.phone ?? undefined,
-      address: profile.address ?? undefined,
-      restaurantName: profile.restaurant_name ?? undefined,
-      cuisine: profile.cuisine ?? undefined,
-      vehicleType: profile.vehicle_type ?? undefined,
-      licensePlate: profile.license_plate ?? undefined,
+      name: profile?.name || profile?.email?.split('@')[0] || 'User',
+      email: profile?.email || email,
+      role: profile?.role || 'customer',
+      phone: profile?.phone ?? undefined,
+      address: profile?.address ?? undefined,
+      avatar: profile?.avatar ?? undefined,
+      restaurantName: profile?.restaurant_name ?? undefined,
+      cuisine: profile?.cuisine ?? undefined,
+      vehicleType: profile?.vehicle_type ?? undefined,
+      licensePlate: profile?.license_plate ?? undefined,
+      locale: profile?.locale ?? 'en',
     }
 
     const token = await createToken(userPayload)
-    return setCookies(
-      NextResponse.json({ success: true, token, user: userPayload }),
-      token
-    )
+    return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token)
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json(

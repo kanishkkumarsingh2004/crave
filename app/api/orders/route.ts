@@ -65,7 +65,10 @@ export async function POST(request: Request) {
   try {
     const actor = await getActor(request)
     if (!actor || actor.role !== 'user') {
-      return NextResponse.json({ error: 'Only authenticated users can place orders' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Only authenticated users can place orders' },
+        { status: 401 }
+      )
     }
     const body = await request.json()
     const {
@@ -260,20 +263,27 @@ export async function PATCH(request: Request) {
     const vendorStatuses: OrderStatus[] = ['preparing', 'packing', 'ready_for_pickup']
     const riderStatuses: OrderStatus[] = ['picked_up', 'out_for_delivery', 'delivered', 'completed']
     const requestedStatus = status as OrderStatus | undefined
-    const isOwner =
-      actor.role === 'user' && existing.customer_id === actor.id
+    const isOwner = actor.role === 'user' && existing.customer_id === actor.id
     const isVendor =
       (actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
       (existing.restaurant_id === (actor as any).restaurantId ||
         existing.restaurant_name === actor.restaurantName)
     const allowed =
       !status ||
-      (actor.role === 'admin' && ['payment_verified', 'sent_to_vendor', 'cancelled'].includes(status)) ||
+      (actor.role === 'admin' &&
+        ['payment_verified', 'sent_to_vendor', 'cancelled'].includes(status)) ||
       (isVendor && vendorStatuses.includes(requestedStatus!)) ||
       (actor.role === 'rider' && riderStatuses.includes(requestedStatus!))
 
-    if (!allowed || (payment_status && actor.role !== 'admin') || (driver_lat != null && actor.role !== 'rider')) {
-      return NextResponse.json({ error: 'You are not allowed to update this order' }, { status: 403 })
+    if (
+      !allowed ||
+      (payment_status && actor.role !== 'admin') ||
+      (driver_lat != null && actor.role !== 'rider')
+    ) {
+      return NextResponse.json(
+        { error: 'You are not allowed to update this order' },
+        { status: 403 }
+      )
     }
 
     // Only pass fields that exist on the Order model to updateOrder.

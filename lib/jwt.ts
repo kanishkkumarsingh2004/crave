@@ -10,10 +10,13 @@ export interface JWTPayload {
   role: 'user' | 'restaurant_vendor' | 'cravexp_store_vendor' | 'rider' | 'admin'
   phone?: string
   address?: string
+  avatar?: string
   restaurantName?: string
   cuisine?: string
   vehicleType?: string
   licensePlate?: string
+  /** ISO 639-1 locale code stored on the user row, e.g. 'en' | 'kn' */
+  locale?: string
   [key: string]: any
 }
 
