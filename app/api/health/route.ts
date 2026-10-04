@@ -1,29 +1,36 @@
-import { supabase } from '@/lib/supabase'
+import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   const startTime = Date.now()
   const timestamp = new Date().toISOString()
 
+  let dbStatus: 'ok' | 'error' = 'error'
+  let dbLatency = -1
+  let dbError: string | null = null
+
   try {
     const dbStart = Date.now()
-    const { data, error } = await supabase
-      .from('users')
-      .select('id', { count: 'exact', head: true })
-      .limit(1)
+    await prisma.$queryRaw`SELECT 1`
+    dbLatency = Date.now() - dbStart
+    dbStatus = 'ok'
+  } catch (err) {
+    dbError = err instanceof Error ? err.message : 'Database connection failed'
+  }
 
-    const dbLatency = Date.now() - dbStart
+  const overall = dbStatus === 'ok' ? 'ok' : 'degraded'
 
-    const status = {
-      status: error ? 'degraded' : 'ok',
+  return NextResponse.json(
+    {
+      status: overall,
       timestamp,
       uptime: process.uptime(),
       responseTimeMs: Date.now() - startTime,
       checks: {
         database: {
-          status: error ? 'error' : 'ok',
+          status: dbStatus,
           latencyMs: dbLatency,
-          error: error?.message ?? null,
+          error: dbError,
         },
       },
       env: {
@@ -31,42 +38,13 @@ export async function GET() {
         nextVersion: process.env.__NEXT_VERSION || 'unknown',
         environment: process.env.NODE_ENV,
       },
-    }
-
-    return NextResponse.json(status, {
-      status: error ? 503 : 200,
+    },
+    {
+      status: dbStatus === 'ok' ? 200 : 503,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
         'Content-Type': 'application/json',
       },
-    })
-  } catch (err) {
-    return NextResponse.json(
-      {
-        status: 'error',
-        timestamp,
-        uptime: process.uptime(),
-        responseTimeMs: Date.now() - startTime,
-        checks: {
-          database: {
-            status: 'error',
-            latencyMs: -1,
-            error: err instanceof Error ? err.message : 'Database connection failed',
-          },
-        },
-        env: {
-          nodeVersion: process.version,
-          nextVersion: process.env.__NEXT_VERSION || 'unknown',
-          environment: process.env.NODE_ENV,
-        },
-      },
-      {
-        status: 503,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0',
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-  }
+    }
+  )
 }
