@@ -13,7 +13,9 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log(`[Admin Delete Vendor] Processing deletion for vendorId: ${vendorId}, userId: ${userId}, email: ${email}`)
+    console.log(
+      `[Admin Delete Vendor] Processing deletion for vendorId: ${vendorId}, userId: ${userId}, email: ${email}`
+    )
 
     // 1. Fetch vendor info to ensure we have all associated IDs
     let targetVendorId = vendorId

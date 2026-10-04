@@ -203,7 +203,11 @@ export default function CraveXPStore() {
       if (!existing) {
         if (delta > 0) {
           // If cart contains items from a different store, reset cart with new store's item
-          if (prev.length > 0 && item.restaurantId && prev[0].item.restaurantId !== item.restaurantId) {
+          if (
+            prev.length > 0 &&
+            item.restaurantId &&
+            prev[0].item.restaurantId !== item.restaurantId
+          ) {
             return [{ item, qty: 1 }]
           }
           return [...prev, { item, qty: 1 }]

@@ -5,24 +5,17 @@ import AdminSettingsPage from '@/app/admin/settings/page'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import {
-  Activity,
-  ArrowUpRight,
-  BarChart3,
   CheckCircle2,
-  CreditCard,
   Crown,
-  DollarSign,
   Edit3,
   Plus,
   RefreshCw,
   Search,
-  Settings,
   ShieldCheck,
   Sparkles,
   Store,
   Tag,
   Trash2,
-  TrendingUp,
   Users,
   Utensils,
   X,
@@ -142,7 +135,11 @@ export default function AdminDashboard() {
   })
 
   // Delete Store Confirmation State
-  const [deleteConfirmVendor, setDeleteConfirmVendor] = useState<{ id: string; name: string; email?: string } | null>(null)
+  const [deleteConfirmVendor, setDeleteConfirmVendor] = useState<{
+    id: string
+    name: string
+    email?: string
+  } | null>(null)
   const [isDeletingVendor, setIsDeletingVendor] = useState<boolean>(false)
 
   function triggerToast(msg: string) {
@@ -187,7 +184,9 @@ export default function AdminDashboard() {
       if (usersData && usersData.length > 0) {
         usersData.forEach((u) => {
           const matchedVendor = realVendorsList.find((v) => v.userId === u.id || v.id === u.id)
-          const isXP = matchedVendor?.description?.toLowerCase().includes('xp') || u.cuisine?.toLowerCase().includes('xp')
+          const isXP =
+            matchedVendor?.description?.toLowerCase().includes('xp') ||
+            u.cuisine?.toLowerCase().includes('xp')
 
           combinedAccounts.push({
             id: u.id,
@@ -225,7 +224,9 @@ export default function AdminDashboard() {
         realVendorsList.forEach((v) => {
           const exists = combinedAccounts.some((a) => a.id === v.id || a.id === v.userId)
           if (!exists) {
-            const isXP = v.description?.toLowerCase().includes('xp') || v.storeName?.toLowerCase().includes('xp')
+            const isXP =
+              v.description?.toLowerCase().includes('xp') ||
+              v.storeName?.toLowerCase().includes('xp')
             combinedAccounts.push({
               id: v.id,
               name: v.storeName || 'Store Vendor',
@@ -237,7 +238,9 @@ export default function AdminDashboard() {
               phone: undefined,
               address: v.address || 'Bengaluru, India',
               restaurantName: v.storeName,
-              cuisine: v.description ? v.description.split('·')[1]?.trim() || v.description : 'Multi-Cuisine',
+              cuisine: v.description
+                ? v.description.split('·')[1]?.trim() || v.description
+                : 'Multi-Cuisine',
               commissionRate: v.commissionRate || 15,
               paymentModel: v.commissionType === 'MARKUP' ? 'markup' : 'commission',
               vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
@@ -300,7 +303,12 @@ export default function AdminDashboard() {
   // Admin Vendor Onboarding Handler
   async function handleOnboardVendor(e: FormEvent) {
     e.preventDefault()
-    if (!newVendorForm.ownerName || !newVendorForm.email || !newVendorForm.password || !newVendorForm.storeName) {
+    if (
+      !newVendorForm.ownerName ||
+      !newVendorForm.email ||
+      !newVendorForm.password ||
+      !newVendorForm.storeName
+    ) {
       triggerToast('Please fill in all required vendor onboarding fields.')
       return
     }
@@ -332,7 +340,9 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Vendor creation failed')
       }
 
-      triggerToast(`🎉 ${newVendorForm.storeName} successfully onboarded as ${newVendorForm.vendorType}!`)
+      triggerToast(
+        `🎉 ${newVendorForm.storeName} successfully onboarded as ${newVendorForm.vendorType}!`
+      )
       setIsAddVendorOpen(false)
 
       setNewVendorForm({
@@ -409,7 +419,9 @@ export default function AdminDashboard() {
             currency: p.currency || 'INR',
             imageUrl: p.imageUrl,
             status: p.status || 'ACTIVE',
-            categoryName: p.description?.includes('·') ? p.description.split('·')[0].trim() : 'General',
+            categoryName: p.description?.includes('·')
+              ? p.description.split('·')[0].trim()
+              : 'General',
           }))
         )
       } else {
@@ -431,7 +443,8 @@ export default function AdminDashboard() {
     const isEdit = !!editingProduct
     const prodId = editingProduct ? editingProduct.id : crypto.randomUUID()
     const finalPrice = Number(productForm.price)
-    const finalComparePrice = productForm.comparePrice !== '' ? Number(productForm.comparePrice) : null
+    const finalComparePrice =
+      productForm.comparePrice !== '' ? Number(productForm.comparePrice) : null
 
     try {
       if (isEdit) {
@@ -563,7 +576,8 @@ export default function AdminDashboard() {
         <div>
           <h2 className="text-xl font-extrabold text-[#18201c]">Platform Accounts &amp; Stores</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer insights &amp; live Supabase sync.
+            Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer
+            insights &amp; live Supabase sync.
           </p>
         </div>
 
@@ -678,7 +692,8 @@ export default function AdminDashboard() {
             <div>
               <h3 className="text-sm font-bold text-[#18201c]">Registered Store Vendors</h3>
               <p className="text-[11px] text-gray-500">
-                Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access menus.
+                Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access
+                menus.
               </p>
             </div>
 
@@ -706,21 +721,30 @@ export default function AdminDashboard() {
                 {vendorAccounts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-xs text-gray-500">
-                      No vendor stores currently registered in Supabase database. Click &apos;+ Onboard New Store&apos; to add one.
+                      No vendor stores currently registered in Supabase database. Click &apos;+
+                      Onboard New Store&apos; to add one.
                     </td>
                   </tr>
                 ) : (
                   vendorAccounts.map((account) => {
-                    const matchedVendor = vendorsList.find((v) => v.id === account.id || v.userId === account.id)
-                    const isXPStore = account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
+                    const matchedVendor = vendorsList.find(
+                      (v) => v.id === account.id || v.userId === account.id
+                    )
+                    const isXPStore =
+                      account.vendorType === 'XP Store' ||
+                      account.detail?.toLowerCase().includes('xp')
 
                     return (
                       <tr key={account.id} className="hover:bg-gray-50/80 transition-colors">
                         <td className="px-4 py-3.5 font-bold text-[#18201c]">
                           <div className="flex items-center gap-3">
-                            <div className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
-                              isXPStore ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
+                            <div
+                              className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
+                                isXPStore
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
                               <Store className="size-4" />
                             </div>
                             <div className="min-w-0">
@@ -747,7 +771,9 @@ export default function AdminDashboard() {
                         </td>
 
                         <td className="px-4 py-3.5 text-gray-600">
-                          <p className="font-medium text-xs text-gray-800">{account.phone || 'Phone N/A'}</p>
+                          <p className="font-medium text-xs text-gray-800">
+                            {account.phone || 'Phone N/A'}
+                          </p>
                           <p className="text-[11px] text-gray-500 truncate max-w-[240px]">
                             {account.address || 'Bengaluru, India'}
                           </p>
@@ -773,7 +799,9 @@ export default function AdminDashboard() {
                                 : 'bg-rose-100 text-rose-800'
                             }`}
                           >
-                            <span className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                            <span
+                              className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                            />
                             {account.status}
                           </span>
                         </td>
@@ -785,7 +813,8 @@ export default function AdminDashboard() {
                                 onClick={() => openMenuDrawerForVendor(matchedVendor)}
                                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-black transition whitespace-nowrap"
                               >
-                                <Utensils className="size-3.5 text-[#d9f447]" /> Manage Menu &amp; Prices
+                                <Utensils className="size-3.5 text-[#d9f447]" /> Manage Menu &amp;
+                                Prices
                               </button>
                             )}
                             <button
@@ -835,7 +864,9 @@ export default function AdminDashboard() {
                   </span>
                   <div>
                     <h4 className="text-base font-extrabold text-white">VIP Spending Customers</h4>
-                    <p className="text-[11px] text-white/70">Real customer accounts ordered by lifetime spend</p>
+                    <p className="text-[11px] text-white/70">
+                      Real customer accounts ordered by lifetime spend
+                    </p>
                   </div>
                 </div>
                 <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
@@ -845,7 +876,10 @@ export default function AdminDashboard() {
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {topSpenders.slice(0, 3).map((cust, idx) => (
-                  <div key={cust.id} className="rounded-xl bg-white/10 p-3.5 backdrop-blur-md border border-white/10">
+                  <div
+                    key={cust.id}
+                    className="rounded-xl bg-white/10 p-3.5 backdrop-blur-md border border-white/10"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="rounded-md bg-[#d9f447] px-2 py-0.5 text-[9px] font-black text-[#18201c]">
                         #{idx + 1} SPENDER
@@ -895,7 +929,9 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="font-bold text-sm text-[#18201c]">{account.name}</p>
-                            <p className="text-[11px] font-normal text-gray-500">Joined: {account.joinedDate}</p>
+                            <p className="text-[11px] font-normal text-gray-500">
+                              Joined: {account.joinedDate}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -910,7 +946,8 @@ export default function AdminDashboard() {
                       </td>
 
                       <td className="px-4 py-3.5 font-bold text-[#18201c]">
-                        ₹{account.totalSpent?.toLocaleString('en-IN')} ({account.totalOrders} orders)
+                        ₹{account.totalSpent?.toLocaleString('en-IN')} ({account.totalOrders}{' '}
+                        orders)
                       </td>
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
@@ -1046,7 +1083,8 @@ export default function AdminDashboard() {
                   Store Menu &amp; Price Alteration Controls
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Admin can access any store menu, alter regular item prices, and set percentage or flat discounts.
+                  Admin can access any store menu, alter regular item prices, and set percentage or
+                  flat discounts.
                 </p>
               </div>
             </div>
@@ -1061,14 +1099,18 @@ export default function AdminDashboard() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-200">
-                        {vendor.description?.toLowerCase().includes('xp') ? 'XP Store' : 'Restaurant'}
+                        {vendor.description?.toLowerCase().includes('xp')
+                          ? 'XP Store'
+                          : 'Restaurant'}
                       </span>
                       <span className="text-[11px] font-bold text-emerald-700">
                         {vendor.commissionRate}% Cut
                       </span>
                     </div>
                     <h4 className="font-bold text-base text-[#18201c]">{vendor.storeName}</h4>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">{vendor.address || 'Bengaluru, India'}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {vendor.address || 'Bengaluru, India'}
+                    </p>
                   </div>
 
                   <div className="mt-4 flex items-center gap-2">
@@ -1079,7 +1121,9 @@ export default function AdminDashboard() {
                       <Utensils className="size-4 text-[#d9f447]" /> Menu &amp; Prices
                     </button>
                     <button
-                      onClick={() => setDeleteConfirmVendor({ id: vendor.id, name: vendor.storeName })}
+                      onClick={() =>
+                        setDeleteConfirmVendor({ id: vendor.id, name: vendor.storeName })
+                      }
                       className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100 transition shrink-0"
                       title="Delete Store"
                     >
@@ -1090,7 +1134,8 @@ export default function AdminDashboard() {
               ))}
               {vendorsList.length === 0 && (
                 <div className="col-span-full p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
-                  No stores in Supabase database. Click &apos;+ Onboard Restaurant Vendor&apos; to add a new Restaurant or XP Store.
+                  No stores in Supabase database. Click &apos;+ Onboard Restaurant Vendor&apos; to
+                  add a new Restaurant or XP Store.
                 </div>
               )}
             </div>
@@ -1111,7 +1156,8 @@ export default function AdminDashboard() {
                   Onboard New Restaurant / XP Store Vendor
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Register vendor credentials, store profile, cuisine, and commission model in Supabase.
+                  Register vendor credentials, store profile, cuisine, and commission model in
+                  Supabase.
                 </p>
               </div>
               <button
@@ -1131,7 +1177,9 @@ export default function AdminDashboard() {
                     required
                     placeholder="e.g. Biryani Blues or craveXP Koramangala"
                     value={newVendorForm.storeName}
-                    onChange={(e) => setNewVendorForm({ ...newVendorForm, storeName: e.target.value })}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, storeName: e.target.value })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
                   />
                 </div>
@@ -1162,7 +1210,9 @@ export default function AdminDashboard() {
                     required
                     placeholder="e.g. Vikram Sharma"
                     value={newVendorForm.ownerName}
-                    onChange={(e) => setNewVendorForm({ ...newVendorForm, ownerName: e.target.value })}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, ownerName: e.target.value })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
                   />
                 </div>
@@ -1174,7 +1224,9 @@ export default function AdminDashboard() {
                     required
                     placeholder="e.g. North Indian, Biryani or Express Grocery"
                     value={newVendorForm.cuisine}
-                    onChange={(e) => setNewVendorForm({ ...newVendorForm, cuisine: e.target.value })}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, cuisine: e.target.value })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
                   />
                 </div>
@@ -1194,7 +1246,9 @@ export default function AdminDashboard() {
                       required
                       placeholder="vendor@store.com"
                       value={newVendorForm.email}
-                      onChange={(e) => setNewVendorForm({ ...newVendorForm, email: e.target.value })}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, email: e.target.value })
+                      }
                       className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
                     />
                   </div>
@@ -1206,7 +1260,9 @@ export default function AdminDashboard() {
                       required
                       placeholder="••••••••"
                       value={newVendorForm.password}
-                      onChange={(e) => setNewVendorForm({ ...newVendorForm, password: e.target.value })}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, password: e.target.value })
+                      }
                       className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
                     />
                   </div>
@@ -1291,7 +1347,9 @@ export default function AdminDashboard() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-900">
-                      {selectedVendorForMenu.description?.toLowerCase().includes('xp') ? 'XP Store' : 'Restaurant'}
+                      {selectedVendorForMenu.description?.toLowerCase().includes('xp')
+                        ? 'XP Store'
+                        : 'Restaurant'}
                     </span>
                     <span className="text-xs font-bold text-emerald-700">
                       {selectedVendorForMenu.commissionRate}% Commission Rate
@@ -1301,7 +1359,8 @@ export default function AdminDashboard() {
                     {selectedVendorForMenu.storeName} — Menu &amp; Price Controls
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Admin can alter regular prices, set compare prices (discounts), or add new items directly.
+                    Admin can alter regular prices, set compare prices (discounts), or add new items
+                    directly.
                   </p>
                 </div>
 
@@ -1342,7 +1401,8 @@ export default function AdminDashboard() {
                   </div>
                 ) : vendorProducts.length === 0 ? (
                   <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
-                    No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos; to create one.
+                    No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos;
+                    to create one.
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
@@ -1363,7 +1423,8 @@ export default function AdminDashboard() {
                             product.comparePrice && product.comparePrice > product.price
                           const discountPct = hasDiscount
                             ? Math.round(
-                                ((product.comparePrice! - product.price) / product.comparePrice!) * 100
+                                ((product.comparePrice! - product.price) / product.comparePrice!) *
+                                  100
                               )
                             : 0
 
@@ -1383,7 +1444,9 @@ export default function AdminDashboard() {
                                     </div>
                                   )}
                                   <div>
-                                    <p className="font-bold text-sm text-[#18201c]">{product.name}</p>
+                                    <p className="font-bold text-sm text-[#18201c]">
+                                      {product.name}
+                                    </p>
                                     <p className="text-[11px] font-normal text-gray-500 line-clamp-1">
                                       {product.description || 'No description'}
                                     </p>
@@ -1439,7 +1502,7 @@ export default function AdminDashboard() {
                                       comparePrice: product.comparePrice || '',
                                       imageUrl: product.imageUrl || '',
                                       sku: product.sku || '',
-                                      status: product.status,
+                                      status: product.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
                                     })
                                     setIsAddProductOpen(true)
                                   }}
@@ -1480,7 +1543,9 @@ export default function AdminDashboard() {
                   Admin Price &amp; Menu Modifier
                 </span>
                 <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
-                  {editingProduct ? `Alter '${editingProduct.name}' Price` : 'Add New Product to Store'}
+                  {editingProduct
+                    ? `Alter '${editingProduct.name}' Price`
+                    : 'Add New Product to Store'}
                 </h3>
               </div>
               <button
@@ -1546,7 +1611,9 @@ export default function AdminDashboard() {
 
                 {/* Quick Discount Tool */}
                 <div className="pt-1">
-                  <p className="text-[10px] font-bold text-gray-500 mb-1">Quick Discount Presets:</p>
+                  <p className="text-[10px] font-bold text-gray-500 mb-1">
+                    Quick Discount Presets:
+                  </p>
                   <div className="flex items-center gap-2">
                     {[10, 20, 30, 50].map((pct) => (
                       <button
@@ -1632,8 +1699,8 @@ export default function AdminDashboard() {
             <p className="mt-2 text-center text-xs text-gray-600 leading-relaxed">
               Are you sure you want to permanently delete store{' '}
               <strong className="text-gray-900">{deleteConfirmVendor.name}</strong>
-              {deleteConfirmVendor.email ? ` (${deleteConfirmVendor.email})` : ''}?
-              This action will erase the store, owner account, and all associated menu items from Supabase.
+              {deleteConfirmVendor.email ? ` (${deleteConfirmVendor.email})` : ''}? This action will
+              erase the store, owner account, and all associated menu items from Supabase.
             </p>
             <div className="mt-6 flex items-center gap-3">
               <button

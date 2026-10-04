@@ -14,6 +14,7 @@ export interface UserProfile {
   phone?: string
   address?: string
   restaurantName?: string
+  restaurantId?: string
   cuisine?: string
   vehicleType?: string
   licensePlate?: string
@@ -62,8 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false
     async function restoreSession() {
       try {
-        const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
-        const savedToken = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
+        const savedUserStr =
+          typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
+        const savedToken =
+          typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
 
         if (savedUserStr) {
           try {
