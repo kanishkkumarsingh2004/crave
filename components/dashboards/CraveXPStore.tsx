@@ -2,7 +2,6 @@
 
 import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import {
   Apple,
   ArrowRight,
@@ -127,27 +126,31 @@ export default function CraveXPStore() {
     }))
 
     try {
-      const { error } = await supabase.from('orders').insert([
-        {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           id: orderId,
           customer_id: user.id,
           customer_name: user.name,
           customer_phone: user.phone || null,
-          customer_address: user.address || null,
+          customer_address: user.address || 'Bengaluru',
           restaurant_id: CRAVEXP_DARK_STORE_ID,
           restaurant_name: CRAVEXP_DARK_STORE_INFO.name,
-          items: JSON.stringify(itemsFormatted),
+          order_type: 'cravexp_grocery',
+          items: itemsFormatted,
           subtotal: cartSubtotal,
           packaging_fee: 0,
           gst: 0,
           total_amount: cartSubtotal,
-          status: 'new',
-          driver_name: null,
-          driver_phone: null,
+          status: 'payment_submitted',
           payment_method: 'UPI Instant / COD',
-        },
-      ])
-      if (error) throw error
+        }),
+      })
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}))
+        throw new Error(result.error || 'Order request failed')
+      }
     } catch (error) {
       console.error('Failed to place craveXP order:', error)
       setOrderError('The order could not be saved. Please try again.')

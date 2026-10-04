@@ -13,6 +13,8 @@ export default function CraveXPStorePage() {
     if (isLoading) return
     if (!user) {
       router.replace('/login')
+    } else if (user.role !== 'cravexp_store_vendor') {
+      router.replace(user.role === 'user' ? '/user/dashboard' : '/dashboard')
     }
   }, [user, isLoading, router])
 

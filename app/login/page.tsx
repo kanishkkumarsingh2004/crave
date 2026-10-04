@@ -33,11 +33,18 @@ export default function LoginPage() {
       const isCraveXPStore =
         authenticatedUser.email === 'cravexp@crave.com' ||
         authenticatedUser.email === 'store@crave.com'
-      const targetPath = isCraveXPStore
-        ? '/vendor/crave-ep'
-        : authenticatedUser.role === 'customer'
-          ? '/user/dashboard'
-          : `/${authenticatedUser.role}/dashboard`
+      const targetPath =
+        isCraveXPStore || authenticatedUser.role === 'cravexp_store_vendor'
+          ? '/vendor/crave-ep'
+          : authenticatedUser.role === 'user' || authenticatedUser.role === 'customer'
+            ? '/user/dashboard'
+            : authenticatedUser.role === 'restaurant_vendor' || authenticatedUser.role === 'vendor'
+              ? '/vendor/dashboard'
+              : authenticatedUser.role === 'rider' || authenticatedUser.role === 'driver'
+                ? '/driver/dashboard'
+                : authenticatedUser.role === 'admin'
+                  ? '/admin/dashboard'
+                  : '/dashboard'
       router.push(targetPath)
     } else {
       setErrorMsg('Email or password is incorrect.')
@@ -66,7 +73,7 @@ export default function LoginPage() {
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <Link
-                    href={user.role === 'customer' ? '/user/dashboard' : `/${user.role}/dashboard`}
+                    href="/dashboard"
                     className="rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36]"
                   >
                     Go to Dashboard

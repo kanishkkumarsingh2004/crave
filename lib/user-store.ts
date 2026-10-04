@@ -7,7 +7,15 @@ export interface RegisteredUser {
   name: string
   email: string
   password?: string
-  role: 'customer' | 'vendor' | 'driver' | 'admin'
+  role:
+    | 'user'
+    | 'restaurant_vendor'
+    | 'cravexp_store_vendor'
+    | 'rider'
+    | 'admin'
+    | 'customer'
+    | 'vendor'
+    | 'driver'
   phone?: string
   address?: string
   createdAt: string

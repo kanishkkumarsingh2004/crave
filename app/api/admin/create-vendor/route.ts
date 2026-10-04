@@ -43,23 +43,8 @@ export async function POST(request: Request) {
     const userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
     const vendorId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
 
-    // Try Supabase auth signup first
-    const { data: authData } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password: String(password),
-      options: {
-        data: {
-          name,
-          role: 'vendor',
-          phone: phone || null,
-          address: address || null,
-          restaurant_name: storeName,
-          cuisine: cuisine || vendorType,
-        },
-      },
-    })
-
-    const finalUserId = authData?.user?.id || userId
+    const finalUserId = userId
+    const vendorRole = vendorType === 'CraveXP Store Vendor' ? 'cravexp_store_vendor' : 'restaurant_vendor'
 
     // Insert user record via Prisma
     try {
@@ -67,7 +52,7 @@ export async function POST(request: Request) {
         id: finalUserId,
         name: String(name).trim(),
         email: cleanEmail,
-        role: 'vendor',
+        role: vendorRole,
         phone: phone || null,
         address: address || null,
         restaurant_name: String(storeName).trim(),

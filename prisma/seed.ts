@@ -1,7 +1,9 @@
+import 'dotenv/config'
 import { prisma } from '@/lib/prisma'
 import * as fs from 'fs'
 import * as path from 'path'
 import { OrderStatus, UserRole } from '@prisma/client'
+import crypto from 'crypto'
 
 if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'true') {
   console.log(
@@ -11,41 +13,78 @@ if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'tr
 }
 
 async function seed() {
+  if (!prisma) {
+    throw new Error(
+      'PostgreSQL is not available. Check DATABASE_URL in .env and make sure the PostgreSQL server is running.'
+    )
+  }
+
+  try {
+    await prisma.$queryRaw`SELECT 1`
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'connection refused'
+    throw new Error(
+      `PostgreSQL is not reachable at DATABASE_URL. Start the PostgreSQL service and retry. ${detail}`
+    )
+  }
+
   console.log('Starting seed...')
 
   // ─── Seed Demo Users ─────────────────────────────────────
   const demoUsers = [
     {
-      id: 'usr_krithik_r124',
-      name: 'Krithik R',
-      email: 'customer@crave.com',
-      role: 'customer' as UserRole,
+      id: 'usr_test_user',
+      name: 'Test User',
+      email: 'user.test@crave.local',
+      role: 'user' as UserRole,
+      password: 'UserTest123!',
     },
     {
-      id: 'usr_admin_r01',
-      name: 'Admin User',
-      email: 'admin@crave.com',
+      id: 'usr_test_admin',
+      name: 'Test Admin',
+      email: 'admin.test@crave.local',
       role: 'admin' as UserRole,
+      password: 'AdminTest123!',
     },
     {
-      id: 'usr_vendor_r01',
-      name: 'Vendor User',
-      email: 'vendor@crave.com',
-      role: 'vendor' as UserRole,
+      id: 'usr_test_restaurant_vendor',
+      name: 'Test Restaurant Vendor',
+      email: 'restaurant.test@crave.local',
+      role: 'restaurant_vendor' as UserRole,
+      password: 'RestaurantTest123!',
     },
     {
-      id: 'usr_driver_r01',
-      name: 'Driver User',
-      email: 'driver@crave.com',
-      role: 'driver' as UserRole,
+      id: 'usr_test_cravexp_vendor',
+      name: 'Test CraveXP Store Vendor',
+      email: 'cravexp.test@crave.local',
+      role: 'cravexp_store_vendor' as UserRole,
+      password: 'CraveXPTest123!',
+    },
+    {
+      id: 'usr_test_rider',
+      name: 'Test Rider',
+      email: 'rider.test@crave.local',
+      role: 'rider' as UserRole,
+      password: 'RiderTest123!',
     },
   ]
 
   for (const u of demoUsers) {
     await prisma.user.upsert({
       where: { id: u.id },
-      update: { name: u.name, email: u.email, role: u.role },
-      create: { id: u.id, name: u.name, email: u.email, role: u.role },
+      update: {
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        password_hash: crypto.scryptSync(u.password, u.email, 64).toString('hex'),
+      },
+      create: {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        password_hash: crypto.scryptSync(u.password, u.email, 64).toString('hex'),
+      },
     })
     console.log(`  ✅ Seeded user ${u.email}`)
   }
@@ -133,8 +172,8 @@ async function seed() {
   const seedOrders = [
     {
       id: 'ord_test_1791114804105',
-      customer_id: 'usr_krithik_r124',
-      customer_name: 'Krithik R',
+      customer_id: 'usr_test_user',
+      customer_name: 'Test User',
       customer_phone: '+919876543210',
       customer_address: 'Kanakapura Road, Bengaluru',
       restaurant_id: 'vnd_1791063436223_iyet2',
@@ -144,7 +183,7 @@ async function seed() {
       packaging_fee: 5,
       gst: 3,
       total_amount: 58,
-      status: 'new' as OrderStatus,
+      status: 'payment_submitted' as OrderStatus,
       payment_method: 'UPI Online',
       delivery_otp: '1234',
       utr_ref: '123456789012',
@@ -154,8 +193,8 @@ async function seed() {
     },
     {
       id: 'ord_test_1791114711178',
-      customer_id: 'usr_krithik_r124',
-      customer_name: 'Krithik R',
+      customer_id: 'usr_test_user',
+      customer_name: 'Test User',
       customer_phone: '+919876543210',
       customer_address: 'Kanakapura Road, Bengaluru',
       restaurant_id: 'vnd_1791063436223_iyet2',
@@ -165,7 +204,7 @@ async function seed() {
       packaging_fee: 5,
       gst: 3,
       total_amount: 58,
-      status: 'new' as OrderStatus,
+      status: 'payment_submitted' as OrderStatus,
       payment_method: 'UPI Online',
       delivery_otp: '1234',
       utr_ref: '123456789012',

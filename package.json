@@ -7,6 +7,8 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "node server.js",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -14,7 +16,6 @@
     "@base-ui/react": "^1.8.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
-    "@supabase/supabase-js": "^2.117.2",
     "@types/leaflet": "^1.9.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -48,6 +49,7 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "prisma": "^7.10.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "tsx": "^4.20.6"
   }
 }

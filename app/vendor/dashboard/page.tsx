@@ -15,8 +15,17 @@ export default function VendorDashboardPage() {
 
     if (!user) {
       router.replace('/login')
-    } else if (role !== 'vendor') {
-      const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+    } else if (role !== 'vendor' && role !== 'restaurant_vendor') {
+      const redirectPath =
+        role === 'user' || role === 'customer'
+          ? '/user/dashboard'
+          : role === 'rider' || role === 'driver'
+            ? '/driver/dashboard'
+            : role === 'cravexp_store_vendor'
+              ? '/vendor/crave-ep'
+              : role === 'admin'
+                ? '/admin/dashboard'
+                : '/login'
       router.replace(redirectPath)
     }
   }, [user, role, isLoading, router])
@@ -34,7 +43,7 @@ export default function VendorDashboardPage() {
     )
   }
 
-  if (role !== 'vendor') {
+  if (role !== 'vendor' && role !== 'restaurant_vendor') {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-xl border border-rose-200">

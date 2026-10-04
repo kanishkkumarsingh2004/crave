@@ -1,9 +1,16 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-export type UserRole = 'customer' | 'vendor' | 'driver' | 'admin'
+export type UserRole =
+  | 'user'
+  | 'restaurant_vendor'
+  | 'cravexp_store_vendor'
+  | 'rider'
+  | 'admin'
+  | 'customer'
+  | 'vendor'
+  | 'driver'
 
 export interface UserProfile {
   id: string
@@ -87,34 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000)),
-        ])
-
-        const sessionData = (sessionResult as any)?.data ?? { session: null }
-        const accessToken = sessionData.session?.access_token
-
-        if (accessToken) {
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}` },
-          })
-          const result = await response.json()
-          if (response.ok && result.success && result.user && !cancelled) {
-            setUser(result.user)
-            setToken(result.token)
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('crave_user', JSON.stringify(result.user))
-              localStorage.setItem('crave_token', result.token ?? '')
-            }
-            return
-          }
-
-          await supabase.auth.signOut()
-        }
       } catch (err) {
-        console.error('Failed to restore Supabase session:', err)
+        console.error('Failed to restore local session:', err)
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -142,13 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (response.ok && result.success && result.user) {
-        if (result.session) {
-          const { error } = await supabase.auth.setSession({
-            access_token: result.session.access_token,
-            refresh_token: result.session.refresh_token,
-          })
-          if (error) console.warn('Supabase setSession notice:', error.message)
-        }
         setUser(result.user)
         setToken(result.token)
         if (typeof window !== 'undefined') {
@@ -176,13 +150,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok || !result.success) {
         return { success: false, message: result.error || 'Unable to create account.' }
       }
-      if (result.session) {
-        const { error } = await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        })
-        if (error) throw error
-      }
       if (result.user) {
         setUser(result.user)
         setToken(result.token ?? null)
@@ -208,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('crave_user')
         localStorage.removeItem('crave_token')
       }
-      await Promise.all([supabase.auth.signOut(), fetch('/api/auth/logout', { method: 'POST' })])
+      await fetch('/api/auth/logout', { method: 'POST' })
     } catch (err) {
       console.error('Logout error:', err)
     }
@@ -220,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const role: UserRole = user?.role || 'customer'
+  const role: UserRole = user?.role || 'user'
 
   return (
     <AuthContext.Provider

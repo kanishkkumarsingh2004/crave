@@ -12,18 +12,25 @@ datasource db {
 // ─── Enums ───────────────────────────────────────────────
 
 enum UserRole {
-  customer
-  vendor
-  driver
+  user
+  restaurant_vendor
+  cravexp_store_vendor
+  rider
   admin
 }
 
 enum OrderStatus {
-  new
+  payment_pending
+  payment_submitted
+  payment_verified
+  sent_to_vendor
   preparing
   packing
-  ready
+  ready_for_pickup
+  rider_assigned
   picked_up
+  out_for_delivery
+  delivered
   completed
   cancelled
 }
@@ -40,6 +47,7 @@ model User {
   name            String
   email           String    @unique
   role            UserRole
+  password_hash   String?
   phone           String?
   address         String?
   avatar          String?
@@ -137,6 +145,12 @@ model Order {
   customer_address   String?
   restaurant_id      String?
   restaurant_name    String
+  order_type        String       @default("restaurant_food")
+  destination_vendor_id String?
+  payment_status    String       @default("pending")
+  payment_reviewed_by String?
+  payment_reviewed_at DateTime?  @db.Timestamptz
+  rider_id          String?
   items              Json
   subtotal           Int
   packaging_fee      Int?        @default(20)

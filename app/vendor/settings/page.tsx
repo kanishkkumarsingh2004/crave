@@ -41,13 +41,21 @@ export default function VendorSettingsPage() {
     if (isLoading) return
     if (!user) {
       router.replace('/login')
-    } else if (role !== 'vendor') {
-      router.replace(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
+    } else if (role !== 'vendor' && role !== 'restaurant_vendor') {
+      router.replace(
+        role === 'user' || role === 'customer'
+          ? '/user/dashboard'
+          : role === 'cravexp_store_vendor'
+            ? '/vendor/crave-ep'
+            : role === 'rider' || role === 'driver'
+              ? '/driver/dashboard'
+              : '/dashboard'
+      )
     }
   }, [user, role, isLoading, router])
 
   useEffect(() => {
-    if (!user?.id || role !== 'vendor') return
+    if (!user?.id || (role !== 'vendor' && role !== 'restaurant_vendor')) return
     const loadSettings = async () => {
       setSettingsLoading(true)
       const { data: restaurant, error } = await supabase
@@ -84,7 +92,7 @@ export default function VendorSettingsPage() {
     loadSettings()
   }, [user?.id, role])
 
-  if (isLoading || !user || role !== 'vendor') {
+  if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="size-8 border-4 border-[#86a018] border-t-transparent rounded-full animate-spin" />
