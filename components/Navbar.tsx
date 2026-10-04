@@ -79,18 +79,6 @@ export default function Navbar() {
                 <CraveLogo variant="full" size="md" />
               </Link>
             </div>
-            <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] lg:flex">
-              <Link href="/" className="transition hover:text-[#18201c]" suppressHydrationWarning>
-                Explore Cravings
-              </Link>
-              <a
-                href="#why-crave"
-                className="transition hover:text-[#18201c]"
-                suppressHydrationWarning
-              >
-                Why crave.
-              </a>
-            </div>
             <div className="flex items-center gap-3">
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
@@ -193,17 +181,7 @@ export default function Navbar() {
               </>
             ) : (
               /* Unauthenticated Nav Items */
-              <>
-                <Link
-                  href="/"
-                  className={`transition hover:text-[#18201c] ${pathname === '/' ? 'text-[#18201c] font-bold' : ''}`}
-                >
-                  Explore Cravings
-                </Link>
-                <a href="#why-crave" className="transition hover:text-[#18201c]">
-                  Why crave.
-                </a>
-              </>
+              <></>
             )}
           </div>
 

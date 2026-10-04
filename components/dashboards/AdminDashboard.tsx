@@ -3,6 +3,7 @@
 import AdminAnalyticsPage from '@/app/admin/analytics/page'
 import AdminSettingsPage from '@/app/admin/settings/page'
 import { useAuth, UserRole } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
   // Sub-tabs in User Management
   const [userTab, setUserTab] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>('vendors')
   const [searchQuery, setSearchQuery] = useState('')
-  const [toastMsg, setToastMsg] = useState('')
+  const { toast } = useToast()
 
   // Data States
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
@@ -143,8 +144,9 @@ export default function AdminDashboard() {
   const [isDeletingVendor, setIsDeletingVendor] = useState<boolean>(false)
 
   function triggerToast(msg: string) {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(''), 3500)
+    const clean = msg.replace(/^[^\w\s₹🗑️]+\s*/, '')
+    const isError = /could not|failed|error|unable|invalid/i.test(clean)
+    toast(clean, isError ? 'error' : 'success')
   }
 
   // Scrub and fetch real database records from Supabase
@@ -563,14 +565,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Toast Notification Banner */}
-      {toastMsg && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
       {/* Navigation Sub-Header Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-4">
         <div>

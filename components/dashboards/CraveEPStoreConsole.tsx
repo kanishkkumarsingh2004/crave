@@ -2,6 +2,7 @@
 
 import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   AlertTriangle,
@@ -64,7 +65,7 @@ export default function CraveXPStoreConsole() {
     { id: string; name: string; bay: string; orders: number; speed: string; accuracy: string }[]
   >([])
   const [dashboardError, setDashboardError] = useState('')
-  const [toastMsg, setToastMsg] = useState('')
+  const { toast } = useToast()
 
   const [orders, setOrders] = useState<IncomingGroceryOrder[]>([])
   const [inventory, setInventory] = useState<
@@ -262,8 +263,8 @@ export default function CraveXPStoreConsole() {
   }, [user?.id])
 
   const triggerToast = (msg: string) => {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(''), 3000)
+    const isError = /could not|failed|error|unable|not found/i.test(msg)
+    toast(msg, isError ? 'error' : 'success')
   }
 
   const handleToggleStoreOnline = async () => {
@@ -595,14 +596,6 @@ export default function CraveXPStoreConsole() {
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-24 selection:bg-[#d9f447] selection:text-[#18201c]">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-black text-white shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4 duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
       {/* Top Console Command Header Bar (Clean Light Theme) */}
       <header className="sticky top-0 z-40 border-b border-[#e2e7dc] bg-white/95 backdrop-blur-md px-4 py-4 sm:px-6 shadow-xs">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

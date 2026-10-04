@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
-   useEffect(() => {
+  useEffect(() => {
     let cancelled = false
 
     async function restoreSession() {

@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ export default function VendorCouponsPage() {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [coupons, setCoupons] = useState<Coupon[]>([])
+  const { toast } = useToast()
   const [restaurantId, setRestaurantId] = useState<string | null>(null)
   const [isLoadingCoupons, setIsLoadingCoupons] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -50,7 +52,10 @@ export default function VendorCouponsPage() {
   const [isActive, setIsActive] = useState(true)
 
   // Notification Toast
-  const [toastMsg, setToastMsg] = useState('')
+  function showToast(msg: string) {
+    const isError = /could not|failed|error|unable/i.test(msg)
+    toast(msg, isError ? 'error' : 'success')
+  }
 
   useEffect(() => {
     if (!user?.id) {
@@ -80,11 +85,6 @@ export default function VendorCouponsPage() {
 
     loadStoreCoupons()
   }, [user?.id])
-
-  function showToast(msg: string) {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(''), 3000)
-  }
 
   function handleCopyCode(cCode: string) {
     if (navigator.clipboard) {
@@ -297,14 +297,6 @@ export default function VendorCouponsPage() {
       </div>
 
       <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        {/* Toast Notification */}
-        {toastMsg && (
-          <div className="fixed top-20 right-5 z-50 flex items-center gap-2.5 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4 duration-300">
-            <Sparkles className="size-4 text-[#d9f447]" />
-            <span>{toastMsg}</span>
-          </div>
-        )}
-
         {/* Header Card */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
           <div>

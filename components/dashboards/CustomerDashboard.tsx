@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
 import {
   AlertTriangle,
@@ -633,7 +634,7 @@ export default function CustomerDashboard({
   }, [])
 
   // Notification Toast
-  const [toastMessage, setToastMessage] = useState('')
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchCouponsFromSupabase().then((coupons) => {
@@ -642,8 +643,10 @@ export default function CustomerDashboard({
   }, [])
 
   function triggerToast(msg: string) {
-    setToastMessage(msg)
-    setTimeout(() => setToastMessage(''), 3000)
+    // Strip leading emoji/special chars for cleaner display; variant is auto-detected below.
+    const clean = msg.replace(/^[^\w\s₹]+\s*/, '')
+    const isError = /could not|failed|error|unable|invalid/i.test(clean)
+    toast(clean, isError ? 'error' : 'success')
   }
 
   function handleCopyCompanyUpi() {
@@ -806,7 +809,7 @@ export default function CustomerDashboard({
     })
   }, [restaurantsList, searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
-   // 3-Minute Payment Verification Countdown Effect & Realtime Sync
+  // 3-Minute Payment Verification Countdown Effect & Realtime Sync
   const [approvalStatus, setApprovalStatus] = useState<string>('pending')
 
   useApprovalUpdates(
@@ -996,13 +999,6 @@ export default function CustomerDashboard({
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] pb-24 text-[#18201c]">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-5 z-50 flex items-center rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#18201c] shadow-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300">
-          <span>{toastMessage.replace(/^[^\w\s]+\s*/, '')}</span>
-        </div>
-      )}
-
       {/* Top Header Navigation Banner */}
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3 sm:px-8 shadow-sm">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
