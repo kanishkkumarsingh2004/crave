@@ -169,7 +169,9 @@ export default function LocationPickerMap({
         (err) => {
           console.warn('Geolocation error:', err)
           setIsLocating(false)
-          alert('Could not access device location. Please enable location permissions in browser settings.')
+          alert(
+            'Could not access device location. Please enable location permissions in browser settings.'
+          )
         },
         { enableHighAccuracy: true, timeout: 10000 }
       )

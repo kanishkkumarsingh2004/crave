@@ -114,7 +114,12 @@ export async function POST(request: Request) {
         }
 
         const token = await createToken(userPayload)
-        const response = NextResponse.json({ success: true, token, user: userPayload, session: null })
+        const response = NextResponse.json({
+          success: true,
+          token,
+          user: userPayload,
+          session: null,
+        })
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -173,7 +178,12 @@ export async function POST(request: Request) {
         }
 
         const token = await createToken(userPayload)
-        const response = NextResponse.json({ success: true, token, user: userPayload, session: null })
+        const response = NextResponse.json({
+          success: true,
+          token,
+          user: userPayload,
+          session: null,
+        })
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -209,7 +219,12 @@ export async function POST(request: Request) {
         }
 
         const token = await createToken(userPayload)
-        const response = NextResponse.json({ success: true, token, user: userPayload, session: null })
+        const response = NextResponse.json({
+          success: true,
+          token,
+          user: userPayload,
+          session: null,
+        })
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
