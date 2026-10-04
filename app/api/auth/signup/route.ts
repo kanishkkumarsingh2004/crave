@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       console.warn('Supabase auth signup warning, using database fallback:', err)
     }
 
-    // Insert user profile via Prisma
+    // Insert user profile via configured database backend.
     try {
       await createUser({
         id: finalUserId,
@@ -83,8 +83,11 @@ export async function POST(request: Request) {
         address: address || null,
       })
     } catch (err: any) {
-      // If insert fails (duplicate), update instead
-      console.warn('User profile insert fallback:', err?.message)
+      console.error('User profile creation failed:', err)
+      return NextResponse.json(
+        { error: 'Unable to create the user profile in the configured database.' },
+        { status: 500 }
+      )
     }
 
     // Create JWT Payload and Auth Token for immediate session login
