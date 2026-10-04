@@ -1,14 +1,63 @@
 import type { MetadataRoute } from 'next'
 
-export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crave.app'
+import { baseUrl } from './sitemap'
 
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/login', '/signup'],
-        disallow: ['/user/', '/vendor/', '/driver/', '/admin/', '/api/', '/dashboard'],
+        allow: [
+          '/',
+          '/login',
+          '/signup',
+          '/user/explore',
+          '/user/cravexp',
+          '/policies',
+          '/policies/privacy',
+          '/policies/terms-of-service',
+          '/policies/cookies',
+          '/policies/security',
+          '/policies/fssai',
+        ],
+        disallow: [
+          '/dashboard/',
+          '/user/dashboard/',
+          '/user/orders/',
+          '/user/track/',
+          '/user/profile/',
+          '/vendor/',
+          '/driver/',
+          '/admin/',
+          '/api/',
+        ],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: [
+          '/',
+          '/login',
+          '/signup',
+          '/user/explore',
+          '/user/cravexp',
+          '/policies',
+          '/policies/privacy',
+          '/policies/terms-of-service',
+          '/policies/cookies',
+          '/policies/security',
+          '/policies/fssai',
+        ],
+        disallow: [
+          '/dashboard/',
+          '/user/dashboard/',
+          '/user/orders/',
+          '/user/track/',
+          '/user/profile/',
+          '/vendor/',
+          '/driver/',
+          '/admin/',
+          '/api/',
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
