@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
 import {
   AlertTriangle,
   ArrowRight,
@@ -266,7 +267,7 @@ export default function CustomerDashboard({
       }
     }
     fetchRestaurants()
-    const interval = setInterval(fetchRestaurants, 10000)
+    const interval = setInterval(fetchRestaurants, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -310,92 +311,87 @@ export default function CustomerDashboard({
     }
 
     fetchLiveMenuItems()
-    const interval = setInterval(fetchLiveMenuItems, 4000)
+    const interval = setInterval(fetchLiveMenuItems, 15000)
     return () => clearInterval(interval)
   }, [selectedRestaurant?.id, selectedRestaurant?.name, restaurantsList])
 
-  // Fetch Past Orders from API & Supabase for logged-in customer
+  const [ordersData, setOrdersData] = useState<any[]>([])
+
+  // WebSocket provides live updates; initial fetch on mount
   useEffect(() => {
     if (!user?.id) return
-    async function fetchPastOrders() {
+    async function fetchInitialOrders() {
       try {
-        let ordersData: any[] = []
         const res = await fetch(`/api/orders?customerId=${user!.id}`)
         const json = await res.json()
-
         if (json.success && Array.isArray(json.orders)) {
-          ordersData = json.orders
-        } else {
-          const { data, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('customer_id', user!.id)
-            .order('created_at', { ascending: false })
-          if (!error && data) {
-            ordersData = data
-          }
+          setOrdersData(json.orders)
         }
-
-        const statusMap: Record<string, PastOrder['status']> = {
-          completed: 'Delivered',
-          delivered: 'Delivered',
-          cancelled: 'Cancelled',
-          new: 'In Progress',
-          preparing: 'In Progress',
-          ready: 'In Progress',
-          accepted: 'In Progress',
-          out_for_delivery: 'In Progress',
-        }
-
-        const parsed: PastOrder[] = ordersData.map((o: any) => {
-          let itemsArr: { name: string; qty: number; price: number }[] = []
-          try {
-            const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-            if (Array.isArray(raw))
-              itemsArr = raw.map((i: any) => ({
-                name: i.name,
-                qty: i.qty ?? 1,
-                price: i.price ?? 0,
-              }))
-          } catch {}
-
-          const rawDate = o.createdAt || o.created_at
-          return {
-            id: o.id,
-            restaurantName: o.restaurant_name ?? 'Crave Kitchen Store',
-            restaurantImage: '',
-            items: itemsArr,
-            subtotal: Number(o.subtotal ?? 0),
-            discount: Number(o.discount_amount ?? 0),
-            total: Number(o.total_amount ?? 0),
-            date: rawDate
-              ? new Date(rawDate).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : '',
-            time: rawDate
-              ? new Date(rawDate).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : '',
-            status: statusMap[o.status] ?? 'In Progress',
-            deliveryTime: '',
-            driverName: o.driver_name || undefined,
-            driverPhone: o.driver_phone || undefined,
-          }
-        })
-        setPastOrders(parsed)
-      } catch (err) {
-        setPastOrders([])
-      }
+      } catch (e) {}
     }
-    fetchPastOrders()
-    const interval = setInterval(fetchPastOrders, 3000)
-    return () => clearInterval(interval)
+    fetchInitialOrders()
   }, [user?.id])
+
+  // Live order updates via WebSocket
+  useOrderUpdates(user?.id, (orders) => {
+    setOrdersData(orders)
+  })
+
+  // Parse ordersData into PastOrder[] whenever it changes
+  useEffect(() => {
+    const statusMap: Record<string, PastOrder['status']> = {
+      completed: 'Delivered',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled',
+      new: 'In Progress',
+      preparing: 'In Progress',
+      ready: 'In Progress',
+      accepted: 'In Progress',
+      out_for_delivery: 'In Progress',
+    }
+
+    const parsed: PastOrder[] = ordersData.map((o: any) => {
+      let itemsArr: { name: string; qty: number; price: number }[] = []
+      try {
+        const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+        if (Array.isArray(raw))
+          itemsArr = raw.map((i: any) => ({
+            name: i.name,
+            qty: i.qty ?? 1,
+            price: i.price ?? 0,
+          }))
+      } catch {}
+
+      const rawDate = o.createdAt || o.created_at
+      return {
+        id: o.id,
+        restaurantName: o.restaurant_name ?? 'Crave Kitchen Store',
+        restaurantImage: '',
+        items: itemsArr,
+        subtotal: Number(o.subtotal ?? 0),
+        discount: Number(o.discount_amount ?? 0),
+        total: Number(o.total_amount ?? 0),
+        date: rawDate
+          ? new Date(rawDate).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })
+          : '',
+        time: rawDate
+          ? new Date(rawDate).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : '',
+        status: statusMap[o.status] ?? 'In Progress',
+        deliveryTime: '',
+        driverName: o.driver_name || undefined,
+        driverPhone: o.driver_phone || undefined,
+      }
+    })
+    setPastOrders(parsed)
+  }, [ordersData])
 
   // Saved Addresses State & GPS Map Picker
   const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([])
@@ -538,80 +534,79 @@ export default function CustomerDashboard({
   const [utrError, setUtrError] = useState('')
   const [paymentDone, setPaymentDone] = useState(false)
   const [activeOrder, setActiveOrder] = useState<any>(null)
+  const [liveDriverPos, setLiveDriverPos] = useState<{ lat: number; lng: number } | null>(null)
 
-  // Fetch active order for customer from /api/orders
+  // Subscribe to live driver location updates via WebSocket
+  useDriverLocation(activeOrder?.id, (data: any) => {
+    setLiveDriverPos({ lat: data.lat, lng: data.lng })
+  })
+
+  // Set active order from WebSocket stream
   useEffect(() => {
-    if (!user?.id) return
-    async function fetchActiveCustomerOrder() {
-      try {
-        const res = await fetch(`/api/orders?customerId=${user!.id}`)
-        const json = await res.json()
-        if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
-          const active = json.orders
-            .slice()
-            .reverse()
-            .find(
-              (o: any) =>
-                o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
-            )
-
-          if (active) {
-            let statusStep = 1
-            if (active.status === 'delivered' || active.status === 'completed') {
-              statusStep = 4
-            } else if (
-              active.status === 'out_for_delivery' ||
-              active.status === 'picked_up' ||
-              active.status === 'arrived_customer'
-            ) {
-              statusStep = 3
-            } else if (
-              active.status === 'preparing' ||
-              active.status === 'cooking' ||
-              active.status === 'ready' ||
-              active.status === 'accepted' ||
-              active.status === 'at_restaurant' ||
-              active.payment_status === 'verified'
-            ) {
-              statusStep = 2
-            }
-
-            let itemsArr: CartItem[] = []
-            try {
-              itemsArr =
-                typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
-            } catch (e) {}
-
-            const formattedTime = active.createdAt
-              ? new Date(active.createdAt).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-            setActiveOrder({
-              id: active.id,
-              restaurantName: active.restaurant_name || 'Crave Kitchen Store',
-              items: itemsArr,
-              subtotal: Number(active.subtotal || 0),
-              total: Number(active.total_amount || 0),
-              statusStep,
-              otp: active.delivery_otp || '1234',
-              driverName: active.driver_name || null,
-              driverPhone: active.driver_phone || null,
-              driverLat: active.driver_lat || active.driver_latitude || null,
-              driverLng: active.driver_lng || active.driver_longitude || null,
-              timestamp: formattedTime,
-            })
-          }
-        }
-      } catch (e) {}
+    if (!user?.id || !ordersData.length) {
+      setActiveOrder(null)
+      setLiveDriverPos(null)
+      return
     }
 
-    fetchActiveCustomerOrder()
-    const interval = setInterval(fetchActiveCustomerOrder, 3000)
-    return () => clearInterval(interval)
-  }, [user?.id])
+    const active = ordersData
+      .slice()
+      .reverse()
+      .find(
+        (o: any) => o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
+      )
+
+    if (active) {
+      let statusStep = 1
+      if (active.status === 'delivered' || active.status === 'completed') {
+        statusStep = 4
+      } else if (
+        active.status === 'out_for_delivery' ||
+        active.status === 'picked_up' ||
+        active.status === 'arrived_customer'
+      ) {
+        statusStep = 3
+      } else if (
+        active.status === 'preparing' ||
+        active.status === 'cooking' ||
+        active.status === 'ready' ||
+        active.status === 'accepted' ||
+        active.status === 'at_restaurant' ||
+        active.payment_status === 'verified'
+      ) {
+        statusStep = 2
+      }
+
+      let itemsArr: CartItem[] = []
+      try {
+        itemsArr = typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
+      } catch (e) {}
+
+      const formattedTime = active.createdAt
+        ? new Date(active.createdAt).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+      setActiveOrder({
+        id: active.id,
+        restaurantName: active.restaurant_name || 'Crave Kitchen Store',
+        items: itemsArr,
+        subtotal: Number(active.subtotal || 0),
+        total: Number(active.total_amount || 0),
+        statusStep,
+        otp: active.delivery_otp || '1234',
+        driverName: active.driver_name || null,
+        driverPhone: active.driver_phone || null,
+        driverLat: liveDriverPos?.lat ?? active.driver_lat ?? active.driver_latitude ?? null,
+        driverLng: liveDriverPos?.lng ?? active.driver_lng ?? active.driver_longitude ?? null,
+        timestamp: formattedTime,
+      })
+    } else {
+      setActiveOrder(null)
+    }
+  }, [user?.id, ordersData, liveDriverPos])
 
   // Fetch Company UPI Config dynamically & listen for admin updates
   useEffect(() => {
@@ -811,7 +806,31 @@ export default function CustomerDashboard({
     })
   }, [restaurantsList, searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
-  // 3-Minute Payment Verification Countdown Effect & Realtime Sync
+   // 3-Minute Payment Verification Countdown Effect & Realtime Sync
+  const [approvalStatus, setApprovalStatus] = useState<string>('pending')
+
+  useApprovalUpdates(
+    verifyingModal.orderId && verifyingModal.open && verifyingModal.status === 'verifying'
+      ? verifyingModal.orderId
+      : undefined,
+    (status) => {
+      setApprovalStatus(status)
+      if (status === 'verified') {
+        setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
+        triggerToast('Payment Approved by Admin! Order sent to kitchen.')
+        setTimeout(() => {
+          setVerifyingModal({ open: false, timer: 180, orderId: '', status: 'verifying' })
+          setCart([])
+          setShowCheckoutModal(false)
+          setPaymentDone(true)
+          navigateToTab('live-order')
+        }, 2000)
+      } else if (status === 'rejected') {
+        setVerifyingModal((prev) => ({ ...prev, status: 'rejected' }))
+      }
+    }
+  )
+
   useEffect(() => {
     if (!verifyingModal.open || verifyingModal.status !== 'verifying') return
 
@@ -825,57 +844,8 @@ export default function CustomerDashboard({
       })
     }, 1000)
 
-    const checkApproval = async () => {
-      try {
-        if (!verifyingModal.orderId) return
-        const res = await fetch(`/api/orders?orderId=${verifyingModal.orderId}`)
-        const json = await res.json()
-        const orderData = json.order
-
-        if (
-          orderData?.payment_status === 'verified' ||
-          orderData?.status === 'preparing' ||
-          orderData?.status === 'accepted'
-        ) {
-          setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
-          triggerToast('Payment Approved by Admin! Order sent to kitchen.')
-          setTimeout(() => {
-            setVerifyingModal({ open: false, timer: 180, orderId: '', status: 'verifying' })
-            setCart([])
-            setShowCheckoutModal(false)
-            setPaymentDone(true)
-            navigateToTab('live-order')
-          }, 2000)
-          return
-        }
-
-        const { data } = await supabase
-          .from('payment_reviews')
-          .select('status')
-          .eq('order_id', verifyingModal.orderId)
-          .maybeSingle()
-
-        if (data?.status === 'verified') {
-          setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
-          triggerToast('Payment Approved by Admin! Order sent to kitchen.')
-          setTimeout(() => {
-            setVerifyingModal({ open: false, timer: 180, orderId: '', status: 'verifying' })
-            setCart([])
-            setShowCheckoutModal(false)
-            setPaymentDone(true)
-            navigateToTab('live-order')
-          }, 2000)
-        } else if (data?.status === 'rejected') {
-          setVerifyingModal((prev) => ({ ...prev, status: 'rejected' }))
-        }
-      } catch (e) {}
-    }
-
-    const pollTimer = setInterval(checkApproval, 3000)
-
     return () => {
       clearInterval(countdownTimer)
-      clearInterval(pollTimer)
     }
   }, [verifyingModal.open, verifyingModal.status, verifyingModal.orderId])
 
