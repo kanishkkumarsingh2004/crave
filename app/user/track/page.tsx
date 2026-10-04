@@ -6,6 +6,21 @@ import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+const getDashboardPath = (role: string) => {
+  switch (role) {
+    case 'restaurant_vendor':
+    case 'cravexp_store_vendor':
+      return 'vendor/dashboard'
+    case 'rider':
+    case 'driver':
+      return 'driver/dashboard'
+    case 'admin':
+      return 'admin/dashboard'
+    default:
+      return 'login'
+  }
+}
+
 export default function UserTrackPage() {
   const { user, role, isLoading } = useAuth()
   const router = useRouter()
@@ -15,8 +30,8 @@ export default function UserTrackPage() {
 
     if (!user) {
       router.replace('/login')
-    } else if (role !== 'customer') {
-      router.replace(`/${role}/dashboard`)
+    } else if (role !== 'user' && role !== 'customer') {
+      router.replace(`/${getDashboardPath(role)}`)
     }
   }, [user, role, isLoading, router])
 
@@ -33,7 +48,7 @@ export default function UserTrackPage() {
     )
   }
 
-  if (role !== 'customer') {
+  if (role !== 'user' && role !== 'customer') {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-xl border border-amber-200">
@@ -45,7 +60,7 @@ export default function UserTrackPage() {
             You are logged in as a <span className="font-bold capitalize">{role}</span>.
           </p>
           <button
-            onClick={() => router.push(`/${role}/dashboard`)}
+            onClick={() =>     router.push(`/${getDashboardPath(role)}`)}
             className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
           >
             Go to {role} Dashboard
