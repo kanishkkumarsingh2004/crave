@@ -217,6 +217,8 @@ export async function PATCH(request: Request) {
     const {
       orderId,
       status,
+      // payment_status / paymentStatus are NOT Order model fields — they only
+      // update the payment_reviews table via updatePaymentReviewStatus.
       payment_status,
       paymentStatus,
       driver_name,
@@ -235,6 +237,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
+    // Only pass fields that exist on the Order model to updateOrder.
     const updated = await updateOrder(orderId, {
       ...(status && { status: status as OrderStatus }),
       ...(driver_name && { driver_name }),
@@ -242,12 +245,9 @@ export async function PATCH(request: Request) {
       ...(driver_lat != null && { delivery_latitude: driver_lat }),
       ...(driver_lng != null && { delivery_longitude: driver_lng }),
       ...(status === 'completed' && { delivered_at: new Date() }),
-      ...(payment_status || paymentStatus
-        ? { payment_status: payment_status || paymentStatus }
-        : {}),
     })
 
-    // Sync payment status to payment_reviews
+    // Sync payment status to payment_reviews (separate table — not on Order).
     const newPaymentStatus = payment_status || paymentStatus
     if (newPaymentStatus) {
       try {
@@ -256,16 +256,17 @@ export async function PATCH(request: Request) {
       broadcast('approval_update', { status: newPaymentStatus, orderId })
     }
 
-    // Broadcast order status update to subscribed clients
+    // Broadcast order status update to subscribed clients.
     if (status) {
       broadcast('order_update', { order: updated, orderId })
     }
 
-    // Broadcast driver location update if coordinates changed
+    // Broadcast driver location update if coordinates changed.
+    // driver_id is passed from the request body, not the Order model.
     if (driver_lat != null && driver_lng != null) {
       broadcast('driver_location', {
         orderId,
-        driverId: driver_id || updated?.driver_id || null,
+        driverId: driver_id || null,
         lat: driver_lat,
         lng: driver_lng,
         driverName: driver_name || null,
@@ -273,7 +274,7 @@ export async function PATCH(request: Request) {
       })
     }
 
-    // If order completed, update vendor settlement & driver payout
+    // If order completed, record driver payout.
     if (status === 'completed') {
       try {
         const paymentConfig = getActiveConfig()

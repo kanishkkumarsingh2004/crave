@@ -24,7 +24,8 @@ export async function findOrderById(id: string) {
     if (!error && data) return data
   } catch {}
 
-  throw new Error(`Order not found for id: ${id}`)
+  // Return null when not found instead of throwing — callers already handle null.
+  return null
 }
 
 export async function listOrders(filters?: {
@@ -43,7 +44,8 @@ export async function listOrders(filters?: {
       orderBy: { created_at: 'desc' },
       take: filters?.limit,
     })
-    if (orders && orders.length > 0) return orders
+    // Return whatever Prisma gives — even an empty array is valid.
+    return orders
   } catch (e) {
     // Prisma unavailable; continue to Supabase.
   }
@@ -55,10 +57,11 @@ export async function listOrders(filters?: {
     if (filters?.status) query = query.eq('status', filters.status)
     if (filters?.limit) query = query.limit(filters.limit)
     const { data, error } = await query
-    if (!error && data && data.length > 0) return data
+    if (!error && data) return data
   } catch {}
 
-  throw new Error('No orders available from configured backend')
+  // Both backends failed — return empty array so routes don't crash.
+  return []
 }
 
 export async function countOrders(filters?: {
@@ -105,6 +108,7 @@ export async function createOrder(data: {
   customer_vpa?: string
 }) {
   try {
+    // utr_ref and customer_vpa are not Order model fields — strip before inserting.
     const { utr_ref, customer_vpa, ...prismaData } = data
     return await prisma.order.create({ data: prismaData })
   } catch (prismaErr: any) {
@@ -160,7 +164,6 @@ export async function updateOrder(
     delivery_longitude?: number
     delivered_at?: Date
     picker_name?: string
-    payment_status?: string
   }
 ) {
   try {

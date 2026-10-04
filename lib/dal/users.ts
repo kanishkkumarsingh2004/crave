@@ -20,10 +20,10 @@ export async function findUserById(id: string) {
     const { data } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
     if (data) return data
   } catch (e) {
-    // Supabase unavailable; no file-store fallback allowed.
+    // Supabase unavailable.
   }
 
-  throw new Error(`User not found for id: ${id}`)
+  return null
 }
 
 export async function findUserByEmail(email: string) {
@@ -46,10 +46,10 @@ export async function findUserByEmail(email: string) {
       .maybeSingle()
     if (data) return data
   } catch (e) {
-    // Supabase unavailable; no file-store fallback allowed.
+    // Supabase unavailable.
   }
 
-  throw new Error(`User not found for email: ${cleanEmail}`)
+  return null
 }
 
 export async function listUsersByRole(role: UserRole) {
@@ -58,7 +58,8 @@ export async function listUsersByRole(role: UserRole) {
       where: { role },
       orderBy: { created_at: 'desc' },
     })
-    if (users && users.length > 0) return users
+    // Return whatever Prisma gives — even an empty array is valid.
+    return users
   } catch (e) {
     // Prisma unavailable; continue to Supabase.
   }
@@ -69,18 +70,18 @@ export async function listUsersByRole(role: UserRole) {
       .select('*')
       .eq('role', role)
       .order('created_at', { ascending: false })
-    if (data && data.length > 0) return data
+    if (data) return data
   } catch (e) {
-    // Supabase unavailable; no file-store fallback allowed.
+    // Supabase unavailable.
   }
 
-  throw new Error(`No users found for role: ${role}`)
+  return []
 }
 
 export async function listAllUsers() {
   try {
     const users = await prisma.user.findMany({ orderBy: { created_at: 'desc' } })
-    if (users && users.length > 0) return users
+    return users
   } catch (e) {
     // Prisma unavailable; continue to Supabase.
   }
@@ -90,12 +91,12 @@ export async function listAllUsers() {
       .from('users')
       .select('*')
       .order('created_at', { ascending: false })
-    if (data && data.length > 0) return data
+    if (data) return data
   } catch (e) {
-    // Supabase unavailable; no file-store fallback allowed.
+    // Supabase unavailable.
   }
 
-  throw new Error('No users available from configured backend')
+  return []
 }
 
 // ─── Mutations ───────────────────────────────────────────
