@@ -386,7 +386,9 @@ export default function VendorDashboard() {
                                 : 'bg-amber-100 text-amber-900 border border-amber-300'
                             }`}
                           >
-                            {order.paymentStatus === 'verified' ? '✓ Payment Verified' : '⏳ Payment Pending'}
+                            {order.paymentStatus === 'verified'
+                              ? '✓ Payment Verified'
+                              : '⏳ Payment Pending'}
                           </span>
                           {order.deliveryOtp && (
                             <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-mono font-black text-[#18201c]">
@@ -394,9 +396,12 @@ export default function VendorDashboard() {
                             </span>
                           )}
                         </div>
-                        <h4 className="font-bold text-base text-[#18201c] mt-1">{order.customerName}</h4>
+                        <h4 className="font-bold text-base text-[#18201c] mt-1">
+                          {order.customerName}
+                        </h4>
                         <p className="text-xs text-gray-500">
-                          {order.address} · <span className="font-semibold text-gray-700">{order.time}</span>
+                          {order.address} ·{' '}
+                          <span className="font-semibold text-gray-700">{order.time}</span>
                         </p>
                         {order.utrRef && (
                           <p className="text-[10px] font-mono text-gray-400 mt-0.5">
@@ -473,7 +478,8 @@ export default function VendorDashboard() {
                       )}
                       {order.status === 'delivered' && (
                         <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                          <CheckCircle2 className="size-4 text-emerald-600" /> Order Completed &amp; Delivered
+                          <CheckCircle2 className="size-4 text-emerald-600" /> Order Completed &amp;
+                          Delivered
                         </span>
                       )}
                     </div>

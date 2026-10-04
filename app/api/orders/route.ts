@@ -13,7 +13,11 @@ export async function GET(request: Request) {
 
     if (orderId) {
       const match = orders.find((o) => o.id === orderId)
-      return NextResponse.json({ success: true, order: match || null, orders: match ? [match] : [] })
+      return NextResponse.json({
+        success: true,
+        order: match || null,
+        orders: match ? [match] : [],
+      })
     }
 
     if (customerId) {

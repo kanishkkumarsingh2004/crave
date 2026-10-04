@@ -224,7 +224,12 @@ export default function DriverDashboardPage() {
                       className="w-32 rounded-xl border border-blue-300 px-3 py-2 text-center text-base font-extrabold tracking-widest outline-none focus:border-blue-600 font-mono"
                       placeholder={activeTask.otp || '1234'}
                     />
-                    <span className="text-xs text-[#737e77] font-medium">Customer OTP: <strong className="font-mono font-bold text-[#18201c]">{activeTask.otp || '1234'}</strong></span>
+                    <span className="text-xs text-[#737e77] font-medium">
+                      Customer OTP:{' '}
+                      <strong className="font-mono font-bold text-[#18201c]">
+                        {activeTask.otp || '1234'}
+                      </strong>
+                    </span>
                   </div>
                 </div>
               )}

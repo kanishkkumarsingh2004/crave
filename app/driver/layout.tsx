@@ -491,7 +491,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <span className="text-[9px]">Wallet</span>
           </Link>
 
-
           <Link
             href="/driver/settings"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
