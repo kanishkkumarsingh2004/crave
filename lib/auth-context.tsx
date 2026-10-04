@@ -59,11 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
-  useEffect(() => {
-    let cancelled = false
-    async function restoreSession() {
-      try {
-        const savedUserStr =
+   useEffect(() => {
+     let cancelled = false
+     async function restoreSession() {
+       try {
+         const savedUserStr =
           typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
         const savedToken =
           typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
