@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
         const res = await fetch('/api/admin/stats')
         const json = await res.json()
         if (json.success) {
-          setWeeklyGross(json.stats.weeklyGross)
+          setWeeklyGross(json.stats.weeklyRevenue)
           setTotalCommission(json.stats.totalCommission)
           setNetVendorPay(json.stats.netVendorPay)
           setCustomerCount(json.stats.customerCount)
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           title="Weekly Gross"
           value={`₹${weeklyGross.toLocaleString()}`}

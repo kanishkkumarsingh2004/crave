@@ -33,7 +33,7 @@ export async function fetchCraveXPGroceryItems(): Promise<CraveXPGroceryItem[]> 
     })
 
     if (menuData.length > 0) {
-      return menuData.map((item) => {
+      return menuData.map((item: any) => {
         const mrp = Number(item.mrp ?? item.price)
         const price = Number(item.price)
         return {

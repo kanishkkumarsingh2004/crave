@@ -1,4 +1,5 @@
 import { listPaymentReviews, updatePaymentReviewStatus } from '@/lib/dal/payments'
+import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -25,6 +26,11 @@ export async function PATCH(request: Request) {
     }
 
     const result = await updatePaymentReviewStatus(orderId, status)
+
+    if (result.count > 0) {
+      broadcast('approval_update', { status, orderId })
+    }
+
     return NextResponse.json({ success: true, count: result.count })
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 500 })

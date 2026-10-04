@@ -7,6 +7,7 @@ import {
 } from '@/lib/dal/payments'
 import { findRestaurantById } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
+import { broadcast } from '@/lib/ws-server'
 import fs from 'fs'
 import path from 'path'
 import { NextResponse } from 'next/server'
@@ -252,6 +253,24 @@ export async function PATCH(request: Request) {
       try {
         await updatePaymentReviewStatus(orderId, newPaymentStatus)
       } catch (e) {}
+      broadcast('approval_update', { status: newPaymentStatus, orderId })
+    }
+
+    // Broadcast order status update to subscribed clients
+    if (status) {
+      broadcast('order_update', { order: updated, orderId })
+    }
+
+    // Broadcast driver location update if coordinates changed
+    if (driver_lat != null && driver_lng != null) {
+      broadcast('driver_location', {
+        orderId,
+        driverId: driver_id || updated?.driver_id || null,
+        lat: driver_lat,
+        lng: driver_lng,
+        driverName: driver_name || null,
+        driverPhone: driver_phone || null,
+      })
     }
 
     // If order completed, update vendor settlement & driver payout

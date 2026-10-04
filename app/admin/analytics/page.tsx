@@ -28,7 +28,7 @@ export default function AdminAnalyticsPage() {
         const json = await res.json()
         if (json.success) {
           setLiveUserCount(json.stats.totalUsers ?? 0)
-          setLiveGrossRevenue(json.stats.weeklyGross ?? 0)
+          setLiveGrossRevenue(json.stats.weeklyRevenue ?? 0)
           setLiveCompletedOrders(json.stats.orderCount ?? 0)
           if (json.restaurants) {
             setTopVendors(
@@ -80,7 +80,7 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Gross revenue"
           value={`₹${liveGrossRevenue.toLocaleString('en-IN')}`}

@@ -581,20 +581,12 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchAccountsAndVendors}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
-          >
-            <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Supabase Data
-          </button>
-          <button
-            onClick={() => setIsAddVendorOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-black transition"
-          >
-            <Plus className="size-4 text-[#d9f447]" /> + Onboard New Store Vendor
-          </button>
-        </div>
+        <button
+          onClick={fetchAccountsAndVendors}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
+        >
+          <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Supabase Data
+        </button>
       </div>
 
       {/* Sub-Tabs: Vendors | Customers | Drivers | Admins | Menu & Price Controls */}

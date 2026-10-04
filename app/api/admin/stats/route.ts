@@ -1,17 +1,21 @@
 import { listVendorSettlements } from '@/lib/dal/payments'
 import { listRestaurants } from '@/lib/dal/restaurants'
 import { listUsersByRole } from '@/lib/dal/users'
+import { countOrders, listOrders } from '@/lib/dal/orders'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const [settlements, restaurants, customers, vendors, drivers] = await Promise.all([
-      listVendorSettlements(),
-      listRestaurants(),
-      listUsersByRole('customer'),
-      listUsersByRole('vendor'),
-      listUsersByRole('driver'),
-    ])
+    const [settlements, restaurants, customers, vendors, drivers, orders, totalCount] =
+      await Promise.all([
+        listVendorSettlements(),
+        listRestaurants(),
+        listUsersByRole('customer'),
+        listUsersByRole('vendor'),
+        listUsersByRole('driver'),
+        listOrders(),
+        countOrders(),
+      ])
 
     const weeklyGross = (settlements || []).reduce(
       (sum: number, row: any) => sum + Number(row.gross_sales ?? 0),
@@ -25,19 +29,27 @@ export async function GET() {
       (sum: number, row: any) => sum + Number(row.net_payout ?? 0),
       0
     )
+    const weeklyOrderRevenue = (orders || []).reduce(
+      (sum: number, row: any) => sum + Number(row.total_amount ?? 0),
+      0
+    )
 
     return NextResponse.json({
       success: true,
       settlements,
       restaurants,
+      orders,
       stats: {
         weeklyGross,
+        weeklyRevenue: weeklyOrderRevenue,
+        orderCount: totalCount,
         totalCommission,
         netVendorPay,
         customerCount: customers.length,
         vendorCount: vendors.length,
         driverCount: drivers.length,
         totalUsers: customers.length + vendors.length + drivers.length,
+        restaurantCount: restaurants.length,
       },
     })
   } catch (error: any) {
