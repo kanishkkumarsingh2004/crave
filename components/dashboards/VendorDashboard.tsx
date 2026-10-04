@@ -1,7 +1,6 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import {
   ArrowUpRight,
   ChartColumn,
@@ -44,21 +43,18 @@ export default function VendorDashboard() {
   const loadLiveKitchenOrders = async () => {
     try {
       let ordersData: any[] = []
-      const res = await fetch('/api/orders')
+      const vendorId = user?.restaurantId || user?.id
+      const query = vendorId
+        ? `vendorId=${encodeURIComponent(vendorId)}`
+        : user?.restaurantName
+          ? `vendorName=${encodeURIComponent(user.restaurantName)}`
+          : ''
+      const res = await fetch(query ? `/api/orders?${query}` : '/api/orders')
       const json = await res.json()
       if (json.success && Array.isArray(json.orders)) {
         ordersData = json.orders
-      } else {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false })
-        if (!error && data) {
-          ordersData = data
-        }
       }
 
-      const vendorId = user?.restaurantId || user?.id
       if (vendorId && ordersData.length > 0) {
         const vendorFiltered = ordersData.filter(
           (o) =>
@@ -117,7 +113,7 @@ export default function VendorDashboard() {
 
   const updateOrderStatus = async (orderId: string, nextStatus: string) => {
     try {
-      await fetch('/api/orders', {
+      const response = await fetch('/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,10 +121,7 @@ export default function VendorDashboard() {
           status: nextStatus,
         }),
       })
-      await supabase
-        .from('orders')
-        .update({ status: nextStatus as any })
-        .eq('id', orderId)
+      if (!response.ok) throw new Error('Order status update failed')
     } catch (err) {
       console.error('Failed to update kitchen order status:', err)
     }

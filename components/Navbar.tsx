@@ -20,10 +20,10 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-export const roleDetails: Record<
+export const roleDetails: Partial<Record<
   UserRole,
   { title: string; badge: string; color: string; bg: string; icon: React.ElementType }
-> = {
+>> = {
   customer: {
     title: 'Customer',
     badge: 'Customer View',
@@ -51,6 +51,34 @@ export const roleDetails: Record<
     color: 'text-purple-700',
     bg: 'bg-purple-100 border-purple-200',
     icon: ShieldCheck,
+  },
+  user: {
+    title: 'User',
+    badge: 'User View',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-100 border-emerald-200',
+    icon: ShoppingBag,
+  },
+  restaurant_vendor: {
+    title: 'Restaurant Vendor',
+    badge: 'Restaurant Console',
+    color: 'text-amber-700',
+    bg: 'bg-amber-100 border-amber-200',
+    icon: UtensilsCrossed,
+  },
+  cravexp_store_vendor: {
+    title: 'CraveXP Store Vendor',
+    badge: 'CraveXP Console',
+    color: 'text-purple-700',
+    bg: 'bg-purple-100 border-purple-200',
+    icon: Store,
+  },
+  rider: {
+    title: 'Rider',
+    badge: 'Delivery Cockpit',
+    color: 'text-blue-700',
+    bg: 'bg-blue-100 border-blue-200',
+    icon: Bike,
   },
 }
 

@@ -113,25 +113,14 @@ export async function createUser(data: {
   cuisine?: string | null
   vehicle_type?: string | null
   license_plate?: string | null
+  password_hash?: string | null
 }) {
   try {
     return await prisma.user.create({ data })
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'Unknown database error'
+    throw new Error(`Unable to create user in PostgreSQL: ${detail}`)
   }
-
-  try {
-    const { data: created } = await supabase
-      .from('users')
-      .insert([data as any])
-      .select()
-      .single()
-    if (created) return created
-  } catch (e) {
-    // Supabase unavailable; fail loudly instead of silently writing to local files.
-  }
-
-  throw new Error(`Unable to create user: ${data.email}`)
 }
 
 export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>) {

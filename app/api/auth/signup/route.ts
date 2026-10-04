@@ -1,7 +1,7 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail } from '@/lib/dal'
-import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     // Strictly enforce that public registration is ONLY for customers/consumers
-    if (role && role !== 'customer') {
+    if (role && role !== 'user') {
       return NextResponse.json(
         {
           error:
@@ -24,16 +24,16 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = String(email).trim().toLowerCase()
-    const finalRole = 'customer' as const
+    const finalRole = 'user' as const
 
     // Check if email already exists via Prisma
     const existingUser = await findUserByEmail(cleanEmail)
     if (existingUser) {
       const roleTitle =
-        existingUser.role === 'vendor'
-          ? 'Vendor Store'
-          : existingUser.role === 'driver'
-            ? 'Rider/Driver'
+        existingUser.role === 'restaurant_vendor' || existingUser.role === 'cravexp_store_vendor'
+          ? 'Vendor'
+          : existingUser.role === 'rider'
+            ? 'Rider'
             : existingUser.role === 'admin'
               ? 'Administrator'
               : 'Customer'
@@ -46,31 +46,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Attempt Supabase auth signup (fallback to generated ID if auth rate-limited)
-    let finalUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-    let authSession: any = null
-
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: String(password),
-        options: {
-          data: {
-            name: String(name).trim(),
-            role: finalRole,
-            phone: phone || null,
-            address: address || null,
-          },
-        },
-      })
-
-      if (!authError && authData?.user) {
-        finalUserId = authData.user.id
-        authSession = authData.session
-      }
-    } catch (err) {
-      console.warn('Supabase auth signup warning, using database fallback:', err)
-    }
+    const finalUserId = crypto.randomUUID()
+    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
 
     // Insert user profile via configured database backend.
     try {
@@ -81,11 +58,22 @@ export async function POST(request: Request) {
         role: finalRole,
         phone: phone || null,
         address: address || null,
+        password_hash: passwordHash,
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('User profile creation failed:', err)
+      const isDatabaseConfigured = Boolean(process.env.DATABASE_URL)
       return NextResponse.json(
-        { error: 'Unable to create the user profile in the configured database.' },
+        {
+          error:
+            process.env.NODE_ENV === 'production'
+              ? 'Unable to create the user profile in the configured database.'
+              : !isDatabaseConfigured
+                ? 'Local PostgreSQL is not configured. Copy .env.example to .env, set DATABASE_URL, run pnpm db:push, and try again.'
+              : err instanceof Error
+                ? err.message
+                : 'Unable to create the user profile in the configured database.',
+        },
         { status: 500 }
       )
     }
@@ -105,7 +93,6 @@ export async function POST(request: Request) {
       success: true,
       token,
       user: userPayload,
-      session: authSession,
       message: 'Account created successfully!',
     })
 

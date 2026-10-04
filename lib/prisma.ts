@@ -12,6 +12,10 @@ function createPrismaClient(): PrismaClientType {
     // Never instantiate on the client side.
     return null as any
   }
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is missing. Configure local PostgreSQL before using database features.')
+    return null as any
+  }
   try {
     // Lazy-load the adapter so it is never bundled for the browser.
     const { PrismaPg } = require('@prisma/adapter-pg')

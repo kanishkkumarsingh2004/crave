@@ -54,8 +54,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
     if (!user) {
       router.replace('/login')
-    } else if (role !== 'driver') {
-      const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+    } else if (role !== 'driver' && role !== 'rider') {
+      const redirectPath =
+        role === 'user' || role === 'customer'
+          ? '/user/dashboard'
+          : role === 'restaurant_vendor' || role === 'vendor'
+            ? '/vendor/dashboard'
+            : role === 'cravexp_store_vendor'
+              ? '/vendor/crave-ep'
+              : role === 'admin'
+                ? '/admin/dashboard'
+                : '/login'
       router.replace(redirectPath)
     }
   }, [user, role, isLoading, router])
@@ -73,7 +82,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (role !== 'driver') {
+  if (role !== 'driver' && role !== 'rider') {
     return null
   }
 

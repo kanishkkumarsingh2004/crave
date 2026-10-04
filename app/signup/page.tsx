@@ -34,7 +34,7 @@ export default function SignupPage() {
     const res = await signup({
       name,
       email,
-      role: 'customer',
+      role: 'user',
       password,
       phone,
     })
@@ -69,7 +69,7 @@ export default function SignupPage() {
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <Link
-                    href={user.role === 'customer' ? '/user/dashboard' : `/${user.role}/dashboard`}
+                    href="/user/dashboard"
                     className="rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36]"
                   >
                     Go to Dashboard

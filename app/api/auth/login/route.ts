@@ -1,7 +1,7 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb } from '@/lib/dal'
-import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 function setCookies(response: ReturnType<typeof NextResponse.json>, token: string) {
   const cookieOptions = {
@@ -19,66 +19,43 @@ function setCookies(response: ReturnType<typeof NextResponse.json>, token: strin
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
-    const authorization = request.headers.get('authorization')
-    const bearerToken = authorization?.startsWith('Bearer ')
-      ? authorization.slice('Bearer '.length)
-      : null
-
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
 
-    let authUser: any = null
-    let session: any = null
-
-    if (bearerToken) {
-      const { data, error } = await supabase.auth.getUser(bearerToken)
-      if (error || !data.user) {
-        return NextResponse.json({ error: 'Invalid Supabase session' }, { status: 401 })
-      }
-      authUser = data.user
-    } else {
-      if (!email || !password) {
-        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (!error && data?.user) {
-        authUser = data.user
-        session = data.session
-      }
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    if (!authUser) {
+    const profile: any = await findUserInDb(email)
+    if (!profile?.password_hash) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Fetch database profile for authenticated Supabase user if one exists.
-    let profile: any = null
-    try {
-      profile = await findUserInDb(authUser.email || email)
-    } catch {
-      profile = null
+    const passwordHash = crypto.scryptSync(password, email, 64).toString('hex')
+    if (
+      passwordHash.length !== profile.password_hash.length ||
+      !crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))
+    ) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
     const userPayload: JWTPayload = {
-      id: authUser.id,
+      id: profile.id,
       name:
-        profile?.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-      email: profile?.email || authUser.email || email,
-      role: profile?.role || authUser.user_metadata?.role || 'customer',
-      phone: profile?.phone ?? authUser.user_metadata?.phone ?? undefined,
-      address: profile?.address ?? authUser.user_metadata?.address ?? undefined,
-      avatar: profile?.avatar ?? authUser.user_metadata?.avatar ?? undefined,
-      restaurantName:
-        profile?.restaurant_name ?? authUser.user_metadata?.restaurant_name ?? undefined,
-      cuisine: profile?.cuisine ?? authUser.user_metadata?.cuisine ?? undefined,
-      vehicleType: profile?.vehicle_type ?? authUser.user_metadata?.vehicle_type ?? undefined,
-      licensePlate: profile?.license_plate ?? authUser.user_metadata?.license_plate ?? undefined,
+        profile.name || email.split('@')[0] || 'User',
+      email: profile.email,
+      role: profile.role,
+      phone: profile.phone ?? undefined,
+      address: profile.address ?? undefined,
+      restaurantName: profile.restaurant_name ?? undefined,
+      cuisine: profile.cuisine ?? undefined,
+      vehicleType: profile.vehicle_type ?? undefined,
+      licensePlate: profile.license_plate ?? undefined,
     }
 
     const token = await createToken(userPayload)
     return setCookies(
-      NextResponse.json({ success: true, token, user: userPayload, session }),
+      NextResponse.json({ success: true, token, user: userPayload }),
       token
     )
   } catch (error) {

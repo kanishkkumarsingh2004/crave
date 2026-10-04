@@ -26,6 +26,13 @@ export interface CraveXPGroceryItem {
 }
 
 export async function fetchCraveXPGroceryItems(): Promise<CraveXPGroceryItem[]> {
+  if (typeof window !== 'undefined') {
+    const response = await fetch('/api/cravexp/catalog')
+    if (!response.ok) throw new Error('Failed to load CraveXP catalog')
+    const data = await response.json()
+    return data.items ?? []
+  }
+
   try {
     const menuData = await prisma.menuItem.findMany({
       where: { restaurant_id: CRAVEXP_DARK_STORE_ID },
@@ -61,6 +68,12 @@ export async function fetchCraveXPGroceryItems(): Promise<CraveXPGroceryItem[]> 
 }
 
 export async function ensureCraveXPDarkStore() {
+  if (typeof window !== 'undefined') {
+    const response = await fetch('/api/cravexp/catalog', { method: 'POST' })
+    if (!response.ok) throw new Error('Failed to initialize CraveXP store')
+    return
+  }
+
   try {
     const existing = await prisma.restaurant.findUnique({
       where: { id: CRAVEXP_DARK_STORE_ID },

@@ -10,9 +10,9 @@ export async function GET() {
       await Promise.all([
         listVendorSettlements(),
         listRestaurants(),
-        listUsersByRole('customer'),
-        listUsersByRole('vendor'),
-        listUsersByRole('driver'),
+        listUsersByRole('user'),
+        listUsersByRole('restaurant_vendor'),
+        listUsersByRole('rider'),
         listOrders(),
         countOrders(),
       ])

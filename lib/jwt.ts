@@ -7,7 +7,7 @@ export interface JWTPayload {
   id: string
   name: string
   email: string
-  role: 'customer' | 'vendor' | 'driver' | 'admin'
+  role: 'user' | 'restaurant_vendor' | 'cravexp_store_vendor' | 'rider' | 'admin'
   phone?: string
   address?: string
   restaurantName?: string

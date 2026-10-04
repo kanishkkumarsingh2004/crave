@@ -16,7 +16,18 @@ export default function DashboardRedirectPage() {
       return
     }
 
-    const targetPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+    const targetPath =
+      role === 'user' || role === 'customer'
+        ? '/user/dashboard'
+        : role === 'restaurant_vendor' || role === 'vendor'
+          ? '/vendor/dashboard'
+          : role === 'cravexp_store_vendor'
+            ? '/vendor/crave-ep'
+            : role === 'rider' || role === 'driver'
+              ? '/driver/dashboard'
+              : role === 'admin'
+                ? '/admin/dashboard'
+                : '/login'
     router.replace(targetPath)
   }, [user, role, isLoading, router])
 

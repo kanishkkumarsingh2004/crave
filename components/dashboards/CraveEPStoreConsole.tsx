@@ -3,7 +3,6 @@
 import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import { supabase } from '@/lib/supabase'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -119,26 +118,25 @@ export default function CraveXPStoreConsole() {
     const loadConsoleData = async () => {
       setDashboardError('')
       try {
-        let vendorId = 'cravexp_dark_store_01'
+        const vendorId = 'cravexp_dark_store_01'
         setRestaurantId('cravexp_dark_store_01')
         setRestaurantName('craveXP Instamart Warehouse #01')
         setRestaurantAddress('Kanakapura Road Central Dark Store Warehouse, Bengaluru')
         setStoreOnline(true)
 
-        const [orderResult, inventoryResult, sensorResult, pickerResult] = await Promise.all([
-          supabase.from('orders').select('*').order('created_at', { ascending: false }),
-          supabase
-            .from('menu_items')
-            .select('*')
-            .eq('restaurant_id', 'cravexp_dark_store_01')
-            .order('name'),
-          supabase.from('cold_chain_sensors').select('*').order('name'),
-          supabase.from('picker_metrics').select('*').order('orders_packed', { ascending: false }),
+        const [ordersResponse, inventoryResponse] = await Promise.all([
+          fetch(`/api/orders?vendorId=${vendorId}`),
+          fetch(`/api/menu-items?restaurantId=${vendorId}`),
         ])
+        if (!ordersResponse.ok || !inventoryResponse.ok) {
+          throw new Error('Failed to load CraveXP data from the local database')
+        }
+        const orderResult = await ordersResponse.json()
+        const inventoryResult = await inventoryResponse.json()
 
         if (cancelled) return
 
-        const orderRows = orderResult.data ?? []
+        const orderRows = orderResult.orders ?? []
         setOrders(
           orderRows.map((order: any) => {
             const rawItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
@@ -168,7 +166,7 @@ export default function CraveXPStoreConsole() {
           })
         )
 
-        const itemRows = inventoryResult.data ?? []
+        const itemRows = inventoryResult.items ?? []
         setInventory(
           itemRows.map((item: any) => ({
             id: item.id,
@@ -187,49 +185,10 @@ export default function CraveXPStoreConsole() {
           }))
         )
 
-        setChillers(
-          (sensorResult.data ?? []).map((sensor: any) => ({
-            id: sensor.id,
-            name: sensor.name,
-            temp: Number(sensor.temperature_c),
-            target: sensor.target_temperature_c == null ? '' : `${sensor.target_temperature_c}°C`,
-            status: sensor.status,
-            updatedAt: sensor.updated_at ?? null,
-          }))
-        )
-
-        setPickerMetrics(
-          (pickerResult.data ?? []).map((picker: any) => ({
-            id: picker.id,
-            name: picker.picker_name,
-            bay: picker.bay ?? '',
-            orders: Number(picker.orders_packed ?? 0),
-            speed:
-              picker.average_pick_seconds == null
-                ? ''
-                : `${Math.floor(picker.average_pick_seconds / 60)}m ${picker.average_pick_seconds % 60}s`,
-            accuracy: picker.accuracy_rate == null ? '' : `${picker.accuracy_rate}%`,
-          }))
-        )
-        const pickTimes = (pickerResult.data ?? [])
-          .map((picker: any) => picker.average_pick_seconds)
-          .filter((value: any): value is number => value != null)
-        const accuracyValues = (pickerResult.data ?? [])
-          .map((picker: any) => picker.accuracy_rate)
-          .filter((value: any): value is number => value != null)
-        setAveragePickSeconds(
-          pickTimes.length
-            ? Math.round(
-                pickTimes.reduce((sum: number, value: number) => sum + value, 0) / pickTimes.length
-              )
-            : null
-        )
-        setAverageAccuracy(
-          accuracyValues.length
-            ? accuracyValues.reduce((sum: number, value: number) => sum + value, 0) /
-                accuracyValues.length
-            : null
-        )
+        setChillers([])
+        setPickerMetrics([])
+        setAveragePickSeconds(null)
+        setAverageAccuracy(null)
 
         const today = new Date().toDateString()
         setDailyRevenue(
@@ -270,12 +229,12 @@ export default function CraveXPStoreConsole() {
   const handleToggleStoreOnline = async () => {
     if (!restaurantId) return
     const nextStatus = !storeOnline
-    const { error } = await supabase
-      .from('restaurants')
-      .update({ is_open: nextStatus })
-      .eq('id', restaurantId)
-      .eq('owner_id', user?.id || '')
-    if (error) {
+    const response = await fetch('/api/restaurants', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: restaurantId, is_open: nextStatus }),
+    })
+    if (!response.ok) {
       triggerToast('Could not update store availability.')
       return
     }
@@ -288,12 +247,12 @@ export default function CraveXPStoreConsole() {
     nextStatus: 'packing' | 'ready' | 'picked_up'
   ) => {
     if (!restaurantId) return
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: nextStatus })
-      .eq('id', orderId)
-      .eq('restaurant_id', restaurantId)
-    if (error) {
+    const response = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, status: nextStatus }),
+    })
+    if (!response.ok) {
       triggerToast('Could not update the order. Please try again.')
       return
     }
@@ -317,12 +276,12 @@ export default function CraveXPStoreConsole() {
     const updatedItems = order.items.map((item, index) =>
       index === itemIdx ? { ...item, packed: !item.packed } : item
     )
-    const { error } = await supabase
-      .from('orders')
-      .update({ items: updatedItems })
-      .eq('id', orderId)
-      .eq('restaurant_id', restaurantId)
-    if (error) {
+    const response = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, items: updatedItems }),
+    })
+    if (!response.ok) {
       triggerToast('Could not update the packing checklist.')
       return
     }
@@ -421,20 +380,12 @@ export default function CraveXPStoreConsole() {
     const nextCount = nextStock ? Math.max(item.stockCount, 1) : 0
     const nextStatus = nextStock ? 'ACTIVE' : 'OUT_OF_STOCK'
 
-    let { error } = await (supabase as any)
-      .from('products')
-      .update({ status: nextStatus, updatedAt: new Date().toISOString() })
-      .eq('id', itemId)
-
-    if (error && error.code === 'PGRST205') {
-      const fallback = await supabase
-        .from('menu_items')
-        .update({ in_stock: nextStock, stock_count: nextCount })
-        .eq('id', itemId)
-      error = fallback.error
-    }
-
-    if (error) {
+    const response = await fetch('/api/menu-items', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: itemId, in_stock: nextStock, stock_count: nextCount }),
+    })
+    if (!response.ok) {
       triggerToast('Could not update product availability.')
       return
     }
@@ -453,20 +404,12 @@ export default function CraveXPStoreConsole() {
     const newCount = Math.max(0, item.stockCount + delta)
     const nextStatus = newCount > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
 
-    let { error } = await (supabase as any)
-      .from('products')
-      .update({ status: nextStatus, updatedAt: new Date().toISOString() })
-      .eq('id', itemId)
-
-    if (error && error.code === 'PGRST205') {
-      const fallback = await supabase
-        .from('menu_items')
-        .update({ stock_count: newCount, in_stock: newCount > 0 })
-        .eq('id', itemId)
-      error = fallback.error
-    }
-
-    if (error) {
+    const response = await fetch('/api/menu-items', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: itemId, stock_count: newCount, in_stock: newCount > 0 }),
+    })
+    if (!response.ok) {
       triggerToast('Could not update the stock count.')
       return
     }
@@ -520,31 +463,27 @@ export default function CraveXPStoreConsole() {
       updatedAt: new Date().toISOString(),
     }
 
-    let { error } = await (supabase as any).from('products').insert([productRecord])
-
-    if (error && error.code === 'PGRST205') {
-      const fallback = await supabase.from('menu_items').insert([
-        {
-          id: newItem.id,
-          restaurant_id: restaurantId,
-          name: newItem.name,
-          category: newItem.category,
-          unit: newItem.unit,
-          price: newItem.price,
-          mrp: newItem.mrp,
-          image: newItem.image || null,
-          in_stock: newItem.inStock,
-          stock_count: newItem.stockCount,
-          sku_code: newItem.skuCode,
-          expiry_date: newItem.expiryDate,
-        },
-      ])
-      error = fallback.error
-    }
-
-    if (error) {
-      console.error('Could not create inventory item:', error)
-      triggerToast(`Could not add product: ${error.message || 'Database error'}`)
+    const response = await fetch('/api/menu-items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: newItem.id,
+        restaurant_id: restaurantId,
+        name: newItem.name,
+        category: newItem.category,
+        unit: newItem.unit,
+        price: newItem.price,
+        mrp: newItem.mrp,
+        image: newItem.image || null,
+        in_stock: newItem.inStock,
+        stock_count: newItem.stockCount,
+        sku_code: newItem.skuCode,
+      }),
+    })
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}))
+      console.error('Could not create inventory item:', result.error)
+      triggerToast(`Could not add product: ${result.error || 'Database error'}`)
       return
     }
 

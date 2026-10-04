@@ -1,32 +1,48 @@
-import { createClient } from '@supabase/supabase-js'
-import { Database } from './database.types'
+/**
+ * Temporary local-database compatibility surface.
+ *
+ * Supabase is intentionally disabled while the application is migrated to the
+ * local PostgreSQL/Prisma backend. Existing legacy screens still import this
+ * symbol, so they receive explicit failures instead of opening a remote
+ * connection or silently pretending that a write succeeded.
+ */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-
-const safeSupabaseStub = () => ({
-  auth: {
-    getSession: async () => ({ data: { session: null }, error: null }),
-    getUser: async () => ({ data: { user: null }, error: null }),
-    signInWithPassword: async () => ({
-      data: { user: null, session: null },
-      error: { message: 'Supabase is not configured for this environment.' },
-    }),
-    signOut: async () => ({ error: null }),
-    setSession: async () => ({ error: null }),
-  },
-  from: () => ({
-    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
-  }),
-})
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase env vars are missing. Falling back to a safe local-only auth mode until they are configured.'
-  )
+const disabledError = {
+  message: 'Supabase is disabled. Use the local PostgreSQL API.',
+  code: 'SUPABASE_DISABLED',
 }
 
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient<Database>(supabaseUrl, supabaseAnonKey)
-    : (safeSupabaseStub() as any)
+const disabledQuery = (): any => ({
+  select: () => disabledQuery(),
+  insert: () => disabledQuery(),
+  update: () => disabledQuery(),
+  delete: () => disabledQuery(),
+  upsert: () => disabledQuery(),
+  eq: () => disabledQuery(),
+  ilike: () => disabledQuery(),
+  or: () => disabledQuery(),
+  order: () => disabledQuery(),
+  limit: () => disabledQuery(),
+  maybeSingle: async () => ({ data: null, error: disabledError }),
+  single: async () => ({ data: null, error: disabledError }),
+  then: (resolve: (value: { data: null; error: typeof disabledError }) => unknown) =>
+    Promise.resolve(resolve({ data: null, error: disabledError })),
+})
+
+export const supabase: any = {
+  auth: {
+    getSession: async () => ({ data: { session: null }, error: disabledError }),
+    getUser: async () => ({ data: { user: null }, error: disabledError }),
+    signInWithPassword: async () => ({
+      data: { user: null, session: null },
+      error: disabledError,
+    }),
+    signUp: async () => ({
+      data: { user: null, session: null },
+      error: disabledError,
+    }),
+    signOut: async () => ({ error: disabledError }),
+    setSession: async () => ({ error: disabledError }),
+  },
+  from: (_table: string) => disabledQuery(),
+} as const

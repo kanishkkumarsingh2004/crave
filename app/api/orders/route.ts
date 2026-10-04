@@ -12,6 +12,15 @@ import fs from 'fs'
 import path from 'path'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
+import { verifyToken, type JWTPayload } from '@/lib/jwt'
+import { cookies } from 'next/headers'
+
+async function getActor(request: Request): Promise<JWTPayload | null> {
+  const header = request.headers.get('authorization')
+  let token = header?.startsWith('Bearer ') ? header.slice(7) : ''
+  if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+  return token ? verifyToken(token) : null
+}
 
 function getActiveConfig(): PaymentConfig {
   try {
@@ -28,6 +37,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const customerId = searchParams.get('customerId')
     const vendorId = searchParams.get('vendorId')
+    const vendorName = searchParams.get('vendorName')
     const orderId = searchParams.get('orderId')
 
     if (orderId) {
@@ -42,6 +52,7 @@ export async function GET(request: Request) {
     const orders = await listOrders({
       customerId: customerId ?? undefined,
       restaurantId: vendorId ?? undefined,
+      restaurantName: vendorName ?? undefined,
     })
 
     return NextResponse.json({ success: true, orders })
@@ -52,6 +63,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const actor = await getActor(request)
+    if (!actor || actor.role !== 'user') {
+      return NextResponse.json({ error: 'Only authenticated users can place orders' }, { status: 401 })
+    }
     const body = await request.json()
     const {
       id,
@@ -66,7 +81,7 @@ export async function POST(request: Request) {
       packaging_fee,
       gst,
       total_amount,
-      status = 'new',
+      status = 'payment_submitted',
       payment_method = 'UPI Online',
       delivery_otp,
       utr_ref,
@@ -77,9 +92,10 @@ export async function POST(request: Request) {
       delivery_fee,
       driver_id,
       driver_name,
+      order_type = 'restaurant_food',
     } = body
 
-    if (!customer_id || !restaurant_id || !total_amount) {
+    if (customer_id !== actor.id || !customer_id || !restaurant_id || !total_amount) {
       return NextResponse.json(
         { error: 'Customer, restaurant, and order total amount are required' },
         { status: 400 }
@@ -137,6 +153,7 @@ export async function POST(request: Request) {
       gst: Number(gst) || 0,
       total_amount: Number(total_amount) || 0,
       status: status as OrderStatus,
+      order_type,
       payment_method,
       delivery_otp: String(delivery_otp || '1234'),
       tip: Number(tip) || 0,
@@ -213,6 +230,8 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const actor = await getActor(request)
+    if (!actor) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     const body = await request.json()
     const {
       orderId,
@@ -226,6 +245,7 @@ export async function PATCH(request: Request) {
       driver_id,
       driver_lat,
       driver_lng,
+      items,
     } = body
 
     if (!orderId) {
@@ -237,6 +257,25 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
+    const vendorStatuses: OrderStatus[] = ['preparing', 'packing', 'ready_for_pickup']
+    const riderStatuses: OrderStatus[] = ['picked_up', 'out_for_delivery', 'delivered', 'completed']
+    const requestedStatus = status as OrderStatus | undefined
+    const isOwner =
+      actor.role === 'user' && existing.customer_id === actor.id
+    const isVendor =
+      (actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
+      (existing.restaurant_id === (actor as any).restaurantId ||
+        existing.restaurant_name === actor.restaurantName)
+    const allowed =
+      !status ||
+      (actor.role === 'admin' && ['payment_verified', 'sent_to_vendor', 'cancelled'].includes(status)) ||
+      (isVendor && vendorStatuses.includes(requestedStatus!)) ||
+      (actor.role === 'rider' && riderStatuses.includes(requestedStatus!))
+
+    if (!allowed || (payment_status && actor.role !== 'admin') || (driver_lat != null && actor.role !== 'rider')) {
+      return NextResponse.json({ error: 'You are not allowed to update this order' }, { status: 403 })
+    }
+
     // Only pass fields that exist on the Order model to updateOrder.
     const updated = await updateOrder(orderId, {
       ...(status && { status: status as OrderStatus }),
@@ -244,6 +283,7 @@ export async function PATCH(request: Request) {
       ...(driver_phone && { driver_phone }),
       ...(driver_lat != null && { delivery_latitude: driver_lat }),
       ...(driver_lng != null && { delivery_longitude: driver_lng }),
+      ...(items && { items }),
       ...(status === 'completed' && { delivered_at: new Date() }),
     })
 
