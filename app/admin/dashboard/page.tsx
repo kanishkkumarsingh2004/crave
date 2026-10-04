@@ -39,16 +39,16 @@ const ADMIN_SECTION_LINKS = [
     icon: BarChart3,
   },
   {
-    href: '/admin/users',
-    label: 'User Accounts',
-    description: 'Manage customer, vendor, driver, and admin access.',
-    icon: Users,
-  },
-  {
     href: '/admin/payments',
     label: 'Payment Review Queue',
     description: 'Verify payment references and payment status.',
     icon: CreditCard,
+  },
+  {
+    href: '/admin/users',
+    label: 'User Accounts',
+    description: 'Manage customer, vendor, driver, and admin access.',
+    icon: Users,
   },
   {
     href: '/admin/coupons',

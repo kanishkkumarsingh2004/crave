@@ -47,6 +47,16 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
   ),
 })
 
+const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#09090b] border border-[#27272a] flex flex-col items-center justify-center gap-2 text-xs text-gray-400 font-bold animate-pulse">
+      <div className="size-8 border-2 border-[#d9f447] border-t-transparent rounded-full animate-spin mb-1" />
+      <span>Loading Mapcn Live Rider Map...</span>
+    </div>
+  ),
+})
+
 interface Restaurant {
   id: string
   name: string
@@ -568,14 +578,24 @@ export default function CustomerDashboard({
 
           if (active) {
             let statusStep = 1
-            if (
+            if (active.status === 'delivered' || active.status === 'completed') {
+              statusStep = 4
+            } else if (
+              active.status === 'out_for_delivery' ||
+              active.status === 'picked_up' ||
+              active.status === 'arrived_customer'
+            ) {
+              statusStep = 3
+            } else if (
               active.status === 'preparing' ||
+              active.status === 'cooking' ||
+              active.status === 'ready' ||
               active.status === 'accepted' ||
+              active.status === 'at_restaurant' ||
               active.payment_status === 'verified'
-            )
+            ) {
               statusStep = 2
-            else if (active.status === 'out_for_delivery') statusStep = 3
-            else if (active.status === 'delivered' || active.status === 'completed') statusStep = 4
+            }
 
             let itemsArr: CartItem[] = []
             try {
@@ -600,6 +620,8 @@ export default function CustomerDashboard({
               otp: active.delivery_otp || '1234',
               driverName: active.driver_name || null,
               driverPhone: active.driver_phone || null,
+              driverLat: active.driver_lat || active.driver_latitude || null,
+              driverLng: active.driver_lng || active.driver_longitude || null,
               timestamp: formattedTime,
             })
           }
@@ -1724,133 +1746,181 @@ export default function CustomerDashboard({
         {activeTab === 'live-order' && (
           <div className="max-w-4xl mx-auto flex flex-col gap-6">
             {activeOrder ? (
-              <div className="overflow-hidden rounded-3xl border border-[#dfe5db] bg-white shadow-lg">
-                <div className="bg-[#18201c] p-6 text-white">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#18201c]">
-                          Live Order #{activeOrder.id}
+              <div className="overflow-hidden rounded-3xl border border-[#dfe5db] bg-white shadow-xl">
+                {/* Header Banner */}
+                <div className="bg-gradient-to-br from-[#18201c] via-[#222c27] to-[#18201c] p-6 sm:p-7 text-white relative overflow-hidden">
+                  {/* Subtle Background Glow */}
+                  <div className="absolute -right-12 -top-12 size-48 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none" />
+
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                    <div className="space-y-3 min-w-0">
+                      {/* Status Badges */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-black text-[#18201c] shadow-xs tracking-wide uppercase">
+                          <span className="size-1.5 rounded-full bg-[#18201c] animate-pulse" />
+                          Order #{typeof activeOrder.id === 'string' && activeOrder.id.length > 10 ? activeOrder.id.slice(0, 8).toUpperCase() : activeOrder.id}
                         </span>
-                        <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-700/50">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs font-bold text-emerald-300 backdrop-blur-xs">
                           {activeOrder.statusStep === 1 && 'Order Confirmed'}
                           {activeOrder.statusStep === 2 && 'Kitchen Cooking'}
-                          {activeOrder.statusStep === 3 && 'Picked from Counter • Out for Delivery'}
+                          {activeOrder.statusStep === 3 && 'Out for Delivery'}
                           {activeOrder.statusStep === 4 && 'Delivered to Doorstep'}
                         </span>
                         {activeOrder.otp && (
-                          <span className="text-xs font-mono font-black text-[#18201c] bg-[#d9f447] px-3 py-0.5 rounded-full shadow-xs">
-                            OTP: {activeOrder.otp}
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-mono font-black text-[#18201c] shadow-xs">
+                            <span className="text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">OTP</span>
+                            <span className="tracking-widest">{activeOrder.otp}</span>
                           </span>
                         )}
                       </div>
-                      <h2 className="mt-2 text-2xl font-bold">{activeOrder.restaurantName}</h2>
-                      <p className="mt-1 text-xs text-white/70">
-                        Placed at {activeOrder.timestamp} · Total ₹{activeOrder.total}
-                      </p>
+
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{activeOrder.restaurantName}</h2>
+                        <p className="mt-1 text-xs text-white/70 flex flex-wrap items-center gap-2">
+                          <span>Placed at {activeOrder.timestamp}</span>
+                          <span>•</span>
+                          <span className="font-semibold text-white">Total ₹{activeOrder.total}</span>
+                          {activeOrder.items && activeOrder.items.length > 0 && (
+                            <>
+                              <span>•</span>
+                              <span>{activeOrder.items.length} {activeOrder.items.length === 1 ? 'item' : 'items'}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-[#d9f447]">Estimated Delivery</p>
-                      <p className="text-xl font-extrabold">18 - 22 mins</p>
+
+                    <div className="shrink-0 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md px-5 py-3 text-left sm:text-right shadow-inner">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Estimated Delivery</p>
+                      <p className="text-xl sm:text-2xl font-black text-white mt-0.5 tracking-tight">18 - 22 mins</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 border-b border-gray-100">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">
-                    Order Status Steps:
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-semibold">
-                    <div
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 1 ? 'text-[#18201c]' : 'text-gray-400'}`}
-                    >
-                      <span className="grid size-9 place-items-center rounded-full font-bold bg-[#d9f447] text-[#18201c]">
-                        {activeOrder.statusStep > 1 ? <Check className="size-4" /> : '1'}
-                      </span>
-                      <span className="text-[11px]">1. Confirmed</span>
+                {/* Progress Stepper Section */}
+                <div className="p-6 sm:p-8 border-b border-gray-100 bg-white">
+                  <div className="flex items-center justify-between mb-6">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                      Live Order Status
+                    </p>
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Step {activeOrder.statusStep} of 4
+                    </span>
+                  </div>
+
+                  {/* Connected Horizontal Timeline */}
+                  <div className="relative max-w-3xl mx-auto px-2 py-2">
+                    {/* Connecting Track Line */}
+                    <div className="absolute top-5 left-8 right-8 h-1 bg-gray-100 rounded-full -z-0">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#d9f447] to-emerald-500 rounded-full transition-all duration-700 ease-in-out"
+                        style={{
+                          width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
+                        }}
+                      />
                     </div>
 
-                    <div
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 2 ? 'text-[#18201c]' : 'text-gray-400'}`}
-                    >
-                      <span
-                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 2 ? 'bg-[#d9f447] text-[#18201c]' : 'bg-gray-100 text-gray-400'}`}
-                      >
-                        {activeOrder.statusStep > 2 ? <Check className="size-4" /> : '2'}
-                      </span>
-                      <span className="text-[11px]">2. Kitchen Cooking</span>
-                    </div>
+                    {/* Step Nodes */}
+                    <div className="grid grid-cols-4 gap-1 text-center relative z-10">
+                      {[
+                        { num: 1, title: 'Confirmed', desc: 'Order placed' },
+                        { num: 2, title: 'Cooking', desc: 'In kitchen' },
+                        { num: 3, title: 'On the Way', desc: 'Out for delivery' },
+                        { num: 4, title: 'Delivered', desc: 'At doorstep' },
+                      ].map((step) => {
+                        const isDone = activeOrder.statusStep > step.num
+                        const isCurrent = activeOrder.statusStep === step.num
+                        const isPassedOrCurrent = activeOrder.statusStep >= step.num
 
-                    <div
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 3 ? 'text-[#18201c]' : 'text-gray-400'}`}
-                    >
-                      <span
-                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep >= 3 ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400'}`}
-                      >
-                        {activeOrder.statusStep > 3 ? <Check className="size-4" /> : '3'}
-                      </span>
-                      <span className="text-[11px] font-bold text-emerald-700">
-                        3. Out for Delivery
-                      </span>
-                    </div>
+                        return (
+                          <div key={step.num} className="flex flex-col items-center group">
+                            {/* Circle Indicator */}
+                            <div
+                              className={`grid size-10 sm:size-11 place-items-center rounded-full font-black text-xs transition-all duration-300 ${
+                                isDone
+                                  ? 'bg-[#d9f447] text-[#18201c] shadow-md ring-4 ring-[#d9f447]/30 scale-105'
+                                  : isCurrent
+                                  ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-4 ring-[#18201c]/20 animate-pulse scale-110'
+                                  : 'bg-white border-2 border-gray-200 text-gray-400'
+                              }`}
+                            >
+                              {isDone ? <Check className="size-5 stroke-[3]" /> : step.num}
+                            </div>
 
-                    <div
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl ${activeOrder.statusStep >= 4 ? 'text-[#18201c]' : 'text-gray-400'}`}
-                    >
-                      <span
-                        className={`grid size-9 place-items-center rounded-full font-bold ${activeOrder.statusStep === 4 ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}
-                      >
-                        4
-                      </span>
-                      <span className="text-[11px]">4. Delivered</span>
+                            {/* Label */}
+                            <div className="mt-3 space-y-0.5">
+                              <p
+                                className={`text-xs font-bold transition-colors ${
+                                  isPassedOrCurrent ? 'text-[#18201c]' : 'text-gray-400'
+                                }`}
+                              >
+                                {step.title}
+                              </p>
+                              <p className="text-[10px] text-gray-400 hidden sm:block">
+                                {step.desc}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
 
+                {/* Live Rider Delivery Route View */}
                 <div className="p-6 bg-[#f8f9f6] border-b border-gray-200 flex flex-col gap-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h4 className="font-bold text-base text-[#18201c] flex items-center gap-2">
+                      <h4 className="font-extrabold text-base text-[#18201c] flex items-center gap-2">
                         <Compass
                           className="size-5 text-emerald-600 animate-spin"
-                          style={{ animationDuration: '6s' }}
+                          style={{ animationDuration: '8s' }}
                         />
                         Live Rider Delivery Route
                       </h4>
-                      <p className="text-xs text-[#737e77]">
-                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}
-                        .
+                      <p className="text-xs text-[#737e77] mt-0.5">
+                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}.
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid h-48 place-items-center rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-xs text-gray-500 sm:h-56">
-                    Live route mapping is unavailable until this order has stored restaurant,
-                    customer, and rider coordinates.
-                  </div>
+                  <LiveDriverMap
+                    restaurantName={activeOrder.restaurantName}
+                    customerAddress={deliveryAddress}
+                    driverName={activeOrder.driverName || 'Assigned Delivery Partner'}
+                    statusStep={activeOrder.statusStep}
+                    driverLat={activeOrder.driverLat || null}
+                    driverLng={activeOrder.driverLng || null}
+                  />
                 </div>
 
-                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white shrink-0">
+                {/* Assigned Delivery Partner Card */}
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
+                  <div className="flex items-center gap-3.5">
+                    <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white shrink-0 shadow-md">
                       <Bike className="size-6 text-[#d9f447]" />
                     </div>
                     <div>
-                      <p className="text-xs text-[#737e77]">Assigned Delivery Partner</p>
-                      <p className="font-bold text-sm text-[#18201c]">
+                      <p className="text-xs font-medium text-[#737e77]">Assigned Delivery Partner</p>
+                      <p className="font-extrabold text-sm text-[#18201c] mt-0.5">
                         {activeOrder.driverName || 'Awaiting driver assignment'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {activeOrder.driverPhone && (
+                    {activeOrder.driverPhone ? (
                       <a
                         href={`tel:${activeOrder.driverPhone}`}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#d8ded4] bg-white px-4 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-50 transition shadow-xs"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#2e3b34] transition shadow-sm"
                       >
-                        <PhoneCall className="size-3.5 text-[#829b14]" />
+                        <PhoneCall className="size-3.5 text-[#d9f447]" />
                         Call Partner
                       </a>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">
+                        Contact details available upon pickup
+                      </span>
                     )}
                   </div>
                 </div>

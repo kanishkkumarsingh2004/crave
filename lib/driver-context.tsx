@@ -355,8 +355,34 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     if (!activeTask) return
     if (activeTask.step === 'assigned') {
       setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
+      try {
+        await fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: activeTask.id,
+            status: 'preparing',
+            driver_name: 'Verified Delivery Partner',
+            driver_phone: '+91 98765 43210',
+          }),
+        })
+      } catch (e) {}
     } else if (activeTask.step === 'at_restaurant') {
       setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
+      try {
+        await fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: activeTask.id,
+            status: 'out_for_delivery',
+            driver_name: 'Verified Delivery Partner',
+            driver_phone: '+91 98765 43210',
+          }),
+        })
+      } catch (e) {}
+    } else if (activeTask.step === 'picked_up') {
+      setActiveTask((prev) => (prev ? { ...prev, step: 'arrived_customer' } : null))
       try {
         await fetch('/api/orders', {
           method: 'PATCH',
@@ -367,8 +393,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           }),
         })
       } catch (e) {}
-    } else if (activeTask.step === 'picked_up') {
-      setActiveTask((prev) => (prev ? { ...prev, step: 'arrived_customer' } : null))
     }
   }
 
