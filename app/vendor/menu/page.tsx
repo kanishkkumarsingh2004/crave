@@ -157,7 +157,7 @@ export default function VendorMenuPage() {
             price: Number(item.price),
             description: item.description?.includes('·')
               ? item.description.split('·').slice(1).join('·').trim()
-              : item.description ?? '',
+              : (item.description ?? ''),
             in_stock: item.status !== 'INACTIVE',
             image:
               item.imageUrl ||

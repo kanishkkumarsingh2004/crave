@@ -9,10 +9,7 @@ export async function POST(request: Request) {
     const { name, email, password, role, phone, address } = body
 
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
     }
 
     // Strictly enforce that public registration is ONLY for customers/consumers
@@ -178,9 +175,6 @@ export async function POST(request: Request) {
     return response
   } catch (error: any) {
     console.error('Signup endpoint error:', error)
-    return NextResponse.json(
-      { error: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 })
   }
 }

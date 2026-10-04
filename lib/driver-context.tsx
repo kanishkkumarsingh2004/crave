@@ -179,18 +179,25 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
             let itemsArr: any[] = []
             try {
-              itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+              itemsArr =
+                typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
             } catch (e) {}
 
-            const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
-            const calcPayout = Math.max(60, Math.round(Number(target.total_amount ?? 250) * 0.15) + 35)
+            const realOtp =
+              target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+            const calcPayout = Math.max(
+              60,
+              Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
+            )
 
             setOfferTimer(25)
             setBroadcastOffer({
               id: target.id,
               orderNumber: `#${target.id.slice(0, 8)}`,
               restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-              restaurantAddress: target.customer_address ? `Kitchen near ${target.customer_address}` : 'Koramangala 5th Block, Bengaluru',
+              restaurantAddress: target.customer_address
+                ? `Kitchen near ${target.customer_address}`
+                : 'Koramangala 5th Block, Bengaluru',
               customerName: target.customer_name || 'Customer',
               customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
               basePayout: calcPayout,
@@ -248,26 +255,31 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            o.status !== 'delivered' &&
-            o.status !== 'completed' &&
-            o.status !== 'cancelled'
+            o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
         )
         if (availableOrders.length > 0) {
           const target = availableOrders[availableOrders.length - 1]
           let itemsArr: any[] = []
           try {
-            itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+            itemsArr =
+              typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
           } catch (e) {}
 
-          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
-          const calcPayout = Math.max(60, Math.round(Number(target.total_amount ?? 250) * 0.15) + 35)
+          const realOtp =
+            target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+          const calcPayout = Math.max(
+            60,
+            Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
+          )
 
           setOfferTimer(25)
           setBroadcastOffer({
             id: target.id,
             orderNumber: `#${target.id.slice(0, 8)}`,
             restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-            restaurantAddress: target.customer_address ? `Kitchen near ${target.customer_address}` : 'Koramangala, Bengaluru',
+            restaurantAddress: target.customer_address
+              ? `Kitchen near ${target.customer_address}`
+              : 'Koramangala, Bengaluru',
             customerName: target.customer_name || 'Customer',
             customerAddress: target.customer_address || 'Indiranagar',
             basePayout: calcPayout,
@@ -285,7 +297,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     // No real customer orders available - do NOT trigger fake offer
     setBroadcastOffer(null)
     if (typeof window !== 'undefined') {
-      alert('No active real customer orders currently waiting for pickup in the queue. Please place an order as a customer first!')
+      alert(
+        'No active real customer orders currently waiting for pickup in the queue. Please place an order as a customer first!'
+      )
     }
   }
 

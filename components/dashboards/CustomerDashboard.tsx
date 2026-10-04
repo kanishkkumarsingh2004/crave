@@ -255,20 +255,25 @@ export default function CustomerDashboard({
   useEffect(() => {
     async function fetchLiveMenuItems() {
       try {
-        const { data: prodData, error: prodErr } = await supabase
-          .from('products')
-          .select('*')
+        const { data: prodData, error: prodErr } = await supabase.from('products').select('*')
 
         if (!prodErr && prodData && prodData.length > 0) {
           let filtered = prodData.filter((item: any) => item.status !== 'INACTIVE')
 
           if (selectedRestaurant) {
             const matchingIds = [selectedRestaurant.id]
-            if ((selectedRestaurant as any).userId) matchingIds.push((selectedRestaurant as any).userId)
+            if ((selectedRestaurant as any).userId)
+              matchingIds.push((selectedRestaurant as any).userId)
 
             const restaurantSpecific = filtered.filter((item: any) => {
-              if (matchingIds.includes(item.vendorId) || matchingIds.includes(item.restaurantId)) return true
-              if (selectedRestaurant.name && item.description && item.description.toLowerCase().includes(selectedRestaurant.name.toLowerCase())) return true
+              if (matchingIds.includes(item.vendorId) || matchingIds.includes(item.restaurantId))
+                return true
+              if (
+                selectedRestaurant.name &&
+                item.description &&
+                item.description.toLowerCase().includes(selectedRestaurant.name.toLowerCase())
+              )
+                return true
               return false
             })
 
@@ -285,7 +290,9 @@ export default function CustomerDashboard({
             const restName =
               selectedRestaurant?.name ||
               matchedVendor?.name ||
-              (item.description?.includes('Vendor:') ? item.description.split('Vendor:')[1]?.trim() : '') ||
+              (item.description?.includes('Vendor:')
+                ? item.description.split('Vendor:')[1]?.trim()
+                : '') ||
               'Crave Kitchen'
 
             return {
@@ -561,7 +568,11 @@ export default function CustomerDashboard({
 
           if (active) {
             let statusStep = 1
-            if (active.status === 'preparing' || active.status === 'accepted' || active.payment_status === 'verified')
+            if (
+              active.status === 'preparing' ||
+              active.status === 'accepted' ||
+              active.payment_status === 'verified'
+            )
               statusStep = 2
             else if (active.status === 'out_for_delivery') statusStep = 3
             else if (active.status === 'delivered' || active.status === 'completed') statusStep = 4
@@ -569,9 +580,7 @@ export default function CustomerDashboard({
             let itemsArr: CartItem[] = []
             try {
               itemsArr =
-                typeof active.items === 'string'
-                  ? JSON.parse(active.items)
-                  : active.items || []
+                typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
             } catch (e) {}
 
             const formattedTime = active.createdAt
@@ -714,7 +723,11 @@ export default function CustomerDashboard({
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
     if (cart.length > 0) {
       const currentRest = cart[0].restaurantName || selectedRestaurant?.name || 'Kitchen Store'
-      if (currentRest !== itemRest && currentRest !== 'Kitchen Store' && itemRest !== 'Kitchen Store') {
+      if (
+        currentRest !== itemRest &&
+        currentRest !== 'Kitchen Store' &&
+        itemRest !== 'Kitchen Store'
+      ) {
         setConflictModal({
           open: true,
           currentRest,
@@ -996,9 +1009,10 @@ export default function CustomerDashboard({
         timestamp: nowTime,
       })
     } catch (err: any) {
-      const errorMsg = err?.message || (typeof err === 'string' ? err : 'Order creation fallback activated')
+      const errorMsg =
+        err?.message || (typeof err === 'string' ? err : 'Order creation fallback activated')
       console.warn('Order submission notice, using client fallback:', errorMsg)
-      
+
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
       setActiveOrder({
@@ -2523,18 +2537,26 @@ export default function CustomerDashboard({
               </div>
               <div>
                 <h3 className="font-bold text-base text-[#18201c]">Replace cart items?</h3>
-                <p className="text-xs text-gray-500">Your cart contains items from a different store.</p>
+                <p className="text-xs text-gray-500">
+                  Your cart contains items from a different store.
+                </p>
               </div>
             </div>
 
             <p className="mt-4 text-xs text-gray-600 leading-relaxed">
-              Your cart currently has items from <strong className="text-[#18201c]">{conflictModal.currentRest}</strong>. Do you want to discard them and add <strong className="text-[#18201c]">{conflictModal.newItem?.name}</strong> from <strong className="text-[#18201c]">{conflictModal.newRest}</strong>?
+              Your cart currently has items from{' '}
+              <strong className="text-[#18201c]">{conflictModal.currentRest}</strong>. Do you want
+              to discard them and add{' '}
+              <strong className="text-[#18201c]">{conflictModal.newItem?.name}</strong> from{' '}
+              <strong className="text-[#18201c]">{conflictModal.newRest}</strong>?
             </p>
 
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
               <button
                 type="button"
-                onClick={() => setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })}
+                onClick={() =>
+                  setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })
+                }
                 className="rounded-full bg-gray-100 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-200 transition"
               >
                 Cancel

@@ -141,37 +141,17 @@ export default function CraveXPStoreConsole() {
         } catch {}
 
         const [orderResult, inventoryResult, sensorResult, pickerResult] = await Promise.all([
-          supabase
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .then((res) => res)
-            .catch(() => ({ data: [], error: null })),
-          supabase
-            .from('products')
-            .select('*')
-            .order('name')
-            .then((res) => res)
-            .catch(() => ({ data: [], error: null })),
-          supabase
-            .from('cold_chain_sensors')
-            .select('*')
-            .order('name')
-            .then((res) => res)
-            .catch(() => ({ data: [], error: null })),
-          supabase
-            .from('picker_metrics')
-            .select('*')
-            .order('orders_packed', { ascending: false })
-            .then((res) => res)
-            .catch(() => ({ data: [], error: null })),
+          supabase.from('orders').select('*').order('created_at', { ascending: false }),
+          supabase.from('products').select('*').order('name'),
+          supabase.from('cold_chain_sensors').select('*').order('name'),
+          supabase.from('picker_metrics').select('*').order('orders_packed', { ascending: false }),
         ])
 
         if (cancelled) return
 
         const orderRows = orderResult.data ?? []
         setOrders(
-          orderRows.map((order) => {
+          orderRows.map((order: any) => {
             const rawItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
             const items = Array.isArray(rawItems)
               ? rawItems.map((item: Record<string, unknown>) => ({
@@ -243,19 +223,19 @@ export default function CraveXPStoreConsole() {
           }))
         )
         const pickTimes = (pickerResult.data ?? [])
-          .map((picker) => picker.average_pick_seconds)
-          .filter((value): value is number => value != null)
+          .map((picker: any) => picker.average_pick_seconds)
+          .filter((value: any): value is number => value != null)
         const accuracyValues = (pickerResult.data ?? [])
-          .map((picker) => picker.accuracy_rate)
-          .filter((value): value is number => value != null)
+          .map((picker: any) => picker.accuracy_rate)
+          .filter((value: any): value is number => value != null)
         setAveragePickSeconds(
           pickTimes.length
-            ? Math.round(pickTimes.reduce((sum, value) => sum + value, 0) / pickTimes.length)
+            ? Math.round(pickTimes.reduce((sum: number, value: number) => sum + value, 0) / pickTimes.length)
             : null
         )
         setAverageAccuracy(
           accuracyValues.length
-            ? accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length
+            ? accuracyValues.reduce((sum: number, value: number) => sum + value, 0) / accuracyValues.length
             : null
         )
 
@@ -263,12 +243,12 @@ export default function CraveXPStoreConsole() {
         setDailyRevenue(
           orderRows
             .filter(
-              (order) => order.created_at && new Date(order.created_at).toDateString() === today
+              (order: any) => order.created_at && new Date(order.created_at).toDateString() === today
             )
-            .reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0)
+            .reduce((sum: number, order: any) => sum + Number(order.total_amount ?? 0), 0)
         )
         setCompletedDrops(
-          orderRows.filter((order) => ['picked_up', 'completed'].includes(order.status)).length
+          orderRows.filter((order: any) => ['picked_up', 'completed'].includes(order.status)).length
         )
       } catch (error) {
         if (cancelled) return

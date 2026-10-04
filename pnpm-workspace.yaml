@@ -3,6 +3,7 @@ pmOnFail: ignore
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
+  - lucide-react@1.51.0
 
 allowBuilds:
   esbuild: true
