@@ -283,7 +283,7 @@ export default function CustomerDashboard({
           let filtered = menuData
           if (selectedRestaurant) {
             const restaurantSpecific = filtered.filter(
-              (item) => item.restaurant_id === selectedRestaurant.id
+              (item: any) => item.restaurant_id === selectedRestaurant.id
             )
             if (restaurantSpecific.length > 0) {
               filtered = restaurantSpecific
@@ -420,7 +420,7 @@ export default function CustomerDashboard({
 
         if (!error && data && data.length > 0) {
           setSavedAddresses(
-            data.map((row) => ({
+            data.map((row: any) => ({
               id: row.id,
               label: row.label,
               address: row.address,
@@ -1713,7 +1713,10 @@ export default function CustomerDashboard({
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-black text-[#18201c] shadow-xs tracking-wide uppercase">
                           <span className="size-1.5 rounded-full bg-[#18201c] animate-pulse" />
-                          Order #{typeof activeOrder.id === 'string' && activeOrder.id.length > 10 ? activeOrder.id.slice(0, 8).toUpperCase() : activeOrder.id}
+                          Order #
+                          {typeof activeOrder.id === 'string' && activeOrder.id.length > 10
+                            ? activeOrder.id.slice(0, 8).toUpperCase()
+                            : activeOrder.id}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs font-bold text-emerald-300 backdrop-blur-xs">
                           {activeOrder.statusStep === 1 && 'Order Confirmed'}
@@ -1723,22 +1726,31 @@ export default function CustomerDashboard({
                         </span>
                         {activeOrder.otp && (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-mono font-black text-[#18201c] shadow-xs">
-                            <span className="text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">OTP</span>
+                            <span className="text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">
+                              OTP
+                            </span>
                             <span className="tracking-widest">{activeOrder.otp}</span>
                           </span>
                         )}
                       </div>
 
                       <div>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{activeOrder.restaurantName}</h2>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                          {activeOrder.restaurantName}
+                        </h2>
                         <p className="mt-1 text-xs text-white/70 flex flex-wrap items-center gap-2">
                           <span>Placed at {activeOrder.timestamp}</span>
                           <span>•</span>
-                          <span className="font-semibold text-white">Total ₹{activeOrder.total}</span>
+                          <span className="font-semibold text-white">
+                            Total ₹{activeOrder.total}
+                          </span>
                           {activeOrder.items && activeOrder.items.length > 0 && (
                             <>
                               <span>•</span>
-                              <span>{activeOrder.items.length} {activeOrder.items.length === 1 ? 'item' : 'items'}</span>
+                              <span>
+                                {activeOrder.items.length}{' '}
+                                {activeOrder.items.length === 1 ? 'item' : 'items'}
+                              </span>
                             </>
                           )}
                         </p>
@@ -1746,8 +1758,12 @@ export default function CustomerDashboard({
                     </div>
 
                     <div className="shrink-0 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md px-5 py-3 text-left sm:text-right shadow-inner">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Estimated Delivery</p>
-                      <p className="text-xl sm:text-2xl font-black text-white mt-0.5 tracking-tight">18 - 22 mins</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
+                        Estimated Delivery
+                      </p>
+                      <p className="text-xl sm:text-2xl font-black text-white mt-0.5 tracking-tight">
+                        18 - 22 mins
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1796,8 +1812,8 @@ export default function CustomerDashboard({
                                 isDone
                                   ? 'bg-[#d9f447] text-[#18201c] shadow-md ring-4 ring-[#d9f447]/30 scale-105'
                                   : isCurrent
-                                  ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-4 ring-[#18201c]/20 animate-pulse scale-110'
-                                  : 'bg-white border-2 border-gray-200 text-gray-400'
+                                    ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-4 ring-[#18201c]/20 animate-pulse scale-110'
+                                    : 'bg-white border-2 border-gray-200 text-gray-400'
                               }`}
                             >
                               {isDone ? <Check className="size-5 stroke-[3]" /> : step.num}
@@ -1835,7 +1851,8 @@ export default function CustomerDashboard({
                         Live Rider Delivery Route
                       </h4>
                       <p className="text-xs text-[#737e77] mt-0.5">
-                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}.
+                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}
+                        .
                       </p>
                     </div>
                   </div>
@@ -1857,7 +1874,9 @@ export default function CustomerDashboard({
                       <Bike className="size-6 text-[#d9f447]" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-[#737e77]">Assigned Delivery Partner</p>
+                      <p className="text-xs font-medium text-[#737e77]">
+                        Assigned Delivery Partner
+                      </p>
                       <p className="font-extrabold text-sm text-[#18201c] mt-0.5">
                         {activeOrder.driverName || 'Awaiting driver assignment'}
                       </p>

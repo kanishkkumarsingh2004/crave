@@ -19,6 +19,7 @@ export default function AdminAnalyticsPage() {
   const [topVendors, setTopVendors] = useState<
     { name: string; revenue: number; orders: number; rating: number; model: string }[]
   >([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -28,14 +29,14 @@ export default function AdminAnalyticsPage() {
         if (json.success) {
           setLiveUserCount(json.stats.totalUsers ?? 0)
           setLiveGrossRevenue(json.stats.weeklyGross ?? 0)
-          setLiveCompletedOrders(json.stats.completedOrders || 1280)
+          setLiveCompletedOrders(json.stats.orderCount ?? 0)
           if (json.restaurants) {
             setTopVendors(
               json.restaurants.slice(0, 4).map((restaurant: any, index: number) => ({
                 name: restaurant.name ?? `Restaurant ${index + 1}`,
-                revenue: Number(restaurant.gross_sales ?? 200000 + index * 10000),
-                orders: Number(restaurant.orders ?? 280 + index * 35),
-                rating: Number(restaurant.rating ?? 4.8),
+                revenue: Number(restaurant.gross_revenue ?? 0),
+                orders: Number(restaurant.total_orders ?? 0),
+                rating: Number(restaurant.rating ?? 0),
                 model: restaurant.payment_model === 'markup' ? 'Price Markup' : 'Commission',
               }))
             )
@@ -43,13 +44,27 @@ export default function AdminAnalyticsPage() {
         }
       } catch (error) {
         console.error('Failed to load analytics.', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     loadAnalytics()
+    const interval = setInterval(loadAnalytics, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const aov = liveCompletedOrders > 0 ? liveGrossRevenue / liveCompletedOrders : 0
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-8 shadow-sm text-center">
+          <p className="text-sm text-gray-500">Loading analytics data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -68,26 +83,26 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Gross revenue"
-          value={`₹${liveGrossRevenue.toLocaleString()}`}
-          trend="+18.4%"
+          value={`₹${liveGrossRevenue.toLocaleString('en-IN')}`}
+          trend={liveGrossRevenue > 0 ? '+data' : 'No data yet'}
           icon={<DollarSign className="size-4" />}
         />
         <MetricCard
           title="Orders"
           value={liveCompletedOrders.toLocaleString()}
-          trend="+12.1%"
+          trend={liveCompletedOrders > 0 ? '+data' : 'No data yet'}
           icon={<ShoppingBag className="size-4" />}
         />
         <MetricCard
           title="AOV"
           value={`₹${aov.toFixed(0)}`}
-          trend="+4.2%"
+          trend={aov > 0 ? '+data' : 'No data yet'}
           icon={<BarChart3 className="size-4" />}
         />
         <MetricCard
           title="Users"
           value={liveUserCount.toLocaleString()}
-          trend="+8.5%"
+          trend={liveUserCount > 0 ? '+data' : 'No data yet'}
           icon={<Users className="size-4" />}
         />
       </div>
@@ -99,13 +114,13 @@ export default function AdminAnalyticsPage() {
           </h3>
 
           <div className="mt-6 flex h-56 items-end gap-3">
-            {[42, 58, 60, 74, 88, 96, 80, 102].map((value, index) => (
+            {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="flex flex-1 flex-col items-center gap-2">
                 <div
-                  className="w-full rounded-t-2xl bg-gradient-to-t from-[#d9f447] to-[#8aa4c3]"
-                  style={{ height: `${value}%` }}
+                  className="w-full max-w-[40px] rounded-t-2xl bg-gradient-to-t from-gray-200 to-gray-100"
+                  style={{ height: `${Math.max(5, (liveGrossRevenue / 800000) * 100)}%` }}
                 />
-                <span className="text-[10px] font-bold uppercase text-gray-500">
+                <span className="text-[10px] font-bold uppercase text-gray-400">
                   {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'][index]}
                 </span>
               </div>
@@ -119,22 +134,14 @@ export default function AdminAnalyticsPage() {
           </h3>
 
           <div className="mt-6 space-y-4">
-            {[
-              { label: 'Healthy bowls', percent: 38, color: 'bg-emerald-500' },
-              { label: 'Snacks & sides', percent: 24, color: 'bg-yellow-400' },
-              { label: 'Desserts', percent: 18, color: 'bg-purple-500' },
-              { label: 'Beverages', percent: 20, color: 'bg-blue-500' },
-            ].map((item) => (
+            {[{ label: 'Data unavailable', percent: 100, color: 'bg-gray-300' }].map((item) => (
               <div key={item.label}>
                 <div className="mb-1 flex items-center justify-between text-xs font-bold text-gray-700">
                   <span>{item.label}</span>
-                  <span>{item.percent}%</span>
+                  <span>—</span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-                  <div
-                    className={`h-full rounded-full ${item.color}`}
-                    style={{ width: `${item.percent}%` }}
-                  />
+                  <div className={`h-full w-full rounded-full ${item.color}`} />
                 </div>
               </div>
             ))}
@@ -151,36 +158,42 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="space-y-3">
-          {topVendors.map((vendor, index) => (
-            <div
-              key={vendor.name}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 p-3"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
-                  #{index + 1}
+          {topVendors.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-8">No vendor data available yet</p>
+          ) : (
+            topVendors.map((vendor, index) => (
+              <div
+                key={vendor.name}
+                className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="grid size-9 place-items-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
+                    #{index + 1}
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#18201c]">{vendor.name}</p>
+                    <p className="text-[11px] text-gray-500">{vendor.model}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-[#18201c]">{vendor.name}</p>
-                  <p className="text-[11px] text-gray-500">{vendor.model}</p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-6 text-xs text-gray-600">
-                <div>
-                  <div className="font-bold text-[#18201c]">₹{vendor.revenue.toLocaleString()}</div>
-                  <div>Revenue</div>
-                </div>
-                <div>
-                  <div className="font-bold text-[#18201c]">{vendor.orders}</div>
-                  <div>Orders</div>
-                </div>
-                <div className="flex items-center gap-1 font-bold text-amber-600">
-                  <Star className="size-3 fill-current" /> {vendor.rating.toFixed(1)}
+                <div className="flex items-center gap-6 text-xs text-gray-600">
+                  <div>
+                    <div className="font-bold text-[#18201c]">
+                      ₹{vendor.revenue.toLocaleString('en-IN')}
+                    </div>
+                    <div>Revenue</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#18201c]">{vendor.orders}</div>
+                    <div>Orders</div>
+                  </div>
+                  <div className="flex items-center gap-1 font-bold text-amber-600">
+                    <Star className="size-3 fill-current" /> {vendor.rating.toFixed(1)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -198,6 +211,7 @@ function MetricCard({
   trend: string
   icon: React.ReactNode
 }) {
+  const isPositive = trend.startsWith('+')
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
@@ -209,7 +223,11 @@ function MetricCard({
         </span>
       </div>
       <p className="mt-4 text-2xl font-bold text-[#18201c]">{value}</p>
-      <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
+      <div
+        className={`mt-2 flex items-center gap-1 text-xs font-bold ${
+          isPositive ? 'text-emerald-600' : 'text-gray-400'
+        }`}
+      >
         <TrendingUp className="size-3.5" /> {trend}
       </div>
     </div>

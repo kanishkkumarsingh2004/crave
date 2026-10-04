@@ -19,7 +19,11 @@ export async function findMenuItemById(id: string) {
   } catch (e) {}
 
   try {
-    const { data: p } = await (supabase as any).from('products').select('*').eq('id', id).maybeSingle()
+    const { data: p } = await (supabase as any)
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
     if (p) {
       return {
         id: p.id,
@@ -118,7 +122,11 @@ export async function createMenuItem(data: {
   } catch (e) {}
 
   try {
-    const { data: created } = await supabase.from('menu_items').insert([data as any]).select().single()
+    const { data: created } = await supabase
+      .from('menu_items')
+      .insert([data as any])
+      .select()
+      .single()
     if (created) return created
   } catch (e) {}
 
@@ -147,7 +155,12 @@ export async function updateMenuItem(id: string, data: any) {
   } catch (e) {}
 
   try {
-    const { data: updated } = await supabase.from('menu_items').update(data).eq('id', id).select().single()
+    const { data: updated } = await supabase
+      .from('menu_items')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
     if (updated) return updated
   } catch (e) {}
 

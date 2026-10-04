@@ -1,14 +1,17 @@
-import { prisma } from '@/lib/prisma'
+import { listPaymentReviews, updatePaymentReviewStatus } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const reviews = await prisma.paymentReview.findMany({
-      orderBy: { created_at: 'desc' },
-    })
+    const url = new URL(request.url)
+    const status = url.searchParams.get('status') || undefined
+    const reviews = await listPaymentReviews(status || undefined)
     return NextResponse.json({ success: true, reviews })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to load reviews' }, { status: 500 })
+    return NextResponse.json(
+      { success: true, reviews: [], error: error?.message || 'Failed to load reviews' },
+      { status: 200 }
+    )
   }
 }
 
@@ -21,12 +24,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'orderId and status required' }, { status: 400 })
     }
 
-    await prisma.paymentReview.updateMany({
-      where: { order_id: orderId },
-      data: { status },
-    })
-
-    return NextResponse.json({ success: true })
+    const result = await updatePaymentReviewStatus(orderId, status)
+    return NextResponse.json({ success: true, count: result.count })
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 500 })
   }

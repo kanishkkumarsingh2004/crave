@@ -62,7 +62,11 @@ export async function listUsersByRole(role: UserRole) {
   } catch (e) {}
 
   try {
-    const { data } = await supabase.from('users').select('*').eq('role', role).order('created_at', { ascending: false })
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', role)
+      .order('created_at', { ascending: false })
     if (data && data.length > 0) return data
   } catch (e) {}
 
@@ -76,7 +80,10 @@ export async function listAllUsers() {
   } catch (e) {}
 
   try {
-    const { data } = await supabase.from('users').select('*').order('created_at', { ascending: false })
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
     if (data && data.length > 0) return data
   } catch (e) {}
 
@@ -117,7 +124,11 @@ export async function createUser(data: {
   } catch (e) {}
 
   try {
-    const { data: created } = await supabase.from('users').insert([data as any]).select().single()
+    const { data: created } = await supabase
+      .from('users')
+      .insert([data as any])
+      .select()
+      .single()
     if (created) return created
   } catch (e) {}
 
@@ -130,7 +141,12 @@ export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>) {
   } catch (e) {}
 
   try {
-    const { data: updated } = await supabase.from('users').update(data as any).eq('id', id).select().single()
+    const { data: updated } = await supabase
+      .from('users')
+      .update(data as any)
+      .eq('id', id)
+      .select()
+      .single()
     if (updated) return updated
   } catch (e) {}
 

@@ -1,6 +1,5 @@
+import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 import fs from 'fs'
 import path from 'path'
 
@@ -83,36 +82,35 @@ function writeLocalConfigFile(cfg: PaymentConfig) {
 
 export async function GET() {
   try {
-    // 1. Check local persistent file first for full fidelity
     const local = readLocalConfigFile()
 
-    // 2. Try DB (Prisma or Supabase) to check for remote overrides
     let dbConfig: any = null
     try {
-      dbConfig = await prisma.paymentConfig.findFirst({
-        where: { is_active: true },
-      })
+      dbConfig = await getActivePaymentConfig()
     } catch {
-      // Prisma offline/auth error fallback to Supabase
-      try {
-        const { data } = await supabase
-          .from('payment_configs')
-          .select('*')
-          .eq('is_active', true)
-          .maybeSingle()
-        dbConfig = data
-      } catch {}
+      dbConfig = null
     }
 
     const merged: PaymentConfig = {
       ...(local || DEFAULT_PAYMENT_CONFIG),
       ...(dbConfig && {
         upiVpa: dbConfig.merchant_vpa || local?.upiVpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
-        merchantName: dbConfig.merchant_name || local?.merchantName || DEFAULT_PAYMENT_CONFIG.merchantName,
-        mccCode: dbConfig.merchant_category_code || local?.mccCode || DEFAULT_PAYMENT_CONFIG.mccCode,
-        baseDeliveryFee: dbConfig.delivery_fee != null ? Number(dbConfig.delivery_fee) : (local?.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee),
-        handlingFee: dbConfig.handling_fee != null ? Number(dbConfig.handling_fee) : (local?.handlingFee ?? DEFAULT_PAYMENT_CONFIG.handlingFee),
-        freeDeliveryThreshold: dbConfig.free_delivery_threshold != null ? Number(dbConfig.free_delivery_threshold) : (local?.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold),
+        merchantName:
+          dbConfig.merchant_name || local?.merchantName || DEFAULT_PAYMENT_CONFIG.merchantName,
+        mccCode:
+          dbConfig.merchant_category_code || local?.mccCode || DEFAULT_PAYMENT_CONFIG.mccCode,
+        baseDeliveryFee:
+          dbConfig.delivery_fee != null
+            ? Number(dbConfig.delivery_fee)
+            : (local?.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee),
+        handlingFee:
+          dbConfig.handling_fee != null
+            ? Number(dbConfig.handling_fee)
+            : (local?.handlingFee ?? DEFAULT_PAYMENT_CONFIG.handlingFee),
+        freeDeliveryThreshold:
+          dbConfig.free_delivery_threshold != null
+            ? Number(dbConfig.free_delivery_threshold)
+            : (local?.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold),
       }),
     }
 
@@ -130,50 +128,22 @@ export async function POST(request: Request) {
       ...body,
     }
 
-    // 1. Write to persistent local config file immediately
     writeLocalConfigFile(fullConfig)
 
-    // 2. Best-effort sync to Prisma
     try {
-      await prisma.paymentConfig.upsert({
-        where: { id: 'default_config' },
-        create: {
-          id: 'default_config',
-          name: 'Default Active Config',
-          merchant_vpa: fullConfig.upiVpa,
-          merchant_name: fullConfig.merchantName,
-          merchant_category_code: fullConfig.mccCode,
-          delivery_fee: fullConfig.baseDeliveryFee,
-          handling_fee: fullConfig.handlingFee,
-          free_delivery_threshold: fullConfig.freeDeliveryThreshold,
-          is_active: true,
-        },
-        update: {
-          merchant_vpa: fullConfig.upiVpa,
-          merchant_name: fullConfig.merchantName,
-          merchant_category_code: fullConfig.mccCode,
-          delivery_fee: fullConfig.baseDeliveryFee,
-          handling_fee: fullConfig.handlingFee,
-          free_delivery_threshold: fullConfig.freeDeliveryThreshold,
-          is_active: true,
-          updated_at: new Date(),
-        },
+      await upsertPaymentConfig({
+        id: 'default_config',
+        name: 'Default Active Config',
+        merchant_vpa: fullConfig.upiVpa,
+        merchant_name: fullConfig.merchantName,
+        merchant_category_code: fullConfig.mccCode,
+        delivery_fee: fullConfig.baseDeliveryFee,
+        handling_fee: fullConfig.handlingFee,
+        free_delivery_threshold: fullConfig.freeDeliveryThreshold,
+        is_active: true,
       })
     } catch (e) {
-      // Best-effort sync to Supabase
-      try {
-        await supabase.from('payment_configs').upsert({
-          id: 'default_config',
-          name: 'Default Active Config',
-          merchant_vpa: fullConfig.upiVpa,
-          merchant_name: fullConfig.merchantName,
-          merchant_category_code: fullConfig.mccCode,
-          delivery_fee: fullConfig.baseDeliveryFee,
-          handling_fee: fullConfig.handlingFee,
-          free_delivery_threshold: fullConfig.freeDeliveryThreshold,
-          is_active: true,
-        })
-      } catch {}
+      console.warn('Payment config DB sync (best-effort):', e)
     }
 
     return NextResponse.json({ success: true, config: fullConfig })

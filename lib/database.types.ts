@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   public: {
@@ -141,12 +135,12 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "restaurants_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: 'restaurants_owner_id_fkey'
+            columns: ['owner_id']
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
         ]
       }
       menu_items: {
@@ -203,12 +197,12 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "menu_items_restaurant_id_fkey"
-            columns: ["restaurant_id"]
+            foreignKeyName: 'menu_items_restaurant_id_fkey'
+            columns: ['restaurant_id']
             isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          }
+            referencedRelation: 'restaurants'
+            referencedColumns: ['id']
+          },
         ]
       }
       orders: {
@@ -225,7 +219,8 @@ export type Database = {
           packaging_fee: number | null
           gst: number | null
           total_amount: number
-          status: 'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
+          status:
+            'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
           driver_name: string | null
           driver_phone: string | null
           payment_method: string | null
@@ -252,7 +247,8 @@ export type Database = {
           packaging_fee?: number | null
           gst?: number | null
           total_amount: number
-          status: 'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
+          status:
+            'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
           driver_name?: string | null
           driver_phone?: string | null
           payment_method?: string | null
@@ -279,7 +275,8 @@ export type Database = {
           packaging_fee?: number | null
           gst?: number | null
           total_amount?: number
-          status?: 'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
+          status?:
+            'new' | 'preparing' | 'packing' | 'ready' | 'picked_up' | 'completed' | 'cancelled'
           driver_name?: string | null
           driver_phone?: string | null
           payment_method?: string | null
@@ -295,19 +292,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: 'orders_customer_id_fkey'
+            columns: ['customer_id']
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            referencedRelation: 'users'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "orders_restaurant_id_fkey"
-            columns: ["restaurant_id"]
+            foreignKeyName: 'orders_restaurant_id_fkey'
+            columns: ['restaurant_id']
             isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          }
+            referencedRelation: 'restaurants'
+            referencedColumns: ['id']
+          },
         ]
       }
       coupons: {
@@ -358,12 +355,12 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "coupons_restaurant_id_fkey"
-            columns: ["restaurant_id"]
+            foreignKeyName: 'coupons_restaurant_id_fkey'
+            columns: ['restaurant_id']
             isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          }
+            referencedRelation: 'restaurants'
+            referencedColumns: ['id']
+          },
         ]
       }
       vendor_settlements: {

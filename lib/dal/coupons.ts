@@ -69,7 +69,11 @@ export async function createCoupon(data: {
   } catch (e) {}
 
   try {
-    const { data: created } = await supabase.from('coupons').insert([data as any]).select().single()
+    const { data: created } = await supabase
+      .from('coupons')
+      .insert([data as any])
+      .select()
+      .single()
     if (created) return created
   } catch (e) {}
 
@@ -91,7 +95,12 @@ export async function updateCoupon(
   } catch (e) {}
 
   try {
-    const { data: updated } = await supabase.from('coupons').update(data as any).eq('id', id).select().single()
+    const { data: updated } = await supabase
+      .from('coupons')
+      .update(data as any)
+      .eq('id', id)
+      .select()
+      .single()
     if (updated) return updated
   } catch (e) {}
 
@@ -107,7 +116,11 @@ export async function incrementCouponUsage(id: string) {
   } catch (e) {}
 
   try {
-    const { data: current } = await supabase.from('coupons').select('used_count').eq('id', id).single()
+    const { data: current } = await supabase
+      .from('coupons')
+      .select('used_count')
+      .eq('id', id)
+      .single()
     const newCount = (current?.used_count || 0) + 1
     await supabase.from('coupons').update({ used_count: newCount }).eq('id', id)
   } catch (e) {}

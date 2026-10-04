@@ -180,7 +180,8 @@ export default function CraveXPStore() {
                 Ultra-fast Grocery & Daily Essentials
               </h1>
               <p className="mt-1 text-xs text-gray-300 max-w-xl font-medium">
-                Sourced directly from our central dark store warehouse. Delivered to your doorstep in 10 minutes.
+                Sourced directly from our central dark store warehouse. Delivered to your doorstep
+                in 10 minutes.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#d9f447]">
                 <MapPin className="size-4" />
@@ -270,9 +271,15 @@ export default function CraveXPStore() {
             <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-100 text-amber-600 mb-3">
               <Package className="size-6" />
             </div>
-            <h4 className="text-base font-bold text-[#18201c]">No products found in craveXP Dark Store</h4>
+            <h4 className="text-base font-bold text-[#18201c]">
+              No products found in craveXP Dark Store
+            </h4>
             <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-              Products are added dynamically through the craveXP Hub Operator Console (<code className="font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">/vendor/crave-ep</code>). Log in with a vendor account to add inventory.
+              Products are added dynamically through the craveXP Hub Operator Console (
+              <code className="font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                /vendor/crave-ep
+              </code>
+              ). Log in with a vendor account to add inventory.
             </p>
             <div className="mt-5">
               <Link
@@ -406,7 +413,9 @@ export default function CraveXPStore() {
                   </div>
                   <div>
                     <h3 className="font-black text-sm text-[#18201c]">craveXP Dark Store Cart</h3>
-                    <p className="text-[10px] text-gray-500 font-bold">10-min delivery from central warehouse</p>
+                    <p className="text-[10px] text-gray-500 font-bold">
+                      10-min delivery from central warehouse
+                    </p>
                   </div>
                 </div>
                 <button
@@ -431,20 +440,32 @@ export default function CraveXPStore() {
                     className="flex items-center justify-between rounded-2xl border border-gray-100 p-3 bg-gray-50/50"
                   >
                     <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="size-10 rounded-lg object-contain bg-white p-1" />
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="size-10 rounded-lg object-contain bg-white p-1"
+                      />
                       <div>
-                        <p className="text-xs font-bold text-[#18201c] max-w-[170px] truncate">{item.name}</p>
+                        <p className="text-xs font-bold text-[#18201c] max-w-[170px] truncate">
+                          {item.name}
+                        </p>
                         <p className="text-[10px] text-gray-400 font-semibold">{item.unit}</p>
                         <p className="text-xs font-black text-[#86a018]">₹{item.price * qty}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 rounded-xl bg-[#18201c] px-2 py-1 text-[#d9f447]">
-                      <button onClick={() => updateItemQty(item, -1)} className="p-0.5 hover:bg-white/20 rounded">
+                      <button
+                        onClick={() => updateItemQty(item, -1)}
+                        className="p-0.5 hover:bg-white/20 rounded"
+                      >
                         <Minus className="size-3" />
                       </button>
                       <span className="text-xs font-black px-1 text-white">{qty}</span>
-                      <button onClick={() => updateItemQty(item, 1)} className="p-0.5 hover:bg-white/20 rounded">
+                      <button
+                        onClick={() => updateItemQty(item, 1)}
+                        className="p-0.5 hover:bg-white/20 rounded"
+                      >
                         <Plus className="size-3" />
                       </button>
                     </div>

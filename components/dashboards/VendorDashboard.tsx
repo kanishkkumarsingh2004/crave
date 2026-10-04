@@ -125,7 +125,10 @@ export default function VendorDashboard() {
           status: nextStatus,
         }),
       })
-      await supabase.from('orders').update({ status: nextStatus as any }).eq('id', orderId)
+      await supabase
+        .from('orders')
+        .update({ status: nextStatus as any })
+        .eq('id', orderId)
     } catch (err) {
       console.error('Failed to update kitchen order status:', err)
     }

@@ -126,7 +126,11 @@ export default function CraveXPStoreConsole() {
 
         const [orderResult, inventoryResult, sensorResult, pickerResult] = await Promise.all([
           supabase.from('orders').select('*').order('created_at', { ascending: false }),
-          supabase.from('menu_items').select('*').eq('restaurant_id', 'cravexp_dark_store_01').order('name'),
+          supabase
+            .from('menu_items')
+            .select('*')
+            .eq('restaurant_id', 'cravexp_dark_store_01')
+            .order('name'),
           supabase.from('cold_chain_sensors').select('*').order('name'),
           supabase.from('picker_metrics').select('*').order('orders_packed', { ascending: false }),
         ])

@@ -1,31 +1,30 @@
-import { prisma } from '@/lib/prisma'
+import { listVendorSettlements } from '@/lib/dal/payments'
+import { listRestaurants } from '@/lib/dal/restaurants'
+import { listUsersByRole } from '@/lib/dal/users'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    // Vendor settlements
-    const settlements = await prisma.vendorSettlement.findMany({
-      orderBy: { payout_date: 'desc' },
-    })
+    const [settlements, restaurants, customers, vendors, drivers] = await Promise.all([
+      listVendorSettlements(),
+      listRestaurants(),
+      listUsersByRole('customer'),
+      listUsersByRole('vendor'),
+      listUsersByRole('driver'),
+    ])
 
-    // Restaurants
-    const restaurants = await prisma.restaurant.findMany({
-      orderBy: { created_at: 'desc' },
-    })
-
-    // User counts by role
-    const users = await prisma.user.findMany({ select: { role: true } })
-    const customerCount = users.filter((u) => u.role === 'customer').length
-    const vendorCount = users.filter((u) => u.role === 'vendor').length
-    const driverCount = users.filter((u) => u.role === 'driver').length
-
-    // Aggregate settlement financials
-    const weeklyGross = settlements.reduce((sum, row) => sum + Number(row.gross_sales ?? 0), 0)
-    const totalCommission = settlements.reduce(
-      (sum, row) => sum + Number(row.commission_amount ?? 0),
+    const weeklyGross = (settlements || []).reduce(
+      (sum: number, row: any) => sum + Number(row.gross_sales ?? 0),
       0
     )
-    const netVendorPay = settlements.reduce((sum, row) => sum + Number(row.net_payout ?? 0), 0)
+    const totalCommission = (settlements || []).reduce(
+      (sum: number, row: any) => sum + Number(row.commission_amount ?? 0),
+      0
+    )
+    const netVendorPay = (settlements || []).reduce(
+      (sum: number, row: any) => sum + Number(row.net_payout ?? 0),
+      0
+    )
 
     return NextResponse.json({
       success: true,
@@ -35,10 +34,10 @@ export async function GET() {
         weeklyGross,
         totalCommission,
         netVendorPay,
-        customerCount,
-        vendorCount,
-        driverCount,
-        totalUsers: users.length,
+        customerCount: customers.length,
+        vendorCount: vendors.length,
+        driverCount: drivers.length,
+        totalUsers: customers.length + vendors.length + drivers.length,
       },
     })
   } catch (error: any) {
