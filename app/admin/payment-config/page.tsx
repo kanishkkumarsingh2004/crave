@@ -12,7 +12,8 @@ import {
   Truck,
   Zap,
 } from 'lucide-react'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
 
 function handleNumInput(val: string): number | '' {
   if (val === '') return ''
@@ -70,6 +71,35 @@ export default function AdminPaymentConfigPage() {
   // 5. Playground Calculator State
   const [testOrderValue, setTestOrderValue] = useState<number>(400)
   const [testDistanceKm, setTestDistanceKm] = useState<number>(5.5)
+
+  // Load saved configuration on mount
+  useEffect(() => {
+    loadPaymentConfig().then((cfg) => {
+      setUpiVpa(cfg.upiVpa)
+      setMerchantName(cfg.merchantName)
+      setThankYouMessage(cfg.thankYouMessage)
+      setMccCode(cfg.mccCode)
+      setIfscCode(cfg.ifscCode)
+      setAccountNumber(cfg.accountNumber)
+      setPlatformFee(cfg.platformFee)
+      setHandlingFee(cfg.handlingFee)
+      setVendorCommission(cfg.vendorCommission)
+      setPackagingCap(cfg.packagingCap)
+      setBaseDeliveryFee(cfg.baseDeliveryFee)
+      setBaseDistanceKm(cfg.baseDistanceKm)
+      setPerKmRate(cfg.perKmRate)
+      setFreeDeliveryThreshold(cfg.freeDeliveryThreshold)
+      setDriverPayoutShare(cfg.driverPayoutShare)
+      setSurgeMultiplier(cfg.surgeMultiplier)
+      setRainFee(cfg.rainFee)
+      setNightSurgeFee(cfg.nightSurgeFee)
+      setIsRainModeActive(cfg.isRainModeActive)
+      setIsNightSurgeActive(cfg.isNightSurgeActive)
+      setEnableCashOnDelivery(cfg.enableCashOnDelivery)
+      setEnableUpiDeepLink(cfg.enableUpiDeepLink)
+      setRequireUtrNumber(cfg.requireUtrNumber)
+    })
+  }, [])
 
   // Live Playground Fee Calculation Math
   const playgroundCalc = useMemo(() => {
@@ -149,8 +179,34 @@ export default function AdminPaymentConfigPage() {
     driverPayoutShare,
   ])
 
-  function handleSaveConfig(e: React.FormEvent) {
+  async function handleSaveConfig(e: React.FormEvent) {
     e.preventDefault()
+    const fullConfig: PaymentConfig = {
+      upiVpa,
+      merchantName,
+      thankYouMessage,
+      mccCode,
+      ifscCode,
+      accountNumber,
+      platformFee: getNum(platformFee),
+      handlingFee: getNum(handlingFee),
+      vendorCommission: getNum(vendorCommission),
+      packagingCap: getNum(packagingCap),
+      baseDeliveryFee: getNum(baseDeliveryFee),
+      baseDistanceKm: getNum(baseDistanceKm),
+      perKmRate: getNum(perKmRate),
+      freeDeliveryThreshold: getNum(freeDeliveryThreshold),
+      driverPayoutShare,
+      surgeMultiplier,
+      rainFee: getNum(rainFee),
+      nightSurgeFee: getNum(nightSurgeFee),
+      isRainModeActive,
+      isNightSurgeActive,
+      enableCashOnDelivery,
+      enableUpiDeepLink,
+      requireUtrNumber,
+    }
+    await savePaymentConfig(fullConfig)
     setSavedSuccess(true)
     setTimeout(() => {
       setSavedSuccess(false)
