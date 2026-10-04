@@ -13,9 +13,7 @@ const nextConfig = {
     '10.247.209.229:3000',
     '*.local',
   ],
-  experimental: {
-    serverOnlyExternalPackages: ['@prisma/adapter-pg', 'pg', 'pg-connection-string', 'pgpass'],
-  },
+  serverExternalPackages: ['@prisma/adapter-pg', 'pg', 'pg-connection-string', 'pgpass'],
 }
 
 export default nextConfig

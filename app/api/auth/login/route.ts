@@ -3,71 +3,6 @@ import { findUserByEmail as findUserInDb } from '@/lib/dal'
 import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
-const demoAccounts: Record<string, JWTPayload> = {
-  'admin@crave.com': {
-    id: 'usr_admin_32e5afdc',
-    name: 'System Administrator',
-    email: 'admin@crave.com',
-    role: 'admin',
-    phone: '+91 9876543210',
-    address: 'HQ Office, Tech Park, Indiranagar, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-  },
-  'customer@crave.com': {
-    id: 'usr_cust_eb6b1630',
-    name: 'Rahul Sharma',
-    email: 'customer@crave.com',
-    role: 'customer',
-    phone: '+91 9876543211',
-    address: 'Flat 402, Sunshine Apartments, HSR Layout, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6',
-  },
-  'vendor@crave.com': {
-    id: 'usr_vend_4fd0e820',
-    name: 'Priya Patel',
-    email: 'vendor@crave.com',
-    role: 'vendor',
-    phone: '+91 9876543212',
-    address: '123 Main Street, Koramangala 5th Block, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-    restaurantName: 'Spice Garden & Quick Mart',
-    cuisine: 'North Indian & Quick Commerce',
-  },
-  'driver@crave.com': {
-    id: 'usr_driv_f36ae61c',
-    name: 'Vikram Singh',
-    email: 'driver@crave.com',
-    role: 'driver',
-    phone: '+91 9876543213',
-    address: 'BTM Layout 2nd Stage, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-    vehicleType: 'Electric Scooter',
-    licensePlate: 'KA-01-EV-4321',
-  },
-  'cravexp@crave.com': {
-    id: 'usr_cravexp_darkstore_01',
-    name: 'craveXP Manager',
-    email: 'cravexp@crave.com',
-    role: 'vendor',
-    phone: '+91 9876543299',
-    address: 'Kanakapura Road Hub #01, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
-    restaurantName: 'craveXP Store',
-    cuisine: '10-Min Quick Commerce & Grocery',
-  },
-  'store@crave.com': {
-    id: 'usr_cravexp_darkstore_01',
-    name: 'craveXP Manager',
-    email: 'store@crave.com',
-    role: 'vendor',
-    phone: '+91 9876543299',
-    address: 'Kanakapura Road Hub #01, Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61',
-    restaurantName: 'craveXP Store',
-    cuisine: '10-Min Quick Commerce & Grocery',
-  },
-}
-
 function setCookies(response: ReturnType<typeof NextResponse.json>, token: string) {
   const cookieOptions = {
     httpOnly: true,
@@ -91,42 +26,6 @@ export async function POST(request: Request) {
 
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
-
-    // 1. Check if email matches a demo test account first for instant dev testing
-    if (!bearerToken && email && demoAccounts[email]) {
-      const demoUser = demoAccounts[email]
-      const token = await createToken(demoUser)
-      return setCookies(
-        NextResponse.json({ success: true, token, user: demoUser, session: null }),
-        token
-      )
-    }
-
-    // 2. Check Prisma database for existing user by email
-    if (!bearerToken && email) {
-      const dbUser: any = await findUserInDb(email)
-      if (dbUser) {
-        const userPayload: JWTPayload = {
-          id: dbUser.id,
-          name: dbUser.name,
-          email: dbUser.email,
-          role: dbUser.role,
-          phone: dbUser.phone ?? undefined,
-          address: dbUser.address ?? undefined,
-          avatar: dbUser.avatar ?? undefined,
-          restaurantName: dbUser.restaurant_name ?? undefined,
-          cuisine: dbUser.cuisine ?? undefined,
-          vehicleType: dbUser.vehicle_type ?? undefined,
-          licensePlate: dbUser.license_plate ?? undefined,
-        }
-
-        const token = await createToken(userPayload)
-        return setCookies(
-          NextResponse.json({ success: true, token, user: userPayload, session: null }),
-          token
-        )
-      }
-    }
 
     let authUser: any = null
     let session: any = null
@@ -153,8 +52,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Fetch database profile for authenticated Supabase user via Prisma
-    const profile: any = await findUserInDb(authUser.email || email)
+    // Fetch database profile for authenticated Supabase user if one exists.
+    let profile: any = null
+    try {
+      profile = await findUserInDb(authUser.email || email)
+    } catch {
+      profile = null
+    }
 
     const userPayload: JWTPayload = {
       id: authUser.id,

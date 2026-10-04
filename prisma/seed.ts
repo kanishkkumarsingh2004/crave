@@ -3,6 +3,11 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { OrderStatus, UserRole } from '@prisma/client'
 
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'true') {
+  console.log('Production mode detected: skipping seed script to avoid demo data in live environments.')
+  process.exit(0)
+}
+
 async function seed() {
   console.log('Starting seed...')
 
