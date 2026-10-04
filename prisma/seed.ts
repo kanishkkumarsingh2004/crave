@@ -30,70 +30,70 @@ async function seed() {
 
   console.log('Starting seed...')
 
+  // ─── Clean Slate: Remove all existing data ──────────────────
+  console.log('  Clearing existing data...')
+  await prisma.paymentReview.deleteMany()
+  await prisma.vendorSettlement.deleteMany()
+  await prisma.driverPayout.deleteMany()
+  await prisma.order.deleteMany()
+  await prisma.paymentConfig.deleteMany()
+  await prisma.restaurant.deleteMany()
+  await prisma.user.deleteMany()
+  console.log('  ✅ Existing data cleared')
+
   // ─── Seed Demo Users ─────────────────────────────────────
+  const SEED_PASSWORD = '1234567890'
   const demoUsers = [
     {
       id: 'usr_test_user',
       name: 'Test User',
       email: 'user.test@crave.local',
       role: 'user' as UserRole,
-      password: 'UserTest123!',
     },
     {
       id: 'usr_test_admin',
       name: 'Test Admin',
       email: 'admin.test@crave.local',
       role: 'admin' as UserRole,
-      password: 'AdminTest123!',
     },
     {
       id: 'usr_test_restaurant_vendor',
       name: 'Test Restaurant Vendor',
       email: 'restaurant.test@crave.local',
       role: 'restaurant_vendor' as UserRole,
-      password: 'RestaurantTest123!',
     },
     {
       id: 'usr_test_cravexp_vendor',
       name: 'Test CraveXP Store Vendor',
       email: 'cravexp.test@crave.local',
       role: 'cravexp_store_vendor' as UserRole,
-      password: 'CraveXPTest123!',
     },
     {
       id: 'usr_test_rider',
       name: 'Test Rider',
       email: 'rider.test@crave.local',
       role: 'rider' as UserRole,
-      password: 'RiderTest123!',
     },
   ]
 
   for (const u of demoUsers) {
-    await prisma.user.upsert({
-      where: { id: u.id },
-      update: {
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        password_hash: crypto.scryptSync(u.password, u.email, 64).toString('hex'),
-      },
-      create: {
+    const hash = crypto.scryptSync(SEED_PASSWORD, u.email, 64).toString('hex')
+    await prisma.user.create({
+      data: {
         id: u.id,
         name: u.name,
         email: u.email,
         role: u.role,
-        password_hash: crypto.scryptSync(u.password, u.email, 64).toString('hex'),
+        password_hash: hash,
+        locale: 'en',
       },
     })
     console.log(`  ✅ Seeded user ${u.email}`)
   }
 
   // ─── Seed Restaurant ─────────────────────────────────────
-  await prisma.restaurant.upsert({
-    where: { id: 'vnd_1791063436223_iyet2' },
-    update: {},
-    create: {
+  await prisma.restaurant.create({
+    data: {
       id: 'vnd_1791063436223_iyet2',
       name: 'Spice Garden',
       cuisine: 'Indian',
@@ -103,20 +103,8 @@ async function seed() {
   console.log('  ✅ Seeded restaurant Spice Garden')
 
   // ─── Seed Active Payment Config ───────────────────────────
-  await prisma.paymentConfig.upsert({
-    where: { id: 'default_config' },
-    update: {
-      name: 'Default Active Config',
-      merchant_vpa: 'crave@upi',
-      merchant_name: 'crave Food Delivery Services',
-      merchant_category_code: '5812',
-      is_active: true,
-      delivery_fee: 30,
-      handling_fee: 5,
-      free_delivery_threshold: 500,
-      updated_at: new Date(),
-    },
-    create: {
+  await prisma.paymentConfig.create({
+    data: {
       id: 'default_config',
       name: 'Default Active Config',
       merchant_vpa: 'crave@upi',
@@ -160,11 +148,10 @@ async function seed() {
   ]
 
   for (const s of settlements) {
-    await prisma.vendorSettlement.upsert({
-      where: { id: s.id },
-      update: { ...s, status: 'settled', restaurant_id: 'vnd_1791063436223_iyet2' },
-      create: { ...s, status: 'settled', restaurant_id: 'vnd_1791063436223_iyet2' },
-    })
+      await prisma.vendorSettlement.createMany({
+        data: [{ ...s, status: 'settled', restaurant_id: 'vnd_1791063436223_iyet2' }],
+        skipDuplicates: true,
+      })
   }
   console.log(`  ✅ Seeded ${settlements.length} vendor settlements`)
 
@@ -216,34 +203,14 @@ async function seed() {
 
   for (const order of seedOrders) {
     try {
-      await prisma.order.upsert({
-        where: { id: order.id },
-        update: {
-          customer_id: order.customer_id || undefined,
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone || undefined,
-          customer_address: order.customer_address || undefined,
-          restaurant_id: order.restaurant_id || undefined,
-          restaurant_name: order.restaurant_name,
-          items: order.items,
-          subtotal: order.subtotal,
-          packaging_fee: order.packaging_fee,
-          gst: order.gst,
-          total_amount: order.total_amount,
-          status: order.status,
-          payment_method: order.payment_method,
-          created_at: order.created_at,
-          delivery_otp: order.delivery_otp || undefined,
-          tip: 0,
-          discount_amount: 0,
-        },
-        create: {
+      await prisma.order.createMany({
+        data: [{
           id: order.id,
-          customer_id: order.customer_id || undefined,
+          customer_id: order.customer_id || null,
           customer_name: order.customer_name,
-          customer_phone: order.customer_phone || undefined,
-          customer_address: order.customer_address || undefined,
-          restaurant_id: order.restaurant_id || undefined,
+          customer_phone: order.customer_phone || null,
+          customer_address: order.customer_address || null,
+          restaurant_id: order.restaurant_id || null,
           restaurant_name: order.restaurant_name,
           items: order.items,
           subtotal: order.subtotal,
@@ -253,25 +220,17 @@ async function seed() {
           status: order.status,
           payment_method: order.payment_method,
           created_at: order.created_at,
-          delivery_otp: order.delivery_otp || undefined,
+          delivery_otp: order.delivery_otp || null,
           tip: 0,
           discount_amount: 0,
-        },
+        }],
+        skipDuplicates: true,
       })
       console.log(`  ✅ Seeded order ${order.id}`)
 
       if (order.utr_ref && order.customer_vpa) {
-        await prisma.paymentReview.upsert({
-          where: { id: `pr_${order.id}` },
-          update: {
-            order_id: order.id,
-            utr_ref: order.utr_ref,
-            customer_vpa: order.customer_vpa,
-            amount: order.total_amount,
-            status: order.payment_status || 'pending',
-            created_at: order.created_at,
-          },
-          create: {
+        await prisma.paymentReview.createMany({
+          data: [{
             id: `pr_${order.id}`,
             order_id: order.id,
             utr_ref: order.utr_ref,
@@ -279,7 +238,8 @@ async function seed() {
             amount: order.total_amount,
             status: order.payment_status || 'pending',
             created_at: order.created_at,
-          },
+          }],
+          skipDuplicates: true,
         })
         console.log(`  ✅ Seeded payment review for order ${order.id}`)
       }
@@ -297,35 +257,14 @@ async function seed() {
 
   for (const order of ordersData) {
     try {
-      await prisma.order.upsert({
-        where: { id: order.id },
-        update: {
-          customer_id: order.customer_id || undefined,
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone || undefined,
-          customer_address: order.customer_address || undefined,
-          restaurant_id: order.restaurant_id || undefined,
-          restaurant_name: order.restaurant_name,
-          items: order.items,
-          subtotal: order.subtotal,
-          packaging_fee: order.packaging_fee,
-          gst: order.gst,
-          total_amount: order.total_amount,
-          status: order.status as OrderStatus,
-          payment_method: order.payment_method,
-          created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          delivery_otp: order.delivery_otp || undefined,
-          tip: order.tip || 0,
-          discount_amount: order.discount_amount || 0,
-          coupon_code: order.coupon_code || undefined,
-        },
-        create: {
+      await prisma.order.createMany({
+        data: [{
           id: order.id,
-          customer_id: order.customer_id || undefined,
+          customer_id: order.customer_id || null,
           customer_name: order.customer_name,
-          customer_phone: order.customer_phone || undefined,
-          customer_address: order.customer_address || undefined,
-          restaurant_id: order.restaurant_id || undefined,
+          customer_phone: order.customer_phone || null,
+          customer_address: order.customer_address || null,
+          restaurant_id: order.restaurant_id || null,
           restaurant_name: order.restaurant_name,
           items: order.items,
           subtotal: order.subtotal,
@@ -335,25 +274,17 @@ async function seed() {
           status: order.status as OrderStatus,
           payment_method: order.payment_method,
           created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          delivery_otp: order.delivery_otp || undefined,
+          delivery_otp: order.delivery_otp || null,
           tip: order.tip || 0,
           discount_amount: order.discount_amount || 0,
-          coupon_code: order.coupon_code || undefined,
-        },
+          coupon_code: order.coupon_code || null,
+        }],
+        skipDuplicates: true,
       })
 
       if (order.utr_ref && order.customer_vpa) {
-        await prisma.paymentReview.upsert({
-          where: { id: `pr_${order.id}` },
-          update: {
-            order_id: order.id,
-            utr_ref: order.utr_ref,
-            customer_vpa: order.customer_vpa,
-            amount: order.total_amount,
-            status: order.payment_status || 'pending',
-            created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          },
-          create: {
+        await prisma.paymentReview.createMany({
+          data: [{
             id: `pr_${order.id}`,
             order_id: order.id,
             utr_ref: order.utr_ref,
@@ -361,7 +292,8 @@ async function seed() {
             amount: order.total_amount,
             status: order.payment_status || 'pending',
             created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          },
+          }],
+          skipDuplicates: true,
         })
       }
     } catch (err) {
