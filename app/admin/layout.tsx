@@ -1,6 +1,8 @@
 'use client'
 
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAuth } from '@/lib/auth-context'
+import { useLanguage } from '@/lib/language-context'
 import {
   Activity,
   BarChart3,
@@ -25,6 +27,7 @@ import React, { useEffect, useState } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, role, logout, isLoading } = useAuth()
+  const { t } = useLanguage()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -48,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="text-center">
           <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
           <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading Admin Console...
+            {t.admin.loadingConsole}
           </p>
         </div>
       </div>
@@ -60,15 +63,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navItems = [
-    { href: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard },
-    { href: '/admin/analytics', label: 'Platform Analytics', icon: BarChart3 },
-    { href: '/admin/payments', label: 'Payment Review Queue', icon: CreditCard },
-    { href: '/admin/users', label: 'User Accounts', icon: Users },
-    { href: '/admin/coupons', label: 'Coupons & Discounts', icon: Tag },
-    { href: '/admin/vendor-settlements', label: 'Vendor Settlements', icon: Store },
-    { href: '/admin/payment-config', label: 'Payment Configs (UPI)', icon: QrCode },
-    { href: '/admin/system', label: 'System Health Logs', icon: Activity },
-    { href: '/admin/settings', label: 'Admin Settings', icon: Settings },
+    { href: '/admin/dashboard', label: t.admin.platformOverview, icon: LayoutDashboard },
+    { href: '/admin/analytics', label: t.admin.platformAnalytics, icon: BarChart3 },
+    { href: '/admin/payments', label: t.admin.paymentReviewQueue, icon: CreditCard },
+    { href: '/admin/users', label: t.admin.userAccounts, icon: Users },
+    { href: '/admin/coupons', label: t.admin.couponsDiscounts, icon: Tag },
+    { href: '/admin/vendor-settlements', label: t.admin.vendorSettlements, icon: Store },
+    { href: '/admin/payment-config', label: t.admin.paymentConfigs, icon: QrCode },
+    { href: '/admin/system', label: t.admin.systemHealthLogs, icon: Activity },
+    { href: '/admin/settings', label: t.admin.adminSettings, icon: Settings },
   ]
 
   // Get current page title for top bar
@@ -139,7 +142,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
               }`}
             >
-              Management & Controls
+              {t.admin.managementControls}
             </p>
             {navItems.map((item) => {
               const Icon = item.icon
@@ -223,7 +226,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
               }`}
             >
-              Minimize Sidebar
+              {t.admin.minimizeSidebar}
             </span>
             <span className="transition-transform duration-300 ease-in-out">
               {sidebarCollapsed ? (
@@ -233,6 +236,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
             </span>
           </button>
+
+          {/* Language Switcher — collapses to icon when sidebar is minimised */}
+          {sidebarCollapsed ? (
+            <LanguageSwitcher variant="inline" />
+          ) : (
+            <LanguageSwitcher variant="pill" />
+          )}
         </div>
       </aside>
 
@@ -243,7 +253,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
-                Admin Command Center
+                {t.admin.commandCenter}
               </p>
               <h1 className="text-lg font-bold tracking-tight text-[#18201c]">{pageTitle}</h1>
             </div>
@@ -253,6 +263,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c]">
               <ShieldCheck className="size-4 text-[#859d19]" /> Master Admin Access
             </span>
+
+            <LanguageSwitcher variant="pill" />
 
             {/* Mobile 3 Lines Menu Button placed on the RIGHT side */}
             <button

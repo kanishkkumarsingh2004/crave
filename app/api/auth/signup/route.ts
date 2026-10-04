@@ -70,9 +70,9 @@ export async function POST(request: Request) {
               ? 'Unable to create the user profile in the configured database.'
               : !isDatabaseConfigured
                 ? 'Local PostgreSQL is not configured. Copy .env.example to .env, set DATABASE_URL, run pnpm db:push, and try again.'
-              : err instanceof Error
-                ? err.message
-                : 'Unable to create the user profile in the configured database.',
+                : err instanceof Error
+                  ? err.message
+                  : 'Unable to create the user profile in the configured database.',
         },
         { status: 500 }
       )

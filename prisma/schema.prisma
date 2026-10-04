@@ -55,6 +55,7 @@ model User {
   cuisine         String?
   vehicle_type    String?
   license_plate   String?
+  locale          String?   @default("en")
   created_at      DateTime? @default(now()) @db.Timestamptz
 
   // Relations

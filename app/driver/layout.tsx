@@ -1,5 +1,6 @@
 'use client'
 
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAuth } from '@/lib/auth-context'
 import { DriverProvider, useDriver } from '@/lib/driver-context'
 import {
@@ -330,6 +331,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 )}
               </span>
             </button>
+
+            {/* Language Switcher */}
+            {sidebarCollapsed ? (
+              <LanguageSwitcher variant="inline" />
+            ) : (
+              <LanguageSwitcher variant="pill" />
+            )}
           </div>
         </div>
       </aside>
@@ -360,6 +368,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               <Radio className="size-4 text-amber-700 animate-pulse" />
               <span>Scan Nearby Orders</span>
             </button>
+
+            <LanguageSwitcher variant="pill" />
 
             {/* Mobile Hamburger Menu Button */}
             <button

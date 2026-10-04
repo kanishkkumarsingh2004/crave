@@ -1,6 +1,7 @@
 'use client'
 
 import CraveLogo from '@/components/CraveLogo'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import {
   Bike,
@@ -20,10 +21,12 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-export const roleDetails: Partial<Record<
-  UserRole,
-  { title: string; badge: string; color: string; bg: string; icon: React.ElementType }
->> = {
+export const roleDetails: Partial<
+  Record<
+    UserRole,
+    { title: string; badge: string; color: string; bg: string; icon: React.ElementType }
+  >
+> = {
   customer: {
     title: 'Customer',
     badge: 'Customer View',
@@ -150,7 +153,6 @@ export default function Navbar() {
           {/* Center navigation links */}
           <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] lg:flex">
             {user ? (
-              /* Authenticated Nav Items */
               <>
                 {role === 'customer' ? (
                   <>
@@ -208,12 +210,11 @@ export default function Navbar() {
                 )}
               </>
             ) : (
-              /* Unauthenticated Nav Items */
               <></>
             )}
           </div>
 
-          {/* Right side auth & profile */}
+          {/* Right side — auth & profile */}
           <div className="flex items-center gap-3">
             {user ? (
               <div className="relative">
@@ -243,6 +244,7 @@ export default function Navbar() {
 
                 {showUserDropdown && (
                   <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] bg-white p-2 shadow-2xl">
+                    {/* User info header */}
                     <div className="border-b border-[#eff2ed] px-3 py-2.5">
                       <p className="text-xs font-bold text-[#18201c]">{user.name}</p>
                       <p className="text-[11px] text-[#78827c] truncate">{user.email}</p>
@@ -253,6 +255,7 @@ export default function Navbar() {
                       </span>
                     </div>
 
+                    {/* Role-specific links */}
                     {user.role === 'customer' ? (
                       <>
                         <Link
@@ -325,6 +328,12 @@ export default function Navbar() {
                       </>
                     )}
 
+                    {/* Language switcher row */}
+                    <div className="border-t border-[#eff2ed] mt-1 pt-2 px-1">
+                      <LanguageSwitcher variant="menu" />
+                    </div>
+
+                    {/* Sign out */}
                     <button
                       onClick={async () => {
                         await logout()
@@ -376,6 +385,8 @@ export default function Navbar() {
           </div>
         </nav>
       </header>
+
+      {/* Mobile menu overlay */}
       <div
         onClick={() => setShowMobileMenu(false)}
         className={`fixed inset-0 z-[60] bg-black/35 transition-opacity duration-300 lg:hidden ${
@@ -383,6 +394,8 @@ export default function Navbar() {
         }`}
         aria-hidden="true"
       />
+
+      {/* Mobile slide-in drawer */}
       <aside
         aria-label="Mobile navigation"
         aria-hidden={!showMobileMenu}
@@ -411,6 +424,7 @@ export default function Navbar() {
             <X className="size-4" />
           </button>
         </div>
+
         <nav className="flex flex-col gap-1 p-4 text-sm font-semibold">
           {user ? (
             <>
@@ -424,6 +438,10 @@ export default function Navbar() {
                   {role}
                 </span>
               </Link>
+              {/* Language switcher in mobile drawer */}
+              <div className="px-1 py-1">
+                <LanguageSwitcher variant="menu" />
+              </div>
               <button
                 onClick={async () => {
                   await logout()
@@ -444,6 +462,10 @@ export default function Navbar() {
               >
                 Explore
               </Link>
+              {/* Language switcher for guests too */}
+              <div className="px-1 py-1">
+                <LanguageSwitcher variant="menu" />
+              </div>
               <Link
                 href="/login"
                 onClick={() => setShowMobileMenu(false)}
