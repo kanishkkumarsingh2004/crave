@@ -1,5 +1,6 @@
 'use client'
 
+import { getLocalPaymentConfig } from '@/lib/payment-config'
 import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
@@ -47,34 +48,98 @@ export default function VendorSettlementsPage() {
 
   useEffect(() => {
     async function loadLiveSettlements() {
+      const activeCfg = getLocalPaymentConfig()
       try {
         const { data: setts } = await supabase.from('vendor_settlements').select('*')
         if (setts && setts.length > 0) {
           const loaded: VendorFinancialRecord[] = setts.map((s) => ({
             id: s.id,
             name: s.restaurant_name,
-            ownerName: 'Maya Lin',
-            email: 'green@table.com',
-            phone: '+91 98111 22334',
-            cuisine: 'Healthy Bowls & Salads',
-            address: 'Koramangala 5th Block, Bengaluru',
+            ownerName: 'Verified Partner Store',
+            email: 'partner@crave.com',
+            phone: '+91 98765 43212',
+            cuisine: 'Multi-Cuisine & Fast Food',
+            address: 'Bengaluru, India',
             fssaiLicense: '#11223344556677',
             bankAccount: 'HDFC •••• 9821',
             ifscCode: 'HDFC0001234',
-            weeklyGrossSales: s.gross_sales,
-            commissionRate: s.commission_rate,
-            packagingCapFee: 20,
+            weeklyGrossSales: Number(s.gross_sales || 0),
+            commissionRate: Number(s.commission_rate || activeCfg.vendorCommission),
+            packagingCapFee: activeCfg.packagingCap,
             promoSubsidyPct: 0,
             settlementStatus: s.status === 'settled' ? 'settled' : 'pending',
             kitchenStatus: 'open',
-            activeOrdersCount: 2,
-            completedDropsCount: 38,
+            activeOrdersCount: 1,
+            completedDropsCount: 12,
           }))
           setVendors(loaded)
+          return
+        }
+
+        // Fallback: Compute live settlements directly from /api/orders
+        const res = await fetch('/api/orders')
+        const json = await res.json()
+        if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
+          const restaurantMap: Record<string, { name: string; gross: number; count: number }> = {}
+          json.orders.forEach((o: any) => {
+            const rName = o.restaurant_name || 'Crave Kitchen Store'
+            if (!restaurantMap[rName]) {
+              restaurantMap[rName] = { name: rName, gross: 0, count: 0 }
+            }
+            restaurantMap[rName].gross += Number(o.subtotal || o.total_amount || 0)
+            restaurantMap[rName].count += 1
+          })
+
+          const computed: VendorFinancialRecord[] = Object.values(restaurantMap).map((item, idx) => ({
+            id: `v_settle_${idx + 1}`,
+            name: item.name,
+            ownerName: 'Verified Partner Store',
+            email: 'partner@crave.com',
+            phone: '+91 98765 43212',
+            cuisine: 'Multi-Cuisine & Fast Food',
+            address: 'Bengaluru, India',
+            fssaiLicense: `#112233445${idx + 10}`,
+            bankAccount: `HDFC •••• ${4000 + idx * 111}`,
+            ifscCode: 'HDFC0001234',
+            weeklyGrossSales: item.gross,
+            commissionRate: activeCfg.vendorCommission,
+            packagingCapFee: activeCfg.packagingCap,
+            promoSubsidyPct: 0,
+            settlementStatus: 'pending',
+            kitchenStatus: 'open',
+            activeOrdersCount: 0,
+            completedDropsCount: item.count,
+          }))
+          setVendors(computed)
+          return
         }
       } catch (err) {
-        console.error('Failed to load settlements from Supabase:', err)
+        console.error('Failed to load settlements:', err)
       }
+
+      // Default initial partner store if no orders exist yet
+      setVendors([
+        {
+          id: 'vnd_1791063436223_iyet2',
+          name: 'Spice Garden & Quick Mart',
+          ownerName: 'Priya Patel',
+          email: 'vendor@crave.com',
+          phone: '+91 98765 43212',
+          cuisine: 'North Indian & Quick Commerce',
+          address: 'Koramangala 5th Block, Bengaluru',
+          fssaiLicense: '#11223344556677',
+          bankAccount: 'HDFC •••• 9821',
+          ifscCode: 'HDFC0001234',
+          weeklyGrossSales: 0,
+          commissionRate: 15,
+          packagingCapFee: 20,
+          promoSubsidyPct: 0,
+          settlementStatus: 'pending',
+          kitchenStatus: 'open',
+          activeOrdersCount: 0,
+          completedDropsCount: 0,
+        },
+      ])
     }
     loadLiveSettlements()
   }, [])

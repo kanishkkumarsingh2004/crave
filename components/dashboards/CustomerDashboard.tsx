@@ -36,6 +36,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
+import { loadPaymentConfig } from '@/lib/payment-config'
 import { supabase } from '@/lib/supabase'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
@@ -634,52 +635,28 @@ export default function CustomerDashboard({
     return () => clearInterval(interval)
   }, [user?.id])
 
-  // Fetch Company UPI Config from Supabase
+  // Fetch Company UPI Config dynamically & listen for admin updates
   useEffect(() => {
-    async function loadCompanyUpi() {
-      try {
-        const { data, error } = await supabase
-          .from('payment_configs')
-          .select(
-            'merchant_vpa, merchant_name, delivery_fee, handling_fee, free_delivery_threshold, gst_rate'
-          )
-          .eq('is_active', true)
-          .maybeSingle()
-
-        if (!error && data) {
-          setCheckoutConfig({
-            merchantVpa: data.merchant_vpa || 'crave@upi',
-            deliveryFee: Number(data.delivery_fee ?? 25),
-            handlingFee: Number(data.handling_fee ?? 5),
-            freeDeliveryThreshold: Number(data.free_delivery_threshold ?? 500),
-            gstRate: Number(data.gst_rate ?? 5),
-          })
-          setCompanyUpiId(data.merchant_vpa || 'crave@upi')
-          setCompanyMerchantName(data.merchant_name || 'craveXP Technologies')
-        } else {
-          setCheckoutConfig({
-            merchantVpa: 'crave@upi',
-            deliveryFee: 25,
-            handlingFee: 5,
-            freeDeliveryThreshold: 500,
-            gstRate: 5,
-          })
-          setCompanyUpiId('crave@upi')
-          setCompanyMerchantName('craveXP Technologies')
-        }
-      } catch (error) {
-        setCheckoutConfig({
-          merchantVpa: 'crave@upi',
-          deliveryFee: 25,
-          handlingFee: 5,
-          freeDeliveryThreshold: 500,
-          gstRate: 5,
-        })
-        setCompanyUpiId('crave@upi')
-        setCompanyMerchantName('craveXP Technologies')
-      }
+    async function refreshPaymentConfig() {
+      const cfg = await loadPaymentConfig()
+      setCheckoutConfig({
+        merchantVpa: cfg.upiVpa,
+        deliveryFee: cfg.baseDeliveryFee,
+        handlingFee: cfg.handlingFee,
+        freeDeliveryThreshold: cfg.freeDeliveryThreshold,
+        gstRate: 5,
+      })
+      setCompanyUpiId(cfg.upiVpa)
+      setCompanyMerchantName(cfg.merchantName)
     }
-    loadCompanyUpi()
+    refreshPaymentConfig()
+
+    window.addEventListener('crave_payment_config_updated', refreshPaymentConfig)
+    window.addEventListener('storage', refreshPaymentConfig)
+    return () => {
+      window.removeEventListener('crave_payment_config_updated', refreshPaymentConfig)
+      window.removeEventListener('storage', refreshPaymentConfig)
+    }
   }, [])
 
   // Notification Toast
