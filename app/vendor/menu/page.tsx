@@ -81,14 +81,14 @@ export default function VendorMenuPage() {
       setMenuError('')
       try {
         // 1. Search vendors table first to ensure targetRestId exists in vendors table (satisfying products FK)
-        let { data: vRecord } = await supabase
+        let { data: vRecord } = await (supabase as any)
           .from('vendors')
           .select('*')
           .or(`userId.eq.${user.id},id.eq.${user.id}`)
           .maybeSingle()
 
         if (!vRecord && user.email) {
-          const { data: vByEmail } = await supabase
+          const { data: vByEmail } = await (supabase as any)
             .from('vendors')
             .select('*')
             .ilike('email', user.email)
@@ -97,7 +97,7 @@ export default function VendorMenuPage() {
         }
 
         if (!vRecord && user.restaurantName) {
-          const { data: vByName } = await supabase
+          const { data: vByName } = await (supabase as any)
             .from('vendors')
             .select('*')
             .ilike('storeName', user.restaurantName)
@@ -105,12 +105,12 @@ export default function VendorMenuPage() {
           vRecord = vByName
         }
 
-        let targetRestId = vRecord?.id
+        let targetRestId = (vRecord as any)?.id
 
         // If no vendor record exists, auto-provision in vendors and restaurants tables
         if (!targetRestId) {
           targetRestId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-          await supabase.from('vendors').upsert([
+          await (supabase as any).from('vendors').upsert([
             {
               id: targetRestId,
               userId: user.id,
@@ -140,7 +140,7 @@ export default function VendorMenuPage() {
         setRestaurantId(targetRestId)
 
         // 2. Fetch dishes for this restaurant from products table
-        const { data: prodData, error: prodErr } = await supabase
+        const { data: prodData, error: prodErr } = await (supabase as any)
           .from('products')
           .select('*')
           .eq('vendorId', targetRestId)
@@ -236,46 +236,75 @@ export default function VendorMenuPage() {
     }
 
     try {
+      // 1. Save to public.menu_items (Primary table for customer store & orders)
       if (editingItem) {
-        const { error: prodError } = await supabase
-          .from('products')
+        await supabase
+          .from('menu_items')
           .update({
             name: itemData.name,
+            category: itemData.category,
             price: itemData.price,
-            description: `${itemData.category} · ${itemData.description}`,
-            imageUrl: itemData.image,
-            status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
-            updatedAt: now,
+            description: itemData.description,
+            image: itemData.image,
+            in_stock: itemData.in_stock,
+            is_veg: itemData.veg,
+            restaurant_id: restaurantId,
           })
           .eq('id', editingItem.id)
-
-        if (prodError) {
-          throw new Error(prodError.message || prodError.details || 'Update failed')
-        }
       } else {
-        const { error: prodError } = await supabase.from('products').insert([
+        await supabase.from('menu_items').insert([
           {
             id: newItemId,
-            vendorId: restaurantId,
-            categoryId: defaultCategoryId,
-            sku: `SKU_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            restaurant_id: restaurantId,
             name: itemData.name,
+            category: itemData.category,
             price: itemData.price,
-            description: `${itemData.category} · ${itemData.description}`,
-            imageUrl: itemData.image,
-            status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
-            createdAt: now,
-            updatedAt: now,
+            description: itemData.description,
+            image: itemData.image,
+            in_stock: itemData.in_stock,
+            is_veg: itemData.veg,
+            created_at: now,
           },
         ])
+      }
 
-        if (prodError) {
-          throw new Error(prodError.message || prodError.details || 'Insert failed')
+      // 2. Fallback sync to public.products table
+      try {
+        if (editingItem) {
+          await (supabase as any)
+            .from('products')
+            .update({
+              name: itemData.name,
+              price: itemData.price,
+              description: `${itemData.category} · ${itemData.description}`,
+              imageUrl: itemData.image,
+              status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
+              updatedAt: now,
+            })
+            .eq('id', editingItem.id)
+        } else {
+          await (supabase as any).from('products').insert([
+            {
+              id: newItemId,
+              vendorId: restaurantId,
+              categoryId: defaultCategoryId,
+              sku: `SKU_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              name: itemData.name,
+              price: itemData.price,
+              description: `${itemData.category} · ${itemData.description}`,
+              imageUrl: itemData.image,
+              status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
+              createdAt: now,
+              updatedAt: now,
+            },
+          ])
         }
+      } catch (e) {
+        console.warn('Products table fallback notice:', e)
       }
     } catch (err: any) {
       const errMsg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err))
-      console.error('Failed to save menu item to Supabase products table:', errMsg)
+      console.error('Failed to save menu item to Supabase:', errMsg)
       triggerToast(errMsg || 'Could not save dish to database.')
       return
     }
@@ -295,7 +324,7 @@ export default function VendorMenuPage() {
     if (!restaurantId) return
     const nextStock = !currentStock
     try {
-      await supabase
+      await (supabase as any)
         .from('products')
         .update({ status: nextStock ? 'ACTIVE' : 'INACTIVE', updatedAt: new Date().toISOString() })
         .eq('id', id)
@@ -313,7 +342,7 @@ export default function VendorMenuPage() {
     if (!confirm(`Are you sure you want to delete '${name}' from your menu?`)) return
     try {
       await supabase.from('menu_items').delete().eq('id', id)
-      await supabase.from('products').delete().eq('id', id)
+      await (supabase as any).from('products').delete().eq('id', id)
     } catch (err) {
       console.error('Failed to delete menu item:', err)
       triggerToast('Could not delete the menu item. Please try again.')

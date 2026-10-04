@@ -1,6 +1,5 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
 import {
   BarChart3,
   DollarSign,
@@ -24,29 +23,23 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const { count } = await supabase.from('users').select('*', { count: 'exact', head: true })
-        setLiveUserCount(count ?? 0)
-
-        const { data: settlements } = await supabase.from('vendor_settlements').select('*')
-        if (settlements && settlements.length > 0) {
-          const gross = settlements.reduce((sum, row) => sum + Number(row.gross_sales ?? 0), 0)
-          setLiveGrossRevenue(gross)
-          setLiveCompletedOrders(
-            settlements.reduce((sum, row) => sum + Number(row.orders ?? 0), 0) || 1280
-          )
-        }
-
-        const { data: restaurants } = await supabase.from('restaurants').select('*')
-        if (restaurants) {
-          setTopVendors(
-            restaurants.slice(0, 4).map((restaurant, index) => ({
-              name: restaurant.name ?? `Restaurant ${index + 1}`,
-              revenue: Number(restaurant.gross_sales ?? 200000 + index * 10000),
-              orders: Number(restaurant.orders ?? 280 + index * 35),
-              rating: Number(restaurant.rating ?? 4.8),
-              model: restaurant.payment_model === 'markup' ? 'Price Markup' : 'Commission',
-            }))
-          )
+        const res = await fetch('/api/admin/stats')
+        const json = await res.json()
+        if (json.success) {
+          setLiveUserCount(json.stats.totalUsers ?? 0)
+          setLiveGrossRevenue(json.stats.weeklyGross ?? 0)
+          setLiveCompletedOrders(json.stats.completedOrders || 1280)
+          if (json.restaurants) {
+            setTopVendors(
+              json.restaurants.slice(0, 4).map((restaurant: any, index: number) => ({
+                name: restaurant.name ?? `Restaurant ${index + 1}`,
+                revenue: Number(restaurant.gross_sales ?? 200000 + index * 10000),
+                orders: Number(restaurant.orders ?? 280 + index * 35),
+                rating: Number(restaurant.rating ?? 4.8),
+                model: restaurant.payment_model === 'markup' ? 'Price Markup' : 'Commission',
+              }))
+            )
+          }
         }
       } catch (error) {
         console.error('Failed to load analytics.', error)

@@ -1,6 +1,5 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
 import {
   ArrowUpRight,
   BarChart3,
@@ -84,31 +83,24 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const { data: settlements } = await supabase.from('vendor_settlements').select('*')
-        if (settlements) {
-          setWeeklyGross(settlements.reduce((sum, row) => sum + Number(row.gross_sales ?? 0), 0))
-          setTotalCommission(
-            settlements.reduce((sum, row) => sum + Number(row.commission_amount ?? 0), 0)
-          )
-          setNetVendorPay(settlements.reduce((sum, row) => sum + Number(row.net_payout ?? 0), 0))
-        }
-
-        const { data: restaurants } = await supabase.from('restaurants').select('*')
-        if (restaurants) {
-          setTopRestaurants(
-            restaurants.slice(0, 4).map((restaurant) => ({
-              name: restaurant.name ?? 'Restaurant',
-              grossSales: Number(restaurant.gross_sales ?? 150000),
-              commissionRate: Number(restaurant.commission_rate ?? 15),
-            }))
-          )
-        }
-
-        const { data: users } = await supabase.from('users').select('role')
-        if (users) {
-          setCustomerCount(users.filter((user) => user.role === 'customer').length)
-          setVendorCount(users.filter((user) => user.role === 'vendor').length)
-          setDriverCount(users.filter((user) => user.role === 'driver').length)
+        const res = await fetch('/api/admin/stats')
+        const json = await res.json()
+        if (json.success) {
+          setWeeklyGross(json.stats.weeklyGross)
+          setTotalCommission(json.stats.totalCommission)
+          setNetVendorPay(json.stats.netVendorPay)
+          setCustomerCount(json.stats.customerCount)
+          setVendorCount(json.stats.vendorCount)
+          setDriverCount(json.stats.driverCount)
+          if (json.restaurants) {
+            setTopRestaurants(
+              json.restaurants.slice(0, 4).map((restaurant: any) => ({
+                name: restaurant.name ?? 'Restaurant',
+                grossSales: Number(restaurant.gross_sales ?? 150000),
+                commissionRate: Number(restaurant.commission_rate ?? 15),
+              }))
+            )
+          }
         }
       } catch (error) {
         console.error('Failed to load admin overview data:', error)

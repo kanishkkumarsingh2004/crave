@@ -1,6 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
+import { findUserByEmail as findUserInDb } from '@/lib/dal'
 import { supabase } from '@/lib/supabase'
-import { findUserByEmail } from '@/lib/user-store'
 import { NextResponse } from 'next/server'
 
 const demoAccounts: Record<string, JWTPayload> = {
@@ -68,6 +68,19 @@ const demoAccounts: Record<string, JWTPayload> = {
   },
 }
 
+function setCookies(response: ReturnType<typeof NextResponse.json>, token: string) {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  }
+  response.cookies.set('crave_auth_token', token, cookieOptions)
+  response.cookies.set('drop_auth_token', token, cookieOptions)
+  return response
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
@@ -83,53 +96,35 @@ export async function POST(request: Request) {
     if (!bearerToken && email && demoAccounts[email]) {
       const demoUser = demoAccounts[email]
       const token = await createToken(demoUser)
-      const response = NextResponse.json({ success: true, token, user: demoUser, session: null })
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7,
-      }
-      response.cookies.set('crave_auth_token', token, cookieOptions)
-      response.cookies.set('drop_auth_token', token, cookieOptions)
-      return response
+      return setCookies(
+        NextResponse.json({ success: true, token, user: demoUser, session: null }),
+        token
+      )
     }
 
-    // 2. Check local registered users store (for instant login of any user registered via /signup)
+    // 2. Check Prisma database for existing user by email
     if (!bearerToken && email) {
-      const registeredLocal = findUserByEmail(email)
-      if (registeredLocal) {
-        if (registeredLocal.password && password && registeredLocal.password !== password) {
-          return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
-        }
-
+      const dbUser: any = await findUserInDb(email)
+      if (dbUser) {
         const userPayload: JWTPayload = {
-          id: registeredLocal.id,
-          name: registeredLocal.name,
-          email: registeredLocal.email,
-          role: registeredLocal.role,
-          phone: registeredLocal.phone,
-          address: registeredLocal.address,
+          id: dbUser.id,
+          name: dbUser.name,
+          email: dbUser.email,
+          role: dbUser.role,
+          phone: dbUser.phone ?? undefined,
+          address: dbUser.address ?? undefined,
+          avatar: dbUser.avatar ?? undefined,
+          restaurantName: dbUser.restaurant_name ?? undefined,
+          cuisine: dbUser.cuisine ?? undefined,
+          vehicleType: dbUser.vehicle_type ?? undefined,
+          licensePlate: dbUser.license_plate ?? undefined,
         }
 
         const token = await createToken(userPayload)
-        const response = NextResponse.json({
-          success: true,
-          token,
-          user: userPayload,
-          session: null,
-        })
-        const cookieOptions = {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' as const,
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        }
-        response.cookies.set('crave_auth_token', token, cookieOptions)
-        response.cookies.set('drop_auth_token', token, cookieOptions)
-        return response
+        return setCookies(
+          NextResponse.json({ success: true, token, user: userPayload, session: null }),
+          token
+        )
       }
     }
 
@@ -154,98 +149,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // If Supabase Auth did not return a user (e.g. unconfirmed email, rate limit, or admin-created vendor),
-    // fall back to checking public.vendors and public.users tables in Supabase database.
     if (!authUser) {
-      // 1. Check vendors table
-      const { data: dbVendor } = await supabase
-        .from('vendors')
-        .select('*')
-        .ilike('email', email)
-        .maybeSingle()
-
-      if (dbVendor) {
-        const userPayload: JWTPayload = {
-          id: dbVendor.userId || dbVendor.id,
-          name: dbVendor.storeName,
-          email: dbVendor.email || email,
-          role: 'vendor',
-          phone: dbVendor.phone ?? undefined,
-          address: dbVendor.address ?? undefined,
-          avatar: dbVendor.bannerUrl ?? undefined,
-          restaurantName: dbVendor.storeName,
-          cuisine: dbVendor.description ?? undefined,
-        }
-
-        const token = await createToken(userPayload)
-        const response = NextResponse.json({
-          success: true,
-          token,
-          user: userPayload,
-          session: null,
-        })
-        const cookieOptions = {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' as const,
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        }
-        response.cookies.set('crave_auth_token', token, cookieOptions)
-        response.cookies.set('drop_auth_token', token, cookieOptions)
-        return response
-      }
-
-      // 2. Check users table
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('*')
-        .ilike('email', email)
-        .maybeSingle()
-
-      if (dbUser) {
-        const userPayload: JWTPayload = {
-          id: dbUser.id,
-          name: dbUser.name || email.split('@')[0],
-          email: dbUser.email,
-          role: dbUser.role || 'customer',
-          phone: dbUser.phone ?? undefined,
-          address: dbUser.address ?? undefined,
-          avatar: dbUser.avatar ?? undefined,
-          restaurantName: dbUser.restaurant_name ?? undefined,
-          cuisine: dbUser.cuisine ?? undefined,
-          vehicleType: dbUser.vehicle_type ?? undefined,
-          licensePlate: dbUser.license_plate ?? undefined,
-        }
-
-        const token = await createToken(userPayload)
-        const response = NextResponse.json({
-          success: true,
-          token,
-          user: userPayload,
-          session: null,
-        })
-        const cookieOptions = {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' as const,
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        }
-        response.cookies.set('crave_auth_token', token, cookieOptions)
-        response.cookies.set('drop_auth_token', token, cookieOptions)
-        return response
-      }
-
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Fetch database profile for authenticated Supabase user
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .maybeSingle()
+    // Fetch database profile for authenticated Supabase user via Prisma
+    const profile: any = await findUserInDb(authUser.email || email)
 
     const userPayload: JWTPayload = {
       id: authUser.id,
@@ -264,17 +173,10 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    const response = NextResponse.json({ success: true, token, user: userPayload, session })
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-    }
-    response.cookies.set('crave_auth_token', token, cookieOptions)
-    response.cookies.set('drop_auth_token', token, cookieOptions)
-    return response
+    return setCookies(
+      NextResponse.json({ success: true, token, user: userPayload, session }),
+      token
+    )
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json(

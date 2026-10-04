@@ -204,51 +204,59 @@ export default function CustomerDashboard({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
 
-  // Fetch Live Restaurants / Vendors from Supabase
+  // Fetch Live Restaurants / Vendors from Supabase (Strictly Food Delivery Vendors)
   useEffect(() => {
     async function fetchRestaurants() {
       try {
         let parsed: Restaurant[] = []
-        // 1. Query vendors table in Supabase
-        const { data: vendorData, error: vendorErr } = await supabase.from('vendors').select('*')
+        // Query restaurants table (excluding craveXP dark store warehouse)
+        const { data: restData } = await supabase
+          .from('restaurants')
+          .select('*')
+          .neq('id', 'cravexp_dark_store_01')
+          .eq('is_dark_store', false)
 
-        if (!vendorErr && vendorData && vendorData.length > 0) {
-          parsed = vendorData.map((v: any) => ({
-            id: v.id,
-            name: v.storeName || 'Vendor Store',
-            cuisine: v.description || 'Fast Food · Indian',
-            rating: '4.8',
-            ratingCount: '1.2k+',
-            eta: '20 min',
-            distance: '1.5 km',
-            costForTwo: '₹300 for two',
-            image:
-              v.logoUrl ||
-              v.bannerUrl ||
-              'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-            tag: 'Popular',
-            address: v.address || 'Bengaluru',
-            offer: '50% OFF',
-            isPureVeg: false,
+        if (restData && restData.length > 0) {
+          parsed = restData.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            cuisine: r.cuisine ?? '',
+            rating: r.rating == null ? '4.8' : String(r.rating),
+            ratingCount: r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
+            eta: r.delivery_minutes == null ? '25 min' : `${r.delivery_minutes} min`,
+            distance: '1.8 km',
+            costForTwo: r.cost_for_two == null ? '₹350 for two' : `₹${r.cost_for_two} for two`,
+            image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+            tag: r.cuisine?.split(' ')[0] ?? 'Popular',
+            address: r.address ?? 'Bengaluru',
+            offer: r.offer ?? '40% OFF',
+            isPureVeg: r.is_pure_veg ?? false,
           }))
         } else {
-          // 2. Query restaurants table fallback
-          const { data: restData } = await supabase.from('restaurants').select('*')
-          if (restData && restData.length > 0) {
-            parsed = restData.map((r: any) => ({
-              id: r.id,
-              name: r.name,
-              cuisine: r.cuisine ?? '',
-              rating: r.rating == null ? '' : String(r.rating),
-              ratingCount: r.rating_count == null ? '' : Number(r.rating_count).toLocaleString(),
-              eta: r.delivery_minutes == null ? '' : `${r.delivery_minutes} min`,
-              distance: '',
-              costForTwo: r.cost_for_two == null ? '' : `₹${r.cost_for_two} for two`,
-              image: r.image ?? '',
-              tag: r.cuisine?.split(' ')[0] ?? '',
-              address: r.address ?? '',
-              offer: r.offer ?? undefined,
-              isPureVeg: r.is_pure_veg ?? undefined,
+          // Fallback query vendors table excluding dark store
+          const { data: vendorData } = await (supabase as any)
+            .from('vendors')
+            .select('*')
+            .neq('id', 'cravexp_dark_store_01')
+
+          if (vendorData && vendorData.length > 0) {
+            parsed = vendorData.map((v: any) => ({
+              id: v.id,
+              name: v.storeName || 'Vendor Store',
+              cuisine: v.description || 'Fast Food · Indian',
+              rating: '4.8',
+              ratingCount: '1.2k+',
+              eta: '25 min',
+              distance: '1.5 km',
+              costForTwo: '₹300 for two',
+              image:
+                v.logoUrl ||
+                v.bannerUrl ||
+                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+              tag: 'Popular',
+              address: v.address || 'Bengaluru',
+              offer: '40% OFF',
+              isPureVeg: false,
             }))
           }
         }
@@ -262,65 +270,35 @@ export default function CustomerDashboard({
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch Live Menu Items from Supabase (strictly for restaurant views)
+  // Fetch Live Menu Items from Supabase (strictly for food delivery restaurant views)
   useEffect(() => {
     async function fetchLiveMenuItems() {
       try {
-        const { data: prodData, error: prodErr } = await supabase.from('products').select('*')
+        const { data: menuData } = await supabase
+          .from('menu_items')
+          .select('*')
+          .neq('restaurant_id', 'cravexp_dark_store_01')
 
-        if (!prodErr && prodData && prodData.length > 0) {
-          let filtered = prodData.filter((item: any) => item.status !== 'INACTIVE')
-
+        if (menuData && menuData.length > 0) {
+          let filtered = menuData
           if (selectedRestaurant) {
-            const matchingIds = [selectedRestaurant.id]
-            if ((selectedRestaurant as any).userId)
-              matchingIds.push((selectedRestaurant as any).userId)
-
-            const restaurantSpecific = filtered.filter((item: any) => {
-              if (matchingIds.includes(item.vendorId) || matchingIds.includes(item.restaurantId))
-                return true
-              if (
-                selectedRestaurant.name &&
-                item.description &&
-                item.description.toLowerCase().includes(selectedRestaurant.name.toLowerCase())
-              )
-                return true
-              return false
-            })
-
-            // If store has specific items use them; otherwise show active platform dishes as fallback
+            const restaurantSpecific = filtered.filter(
+              (item) => item.restaurant_id === selectedRestaurant.id
+            )
             if (restaurantSpecific.length > 0) {
               filtered = restaurantSpecific
             }
           }
 
-          const parsed: MenuItem[] = filtered.map((item: any) => {
-            const matchedVendor = restaurantsList.find(
-              (r) => r.id === item.vendorId || r.id === item.restaurantId
-            )
-            const restName =
-              selectedRestaurant?.name ||
-              matchedVendor?.name ||
-              (item.description?.includes('Vendor:')
-                ? item.description.split('Vendor:')[1]?.trim()
-                : '') ||
-              'Crave Kitchen'
-
-            return {
-              id: item.id,
-              name: item.name,
-              detail: item.description?.includes('·')
-                ? item.description.split('·').slice(1).join('·').trim()
-                : item.description || '',
-              price: Number(item.price) || 0,
-              image:
-                item.imageUrl ||
-                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-              veg: true,
-              restaurantName: restName,
-            }
-          })
-
+          const parsed: MenuItem[] = filtered.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            detail: item.description || '',
+            price: Number(item.price) || 0,
+            image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
+            veg: Boolean(item.is_veg ?? true),
+            restaurantName: selectedRestaurant?.name || 'Partner Kitchen',
+          }))
           setMenuItemsList(parsed)
         } else {
           setMenuItemsList([])

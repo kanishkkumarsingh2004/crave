@@ -1,4 +1,7 @@
-import { supabase } from '@/lib/supabase'
+import { findUserByEmail, deleteUser } from '@/lib/dal'
+import { deleteRestaurant, deleteRestaurantsByOwner } from '@/lib/dal/restaurants'
+import { deleteMenuItemsByRestaurant } from '@/lib/dal/menu-items'
+import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -17,75 +20,56 @@ export async function POST(request: Request) {
       `[Admin Delete Vendor] Processing deletion for vendorId: ${vendorId}, userId: ${userId}, email: ${email}`
     )
 
-    // 1. Fetch vendor info to ensure we have all associated IDs
-    let targetVendorId = vendorId
     let targetUserId = userId
-    let targetEmail = email
+    let targetVendorId = vendorId
 
-    if (vendorId) {
-      const { data: vRecord } = await supabase
-        .from('vendors')
-        .select('*')
-        .or(`id.eq.${vendorId},userId.eq.${vendorId}`)
-        .maybeSingle()
-
-      if (vRecord) {
-        targetVendorId = vRecord.id
-        targetUserId = vRecord.userId || targetUserId
-        targetEmail = vRecord.email || targetEmail
+    // Resolve user from email if only email provided
+    if (!targetUserId && email) {
+      const user = await findUserByEmail(email)
+      if (user) {
+        targetUserId = user.id
       }
     }
 
-    if (!targetVendorId && userId) {
-      const { data: vRecord } = await supabase
-        .from('vendors')
-        .select('*')
-        .eq('userId', userId)
-        .maybeSingle()
-
-      if (vRecord) {
-        targetVendorId = vRecord.id
-        targetEmail = vRecord.email || targetEmail
+    // 1. Delete associated menu items
+    if (targetVendorId) {
+      try {
+        await deleteMenuItemsByRestaurant(targetVendorId)
+      } catch (e: any) {
+        console.warn('Menu items deletion notice:', e?.message)
       }
     }
 
-    // 2. Delete associated menu items
+    // 2. Delete from restaurants table
     if (targetVendorId) {
-      const { error: menuErr } = await supabase
-        .from('menu_items')
-        .delete()
-        .eq('restaurant_id', targetVendorId)
-      if (menuErr) console.warn('Menu items deletion notice:', menuErr.message)
-    }
-
-    // 3. Delete from restaurants table
-    if (targetVendorId) {
-      await supabase.from('restaurants').delete().eq('id', targetVendorId)
+      try {
+        await deleteRestaurant(targetVendorId)
+      } catch (e: any) {
+        console.warn('Restaurant deletion notice:', e?.message)
+      }
     }
     if (targetUserId) {
-      await supabase.from('restaurants').delete().eq('owner_id', targetUserId)
+      try {
+        await deleteRestaurantsByOwner(targetUserId)
+      } catch (e: any) {
+        console.warn('Owner restaurants deletion notice:', e?.message)
+      }
     }
 
-    // 4. Delete from vendors table
-    if (targetVendorId) {
-      await supabase.from('vendors').delete().eq('id', targetVendorId)
-    }
+    // 3. Delete from users profile table
     if (targetUserId) {
-      await supabase.from('vendors').delete().eq('userId', targetUserId)
+      try {
+        await deleteUser(targetUserId)
+      } catch (e: any) {
+        console.warn('User deletion notice:', e?.message)
+      }
     }
-    if (targetEmail) {
-      await supabase.from('vendors').delete().ilike('email', targetEmail)
-    }
-
-    // 5. Delete from users profile table
-    if (targetUserId) {
-      await supabase.from('users').delete().eq('id', targetUserId)
-    }
-    if (targetVendorId) {
-      await supabase.from('users').delete().eq('id', targetVendorId)
-    }
-    if (targetEmail) {
-      await supabase.from('users').delete().ilike('email', targetEmail)
+    if (targetVendorId && targetVendorId !== targetUserId) {
+      try {
+        await deleteUser(targetVendorId)
+      } catch (e: any) {
+        // May not exist as user
+      }
     }
 
     return NextResponse.json({
