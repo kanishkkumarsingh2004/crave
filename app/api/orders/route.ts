@@ -125,7 +125,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json()
-    const { orderId, status, payment_status, paymentStatus } = body
+    const { orderId, status, payment_status, paymentStatus, driver_name, driver_phone, driver_lat, driver_lng } = body
 
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
@@ -145,6 +145,10 @@ export async function PATCH(request: Request) {
       ...existing,
       status: newStatus,
       payment_status: newPaymentStatus,
+      driver_name: driver_name || existing.driver_name,
+      driver_phone: driver_phone || existing.driver_phone,
+      driver_lat: driver_lat ?? existing.driver_lat,
+      driver_lng: driver_lng ?? existing.driver_lng,
     }
 
     saveOrder(updated)

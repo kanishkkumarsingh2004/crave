@@ -62,10 +62,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard },
     { href: '/admin/analytics', label: 'Platform Analytics', icon: BarChart3 },
+    { href: '/admin/payments', label: 'Payment Review Queue', icon: CreditCard },
+    { href: '/admin/users', label: 'User Accounts', icon: Users },
     { href: '/admin/coupons', label: 'Coupons & Discounts', icon: Tag },
     { href: '/admin/vendor-settlements', label: 'Vendor Settlements', icon: Store },
-    { href: '/admin/users', label: 'User Accounts', icon: Users },
-    { href: '/admin/payments', label: 'Payment Review Queue', icon: CreditCard },
     { href: '/admin/payment-config', label: 'Payment Configs (UPI)', icon: QrCode },
     { href: '/admin/system', label: 'System Health Logs', icon: Activity },
     { href: '/admin/settings', label: 'Admin Settings', icon: Settings },

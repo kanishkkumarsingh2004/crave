@@ -14,9 +14,13 @@ export interface OrderRecord {
   packaging_fee: number
   gst: number
   total_amount: number
-  status: 'new' | 'accepted' | 'preparing' | 'ready' | 'picked_up' | 'delivered' | 'cancelled'
+  status: 'new' | 'accepted' | 'preparing' | 'ready' | 'picked_up' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled'
   payment_method: string
   delivery_otp: string
+  driver_name?: string
+  driver_phone?: string
+  driver_lat?: number
+  driver_lng?: number
   utr_ref?: string
   customer_vpa?: string
   payment_status?: 'pending' | 'verified' | 'rejected'
