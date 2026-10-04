@@ -1,16 +1,14 @@
 /**
  * Database Access Layer — Orders
- * Robust dual-engine: Prisma ORM with Supabase REST + local JSON store fallback
+ * Requires Prisma or Supabase to be available; no silent local file fallback.
  */
 import { prisma } from '@/lib/prisma'
 import { supabase } from '@/lib/supabase'
-import { getOrders, saveOrder as saveOrderToFile, OrderRecord } from '@/lib/order-store'
 import type { OrderStatus } from '@prisma/client'
 
 // ─── Queries ─────────────────────────────────────────────
 
 export async function findOrderById(id: string) {
-  // 1. Try Prisma
   try {
     const order = await prisma.order.findUnique({
       where: { id },
@@ -18,18 +16,15 @@ export async function findOrderById(id: string) {
     })
     if (order) return order
   } catch (e) {
-    // Prisma offline/auth error
+    // Prisma unavailable; continue to Supabase.
   }
 
-  // 2. Try Supabase REST
   try {
     const { data, error } = await supabase.from('orders').select('*').eq('id', id).maybeSingle()
     if (!error && data) return data
   } catch {}
 
-  // 3. Fallback to local store
-  const localOrders = getOrders()
-  return localOrders.find((o) => o.id === id) || null
+  throw new Error(`Order not found for id: ${id}`)
 }
 
 export async function listOrders(filters?: {
@@ -38,7 +33,6 @@ export async function listOrders(filters?: {
   status?: OrderStatus
   limit?: number
 }) {
-  // 1. Try Prisma
   try {
     const orders = await prisma.order.findMany({
       where: {
@@ -51,10 +45,9 @@ export async function listOrders(filters?: {
     })
     if (orders && orders.length > 0) return orders
   } catch (e) {
-    // Prisma offline/auth error
+    // Prisma unavailable; continue to Supabase.
   }
 
-  // 2. Try Supabase REST
   try {
     let query = supabase.from('orders').select('*').order('created_at', { ascending: false })
     if (filters?.customerId) query = query.eq('customer_id', filters.customerId)
@@ -65,16 +58,7 @@ export async function listOrders(filters?: {
     if (!error && data && data.length > 0) return data
   } catch {}
 
-  // 3. Fallback to local store
-  const localOrders = getOrders()
-  return localOrders
-    .filter((o) => {
-      if (filters?.customerId && o.customer_id !== filters.customerId) return false
-      if (filters?.restaurantId && o.restaurant_id !== filters.restaurantId) return false
-      if (filters?.status && o.status !== filters.status) return false
-      return true
-    })
-    .slice(0, filters?.limit)
+  throw new Error('No orders available from configured backend')
 }
 
 export async function countOrders(filters?: {
@@ -120,43 +104,13 @@ export async function createOrder(data: {
   utr_ref?: string
   customer_vpa?: string
 }) {
-  // Always save to file as guaranteed baseline
-  try {
-    const record: OrderRecord = {
-      id: data.id,
-      customer_id: data.customer_id || 'usr_anonymous',
-      customer_name: data.customer_name,
-      customer_phone: data.customer_phone,
-      customer_address: data.customer_address || '',
-      restaurant_id: data.restaurant_id || 'vnd_default',
-      restaurant_name: data.restaurant_name,
-      items: Array.isArray(data.items) ? data.items : [],
-      subtotal: data.subtotal,
-      packaging_fee: data.packaging_fee ?? 0,
-      gst: data.gst ?? 0,
-      total_amount: data.total_amount,
-      status: data.status as any,
-      payment_method: data.payment_method || 'UPI Online',
-      delivery_otp: data.delivery_otp || '1234',
-      utr_ref: data.utr_ref,
-      customer_vpa: data.customer_vpa,
-      payment_status: 'pending',
-      createdAt: new Date().toISOString(),
-    }
-    saveOrderToFile(record)
-  } catch (err) {
-    console.warn('Local order file store note:', err)
-  }
-
-  // 1. Try Prisma
   try {
     const { utr_ref, customer_vpa, ...prismaData } = data
     return await prisma.order.create({ data: prismaData })
   } catch (prismaErr: any) {
-    console.warn('Prisma createOrder note (falling back):', prismaErr.message?.substring(0, 80))
+    // Prisma unavailable; continue to Supabase.
   }
 
-  // 2. Try Supabase REST
   try {
     const { utr_ref, customer_vpa, ...insertData } = data
     const { data: created, error } = await supabase
@@ -165,13 +119,11 @@ export async function createOrder(data: {
       .select()
       .single()
     if (!error && created) return created
-  } catch (sbErr) {}
-
-  // 3. Return local order object if DBs are offline/missing table
-  return {
-    ...data,
-    created_at: new Date(),
+  } catch (sbErr) {
+    // Supabase unavailable; fail loudly instead of claiming a successful order write.
   }
+
+  throw new Error(`Unable to create order for customer: ${data.customer_name}`)
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
@@ -194,14 +146,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
       if (data) return data
     } catch {}
 
-    const localOrders = getOrders()
-    const found = localOrders.find((o) => o.id === id)
-    if (found) {
-      found.status = status as any
-      saveOrderToFile(found)
-      return found
-    }
-    return null
+    throw new Error(`Unable to update order status for id: ${id}`)
   }
 }
 
@@ -218,26 +163,9 @@ export async function updateOrder(
     payment_status?: string
   }
 ) {
-  // Update local file store
-  try {
-    const localOrders = getOrders()
-    const found = localOrders.find((o) => o.id === id)
-    if (found) {
-      if (data.status) found.status = data.status as any
-      if (data.driver_name) found.driver_name = data.driver_name
-      if (data.driver_phone) found.driver_phone = data.driver_phone
-      if (data.delivery_latitude) found.driver_lat = data.delivery_latitude
-      if (data.delivery_longitude) found.driver_lng = data.delivery_longitude
-      if (data.payment_status) found.payment_status = data.payment_status as any
-      saveOrderToFile(found)
-    }
-  } catch {}
-
-  // Try Prisma
   try {
     return await prisma.order.update({ where: { id }, data })
   } catch (e) {
-    // Try Supabase
     try {
       const { data: updated } = await supabase
         .from('orders')
@@ -247,7 +175,8 @@ export async function updateOrder(
         .single()
       if (updated) return updated
     } catch {}
-    return { id, ...data }
+
+    throw new Error(`Unable to update order: ${id}`)
   }
 }
 

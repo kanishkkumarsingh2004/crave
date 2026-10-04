@@ -30,7 +30,7 @@ export default function HomePage() {
     }
   }, [user, role, isLoading, router])
 
-  if (isLoading || user) {
+  if (!isLoading && user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">

@@ -60,10 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
    useEffect(() => {
-     let cancelled = false
-     async function restoreSession() {
-       try {
-         const savedUserStr =
+    let cancelled = false
+
+    async function restoreSession() {
+      try {
+        const savedUserStr =
           typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
         const savedToken =
           typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
@@ -77,11 +78,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setIsLoading(false)
               return
             }
-          } catch (e) {}
+          } catch (e) {
+            console.warn('Stored session data was invalid, clearing it.')
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('crave_user')
+              localStorage.removeItem('crave_token')
+            }
+          }
         }
 
-        const { data: sessionData } = await supabase.auth.getSession()
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000)),
+        ])
+
+        const sessionData = (sessionResult as any)?.data ?? { session: null }
         const accessToken = sessionData.session?.access_token
+
         if (accessToken) {
           const response = await fetch('/api/auth/login', {
             method: 'POST',
@@ -97,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return
           }
+
           await supabase.auth.signOut()
         }
       } catch (err) {
@@ -105,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) setIsLoading(false)
       }
     }
+
     restoreSession()
     return () => {
       cancelled = true
