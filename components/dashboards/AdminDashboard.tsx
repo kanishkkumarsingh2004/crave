@@ -153,7 +153,7 @@ export default function AdminDashboard() {
       setAccountsLoading(true)
 
       // 1. Fetch real vendors table records
-      const { data: vendorsData } = await supabase.from('vendors').select('*')
+      const { data: vendorsData } = await (supabase as any).from('vendors').select('*')
 
       // 2. Fetch real users table records
       const { data: usersData } = await supabase
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
 
       const realVendorsList: VendorStore[] = vendorsData
-        ? vendorsData.map((v) => ({
+        ? (vendorsData as any[]).map((v: any) => ({
             id: v.id,
             userId: v.userId,
             storeName: v.storeName || 'Unnamed Store',
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
 
       // Add users from public.users
       if (usersData && usersData.length > 0) {
-        usersData.forEach((u) => {
+        usersData.forEach((u: any) => {
           const matchedVendor = realVendorsList.find((v) => v.userId === u.id || v.id === u.id)
           const isXP =
             matchedVendor?.description?.toLowerCase().includes('xp') ||
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
     setProductsLoading(true)
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('products')
         .select('*')
         .eq('vendorId', vendor.id)
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
 
       if (!error && data) {
         setVendorProducts(
-          data.map((p) => ({
+          data.map((p: any) => ({
             id: p.id,
             vendorId: p.vendorId,
             categoryId: p.categoryId,
@@ -448,7 +448,7 @@ export default function AdminDashboard() {
 
     try {
       if (isEdit) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('products')
           .update({
             name: productForm.name,
@@ -465,7 +465,7 @@ export default function AdminDashboard() {
         if (error) throw error
         triggerToast(`Updated product '${productForm.name}' pricing & details!`)
       } else {
-        const { error } = await supabase.from('products').insert([
+        const { error } = await (supabase as any).from('products').insert([
           {
             id: prodId,
             vendorId: selectedVendorForMenu.id,

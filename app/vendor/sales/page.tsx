@@ -94,7 +94,7 @@ export default function VendorSalesPage() {
         if (orderResult.error) throw orderResult.error
         if (settlementResult.error) throw settlementResult.error
 
-        setOrders(orderResult.data ?? [])
+        setOrders((orderResult.data as any) ?? [])
         setSettlementsHistory(
           (settlementResult.data ?? []).map((settlement) => ({
             id: settlement.id,

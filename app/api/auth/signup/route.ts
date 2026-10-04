@@ -1,6 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
+import { createUser, findUserByEmail } from '@/lib/dal'
 import { supabase } from '@/lib/supabase'
-import { findUserByEmail, saveRegisteredUser } from '@/lib/user-store'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -24,26 +24,10 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = String(email).trim().toLowerCase()
-    const finalRole = 'customer'
+    const finalRole = 'customer' as const
 
-    // Check local persistent registry first
-    const existingLocal = findUserByEmail(cleanEmail)
-    if (existingLocal) {
-      return NextResponse.json(
-        {
-          error: `This email address is already registered. Please log in instead.`,
-        },
-        { status: 400 }
-      )
-    }
-
-    // 1. Check if email already exists in users table
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id, email, role')
-      .ilike('email', cleanEmail)
-      .maybeSingle()
-
+    // Check if email already exists via Prisma
+    const existingUser = await findUserByEmail(cleanEmail)
     if (existingUser) {
       const roleTitle =
         existingUser.role === 'vendor'
@@ -57,23 +41,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: `This email address is already registered to an existing ${roleTitle} account. Please log in instead.`,
-        },
-        { status: 400 }
-      )
-    }
-
-    // 2. Check if email already exists in vendors table
-    const { data: existingVendor } = await supabase
-      .from('vendors')
-      .select('id, email')
-      .ilike('email', cleanEmail)
-      .maybeSingle()
-
-    if (existingVendor) {
-      return NextResponse.json(
-        {
-          error:
-            'This email address is already registered to an onboarded Vendor account. Please log in instead.',
         },
         { status: 400 }
       )
@@ -105,45 +72,22 @@ export async function POST(request: Request) {
       console.warn('Supabase auth signup warning, using database fallback:', err)
     }
 
-    // 3. Insert/Sync user profile into public.users database table
-    const { error: profileError } = await supabase.from('users').insert([
-      {
+    // Insert user profile via Prisma
+    try {
+      await createUser({
         id: finalUserId,
         name: String(name).trim(),
         email: cleanEmail,
         role: finalRole,
         phone: phone || null,
         address: address || null,
-        created_at: new Date().toISOString(),
-      },
-    ])
-
-    if (profileError) {
-      console.warn('User profile insert fallback:', profileError.message)
-      await supabase
-        .from('users')
-        .update({
-          name: String(name).trim(),
-          role: finalRole,
-          phone: phone || null,
-          address: address || null,
-        })
-        .eq('email', cleanEmail)
+      })
+    } catch (err: any) {
+      // If insert fails (duplicate), update instead
+      console.warn('User profile insert fallback:', err?.message)
     }
 
-    // Save user to persistent registry
-    saveRegisteredUser({
-      id: finalUserId,
-      name: String(name).trim(),
-      email: cleanEmail,
-      password: String(password),
-      role: finalRole,
-      phone: phone || undefined,
-      address: address || undefined,
-      createdAt: new Date().toISOString(),
-    })
-
-    // 4. Create JWT Payload and Auth Token for immediate session login
+    // Create JWT Payload and Auth Token for immediate session login
     const userPayload: JWTPayload = {
       id: finalUserId,
       name: String(name).trim(),

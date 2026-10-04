@@ -17,11 +17,40 @@ export interface Coupon {
 
 export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<Coupon[]> {
   try {
-    let query = supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    if (typeof window !== 'undefined') {
+      const url = restaurantId
+        ? `/api/admin/coupons?restaurantId=${encodeURIComponent(restaurantId)}`
+        : '/api/admin/coupons'
+      const res = await fetch(url)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.success && Array.isArray(json.coupons)) {
+          return json.coupons.map((item: any) => ({
+            id: item.id,
+            code: item.code,
+            description: item.description,
+            discountType: item.discount_type as 'percentage' | 'flat',
+            discountValue: Number(item.discount_value),
+            minOrderAmount: Number(item.min_order_amount),
+            maxDiscount: item.max_discount == null ? undefined : Number(item.max_discount),
+            expiryDate: item.expiry_date ? String(item.expiry_date).split('T')[0] : '',
+            usageLimit: item.usage_limit == null ? undefined : Number(item.usage_limit),
+            usedCount: Number(item.used_count ?? 0),
+            isActive: Boolean(item.is_active),
+            restaurantId: item.restaurant_id ?? undefined,
+          }))
+        }
+      }
+    }
+
+    // Direct Supabase fallback
+    let query = supabase.from('coupons').select('*')
     if (restaurantId) query = query.eq('restaurant_id', restaurantId)
     const { data, error } = await query
-    if (error) throw error
-    return (data ?? []).map((item) => ({
+
+    if (error || !data) return []
+
+    return data.map((item) => ({
       id: item.id,
       code: item.code,
       description: item.description,
@@ -29,7 +58,7 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
       discountValue: Number(item.discount_value),
       minOrderAmount: Number(item.min_order_amount),
       maxDiscount: item.max_discount == null ? undefined : Number(item.max_discount),
-      expiryDate: item.expiry_date ?? '',
+      expiryDate: item.expiry_date ? String(item.expiry_date).split('T')[0] : '',
       usageLimit: item.usage_limit == null ? undefined : Number(item.usage_limit),
       usedCount: Number(item.used_count ?? 0),
       isActive: Boolean(item.is_active),

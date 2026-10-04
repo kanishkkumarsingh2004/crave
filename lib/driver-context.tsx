@@ -341,7 +341,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         .update({
           driver_name: 'Verified Delivery Partner',
           driver_phone: '+91 98765 43210',
-          status: 'out_for_delivery',
+          status: 'picked_up',
         })
         .eq('id', realId)
     } catch (e) {

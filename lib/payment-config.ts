@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase'
-
 export interface PaymentConfig {
   upiVpa: string
   merchantName: string
@@ -77,24 +75,14 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
   }
 
   try {
-    const { error } = await supabase.from('payment_configs').upsert({
-      id: 'default_config',
-      name: 'Default Active Config',
-      merchant_vpa: config.upiVpa,
-      merchant_name: config.merchantName,
-      merchant_category_code: config.mccCode,
-      delivery_fee: config.baseDeliveryFee,
-      handling_fee: config.handlingFee,
-      free_delivery_threshold: config.freeDeliveryThreshold,
-      is_active: true,
-      updated_at: new Date().toISOString(),
+    const res = await fetch('/api/payment-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
     })
-    if (error) {
-      console.warn('Supabase payment_configs upsert warning:', error.message)
-    }
-    return true
+    return res.ok
   } catch (e) {
-    console.warn('Supabase payment_configs upsert error:', e)
+    console.warn('API payment config save error:', e)
     return true
   }
 }
@@ -102,32 +90,18 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
 export async function loadPaymentConfig(): Promise<PaymentConfig> {
   const local = getLocalPaymentConfig()
   try {
-    const { data, error } = await supabase
-      .from('payment_configs')
-      .select('*')
-      .eq('is_active', true)
-      .maybeSingle()
-
-    if (!error && data) {
-      const merged: PaymentConfig = {
-        ...local,
-        upiVpa: data.merchant_vpa || local.upiVpa,
-        merchantName: data.merchant_name || local.merchantName,
-        mccCode: data.merchant_category_code || local.mccCode,
-        baseDeliveryFee: data.delivery_fee != null ? Number(data.delivery_fee) : local.baseDeliveryFee,
-        handlingFee: data.handling_fee != null ? Number(data.handling_fee) : local.handlingFee,
-        freeDeliveryThreshold:
-          data.free_delivery_threshold != null
-            ? Number(data.free_delivery_threshold)
-            : local.freeDeliveryThreshold,
+    const res = await fetch('/api/payment-config')
+    if (res.ok) {
+      const data = await res.json()
+      if (data?.config) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.config))
+        }
+        return data.config
       }
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-      }
-      return merged
     }
   } catch (e) {
-    console.warn('Failed to load payment config from Supabase:', e)
+    console.warn('Failed to load payment config from API:', e)
   }
   return local
 }

@@ -118,31 +118,15 @@ export default function CraveXPStoreConsole() {
     const loadConsoleData = async () => {
       setDashboardError('')
       try {
-        let vendorId = 'cmur2n46c000lg1dkpbvcyg83'
-        try {
-          const { data: vData } = await supabase
-            .from('vendors')
-            .select('id, storeName, address, isOpen')
-            .eq('userId', user.id)
-            .maybeSingle()
-
-          if (vData) {
-            vendorId = vData.id
-            setRestaurantId(vData.id)
-            setRestaurantName(vData.storeName || 'craveXP Store')
-            setRestaurantAddress(vData.address || '')
-            setStoreOnline(Boolean(vData.isOpen))
-          } else {
-            setRestaurantId(vendorId)
-            setRestaurantName(user.restaurantName || 'craveXP Store #01')
-            setRestaurantAddress(user.address || 'Kanakapura Road Hub #01, Bengaluru')
-            setStoreOnline(true)
-          }
-        } catch {}
+        let vendorId = 'cravexp_dark_store_01'
+        setRestaurantId('cravexp_dark_store_01')
+        setRestaurantName('craveXP Instamart Warehouse #01')
+        setRestaurantAddress('Kanakapura Road Central Dark Store Warehouse, Bengaluru')
+        setStoreOnline(true)
 
         const [orderResult, inventoryResult, sensorResult, pickerResult] = await Promise.all([
           supabase.from('orders').select('*').order('created_at', { ascending: false }),
-          supabase.from('products').select('*').order('name'),
+          supabase.from('menu_items').select('*').eq('restaurant_id', 'cravexp_dark_store_01').order('name'),
           supabase.from('cold_chain_sensors').select('*').order('name'),
           supabase.from('picker_metrics').select('*').order('orders_packed', { ascending: false }),
         ])
@@ -281,7 +265,7 @@ export default function CraveXPStoreConsole() {
       .from('restaurants')
       .update({ is_open: nextStatus })
       .eq('id', restaurantId)
-      .eq('owner_id', user?.id)
+      .eq('owner_id', user?.id || '')
     if (error) {
       triggerToast('Could not update store availability.')
       return
@@ -428,7 +412,7 @@ export default function CraveXPStoreConsole() {
     const nextCount = nextStock ? Math.max(item.stockCount, 1) : 0
     const nextStatus = nextStock ? 'ACTIVE' : 'OUT_OF_STOCK'
 
-    let { error } = await supabase
+    let { error } = await (supabase as any)
       .from('products')
       .update({ status: nextStatus, updatedAt: new Date().toISOString() })
       .eq('id', itemId)
@@ -460,7 +444,7 @@ export default function CraveXPStoreConsole() {
     const newCount = Math.max(0, item.stockCount + delta)
     const nextStatus = newCount > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
 
-    let { error } = await supabase
+    let { error } = await (supabase as any)
       .from('products')
       .update({ status: nextStatus, updatedAt: new Date().toISOString() })
       .eq('id', itemId)
@@ -527,7 +511,7 @@ export default function CraveXPStoreConsole() {
       updatedAt: new Date().toISOString(),
     }
 
-    let { error } = await supabase.from('products').insert([productRecord])
+    let { error } = await (supabase as any).from('products').insert([productRecord])
 
     if (error && error.code === 'PGRST205') {
       const fallback = await supabase.from('menu_items').insert([
