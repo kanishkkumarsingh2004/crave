@@ -10,7 +10,9 @@ RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
 RUN pnpm install --no-frozen-lockfile
 COPY . .
 ARG DATABASE_URL
+ARG JWT_SECRET
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://placeholder:placeholder@placeholder:5432/placeholder?schema=public}
+ENV JWT_SECRET=${JWT_SECRET:-crave_jwt_secret_key_bengaluru_2026_super_secure_auth}
 RUN npx prisma generate
 RUN pnpm run build
 

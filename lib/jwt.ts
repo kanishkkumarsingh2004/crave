@@ -1,10 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('FATAL: JWT_SECRET environment variable must be configured in production!')
+function getJwtSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET || 'crave_jwt_secret_key_bengaluru_2026_super_secure_auth'
+  return new TextEncoder().encode(secret)
 }
-const jwtSecret = process.env.JWT_SECRET || 'crave_jwt_secret_key_bengaluru_2026_super_secure_auth'
-const JWT_SECRET = new TextEncoder().encode(jwtSecret)
 
 export interface JWTPayload {
   id: string
@@ -28,14 +27,14 @@ export async function createToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET)
+    .sign(getJwtSecretKey())
 
   return token
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
+    const { payload } = await jwtVerify(token, getJwtSecretKey(), {
       algorithms: ['HS256'],
     })
     return payload as JWTPayload

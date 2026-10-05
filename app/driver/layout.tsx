@@ -331,13 +331,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 )}
               </span>
             </button>
-
-            {/* Language Switcher */}
-            {sidebarCollapsed ? (
-              <LanguageSwitcher variant="inline" />
-            ) : (
-              <LanguageSwitcher variant="pill" />
-            )}
           </div>
         </div>
       </aside>

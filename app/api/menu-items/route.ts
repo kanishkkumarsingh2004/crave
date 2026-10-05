@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -44,6 +45,9 @@ export async function POST(request: Request) {
         sku_code: body.sku_code || null,
       },
     })
+
+    broadcast('menu_items', { type: 'create', item, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
     return NextResponse.json(
@@ -68,6 +72,9 @@ export async function PATCH(request: Request) {
     if (data.stock_count != null) data.stock_count = Number(data.stock_count)
 
     const item = await prisma.menuItem.update({ where: { id }, data })
+
+    broadcast('menu_items', { type: 'update', item, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
     return NextResponse.json(
@@ -87,6 +94,9 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.menuItem.delete({ where: { id } })
+
+    broadcast('menu_items', { type: 'delete', id, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json(

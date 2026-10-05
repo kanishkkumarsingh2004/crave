@@ -1,6 +1,7 @@
 import { listVendorSettlements, updateVendorSettlementStatus } from '@/lib/dal/payments'
 import { verifyToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -54,6 +55,15 @@ export async function POST(request: Request) {
         data: { commission_rate: Number(commission_rate) },
       })
     }
+
+    broadcast('admin_settlements', {
+      type: 'update',
+      id,
+      status,
+      commission_rate,
+      restaurant_id,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({ success: true, message: 'Settlement updated successfully' })
   } catch (error: any) {

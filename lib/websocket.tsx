@@ -178,3 +178,14 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
     },
   })
 }
+
+export function useAdminStatsUpdates(onEvent: (data: any) => void) {
+  return useWebSocket({
+    channels: ['admin_stats', 'admin_users'],
+    onMessage: (msg) => {
+      if (msg.channel === 'admin_stats' || msg.channel === 'admin_users') {
+        onEvent(msg.data)
+      }
+    },
+  })
+}

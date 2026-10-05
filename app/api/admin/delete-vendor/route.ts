@@ -2,6 +2,7 @@ import { findUserByEmail, deleteUser } from '@/lib/dal'
 import { deleteRestaurant, deleteRestaurantsByOwner } from '@/lib/dal/restaurants'
 import { deleteMenuItemsByRestaurant } from '@/lib/dal/menu-items'
 import { verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -81,6 +82,19 @@ export async function POST(request: Request) {
         // May not exist as user
       }
     }
+
+    // Broadcast vendor deletion event to Admin WebSocket channels
+    broadcast('admin_stats', {
+      type: 'vendor_deleted',
+      vendorId: targetVendorId,
+      userId: targetUserId,
+      timestamp: new Date().toISOString(),
+    })
+    broadcast('admin_users', {
+      type: 'user_deleted',
+      userId: targetUserId,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({
       success: true,

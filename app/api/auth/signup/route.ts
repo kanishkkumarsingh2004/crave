@@ -1,6 +1,7 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail } from '@/lib/dal'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -97,6 +98,19 @@ export async function POST(request: Request) {
       phone: phone || undefined,
       address: address || undefined,
     }
+
+    // Broadcast real-time server signup event to Admin WebSocket channels (Live count update)
+    broadcast('admin_stats', {
+      type: 'user_signup',
+      role: finalRole,
+      user: userPayload,
+      timestamp: new Date().toISOString(),
+    })
+    broadcast('admin_users', {
+      type: 'user_signup',
+      user: userPayload,
+      timestamp: new Date().toISOString(),
+    })
 
     const token = await createToken(userPayload)
     const response = NextResponse.json({

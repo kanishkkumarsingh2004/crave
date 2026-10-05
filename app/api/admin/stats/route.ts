@@ -62,7 +62,7 @@ export async function GET(request?: Request) {
         driverCount: drivers.length,
         totalUsers: customers.length + vendors.length + drivers.length,
         restaurantCount: restaurants.length,
-        liveDevices: Math.max(1, customers.length + vendors.length + drivers.length + 2),
+        liveDevices: Math.max(1, customers.length + vendors.length + drivers.length),
       },
     })
   } catch (error: any) {

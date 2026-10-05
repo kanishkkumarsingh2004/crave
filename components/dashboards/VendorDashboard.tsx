@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { useLanguage } from '@/lib/language-context'
 import {
   ArrowUpRight,
   ChartColumn,
@@ -38,6 +39,7 @@ interface KitchenOrder {
 
 export default function VendorDashboard() {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
@@ -168,11 +170,31 @@ export default function VendorDashboard() {
 
         <nav className="flex-1 space-y-1 p-4" aria-label="Vendor navigation">
           {[
-            { href: '/vendor/dashboard', label: 'Kitchen Orders', icon: ShoppingBag },
-            { href: '/vendor/menu', label: 'Menu Management', icon: UtensilsCrossed },
-            { href: '/vendor/sales', label: 'Sales & Earnings', icon: ChartColumn },
-            { href: '/vendor/coupons', label: 'Store Offers', icon: Percent },
-            { href: '/vendor/settings', label: 'Bank & Settings', icon: Settings },
+            {
+              href: '/vendor/dashboard',
+              label: t.vendor.liveOrders || 'Kitchen Orders',
+              icon: ShoppingBag,
+            },
+            {
+              href: '/vendor/menu',
+              label: t.vendor.menuManagement || 'Menu Management',
+              icon: UtensilsCrossed,
+            },
+            {
+              href: '/vendor/sales',
+              label: t.vendor.salesReports || 'Sales & Earnings',
+              icon: ChartColumn,
+            },
+            {
+              href: '/vendor/coupons',
+              label: t.vendor.couponManager || 'Store Offers',
+              icon: Percent,
+            },
+            {
+              href: '/vendor/settings',
+              label: t.vendor.vendorSettings || 'Bank & Settings',
+              icon: Settings,
+            },
           ].map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href
             return (

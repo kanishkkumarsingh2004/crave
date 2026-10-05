@@ -8,8 +8,6 @@ import {
 import { findRestaurantById } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { broadcast } from '@/lib/ws-server'
-import fs from 'fs'
-import path from 'path'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
@@ -23,12 +21,6 @@ async function getActor(request: Request): Promise<JWTPayload | null> {
 }
 
 function getActiveConfig(): PaymentConfig {
-  try {
-    const configPath = path.join(process.cwd(), 'data', 'payment_config.json')
-    if (fs.existsSync(configPath)) {
-      return { ...DEFAULT_PAYMENT_CONFIG, ...JSON.parse(fs.readFileSync(configPath, 'utf8')) }
-    }
-  } catch {}
   return DEFAULT_PAYMENT_CONFIG
 }
 
@@ -226,6 +218,18 @@ export async function POST(request: Request) {
         console.warn('Driver payout creation notice:', payoutErr)
       }
     }
+
+    // Broadcast real-time order creation to Admin WebSocket channels
+    broadcast('admin_stats', {
+      type: 'new_order',
+      order,
+      timestamp: new Date().toISOString(),
+    })
+    broadcast('admin_orders', {
+      type: 'new_order',
+      order,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({
       success: true,
