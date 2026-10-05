@@ -116,6 +116,7 @@ const kn: Dictionary = {
     commandCenter: 'ಅಡ್ಮಿನ್ ಕಮಾಂಡ್ ಸೆಂಟರ್',
     platformOverview: 'ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಅವಲೋಕನ',
     platformAnalytics: 'ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ವಿಶ್ಲೇಷಣೆ',
+    aiAnalytics: 'AI ವಿಶ್ಲೇಷಣೆ',
     paymentReviewQueue: 'ಪಾವತಿ ಪರಿಶೀಲನಾ ಸಾಲು',
     userAccounts: 'ಬಳಕೆದಾರ ಖಾತೆಗಳು',
     couponsDiscounts: 'ಕೂಪನ್ ಮತ್ತು ರಿಯಾಯಿತಿ',

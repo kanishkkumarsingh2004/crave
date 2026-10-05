@@ -1,4 +1,4 @@
-const crypto = require('crypto')
+const nodeCrypto = require('crypto')
 
 const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_JWT_SECRET'
 
@@ -40,7 +40,7 @@ class SignJWT {
     const header = base64UrlEncode(JSON.stringify(this.header))
     const payload = base64UrlEncode(JSON.stringify({ ...this.payload }))
     const data = `${header}.${payload}`
-    const signature = crypto
+    const signature = nodeCrypto
       .createHmac('sha256', Buffer.from(typeof secret === 'string' ? secret : String(secret)))
       .update(data)
       .digest('base64')
@@ -59,7 +59,7 @@ async function jwtVerify(token: string, secret: string | Uint8Array, _opts?: any
 
   const [headerB64, payloadB64, signature] = parts
   const data = `${headerB64}.${payloadB64}`
-  const expectedSignature = crypto
+  const expectedSignature = nodeCrypto
     .createHmac('sha256', Buffer.from(typeof secret === 'string' ? secret : String(secret)))
     .update(data)
     .digest('base64')

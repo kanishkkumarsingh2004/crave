@@ -218,22 +218,47 @@ export default function CustomerDashboard({
     return () => window.removeEventListener('toggle-mobile-sidebar', handleToggleSidebar)
   }, [])
 
-  const { setItems: setGlobalItems, clearCart: clearGlobalCart } = useCart()
+  const { items: globalCartItems, setItems: setGlobalItems, isLoaded: globalCartLoaded } = useCart()
+  const [isCartInitialized, setIsCartInitialized] = useState(false)
 
+  // Sync initial cart state from CartProvider / localStorage on mount
   useEffect(() => {
-    setGlobalItems(
-      cart.map((item) => ({
-        id: item.id,
-        name: item.name,
-        qty: item.qty,
-        price: item.price,
-      }))
-    )
-  }, [cart])
+    if (!isCartInitialized) {
+      if (globalCartItems.length > 0) {
+        setCart(globalCartItems as CartItem[])
+        setIsCartInitialized(true)
+      } else if (globalCartLoaded) {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('crave_cart') : null
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCart(parsed)
+            }
+          } catch {}
+        }
+        setIsCartInitialized(true)
+      }
+    }
+  }, [globalCartItems, globalCartLoaded, isCartInitialized])
 
+  // Sync local cart updates to CartContext once initialized
   useEffect(() => {
-    return () => clearGlobalCart()
-  }, [])
+    if (isCartInitialized) {
+      setGlobalItems(
+        cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          detail: item.detail,
+          image: item.image,
+          veg: item.veg,
+          restaurantName: item.restaurantName,
+        }))
+      )
+    }
+  }, [cart, isCartInitialized, setGlobalItems])
 
   // Fetch Live Restaurants / Vendors from local DB
   useEffect(() => {
@@ -2265,11 +2290,135 @@ export default function CustomerDashboard({
                     </div>
                   ))}
 
+                  {/* Coupons & Offers Section */}
+                  <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-3.5 text-xs flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold text-[#18201c]">
+                        <Tag className="size-4 text-[#86a018]" />
+                        <span>Coupons &amp; Offers</span>
+                      </div>
+                      {appliedCoupon && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-[11px] font-bold text-rose-600 hover:text-rose-800 transition"
+                        >
+                          Remove Coupon
+                        </button>
+                      )}
+                    </div>
+
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 p-2.5">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="size-4 text-emerald-600 fill-emerald-600 shrink-0" />
+                          <div>
+                            <div className="flex items-center gap-1.5 font-extrabold text-[#18201c]">
+                              <span className="bg-emerald-600 text-white font-mono px-2 py-0.5 rounded text-[10px] tracking-wide">
+                                {appliedCoupon.code}
+                              </span>
+                              <span className="text-xs text-emerald-900">Applied</span>
+                            </div>
+                            <p className="text-[10px] text-emerald-700 mt-0.5">
+                              {appliedCoupon.description || `You saved ₹${couponDiscount}!`}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-extrabold text-emerald-800 text-xs shrink-0">-₹{couponDiscount}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter coupon code (e.g. CRAVE50)"
+                          value={couponCodeInput}
+                          onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleApplyCouponCode()
+                            }
+                          }}
+                          className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-[#18201c] uppercase placeholder:normal-case placeholder:font-normal placeholder:text-gray-400 focus:border-[#86a018] focus:outline-hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleApplyCouponCode()}
+                          className="rounded-xl bg-[#18201c] px-4 py-2 text-xs font-bold text-white hover:bg-[#323d36] transition shadow-xs"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    )}
+
+                    {couponMessage && (
+                      <div
+                        className={`rounded-xl p-2 text-[11px] font-medium flex items-center gap-2 ${
+                          couponMessage.type === 'success'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-800 border border-rose-200'
+                        }`}
+                      >
+                        {couponMessage.type === 'success' ? (
+                          <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="size-3.5 text-rose-600 shrink-0" />
+                        )}
+                        <span>{couponMessage.text}</span>
+                      </div>
+                    )}
+
+                    {/* Available Coupons List */}
+                    {availableCoupons.length > 0 && !appliedCoupon && (
+                      <div className="flex flex-col gap-1.5 pt-1 border-t border-gray-200/60">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          Available Coupons
+                        </p>
+                        <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1">
+                          {availableCoupons.map((c) => (
+                            <div
+                              key={c.id}
+                              className="flex items-center justify-between rounded-xl border border-dashed border-[#86a018]/50 bg-[#f8faee] p-2 hover:bg-[#f3f7e3] transition"
+                            >
+                              <div className="pr-2">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-extrabold text-[10px] text-[#18201c] bg-[#d9f447] px-1.5 py-0.5 rounded">
+                                    {c.code}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-[#687e11]">
+                                    {c.discountType === 'percentage'
+                                      ? `${c.discountValue}% OFF`
+                                      : `FLAT ₹${c.discountValue} OFF`}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-gray-600 mt-0.5 line-clamp-1">{c.description}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleApplyCouponCode(c.code)}
+                                className="rounded-lg bg-[#18201c] px-2.5 py-1 text-[10px] font-extrabold text-[#d9f447] hover:bg-[#323d36] transition shrink-0"
+                              >
+                                APPLY
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="mt-3 rounded-2xl bg-gray-50 p-4 text-xs flex flex-col gap-2 border border-gray-200">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal Items</span>
                       <span className="font-semibold text-[#18201c]">₹{cartSubtotal}</span>
                     </div>
+
+                    {appliedCoupon && couponDiscount > 0 && (
+                      <div className="flex justify-between font-semibold text-emerald-700">
+                        <span>Coupon Discount ({appliedCoupon.code})</span>
+                        <span>-₹{couponDiscount}</span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-gray-600">
                       <span>Packaging &amp; Restaurant Taxes</span>
@@ -2402,6 +2551,12 @@ export default function CustomerDashboard({
                     <span>Items Subtotal ({totalCartItemCount} items)</span>
                     <span>₹{cartSubtotal}</span>
                   </div>
+                  {appliedCoupon && couponDiscount > 0 && (
+                    <div className="flex justify-between py-1 font-semibold text-emerald-700">
+                      <span>Coupon Discount ({appliedCoupon.code})</span>
+                      <span>-₹{couponDiscount}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-1 text-[#65716a]">
                     <span>Delivery, packaging &amp; taxes</span>
                     <span>₹{deliveryFee + packagingFee + taxAmount}</span>

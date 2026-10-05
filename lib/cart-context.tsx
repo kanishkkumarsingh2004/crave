@@ -7,6 +7,12 @@ export interface CartItem {
   name: string
   qty: number
   price: number
+  detail?: string
+  image?: string
+  veg?: boolean
+  restaurantName?: string
+  restaurantId?: string
+  vendorId?: string
 }
 
 interface CartContextType {
@@ -14,8 +20,9 @@ interface CartContextType {
   addItem: (item: CartItem) => void
   removeItem: (id: string) => void
   clearCart: () => void
-  setItems: (items: CartItem[]) => void
+  setItems: React.Dispatch<React.SetStateAction<CartItem[]>>
   totalCount: number
+  isLoaded: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -24,19 +31,33 @@ const STORAGE_KEY = 'crave_cart'
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        setItems(JSON.parse(stored))
-      } catch {}
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          setItems(parsed)
+        }
+      }
+    } catch (e) {
+      console.error('Error loading cart from localStorage:', e)
+    } finally {
+      setIsLoaded(true)
     }
   }, [])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-  }, [items])
+    if (isLoaded) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+      } catch (e) {
+        console.error('Error saving cart to localStorage:', e)
+      }
+    }
+  }, [items, isLoaded])
 
   const addItem = (item: CartItem) => {
     setItems((prev) => {
@@ -57,7 +78,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalCount = items.reduce((sum, item) => sum + item.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, setItems, totalCount }}>
+    <CartContext.Provider
+      value={{ items, addItem, removeItem, clearCart, setItems, totalCount, isLoaded }}
+    >
       {children}
     </CartContext.Provider>
   )
@@ -68,3 +91,4 @@ export function useCart() {
   if (!ctx) throw new Error('useCart must be used within CartProvider')
   return ctx
 }
+

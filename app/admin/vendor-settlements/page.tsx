@@ -187,16 +187,31 @@ export default function VendorSettlementsPage() {
   }
 
   // Update Vendor Pricing & Commission in Playground
-  function updateVendorPricing(id: string, field: keyof VendorFinancialRecord, value: any) {
+  async function updateVendorPricing(id: string, field: keyof VendorFinancialRecord, value: any) {
     setVendors((prev) => prev.map((v) => (v.id === id ? { ...v, [field]: value } : v)))
     if (selectedVendor && selectedVendor.id === id) {
       setSelectedVendor((prev) => (prev ? { ...prev, [field]: value } : null))
     }
+
+    try {
+      await fetch('/api/admin/settlements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          restaurant_id: id,
+          ...(field === 'commissionRate' && { commission_rate: value }),
+          ...(field === 'settlementStatus' && { status: value }),
+        }),
+      })
+    } catch (e) {
+      console.warn('Settlement DB sync notice:', e)
+    }
   }
 
   // Process Settlement Action
-  function markVendorSettled(id: string) {
-    updateVendorPricing(id, 'settlementStatus', 'settled')
+  async function markVendorSettled(id: string) {
+    await updateVendorPricing(id, 'settlementStatus', 'settled')
     setSettlementProcessedSuccess(true)
     setTimeout(() => {
       setSettlementProcessedSuccess(false)

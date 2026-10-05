@@ -108,6 +108,7 @@ const en = {
     commandCenter: 'Admin Command Center',
     platformOverview: 'Platform Overview',
     platformAnalytics: 'Platform Analytics',
+    aiAnalytics: 'AI Analytics',
     paymentReviewQueue: 'Payment Review Queue',
     userAccounts: 'User Accounts',
     couponsDiscounts: 'Coupons & Discounts',

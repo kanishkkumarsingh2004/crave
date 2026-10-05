@@ -4,62 +4,57 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle2,
-  DollarSign,
   FileCheck,
   Globe,
   Lock,
   RotateCcw,
   Save,
+  ShieldCheck,
   Truck,
+  Volume2,
 } from 'lucide-react'
 import React, { useState } from 'react'
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<
-    'general' | 'financial' | 'delivery' | 'security' | 'notifications' | 'onboarding'
+    'general' | 'security' | 'notifications' | 'onboarding'
   >('general')
 
-  // 1. General Settings
-  const [appName, setAppName] = useState('Blinkbite / Crave')
-  const [supportEmail, setSupportEmail] = useState('support@blinkbite.com')
+  // 1. General & Operations Settings
+  const [appName, setAppName] = useState('crave. Food Delivery')
+  const [supportEmail, setSupportEmail] = useState('support@crave.com')
   const [supportPhone, setSupportPhone] = useState('+91 98765 43210')
-  const [currency, setCurrency] = useState('INR (₹)')
-  const [timezone, setTimezone] = useState('Asia/Kolkata (IST)')
-  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false)
-  const [maintenanceNotice, setMaintenanceNotice] = useState(
-    'We are updating our backend services. We will be back online in 15 minutes.'
+  const [currency] = useState('INR (₹)')
+  const [timezone] = useState('Asia/Kolkata (IST)')
+  const [deliveryRadius, setDeliveryRadius] = useState<number>(8)
+  const [maxPreparationTime, setMaxPreparationTime] = useState<number>(25)
+  const [autoAssignDrivers, setAutoAssignDrivers] = useState<boolean>(true)
+
+  // Maintenance Mode
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean>(false)
+  const [maintenanceNotice, setMaintenanceNotice] = useState<string>(
+    'We are performing scheduled backend optimization. Ordering will resume shortly.'
   )
 
-  // 2. Financial & Fee Settings
-  const [platformCommission, setPlatformCommission] = useState<number>(15)
-  const [handlingCharge, setHandlingCharge] = useState<number>(5)
-  const [minOrderValue, setMinOrderValue] = useState<number>(99)
-  const [packagingCap, setPackagingCap] = useState<number>(20)
-  const [gstRate, setGstRate] = useState<number>(5)
-
-  // 3. Logistics & Delivery
-  const [deliveryRadius, setDeliveryRadius] = useState<number>(8)
-  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(30)
-  const [perKmFee, setPerKmFee] = useState<number>(10)
-  const [autoAssignDrivers, setAutoAssignDrivers] = useState<boolean>(true)
-  const [maxPreparationTime, setMaxPreparationTime] = useState<number>(25)
-
-  // 4. Security & Auth
+  // 2. Security & Auth Settings
   const [jwtExpiryDays, setJwtExpiryDays] = useState<number>(7)
   const [requireAdmin2FA, setRequireAdmin2FA] = useState<boolean>(true)
   const [sessionTimeoutMins, setSessionTimeoutMins] = useState<number>(60)
   const [rateLimitPerMin, setRateLimitPerMin] = useState<number>(100)
   const [enforceStrongPassword, setEnforceStrongPassword] = useState<boolean>(true)
 
-  // 5. Notifications
+  // 3. Notifications & Gateways
   const [sendSmsAlerts, setSendSmsAlerts] = useState<boolean>(true)
   const [sendWhatsappAlerts, setSendWhatsappAlerts] = useState<boolean>(true)
   const [sendEmailReceipts, setSendEmailReceipts] = useState<boolean>(true)
+  const [enableSoundAlerts, setEnableSoundAlerts] = useState<boolean>(true)
+  const [smsProvider, setSmsProvider] = useState<string>('Twilio SMS Gateway')
 
-  // 6. Partner Onboarding
+  // 4. Partner Onboarding & Compliance
   const [autoApproveVendors, setAutoApproveVendors] = useState<boolean>(false)
   const [requireFssaiLicense, setRequireFssaiLicense] = useState<boolean>(true)
   const [requireDriverLicense, setRequireDriverLicense] = useState<boolean>(true)
+  const [requireGstin, setRequireGstin] = useState<boolean>(true)
 
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false)
 
@@ -70,23 +65,26 @@ export default function AdminSettingsPage() {
   }
 
   function handleReset() {
-    setAppName('Blinkbite / Crave')
-    setSupportEmail('support@blinkbite.com')
+    setAppName('crave. Food Delivery')
+    setSupportEmail('support@crave.com')
     setSupportPhone('+91 98765 43210')
-    setPlatformCommission(15)
-    setHandlingCharge(5)
-    setMinOrderValue(99)
-    setPackagingCap(20)
-    setGstRate(5)
     setDeliveryRadius(8)
-    setBaseDeliveryFee(30)
-    setPerKmFee(10)
-    setAutoAssignDrivers(true)
     setMaxPreparationTime(25)
+    setAutoAssignDrivers(true)
+    setIsMaintenanceMode(false)
     setJwtExpiryDays(7)
     setRequireAdmin2FA(true)
     setSessionTimeoutMins(60)
-    setIsMaintenanceMode(false)
+    setRateLimitPerMin(100)
+    setEnforceStrongPassword(true)
+    setSendSmsAlerts(true)
+    setSendWhatsappAlerts(true)
+    setSendEmailReceipts(true)
+    setEnableSoundAlerts(true)
+    setAutoApproveVendors(false)
+    setRequireFssaiLicense(true)
+    setRequireDriverLicense(true)
+    setRequireGstin(true)
   }
 
   return (
@@ -98,31 +96,27 @@ export default function AdminSettingsPage() {
             System Administration
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c]">
-            Admin Security & Platform Master Settings
+            Admin Security &amp; Operational Controls
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Manage system-wide parameters, order fees, delivery thresholds, security rules, and
-            onboarding policies.
+            Manage platform identity, operational thresholds, security rules, notification gateways, and partner compliance.
           </p>
         </div>
 
         {savedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2.5 text-xs font-bold text-emerald-900 border border-emerald-300 shadow-sm animate-fade-in">
-            <CheckCircle2 className="size-4 text-emerald-700" /> System Settings Saved & Applied
-            Globally!
+            <CheckCircle2 className="size-4 text-emerald-700" /> Admin Master Settings Saved &amp; Applied!
           </div>
         )}
       </div>
 
-      {/* Navigation Sub-Tabs */}
+      {/* Relevant Navigation Sub-Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
         {[
-          { id: 'general', label: 'General & Operations', icon: Globe },
-          { id: 'financial', label: 'Financials & Fees', icon: DollarSign },
-          { id: 'delivery', label: 'Logistics & Delivery', icon: Truck },
+          { id: 'general', label: 'Platform & Operations', icon: Globe },
           { id: 'security', label: 'Security & Auth', icon: Lock },
-          { id: 'notifications', label: 'Notifications', icon: Bell },
-          { id: 'onboarding', label: 'Partner Onboarding', icon: FileCheck },
+          { id: 'notifications', label: 'Notification Gateways', icon: Bell },
+          { id: 'onboarding', label: 'Partner Compliance', icon: FileCheck },
         ].map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -144,19 +138,19 @@ export default function AdminSettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="flex flex-col gap-6">
-        {/* TAB 1: GENERAL & OPERATIONS */}
+        {/* TAB 1: PLATFORM & OPERATIONS */}
         {activeTab === 'general' && (
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Globe className="size-4 text-[#859d19]" /> Platform Identity & Operational Controls
+                <Globe className="size-4 text-[#859d19]" /> Platform Identity &amp; Dispatch Thresholds
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Set store names, support contacts, and emergency maintenance status.
+                Set brand credentials, support contacts, dispatch radius, and emergency maintenance.
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 text-xs">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
               <div>
                 <label className="font-bold text-[#18201c]">Application / Platform Name *</label>
                 <input
@@ -191,18 +185,69 @@ export default function AdminSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Operating Currency</label>
+                <label className="font-bold text-[#18201c]">Max Delivery Radius (km)</label>
+                <input
+                  type="number"
+                  required
+                  value={deliveryRadius}
+                  onChange={(e) => setDeliveryRadius(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Maximum customer order distance allowed</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Max Kitchen Prep Timeout (mins)</label>
+                <input
+                  type="number"
+                  required
+                  value={maxPreparationTime}
+                  onChange={(e) => setMaxPreparationTime(parseFloat(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400">Target cooking &amp; packing time window</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Operating Currency &amp; Timezone</label>
                 <input
                   type="text"
                   disabled
-                  value={currency}
+                  value={`${currency} · ${timezone}`}
                   className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-bold text-gray-500 cursor-not-allowed"
                 />
               </div>
             </div>
 
+            {/* Rider Auto-Dispatch Box */}
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-blue-900 flex items-center gap-1.5">
+                    <Truck className="size-4 text-blue-600" /> Auto-Assign Nearby Delivery Rider
+                  </h4>
+                  <p className="text-[11px] text-blue-700 mt-0.5">
+                    Automatically match new confirmed orders with the nearest online rider.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAutoAssignDrivers((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                    autoAssignDrivers ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block size-4 transform rounded-full bg-white transition ${
+                      autoAssignDrivers ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             {/* Maintenance Mode Card */}
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 mt-2 text-xs">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-xs">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -245,193 +290,21 @@ export default function AdminSettingsPage() {
           </div>
         )}
 
-        {/* TAB 2: FINANCIALS & FEES */}
-        {activeTab === 'financial' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <DollarSign className="size-4 text-[#859d19]" /> Global Revenue & Order Fee
-                Parameters
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Configure commission rates, handling fees, minimum order thresholds, and GST tax
-                percentages.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div>
-                <label className="font-bold text-[#18201c]">Platform Commission Fee (%)</label>
-                <input
-                  type="number"
-                  required
-                  value={platformCommission}
-                  onChange={(e) => setPlatformCommission(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">% cut taken from vendor food sales</p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Order Handling Charge (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={handlingCharge}
-                  onChange={(e) => setHandlingCharge(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Payment & processing handling charge
-                </p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Minimum Order Value (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={minOrderValue}
-                  onChange={(e) => setMinOrderValue(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">Minimum subtotal required to order</p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Max Kitchen Packaging Cap (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={packagingCap}
-                  onChange={(e) => setPackagingCap(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Upper cap on packaging container fee
-                </p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Food Service GST Tax Rate (%)</label>
-                <input
-                  type="number"
-                  required
-                  value={gstRate}
-                  onChange={(e) => setGstRate(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Statutory GST percentage for invoices
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: LOGISTICS & DELIVERY */}
-        {activeTab === 'delivery' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Truck className="size-4 text-[#859d19]" /> Delivery Fleet & Distance Limits
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Set maximum delivery radius, base fares, and driver dispatch automation settings.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div>
-                <label className="font-bold text-[#18201c]">Default Delivery Radius (km)</label>
-                <input
-                  type="number"
-                  required
-                  value={deliveryRadius}
-                  onChange={(e) => setDeliveryRadius(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">Max customer distance allowed</p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Base Delivery Fee (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={baseDeliveryFee}
-                  onChange={(e) => setBaseDeliveryFee(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">Fixed rate for initial distance</p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Per-KM Rate Beyond Base (₹/km)</label>
-                <input
-                  type="number"
-                  required
-                  value={perKmFee}
-                  onChange={(e) => setPerKmFee(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">Extra fare per additional km</p>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#18201c]">Max Kitchen Prep Timeout (mins)</label>
-                <input
-                  type="number"
-                  required
-                  value={maxPreparationTime}
-                  onChange={(e) => setMaxPreparationTime(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
-                />
-                <p className="mt-1 text-[10px] text-gray-400">Target food preparation window</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-blue-900">Auto-Assign Delivery Driver</h4>
-                  <p className="text-[11px] text-blue-700 mt-0.5">
-                    Automatically match new orders with the closest active delivery rider.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAutoAssignDrivers((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoAssignDrivers ? 'bg-blue-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      autoAssignDrivers ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: SECURITY & AUTH */}
+        {/* TAB 2: SECURITY & AUTH */}
         {activeTab === 'security' && (
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Lock className="size-4 text-[#859d19]" /> Security, JWT Tokens & Access Control
+                <Lock className="size-4 text-[#859d19]" /> Security, JWT Tokens &amp; Access Controls
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Manage authentication timeouts, admin two-factor policies, and rate limits.
+                Manage authentication cookie expiry, admin two-factor policies, and API rate limits.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">JWT Token Expiry (Days)</label>
+                <label className="font-bold text-[#18201c]">JWT Cookie Expiry (Days)</label>
                 <input
                   type="number"
                   required
@@ -439,7 +312,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setJwtExpiryDays(parseFloat(e.target.value) || 1)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Auth cookie validity period</p>
+                <p className="mt-1 text-[10px] text-gray-400">Auth cookie validity duration</p>
               </div>
 
               <div>
@@ -463,7 +336,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setRateLimitPerMin(parseFloat(e.target.value) || 10)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">DDoS & brute-force throttling</p>
+                <p className="mt-1 text-[10px] text-gray-400">DDoS &amp; brute-force throttling limit</p>
               </div>
             </div>
 
@@ -472,7 +345,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <p className="font-bold text-[#18201c]">Require Admin 2-Factor Authentication</p>
                   <p className="text-[10px] text-gray-500">
-                    Enforce OTP verification for all admin logins
+                    Enforce OTP verification for master admin accounts
                   </p>
                 </div>
                 <button
@@ -493,7 +366,7 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-[#18201c]">Enforce Strong Passwords</p>
-                  <p className="text-[10px] text-gray-500">Require uppercase, numbers & symbols</p>
+                  <p className="text-[10px] text-gray-500">Require uppercase, numbers &amp; symbols</p>
                 </div>
                 <button
                   type="button"
@@ -513,23 +386,36 @@ export default function AdminSettingsPage() {
           </div>
         )}
 
-        {/* TAB 5: NOTIFICATIONS */}
+        {/* TAB 3: NOTIFICATION GATEWAYS */}
         {activeTab === 'notifications' && (
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Bell className="size-4 text-[#859d19]" /> Customer & Rider Automated Alerts
+                <Bell className="size-4 text-[#859d19]" /> Customer &amp; Partner Notification Gateways
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Toggle SMS, WhatsApp, and Email notification gateways.
+                Configure SMS providers, WhatsApp Business alerts, and email receipt triggers.
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+            <div className="grid gap-4 sm:grid-cols-2 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Active SMS Gateway Provider</label>
+                <select
+                  value={smsProvider}
+                  onChange={(e) => setSmsProvider(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                >
+                  <option value="Twilio SMS Gateway">Twilio SMS Gateway</option>
+                  <option value="Fast2SMS India">Fast2SMS India</option>
+                  <option value="MSG91 Gateway">MSG91 Gateway</option>
+                </select>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-gray-50/50">
                 <div>
                   <p className="font-bold text-[#18201c]">SMS Gateway Alerts</p>
-                  <p className="text-[10px] text-gray-500">Order verification OTPs</p>
+                  <p className="text-[10px] text-gray-500">Order verification &amp; delivery OTPs</p>
                 </div>
                 <button
                   type="button"
@@ -545,11 +431,13 @@ export default function AdminSettingsPage() {
                   />
                 </button>
               </div>
+            </div>
 
+            <div className="grid gap-4 sm:grid-cols-3 text-xs">
               <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
                 <div>
                   <p className="font-bold text-[#18201c]">WhatsApp Business Alerts</p>
-                  <p className="text-[10px] text-gray-500">Live order tracking updates</p>
+                  <p className="text-[10px] text-gray-500">Live drop tracking updates</p>
                 </div>
                 <button
                   type="button"
@@ -568,8 +456,8 @@ export default function AdminSettingsPage() {
 
               <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
                 <div>
-                  <p className="font-bold text-[#18201c]">Email Invoices & Receipts</p>
-                  <p className="text-[10px] text-gray-500">Tax invoices on completed orders</p>
+                  <p className="font-bold text-[#18201c]">Email Invoices &amp; Receipts</p>
+                  <p className="text-[10px] text-gray-500">Tax invoices on completed drops</p>
                 </div>
                 <button
                   type="button"
@@ -585,28 +473,49 @@ export default function AdminSettingsPage() {
                   />
                 </button>
               </div>
+
+              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+                <div>
+                  <p className="font-bold text-[#18201c] flex items-center gap-1">
+                    <Volume2 className="size-3.5 text-[#859d19]" /> Audio Order Chimes
+                  </p>
+                  <p className="text-[10px] text-gray-500">Play sound alert on new orders</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEnableSoundAlerts((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                    enableSoundAlerts ? 'bg-emerald-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block size-4 transform rounded-full bg-white transition ${
+                      enableSoundAlerts ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 6: PARTNER ONBOARDING */}
+        {/* TAB 4: PARTNER COMPLIANCE & ONBOARDING */}
         {activeTab === 'onboarding' && (
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <FileCheck className="size-4 text-[#859d19]" /> Kitchen Vendor & Delivery Partner
-                Rules
+                <FileCheck className="size-4 text-[#859d19]" /> Partner Onboarding &amp; Legal Compliance
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Compliance requirements and registration approval workflows.
+                Set verification requirements for new kitchen vendors and delivery riders.
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Auto-Approve Vendors</p>
-                  <p className="text-[10px] text-gray-500">Bypass manual admin review</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Bypass manual admin verification</p>
                 </div>
                 <button
                   type="button"
@@ -623,10 +532,10 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Mandatory FSSAI License</p>
-                  <p className="text-[10px] text-gray-500">Require food safety certificate</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Require food safety license upload</p>
                 </div>
                 <button
                   type="button"
@@ -643,10 +552,30 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
-                  <p className="font-bold text-[#18201c]">Mandatory Driver RC & License</p>
-                  <p className="text-[10px] text-gray-500">Require driving documents</p>
+                  <p className="font-bold text-[#18201c]">Mandatory GSTIN Registration</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Require tax GST number for payouts</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRequireGstin((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                    requireGstin ? 'bg-emerald-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block size-4 transform rounded-full bg-white transition ${
+                      requireGstin ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
+                <div>
+                  <p className="font-bold text-[#18201c]">Mandatory Driver License &amp; RC</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Require driving &amp; vehicle documents</p>
                 </div>
                 <button
                   type="button"
@@ -672,7 +601,7 @@ export default function AdminSettingsPage() {
             type="submit"
             className="flex items-center justify-center gap-2 rounded-full bg-[#18201c] px-6 py-3.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#323d36]"
           >
-            <Save className="size-4" /> Save System & Security Settings
+            <Save className="size-4" /> Save System &amp; Security Settings
           </button>
           <button
             type="button"
