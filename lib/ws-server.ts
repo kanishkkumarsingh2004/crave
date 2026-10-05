@@ -1,4 +1,6 @@
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
+export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000
+export const WS_BROADCAST_HOST = process.env.WS_BROADCAST_HOST || 'localhost'
 
 export const broadcast = (channel: string, data: unknown, _excludeSocket?: unknown): boolean => {
   if (typeof window !== 'undefined') {
@@ -11,8 +13,8 @@ export const broadcast = (channel: string, data: unknown, _excludeSocket?: unkno
 
     const req = http.request(
       {
-        hostname: 'localhost',
-        port: process.env.PORT || 3000,
+        hostname: WS_BROADCAST_HOST,
+        port: WS_BROADCAST_PORT,
         path: WS_BROADCAST_ENDPOINT,
         method: 'POST',
         headers: {
