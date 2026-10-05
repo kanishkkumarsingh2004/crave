@@ -8,7 +8,14 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
-  "include": ["test/**/*", "lib/**/*", "components/**/*", "app/**/*", "prisma/**/*", "jest.config.js"]
+  "include": [
+    "test/**/*",
+    "lib/**/*",
+    "components/**/*",
+    "app/**/*",
+    "prisma/**/*",
+    "jest.config.js"
+  ]
 }

@@ -15,7 +15,10 @@ describe('Payment Config API', () => {
   beforeEach(() => jest.clearAllMocks())
 
   function makeGetRequest(): NextRequest {
-    return { url: 'http://localhost:3000/api/payment-config', headers: { get: () => null } } as unknown as NextRequest
+    return {
+      url: 'http://localhost:3000/api/payment-config',
+      headers: { get: () => null },
+    } as unknown as NextRequest
   }
 
   function makePostRequest(body: any): NextRequest {

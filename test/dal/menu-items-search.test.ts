@@ -15,7 +15,9 @@ jest.mock('@/lib/supabase', () => {
     select: () => chainable,
     eq: () => chainable,
     order: () => chainable,
-    then: function (resolve: any) { return resolve({ data: [], error: null }) },
+    then: function (resolve: any) {
+      return resolve({ data: [], error: null })
+    },
   }
   return { supabase: { from: () => chainable } }
 })

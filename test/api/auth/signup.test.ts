@@ -10,8 +10,7 @@ describe('Auth Signup API Route', () => {
     return {
       json: async () => body,
       headers: {
-        get: (key: string) =>
-          key === 'Content-Type' ? 'application/json' : null,
+        get: (key: string) => (key === 'Content-Type' ? 'application/json' : null),
       },
       url: 'http://localhost:3000/api/auth/signup',
     } as unknown as NextRequest
@@ -45,7 +44,11 @@ describe('Auth Signup API Route', () => {
 
   it('rejects missing role', async () => {
     const { POST } = await import('@/app/api/auth/signup/route')
-    const req = createMockRequest({ email: 'test@crave.local', password: '1234567890', name: 'Test' })
+    const req = createMockRequest({
+      email: 'test@crave.local',
+      password: '1234567890',
+      name: 'Test',
+    })
 
     const response = await POST(req)
     const data = await response.json()
@@ -56,7 +59,9 @@ describe('Auth Signup API Route', () => {
 
   it('rejects when user already exists', async () => {
     jest.doMock('@/lib/dal', () => ({
-      findUserByEmail: jest.fn().mockResolvedValue({ id: 'usr_existing', email: 'test@crave.local' }),
+      findUserByEmail: jest
+        .fn()
+        .mockResolvedValue({ id: 'usr_existing', email: 'test@crave.local' }),
     }))
 
     const { POST } = await import('@/app/api/auth/signup/route')

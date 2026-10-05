@@ -178,9 +178,7 @@ describe('WebSocket Hooks - useWebSocket', () => {
 
     const { useWebSocket } = await import('@/lib/websocket')
 
-    const { result } = renderHook(() =>
-      useWebSocket({ channels: ['order_update'] })
-    )
+    const { result } = renderHook(() => useWebSocket({ channels: ['order_update'] }))
 
     await act(async () => {
       mockWsInstance.onopen()
@@ -188,8 +186,6 @@ describe('WebSocket Hooks - useWebSocket', () => {
 
     result.current.sendMessage('ping', { test: true })
 
-    expect(mockWsInstance.send).toHaveBeenCalledWith(
-      JSON.stringify({ type: 'ping', test: true })
-    )
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'ping', test: true }))
   })
 })

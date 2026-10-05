@@ -16,13 +16,16 @@ describe('Admin Stats API Route', () => {
   beforeEach(() => jest.clearAllMocks())
 
   function makeRequest(): NextRequest {
-    return { url: 'http://localhost:3000/api/admin/stats', headers: { get: () => null } } as unknown as NextRequest
+    return {
+      url: 'http://localhost:3000/api/admin/stats',
+      headers: { get: () => null },
+    } as unknown as NextRequest
   }
 
   it('returns aggregated stats from all data sources', async () => {
-    prisma.vendorSettlement.findMany = jest.fn().mockResolvedValue([
-      { gross_sales: 50000, commission_amount: 7500, net_payout: 42500 },
-    ])
+    prisma.vendorSettlement.findMany = jest
+      .fn()
+      .mockResolvedValue([{ gross_sales: 50000, commission_amount: 7500, net_payout: 42500 }])
     prisma.restaurant.findMany = jest.fn().mockResolvedValue([{ id: 'vnd_1' }, { id: 'vnd_2' }])
     prisma.user.findMany = jest.fn().mockResolvedValue([
       { id: 'usr_1', role: 'user' },
@@ -91,7 +94,8 @@ describe('Admin Stats API Route', () => {
   it('counts users by role correctly', async () => {
     prisma.vendorSettlement.findMany = jest.fn().mockResolvedValue([])
     prisma.restaurant.findMany = jest.fn().mockResolvedValue([])
-    prisma.user.findMany = jest.fn()
+    prisma.user.findMany = jest
+      .fn()
       .mockResolvedValueOnce([{ role: 'user' }, { role: 'user' }])
       .mockResolvedValueOnce([{ role: 'restaurant_vendor' }])
       .mockResolvedValueOnce([{ role: 'rider' }])

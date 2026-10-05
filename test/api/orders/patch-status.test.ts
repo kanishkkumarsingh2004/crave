@@ -231,10 +231,7 @@ describe('Orders PATCH - Order Status Flow', () => {
     mockedUpdateOrder.mockResolvedValue({})
 
     const { PATCH } = await import('@/app/api/orders/route')
-    const req = makeRequest(
-      { orderId: 'ord_1', payment_status: 'verified' },
-      ADMIN_TOKEN
-    )
+    const req = makeRequest({ orderId: 'ord_1', payment_status: 'verified' }, ADMIN_TOKEN)
 
     const response = await PATCH(req)
     await response.json()

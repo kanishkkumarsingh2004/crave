@@ -5,10 +5,13 @@ ENV NODE_ENV=production
 
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable pnpm && corepack prepare pnpm@9.15.0 --activate
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
+RUN pnpm install --no-frozen-lockfile
 COPY . .
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL:-postgresql://placeholder:placeholder@placeholder:5432/placeholder?schema=public}
+RUN npx prisma generate
 RUN pnpm run build
 
 FROM node:20-alpine AS runner
@@ -18,6 +21,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/ws-server.js ./ws-server.js
 COPY --from=builder /app/next.config.mjs ./next.config.mjs

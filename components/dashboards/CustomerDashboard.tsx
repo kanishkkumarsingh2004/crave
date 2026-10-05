@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/lib/toast-context'
 import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
 import {
@@ -206,6 +207,23 @@ export default function CustomerDashboard({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
 
+  const { setItems: setGlobalItems, clearCart: clearGlobalCart } = useCart()
+
+  useEffect(() => {
+    setGlobalItems(
+      cart.map((item) => ({
+        id: item.id,
+        name: item.name,
+        qty: item.qty,
+        price: item.price,
+      }))
+    )
+  }, [cart])
+
+  useEffect(() => {
+    return () => clearGlobalCart()
+  }, [])
+
   // Fetch Live Restaurants / Vendors from local DB
   useEffect(() => {
     async function fetchRestaurants() {
@@ -223,11 +241,13 @@ export default function CustomerDashboard({
               name: r.name,
               cuisine: r.cuisine ?? '',
               rating: r.rating == null ? '4.8' : String(r.rating),
-              ratingCount: r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
+              ratingCount:
+                r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
               eta: r.delivery_minutes == null ? '25 min' : `${r.delivery_minutes} min`,
               distance: '1.8 km',
               costForTwo: r.cost_for_two == null ? '₹350 for two' : `₹${r.cost_for_two} for two`,
-              image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+              image:
+                r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
               tag: r.cuisine?.split(' ')[0] ?? 'Popular',
               address: r.address ?? 'Bengaluru',
               offer: r.offer ?? '40% OFF',
@@ -1653,17 +1673,17 @@ export default function CustomerDashboard({
                             <span className="tracking-widest">{activeOrder.otp}</span>
                           </span>
                         )}
-                         {activeOrder.paymentStatus === 'pending' && (
-                           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-3 py-1 text-xs font-bold text-amber-200">
-                             Payment Pending
-                           </span>
-                         )}
-                       </div>
+                        {activeOrder.paymentStatus === 'pending' && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-3 py-1 text-xs font-bold text-amber-200">
+                            Payment Pending
+                          </span>
+                        )}
+                      </div>
 
-                       <div>
-                         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                           {activeOrder.restaurantName}
-                         </h2>
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                          {activeOrder.restaurantName}
+                        </h2>
                         <p className="mt-1 text-xs text-white/70 flex flex-wrap items-center gap-2">
                           <span>Placed at {activeOrder.timestamp}</span>
                           <span>•</span>
@@ -2190,7 +2210,9 @@ export default function CustomerDashboard({
 
                 <button
                   type="submit"
-                  disabled={!checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 12}
+                  disabled={
+                    !checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 12
+                  }
                   className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit Order &amp; Start Verification (₹{grandTotal})

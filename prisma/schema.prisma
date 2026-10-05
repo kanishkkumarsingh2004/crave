@@ -1,6 +1,3 @@
-// Prisma Schema for Crave Food Delivery Platform
-// Maps 1:1 to existing Supabase PostgreSQL schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,7 +6,272 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Enums ───────────────────────────────────────────────
+model User {
+  id                 String             @id
+  name               String
+  email              String             @unique
+  role               UserRole
+  password_hash      String?
+  phone              String?
+  address            String?
+  avatar             String?
+  restaurant_name    String?
+  cuisine            String?
+  vehicle_type       String?
+  license_plate      String?
+  locale             String?            @default("en")
+  created_at         DateTime?          @default(now()) @db.Timestamptz(6)
+  customer_addresses CustomerAddress[]
+  driver_incentives  DriverIncentive[]
+  driver_payouts     DriverPayout[]
+  driver_upi         DriverUpiAccount[]
+  orders             Order[]
+  owned_restaurants  Restaurant[]
+
+  @@map("users")
+}
+
+model Restaurant {
+  id                  String             @id
+  name                String
+  cuisine             String
+  rating              Decimal?           @default(4.8) @db.Decimal(2, 1)
+  commission_rate     Int?               @default(15)
+  payment_model       String?            @default("commission")
+  address             String?
+  owner_id            String?
+  created_at          DateTime?          @default(now()) @db.Timestamptz(6)
+  image               String?
+  is_pure_veg         Boolean?
+  is_dark_store       Boolean            @default(false)
+  is_open             Boolean            @default(false)
+  rating_count        Int?
+  cost_for_two        Int?
+  delivery_minutes    Int?
+  offer               String?
+  latitude            Decimal?           @db.Decimal
+  longitude           Decimal?           @db.Decimal
+  phone               String?
+  bank_account_name   String?
+  bank_name           String?
+  bank_account_number String?
+  bank_ifsc           String?
+  payout_vpa          String?
+  fssai_license       String?
+  cold_chain_sensors  ColdChainSensor[]
+  coupons             Coupon[]
+  menu_items          MenuItem[]
+  orders              Order[]
+  picker_metrics      PickerMetric[]
+  owner               User?              @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  vendor_settlements  VendorSettlement[]
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id            String      @id
+  restaurant_id String?
+  name          String
+  category      String
+  price         Int
+  description   String?
+  in_stock      Boolean?    @default(true)
+  image         String?
+  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
+  is_veg        Boolean?
+  unit          String?
+  mrp           Int?
+  stock_count   Int         @default(0)
+  sku_code      String?
+  expiry_date   DateTime?   @db.Date
+  restaurant    Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@map("menu_items")
+}
+
+model Order {
+  id                    String      @id
+  customer_id           String?
+  customer_name         String
+  customer_phone        String?
+  customer_address      String?
+  restaurant_id         String?
+  restaurant_name       String
+  order_type            String      @default("restaurant_food")
+  destination_vendor_id String?
+  payment_status        String      @default("pending")
+  payment_reviewed_by   String?
+  payment_reviewed_at   DateTime?   @db.Timestamptz(6)
+  rider_id              String?
+  items                 Json
+  subtotal              Int
+  packaging_fee         Int?        @default(20)
+  gst                   Int?        @default(18)
+  total_amount          Int
+  status                OrderStatus
+  driver_name           String?
+  driver_phone          String?
+  payment_method        String?     @default("UPI Online")
+  created_at            DateTime?   @default(now()) @db.Timestamptz(6)
+  delivery_otp          String?
+  picker_name           String?
+  tip                   Int         @default(0)
+  discount_amount       Int         @default(0)
+  coupon_code           String?
+  delivery_latitude     Decimal?    @db.Decimal
+  delivery_longitude    Decimal?    @db.Decimal
+  delivered_at          DateTime?   @db.Timestamptz(6)
+  customer              User?       @relation(fields: [customer_id], references: [id])
+  restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id])
+
+  @@map("orders")
+}
+
+model Coupon {
+  id               String       @id
+  code             String       @unique
+  description      String
+  discount_type    DiscountType
+  discount_value   Int
+  min_order_amount Int
+  max_discount     Int?
+  usage_limit      Int?
+  used_count       Int?         @default(0)
+  is_active        Boolean?     @default(true)
+  expiry_date      DateTime?    @db.Date
+  created_at       DateTime?    @default(now()) @db.Timestamptz(6)
+  restaurant_id    String?
+  restaurant       Restaurant?  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@map("coupons")
+}
+
+model VendorSettlement {
+  id                String      @id
+  restaurant_name   String
+  gross_sales       Int
+  commission_rate   Int
+  commission_amount Int
+  net_payout        Int
+  status            String?     @default("scheduled")
+  payout_date       DateTime?   @db.Date
+  restaurant_id     String?
+  period_start      DateTime?   @db.Date
+  period_end        DateTime?   @db.Date
+  transaction_ref   String?
+  restaurant        Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@map("vendor_settlements")
+}
+
+model PaymentReview {
+  id           String    @id
+  order_id     String
+  utr_ref      String
+  customer_vpa String
+  amount       Int
+  status       String?   @default("pending")
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@map("payment_reviews")
+}
+
+model CustomerAddress {
+  id          String   @id
+  customer_id String
+  label       String
+  address     String
+  is_default  Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  latitude    Decimal? @db.Decimal
+  longitude   Decimal? @db.Decimal
+  customer    User     @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@map("customer_addresses")
+}
+
+model PaymentConfig {
+  id                      String   @id
+  name                    String
+  merchant_vpa            String
+  merchant_name           String
+  merchant_category_code  String?
+  is_active               Boolean  @default(false)
+  updated_at              DateTime @default(now()) @db.Timestamptz(6)
+  delivery_fee            Int?
+  handling_fee            Int?
+  free_delivery_threshold Int?
+  gst_rate                Decimal? @db.Decimal
+
+  @@map("payment_configs")
+}
+
+model DriverUpiAccount {
+  id          String   @id
+  driver_id   String
+  vpa         String
+  bank_name   String?
+  is_primary  Boolean  @default(false)
+  is_verified Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  driver      User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@map("driver_upi_accounts")
+}
+
+model DriverPayout {
+  id              String   @id
+  driver_id       String
+  amount          Int
+  status          String   @default("pending")
+  transaction_ref String?
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  driver          User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@map("driver_payouts")
+}
+
+model DriverIncentive {
+  id            String    @id
+  driver_id     String?
+  title         String
+  description   String
+  reward_amount Int
+  starts_at     DateTime? @db.Timestamptz(6)
+  ends_at       DateTime? @db.Timestamptz(6)
+  is_active     Boolean   @default(true)
+  driver        User?     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@map("driver_incentives")
+}
+
+model ColdChainSensor {
+  id                   String     @id
+  restaurant_id        String
+  name                 String
+  temperature_c        Decimal    @db.Decimal
+  target_temperature_c Decimal?   @db.Decimal
+  status               String
+  updated_at           DateTime   @default(now()) @db.Timestamptz(6)
+  restaurant           Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@map("cold_chain_sensors")
+}
+
+model PickerMetric {
+  id                   String     @id
+  restaurant_id        String
+  picker_name          String
+  bay                  String?
+  orders_packed        Int        @default(0)
+  average_pick_seconds Int?
+  accuracy_rate        Decimal?   @db.Decimal
+  updated_at           DateTime   @default(now()) @db.Timestamptz(6)
+  restaurant           Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@map("picker_metrics")
+}
 
 enum UserRole {
   user
@@ -38,323 +300,4 @@ enum OrderStatus {
 enum DiscountType {
   percentage
   flat
-}
-
-// ─── Users ───────────────────────────────────────────────
-
-model User {
-  id              String    @id
-  name            String
-  email           String    @unique
-  role            UserRole
-  password_hash   String?
-  phone           String?
-  address         String?
-  avatar          String?
-  restaurant_name String?
-  cuisine         String?
-  vehicle_type    String?
-  license_plate   String?
-  locale          String?   @default("en")
-  created_at      DateTime? @default(now()) @db.Timestamptz
-
-  // Relations
-  owned_restaurants  Restaurant[]
-  orders             Order[]
-  customer_addresses CustomerAddress[]
-  driver_upi         DriverUpiAccount[]
-  driver_payouts     DriverPayout[]
-  driver_incentives  DriverIncentive[]
-
-  @@map("users")
-}
-
-// ─── Restaurants ─────────────────────────────────────────
-
-model Restaurant {
-  id                  String   @id
-  name                String
-  cuisine             String
-  rating              Decimal? @default(4.8) @db.Decimal(2, 1)
-  commission_rate     Int?     @default(15)
-  payment_model       String?  @default("commission")
-  address             String?
-  owner_id            String?
-  created_at          DateTime? @default(now()) @db.Timestamptz
-  image               String?
-  is_pure_veg         Boolean?
-  is_dark_store       Boolean  @default(false)
-  is_open             Boolean  @default(false)
-  rating_count        Int?
-  cost_for_two        Int?
-  delivery_minutes    Int?
-  offer               String?
-  latitude            Decimal? @db.Decimal
-  longitude           Decimal? @db.Decimal
-  phone               String?
-  bank_account_name   String?
-  bank_name           String?
-  bank_account_number String?
-  bank_ifsc           String?
-  payout_vpa          String?
-  fssai_license       String?
-
-  // Relations
-  owner             User?              @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  menu_items        MenuItem[]
-  orders            Order[]
-  coupons           Coupon[]
-  vendor_settlements VendorSettlement[]
-  cold_chain_sensors ColdChainSensor[]
-  picker_metrics     PickerMetric[]
-
-  @@map("restaurants")
-}
-
-// ─── Menu Items ──────────────────────────────────────────
-
-model MenuItem {
-  id            String    @id
-  restaurant_id String?
-  name          String
-  category      String
-  price         Int
-  description   String?
-  in_stock      Boolean?  @default(true)
-  image         String?
-  created_at    DateTime? @default(now()) @db.Timestamptz
-  is_veg        Boolean?
-  unit          String?
-  mrp           Int?
-  stock_count   Int       @default(0)
-  sku_code      String?
-  expiry_date   DateTime? @db.Date
-
-  // Relations
-  restaurant Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-
-  @@map("menu_items")
-}
-
-// ─── Orders ──────────────────────────────────────────────
-
-model Order {
-  id                 String      @id
-  customer_id        String?
-  customer_name      String
-  customer_phone     String?
-  customer_address   String?
-  restaurant_id      String?
-  restaurant_name    String
-  order_type        String       @default("restaurant_food")
-  destination_vendor_id String?
-  payment_status    String       @default("pending")
-  payment_reviewed_by String?
-  payment_reviewed_at DateTime?  @db.Timestamptz
-  rider_id          String?
-  items              Json
-  subtotal           Int
-  packaging_fee      Int?        @default(20)
-  gst                Int?        @default(18)
-  total_amount       Int
-  status             OrderStatus
-  driver_name        String?
-  driver_phone       String?
-  payment_method     String?     @default("UPI Online")
-  created_at         DateTime?   @default(now()) @db.Timestamptz
-  delivery_otp       String?
-  picker_name        String?
-  tip                Int         @default(0)
-  discount_amount    Int         @default(0)
-  coupon_code        String?
-  delivery_latitude  Decimal?    @db.Decimal
-  delivery_longitude Decimal?    @db.Decimal
-  delivered_at       DateTime?   @db.Timestamptz
-
-  // Relations
-  customer   User?       @relation(fields: [customer_id], references: [id], onDelete: SetNull)
-  restaurant Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: SetNull)
-
-  @@map("orders")
-}
-
-// ─── Coupons ─────────────────────────────────────────────
-
-model Coupon {
-  id               String       @id
-  code             String       @unique
-  description      String
-  discount_type    DiscountType
-  discount_value   Int
-  min_order_amount Int
-  max_discount     Int?
-  usage_limit      Int?
-  used_count       Int?         @default(0)
-  is_active        Boolean?     @default(true)
-  expiry_date      DateTime?    @db.Date
-  created_at       DateTime?    @default(now()) @db.Timestamptz
-  restaurant_id    String?
-
-  // Relations
-  restaurant Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-
-  @@map("coupons")
-}
-
-// ─── Vendor Settlements ──────────────────────────────────
-
-model VendorSettlement {
-  id                String    @id
-  restaurant_name   String
-  gross_sales       Int
-  commission_rate   Int
-  commission_amount Int
-  net_payout        Int
-  status            String?   @default("scheduled")
-  payout_date       DateTime? @db.Date
-  restaurant_id     String?
-  period_start      DateTime? @db.Date
-  period_end        DateTime? @db.Date
-  transaction_ref   String?
-
-  // Relations
-  restaurant Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-
-  @@map("vendor_settlements")
-}
-
-// ─── Payment Reviews ────────────────────────────────────
-
-model PaymentReview {
-  id           String    @id
-  order_id     String
-  utr_ref      String
-  customer_vpa String
-  amount       Int
-  status       String?   @default("pending")
-  created_at   DateTime? @default(now()) @db.Timestamptz
-
-  @@map("payment_reviews")
-}
-
-// ─── Customer Addresses ──────────────────────────────────
-
-model CustomerAddress {
-  id          String   @id
-  customer_id String
-  label       String
-  address     String
-  is_default  Boolean  @default(false)
-  created_at  DateTime @default(now()) @db.Timestamptz
-  latitude    Decimal? @db.Decimal
-  longitude   Decimal? @db.Decimal
-
-  // Relations
-  customer User @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-
-  @@map("customer_addresses")
-}
-
-// ─── Payment Configs ─────────────────────────────────────
-
-model PaymentConfig {
-  id                      String   @id
-  name                    String
-  merchant_vpa            String
-  merchant_name           String
-  merchant_category_code  String?
-  is_active               Boolean  @default(false)
-  updated_at              DateTime @default(now()) @db.Timestamptz
-  delivery_fee            Int?
-  handling_fee            Int?
-  free_delivery_threshold Int?
-  gst_rate                Decimal? @db.Decimal
-
-  @@map("payment_configs")
-}
-
-// ─── Driver UPI Accounts ─────────────────────────────────
-
-model DriverUpiAccount {
-  id          String   @id
-  driver_id   String
-  vpa         String
-  bank_name   String?
-  is_primary  Boolean  @default(false)
-  is_verified Boolean  @default(false)
-  created_at  DateTime @default(now()) @db.Timestamptz
-
-  // Relations
-  driver User @relation(fields: [driver_id], references: [id], onDelete: Cascade)
-
-  @@map("driver_upi_accounts")
-}
-
-// ─── Driver Payouts ──────────────────────────────────────
-
-model DriverPayout {
-  id              String   @id
-  driver_id       String
-  amount          Int
-  status          String   @default("pending")
-  transaction_ref String?
-  created_at      DateTime @default(now()) @db.Timestamptz
-
-  // Relations
-  driver User @relation(fields: [driver_id], references: [id], onDelete: Cascade)
-
-  @@map("driver_payouts")
-}
-
-// ─── Driver Incentives ───────────────────────────────────
-
-model DriverIncentive {
-  id            String    @id
-  driver_id     String?
-  title         String
-  description   String
-  reward_amount Int
-  starts_at     DateTime? @db.Timestamptz
-  ends_at       DateTime? @db.Timestamptz
-  is_active     Boolean   @default(true)
-
-  // Relations
-  driver User? @relation(fields: [driver_id], references: [id], onDelete: Cascade)
-
-  @@map("driver_incentives")
-}
-
-// ─── Cold Chain Sensors ──────────────────────────────────
-
-model ColdChainSensor {
-  id                    String   @id
-  restaurant_id         String
-  name                  String
-  temperature_c         Decimal  @db.Decimal
-  target_temperature_c  Decimal? @db.Decimal
-  status                String
-  updated_at            DateTime @default(now()) @db.Timestamptz
-
-  // Relations
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-
-  @@map("cold_chain_sensors")
-}
-
-// ─── Picker Metrics ──────────────────────────────────────
-
-model PickerMetric {
-  id                   String   @id
-  restaurant_id        String
-  picker_name          String
-  bay                  String?
-  orders_packed        Int      @default(0)
-  average_pick_seconds Int?
-  accuracy_rate        Decimal? @db.Decimal
-  updated_at           DateTime @default(now()) @db.Timestamptz
-
-  // Relations
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-
-  @@map("picker_metrics")
 }

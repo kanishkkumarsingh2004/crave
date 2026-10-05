@@ -187,6 +187,6 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
     const data = await response.json()
 
     expect(response.status).toBe(403)
-        expect(data.error).toContain('not allowed')
+    expect(data.error).toContain('not allowed')
   })
 })

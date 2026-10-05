@@ -1,4 +1,9 @@
-import { createRestaurant, updateRestaurant, deleteRestaurant, findRestaurantById } from '@/lib/dal/restaurants'
+import {
+  createRestaurant,
+  updateRestaurant,
+  deleteRestaurant,
+  findRestaurantById,
+} from '@/lib/dal/restaurants'
 import { prisma } from '@/lib/prisma'
 
 jest.mock('@/lib/prisma', () => ({

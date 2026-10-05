@@ -1,62 +1,92 @@
 # Crave — Food Delivery Platform
 
-A full-stack food delivery platform built with **Next.js 16**, **Prisma ORM**, **PostgreSQL**, and **WebSocket** for real-time order tracking, driver location updates, and admin payment approval workflows.
+A full-stack food delivery platform built with Next.js 16, Prisma ORM, PostgreSQL, and WebSocket for real-time order tracking, driver location updates, and admin payment approval workflows.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Docker Compose                      │
-│                                                         │
-│  ┌───────────────┐       ┌───────────────┐    ┌──────┐  │
-│  │   Frontend    │  HTTP │   Backend     │    │  DB  │  │
-│  │  (Next.js)    │       │ (WebSocket)   │    │  PG  │  │
-│  │  port 3000    │       │  port 8000    │    │ 5432 │  │
-│  └──────┬────────┘       └──────┬────────┘    └──▲───┘  │
-│         │ WebSocket connect      │  API routes call     │
-│         └────────────────────────┼─broadcast endpoint──┘
-│         (ws://host:8000/ws)      │                      │
-│                                  │                      │
-└─────────────────────────────────┼──────────────────────┘
-                                  │
-                                  ▼
-                    Broadcast via HTTP POST to
-                    backend:8000/__ws/broadcast
+                    Docker Compose
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│  ┌─────────────┐    HTTP    ┌────────────┐   ┌────────┐ │
+│  │  Frontend   │◄──────────►│  Backend   │   │  DB    │ │
+│  │  Next.js    │  WS conn   │  WS Server │   │ Postgres│ │
+│  │  :3000      │            │  :8000     │   │ :5432  │ │
+│  └──────┬──────┘            └─────▲──────┘   └───▲────┘ │
+│         │                         │             │      │
+│         │  ws://host:8000/api/ws  │             │      │
+│         └─────────────────────────┼─────────────┘      │
+│                                   │                    │
+│         POST to backend:8000/__ws/broadcast            │
+│         (from Next.js API routes)                      │
+└────────────────────────────────────────────────────────┘
 ```
 
 ### Services
 
-| Service    | Port | Description                                              |
-|------------|------|----------------------------------------------------------|
-| Frontend   | 3000 | Next.js app (React pages, API routes, static assets)     |
-| Backend    | 8000 | WebSocket server (real-time broadcasts, WS connections) |
-| PostgreSQL | 5432 | Database for all application data                         |
+| Service    | Port | Container        | Description                                             |
+| ---------- | ---- | ---------------- | ------------------------------------------------------- |
+| Frontend   | 3000 | `crave-frontend` | Next.js app (React pages, API routes, static assets)    |
+| Backend    | 8000 | `crave-backend`  | WebSocket server (real-time broadcasts, WS connections) |
+| PostgreSQL | 5432 | `crave-postgres` | Database for all application data                       |
 
 ### Key Files
 
-- **`server.js`** — Frontend HTTP server (Next.js App Router)
-- **`ws-server.js`** — Standalone WebSocket backend server (port 8000)
-- **`lib/ws-server.ts`** — Broadcast helper — API routes call this to push WS messages to backend
-- **`lib/websocket.tsx`** — Client-side React hooks (`useWebSocket`, `useOrderUpdates`, `useDriverLocation`, `useApprovalUpdates`)
-- **`lib/dal/`** — Data Access Layer (Prisma + Supabase fallback)
-- **`app/api/`** — API route handlers
+| File                | Role                                             |
+| ------------------- | ------------------------------------------------ |
+| `server.js`         | Frontend HTTP server (Next.js App Router)        |
+| `ws-server.js`      | Standalone WebSocket backend server (port 8000)  |
+| `lib/ws-server.ts`  | Broadcast helper — API routes POST to backend WS |
+| `lib/websocket.tsx` | Client-side React hooks (`useWebSocket`, etc.)   |
+| `lib/dal/`          | Data Access Layer (Prisma + Supabase fallback)   |
+| `app/api/`          | API route handlers                               |
 
 ## Prerequisites
 
-- [Node.js 20+](https://nodejs.org/)
-- [pnpm 9+](https://pnpm.io/)
-- [Docker & Docker Compose](https://docs.docker.com/compose/) (for containerized setup)
+- **Node.js** 20+
+- **pnpm** 9+
+- **Docker & Docker Compose** v2 (for containerized setup)
 
 ## Quick Start (Docker)
 
 ```bash
-# Start all services
-docker-compose up --build
+# Build and start all services in the background
+pnpm dc:up
 
 # The application will be available at:
 #   Frontend:  http://localhost:3000
 #   WebSocket: ws://localhost:8000/api/ws
 #   Database:  localhost:5432
+```
+
+## Docker Lifecycle
+
+### Scripts
+
+| Script            | Command                                         | When to use                      |
+| ----------------- | ----------------------------------------------- | -------------------------------- |
+| `pnpm dc:up`      | `docker compose up --build -d`                  | Initial start                    |
+| `pnpm dc:down`    | `docker compose down -v`                        | Stop and wipe all data           |
+| `pnpm dc:restart` | `docker compose down -v && up --build -d`       | Config changes, full refresh     |
+| `pnpm dc:rebuild` | `docker compose up --build --force-recreate -d` | Code changes, dependency updates |
+| `pnpm dc:logs`    | `docker compose logs -f`                        | Tail logs                        |
+| `pnpm dc:ps`      | `docker compose ps`                             | Check container status           |
+
+### Common Workflows
+
+```bash
+# After pulling new code or changing dependencies
+pnpm dc:rebuild
+
+# When changing docker-compose.yml or Dockerfile
+pnpm dc:restart
+
+# For environment or config changes only (no rebuild)
+docker compose restart frontend
+
+# Stop everything and start fresh
+pnpm dc:down
+pnpm dc:up
 ```
 
 ### Environment Variables
@@ -67,17 +97,15 @@ Create a `.env` file from the template:
 cp .env.example .env
 ```
 
-Key variables:
-
-| Variable               | Default                          | Description                          |
-|------------------------|----------------------------------|--------------------------------------|
-| `DATABASE_URL`         | `postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public` | PostgreSQL connection string |
-| `JWT_SECRET`           | *(random)*                       | JWT signing secret                   |
-| `WS_PORT`              | `8000`                           | WebSocket server port                |
-| `WS_BROADCAST_PORT`    | `8000`                           | Port for API routes to broadcast to  |
-| `WS_BROADCAST_HOST`    | `localhost`                      | Host for API routes to broadcast to  |
-| `NEXT_PUBLIC_WS_PORT`  | `8000`                           | Client-side WS port                  |
-| `NEXT_PUBLIC_WS_HOST`  | `localhost`                      | Client-side WS host                  |
+| Variable              | Default                                                                | Description                  |
+| --------------------- | ---------------------------------------------------------------------- | ---------------------------- |
+| `DATABASE_URL`        | `postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public` | PostgreSQL connection string |
+| `JWT_SECRET`          | _(random)_                                                             | JWT signing secret           |
+| `WS_PORT`             | `8000`                                                                 | WebSocket server port        |
+| `WS_BROADCAST_PORT`   | `8000`                                                                 | Port API routes broadcast to |
+| `WS_BROADCAST_HOST`   | `localhost`                                                            | Host API routes broadcast to |
+| `NEXT_PUBLIC_WS_PORT` | `8000`                                                                 | Client-side WS port          |
+| `NEXT_PUBLIC_WS_HOST` | `localhost`                                                            | Client-side WS host          |
 
 ## Local Development (without Docker)
 
@@ -109,9 +137,17 @@ pnpm test:watch
 
 # Run tests with coverage
 pnpm test:coverage
+
+# Run specific test file
+npx jest test/api/orders/post.test.ts
 ```
 
-The test suite uses **Jest** with **Babel** for TypeScript transformation and **Testing Library** for React component testing. WebSocket hooks are tested using mocked `WebSocket` globals and the existing test infrastructure handles jose JWT mocks, Prisma DAL mocks, and Supabase fallbacks.
+The test suite uses **Jest** with **Babel** for TypeScript transformation and **Testing Library** for React component testing. WebSocket hooks are tested using mocked `WebSocket` globals. The test infrastructure includes:
+
+- **jose JWT mocks** — `test/__mocks__/jose.ts`
+- **Prisma DAL mocks** — `test/__mocks__/prisma.ts`
+- **Supabase mocks** — Global setup in `test/setup.ts`
+- **Next.js mocks** — `next/server`, `next/headers`, `next/navigation`
 
 ## Project Structure
 
@@ -129,21 +165,20 @@ The test suite uses **Jest** with **Babel** for TypeScript transformation and **
 │   └── layout.tsx       # Root layout
 ├── components/          # React components
 │   ├── dashboards/      # Dashboard views (Customer, Vendor, Admin)
-│   ├── ui/             # Reusable UI components
-│   └── ...
+│   └── ui/             # Reusable UI components
 ├── lib/                 # Core libraries
-│   ├── dal/            # Data Access Layer
+│   ├── dal/            # Data Access Layer (Prisma + Supabase fallback)
 │   ├── prisma.ts       # Prisma client
-│   ├── supabase.ts     # Supabase client (disabled — using local PostgreSQL)
-│   ├── jwt.ts          # JWT utilities (jose library)
+│   ├── supabase.ts     # Supabase client (disabled — local PostgreSQL)
+│   ├── jwt.ts          # JWT utilities
 │   ├── ws-server.ts    # Broadcast helper
 │   ├── websocket.tsx   # WebSocket React hooks
 │   ├── auth-context.tsx # Auth context/provider
 │   └── ...
-├── prisma/              # Database schema & migrations
+├── prisma/              # Database schema & seed
 │   ├── schema.prisma   # Prisma schema
 │   └── seed.ts         # Database seeder
-├── test/                # Test files
+├── test/                # Jest test suite
 │   ├── api/            # API route tests
 │   ├── components/     # Component tests
 │   ├── dal/            # Data Access Layer tests
@@ -162,22 +197,26 @@ The test suite uses **Jest** with **Babel** for TypeScript transformation and **
 ## Features
 
 ### Real-time Order Tracking
+
 - WebSocket connections for live order status updates
 - Driver location tracking with real-time position updates
 - Order status progression visualization (Confirmed → Cooking → Out for Delivery → Delivered)
 
 ### Payment Verification Workflow
+
 - UPI payment reference (UTR) submission
 - Admin approval/rejection of payments via WebSocket broadcasts
 - Real-time payment status updates to customers
 
 ### Multi-role Dashboards
+
 - **Customer**: Order placement, live tracking, order history
 - **Vendor/Restaurant**: Kitchen order management, order status updates
 - **Admin**: Payment review queue, user management, analytics
 - **Rider**: Order assignment, delivery tracking
 
 ### API Design
+
 - RESTful API routes with JWT authentication
 - Role-based access control (user, restaurant_vendor, rider, admin)
 - Prisma ORM with PostgreSQL backend

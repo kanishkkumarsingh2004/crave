@@ -60,7 +60,7 @@ export default function UserProfilePage() {
             You are logged in as a <span className="font-bold capitalize">{role}</span>.
           </p>
           <button
-            onClick={() =>     router.push(`/${getDashboardPath(role)}`)}
+            onClick={() => router.push(`/${getDashboardPath(role)}`)}
             className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
           >
             Go to {role} Dashboard

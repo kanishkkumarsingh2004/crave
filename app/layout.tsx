@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/lib/auth-context'
+import { CartProvider } from '@/lib/cart-context'
 import { LanguageProvider } from '@/lib/language-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { Toaster } from '@/components/ui/Toaster'
@@ -29,12 +30,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn('font-sans', geist.variable)}>
       <body className="antialiased bg-[#f8f9f7] text-[#18201c]" suppressHydrationWarning>
         <AuthProvider>
-          <LanguageProvider>
-            <ToastProvider>
-              {children}
-              <Toaster />
-            </ToastProvider>
-          </LanguageProvider>
+          <CartProvider>
+            <LanguageProvider>
+              <ToastProvider>
+                {children}
+                <Toaster />
+              </ToastProvider>
+            </LanguageProvider>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

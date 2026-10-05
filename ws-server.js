@@ -105,8 +105,12 @@ wss.on('connection', (ws, req) => {
 })
 
 server.on('upgrade', (req, socket, head) => {
-  if (req.url && req.url.startsWith('/api/ws')) {
-    wss.handleUpgrade({ url: '/api/ws' }, socket, head, (ws) => {
+  if (!req.headers || !req.url) {
+    socket.destroy()
+    return
+  }
+  if (req.url.startsWith('/api/ws')) {
+    wss.handleUpgrade({ url: '/api/ws', headers: req.headers }, socket, head, (ws) => {
       wss.emit('connection', ws, req)
     })
   } else {

@@ -6,19 +6,33 @@ services:
     container_name: crave-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-crave}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crave_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-crave_db}
+      POSTGRES_USER: crave
+      POSTGRES_PASSWORD: crave_secret
+      POSTGRES_DB: crave_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./prisma/schema.prisma:/app/schema.prisma:ro
     ports:
-      - "5432:5432"
+      - '5433:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crave} -d ${POSTGRES_DB:-crave_db}"]
+      test: ['CMD-SHELL', 'pg_isready -U crave -d crave_db']
       interval: 10s
       timeout: 5s
       retries: 5
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crave-db-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
+      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
+    command: ['sh', '-c', 'npx prisma generate && npx prisma db push --accept-data-loss']
+    restart: 'no'
 
   backend:
     build:
@@ -29,17 +43,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public}
-      DIRECT_URL: ${DIRECT_URL:-postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public}
+      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
+      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
       JWT_SECRET: ${JWT_SECRET:-REDACTED_JWT_SECRET}
-    command: ["node", "ws-server.js"]
+    command: ['node', 'ws-server.js']
     ports:
-      - "8000:8000"
+      - '8000:8000'
     healthcheck:
-      test: ["CMD", "node", "-e", "const net=require('net');const s=net.connect(8000,'localhost',()=>{s.destroy();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const http=require('http');const r=http.get('http://localhost:8000/__ws/broadcast',{timeout:5000},(res)=>{process.exit(res.statusCode<500?0:1)});r.on('error',()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,6 +77,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -63,16 +87,22 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      DATABASE_URL: ${DATABASE_URL:-postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public}
-      DIRECT_URL: ${DIRECT_URL:-postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public}
+      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
+      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
       JWT_SECRET: ${JWT_SECRET:-REDACTED_JWT_SECRET}
       NEXT_PUBLIC_WS_PORT: 8000
       NEXT_PUBLIC_WS_HOST: localhost
-    command: ["node", "server.js"]
+    command: ['node', 'server.js']
     ports:
-      - "3000:3000"
+      - '3000:3000'
     healthcheck:
-      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:3000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:3000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       start_period: 30s

@@ -57,12 +57,26 @@ describe('Payment Config', () => {
 
   it('all required fields exist in PaymentConfig', () => {
     const requiredFields: (keyof PaymentConfig)[] = [
-      'upiVpa', 'merchantName', 'mccCode', 'ifscCode', 'accountNumber',
-      'platformFee', 'handlingFee', 'vendorCommission', 'packagingCap',
-      'baseDeliveryFee', 'baseDistanceKm', 'perKmRate', 'freeDeliveryThreshold',
-      'driverPayoutShare', 'surgeMultiplier',
-      'isRainModeActive', 'isNightSurgeActive',
-      'enableCashOnDelivery', 'enableUpiDeepLink', 'requireUtrNumber',
+      'upiVpa',
+      'merchantName',
+      'mccCode',
+      'ifscCode',
+      'accountNumber',
+      'platformFee',
+      'handlingFee',
+      'vendorCommission',
+      'packagingCap',
+      'baseDeliveryFee',
+      'baseDistanceKm',
+      'perKmRate',
+      'freeDeliveryThreshold',
+      'driverPayoutShare',
+      'surgeMultiplier',
+      'isRainModeActive',
+      'isNightSurgeActive',
+      'enableCashOnDelivery',
+      'enableUpiDeepLink',
+      'requireUtrNumber',
     ]
 
     for (const field of requiredFields) {

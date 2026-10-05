@@ -14,10 +14,7 @@ export async function GET(request: Request) {
     })
     return NextResponse.json({ success: true, reviews })
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || 'Failed to load reviews' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error?.message || 'Failed to load reviews' }, { status: 500 })
   }
 }
 

@@ -64,7 +64,10 @@ describe('WebSocket Hooks - useApprovalUpdates', () => {
 
     await act(async () => {
       mockWsInstance.onmessage({
-        data: JSON.stringify({ channel: 'approval_update', data: { status: 'verified', orderId: 'ord_1' } }),
+        data: JSON.stringify({
+          channel: 'approval_update',
+          data: { status: 'verified', orderId: 'ord_1' },
+        }),
       })
     })
 
@@ -78,13 +81,19 @@ describe('WebSocket Hooks - useApprovalUpdates', () => {
     renderHook(() => useApprovalUpdates(undefined, mockCallback))
 
     await act(async () => {
-      mockWsInstance.onmessage({ data: JSON.stringify({ channel: 'approval_update', data: { status: 'pending' } }) })
+      mockWsInstance.onmessage({
+        data: JSON.stringify({ channel: 'approval_update', data: { status: 'pending' } }),
+      })
     })
     await act(async () => {
-      mockWsInstance.onmessage({ data: JSON.stringify({ channel: 'approval_update', data: { status: 'verified' } }) })
+      mockWsInstance.onmessage({
+        data: JSON.stringify({ channel: 'approval_update', data: { status: 'verified' } }),
+      })
     })
     await act(async () => {
-      mockWsInstance.onmessage({ data: JSON.stringify({ channel: 'approval_update', data: { status: 'rejected' } }) })
+      mockWsInstance.onmessage({
+        data: JSON.stringify({ channel: 'approval_update', data: { status: 'rejected' } }),
+      })
     })
 
     expect(mockCallback.mock.calls).toHaveLength(3)
@@ -100,7 +109,9 @@ describe('WebSocket Hooks - useApprovalUpdates', () => {
     renderHook(() => useApprovalUpdates(undefined, mockCallback))
 
     await act(async () => {
-      mockWsInstance.onmessage({ data: JSON.stringify({ channel: 'order_update', data: { status: 'preparing' } }) })
+      mockWsInstance.onmessage({
+        data: JSON.stringify({ channel: 'order_update', data: { status: 'preparing' } }),
+      })
     })
 
     expect(mockCallback).not.toHaveBeenCalled()

@@ -1,7 +1,6 @@
 const crypto = require('crypto')
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'REDACTED_JWT_SECRET'
+const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_JWT_SECRET'
 
 function base64UrlEncode(str: string): string {
   return Buffer.from(str)

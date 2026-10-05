@@ -129,7 +129,9 @@ describe('Auth Login API Route', () => {
 
   it('returns a valid token and user payload on successful login', async () => {
     const crypto = require('crypto')
-    const passwordHash = crypto.scryptSync('1234567890', 'user.test@crave.local', 64).toString('hex')
+    const passwordHash = crypto
+      .scryptSync('1234567890', 'user.test@crave.local', 64)
+      .toString('hex')
 
     const mockUser = {
       id: 'usr_test_user',
