@@ -15,6 +15,7 @@ import {
   QrCode,
   Settings,
   ShieldCheck,
+  Sparkles,
   Store,
   Tag,
   Users,
@@ -65,6 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin/dashboard', label: t.admin.platformOverview, icon: LayoutDashboard },
     { href: '/admin/analytics', label: t.admin.platformAnalytics, icon: BarChart3 },
+    { href: '/admin/ai-analytics', label: (t.admin as any).aiAnalytics || 'AI Analytics', icon: Sparkles },
     { href: '/admin/payments', label: t.admin.paymentReviewQueue, icon: CreditCard },
     { href: '/admin/users', label: t.admin.userAccounts, icon: Users },
     { href: '/admin/coupons', label: t.admin.couponsDiscounts, icon: Tag },
