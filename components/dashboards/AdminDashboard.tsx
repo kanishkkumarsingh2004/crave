@@ -189,17 +189,26 @@ export default function AdminDashboard() {
             matchedVendor?.description?.toLowerCase().includes('xp') ||
             u.cuisine?.toLowerCase().includes('xp')
 
+          const normalizedRole: UserRole =
+            u.role === 'user' || u.role === 'customer'
+              ? 'customer'
+              : u.role === 'rider' || u.role === 'driver'
+                ? 'driver'
+                : u.role === 'restaurant_vendor' || u.role === 'cravexp_store_vendor' || u.role === 'vendor'
+                  ? 'vendor'
+                  : (u.role as UserRole) || 'customer'
+
           combinedAccounts.push({
             id: u.id,
             name: u.name || 'User Account',
             email: u.email || 'no-email@crave.com',
-            role: (u.role as UserRole) || 'customer',
+            role: normalizedRole,
             status: 'active',
             joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Recently',
             detail:
-              u.role === 'restaurant_vendor'
+              u.role === 'restaurant_vendor' || u.role === 'vendor'
                 ? matchedVendor?.storeName || u.restaurant_name || 'Kitchen Vendor'
-                : u.role === 'rider'
+                : u.role === 'rider' || u.role === 'driver'
                   ? u.vehicle_type || 'Delivery Agent'
                   : u.role === 'admin'
                     ? 'System Super Admin'
@@ -526,7 +535,9 @@ export default function AdminDashboard() {
   // Filtered lists for tabs
   const vendorAccounts = accounts.filter(
     (a) =>
-      a.role === 'vendor' &&
+      (a.role === 'vendor' ||
+        a.role === 'restaurant_vendor' ||
+        a.role === 'cravexp_store_vendor') &&
       (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (a.restaurantName && a.restaurantName.toLowerCase().includes(searchQuery.toLowerCase())))
@@ -534,14 +545,14 @@ export default function AdminDashboard() {
 
   const customerAccounts = accounts.filter(
     (a) =>
-      a.role === 'customer' &&
+      (a.role === 'customer' || a.role === 'user') &&
       (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.email.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const driverAccounts = accounts.filter(
     (a) =>
-      a.role === 'driver' &&
+      (a.role === 'driver' || a.role === 'rider') &&
       (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.email.toLowerCase().includes(searchQuery.toLowerCase()))
   )

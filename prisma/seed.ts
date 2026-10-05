@@ -47,32 +47,32 @@ async function seed() {
     {
       id: 'usr_test_user',
       name: 'Test User',
-      email: 'user.test@crave.local',
+      email: 'user@crave.com',
       role: 'user' as UserRole,
     },
     {
       id: 'usr_test_admin',
       name: 'Test Admin',
-      email: 'admin.test@crave.local',
+      email: 'admin@crave.com',
       role: 'admin' as UserRole,
     },
     {
       id: 'usr_test_restaurant_vendor',
       name: 'Test Restaurant Vendor',
-      email: 'restaurant.test@crave.local',
+      email: 'restaurant.test@crave.com',
       role: 'restaurant_vendor' as UserRole,
       restaurant_name: 'Spice Garden',
     },
     {
       id: 'usr_test_cravexp_vendor',
       name: 'Test CraveXP Store Vendor',
-      email: 'cravexp.test@crave.local',
+      email: 'cravexp@crave.com',
       role: 'cravexp_store_vendor' as UserRole,
     },
     {
       id: 'usr_test_rider',
       name: 'Test Rider',
-      email: 'rider.test@crave.local',
+      email: 'rider@crave.com',
       role: 'rider' as UserRole,
     },
   ]
