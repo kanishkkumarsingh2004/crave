@@ -4,7 +4,6 @@ import AdminAnalyticsPage from '@/app/admin/analytics/page'
 import AdminSettingsPage from '@/app/admin/settings/page'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
   Crown,
@@ -149,32 +148,33 @@ export default function AdminDashboard() {
     toast(clean, isError ? 'error' : 'success')
   }
 
-  // Scrub and fetch real database records from Supabase
+  // Fetch real database records
   const fetchAccountsAndVendors = async () => {
     try {
       setAccountsLoading(true)
 
-      // 1. Fetch real vendors table records
-      const { data: vendorsData } = await (supabase as any).from('vendors').select('*')
+      // 1. Fetch restaurants (vendors) from API
+      const resRest = await fetch('/api/restaurants', { cache: 'no-store' })
+      const restaurantsJson = await resRest.json()
+      const vendorsData = restaurantsJson.restaurants || []
 
-      // 2. Fetch real users table records
-      const { data: usersData } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false })
+      // 2. Fetch users from API
+      const resUsers = await fetch('/api/admin/users', { cache: 'no-store' })
+      const usersJson = await resUsers.json()
+      const usersData = usersJson.users || []
 
       const realVendorsList: VendorStore[] = vendorsData
-        ? (vendorsData as any[]).map((v: any) => ({
-            id: v.id,
-            userId: v.userId,
-            storeName: v.storeName || 'Unnamed Store',
-            description: v.description,
-            address: v.address,
-            status: v.status || 'ACTIVE',
-            isOpen: v.isOpen ?? true,
-            commissionRate: v.commissionRate ?? 15,
-            commissionType: v.commissionType || 'COMMISSION',
-            bannerUrl: v.bannerUrl,
+        ? (vendorsData as any[]).map((r: any) => ({
+            id: r.id,
+            userId: r.owner_id,
+            storeName: r.name || 'Unnamed Store',
+            description: r.cuisine,
+            address: r.address,
+            status: r.is_open ? 'ACTIVE' : 'INACTIVE',
+            isOpen: r.is_open ?? true,
+            commissionRate: r.commission_rate ?? 15,
+            commissionType: r.payment_model || 'COMMISSION',
+            bannerUrl: r.image,
           }))
         : []
 
@@ -182,7 +182,6 @@ export default function AdminDashboard() {
 
       const combinedAccounts: AccountRecord[] = []
 
-      // Add users from public.users
       if (usersData && usersData.length > 0) {
         usersData.forEach((u: any) => {
           const matchedVendor = realVendorsList.find((v) => v.userId === u.id || v.id === u.id)
@@ -198,13 +197,15 @@ export default function AdminDashboard() {
             status: 'active',
             joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Recently',
             detail:
-              u.role === 'vendor'
+              u.role === 'restaurant_vendor'
                 ? matchedVendor?.storeName || u.restaurant_name || 'Kitchen Vendor'
-                : u.role === 'driver'
+                : u.role === 'rider'
                   ? u.vehicle_type || 'Delivery Agent'
                   : u.role === 'admin'
-                    ? 'System Super Admin'
-                    : u.address || 'Registered Customer',
+                  ? 'System Super Admin'
+                  : u.role === 'cravexp_store_vendor'
+                  ? 'CraveXP Store Vendor'
+                  : u.address || 'Registered Customer',
             phone: u.phone || undefined,
             address: u.address || undefined,
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
@@ -221,7 +222,6 @@ export default function AdminDashboard() {
         })
       }
 
-      // Add all real vendors from public.vendors if not already added
       if (realVendorsList.length > 0) {
         realVendorsList.forEach((v) => {
           const exists = combinedAccounts.some((a) => a.id === v.id || a.id === v.userId)
@@ -232,8 +232,8 @@ export default function AdminDashboard() {
             combinedAccounts.push({
               id: v.id,
               name: v.storeName || 'Store Vendor',
-              email: `${v.storeName.toLowerCase().replace(/[^a-z0-9]/g, '')}@crave.com`,
-              role: 'vendor',
+              email: `${v.storeName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'store'}@crave.com`,
+              role: v.commissionType === 'MARKUP' ? 'vendor' : 'restaurant_vendor',
               status: v.status ? (v.status.toLowerCase() as any) : 'active',
               joinedDate: 'Active',
               detail: v.storeName,
@@ -264,12 +264,11 @@ export default function AdminDashboard() {
   // Fetch Payment Queue
   const fetchPayments = async () => {
     try {
-      const { data, error } = await supabase
-        .from('payment_reviews')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const res = await fetch('/api/admin/payment-reviews', { cache: 'no-store' })
+      const json = await res.json()
+      const data = json.reviews || []
 
-      if (!error && data) {
+      if (data) {
         setPayments(
           data.map((p: any) => ({
             id: p.id,
@@ -401,29 +400,28 @@ export default function AdminDashboard() {
     setProductsLoading(true)
 
     try {
-      const { data, error } = await (supabase as any)
-        .from('products')
-        .select('*')
-        .eq('vendorId', vendor.id)
-        .order('createdAt', { ascending: false })
+      const res = await fetch(
+        `/api/menu-items?restaurantId=${vendor.id}`,
+        { cache: 'no-store' }
+      )
+      const json = await res.json()
+      const data = json.items || []
 
-      if (!error && data) {
+      if (data) {
         setVendorProducts(
           data.map((p: any) => ({
             id: p.id,
-            vendorId: p.vendorId,
-            categoryId: p.categoryId,
+            vendorId: p.restaurant_id,
+            categoryId: p.category,
             name: p.name,
             description: p.description,
-            sku: p.sku,
+            sku: p.sku_code,
             price: Number(p.price),
-            comparePrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-            currency: p.currency || 'INR',
-            imageUrl: p.imageUrl,
-            status: p.status || 'ACTIVE',
-            categoryName: p.description?.includes('·')
-              ? p.description.split('·')[0].trim()
-              : 'General',
+            comparePrice: p.mrp ? Number(p.mrp) : undefined,
+            currency: 'INR',
+            imageUrl: p.image,
+            status: p.in_stock ? 'ACTIVE' : 'INACTIVE',
+            categoryName: p.category || 'General',
           }))
         )
       } else {
@@ -450,44 +448,42 @@ export default function AdminDashboard() {
 
     try {
       if (isEdit) {
-        const { error } = await (supabase as any)
-          .from('products')
-          .update({
+        const res = await fetch('/api/menu-items', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: prodId,
             name: productForm.name,
             description: `${productForm.categoryName} · ${productForm.description || ''}`,
             price: finalPrice,
-            comparePrice: finalComparePrice,
-            imageUrl: productForm.imageUrl || null,
-            status: productForm.status,
-            sku: productForm.sku || `SKU-${Date.now()}`,
-            updatedAt: new Date().toISOString(),
-          })
-          .eq('id', prodId)
-
-        if (error) throw error
+            mrp: finalComparePrice,
+            image: productForm.imageUrl || null,
+            in_stock: productForm.status === 'ACTIVE',
+            sku_code: productForm.sku || `SKU-${Date.now()}`,
+          }),
+        })
+        if (!res.ok) throw new Error('Update failed')
         triggerToast(`Updated product '${productForm.name}' pricing & details!`)
       } else {
-        const { error } = await (supabase as any).from('products').insert([
-          {
+        const res = await fetch('/api/menu-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             id: prodId,
-            vendorId: selectedVendorForMenu.id,
+            restaurant_id: selectedVendorForMenu.id,
             name: productForm.name,
-            description: `${productForm.categoryName} · ${productForm.description || ''}`,
+            category: productForm.categoryName || 'General',
             price: finalPrice,
-            comparePrice: finalComparePrice,
-            currency: 'INR',
-            imageUrl:
-              productForm.imageUrl ||
+            description: `${productForm.categoryName} · ${productForm.description || ''}`,
+            image: productForm.imageUrl ||
               'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-            status: productForm.status,
-            sku: productForm.sku || `SKU-${Date.now()}`,
-            isArchived: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ])
-
-        if (error) throw error
+            in_stock: productForm.status === 'ACTIVE',
+            is_veg: productForm.categoryName?.toLowerCase().includes('veg') ?? false,
+            mrp: finalComparePrice,
+            sku_code: productForm.sku || `SKU-${Date.now()}`,
+          }),
+        })
+        if (!res.ok) throw new Error('Create failed')
         triggerToast(`Added '${productForm.name}' to ${selectedVendorForMenu.storeName}'s catalog!`)
       }
 

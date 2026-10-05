@@ -12,8 +12,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
     }
 
-    // Strictly enforce that public registration is ONLY for customers/consumers
-    if (role && role !== 'user') {
+    if (!role) {
+      return NextResponse.json({ error: 'A role must be specified' }, { status: 400 })
+    }
+
+    if (role !== 'user') {
       return NextResponse.json(
         {
           error:

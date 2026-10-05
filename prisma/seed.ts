@@ -61,6 +61,7 @@ async function seed() {
       name: 'Test Restaurant Vendor',
       email: 'restaurant.test@crave.local',
       role: 'restaurant_vendor' as UserRole,
+      restaurant_name: 'Spice Garden',
     },
     {
       id: 'usr_test_cravexp_vendor',
@@ -86,18 +87,20 @@ async function seed() {
         role: u.role,
         password_hash: hash,
         locale: 'en',
+        ...(u.restaurant_name && { restaurant_name: u.restaurant_name }),
       },
     })
     console.log(`  ✅ Seeded user ${u.email}`)
   }
 
   // ─── Seed Restaurant ─────────────────────────────────────
-  await prisma.restaurant.create({
+   await prisma.restaurant.create({
     data: {
       id: 'vnd_1791063436223_iyet2',
       name: 'Spice Garden',
       cuisine: 'Indian',
       is_open: true,
+      owner_id: 'usr_test_restaurant_vendor',
     },
   })
   console.log('  ✅ Seeded restaurant Spice Garden')
