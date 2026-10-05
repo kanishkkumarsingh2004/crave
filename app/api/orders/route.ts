@@ -273,7 +273,8 @@ export async function PATCH(request: Request) {
       (actor.role === 'admin' &&
         ['payment_verified', 'sent_to_vendor', 'cancelled'].includes(status)) ||
       (isVendor && vendorStatuses.includes(requestedStatus!)) ||
-      (actor.role === 'rider' && riderStatuses.includes(requestedStatus!))
+      (actor.role === 'rider' && riderStatuses.includes(requestedStatus!)) ||
+      (isOwner && status === 'completed')
 
     if (
       !allowed ||

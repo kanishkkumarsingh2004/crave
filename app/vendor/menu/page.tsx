@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import { supabase } from '@/lib/supabase'
 import {
   ArrowLeft,
   Edit,
@@ -89,91 +88,64 @@ export default function VendorMenuPage() {
       setMenuLoading(true)
       setMenuError('')
       try {
-        // 1. Search vendors table first to ensure targetRestId exists in vendors table (satisfying products FK)
-        let { data: vRecord } = await (supabase as any)
-          .from('vendors')
-          .select('*')
-          .or(`userId.eq.${user.id},id.eq.${user.id}`)
-          .maybeSingle()
+        let targetRestId: string | null = null
 
-        if (!vRecord && user.email) {
-          const { data: vByEmail } = await (supabase as any)
-            .from('vendors')
-            .select('*')
-            .ilike('email', user.email)
-            .maybeSingle()
-          vRecord = vByEmail
+        const restRes = await fetch(`/api/restaurants?ownerId=${encodeURIComponent(user.id)}`)
+        if (restRes.ok) {
+          const restResult = await restRes.json()
+          if (restResult.success && restResult.restaurants?.length > 0) {
+            targetRestId = restResult.restaurants[0].id
+          }
         }
 
-        if (!vRecord && user.restaurantName) {
-          const { data: vByName } = await (supabase as any)
-            .from('vendors')
-            .select('*')
-            .ilike('storeName', user.restaurantName)
-            .maybeSingle()
-          vRecord = vByName
-        }
-
-        let targetRestId = (vRecord as any)?.id
-
-        // If no vendor record exists, auto-provision in vendors and restaurants tables
         if (!targetRestId) {
-          targetRestId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-          await (supabase as any).from('vendors').upsert([
-            {
-              id: targetRestId,
-              userId: user.id,
-              storeName: user.restaurantName || 'My Kitchen Store',
-              email: user.email,
-              phone: user.phone || null,
-              description: user.cuisine || 'Restaurant Vendor',
-              status: 'ACTIVE',
-              isOpen: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ])
-
-          await supabase.from('restaurants').upsert([
-            {
-              id: targetRestId,
-              owner_id: user.id,
-              name: user.restaurantName || 'My Kitchen Store',
+          const restName = user.restaurantName || 'My Kitchen Store'
+          const newRestId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+          const createRes = await fetch('/api/restaurants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: newRestId,
+              name: restName,
               cuisine: user.cuisine || 'Multi-Cuisine',
-              is_open: true,
               address: user.address || 'Bengaluru, India',
-            },
-          ])
+              owner_id: user.id,
+              is_open: true,
+              is_dark_store: false,
+            }),
+          })
+          if (createRes.ok) {
+            const createResult = await createRes.json()
+            targetRestId = createResult.restaurant?.id || newRestId
+          } else {
+            targetRestId = newRestId
+          }
         }
 
-        setRestaurantId(targetRestId)
+        const restId = targetRestId || ''
+        setRestaurantId(restId || null)
 
-        // 2. Fetch dishes for this restaurant from products table
-        const { data: prodData, error: prodErr } = await (supabase as any)
-          .from('products')
-          .select('*')
-          .eq('vendorId', targetRestId)
-          .order('createdAt', { ascending: false })
-
-        if (!prodErr && prodData && prodData.length > 0) {
-          const formatted: MenuItemRecord[] = prodData.map((item: any) => ({
-            id: item.id,
-            restaurant_id: item.vendorId || targetRestId,
-            name: item.name,
-            category: item.description?.includes('·')
-              ? item.description.split('·')[0].trim()
-              : 'General',
-            price: Number(item.price),
-            description: item.description?.includes('·')
-              ? item.description.split('·').slice(1).join('·').trim()
-              : (item.description ?? ''),
-            in_stock: item.status !== 'INACTIVE',
-            image:
-              item.imageUrl ||
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-            veg: true,
-          }))
-          setMenuItems(formatted)
+        const menuRes = await fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restId)}`)
+        if (menuRes.ok) {
+          const menuResult = await menuRes.json()
+          if (menuResult.success && menuResult.items) {
+            const formatted: MenuItemRecord[] = menuResult.items.map((item: any) => ({
+              id: item.id,
+              restaurant_id: item.restaurant_id || targetRestId,
+              name: item.name,
+              category: item.category,
+              price: Number(item.price),
+              description: item.description ?? '',
+              in_stock: item.in_stock ?? true,
+              image:
+                item.image ||
+                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+              veg: item.is_veg ?? true,
+            }))
+            setMenuItems(formatted)
+          } else {
+            setMenuItems([])
+          }
         } else {
           setMenuItems([])
         }
@@ -229,8 +201,6 @@ export default function VendorMenuPage() {
       : `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
     const defaultImg =
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
-    const now = new Date().toISOString()
-    const defaultCategoryId = 'cmuq0vgyi0009g1u0hs8gcarp' // Valid Restaurants category ID in Supabase
 
     const itemData: MenuItemRecord = {
       id: newItemId,
@@ -245,75 +215,49 @@ export default function VendorMenuPage() {
     }
 
     try {
-      // 1. Save to public.menu_items (Primary table for customer store & orders)
-      if (editingItem) {
-        await supabase
-          .from('menu_items')
-          .update({
-            name: itemData.name,
-            category: itemData.category,
-            price: itemData.price,
-            description: itemData.description,
-            image: itemData.image,
-            in_stock: itemData.in_stock,
-            is_veg: itemData.veg,
-            restaurant_id: restaurantId,
-          })
-          .eq('id', editingItem.id)
-      } else {
-        await supabase.from('menu_items').insert([
-          {
-            id: newItemId,
-            restaurant_id: restaurantId,
-            name: itemData.name,
-            category: itemData.category,
-            price: itemData.price,
-            description: itemData.description,
-            image: itemData.image,
-            in_stock: itemData.in_stock,
-            is_veg: itemData.veg,
-            created_at: now,
-          },
-        ])
+      const payload = {
+        id: newItemId,
+        restaurant_id: restaurantId,
+        name: itemData.name,
+        category: itemData.category,
+        price: itemData.price,
+        description: itemData.description || null,
+        image: itemData.image || null,
+        in_stock: itemData.in_stock,
+        is_veg: itemData.veg ?? null,
+        unit: null,
+        mrp: itemData.price || null,
+        stock_count: 0,
+        sku_code: null,
       }
 
-      // 2. Fallback sync to public.products table
-      try {
-        if (editingItem) {
-          await (supabase as any)
-            .from('products')
-            .update({
-              name: itemData.name,
-              price: itemData.price,
-              description: `${itemData.category} · ${itemData.description}`,
-              imageUrl: itemData.image,
-              status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
-              updatedAt: now,
-            })
-            .eq('id', editingItem.id)
-        } else {
-          await (supabase as any).from('products').insert([
-            {
-              id: newItemId,
-              vendorId: restaurantId,
-              categoryId: defaultCategoryId,
-              sku: `SKU_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-              name: itemData.name,
-              price: itemData.price,
-              description: `${itemData.category} · ${itemData.description}`,
-              imageUrl: itemData.image,
-              status: itemData.in_stock ? 'ACTIVE' : 'INACTIVE',
-              createdAt: now,
-              updatedAt: now,
-            },
-          ])
-        }
-      } catch (e) {
-        console.warn('Products table fallback notice:', e)
+      let res
+      if (editingItem) {
+        res = await fetch('/api/menu-items', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      } else {
+        res = await fetch('/api/menu-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }
+
+      if (!res.ok) {
+        const errResult = await res.text()
+        throw new Error(errResult || 'Failed to save menu item')
+      }
+
+      const result = await res.json()
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save menu item')
       }
     } catch (err: any) {
       const errMsg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err))
-      console.error('Failed to save menu item to Supabase:', errMsg)
+      console.error('Failed to save menu item:', errMsg)
       triggerToast(errMsg || 'Could not save dish to database.')
       return
     }
@@ -330,13 +274,17 @@ export default function VendorMenuPage() {
   }
 
   async function handleToggleStock(id: string, currentStock: boolean) {
-    if (!restaurantId) return
     const nextStock = !currentStock
     try {
-      await (supabase as any)
-        .from('products')
-        .update({ status: nextStock ? 'ACTIVE' : 'INACTIVE', updatedAt: new Date().toISOString() })
-        .eq('id', id)
+      const res = await fetch('/api/menu-items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, in_stock: nextStock }),
+      })
+
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
     } catch (err) {
       console.error('Failed to update menu item stock:', err)
       triggerToast('Could not update availability. Please try again.')
@@ -350,8 +298,13 @@ export default function VendorMenuPage() {
   async function handleDeleteItem(id: string, name: string) {
     if (!confirm(`Are you sure you want to delete '${name}' from your menu?`)) return
     try {
-      await supabase.from('menu_items').delete().eq('id', id)
-      await (supabase as any).from('products').delete().eq('id', id)
+      const res = await fetch(`/api/menu-items?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
     } catch (err) {
       console.error('Failed to delete menu item:', err)
       triggerToast('Could not delete the menu item. Please try again.')

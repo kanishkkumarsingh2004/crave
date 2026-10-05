@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const restaurantId = searchParams.get('restaurantId')
+    const ownerId = searchParams.get('ownerId')
     const isDarkStore = searchParams.get('isDarkStore')
 
     let restaurants
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
       const { findRestaurantById } = await import('@/lib/dal/restaurants')
       const found = await findRestaurantById(restaurantId)
       restaurants = found ? [found] : []
+    } else if (ownerId) {
+      restaurants = await listRestaurants({ ownerId })
     } else if (isDarkStore !== null) {
       restaurants = await listRestaurants({ isDarkStore: isDarkStore === 'true' })
     } else {
@@ -23,6 +26,32 @@ export async function GET(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to load restaurants' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        id: body.id || crypto.randomUUID(),
+        name: body.name || 'My Kitchen Store',
+        cuisine: body.cuisine || 'Multi-Cuisine',
+        address: body.address || 'Bengaluru, India',
+        owner_id: body.owner_id,
+        is_open: body.is_open ?? true,
+        is_dark_store: body.is_dark_store ?? false,
+        rating: 4.8,
+        commission_rate: 15,
+        payment_model: 'commission',
+      },
+    })
+    return NextResponse.json({ success: true, restaurant })
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || 'Failed to create restaurant' },
       { status: 500 }
     )
   }

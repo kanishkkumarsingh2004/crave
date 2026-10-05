@@ -821,21 +821,9 @@ export default function CustomerDashboard({
 
   async function handleCheckoutSubmit(e: FormEvent) {
     e.preventDefault()
-    setUpiError('')
     setUtrError('')
 
-    const cleanUpi = upiId.trim()
     const cleanUtr = utrRef.trim()
-
-    if (!cleanUpi.includes('@') || cleanUpi.length < 5) {
-      setUpiError('Please enter a valid UPI VPA (e.g. name@upi)')
-      return
-    }
-
-    if (!/^\d{12}$/.test(cleanUtr)) {
-      setUtrError('UTR number must be exactly 12 numeric digits')
-      return
-    }
 
     const targetAddress = (deliveryAddress || user?.address || 'Kanakapura Road, Bengaluru').trim()
     const targetRestaurantId =
@@ -895,7 +883,6 @@ export default function CustomerDashboard({
         payment_method: 'UPI Online',
         delivery_otp: generatedOtp,
         utr_ref: cleanUtr,
-        customer_vpa: cleanUpi,
       }
 
       const res = await fetch('/api/orders', {
@@ -2170,24 +2157,6 @@ export default function CustomerDashboard({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-[#18201c]">Your UPI ID / VPA</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter your UPI VPA"
-                    value={upiId}
-                    onChange={(e) => {
-                      setUpiId(e.target.value)
-                      setUpiError('')
-                    }}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 text-xs outline-none focus:border-[#86a018] font-medium"
-                  />
-                  {upiError && (
-                    <p className="mt-1 text-[11px] font-bold text-rose-600">{upiError}</p>
-                  )}
-                </div>
-
-                <div>
                   <label className="text-xs font-bold text-[#18201c]">
                     12-Digit UTR Payment Reference Number
                   </label>
@@ -2206,11 +2175,16 @@ export default function CustomerDashboard({
                   {utrError && (
                     <p className="mt-1 text-[11px] font-bold text-rose-600">{utrError}</p>
                   )}
+                  {utrRef.length > 0 && utrRef.length < 12 && (
+                    <p className="mt-1 text-[11px] font-bold text-gray-500">
+                      Enter at least 12 digits to continue ({utrRef.length}/12)
+                    </p>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={!checkoutConfig || !companyUpiId}
+                  disabled={!checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 12}
                   className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit Order &amp; Start Verification (₹{grandTotal})

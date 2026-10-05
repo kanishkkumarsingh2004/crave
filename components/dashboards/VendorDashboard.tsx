@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   CookingPot,
   LogOut,
+  Menu,
   PackageCheck,
   Percent,
   Settings,
@@ -14,6 +15,7 @@ import {
   Star,
   Store,
   UtensilsCrossed,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -39,6 +41,7 @@ export default function VendorDashboard() {
   const router = useRouter()
   const pathname = usePathname()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const loadLiveKitchenOrders = async () => {
     try {
@@ -224,10 +227,18 @@ export default function VendorDashboard() {
                 {user?.restaurantName || 'The Green Table'}
               </span>
             </div>
+
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="sm:hidden grid size-9 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              aria-label="Open menu"
+            >
+              <Menu className="size-5" />
+            </button>
           </div>
 
-          {/* Navigation Links */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto text-xs font-bold lg:hidden">
+          {/* Desktop Navigation Links (hidden on mobile) */}
+          <div className="no-scrollbar hidden items-center gap-2 overflow-x-auto text-xs font-bold lg:hidden xl:flex">
             <button
               onClick={() => router.push('/vendor/dashboard')}
               className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
@@ -272,6 +283,77 @@ export default function VendorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Slide-Out Menu (slides in from right) */}
+      <div
+        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex h-full flex-col">
+          {/* Close button */}
+          <div className="flex items-center justify-between border-b border-gray-100 p-4">
+            <h2 className="text-lg font-bold text-[#18201c]">Menu</h2>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="grid size-7 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              aria-label="Close menu"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1" aria-label="Mobile menu">
+            {[
+              { href: '/vendor/dashboard', label: 'Kitchen Orders', icon: ShoppingBag },
+              { href: '/vendor/menu', label: 'Menu Management', icon: UtensilsCrossed },
+              { href: '/vendor/sales', label: 'Sales & Earnings', icon: ChartColumn },
+              { href: '/vendor/coupons', label: 'Store Offers', icon: Percent },
+              { href: '/vendor/settings', label: 'Bank & Settings', icon: Settings },
+            ].map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
+                    isActive
+                      ? 'bg-[#18201c] text-white'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span>{label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          <div className="border-t border-gray-100 p-4">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false)
+                logout()
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile overlay backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Welcome Kitchen Banner */}

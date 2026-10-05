@@ -28,8 +28,8 @@ export function useWebSocket({
   reconnectInterval = 5000,
 }: UseWebSocketOptions) {
   const [connected, setConnected] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
-  const reconnectRef = useRef<NodeJS.Timeout | null>(null)
+  const wsRef: any = useRef(null)
+  const reconnectRef: any = useRef(null)
 
   useEffect(() => {
     if (!channels.length) return
