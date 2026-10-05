@@ -164,30 +164,36 @@ export default function AdminAnalyticsPage() {
             topVendors.map((vendor, index) => (
               <div
                 key={vendor.name}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 p-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-gray-200 p-3 bg-[#f8f9f7]/50 sm:bg-white"
               >
-                <div className="flex items-center gap-3">
-                  <div className="grid size-9 place-items-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="grid size-8 sm:size-9 place-items-center rounded-xl bg-gray-100 text-xs font-bold text-gray-700 shrink-0">
                     #{index + 1}
                   </div>
-                  <div>
-                    <p className="font-bold text-[#18201c]">{vendor.name}</p>
-                    <p className="text-[11px] text-gray-500">{vendor.model}</p>
+                  <div className="min-w-0">
+                    <p className="font-bold text-xs sm:text-sm text-[#18201c] truncate">
+                      {vendor.name}
+                    </p>
+                    <p className="text-[10px] sm:text-[11px] text-gray-500 truncate">
+                      {vendor.model}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 text-xs text-gray-600">
+                <div className="flex items-center justify-between sm:justify-end gap-4 text-xs text-gray-600 border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
                   <div>
-                    <div className="font-bold text-[#18201c]">
+                    <div className="font-bold text-xs sm:text-sm text-[#18201c]">
                       ₹{vendor.revenue.toLocaleString('en-IN')}
                     </div>
-                    <div>Revenue</div>
+                    <div className="text-[10px] text-gray-400">Revenue</div>
                   </div>
                   <div>
-                    <div className="font-bold text-[#18201c]">{vendor.orders}</div>
-                    <div>Orders</div>
+                    <div className="font-bold text-xs sm:text-sm text-[#18201c]">
+                      {vendor.orders}
+                    </div>
+                    <div className="text-[10px] text-gray-400">Orders</div>
                   </div>
-                  <div className="flex items-center gap-1 font-bold text-amber-600">
+                  <div className="flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 text-[11px]">
                     <Star className="size-3 fill-current" /> {vendor.rating.toFixed(1)}
                   </div>
                 </div>
@@ -213,18 +219,18 @@ function MetricCard({
 }) {
   const isPositive = trend.startsWith('+')
   return (
-    <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+    <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] bg-white p-3.5 sm:p-5 shadow-sm hover:shadow-md transition">
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 truncate">
           {title}
         </span>
-        <span className="grid size-9 place-items-center rounded-2xl bg-[#f1f6d9] text-[#6a8014]">
+        <span className="grid size-7 sm:size-9 place-items-center rounded-xl sm:rounded-2xl bg-[#f1f6d9] text-[#6a8014] shrink-0">
           {icon}
         </span>
       </div>
-      <p className="mt-4 text-2xl font-bold text-[#18201c]">{value}</p>
+      <p className="mt-2 sm:mt-4 text-lg sm:text-2xl font-bold text-[#18201c] truncate">{value}</p>
       <div
-        className={`mt-2 flex items-center gap-1 text-xs font-bold ${
+        className={`mt-1 sm:mt-2 flex items-center gap-1 text-[10px] sm:text-xs font-bold ${
           isPositive ? 'text-emerald-600' : 'text-gray-400'
         }`}
       >

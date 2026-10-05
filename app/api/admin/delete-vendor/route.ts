@@ -1,11 +1,21 @@
 import { findUserByEmail, deleteUser } from '@/lib/dal'
 import { deleteRestaurant, deleteRestaurantsByOwner } from '@/lib/dal/restaurants'
 import { deleteMenuItemsByRestaurant } from '@/lib/dal/menu-items'
-import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+
+    const payload = token ? await verifyToken(token) : null
+    if (!payload || payload.role !== 'admin') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { vendorId, userId, email } = body
 

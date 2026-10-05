@@ -115,20 +115,20 @@ export default function AdminPaymentConfigPage() {
     const rFee = getNum(rainFee)
     const nFee = getNum(nightSurgeFee)
 
-    // Delivery fee math
+    // Delivery fee math (distance-based fare for the trip)
     let rawDelivery = baseFee
     if (distKm > baseDist) {
       rawDelivery += (distKm - baseDist) * perKm
     }
 
-    // Apply Free Delivery check
+    // Apply Free Delivery check for customer
     const isFreeDelivery = ordVal >= freeThresh && freeThresh > 0
     let finalDeliveryFee = isFreeDelivery ? 0 : rawDelivery
 
-    // Surge calculations
+    // Surge calculations based on actual trip distance fare
     let surgeAddon = 0
     if (surgeMultiplier > 1.0) {
-      surgeAddon += finalDeliveryFee * (surgeMultiplier - 1.0)
+      surgeAddon += rawDelivery * (surgeMultiplier - 1.0)
     }
     if (isRainModeActive) {
       surgeAddon += rFee
@@ -137,6 +137,11 @@ export default function AdminPaymentConfigPage() {
       surgeAddon += nFee
     }
 
+    // Trip Delivery Fare for driver payout (driver always receives share of full trip fare)
+    const tripDeliveryFare = rawDelivery + surgeAddon
+    const driverPayout = Math.round(tripDeliveryFare * (driverPayoutShare / 100))
+
+    // Total delivery charges paid by customer
     const totalDeliveryCharges = Math.round((finalDeliveryFee + surgeAddon) * 100) / 100
 
     // Customer Grand Total (includes Subtotal + Delivery + Platform Fee + Handling Charges)
@@ -145,7 +150,6 @@ export default function AdminPaymentConfigPage() {
     // Breakdown Split
     const vendorCommissionAmount = (ordVal * vComm) / 100
     const vendorPayout = ordVal - vendorCommissionAmount
-    const driverPayout = Math.round(totalDeliveryCharges * (driverPayoutShare / 100))
     const platformNetProfit = Math.round((customerTotal - vendorPayout - driverPayout) * 100) / 100
 
     return {

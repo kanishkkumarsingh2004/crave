@@ -691,7 +691,8 @@ export default function CustomerDashboard({
 
   useEffect(() => {
     if (!appliedCoupon) return
-    const res = validateCoupon(appliedCoupon.code, cartSubtotal, availableCoupons)
+    const currentRestId = (cart[0] as any)?.restaurantId || (selectedRestaurant as any)?.id
+    const res = validateCoupon(appliedCoupon.code, cartSubtotal, availableCoupons, currentRestId)
     if (res.valid) {
       setCouponDiscount(res.discountAmount)
     } else {
@@ -699,7 +700,7 @@ export default function CustomerDashboard({
       setCouponDiscount(0)
       setCouponMessage({ type: 'error', text: res.message })
     }
-  }, [cartSubtotal, appliedCoupon])
+  }, [cartSubtotal, appliedCoupon, cart, selectedRestaurant])
 
   // State for Single-Restaurant Cart Conflict Modal
   const [conflictModal, setConflictModal] = useState<{
@@ -787,7 +788,8 @@ export default function CustomerDashboard({
     const targetCode = codeToApply || couponCodeInput
     if (!targetCode.trim()) return
 
-    const res = validateCoupon(targetCode, cartSubtotal, availableCoupons)
+    const currentRestId = (cart[0] as any)?.restaurantId || (selectedRestaurant as any)?.id
+    const res = validateCoupon(targetCode, cartSubtotal, availableCoupons, currentRestId)
     if (res.valid && res.coupon) {
       setAppliedCoupon(res.coupon)
       setCouponDiscount(res.discountAmount)
@@ -2324,7 +2326,9 @@ export default function CustomerDashboard({
                             </p>
                           </div>
                         </div>
-                        <span className="font-extrabold text-emerald-800 text-xs shrink-0">-₹{couponDiscount}</span>
+                        <span className="font-extrabold text-emerald-800 text-xs shrink-0">
+                          -₹{couponDiscount}
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -2391,7 +2395,9 @@ export default function CustomerDashboard({
                                       : `FLAT ₹${c.discountValue} OFF`}
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-gray-600 mt-0.5 line-clamp-1">{c.description}</p>
+                                <p className="text-[10px] text-gray-600 mt-0.5 line-clamp-1">
+                                  {c.description}
+                                </p>
                               </div>
                               <button
                                 type="button"

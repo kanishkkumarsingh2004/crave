@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export async function POST() {
+export async function POST(_request?: Request) {
   const response = NextResponse.json({ success: true, message: 'Logged out successfully' })
 
   const cookieOptions = {

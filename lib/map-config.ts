@@ -53,18 +53,37 @@ export interface MapThemeConfig {
   }
 }
 
+export const CUSTOM_MAP_PALETTE = {
+  overlay: '#f8fafc',
+  text: '#35455c',
+  land: '#f8fafc',
+  landcover: '#eef2f6',
+  water: '#e2e8f0',
+  waterways: '#abb7c7',
+  parks: '#f1f5f9',
+  buildings: '#8e9eb3',
+  aeroway: '#e2e8f0',
+  rail: '#37475c',
+  roadMajor: '#35455c',
+  roadMinorHigh: '#425267',
+  roadMinorMid: '#5e7086',
+  roadMinorLow: '#9faec0',
+  roadPath: '#b0bccb',
+  roadOutline: '#f8fafc',
+} as const
+
 export const DEFAULT_MAP_THEME_KEY = 'slateMinimal'
 
 export const MAP_THEMES: Record<string, MapThemeConfig> = {
   slateMinimal: {
-    name: 'Slate Minimal (Blueprint)',
+    name: 'Custom Swatch Palette',
     tileUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     maxZoom: 19,
     route: {
-      glowColor: '#354659',
+      glowColor: '#35455c',
       glowWeight: 6,
       glowOpacity: 0.35,
-      lineColor: '#2f3e50',
+      lineColor: '#35455c',
       lineWeight: 4.5,
       dashArray: '',
     },

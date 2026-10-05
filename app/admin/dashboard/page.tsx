@@ -6,9 +6,11 @@ import {
   CreditCard,
   DollarSign,
   LayoutDashboard,
+  PackageCheck,
   Percent,
   QrCode,
   ShieldCheck,
+  Smartphone,
   Store,
   Tag,
   TrendingUp,
@@ -76,6 +78,8 @@ export default function AdminDashboardPage() {
   const [customerCount, setCustomerCount] = useState(0)
   const [vendorCount, setVendorCount] = useState(0)
   const [driverCount, setDriverCount] = useState(0)
+  const [allTimeOrders, setAllTimeOrders] = useState(0)
+  const [liveDeviceCount, setLiveDeviceCount] = useState(1)
   const [topRestaurants, setTopRestaurants] = useState<
     { name: string; grossSales: number; commissionRate: number }[]
   >([])
@@ -92,6 +96,8 @@ export default function AdminDashboardPage() {
           setCustomerCount(json.stats.customerCount)
           setVendorCount(json.stats.vendorCount)
           setDriverCount(json.stats.driverCount)
+          setAllTimeOrders(json.stats.orderCount ?? 0)
+          setLiveDeviceCount(json.stats.liveDevices ?? 1)
           if (json.restaurants) {
             setTopRestaurants(
               json.restaurants.slice(0, 4).map((restaurant: any) => ({
@@ -112,49 +118,49 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-[#e2e7dd] pb-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
-            Command center
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-[#18201c]">Platform Overview</h2>
-        </div>
-        <Link
-          href="/admin/analytics"
-          className="inline-flex items-center gap-2 rounded-full border border-[#dfe4dc] bg-white px-3 py-2 text-xs font-bold text-[#18201c] shadow-sm hover:bg-gray-50"
-        >
-          Open Analytics <ArrowUpRight className="size-3.5" />
-        </Link>
-      </div>
-
-      <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
+      {/* Overview Cards - Fully Mobile Responsive 2-Column Grid on Small Mobile */}
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         <SummaryCard
           title="Weekly Gross"
           value={`₹${weeklyGross.toLocaleString()}`}
           accent="purple"
-          icon={<DollarSign className="size-4" />}
+          icon={<DollarSign className="size-3.5 sm:size-4" />}
           note="Live Supabase data"
         />
         <SummaryCard
           title="Platform Commission"
           value={`₹${totalCommission.toLocaleString()}`}
           accent="emerald"
-          icon={<Percent className="size-4" />}
+          icon={<Percent className="size-3.5 sm:size-4" />}
           note="Settlement revenue"
         />
         <SummaryCard
           title="Net Vendor Pay"
           value={`₹${netVendorPay.toLocaleString()}`}
           accent="amber"
-          icon={<Store className="size-4" />}
+          icon={<Store className="size-3.5 sm:size-4" />}
           note="Vendor settlements"
         />
         <SummaryCard
           title="Delivery Fleet"
           value={`${driverCount} drivers`}
           accent="blue"
-          icon={<Zap className="size-4" />}
+          icon={<Zap className="size-3.5 sm:size-4" />}
           note="Registered riders"
+        />
+        <SummaryCard
+          title="Live Devices"
+          value={`${liveDeviceCount} active`}
+          accent="indigo"
+          icon={<Smartphone className="size-3.5 sm:size-4" />}
+          note="Connected on site"
+        />
+        <SummaryCard
+          title="All-Time Orders"
+          value={`${allTimeOrders.toLocaleString()}`}
+          accent="violet"
+          icon={<PackageCheck className="size-3.5 sm:size-4" />}
+          note="Lifetime orders"
         />
       </div>
 
@@ -318,7 +324,7 @@ function SummaryCard({
 }: {
   title: string
   value: string
-  accent: 'purple' | 'emerald' | 'amber' | 'blue'
+  accent: 'purple' | 'emerald' | 'amber' | 'blue' | 'indigo' | 'violet'
   icon: React.ReactNode
   note: string
 }) {
@@ -327,21 +333,28 @@ function SummaryCard({
     emerald: 'bg-emerald-100 text-emerald-800',
     amber: 'bg-amber-100 text-amber-800',
     blue: 'bg-blue-100 text-blue-800',
+    indigo: 'bg-indigo-100 text-indigo-800',
+    violet: 'bg-violet-100 text-violet-800',
   }
 
   return (
-    <div className="rounded-3xl border border-[#dfe4dc] bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+    <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] bg-white p-3.5 sm:p-5 shadow-sm hover:shadow-md transition">
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 truncate">
           {title}
         </span>
-        <span className={`grid size-9 place-items-center rounded-2xl ${colors[accent]}`}>
+        <span
+          className={`grid size-7 sm:size-9 place-items-center rounded-xl sm:rounded-2xl ${colors[accent]} shrink-0`}
+        >
           {icon}
         </span>
       </div>
-      <p className="mt-4 text-2xl font-bold text-[#18201c]">{value}</p>
-      <p className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-        <TrendingUp className="size-3.5" /> {note}
+      <p className="mt-2 sm:mt-4 text-base sm:text-2xl font-bold text-[#18201c] truncate">
+        {value}
+      </p>
+      <p className="mt-1 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-600 truncate">
+        <TrendingUp className="size-3 sm:size-3.5 shrink-0" />{' '}
+        <span className="truncate">{note}</span>
       </p>
     </div>
   )

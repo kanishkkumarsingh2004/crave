@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server'
 
+jest.mock('@/lib/jwt', () => ({
+  verifyToken: jest.fn().mockResolvedValue({ id: 'usr_admin', role: 'admin' }),
+}))
+
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: { findMany: jest.fn() },
@@ -21,7 +25,9 @@ describe('Admin Users API Route', () => {
 
   function makeRequest(): NextRequest {
     return {
-      headers: { get: () => null },
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null),
+      },
       url: 'http://localhost:3000/api/admin/users',
     } as unknown as NextRequest
   }

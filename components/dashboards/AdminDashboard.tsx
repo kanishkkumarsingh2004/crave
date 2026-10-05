@@ -194,7 +194,9 @@ export default function AdminDashboard() {
               ? 'customer'
               : u.role === 'rider' || u.role === 'driver'
                 ? 'driver'
-                : u.role === 'restaurant_vendor' || u.role === 'cravexp_store_vendor' || u.role === 'vendor'
+                : u.role === 'restaurant_vendor' ||
+                    u.role === 'cravexp_store_vendor' ||
+                    u.role === 'vendor'
                   ? 'vendor'
                   : (u.role as UserRole) || 'customer'
 

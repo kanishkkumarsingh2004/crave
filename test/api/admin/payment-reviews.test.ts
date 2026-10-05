@@ -46,7 +46,12 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
   })
 
   function makeGetRequest(url: string): NextRequest {
-    return { url, headers: { get: () => null } } as unknown as NextRequest
+    return {
+      url,
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null),
+      },
+    } as unknown as NextRequest
   }
 
   function makePatchRequest(body: any): NextRequest {

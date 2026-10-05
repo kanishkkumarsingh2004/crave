@@ -1,10 +1,17 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail } from '@/lib/dal'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request)
+    const { allowed, resetTime } = checkRateLimit(`signup_${clientIp}`, 10, 60000)
+    if (!allowed) {
+      return rateLimitResponse(resetTime)
+    }
+
     const body = await request.json()
     const { name, email, password, role, phone, address } = body
 

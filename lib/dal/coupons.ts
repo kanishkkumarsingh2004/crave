@@ -63,9 +63,11 @@ export async function createCoupon(data: {
   expiry_date?: Date
   is_active?: boolean
   restaurant_id?: string
+  restaurant_ids?: string[]
 }) {
   try {
-    return await prisma.coupon.create({ data })
+    const { restaurant_ids, ...prismaData } = data
+    return await prisma.coupon.create({ data: prismaData })
   } catch (e) {}
 
   try {
@@ -88,10 +90,13 @@ export async function updateCoupon(
     description?: string
     discount_value?: number
     expiry_date?: Date
+    restaurant_id?: string
+    restaurant_ids?: string[]
   }
 ) {
   try {
-    return await prisma.coupon.update({ where: { id }, data })
+    const { restaurant_ids, ...prismaData } = data
+    return await prisma.coupon.update({ where: { id }, data: prismaData })
   } catch (e) {}
 
   try {

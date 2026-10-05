@@ -1,5 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb } from '@/lib/dal'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -18,6 +19,12 @@ function setCookies(response: ReturnType<typeof NextResponse.json>, token: strin
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request)
+    const { allowed, resetTime } = checkRateLimit(`login_${clientIp}`, 15, 60000)
+    if (!allowed) {
+      return rateLimitResponse(resetTime)
+    }
+
     const body = await request.json().catch(() => ({}))
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
