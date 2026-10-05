@@ -15,7 +15,7 @@ describe('WebSocket Server Broadcast', () => {
     const originalEnv = process.env
 
     beforeEach(() => {
-      process.env = { ...originalEnv, PORT: '3000' }
+      process.env = { ...originalEnv, WS_BROADCAST_HOST: 'localhost' }
       jest.resetModules()
     })
 
@@ -43,7 +43,7 @@ describe('WebSocket Server Broadcast', () => {
       })
 
       const port = (server.address() as any).port
-      process.env.PORT = String(port)
+      process.env.WS_BROADCAST_PORT = String(port)
 
       const { broadcast } = require('@/lib/ws-server')
       const result = broadcast('order_update', { orderId: 'ord_1', status: 'preparing' })

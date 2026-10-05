@@ -35,7 +35,9 @@ export function useWebSocket({
     if (!channels.length) return
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/ws`
+    const wsPort = process.env.NEXT_PUBLIC_WS_PORT || 8000
+    const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.hostname
+    const wsUrl = `${protocol}//${wsHost}:${wsPort}/api/ws`
 
     const connect = () => {
       const ws = new WebSocket(wsUrl)
