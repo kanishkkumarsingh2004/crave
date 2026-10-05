@@ -102,6 +102,83 @@ async function seed() {
   })
   console.log('  ✅ Seeded restaurant Spice Garden')
 
+  // ─── Seed Menu Items ──────────────────────────────────────
+  const seedMenuItems = [
+    {
+      id: 'mi_001',
+      restaurant_id: 'vnd_1791063436223_iyet2',
+      name: 'Margherita Pizza',
+      category: 'Pizza',
+      price: 150,
+      description: 'Fresh tomato sauce, mozzarella, basil',
+      is_veg: true,
+      image: 'https://images.unsplash.com/photo-1600891938885-8b2e0b1a2a6a?w=500',
+      stock_count: 50,
+    },
+    {
+      id: 'mi_002',
+      restaurant_id: 'vnd_1791063436223_iyet2',
+      name: 'Paneer Tikka Pizza',
+      category: 'Pizza',
+      price: 220,
+      description: 'Grilled paneer, capsicum, tomato, paneer tikka masala',
+      is_veg: true,
+      image: 'https://images.unsplash.com/photo-1565780093704-9dc584f1f486?w=500',
+      stock_count: 30,
+    },
+    {
+      id: 'mi_003',
+      restaurant_id: 'vnd_1791063436223_iyet2',
+      name: 'Chicken Pepperoni Pizza',
+      category: 'Pizza',
+      price: 280,
+      description: 'Pepperoni, mozzarella, tomato sauce, oregano',
+      is_veg: false,
+      image: 'https://images.unsplash.com/photo-1594007651032-13b7f892b970?w=500',
+      stock_count: 40,
+    },
+    {
+      id: 'mi_004',
+      restaurant_id: 'vnd_1791063436223_iyet2',
+      name: 'Garlic Breadsticks',
+      category: 'Sides',
+      price: 80,
+      description: 'Crispy garlic breadsticks with herbs',
+      is_veg: true,
+      image: 'https://images.unsplash.com/photo-1578662986947-9e765b6f4a5e?w=500',
+      stock_count: 60,
+    },
+    {
+      id: 'mi_005',
+      restaurant_id: 'vnd_1791063436223_iyet2',
+      name: 'Chicken Cheesy Pasta',
+      category: 'Pasta',
+      price: 220,
+      description: 'Creamy pasta with grilled chicken and cheese',
+      is_veg: false,
+      image: 'https://images.unsplash.com/photo-1612874642237-1c2766d1c767?w=500',
+      stock_count: 25,
+    },
+  ]
+
+  for (const item of seedMenuItems) {
+    await prisma.menuItem.createMany({
+      data: [{
+        id: item.id,
+        restaurant_id: item.restaurant_id,
+        name: item.name,
+        category: item.category,
+        price: item.price,
+        description: item.description,
+        is_veg: item.is_veg,
+        image: item.image,
+        stock_count: item.stock_count,
+      }],
+      skipDuplicates: true,
+    })
+  }
+  console.log(`  ✅ Seeded ${seedMenuItems.length} menu items`)
+
   // ─── Seed Active Payment Config ───────────────────────────
   await prisma.paymentConfig.create({
     data: {
