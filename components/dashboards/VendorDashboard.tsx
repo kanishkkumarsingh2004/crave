@@ -436,7 +436,7 @@ export default function VendorDashboard() {
                 </p>
               </div>
               <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-                Active Orders ({kitchenOrders.length})
+                Active Orders ({openCount})
               </span>
             </div>
 

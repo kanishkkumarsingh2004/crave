@@ -112,6 +112,12 @@ jest.mock('next/headers', () => ({
   })),
 }))
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => ({ get: jest.fn(), toString: () => '' }),
+}))
+
 global.matchMedia =
   global.matchMedia ||
   function () {

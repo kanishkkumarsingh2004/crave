@@ -333,7 +333,7 @@ export default function CustomerDashboard({
       const rawDate = o.createdAt || o.created_at
       return {
         id: o.id,
-        restaurantName: o.restaurant_name ?? 'Crave Kitchen Store',
+        restaurantName: o.restaurant_name ?? o.restaurantName ?? 'Crave Kitchen Store',
         restaurantImage: '',
         items: itemsArr,
         subtotal: Number(o.subtotal ?? 0),
@@ -559,7 +559,7 @@ export default function CustomerDashboard({
 
       setActiveOrder({
         id: active.id,
-        restaurantName: active.restaurant_name || 'Crave Kitchen Store',
+        restaurantName: active.restaurant_name || active.restaurantName || 'Crave Kitchen Store',
         items: itemsArr,
         subtotal: Number(active.subtotal || 0),
         total: Number(active.total_amount || 0),
@@ -570,6 +570,7 @@ export default function CustomerDashboard({
         driverLat: liveDriverPos?.lat ?? active.driver_lat ?? active.driver_latitude ?? null,
         driverLng: liveDriverPos?.lng ?? active.driver_lng ?? active.driver_longitude ?? null,
         timestamp: formattedTime,
+        paymentStatus: active.payment_status || 'pending',
       })
     } else {
       setActiveOrder(null)
@@ -1652,12 +1653,17 @@ export default function CustomerDashboard({
                             <span className="tracking-widest">{activeOrder.otp}</span>
                           </span>
                         )}
-                      </div>
+                         {activeOrder.paymentStatus === 'pending' && (
+                           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-3 py-1 text-xs font-bold text-amber-200">
+                             Payment Pending
+                           </span>
+                         )}
+                       </div>
 
-                      <div>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                          {activeOrder.restaurantName}
-                        </h2>
+                       <div>
+                         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                           {activeOrder.restaurantName}
+                         </h2>
                         <p className="mt-1 text-xs text-white/70 flex flex-wrap items-center gap-2">
                           <span>Placed at {activeOrder.timestamp}</span>
                           <span>•</span>

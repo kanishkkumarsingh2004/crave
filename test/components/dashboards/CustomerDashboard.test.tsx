@@ -20,6 +20,11 @@ jest.mock('@/lib/websocket', () => ({
   useWebSocket: jest.fn(),
 }))
 
+jest.mock('@/lib/toast-context', () => ({
+  useToast: () => ({ toast: jest.fn() }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
+
 jest.mock('lucide-react', () => {
   const React = require('react')
   return {
@@ -27,6 +32,12 @@ jest.mock('lucide-react', () => {
     Clock: (props: any) => React.createElement('div', { 'data-testid': 'clock', ...props }),
   }
 })
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => '/user/track',
+  useSearchParams: () => ({ get: jest.fn(), toString: () => '' }),
+}))
 
 describe('CustomerDashboard - Order Tracking View', () => {
   beforeEach(() => {
