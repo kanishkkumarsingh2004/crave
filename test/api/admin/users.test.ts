@@ -29,10 +29,16 @@ describe('Admin Users API Route', () => {
   it('fetches all users from Prisma', async () => {
     const mockUsers = [
       { id: 'usr_1', name: 'Admin', email: 'admin@test.com', role: 'admin', is_online: true },
-      { id: 'usr_2', name: 'Vendor', email: 'vendor@test.com', role: 'restaurant_vendor', is_online: false },
+      {
+        id: 'usr_2',
+        name: 'Vendor',
+        email: 'vendor@test.com',
+        role: 'restaurant_vendor',
+        is_online: false,
+      },
     ]
     prisma.user.findMany = jest.fn().mockResolvedValue(mockUsers)
-    ;(require('@/lib/prisma')).prisma.user.findMany = prisma.user.findMany
+    require('@/lib/prisma').prisma.user.findMany = prisma.user.findMany
 
     const actualPrisma = require('@/lib/prisma').prisma
     actualPrisma.user = { findMany: jest.fn().mockResolvedValue(mockUsers) }

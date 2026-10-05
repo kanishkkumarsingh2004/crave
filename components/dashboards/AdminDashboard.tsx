@@ -202,10 +202,10 @@ export default function AdminDashboard() {
                 : u.role === 'rider'
                   ? u.vehicle_type || 'Delivery Agent'
                   : u.role === 'admin'
-                  ? 'System Super Admin'
-                  : u.role === 'cravexp_store_vendor'
-                  ? 'CraveXP Store Vendor'
-                  : u.address || 'Registered Customer',
+                    ? 'System Super Admin'
+                    : u.role === 'cravexp_store_vendor'
+                      ? 'CraveXP Store Vendor'
+                      : u.address || 'Registered Customer',
             phone: u.phone || undefined,
             address: u.address || undefined,
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
@@ -400,10 +400,7 @@ export default function AdminDashboard() {
     setProductsLoading(true)
 
     try {
-      const res = await fetch(
-        `/api/menu-items?restaurantId=${vendor.id}`,
-        { cache: 'no-store' }
-      )
+      const res = await fetch(`/api/menu-items?restaurantId=${vendor.id}`, { cache: 'no-store' })
       const json = await res.json()
       const data = json.items || []
 
@@ -475,7 +472,8 @@ export default function AdminDashboard() {
             category: productForm.categoryName || 'General',
             price: finalPrice,
             description: `${productForm.categoryName} · ${productForm.description || ''}`,
-            image: productForm.imageUrl ||
+            image:
+              productForm.imageUrl ||
               'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
             in_stock: productForm.status === 'ACTIVE',
             is_veg: productForm.categoryName?.toLowerCase().includes('veg') ?? false,

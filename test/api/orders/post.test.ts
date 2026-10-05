@@ -96,7 +96,11 @@ describe('Orders API Route - POST', () => {
 
   it('rejects order when restaurant_id is missing', async () => {
     const { POST } = await import('@/app/api/orders/route')
-    const req = makeRequest({ customer_id: 'usr_test_user', restaurant_id: null, total_amount: 100 })
+    const req = makeRequest({
+      customer_id: 'usr_test_user',
+      restaurant_id: null,
+      total_amount: 100,
+    })
 
     const response = await POST(req)
     const data = await response.json()

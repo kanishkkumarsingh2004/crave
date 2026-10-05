@@ -83,9 +83,7 @@ describe('Orders DAL', () => {
       mockPrisma.order.findMany = jest.fn().mockResolvedValue([])
 
       await listOrders({ limit: 10 })
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 10 })
-      )
+      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }))
     })
   })
 

@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.3.4",
+  "pnpm": {
+    "onlyBuiltModules": [
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "@parcel/watcher",
+      "unrs-resolver"
+    ]
+  },
   "scripts": {
     "dev": "NODE_ENV=development node server.js",
     "build": "next build",
@@ -13,7 +22,13 @@
     "format:check": "prettier --check .",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "dc:up": "docker compose up --build -d",
+    "dc:down": "docker compose down -v",
+    "dc:restart": "docker compose down -v && docker compose up --build -d",
+    "dc:rebuild": "docker compose up --build --force-recreate -d",
+    "dc:logs": "docker compose logs -f",
+    "dc:ps": "docker compose ps"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

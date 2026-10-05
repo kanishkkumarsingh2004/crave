@@ -44,7 +44,10 @@ jest.mock('jose', () => {
       const payload = base64UrlEncode(JSON.stringify(this.payload))
       const data = `${header}.${payload}`
       const signature = crypto
-        .createHmac('sha256', Buffer.from(typeof secret === 'string' ? secret : new TextDecoder().decode(secret)))
+        .createHmac(
+          'sha256',
+          Buffer.from(typeof secret === 'string' ? secret : new TextDecoder().decode(secret))
+        )
         .update(data)
         .digest('base64')
         .replace(/\+/g, '-')

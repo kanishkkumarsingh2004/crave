@@ -94,7 +94,7 @@ async function seed() {
   }
 
   // ─── Seed Restaurant ─────────────────────────────────────
-   await prisma.restaurant.create({
+  await prisma.restaurant.create({
     data: {
       id: 'vnd_1791063436223_iyet2',
       name: 'Spice Garden',
@@ -166,17 +166,19 @@ async function seed() {
 
   for (const item of seedMenuItems) {
     await prisma.menuItem.createMany({
-      data: [{
-        id: item.id,
-        restaurant_id: item.restaurant_id,
-        name: item.name,
-        category: item.category,
-        price: item.price,
-        description: item.description,
-        is_veg: item.is_veg,
-        image: item.image,
-        stock_count: item.stock_count,
-      }],
+      data: [
+        {
+          id: item.id,
+          restaurant_id: item.restaurant_id,
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          description: item.description,
+          is_veg: item.is_veg,
+          image: item.image,
+          stock_count: item.stock_count,
+        },
+      ],
       skipDuplicates: true,
     })
   }
@@ -228,10 +230,10 @@ async function seed() {
   ]
 
   for (const s of settlements) {
-      await prisma.vendorSettlement.createMany({
-        data: [{ ...s, status: 'settled', restaurant_id: 'vnd_1791063436223_iyet2' }],
-        skipDuplicates: true,
-      })
+    await prisma.vendorSettlement.createMany({
+      data: [{ ...s, status: 'settled', restaurant_id: 'vnd_1791063436223_iyet2' }],
+      skipDuplicates: true,
+    })
   }
   console.log(`  ✅ Seeded ${settlements.length} vendor settlements`)
 
@@ -284,41 +286,45 @@ async function seed() {
   for (const order of seedOrders) {
     try {
       await prisma.order.createMany({
-        data: [{
-          id: order.id,
-          customer_id: order.customer_id || null,
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone || null,
-          customer_address: order.customer_address || null,
-          restaurant_id: order.restaurant_id || null,
-          restaurant_name: order.restaurant_name,
-          items: order.items,
-          subtotal: order.subtotal,
-          packaging_fee: order.packaging_fee,
-          gst: order.gst,
-          total_amount: order.total_amount,
-          status: order.status,
-          payment_method: order.payment_method,
-          created_at: order.created_at,
-          delivery_otp: order.delivery_otp || null,
-          tip: 0,
-          discount_amount: 0,
-        }],
+        data: [
+          {
+            id: order.id,
+            customer_id: order.customer_id || null,
+            customer_name: order.customer_name,
+            customer_phone: order.customer_phone || null,
+            customer_address: order.customer_address || null,
+            restaurant_id: order.restaurant_id || null,
+            restaurant_name: order.restaurant_name,
+            items: order.items,
+            subtotal: order.subtotal,
+            packaging_fee: order.packaging_fee,
+            gst: order.gst,
+            total_amount: order.total_amount,
+            status: order.status,
+            payment_method: order.payment_method,
+            created_at: order.created_at,
+            delivery_otp: order.delivery_otp || null,
+            tip: 0,
+            discount_amount: 0,
+          },
+        ],
         skipDuplicates: true,
       })
       console.log(`  ✅ Seeded order ${order.id}`)
 
       if (order.utr_ref && order.customer_vpa) {
         await prisma.paymentReview.createMany({
-          data: [{
-            id: `pr_${order.id}`,
-            order_id: order.id,
-            utr_ref: order.utr_ref,
-            customer_vpa: order.customer_vpa,
-            amount: order.total_amount,
-            status: order.payment_status || 'pending',
-            created_at: order.created_at,
-          }],
+          data: [
+            {
+              id: `pr_${order.id}`,
+              order_id: order.id,
+              utr_ref: order.utr_ref,
+              customer_vpa: order.customer_vpa,
+              amount: order.total_amount,
+              status: order.payment_status || 'pending',
+              created_at: order.created_at,
+            },
+          ],
           skipDuplicates: true,
         })
         console.log(`  ✅ Seeded payment review for order ${order.id}`)
@@ -338,41 +344,45 @@ async function seed() {
   for (const order of ordersData) {
     try {
       await prisma.order.createMany({
-        data: [{
-          id: order.id,
-          customer_id: order.customer_id || null,
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone || null,
-          customer_address: order.customer_address || null,
-          restaurant_id: order.restaurant_id || null,
-          restaurant_name: order.restaurant_name,
-          items: order.items,
-          subtotal: order.subtotal,
-          packaging_fee: order.packaging_fee,
-          gst: order.gst,
-          total_amount: order.total_amount,
-          status: order.status as OrderStatus,
-          payment_method: order.payment_method,
-          created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          delivery_otp: order.delivery_otp || null,
-          tip: order.tip || 0,
-          discount_amount: order.discount_amount || 0,
-          coupon_code: order.coupon_code || null,
-        }],
+        data: [
+          {
+            id: order.id,
+            customer_id: order.customer_id || null,
+            customer_name: order.customer_name,
+            customer_phone: order.customer_phone || null,
+            customer_address: order.customer_address || null,
+            restaurant_id: order.restaurant_id || null,
+            restaurant_name: order.restaurant_name,
+            items: order.items,
+            subtotal: order.subtotal,
+            packaging_fee: order.packaging_fee,
+            gst: order.gst,
+            total_amount: order.total_amount,
+            status: order.status as OrderStatus,
+            payment_method: order.payment_method,
+            created_at: order.createdAt ? new Date(order.createdAt) : undefined,
+            delivery_otp: order.delivery_otp || null,
+            tip: order.tip || 0,
+            discount_amount: order.discount_amount || 0,
+            coupon_code: order.coupon_code || null,
+          },
+        ],
         skipDuplicates: true,
       })
 
       if (order.utr_ref && order.customer_vpa) {
         await prisma.paymentReview.createMany({
-          data: [{
-            id: `pr_${order.id}`,
-            order_id: order.id,
-            utr_ref: order.utr_ref,
-            customer_vpa: order.customer_vpa,
-            amount: order.total_amount,
-            status: order.payment_status || 'pending',
-            created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-          }],
+          data: [
+            {
+              id: `pr_${order.id}`,
+              order_id: order.id,
+              utr_ref: order.utr_ref,
+              customer_vpa: order.customer_vpa,
+              amount: order.total_amount,
+              status: order.payment_status || 'pending',
+              created_at: order.createdAt ? new Date(order.createdAt) : undefined,
+            },
+          ],
           skipDuplicates: true,
         })
       }

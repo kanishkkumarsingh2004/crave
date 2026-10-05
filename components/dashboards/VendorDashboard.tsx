@@ -319,9 +319,7 @@ export default function VendorDashboard() {
                   onClick={() => setMobileMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
-                    isActive
-                      ? 'bg-[#18201c] text-white'
-                      : 'text-gray-700 hover:bg-gray-50'
+                    isActive ? 'bg-[#18201c] text-white' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />

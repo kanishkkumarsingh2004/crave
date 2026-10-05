@@ -3,6 +3,7 @@
 import CraveLogo from '@/components/CraveLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAuth, UserRole } from '@/lib/auth-context'
+import { useCart } from '@/lib/cart-context'
 import {
   Bike,
   ChevronDown,
@@ -12,8 +13,10 @@ import {
   Menu,
   ShieldCheck,
   ShoppingBag,
+  ShoppingCart,
   Store,
   UtensilsCrossed,
+  User,
   X,
   Zap,
 } from 'lucide-react'
@@ -87,6 +90,7 @@ export const roleDetails: Partial<
 
 export default function Navbar() {
   const { user, role, logout } = useAuth()
+  const { totalCount: cartCount } = useCart()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -438,6 +442,61 @@ export default function Navbar() {
                   {role}
                 </span>
               </Link>
+
+              <div className="mt-2 border-t border-[#e5e9e1]" />
+
+              <Link
+                href="/user/explore"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+              >
+                <Compass className="size-5 text-[#859d19]" />
+                Explore
+              </Link>
+
+              <Link
+                href="/user/track"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+              >
+                <Bike className="size-5 text-[#859d19]" />
+                Track Drop
+              </Link>
+
+              <Link
+                href="/user/orders"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+              >
+                <ShoppingBag className="size-5 text-[#859d19]" />
+                Orders
+              </Link>
+
+              <Link
+                href="/user/profile"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+              >
+                <User className="size-5 text-[#859d19]" />
+                Profile
+              </Link>
+
+              <Link
+                href="/user/dashboard"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+              >
+                <span className="flex items-center gap-3">
+                  <ShoppingCart className="size-5 text-[#859d19]" />
+                  Cart
+                </span>
+                {cartCount > 0 && (
+                  <span className="rounded-full bg-[#859d19] px-2 py-0.5 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
               {/* Language switcher in mobile drawer */}
               <div className="px-1 py-1">
                 <LanguageSwitcher variant="menu" />

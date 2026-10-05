@@ -22,14 +22,27 @@ jest.mock('@/lib/auth-context', () => ({
 jest.mock('lucide-react', () => {
   const React = require('react')
   const icons = [
-    'ShoppingBag', 'UtensilsCrossed', 'ChartColumn', 'Percent',
-    'Settings', 'LogOut', 'Menu', 'X', 'Store', 'ArrowLeft',
-    'Star', 'PackageCheck', 'CheckCircle2', 'CookingPot',
-    'ArrowUpRight', 'Sparkles',
+    'ShoppingBag',
+    'UtensilsCrossed',
+    'ChartColumn',
+    'Percent',
+    'Settings',
+    'LogOut',
+    'Menu',
+    'X',
+    'Store',
+    'ArrowLeft',
+    'Star',
+    'PackageCheck',
+    'CheckCircle2',
+    'CookingPot',
+    'ArrowUpRight',
+    'Sparkles',
   ]
   const mockIcons: Record<string, any> = {}
   icons.forEach((name) => {
-    mockIcons[name] = (props: any) => React.createElement('div', { 'data-testid': name.toLowerCase(), ...props })
+    mockIcons[name] = (props: any) =>
+      React.createElement('div', { 'data-testid': name.toLowerCase(), ...props })
   })
   return mockIcons
 })
@@ -151,9 +164,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
   })
 
   it('calls PATCH orders API when "Start Preparing" is clicked', async () => {
-    const mockOrders = [
-      { id: 'ord_1', status: 'new', customer_name: 'A', total_amount: 100 },
-    ]
+    const mockOrders = [{ id: 'ord_1', status: 'new', customer_name: 'A', total_amount: 100 }]
 
     ;(global.fetch as jest.Mock)
       .mockResolvedValueOnce({

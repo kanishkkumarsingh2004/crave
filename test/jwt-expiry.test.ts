@@ -5,7 +5,11 @@ jest.mock('jose', () => {
   const crypto = require('crypto')
 
   function base64UrlEncode(str: string): string {
-    return Buffer.from(str).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    return Buffer.from(str)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '')
   }
 
   class SignJWT {
@@ -39,7 +43,19 @@ jest.mock('jose', () => {
       const header = base64UrlEncode(JSON.stringify(this.header))
       const payload = base64UrlEncode(JSON.stringify(this.payload))
       const data = `${header}.${payload}`
-      const signature = crypto.createHmac('sha256', Buffer.from(typeof secret === 'string' ? secret : new TextDecoder().decode(secret), 'utf8')).update(data).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+      const signature = crypto
+        .createHmac(
+          'sha256',
+          Buffer.from(
+            typeof secret === 'string' ? secret : new TextDecoder().decode(secret),
+            'utf8'
+          )
+        )
+        .update(data)
+        .digest('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '')
       return Promise.resolve(`${data}.${signature}`)
     }
   }
@@ -50,7 +66,13 @@ jest.mock('jose', () => {
     const [headerB64, payloadB64, signature] = parts
     const data = `${headerB64}.${payloadB64}`
     const secretKey = typeof secret === 'string' ? secret : new TextDecoder().decode(secret)
-    const expectedSignature = crypto.createHmac('sha256', Buffer.from(secretKey)).update(data).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    const expectedSignature = crypto
+      .createHmac('sha256', Buffer.from(secretKey))
+      .update(data)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '')
     if (signature !== expectedSignature) throw new Error('Invalid signature')
     const padded = payloadB64 + '='.repeat((4 - (payloadB64.length % 4)) % 4)
     const normal = padded.replace(/-/g, '+').replace(/_/g, '/')
@@ -113,15 +135,17 @@ describe('JWT - Token Expiry and Claims', () => {
     const token = await createToken(payload)
     const decoded = await verifyToken(token)
 
-    expect(decoded).toEqual(expect.objectContaining({
-      id: 'usr_test',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+919876543210',
-      address: 'Bengaluru',
-      restaurantName: 'Spice Garden',
-      cuisine: 'Indian',
-    }))
+    expect(decoded).toEqual(
+      expect.objectContaining({
+        id: 'usr_test',
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+919876543210',
+        address: 'Bengaluru',
+        restaurantName: 'Spice Garden',
+        cuisine: 'Indian',
+      })
+    )
   })
 
   it('rejects token signed with wrong secret', async () => {

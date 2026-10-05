@@ -25,6 +25,18 @@ jest.mock('@/lib/toast-context', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
+jest.mock('@/lib/cart-context', () => ({
+  useCart: () => ({
+    items: [],
+    addItem: jest.fn(),
+    removeItem: jest.fn(),
+    clearCart: jest.fn(),
+    setItems: jest.fn(),
+    totalCount: 0,
+  }),
+  CartProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
+
 jest.mock('lucide-react', () => {
   const React = require('react')
   return {
@@ -70,17 +82,17 @@ describe('CustomerDashboard - Order Tracking View', () => {
       if (url.includes('/restaurants')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            restaurants: [{ id: 'vnd_1', name: 'Spice Garden', menu_items: [] }],
-          }),
+          json: () =>
+            Promise.resolve({
+              success: true,
+              restaurants: [{ id: 'vnd_1', name: 'Spice Garden', menu_items: [] }],
+            }),
         })
       }
       if (url.includes('/payment-config')) {
         return Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({ config: { upiVpa: 'crave@upi', baseDeliveryFee: 30 } }),
+          json: () => Promise.resolve({ config: { upiVpa: 'crave@upi', baseDeliveryFee: 30 } }),
         })
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
@@ -134,7 +146,11 @@ describe('CustomerDashboard - Order Tracking View', () => {
       if (url.includes('/restaurants')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ success: true, restaurants: [{ id: 'vnd_1', name: 'Restaurant', menu_items: [] }] }),
+          json: () =>
+            Promise.resolve({
+              success: true,
+              restaurants: [{ id: 'vnd_1', name: 'Restaurant', menu_items: [] }],
+            }),
         })
       }
       if (url.includes('/payment-config')) {
