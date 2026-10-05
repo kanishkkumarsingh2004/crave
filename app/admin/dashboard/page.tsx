@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/lib/language-context'
+import { useAdminStatsUpdates } from '@/lib/websocket'
 import {
   ArrowUpRight,
   BarChart3,
@@ -9,8 +11,8 @@ import {
   PackageCheck,
   Percent,
   QrCode,
+  Radio,
   ShieldCheck,
-  Smartphone,
   Store,
   Tag,
   TrendingUp,
@@ -20,58 +22,8 @@ import {
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-const ADMIN_SECTION_LINKS = [
-  {
-    href: '/vendor/crave-ep',
-    label: 'craveXP Hub',
-    description: 'Manage 10-min grocery inventory, cold-chain IoT, pickers & barcode dispatch.',
-    icon: Zap,
-  },
-  {
-    href: '/user/cravexp',
-    label: 'craveXP Instamart Store',
-    description: 'Browse live 10-minute grocery catalog & customer ordering experience.',
-    icon: Store,
-  },
-  {
-    href: '/admin/analytics',
-    label: 'Platform Analytics',
-    description: 'Review revenue, orders, and platform performance.',
-    icon: BarChart3,
-  },
-  {
-    href: '/admin/payments',
-    label: 'Payment Review Queue',
-    description: 'Verify payment references and payment status.',
-    icon: CreditCard,
-  },
-  {
-    href: '/admin/users',
-    label: 'User Accounts',
-    description: 'Manage customer, vendor, driver, and admin access.',
-    icon: Users,
-  },
-  {
-    href: '/admin/coupons',
-    label: 'Coupons & Discounts',
-    description: 'Manage promotions and campaign rules.',
-    icon: Tag,
-  },
-  {
-    href: '/admin/vendor-settlements',
-    label: 'Vendor Settlements',
-    description: 'Review payouts, sales, and commission splits.',
-    icon: Store,
-  },
-  {
-    href: '/admin/payment-config',
-    label: 'Payment Configs',
-    description: 'Manage UPI configuration and payment routing.',
-    icon: QrCode,
-  },
-]
-
 export default function AdminDashboardPage() {
+  const { t } = useLanguage()
   const [weeklyGross, setWeeklyGross] = useState(0)
   const [totalCommission, setTotalCommission] = useState(0)
   const [netVendorPay, setNetVendorPay] = useState(0)
@@ -79,10 +31,32 @@ export default function AdminDashboardPage() {
   const [vendorCount, setVendorCount] = useState(0)
   const [driverCount, setDriverCount] = useState(0)
   const [allTimeOrders, setAllTimeOrders] = useState(0)
-  const [liveDeviceCount, setLiveDeviceCount] = useState(1)
+  const [liveNotice, setLiveNotice] = useState<string | null>(null)
   const [topRestaurants, setTopRestaurants] = useState<
     { name: string; grossSales: number; commissionRate: number }[]
   >([])
+
+  // Subscribe to Live Server WebSocket Broadcast Stream (Zero Refresh Real-Time Server Updates)
+  useAdminStatsUpdates((data) => {
+    if (!data) return
+
+    if (data.type === 'user_signup') {
+      const role = data.role || data.user?.role || 'user'
+      if (role === 'user' || role === 'customer') {
+        setCustomerCount((prev) => prev + 1)
+      } else if (role === 'restaurant_vendor' || role === 'cravexp_store_vendor') {
+        setVendorCount((prev) => prev + 1)
+      } else if (role === 'rider' || role === 'driver') {
+        setDriverCount((prev) => prev + 1)
+      }
+      setLiveNotice(
+        `⚡ LIVE SERVER EVENT: New ${role} registered (${data.user?.name || 'User'}) — Admin count updated live without refresh!`
+      )
+    } else if (data.type === 'order_created') {
+      setAllTimeOrders((prev) => prev + 1)
+      setLiveNotice('⚡ LIVE SERVER EVENT: New order created — Order count updated live!')
+    }
+  })
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -97,7 +71,6 @@ export default function AdminDashboardPage() {
           setVendorCount(json.stats.vendorCount)
           setDriverCount(json.stats.driverCount)
           setAllTimeOrders(json.stats.orderCount ?? 0)
-          setLiveDeviceCount(json.stats.liveDevices ?? 1)
           if (json.restaurants) {
             setTopRestaurants(
               json.restaurants.slice(0, 4).map((restaurant: any) => ({
@@ -116,51 +89,125 @@ export default function AdminDashboardPage() {
     loadDashboardData()
   }, [])
 
+  const sectionLinks = [
+    {
+      href: '/vendor/crave-ep',
+      label: t.admin.craveXpHub || 'craveXP Hub',
+      description:
+        t.admin.craveXpDesc ||
+        'Manage 10-min grocery inventory, cold-chain IoT, pickers & barcode dispatch.',
+      icon: Zap,
+    },
+    {
+      href: '/user/cravexp',
+      label: t.admin.craveXpStore || 'craveXP Instamart Store',
+      description:
+        t.admin.craveXpStoreDesc ||
+        'Browse live 10-minute grocery catalog & customer ordering experience.',
+      icon: Store,
+    },
+    {
+      href: '/admin/analytics',
+      label: t.admin.platformAnalytics || 'Platform Analytics',
+      description: 'Review revenue, orders, and platform performance.',
+      icon: BarChart3,
+    },
+    {
+      href: '/admin/payments',
+      label: t.admin.paymentReviewQueue || 'Payment Review Queue',
+      description: 'Verify payment references and payment status.',
+      icon: CreditCard,
+    },
+    {
+      href: '/admin/users',
+      label: t.admin.userAccounts || 'User Accounts',
+      description: 'Manage customer, vendor, driver, and admin access.',
+      icon: Users,
+    },
+    {
+      href: '/admin/coupons',
+      label: t.admin.couponsDiscounts || 'Coupons & Discounts',
+      description: 'Manage promotions and campaign rules.',
+      icon: Tag,
+    },
+    {
+      href: '/admin/vendor-settlements',
+      label: t.admin.vendorSettlements || 'Vendor Settlements',
+      description: 'Review payouts, sales, and commission splits.',
+      icon: Store,
+    },
+    {
+      href: '/admin/payment-config',
+      label: t.admin.paymentConfigs || 'Payment Configs',
+      description: 'Manage UPI configuration and payment routing.',
+      icon: QrCode,
+    },
+  ]
+
   return (
     <div className="space-y-6">
+      {/* Live Server WebSocket Event Banner */}
+      {liveNotice && (
+        <div className="rounded-2xl border border-emerald-500/50 bg-[#121815] p-4 text-white shadow-xl flex items-center justify-between animate-in fade-in duration-300">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex size-3 rounded-full bg-emerald-500" />
+            </span>
+            <p className="text-xs sm:text-sm font-extrabold text-emerald-300">{liveNotice}</p>
+          </div>
+          <button
+            onClick={() => setLiveNotice(null)}
+            className="text-xs font-bold text-gray-400 hover:text-white px-2 py-1 rounded bg-white/10"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Overview Cards - Fully Mobile Responsive 2-Column Grid on Small Mobile */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         <SummaryCard
-          title="Weekly Gross"
+          title={t.admin.weeklyGross || 'Weekly Gross'}
           value={`₹${weeklyGross.toLocaleString()}`}
           accent="purple"
           icon={<DollarSign className="size-3.5 sm:size-4" />}
-          note="Live Supabase data"
+          note={t.admin.liveData || 'Live Supabase data'}
         />
         <SummaryCard
-          title="Platform Commission"
+          title={t.admin.platformCommission || 'Platform Commission'}
           value={`₹${totalCommission.toLocaleString()}`}
           accent="emerald"
           icon={<Percent className="size-3.5 sm:size-4" />}
-          note="Settlement revenue"
+          note={t.admin.settlementRevenue || 'Settlement revenue'}
         />
         <SummaryCard
-          title="Net Vendor Pay"
+          title={t.admin.netVendorPay || 'Net Vendor Pay'}
           value={`₹${netVendorPay.toLocaleString()}`}
           accent="amber"
           icon={<Store className="size-3.5 sm:size-4" />}
-          note="Vendor settlements"
+          note={t.admin.vendorSettlementNote || 'Vendor settlements'}
         />
         <SummaryCard
-          title="Delivery Fleet"
-          value={`${driverCount} drivers`}
+          title={t.admin.deliveryFleet || 'Delivery Fleet'}
+          value={`${driverCount} ${t.admin.drivers?.toLowerCase() || 'drivers'}`}
           accent="blue"
           icon={<Zap className="size-3.5 sm:size-4" />}
-          note="Registered riders"
+          note={t.admin.registeredRiders || 'Registered riders'}
         />
         <SummaryCard
-          title="Live Devices"
-          value={`${liveDeviceCount} active`}
+          title={t.admin.totalCustomers || 'Total Customers'}
+          value={`${customerCount} ${t.admin.customers?.toLowerCase() || 'active'}`}
           accent="indigo"
-          icon={<Smartphone className="size-3.5 sm:size-4" />}
-          note="Connected on site"
+          icon={<Users className="size-3.5 sm:size-4" />}
+          note={t.admin.registeredCustomers || 'Registered customers'}
         />
         <SummaryCard
-          title="All-Time Orders"
+          title={t.admin.totalOrders || 'All-Time Orders'}
           value={`${allTimeOrders.toLocaleString()}`}
           accent="violet"
           icon={<PackageCheck className="size-3.5 sm:size-4" />}
-          note="Lifetime orders"
+          note={t.admin.lifetimeOrders || 'Lifetime orders'}
         />
       </div>
 
@@ -168,31 +215,37 @@ export default function AdminDashboardPage() {
       <div className="rounded-3xl border border-[#d9f447]/60 bg-gradient-to-r from-[#18201c] to-[#25322b] p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 px-3 py-1 text-[10px] font-extrabold text-[#d9f447] uppercase tracking-wider">
-            <Zap className="size-3.5 fill-[#d9f447]" /> craveXP Command Center
+            <Zap className="size-3.5 fill-[#d9f447]" />{' '}
+            {t.admin.cravexpCommandCenter || 'craveXP Command Center'}
           </div>
           <h3 className="text-xl font-extrabold tracking-tight text-white">
-            10-Minute Fleet &amp; IoT Cold-Chain Monitoring
+            {t.admin.cravexpFleetMonitoring || '10-Minute Fleet & IoT Cold-Chain Monitoring'}
           </h3>
           <p className="text-xs text-[#a3b3a9] leading-relaxed">
-            4 active fulfillment hubs • 98.6% SLA speed compliance • Live picker staff leaderboard
-            &amp; auto-replenishment active.
+            {t.admin.cravexpDesc ||
+              '4 active fulfillment hubs • 98.6% SLA speed compliance • Live picker staff leaderboard & auto-replenishment active.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="rounded-2xl bg-white/10 backdrop-blur px-4 py-2.5 text-center border border-white/10">
-            <p className="text-[10px] text-gray-300 font-bold uppercase">Avg Pick Time</p>
+            <p className="text-[10px] text-gray-300 font-bold uppercase">
+              {t.admin.avgPickTime || 'Avg Pick Time'}
+            </p>
             <p className="text-base font-black text-[#d9f447]">1m 42s</p>
           </div>
           <div className="rounded-2xl bg-white/10 backdrop-blur px-4 py-2.5 text-center border border-white/10">
-            <p className="text-[10px] text-gray-300 font-bold uppercase">Cold-Chain Temp</p>
+            <p className="text-[10px] text-gray-300 font-bold uppercase">
+              {t.admin.coldChainTemp || 'Cold-Chain Temp'}
+            </p>
             <p className="text-base font-black text-emerald-400">3.2°C Nominal</p>
           </div>
           <Link
             href="/vendor/crave-ep"
             className="rounded-full bg-[#d9f447] px-5 py-3 text-xs font-black text-[#121815] shadow-lg hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
           >
-            Manage craveXP Console <ArrowUpRight className="size-4" />
+            {t.admin.manageCravexpConsole || 'Manage craveXP Console'}{' '}
+            <ArrowUpRight className="size-4" />
           </Link>
         </div>
       </div>
@@ -201,16 +254,20 @@ export default function AdminDashboardPage() {
         <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center justify-between gap-3 border-b border-[#f0f3ec] pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#18201c]">Management Modules</h3>
-              <p className="text-xs text-[#737e77]">Each section has its own dedicated page.</p>
+              <h3 className="text-lg font-bold text-[#18201c]">
+                {t.admin.managementModules || 'Management Modules'}
+              </h3>
+              <p className="text-xs text-[#737e77]">
+                {t.admin.managementModulesDesc || 'Each section has its own dedicated page.'}
+              </p>
             </div>
             <span className="inline-flex items-center gap-2 rounded-full bg-[#f1f6d9] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6a8014]">
-              <LayoutDashboard className="size-3.5" /> Overview
+              <LayoutDashboard className="size-3.5" /> {t.admin.overview || 'Overview'}
             </span>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {ADMIN_SECTION_LINKS.map(({ href, label, description, icon: Icon }) => (
+            {sectionLinks.map(({ href, label, description, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
@@ -235,17 +292,23 @@ export default function AdminDashboardPage() {
           <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
               <div>
-                <h3 className="text-base font-bold text-[#18201c]">Partner Restaurants</h3>
-                <p className="text-xs text-[#737e77]">Live settlement snapshot</p>
+                <h3 className="text-base font-bold text-[#18201c]">
+                  {t.admin.partnerRestaurants || 'Partner Restaurants'}
+                </h3>
+                <p className="text-xs text-[#737e77]">
+                  {t.admin.liveSettlementSnapshot || 'Live settlement snapshot'}
+                </p>
               </div>
               <Link href="/admin/vendor-settlements" className="text-xs font-bold text-[#86a018]">
-                View all
+                {t.common.viewAll || 'View all'}
               </Link>
             </div>
 
             <div className="mt-4 space-y-3">
               {topRestaurants.length === 0 ? (
-                <p className="text-sm text-gray-500">No restaurant data is available yet.</p>
+                <p className="text-sm text-gray-500">
+                  {t.common.noData || 'No restaurant data is available yet.'}
+                </p>
               ) : (
                 topRestaurants.map((restaurant, index) => {
                   const commission = Math.round(
@@ -271,21 +334,29 @@ export default function AdminDashboardPage() {
 
           <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-              <h3 className="text-base font-bold text-[#18201c]">User Distribution</h3>
+              <h3 className="text-base font-bold text-[#18201c]">
+                {t.admin.userDistribution || 'User Distribution'}
+              </h3>
               <Link href="/admin/users" className="text-xs font-bold text-[#86a018]">
-                Manage users
+                {t.admin.manageUsers || 'Manage users'}
               </Link>
             </div>
             <div className="mt-4 space-y-4">
-              <RoleBar label="Customers" count={customerCount} color="emerald" />
-              <RoleBar label="Vendors" count={vendorCount} color="amber" />
-              <RoleBar label="Drivers" count={driverCount} color="blue" />
+              <RoleBar
+                label={t.admin.customers || 'Customers'}
+                count={customerCount}
+                color="emerald"
+              />
+              <RoleBar label={t.admin.vendors || 'Vendors'} count={vendorCount} color="amber" />
+              <RoleBar label={t.admin.drivers || 'Drivers'} count={driverCount} color="blue" />
             </div>
           </section>
 
           <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-              <h3 className="text-base font-bold text-[#18201c]">Quick Actions</h3>
+              <h3 className="text-base font-bold text-[#18201c]">
+                {t.admin.quickActions || 'Quick Actions'}
+              </h3>
               <ShieldCheck className="size-5 text-[#859d19]" />
             </div>
             <div className="mt-4 flex flex-col gap-3 text-sm">
@@ -293,19 +364,19 @@ export default function AdminDashboardPage() {
                 href="/admin/users"
                 className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
               >
-                Review user accounts
+                {t.admin.reviewUserAccounts || 'Review user accounts'}
               </Link>
               <Link
                 href="/admin/payments"
                 className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
               >
-                Review payment references
+                {t.admin.reviewPaymentReferences || 'Review payment references'}
               </Link>
               <Link
                 href="/admin/settings"
                 className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
               >
-                Update platform settings
+                {t.admin.updatePlatformSettings || 'Update platform settings'}
               </Link>
             </div>
           </section>

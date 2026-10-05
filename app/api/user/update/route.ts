@@ -1,5 +1,6 @@
 import { updateUser, findUserById } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -51,6 +52,14 @@ export async function PATCH(request: Request) {
 
   try {
     const updated = await updateUser(userId, updates)
+
+    broadcast('user_profile', {
+      type: 'update',
+      userId,
+      user: updated,
+      timestamp: new Date().toISOString(),
+    })
+
     return NextResponse.json({ success: true, user: updated })
   } catch (err) {
     console.error('[PATCH /api/user/update]', err)

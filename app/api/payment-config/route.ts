@@ -1,7 +1,5 @@
 import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
 
 export interface PaymentConfig {
   upiVpa: string
@@ -56,33 +54,11 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   requireUtrNumber: true,
 }
 
-const CONFIG_FILE_PATH = path.join(process.cwd(), 'data', 'payment_config.json')
-
-function readLocalConfigFile(): PaymentConfig | null {
-  try {
-    if (fs.existsSync(CONFIG_FILE_PATH)) {
-      const raw = fs.readFileSync(CONFIG_FILE_PATH, 'utf8')
-      return JSON.parse(raw)
-    }
-  } catch (e) {
-    console.warn('Could not read payment_config.json:', e)
-  }
-  return null
-}
-
-function writeLocalConfigFile(cfg: PaymentConfig) {
-  try {
-    const dir = path.dirname(CONFIG_FILE_PATH)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(cfg, null, 2), 'utf8')
-  } catch (e) {
-    console.warn('Could not write payment_config.json:', e)
-  }
-}
+let memoryConfigCache: PaymentConfig | null = null
 
 export async function GET(_request?: Request) {
   try {
-    const local = readLocalConfigFile()
+    const local = memoryConfigCache
 
     let dbConfig: any = null
     try {
@@ -91,9 +67,15 @@ export async function GET(_request?: Request) {
       dbConfig = null
     }
 
-    const merged: PaymentConfig = {
+    const merged: PaymentConfig & Record<string, any> = {
       ...(local || DEFAULT_PAYMENT_CONFIG),
       ...(dbConfig && {
+        merchant_vpa: dbConfig.merchant_vpa,
+        merchant_name: dbConfig.merchant_name,
+        merchant_category_code: dbConfig.merchant_category_code,
+        delivery_fee: dbConfig.delivery_fee,
+        handling_fee: dbConfig.handling_fee,
+        free_delivery_threshold: dbConfig.free_delivery_threshold,
         upiVpa: dbConfig.merchant_vpa || local?.upiVpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
         merchantName:
           dbConfig.merchant_name || local?.merchantName || DEFAULT_PAYMENT_CONFIG.merchantName,
@@ -128,7 +110,7 @@ export async function POST(request: Request) {
       ...body,
     }
 
-    writeLocalConfigFile(fullConfig)
+    memoryConfigCache = fullConfig
 
     try {
       await upsertPaymentConfig({

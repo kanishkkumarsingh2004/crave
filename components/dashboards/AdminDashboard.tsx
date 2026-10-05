@@ -21,6 +21,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import { useLanguage } from '@/lib/language-context'
 import { FormEvent, useEffect, useState } from 'react'
 
 interface AccountRecord {
@@ -82,6 +83,7 @@ interface VendorStore {
 
 export default function AdminDashboard() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<
     'overview' | 'analytics' | 'users' | 'menu-pricing' | 'payments' | 'system' | 'settings'
   >('users')

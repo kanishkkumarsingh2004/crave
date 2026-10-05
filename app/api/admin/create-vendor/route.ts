@@ -1,6 +1,7 @@
 import { createUser, findUserByEmail } from '@/lib/dal'
 import { createRestaurant } from '@/lib/dal/restaurants'
 import { verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -95,6 +96,19 @@ export async function POST(request: Request) {
         console.warn('Could not insert restaurant record:', err?.message)
       }
     }
+
+    // Broadcast real-time vendor creation to Admin WebSocket channels
+    broadcast('admin_stats', {
+      type: 'user_signup',
+      role: vendorRole,
+      user: { id: finalUserId, name: String(name).trim(), email: cleanEmail, role: vendorRole },
+      timestamp: new Date().toISOString(),
+    })
+    broadcast('admin_users', {
+      type: 'user_signup',
+      user: { id: finalUserId, name: String(name).trim(), email: cleanEmail, role: vendorRole },
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({
       success: true,

@@ -11,6 +11,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
   QrCode,
   Settings,
@@ -51,7 +52,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">
           <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
+          <p
+            className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider"
+            suppressHydrationWarning
+          >
             {t.admin.loadingConsole}
           </p>
         </div>
@@ -66,6 +70,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin/dashboard', label: t.admin.platformOverview, icon: LayoutDashboard },
     { href: '/admin/analytics', label: t.admin.platformAnalytics, icon: BarChart3 },
+    {
+      href: '/admin/map-live-analytics',
+      label: (t.admin as any).mapLiveAnalytics || 'Map Live Analytics',
+      icon: MapPin,
+    },
     {
       href: '/admin/ai-analytics',
       label: (t.admin as any).aiAnalytics || 'AI Analytics',
@@ -242,13 +251,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
             </span>
           </button>
-
-          {/* Language Switcher — collapses to icon when sidebar is minimised */}
-          {sidebarCollapsed ? (
-            <LanguageSwitcher variant="inline" />
-          ) : (
-            <LanguageSwitcher variant="pill" />
-          )}
         </div>
       </aside>
 

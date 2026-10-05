@@ -432,24 +432,22 @@ export default function CustomerDashboard({
     }
     const loadAddresses = async () => {
       try {
-        const { data, error } = await supabase
-          .from('customer_addresses')
-          .select('*')
-          .eq('customer_id', user.id)
-          .order('created_at', { ascending: false })
-
-        if (!error && data && data.length > 0) {
-          setSavedAddresses(
-            data.map((row: any) => ({
-              id: row.id,
-              label: row.label,
-              address: row.address,
-              tag: row.is_default ? 'Primary' : row.label,
-              lat: row.latitude == null ? null : Number(row.latitude),
-              lng: row.longitude == null ? null : Number(row.longitude),
-            }))
-          )
-          return
+        const res = await fetch('/api/user/addresses')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.addresses && Array.isArray(json.addresses) && json.addresses.length > 0) {
+            setSavedAddresses(
+              json.addresses.map((row: any) => ({
+                id: row.id,
+                label: row.label,
+                address: row.address,
+                tag: row.is_default ? 'Primary' : row.label,
+                lat: row.latitude == null ? null : Number(row.latitude),
+                lng: row.longitude == null ? null : Number(row.longitude),
+              }))
+            )
+            return
+          }
         }
       } catch (err) {}
 
@@ -500,38 +498,44 @@ export default function CustomerDashboard({
       triggerToast('Please enter an address or drop a pin on the map!')
       return
     }
-    const { data, error } = await supabase
-      .from('customer_addresses')
-      .insert([
-        {
-          id: crypto.randomUUID(),
-          customer_id: user.id,
+
+    try {
+      const res = await fetch('/api/user/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           label: newAddressLabel,
           address: newAddressInput.trim(),
           latitude: selectedMapPin?.lat ?? null,
           longitude: selectedMapPin?.lng ?? null,
-          is_default: savedAddresses.length === 0,
-        },
-      ])
-      .select('*')
-      .single()
-    if (error || !data) {
+          is_default: true,
+        }),
+      })
+
+      const json = await res.json()
+      if (!res.ok || !json.address) {
+        triggerToast(json.error || 'Could not save this address to your account.')
+        return
+      }
+
+      const data = json.address
+      const newEntry: CustomerAddress = {
+        id: data.id,
+        label: data.label,
+        address: data.address,
+        tag: data.is_default ? 'Primary' : data.label,
+        lat: data.latitude == null ? null : Number(data.latitude),
+        lng: data.longitude == null ? null : Number(data.longitude),
+      }
+
+      setSavedAddresses((prev) => [newEntry, ...prev.filter((a) => a.id !== newEntry.id)])
+      setDeliveryAddress(data.address)
+      setNewAddressInput('')
+      setShowLocationModal(false)
+      triggerToast(`Address & coordinates saved & set as current delivery location!`)
+    } catch (err) {
       triggerToast('Could not save this address to your account.')
-      return
     }
-    const newEntry: CustomerAddress = {
-      id: data.id,
-      label: data.label,
-      address: data.address,
-      tag: data.is_default ? 'Primary' : data.label,
-      lat: data.latitude == null ? null : Number(data.latitude),
-      lng: data.longitude == null ? null : Number(data.longitude),
-    }
-    setSavedAddresses((prev) => [newEntry, ...prev])
-    setDeliveryAddress(data.address)
-    setNewAddressInput('')
-    setShowLocationModal(false)
-    triggerToast(`Address added & set as current delivery location!`)
   }
 
   // Profile editing

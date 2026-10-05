@@ -79,9 +79,9 @@ interface LanguageProviderProps {
 
 export function LanguageProvider({ children, initialLocale }: LanguageProviderProps) {
   const [locale, setLocaleState] = useState<SupportedLocale>(() => {
-    // Server-resolved locale wins; otherwise fall back to localStorage / default.
+    // Always start with server initialLocale or DEFAULT_LOCALE to match SSR during hydration
     if (initialLocale && isSupportedLocale(initialLocale)) return initialLocale
-    return readStoredLocale()
+    return DEFAULT_LOCALE
   })
 
   const [isLocaleLoading, setIsLocaleLoading] = useState(true)
@@ -97,7 +97,7 @@ export function LanguageProvider({ children, initialLocale }: LanguageProviderPr
     writeStoredLocale(resolved)
     setIsLocaleLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [initialLocale])
 
   const setLocale = useCallback(async (newLocale: SupportedLocale, token?: string | null) => {
     // 1. Optimistic update — UI reacts instantly.
@@ -138,7 +138,12 @@ export function LanguageProvider({ children, initialLocale }: LanguageProviderPr
 export function useLanguage(): LanguageContextType {
   const ctx = useContext(LanguageContext)
   if (!ctx) {
-    throw new Error('useLanguage must be used within a <LanguageProvider>.')
+    return {
+      locale: DEFAULT_LOCALE,
+      t: getDictionary(DEFAULT_LOCALE),
+      setLocale: async () => {},
+      isLocaleLoading: false,
+    }
   }
   return ctx
 }

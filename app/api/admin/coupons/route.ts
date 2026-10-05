@@ -1,5 +1,6 @@
 import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/dal/coupons'
 import { verifyToken } from '@/lib/jwt'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import type { DiscountType } from '@prisma/client'
 import { NextResponse } from 'next/server'
@@ -49,6 +50,9 @@ export async function POST(request: Request) {
       restaurant_id: body.restaurant_id || undefined,
       restaurant_ids: Array.isArray(body.restaurant_ids) ? body.restaurant_ids : undefined,
     })
+
+    broadcast('admin_coupons', { type: 'create', coupon, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, coupon })
   } catch (error: any) {
     return NextResponse.json(
@@ -75,6 +79,9 @@ export async function PATCH(request: Request) {
     if (data.discount_value != null) data.discount_value = Number(data.discount_value)
 
     const coupon = await updateCoupon(id, data)
+
+    broadcast('admin_coupons', { type: 'update', coupon, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, coupon })
   } catch (error: any) {
     return NextResponse.json(
@@ -98,6 +105,9 @@ export async function DELETE(request: Request) {
     }
 
     await deleteCoupon(id)
+
+    broadcast('admin_coupons', { type: 'delete', id, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json(

@@ -1,4 +1,5 @@
 import { listRestaurants } from '@/lib/dal/restaurants'
+import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
         payment_model: 'commission',
       },
     })
+
+    broadcast('restaurants', { type: 'create', restaurant, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, restaurant })
   } catch (error: any) {
     return NextResponse.json(
@@ -67,6 +71,9 @@ export async function PATCH(request: Request) {
       where: { id: body.id },
       data: { is_open: body.is_open },
     })
+
+    broadcast('restaurants', { type: 'update', restaurant, timestamp: new Date().toISOString() })
+
     return NextResponse.json({ success: true, restaurant })
   } catch (error) {
     return NextResponse.json(
