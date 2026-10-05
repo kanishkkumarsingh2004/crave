@@ -18,7 +18,9 @@ import {
   Flame,
   History,
   LocateFixed,
+  LogOut,
   MapPin,
+  Menu,
   Minus,
   PhoneCall,
   Plus,
@@ -204,8 +206,17 @@ export default function CustomerDashboard({
   const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([])
   const [restaurantsList, setRestaurantsList] = useState<Restaurant[]>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
+  const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
+
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      setShowMobileSideMenu((prev) => !prev)
+    }
+    window.addEventListener('toggle-mobile-sidebar', handleToggleSidebar)
+    return () => window.removeEventListener('toggle-mobile-sidebar', handleToggleSidebar)
+  }, [])
 
   const { setItems: setGlobalItems, clearCart: clearGlobalCart } = useCart()
 
@@ -975,13 +986,13 @@ export default function CustomerDashboard({
   return (
     <div className="min-h-screen bg-[#f8f9f7] pb-24 text-[#18201c]">
       {/* Top Header Navigation Banner */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3 sm:px-8 shadow-sm">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-xs">
+        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-2 sm:gap-4">
           {/* Left Block: Logo + Location Selector */}
-          <div className="flex items-center justify-between lg:justify-start gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0 hover:opacity-90 transition"
+              className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] shrink-0 hover:opacity-90 transition"
             >
               crave<span className="text-[#86a018]">.</span>
             </Link>
@@ -990,55 +1001,51 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-2.5 text-left group min-w-0 rounded-2xl p-1 -ml-1 hover:bg-gray-50 transition"
+              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1 hover:bg-gray-100/80 transition"
             >
-              <div className="grid size-9 sm:size-10 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] shrink-0 shadow-xs">
-                <MapPin className="size-4 sm:size-5" />
+              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] shrink-0 shadow-xs">
+                <MapPin className="size-3.5 sm:size-4 lg:size-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                  <span className="text-[9px] sm:text-[10px] lg:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
                     DELIVER TO
                   </span>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-[#86a018] group-hover:underline">
+                  <span className="text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-[#86a018] group-hover:underline">
                     (Change)
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] truncate mt-0.5">
-                  <span className="truncate max-w-[160px] sm:max-w-[220px] lg:max-w-[280px]">
+                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] truncate">
+                  <span className="truncate max-w-[110px] xs:max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
                     {deliveryAddress}
                   </span>
                   <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
                 </div>
               </div>
             </button>
-
-            <button
-              onClick={() => setShowCartDrawer(true)}
-              className="lg:hidden relative flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#2a3831] transition active:scale-95 shrink-0"
-            >
-              <ShoppingCart className="size-4 text-[#d9f447]" />
-              <span>Cart ({totalCartItemCount})</span>
-            </button>
           </div>
 
-          {/* Center Block: Page Navigation Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 lg:pb-0 no-scrollbar text-xs sm:text-sm font-bold justify-start lg:justify-center">
+          {/* Center Block: Desktop Page Navigation Tabs (Hidden on small screens) */}
+          <div className="hidden lg:flex items-center gap-1.5 text-sm font-bold justify-center">
             <button
               onClick={() => navigateToTab('explore')}
-              className={`rounded-2xl px-4 lg:px-5 py-2 lg:py-2.5 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'explore'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-sm'
+                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
                   : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
               }`}
             >
-              Explore
+              <Compass
+                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+              />
+              <span>Explore</span>
             </button>
+
             <button
               onClick={() => navigateToTab('live-order')}
-              className={`flex items-center gap-2 rounded-2xl px-4 lg:px-5 py-2 lg:py-2.5 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'live-order'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-sm'
+                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
                   : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
               }`}
             >
@@ -1048,22 +1055,24 @@ export default function CustomerDashboard({
                 <span className="size-2 rounded-full bg-[#d9f447] animate-pulse" />
               )}
             </button>
+
             <button
               onClick={() => navigateToTab('orders')}
-              className={`flex items-center gap-2 rounded-2xl px-4 lg:px-5 py-2 lg:py-2.5 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'orders'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-sm'
+                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
                   : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
               }`}
             >
               <History className="size-4" />
               <span>Orders</span>
             </button>
+
             <button
               onClick={() => navigateToTab('profile')}
-              className={`flex items-center gap-2 rounded-2xl px-4 lg:px-5 py-2 lg:py-2.5 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'profile'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-sm'
+                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
                   : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
               }`}
             >
@@ -1072,11 +1081,11 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Right Block: Laptop Cart Button */}
-          <div className="hidden lg:flex items-center gap-3 shrink-0">
+          {/* Right Block: Cart (Desktop only) + Mobile 3-Line Hamburger Button */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowCartDrawer(true)}
-              className="relative flex items-center gap-2.5 rounded-2xl bg-[#18201c] px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#2a3831] transition active:scale-95"
+              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#2a3831] transition active:scale-95 shrink-0"
             >
               <ShoppingCart className="size-4 text-[#d9f447]" />
               <span>Cart ({totalCartItemCount})</span>
@@ -1084,9 +1093,216 @@ export default function CustomerDashboard({
                 <span className="text-[#d9f447] font-semibold">&bull; ₹{grandTotal}</span>
               )}
             </button>
+
+            {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
+            <button
+              onClick={() => setShowMobileSideMenu(true)}
+              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 bg-white text-[#18201c] shadow-xs hover:bg-gray-100 transition active:scale-95 shrink-0"
+              aria-label="Open side menu"
+            >
+              <Menu className="size-5 text-[#18201c]" />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Side Menu Bar Drawer Backdrop & Aside */}
+      <div
+        onClick={() => setShowMobileSideMenu(false)}
+        className={`fixed inset-0 z-[80] bg-black/50 backdrop-blur-xs transition-opacity duration-300 lg:hidden ${
+          showMobileSideMenu ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        aria-hidden="true"
+      />
+
+      <aside
+        aria-label="Side menu options"
+        className={`fixed inset-y-0 right-0 z-[90] flex w-80 max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+          showMobileSideMenu ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Side Drawer Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 bg-[#f9faf7]">
+          <div className="flex items-center gap-3">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="size-10 rounded-full object-cover border border-[#d9f447]"
+              />
+            ) : (
+              <span className="grid size-10 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] text-sm font-black shadow-xs">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-[#18201c] truncate">
+                {user?.name || 'Customer'}
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium truncate">
+                {user?.email || 'Logged in'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowMobileSideMenu(false)}
+            className="grid size-9 place-items-center rounded-2xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition"
+            aria-label="Close menu"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        {/* Side Drawer Navigation Options */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+          <p className="px-3 pt-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
+            Navigation
+          </p>
+
+          <button
+            onClick={() => {
+              navigateToTab('explore')
+              setShowMobileSideMenu(false)
+            }}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'explore'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Compass
+                className={`size-5 ${activeTab === 'explore' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+              />
+              Explore Kitchens
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              navigateToTab('live-order')
+              setShowMobileSideMenu(false)
+            }}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'live-order'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Bike
+                className={`size-5 ${activeTab === 'live-order' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+              />
+              Track Drop
+            </span>
+            {activeOrder && activeOrder.statusStep < 4 && (
+              <span className="flex items-center gap-1 rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black text-[#18201c]">
+                <span className="size-1.5 rounded-full bg-emerald-700 animate-ping" />
+                Live
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              navigateToTab('orders')
+              setShowMobileSideMenu(false)
+            }}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'orders'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <History
+                className={`size-5 ${activeTab === 'orders' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+              />
+              Orders History
+            </span>
+            {pastOrders.length > 0 && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-extrabold text-gray-700">
+                {pastOrders.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              navigateToTab('profile')
+              setShowMobileSideMenu(false)
+            }}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'profile'
+                ? 'bg-[#18201c] text-white shadow-xs'
+                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <User
+                className={`size-5 ${activeTab === 'profile' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+              />
+              Profile & Account
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setShowMobileSideMenu(false)
+              setShowCartDrawer(true)
+            }}
+            className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] hover:bg-[#f3f6ee] transition"
+          >
+            <span className="flex items-center gap-3">
+              <ShoppingCart className="size-5 text-[#859d19]" />
+              My Cart
+            </span>
+            {totalCartItemCount > 0 && (
+              <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-xs font-bold text-[#d9f447]">
+                {totalCartItemCount} items
+              </span>
+            )}
+          </button>
+
+          <div className="my-3 border-t border-gray-100" />
+          <p className="px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
+            Quick Access
+          </p>
+
+          <Link
+            href="/user/cravexp"
+            onClick={() => setShowMobileSideMenu(false)}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition"
+          >
+            <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+            <span>craveXP Instamart (10 Min)</span>
+          </Link>
+
+          <Link
+            href="/vendor/crave-ep"
+            onClick={() => setShowMobileSideMenu(false)}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] bg-[#f0f3eb] hover:bg-[#e2e7dc] transition"
+          >
+            <Store className="size-5 text-[#859d19]" />
+            <span>craveXP Partner Console</span>
+          </Link>
+        </div>
+
+        {/* Side Drawer Footer / Sign Out */}
+        <div className="border-t border-gray-100 p-4 bg-[#f9faf7]">
+          <button
+            onClick={async () => {
+              setShowMobileSideMenu(false)
+              await logout()
+              router.push('/login')
+            }}
+            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-rose-600 hover:bg-rose-50 transition"
+          >
+            <LogOut className="size-5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
         {activeTab === 'explore' && (
@@ -1555,9 +1771,23 @@ export default function CustomerDashboard({
                         />
                       </div>
                       <button
-                        onClick={() => {
-                          setEditAddress(false)
-                          triggerToast('Profile & Address details saved!')
+                        onClick={async () => {
+                          if (!deliveryAddress.trim()) {
+                            triggerToast('Please enter a delivery address')
+                            return
+                          }
+                          try {
+                            const res = await fetch('/api/user/update', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ address: deliveryAddress }),
+                            })
+                            if (!res.ok) throw new Error('Failed to save')
+                            setEditAddress(false)
+                            triggerToast('Address saved!')
+                          } catch {
+                            triggerToast('Could not save address. Please try again.')
+                          }
                         }}
                         className="w-full rounded-xl bg-[#18201c] py-2.5 font-semibold text-white hover:bg-[#2a3831] transition"
                       >
