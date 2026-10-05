@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
+jest.mock('@/lib/jwt', () => ({
+  verifyToken: jest.fn().mockResolvedValue({ id: 'usr_admin', role: 'admin' }),
+}))
+
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     vendorSettlement: { findMany: jest.fn() },
@@ -36,7 +40,11 @@ describe('Admin Settlements API Route', () => {
     mockPrisma.vendorSettlement.findMany.mockResolvedValue(mockSettlements)
 
     const { GET } = await import('@/app/api/admin/settlements/route')
-    const req = { headers: { get: () => null } } as unknown as NextRequest
+    const req = {
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null),
+      },
+    } as unknown as NextRequest
 
     const response = await GET(req)
     const data = await response.json()
@@ -51,7 +59,11 @@ describe('Admin Settlements API Route', () => {
     mockPrisma.vendorSettlement.findMany.mockResolvedValue([])
 
     const { GET } = await import('@/app/api/admin/settlements/route')
-    const req = { headers: { get: () => null } } as unknown as NextRequest
+    const req = {
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null),
+      },
+    } as unknown as NextRequest
 
     await GET(req)
 
@@ -65,7 +77,11 @@ describe('Admin Settlements API Route', () => {
     mockPrisma.vendorSettlement.findMany.mockRejectedValue(new Error('DB error'))
 
     const { GET } = await import('@/app/api/admin/settlements/route')
-    const req = { headers: { get: () => null } } as unknown as NextRequest
+    const req = {
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null),
+      },
+    } as unknown as NextRequest
 
     const response = await GET(req)
     const data = await response.json()

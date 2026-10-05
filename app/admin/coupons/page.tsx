@@ -4,6 +4,7 @@ import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
+  Building2,
   Check,
   CheckCircle2,
   DollarSign,
@@ -11,6 +12,7 @@ import {
   Plus,
   Search,
   Sparkles,
+  Store,
   Tag,
   Trash2,
   TrendingUp,
@@ -38,12 +40,38 @@ export default function AdminCouponsPage() {
   const [usageLimit, setUsageLimit] = useState<number | ''>('')
   const [isActive, setIsActive] = useState(true)
 
+  // Restaurants State for Applicable Restaurants Selection
+  const [restaurantsList, setRestaurantsList] = useState<
+    { id: string; name: string; address: string }[]
+  >([])
+  const [selectedRestaurantIds, setSelectedRestaurantIds] = useState<string[]>([])
+  const [showRestaurantModal, setShowRestaurantModal] = useState(false)
+  const [restaurantSearchQuery, setRestaurantSearchQuery] = useState('')
+
   const { toast } = useToast()
 
   useEffect(() => {
     async function load() {
       const data = await fetchCouponsFromSupabase()
       setCoupons(data)
+
+      try {
+        const res = await fetch('/api/restaurants')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.success && Array.isArray(json.restaurants)) {
+            setRestaurantsList(
+              json.restaurants.map((r: any) => ({
+                id: r.id,
+                name: r.name || 'Unnamed Kitchen',
+                address: r.address || 'Bengaluru, India',
+              }))
+            )
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load restaurants for coupon form:', err)
+      }
     }
     load()
   }, [])
@@ -73,6 +101,9 @@ export default function AdminCouponsPage() {
           : parseInt(usageLimit as any)
         : undefined
 
+    const rIds = selectedRestaurantIds
+    const primaryRestId = rIds.length === 1 ? rIds[0] : rIds.length > 0 ? rIds[0] : null
+
     let updated: Coupon[]
     if (editingCoupon) {
       const dbRecord = {
@@ -85,6 +116,8 @@ export default function AdminCouponsPage() {
         expiry_date: expiryDate || null,
         usage_limit: uLimit || null,
         is_active: isActive,
+        restaurant_id: primaryRestId,
+        restaurant_ids: rIds,
       }
       try {
         const { error } = await supabase.from('coupons').update(dbRecord).eq('id', editingCoupon.id)
@@ -118,6 +151,8 @@ export default function AdminCouponsPage() {
               expiryDate,
               usageLimit: uLimit,
               isActive,
+              restaurantId: primaryRestId || undefined,
+              restaurantIds: rIds,
             }
           : c
       )
@@ -139,6 +174,8 @@ export default function AdminCouponsPage() {
         used_count: 0,
         is_active: true,
         expiry_date: expiryDate || null,
+        restaurant_id: primaryRestId,
+        restaurant_ids: rIds,
       }
 
       try {
@@ -172,6 +209,8 @@ export default function AdminCouponsPage() {
         usageLimit: uLimit,
         usedCount: 0,
         isActive: true,
+        restaurantId: primaryRestId || undefined,
+        restaurantIds: rIds,
       }
       updated = [newCoupon, ...coupons]
       showToast(`New Coupon '${formattedCode}' created and published!`)
@@ -241,6 +280,7 @@ export default function AdminCouponsPage() {
     setExpiryDate('')
     setUsageLimit('')
     setIsActive(true)
+    setSelectedRestaurantIds([])
     setShowModal(true)
   }
 
@@ -255,12 +295,20 @@ export default function AdminCouponsPage() {
     setExpiryDate(c.expiryDate)
     setUsageLimit(c.usageLimit !== undefined ? c.usageLimit : '')
     setIsActive(c.isActive)
+    setSelectedRestaurantIds(
+      c.restaurantIds && c.restaurantIds.length > 0
+        ? c.restaurantIds
+        : c.restaurantId
+          ? [c.restaurantId]
+          : []
+    )
     setShowModal(true)
   }
 
   function closeModal() {
     setShowModal(false)
     setEditingCoupon(null)
+    setShowRestaurantModal(false)
   }
 
   // Filtered List
@@ -397,6 +445,7 @@ export default function AdminCouponsPage() {
               <tr className="border-b border-gray-200 bg-gray-50/70 text-gray-500 font-bold uppercase text-[10px] tracking-wider">
                 <th className="py-3.5 px-4">Coupon Code</th>
                 <th className="py-3.5 px-4">Offer Description</th>
+                <th className="py-3.5 px-4">Applicable Stores</th>
                 <th className="py-3.5 px-4">Discount Type &amp; Value</th>
                 <th className="py-3.5 px-4">Min Order / Max Cap</th>
                 <th className="py-3.5 px-4">Expiry Date</th>
@@ -415,6 +464,17 @@ export default function AdminCouponsPage() {
                     </span>
                   </td>
                   <td className="py-4 px-4 text-gray-700 max-w-xs">{c.description}</td>
+                  <td className="py-4 px-4">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 bg-purple-50 px-2.5 py-1 rounded-xl border border-purple-200">
+                      <Store className="size-3.5 text-purple-600" />
+                      {!c.restaurantIds || c.restaurantIds.length === 0
+                        ? 'All Stores'
+                        : c.restaurantIds.length === 1
+                          ? restaurantsList.find((r) => r.id === c.restaurantIds![0])?.name ||
+                            '1 Store'
+                          : `${c.restaurantIds.length} Stores`}
+                    </span>
+                  </td>
                   <td className="py-4 px-4 font-bold text-[#18201c]">
                     {c.discountType === 'percentage' ? (
                       <span className="text-purple-700">{c.discountValue}% OFF</span>
@@ -470,7 +530,7 @@ export default function AdminCouponsPage() {
               ))}
               {filteredCoupons.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-xs text-gray-500">
+                  <td colSpan={9} className="py-12 text-center text-xs text-gray-500">
                     No coupons found matching your filter criteria.
                   </td>
                 </tr>
@@ -503,6 +563,19 @@ export default function AdminCouponsPage() {
             </div>
 
             <p className="text-xs font-bold text-[#18201c]">{c.description}</p>
+
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 bg-purple-50/80 px-2.5 py-1.5 rounded-xl border border-purple-200">
+              <Store className="size-3.5 text-purple-600" />
+              <span>
+                {!c.restaurantIds || c.restaurantIds.length === 0
+                  ? 'Applicable to All Restaurants'
+                  : c.restaurantIds.length === 1
+                    ? `Store: ${
+                        restaurantsList.find((r) => r.id === c.restaurantIds![0])?.name || '1 Store'
+                      }`
+                    : `Applicable to ${c.restaurantIds.length} Stores`}
+              </span>
+            </div>
 
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-50 p-3 text-xs">
               <div>
@@ -664,6 +737,75 @@ export default function AdminCouponsPage() {
                 </div>
               </div>
 
+              {/* Applicable Restaurants Section */}
+              <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="font-bold text-[#18201c] flex items-center gap-1.5">
+                      <Store className="size-4 text-purple-600" /> Applicable Restaurants
+                    </label>
+                    <p className="text-[11px] text-gray-500">
+                      Restrict to specific restaurants or allow platform-wide
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowRestaurantModal(true)}
+                    className="flex items-center gap-1.5 rounded-xl bg-[#121815] px-3 py-1.5 text-[11px] font-bold text-white hover:bg-[#232f29] transition active:scale-95 shadow-sm"
+                  >
+                    <Building2 className="size-3.5 text-[#d9f447]" /> Select Restaurants
+                  </button>
+                </div>
+
+                <div className="pt-1">
+                  {selectedRestaurantIds.length === 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                      <Sparkles className="size-3 text-emerald-600" /> Platform-Wide (All
+                      Restaurants Allowed)
+                    </span>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-purple-900">
+                          {selectedRestaurantIds.length} Restaurant(s) Selected:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRestaurantIds([])}
+                          className="text-[10px] text-rose-600 font-bold hover:underline"
+                        >
+                          Clear Selection (Allow All)
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto pr-1">
+                        {selectedRestaurantIds.map((rId) => {
+                          const rest = restaurantsList.find((r) => r.id === rId)
+                          return (
+                            <span
+                              key={rId}
+                              className="inline-flex items-center gap-1 rounded-lg bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-900 border border-purple-200"
+                            >
+                              {rest?.name || rId}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedRestaurantIds((prev) =>
+                                    prev.filter((id) => id !== rId)
+                                  )
+                                }
+                                className="text-purple-500 hover:text-purple-900"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Active Status</p>
@@ -686,6 +828,131 @@ export default function AdminCouponsPage() {
                 {editingCoupon ? 'Save Coupon Changes' : 'Publish Coupon'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Restaurant Selection Popup Modal */}
+      {showRestaurantModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#18201c] flex items-center gap-2">
+                  <Store className="size-5 text-purple-600" /> Select Applicable Restaurants
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Choose restaurants where customers can redeem this coupon
+                </p>
+              </div>
+              <button
+                onClick={() => setShowRestaurantModal(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-3 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search restaurant by name or address..."
+                value={restaurantSearchQuery}
+                onChange={(e) => setRestaurantSearchQuery(e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 py-2.5 pl-9 pr-4 text-xs font-medium outline-none focus:border-[#121815] focus:bg-white"
+              />
+            </div>
+
+            {/* Quick Actions & Selection Counter */}
+            <div className="mt-3 flex items-center justify-between text-xs border-b border-gray-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRestaurantIds(restaurantsList.map((r) => r.id))}
+                  className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200"
+                >
+                  Select All ({restaurantsList.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRestaurantIds([])}
+                  className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200"
+                >
+                  Deselect All
+                </button>
+              </div>
+              <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                {selectedRestaurantIds.length} Selected
+              </span>
+            </div>
+
+            {/* Scrollable Restaurant List */}
+            <div className="mt-3 flex-1 overflow-y-auto space-y-2 pr-1 max-h-72">
+              {restaurantsList.filter(
+                (r) =>
+                  r.name.toLowerCase().includes(restaurantSearchQuery.toLowerCase()) ||
+                  r.address.toLowerCase().includes(restaurantSearchQuery.toLowerCase())
+              ).length === 0 ? (
+                <div className="py-8 text-center text-xs text-gray-400 font-medium">
+                  No restaurants match "{restaurantSearchQuery}"
+                </div>
+              ) : (
+                restaurantsList
+                  .filter(
+                    (r) =>
+                      r.name.toLowerCase().includes(restaurantSearchQuery.toLowerCase()) ||
+                      r.address.toLowerCase().includes(restaurantSearchQuery.toLowerCase())
+                  )
+                  .map((rest) => {
+                    const isChecked = selectedRestaurantIds.includes(rest.id)
+                    return (
+                      <label
+                        key={rest.id}
+                        className={`flex items-start gap-3 rounded-2xl p-3 border transition cursor-pointer ${
+                          isChecked
+                            ? 'border-purple-300 bg-purple-50/40 shadow-sm'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedRestaurantIds((prev) => [...prev, rest.id])
+                            } else {
+                              setSelectedRestaurantIds((prev) =>
+                                prev.filter((id) => id !== rest.id)
+                              )
+                            }
+                          }}
+                          className="mt-0.5 size-4 accent-purple-700 cursor-pointer rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-[#18201c] truncate">{rest.name}</p>
+                          <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                            📍 {rest.address}
+                          </p>
+                        </div>
+                      </label>
+                    )
+                  })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-4 border-t border-gray-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowRestaurantModal(false)}
+                className="w-full rounded-full bg-[#121815] py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#232f29] transition"
+              >
+                Confirm &amp; Apply Selection ({selectedRestaurantIds.length} Selected)
+              </button>
+            </div>
           </div>
         </div>
       )}

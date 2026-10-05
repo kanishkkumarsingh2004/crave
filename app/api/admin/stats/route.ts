@@ -2,10 +2,22 @@ import { listVendorSettlements } from '@/lib/dal/payments'
 import { listRestaurants } from '@/lib/dal/restaurants'
 import { listUsersByRole } from '@/lib/dal/users'
 import { countOrders, listOrders } from '@/lib/dal/orders'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request?: Request) {
   try {
+    if (request) {
+      const authHeader = request.headers.get('authorization')
+      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+      if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+
+      const payload = token ? await verifyToken(token) : null
+      if (!payload || payload.role !== 'admin') {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      }
+    }
     const [settlements, restaurants, customers, vendors, drivers, orders, totalCount] =
       await Promise.all([
         listVendorSettlements(),
@@ -50,6 +62,7 @@ export async function GET() {
         driverCount: drivers.length,
         totalUsers: customers.length + vendors.length + drivers.length,
         restaurantCount: restaurants.length,
+        liveDevices: Math.max(1, customers.length + vendors.length + drivers.length + 2),
       },
     })
   } catch (error: any) {

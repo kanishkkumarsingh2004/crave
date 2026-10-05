@@ -1,8 +1,8 @@
 'use client'
 
-import { Map, MapControls, MapMarker, MarkerContent } from '@/components/ui/map'
+import { Map, MapMarker, MarkerContent, type MapRef } from '@/components/ui/map'
 import { Locate, MapPin } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface LocationPickerMapProps {
   initialLat?: number
@@ -15,17 +15,16 @@ export default function LocationPickerMap({
   initialLng = 77.4729,
   onLocationSelect,
 }: LocationPickerMapProps) {
+  const mapRef = useRef<MapRef | null>(null)
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>({
     lat: initialLat,
     lng: initialLng,
   })
-  const [detectedAddress, setDetectedAddress] = useState<string>('')
+  const [, setDetectedAddress] = useState<string>('')
   const [isLocating, setIsLocating] = useState<boolean>(false)
-  const [isGeocoding, setIsGeocoding] = useState<boolean>(false)
 
   // Reverse Geocoding helper via OpenStreetMap Nominatim
   const fetchReverseGeocode = async (lat: number, lng: number) => {
-    setIsGeocoding(true)
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
@@ -42,7 +41,6 @@ export default function LocationPickerMap({
           const cleanAddr = parts.slice(0, 4).join(', ')
           setDetectedAddress(cleanAddr)
           onLocationSelect(lat, lng, cleanAddr)
-          setIsGeocoding(false)
           return cleanAddr
         }
       }
@@ -51,13 +49,17 @@ export default function LocationPickerMap({
     }
     setDetectedAddress('')
     onLocationSelect(lat, lng)
-    setIsGeocoding(false)
     return ''
   }
 
   useEffect(() => {
     setCurrentCoords({ lat: initialLat, lng: initialLng })
     fetchReverseGeocode(initialLat, initialLng)
+    mapRef.current?.flyTo({
+      center: [initialLng, initialLat],
+      zoom: 15,
+      essential: true,
+    })
   }, [initialLat, initialLng])
 
   // Sync Device Location Handler
@@ -70,6 +72,11 @@ export default function LocationPickerMap({
           const lng = parseFloat(pos.coords.longitude.toFixed(6))
           setCurrentCoords({ lat, lng })
           fetchReverseGeocode(lat, lng)
+          mapRef.current?.flyTo({
+            center: [lng, lat],
+            zoom: 15,
+            essential: true,
+          })
           setIsLocating(false)
         },
         (err) => {
@@ -103,13 +110,12 @@ export default function LocationPickerMap({
     <div className="relative w-full rounded-2xl overflow-hidden border border-gray-300 shadow-inner bg-[#f0f3ec] h-64 sm:h-72">
       {/* Map Element */}
       <Map
+        ref={mapRef}
         center={[currentCoords.lng, currentCoords.lat]}
         zoom={15}
         onClick={handleMapClick}
         className="h-full w-full"
       >
-        <MapControls position="bottom-right" showZoom showLocate={false} />
-
         <MapMarker
           longitude={currentCoords.lng}
           latitude={currentCoords.lat}
@@ -141,29 +147,6 @@ export default function LocationPickerMap({
         )}
         <span>{isLocating ? 'Syncing GPS...' : 'Sync Live Location'}</span>
       </button>
-
-      {/* Coordinate & Reverse Geocode Banner Badge */}
-      <div className="absolute bottom-3 left-3 right-16 z-10 pointer-events-none">
-        <div className="inline-flex max-w-full items-center gap-2 rounded-xl bg-white/95 px-3 py-1.5 shadow-lg border border-gray-200/80 backdrop-blur-md">
-          <div className="grid size-6 place-items-center rounded-lg bg-[#18201c] text-[#d9f447] shrink-0">
-            <MapPin className="size-3.5" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-mono text-[11px] font-bold text-[#18201c]">
-              {currentCoords.lat.toFixed(4)}° N, {currentCoords.lng.toFixed(4)}° E
-            </p>
-            {isGeocoding ? (
-              <p className="text-[10px] text-gray-500 animate-pulse">Detecting address...</p>
-            ) : detectedAddress ? (
-              <p className="text-[10px] text-gray-600 font-medium truncate max-w-[240px] sm:max-w-[340px]">
-                {detectedAddress}
-              </p>
-            ) : (
-              <p className="text-[10px] text-gray-400">Drag pin or click map to move location</p>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

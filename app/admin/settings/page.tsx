@@ -1,5 +1,6 @@
 'use client'
 
+import { useToast } from '@/lib/toast-context'
 import {
   AlertTriangle,
   Bell,
@@ -16,6 +17,7 @@ import {
 import React, { useState } from 'react'
 
 export default function AdminSettingsPage() {
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<
     'general' | 'security' | 'notifications' | 'onboarding'
   >('general')
@@ -61,6 +63,7 @@ export default function AdminSettingsPage() {
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSavedSuccess(true)
+    toast('Admin Master Settings Saved & Applied!', 'success')
     setTimeout(() => setSavedSuccess(false), 3500)
   }
 
@@ -85,6 +88,7 @@ export default function AdminSettingsPage() {
     setRequireFssaiLicense(true)
     setRequireDriverLicense(true)
     setRequireGstin(true)
+    toast('Settings reset to default configuration.', 'info')
   }
 
   return (
@@ -99,13 +103,15 @@ export default function AdminSettingsPage() {
             Admin Security &amp; Operational Controls
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76]">
-            Manage platform identity, operational thresholds, security rules, notification gateways, and partner compliance.
+            Manage platform identity, operational thresholds, security rules, notification gateways,
+            and partner compliance.
           </p>
         </div>
 
         {savedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2.5 text-xs font-bold text-emerald-900 border border-emerald-300 shadow-sm animate-fade-in">
-            <CheckCircle2 className="size-4 text-emerald-700" /> Admin Master Settings Saved &amp; Applied!
+            <CheckCircle2 className="size-4 text-emerald-700" /> Admin Master Settings Saved &amp;
+            Applied!
           </div>
         )}
       </div>
@@ -143,7 +149,8 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Globe className="size-4 text-[#859d19]" /> Platform Identity &amp; Dispatch Thresholds
+                <Globe className="size-4 text-[#859d19]" /> Platform Identity &amp; Dispatch
+                Thresholds
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Set brand credentials, support contacts, dispatch radius, and emergency maintenance.
@@ -193,7 +200,9 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setDeliveryRadius(parseFloat(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Maximum customer order distance allowed</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Maximum customer order distance allowed
+                </p>
               </div>
 
               <div>
@@ -205,11 +214,15 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setMaxPreparationTime(parseFloat(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">Target cooking &amp; packing time window</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Target cooking &amp; packing time window
+                </p>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Operating Currency &amp; Timezone</label>
+                <label className="font-bold text-[#18201c]">
+                  Operating Currency &amp; Timezone
+                </label>
                 <input
                   type="text"
                   disabled
@@ -295,7 +308,8 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Lock className="size-4 text-[#859d19]" /> Security, JWT Tokens &amp; Access Controls
+                <Lock className="size-4 text-[#859d19]" /> Security, JWT Tokens &amp; Access
+                Controls
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Manage authentication cookie expiry, admin two-factor policies, and API rate limits.
@@ -336,7 +350,9 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setRateLimitPerMin(parseFloat(e.target.value) || 10)}
                   className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
                 />
-                <p className="mt-1 text-[10px] text-gray-400">DDoS &amp; brute-force throttling limit</p>
+                <p className="mt-1 text-[10px] text-gray-400">
+                  DDoS &amp; brute-force throttling limit
+                </p>
               </div>
             </div>
 
@@ -366,7 +382,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-[#18201c]">Enforce Strong Passwords</p>
-                  <p className="text-[10px] text-gray-500">Require uppercase, numbers &amp; symbols</p>
+                  <p className="text-[10px] text-gray-500">
+                    Require uppercase, numbers &amp; symbols
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -391,7 +409,8 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Bell className="size-4 text-[#859d19]" /> Customer &amp; Partner Notification Gateways
+                <Bell className="size-4 text-[#859d19]" /> Customer &amp; Partner Notification
+                Gateways
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Configure SMS providers, WhatsApp Business alerts, and email receipt triggers.
@@ -415,7 +434,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-gray-50/50">
                 <div>
                   <p className="font-bold text-[#18201c]">SMS Gateway Alerts</p>
-                  <p className="text-[10px] text-gray-500">Order verification &amp; delivery OTPs</p>
+                  <p className="text-[10px] text-gray-500">
+                    Order verification &amp; delivery OTPs
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -504,7 +525,8 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b pb-4">
               <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <FileCheck className="size-4 text-[#859d19]" /> Partner Onboarding &amp; Legal Compliance
+                <FileCheck className="size-4 text-[#859d19]" /> Partner Onboarding &amp; Legal
+                Compliance
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Set verification requirements for new kitchen vendors and delivery riders.
@@ -515,7 +537,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Auto-Approve Vendors</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Bypass manual admin verification</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Bypass manual admin verification
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -535,7 +559,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Mandatory FSSAI License</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Require food safety license upload</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Require food safety license upload
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -555,7 +581,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Mandatory GSTIN Registration</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Require tax GST number for payouts</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Require tax GST number for payouts
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -575,7 +603,9 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
                 <div>
                   <p className="font-bold text-[#18201c]">Mandatory Driver License &amp; RC</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Require driving &amp; vehicle documents</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Require driving &amp; vehicle documents
+                  </p>
                 </div>
                 <button
                   type="button"

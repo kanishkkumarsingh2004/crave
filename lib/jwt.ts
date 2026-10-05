@@ -1,5 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose'
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('FATAL: JWT_SECRET environment variable must be configured in production!')
+}
 const jwtSecret = process.env.JWT_SECRET || 'crave_jwt_secret_key_bengaluru_2026_super_secure_auth'
 const JWT_SECRET = new TextEncoder().encode(jwtSecret)
 

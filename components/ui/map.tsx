@@ -20,7 +20,141 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 
+import { CUSTOM_MAP_PALETTE } from '@/lib/map-config'
 import { cn } from '@/lib/utils'
+
+function applyCustomPalette(map: MapLibreGL.Map) {
+  try {
+    const style = map.getStyle()
+    if (!style || !style.layers) return
+
+    for (const layer of style.layers) {
+      const id = layer.id.toLowerCase()
+      const type = layer.type
+
+      if (type === 'background') {
+        map.setPaintProperty(layer.id, 'background-color', CUSTOM_MAP_PALETTE.land)
+      } else if (id.includes('land') && type === 'fill') {
+        map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.land)
+      }
+
+      if (id.includes('landcover') || id.includes('landuse')) {
+        if (type === 'fill') {
+          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.landcover)
+        }
+      }
+
+      if (
+        id.includes('waterway') ||
+        id.includes('river') ||
+        id.includes('canal') ||
+        id.includes('stream')
+      ) {
+        if (type === 'line') {
+          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.waterways)
+        }
+      } else if (id.includes('water') || id.includes('ocean') || id.includes('lake')) {
+        if (type === 'fill') {
+          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.water)
+        }
+      }
+
+      if (
+        id.includes('park') ||
+        id.includes('green') ||
+        id.includes('wood') ||
+        id.includes('cemetery') ||
+        id.includes('pitch')
+      ) {
+        if (type === 'fill') {
+          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.parks)
+        }
+      }
+
+      if (id.includes('building')) {
+        if (type === 'fill') {
+          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.buildings)
+        }
+        if (type === 'fill-extrusion') {
+          map.setPaintProperty(layer.id, 'fill-extrusion-color', CUSTOM_MAP_PALETTE.buildings)
+        }
+      }
+
+      if (
+        id.includes('aeroway') ||
+        id.includes('runway') ||
+        id.includes('taxiway') ||
+        id.includes('airport')
+      ) {
+        if (type === 'fill') {
+          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.aeroway)
+        }
+        if (type === 'line') {
+          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.aeroway)
+        }
+      }
+
+      if (id.includes('rail') || id.includes('train') || id.includes('transit')) {
+        if (type === 'line') {
+          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.rail)
+        }
+      }
+
+      if (
+        id.includes('road') ||
+        id.includes('highway') ||
+        id.includes('street') ||
+        id.includes('bridge') ||
+        id.includes('tunnel') ||
+        id.includes('transportation')
+      ) {
+        if (id.includes('casing') || id.includes('outline')) {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadOutline)
+          }
+        } else if (
+          id.includes('motorway') ||
+          id.includes('trunk') ||
+          id.includes('primary') ||
+          id.includes('major')
+        ) {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMajor)
+          }
+        } else if (id.includes('secondary')) {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorHigh)
+          }
+        } else if (id.includes('tertiary')) {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorMid)
+          }
+        } else if (
+          id.includes('path') ||
+          id.includes('foot') ||
+          id.includes('pedestrian') ||
+          id.includes('cycle')
+        ) {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadPath)
+          }
+        } else {
+          if (type === 'line') {
+            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorLow)
+          }
+        }
+      }
+
+      if (type === 'symbol') {
+        try {
+          map.setPaintProperty(layer.id, 'text-color', CUSTOM_MAP_PALETTE.text)
+        } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.warn('Custom map palette application error:', err)
+  }
+}
 
 if (typeof window !== 'undefined' && !MapLibreGL.getWorkerUrl()) {
   MapLibreGL.setWorkerUrl(
@@ -302,6 +436,7 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
 
     const styleLoadHandler = () => {
       styleSwapInFlightRef.current = false
+      applyCustomPalette(map)
       setIsStyleLoaded(true)
     }
     const loadHandler = () => setIsLoaded(true)

@@ -21,7 +21,17 @@ const server = createServer((req, res) => {
   if (req.url && req.url.startsWith('/__ws/broadcast')) {
     if (req.method === 'POST') {
       let body = ''
-      req.on('data', (chunk) => (body += chunk))
+      let size = 0
+      req.on('data', (chunk) => {
+        size += chunk.length
+        if (size > 1024 * 1024) {
+          res.writeHead(413, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Payload Too Large' }))
+          req.destroy()
+          return
+        }
+        body += chunk
+      })
       req.on('end', () => {
         try {
           const msg = JSON.parse(body)
@@ -57,6 +67,10 @@ wss.on('connection', (ws, req) => {
   })
 
   ws.on('message', (raw) => {
+    if (raw && raw.length > 65536) {
+      ws.close(1009, 'Payload too large')
+      return
+    }
     try {
       const msg = JSON.parse(raw.toString())
       const info = connectedClients.get(ws)

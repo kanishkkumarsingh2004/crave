@@ -88,7 +88,8 @@ export default function AIAnalyticsPage() {
             AI Analytics &amp; Predictive Insights
           </h1>
           <p className="text-xs font-medium text-[#627068]">
-            Next-gen artificial intelligence suite for demand forecasting, route batching, and pricing intelligence.
+            Next-gen artificial intelligence suite for demand forecasting, route batching, and
+            pricing intelligence.
           </p>
         </div>
       </div>
@@ -110,7 +111,9 @@ export default function AIAnalyticsPage() {
           </h2>
 
           <p className="mt-3 text-sm text-gray-300 leading-relaxed">
-            Our Deep Learning Intelligence Engine is being trained on platform delivery metrics, vendor order frequency, and live rider telematics. Get ready for real-time AI dashboards that make data-driven decisions on autopilot.
+            Our Deep Learning Intelligence Engine is being trained on platform delivery metrics,
+            vendor order frequency, and live rider telematics. Get ready for real-time AI dashboards
+            that make data-driven decisions on autopilot.
           </p>
 
           {/* Early access notification form */}
@@ -121,7 +124,10 @@ export default function AIAnalyticsPage() {
                 <span>You are registered for AI Beta Access! We will notify you on launch.</span>
               </div>
             ) : (
-              <form onSubmit={handleNotifySubmit} className="flex flex-col sm:flex-row gap-3 max-w-md">
+              <form
+                onSubmit={handleNotifySubmit}
+                className="flex flex-col sm:flex-row gap-3 max-w-md"
+              >
                 <input
                   type="email"
                   required
@@ -147,7 +153,9 @@ export default function AIAnalyticsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu className="size-5 text-[#86a018]" />
-            <h3 className="font-extrabold text-sm text-[#18201c]">Overall Neural Model Pipeline Readiness</h3>
+            <h3 className="font-extrabold text-sm text-[#18201c]">
+              Overall Neural Model Pipeline Readiness
+            </h3>
           </div>
           <span className="font-mono text-sm font-black text-[#86a018] bg-[#f0f6d6] px-3 py-1 rounded-full">
             88% Complete

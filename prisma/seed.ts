@@ -334,63 +334,6 @@ async function seed() {
     }
   }
 
-  // ─── Also read from data/orders.json if present ──────────
-  const ordersFile = path.join(process.cwd(), 'data', 'orders.json')
-  let ordersData: any[] = []
-  if (fs.existsSync(ordersFile)) {
-    ordersData = JSON.parse(fs.readFileSync(ordersFile, 'utf-8')) || []
-  }
-
-  for (const order of ordersData) {
-    try {
-      await prisma.order.createMany({
-        data: [
-          {
-            id: order.id,
-            customer_id: order.customer_id || null,
-            customer_name: order.customer_name,
-            customer_phone: order.customer_phone || null,
-            customer_address: order.customer_address || null,
-            restaurant_id: order.restaurant_id || null,
-            restaurant_name: order.restaurant_name,
-            items: order.items,
-            subtotal: order.subtotal,
-            packaging_fee: order.packaging_fee,
-            gst: order.gst,
-            total_amount: order.total_amount,
-            status: order.status as OrderStatus,
-            payment_method: order.payment_method,
-            created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-            delivery_otp: order.delivery_otp || null,
-            tip: order.tip || 0,
-            discount_amount: order.discount_amount || 0,
-            coupon_code: order.coupon_code || null,
-          },
-        ],
-        skipDuplicates: true,
-      })
-
-      if (order.utr_ref && order.customer_vpa) {
-        await prisma.paymentReview.createMany({
-          data: [
-            {
-              id: `pr_${order.id}`,
-              order_id: order.id,
-              utr_ref: order.utr_ref,
-              customer_vpa: order.customer_vpa,
-              amount: order.total_amount,
-              status: order.payment_status || 'pending',
-              created_at: order.createdAt ? new Date(order.createdAt) : undefined,
-            },
-          ],
-          skipDuplicates: true,
-        })
-      }
-    } catch (err) {
-      console.error(`  ❌ Failed to seed order ${order.id}:`, err)
-    }
-  }
-
   const ordersCount = await prisma.order.count()
   const reviewsCount = await prisma.paymentReview.count()
   const usersCount = await prisma.user.count()

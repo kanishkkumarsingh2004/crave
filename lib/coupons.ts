@@ -13,6 +13,7 @@ export interface Coupon {
   usedCount: number
   isActive: boolean
   restaurantId?: string
+  restaurantIds?: string[]
 }
 
 export const DEFAULT_COUPONS: Coupon[] = [
@@ -75,6 +76,13 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
             usedCount: Number(item.used_count ?? 0),
             isActive: Boolean(item.is_active),
             restaurantId: item.restaurant_id ?? undefined,
+            restaurantIds: Array.isArray(item.restaurant_ids)
+              ? item.restaurant_ids
+              : typeof item.restaurant_ids === 'string'
+                ? JSON.parse(item.restaurant_ids)
+                : item.restaurant_id
+                  ? [item.restaurant_id]
+                  : [],
           }))
         }
       }
@@ -100,6 +108,13 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
       usedCount: Number(item.used_count ?? 0),
       isActive: Boolean(item.is_active),
       restaurantId: item.restaurant_id ?? undefined,
+      restaurantIds: Array.isArray(item.restaurant_ids)
+        ? item.restaurant_ids
+        : typeof item.restaurant_ids === 'string'
+          ? JSON.parse(item.restaurant_ids)
+          : item.restaurant_id
+            ? [item.restaurant_id]
+            : [],
     }))
   } catch (err) {
     return DEFAULT_COUPONS
@@ -109,7 +124,8 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
 export function validateCoupon(
   code: string,
   subtotal: number,
-  couponsList: Coupon[] = []
+  couponsList: Coupon[] = [],
+  restaurantId?: string
 ): { valid: boolean; discountAmount: number; coupon?: Coupon; message: string } {
   const coupons = couponsList
   const cleanCode = code.trim().toUpperCase()
@@ -124,6 +140,24 @@ export function validateCoupon(
       valid: false,
       discountAmount: 0,
       message: `Coupon code '${cleanCode}' has been deactivated.`,
+    }
+  }
+
+  if (restaurantId) {
+    if (found.restaurantIds && found.restaurantIds.length > 0) {
+      if (!found.restaurantIds.includes(restaurantId)) {
+        return {
+          valid: false,
+          discountAmount: 0,
+          message: `Coupon code '${cleanCode}' is not applicable for the selected restaurant.`,
+        }
+      }
+    } else if (found.restaurantId && found.restaurantId !== restaurantId) {
+      return {
+        valid: false,
+        discountAmount: 0,
+        message: `Coupon code '${cleanCode}' is not applicable for the selected restaurant.`,
+      }
     }
   }
 

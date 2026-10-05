@@ -80,7 +80,7 @@ function writeLocalConfigFile(cfg: PaymentConfig) {
   }
 }
 
-export async function GET() {
+export async function GET(_request?: Request) {
   try {
     const local = readLocalConfigFile()
 

@@ -61,8 +61,16 @@ export async function GET(request: Request) {
   }
 }
 
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request)
+    const { allowed, resetTime } = checkRateLimit(`order_${clientIp}`, 30, 60000)
+    if (!allowed) {
+      return rateLimitResponse(resetTime)
+    }
+
     const actor = await getActor(request)
     if (!actor || actor.role !== 'user') {
       return NextResponse.json(
@@ -121,8 +129,11 @@ export async function POST(request: Request) {
     const actualDeliveryFee = Number(
       delivery_fee != null ? delivery_fee : paymentConfig.baseDeliveryFee
     )
+    // Driver receives payout share based on trip fare (if customer got free delivery, driver is still paid using base trip fare)
+    const tripDeliveryFare =
+      actualDeliveryFee > 0 ? actualDeliveryFee : paymentConfig.baseDeliveryFee || 30
     const driverPayout =
-      Math.round(actualDeliveryFee * (paymentConfig.driverPayoutShare / 100)) + (Number(tip) || 0)
+      Math.round(tripDeliveryFare * (paymentConfig.driverPayoutShare / 100)) + (Number(tip) || 0)
     const platformProfit =
       Math.round((Number(total_amount) - vendorNetPayout - driverPayout) * 100) / 100
 

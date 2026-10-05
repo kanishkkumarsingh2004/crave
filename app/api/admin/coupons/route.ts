@@ -1,6 +1,20 @@
 import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/dal/coupons'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 import type { DiscountType } from '@prisma/client'
 import { NextResponse } from 'next/server'
+
+async function checkAdminOrVendorAuth(request: Request) {
+  const authHeader = request.headers.get('authorization')
+  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+
+  const payload = token ? await verifyToken(token) : null
+  if (!payload || (payload.role !== 'admin' && payload.role !== 'restaurant_vendor')) {
+    return false
+  }
+  return true
+}
 
 export async function GET(request: Request) {
   try {
@@ -16,6 +30,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!(await checkAdminOrVendorAuth(request))) {
+      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    }
+
     const body = await request.json()
     const coupon = await createCoupon({
       id: body.id || crypto.randomUUID(),
@@ -29,6 +47,7 @@ export async function POST(request: Request) {
       expiry_date: body.expiry_date ? new Date(body.expiry_date) : undefined,
       is_active: body.is_active ?? true,
       restaurant_id: body.restaurant_id || undefined,
+      restaurant_ids: Array.isArray(body.restaurant_ids) ? body.restaurant_ids : undefined,
     })
     return NextResponse.json({ success: true, coupon })
   } catch (error: any) {
@@ -41,6 +60,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    if (!(await checkAdminOrVendorAuth(request))) {
+      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { id, ...data } = body
 
@@ -63,6 +86,10 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    if (!(await checkAdminOrVendorAuth(request))) {
+      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

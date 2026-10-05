@@ -5,10 +5,10 @@ Object.assign(global, { TextEncoder, TextDecoder })
 
 if (typeof global.Request === 'undefined') {
   class Request {
-    url: string
-    method: string
-    headers: Record<string, string>
-    body: string | null
+    url: string = ''
+    method: string = 'GET'
+    headers: Record<string, string> = {}
+    body: string | null = null
 
     constructor(input: string | Request, init?: any) {
       if (typeof input === 'string') {
@@ -38,10 +38,10 @@ if (typeof global.Request === 'undefined') {
 
 if (typeof global.Response === 'undefined') {
   class Response {
-    body: string | null
-    status: number
-    statusText: string
-    headers: Record<string, string>
+    body: string | null = null
+    status: number = 200
+    statusText: string = 'OK'
+    headers: Record<string, string> = {}
 
     constructor(body?: any, init?: any) {
       this.body = typeof body === 'string' ? body : body ? JSON.stringify(body) : null
@@ -64,10 +64,10 @@ if (typeof global.Response === 'undefined') {
 
 jest.mock('next/server', () => ({
   NextRequest: class NextRequest {
-    url: string
-    method: string
-    headers: { get: (key: string) => string | null }
-    body: any
+    url: string = ''
+    method: string = 'GET'
+    headers: { get: (key: string) => string | null } = { get: () => null }
+    body: any = null
     constructor(input: any, init?: any) {
       if (typeof input === 'string') {
         this.url = input
@@ -142,8 +142,8 @@ global.ResizeObserver =
   }
 
 if (typeof window !== 'undefined') {
-  window.happyDOM = {
-    ...(window.happyDOM || {}),
+  ;(window as any).happyDOM = {
+    ...((window as any).happyDOM || {}),
   }
 
   Element.prototype.scrollTo = () => {}
