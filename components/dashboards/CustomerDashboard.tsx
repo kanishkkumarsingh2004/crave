@@ -206,61 +206,33 @@ export default function CustomerDashboard({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
 
-  // Fetch Live Restaurants / Vendors from Supabase (Strictly Food Delivery Vendors)
+  // Fetch Live Restaurants / Vendors from local DB
   useEffect(() => {
     async function fetchRestaurants() {
       try {
         let parsed: Restaurant[] = []
-        // Query restaurants table (excluding craveXP dark store warehouse)
-        const { data: restData } = await supabase
-          .from('restaurants')
-          .select('*')
-          .neq('id', 'cravexp_dark_store_01')
-          .eq('is_dark_store', false)
+        const res = await fetch('/api/restaurants', { cache: 'no-store' })
+        const json = await res.json()
+        const restData = json.restaurants || []
 
-        if (restData && restData.length > 0) {
-          parsed = restData.map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            cuisine: r.cuisine ?? '',
-            rating: r.rating == null ? '4.8' : String(r.rating),
-            ratingCount: r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
-            eta: r.delivery_minutes == null ? '25 min' : `${r.delivery_minutes} min`,
-            distance: '1.8 km',
-            costForTwo: r.cost_for_two == null ? '₹350 for two' : `₹${r.cost_for_two} for two`,
-            image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-            tag: r.cuisine?.split(' ')[0] ?? 'Popular',
-            address: r.address ?? 'Bengaluru',
-            offer: r.offer ?? '40% OFF',
-            isPureVeg: r.is_pure_veg ?? false,
-          }))
-        } else {
-          // Fallback query vendors table excluding dark store
-          const { data: vendorData } = await (supabase as any)
-            .from('vendors')
-            .select('*')
-            .neq('id', 'cravexp_dark_store_01')
-
-          if (vendorData && vendorData.length > 0) {
-            parsed = vendorData.map((v: any) => ({
-              id: v.id,
-              name: v.storeName || 'Vendor Store',
-              cuisine: v.description || 'Fast Food · Indian',
-              rating: '4.8',
-              ratingCount: '1.2k+',
-              eta: '25 min',
-              distance: '1.5 km',
-              costForTwo: '₹300 for two',
-              image:
-                v.logoUrl ||
-                v.bannerUrl ||
-                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-              tag: 'Popular',
-              address: v.address || 'Bengaluru',
-              offer: '40% OFF',
-              isPureVeg: false,
+        if (restData.length > 0) {
+          parsed = restData
+            .filter((r: any) => r.id !== 'cravexp_dark_store_01' && r.is_dark_store === false)
+            .map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              cuisine: r.cuisine ?? '',
+              rating: r.rating == null ? '4.8' : String(r.rating),
+              ratingCount: r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
+              eta: r.delivery_minutes == null ? '25 min' : `${r.delivery_minutes} min`,
+              distance: '1.8 km',
+              costForTwo: r.cost_for_two == null ? '₹350 for two' : `₹${r.cost_for_two} for two`,
+              image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+              tag: r.cuisine?.split(' ')[0] ?? 'Popular',
+              address: r.address ?? 'Bengaluru',
+              offer: r.offer ?? '40% OFF',
+              isPureVeg: r.is_pure_veg ?? false,
             }))
-          }
         }
         setRestaurantsList(parsed)
       } catch (err) {
@@ -272,27 +244,22 @@ export default function CustomerDashboard({
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch Live Menu Items from Supabase (strictly for food delivery restaurant views)
+  // Fetch Live Menu Items from local DB
   useEffect(() => {
     async function fetchLiveMenuItems() {
       try {
-        const { data: menuData } = await supabase
-          .from('menu_items')
-          .select('*')
-          .neq('restaurant_id', 'cravexp_dark_store_01')
+        if (!selectedRestaurant) {
+          setMenuItemsList([])
+          return
+        }
+        const res = await fetch(`/api/menu-items?restaurantId=${selectedRestaurant.id}`, {
+          cache: 'no-store',
+        })
+        const json = await res.json()
+        const menuData = json.items || []
 
-        if (menuData && menuData.length > 0) {
-          let filtered = menuData
-          if (selectedRestaurant) {
-            const restaurantSpecific = filtered.filter(
-              (item: any) => item.restaurant_id === selectedRestaurant.id
-            )
-            if (restaurantSpecific.length > 0) {
-              filtered = restaurantSpecific
-            }
-          }
-
-          const parsed: MenuItem[] = filtered.map((item: any) => ({
+        if (menuData.length > 0) {
+          const parsed: MenuItem[] = menuData.map((item: any) => ({
             id: item.id,
             name: item.name,
             detail: item.description || '',
