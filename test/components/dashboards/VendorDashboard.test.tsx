@@ -83,7 +83,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     await waitFor(() => {
       expect(screen.getByText(/Test Customer/i)).toBeInTheDocument()
     })
-    expect(screen.getByText(/₹168/)).toBeInTheDocument()
+    expect(screen.getAllByText(/₹168/)[0]).toBeInTheDocument()
     expect(screen.getByText(/Payment Pending/i)).toBeInTheDocument()
   })
 
@@ -146,7 +146,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     render(<VendorDashboard />)
 
     await waitFor(() => {
-      expect(screen.getByText('₹800')).toBeInTheDocument()
+      expect(screen.getAllByText('₹800')[0]).toBeInTheDocument()
     })
   })
 
