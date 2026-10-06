@@ -3,14 +3,7 @@
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
-import {
-  ArrowUpRight,
-  Clock3,
-  DollarSign,
-  Percent,
-  Search,
-  TrendingUp,
-} from 'lucide-react'
+import { ArrowUpRight, Clock3, DollarSign, Percent, Search, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'

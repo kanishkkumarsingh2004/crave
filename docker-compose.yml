@@ -1,56 +1,24 @@
 name: crave-food-delivery
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: crave-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: crave
-      POSTGRES_PASSWORD: crave_secret
-      POSTGRES_DB: crave_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./prisma/schema.prisma:/app/schema.prisma:ro
-    ports:
-      - '5433:5432'
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U crave -d crave_db']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  db-init:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: crave-db-init
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-    command: ['sh', '-c', 'npx prisma generate && npx prisma db push']
-    restart: 'no'
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
+        JWT_SECRET: ${JWT_SECRET}
     container_name: crave-backend
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-      JWT_SECRET: ${JWT_SECRET:-REDACTED_JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      JWT_SECRET: ${JWT_SECRET}
     command: ['node', 'ws-server.js']
     ports:
       - '8000:8000'
@@ -70,15 +38,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
+        JWT_SECRET: ${JWT_SECRET}
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -87,9 +57,9 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-      DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-      JWT_SECRET: ${JWT_SECRET:-REDACTED_JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      JWT_SECRET: ${JWT_SECRET}
       NEXT_PUBLIC_WS_PORT: 8000
       NEXT_PUBLIC_WS_HOST: localhost
     command: ['node', 'server.js']
@@ -107,6 +77,3 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
-
-volumes:
-  postgres_data:

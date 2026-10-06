@@ -197,11 +197,28 @@ model PaymentConfig {
   merchant_vpa            String
   merchant_name           String
   merchant_category_code  String?
+  thank_you_message       String?
+  ifsc_code               String?
+  account_number          String?
+  platform_fee            Int?
+  handling_fee            Int?
+  vendor_commission       Int?
+  packaging_cap           Int?
+  delivery_fee            Int?
+  base_distance_km        Int?
+  per_km_rate             Int?
+  free_delivery_threshold Int?
+  driver_payout_share     Int?
+  surge_multiplier        Decimal? @db.Decimal
+  rain_fee                Int?
+  night_surge_fee         Int?
+  is_rain_mode_active     Boolean? @default(false)
+  is_night_surge_active    Boolean? @default(false)
+  enable_cash_on_delivery Boolean? @default(false)
+  enable_upi_deep_link    Boolean? @default(true)
+  require_utr_number      Boolean? @default(true)
   is_active               Boolean  @default(false)
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
-  delivery_fee            Int?
-  handling_fee            Int?
-  free_delivery_threshold Int?
   gst_rate                Decimal? @db.Decimal
 
   @@map("payment_configs")

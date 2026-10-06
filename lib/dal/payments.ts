@@ -89,9 +89,26 @@ export async function upsertPaymentConfig(data: {
   merchant_vpa: string
   merchant_name: string
   merchant_category_code?: string
-  delivery_fee?: number
+  thank_you_message?: string
+  ifsc_code?: string
+  account_number?: string
+  platform_fee?: number
   handling_fee?: number
+  vendor_commission?: number
+  packaging_cap?: number
+  delivery_fee?: number
+  base_distance_km?: number
+  per_km_rate?: number
   free_delivery_threshold?: number
+  driver_payout_share?: number
+  surge_multiplier?: number
+  rain_fee?: number
+  night_surge_fee?: number
+  is_rain_mode_active?: boolean
+  is_night_surge_active?: boolean
+  enable_cash_on_delivery?: boolean
+  enable_upi_deep_link?: boolean
+  require_utr_number?: boolean
   is_active?: boolean
 }) {
   try {
