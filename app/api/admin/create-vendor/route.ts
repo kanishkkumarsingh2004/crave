@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       commissionRate = 15,
       paymentModel = 'commission',
       bannerUrl,
+      latitude,
+      longitude,
     } = body
 
     if (!name || !email || !password || !storeName) {
@@ -91,6 +93,8 @@ export async function POST(request: Request) {
           owner_id: finalUserId,
           commission_rate: Number(commissionRate),
           payment_model: paymentModel,
+          latitude: latitude ? Number(latitude) : undefined,
+          longitude: longitude ? Number(longitude) : undefined,
         })
       } catch (err: any) {
         console.warn('Could not insert restaurant record:', err?.message)

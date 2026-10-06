@@ -1,20 +1,9 @@
 'use client'
 
+import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
-import {
-  ArrowLeft,
-  Building2,
-  FileText,
-  LogOut,
-  Percent,
-  Save,
-  ShieldCheck,
-  Sparkles,
-  Store,
-  UtensilsCrossed,
-} from 'lucide-react'
-import Link from 'next/link'
+import { Building2, FileText, Save, ShieldCheck, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 
@@ -146,83 +135,8 @@ export default function VendorSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-3 text-xs font-bold text-white shadow-2xl border border-white/20 animate-in fade-in duration-300">
-          <Sparkles className="size-4 text-[#d9f447]" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Top Header Navbar */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link
-              href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
-            >
-              crave<span className="text-[#86a018]">.</span>
-            </Link>
-            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
-              VENDOR
-            </span>
-
-            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
-
-            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
-              <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">
-                {user?.restaurantName || 'Your restaurant'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
-            <Link
-              href="/vendor/dashboard"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Kitchen Orders</span>
-            </Link>
-            <Link
-              href="/vendor/menu"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <UtensilsCrossed className="size-3.5 text-amber-600" />
-              <span>Menu Management</span>
-            </Link>
-            <Link
-              href="/vendor/sales"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50"
-            >
-              Sales &amp; Earnings
-            </Link>
-            <Link
-              href="/vendor/coupons"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <Percent className="size-3.5 text-purple-600" />
-              <span>Store Offers</span>
-            </Link>
-            <button
-              onClick={() => router.push('/vendor/settings')}
-              className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
-            >
-              Bank &amp; Settings
-            </button>
-            <button
-              onClick={() => logout()}
-              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
-              title="Sign Out"
-            >
-              <LogOut className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16 lg:pl-64">
+      <VendorSidebar />
 
       <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 space-y-6">
         {/* Header Hero */}

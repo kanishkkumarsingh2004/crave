@@ -1,5 +1,6 @@
 'use client'
 
+import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
 import { useVendorOrderUpdates, playChimeSound } from '@/lib/websocket'
@@ -9,15 +10,8 @@ import {
   ChartColumn,
   CheckCircle2,
   CookingPot,
-  LogOut,
-  Menu,
   PackageCheck,
-  Percent,
-  Settings,
   ShoppingBag,
-  Star,
-  Store,
-  UtensilsCrossed,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -167,241 +161,22 @@ export default function VendorDashboard() {
     (o) => o.status === 'new' || o.status === 'preparing'
   ).length
   const readyCount = kitchenOrders.filter((o) => o.status === 'ready').length
+  const completedDropsCount = kitchenOrders.filter(
+    (o) => o.status === 'delivered' || o.status === 'out_for_delivery'
+  ).length
   const totalDailyRevenue = kitchenOrders.reduce((acc, o) => acc + o.totalAmount, 0)
+  const completionRate =
+    kitchenOrders.length > 0 ? Math.round((completedDropsCount / kitchenOrders.length) * 100) : 0
 
   const orderStats = [
     { label: 'Active Orders', value: openCount.toString(), tone: 'amber' },
     { label: 'Ready for Pickup', value: readyCount.toString(), tone: 'green' },
     { label: 'Daily Sales', value: `₹${totalDailyRevenue}`, tone: 'blue' },
-    { label: 'Kitchen Rating', value: '4.9 ★', tone: 'purple' },
   ]
 
   return (
     <div className="min-h-screen bg-[#f8f9f7] pb-16 text-[#18201c] lg:pl-64">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-[#202923] bg-[#121815] text-white lg:flex">
-        <div className="border-b border-white/10 p-6">
-          <Link href="/vendor/dashboard" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815]">
-              <UtensilsCrossed className="size-5" />
-            </span>
-            <span className="text-xl font-black tracking-tight">
-              crave<span className="text-[#d9f447]">.</span>
-            </span>
-          </Link>
-          <div className="mt-5 rounded-xl bg-white/5 px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Vendor</p>
-            <p className="mt-1 truncate text-sm font-bold">
-              {user?.restaurantName || 'The Green Table'}
-            </p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-4" aria-label="Vendor navigation">
-          {[
-            {
-              href: '/vendor/dashboard',
-              label: t.vendor.liveOrders || 'Kitchen Orders',
-              icon: ShoppingBag,
-            },
-            {
-              href: '/vendor/menu',
-              label: t.vendor.menuManagement || 'Menu Management',
-              icon: UtensilsCrossed,
-            },
-            {
-              href: '/vendor/sales',
-              label: t.vendor.salesReports || 'Sales & Earnings',
-              icon: ChartColumn,
-            },
-            {
-              href: '/vendor/coupons',
-              label: t.vendor.couponManager || 'Store Offers',
-              icon: Percent,
-            },
-            {
-              href: '/vendor/settings',
-              label: t.vendor.vendorSettings || 'Bank & Settings',
-              icon: Settings,
-            },
-          ].map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={isActive ? 'page' : undefined}
-                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
-                  isActive
-                    ? 'bg-[#d9f447] text-[#121815]'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Icon className="size-4 shrink-0" />
-                <span>{label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="border-t border-white/10 p-4">
-          <button
-            onClick={() => logout()}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10"
-          >
-            <LogOut className="size-4" />
-            Sign out
-          </button>
-        </div>
-      </aside>
-
-      {/* Top Vendor Header Navigation Bar */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Brand Logo & Kitchen Name */}
-          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
-            <Link
-              href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0"
-            >
-              crave<span className="text-[#86a018]">.</span>
-            </Link>
-            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
-              VENDOR
-            </span>
-
-            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
-
-            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
-              <Store className="size-4 text-[#86a018] shrink-0" />
-              <span className="truncate max-w-[200px]">
-                {user?.restaurantName || 'The Green Table'}
-              </span>
-            </div>
-
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="sm:hidden grid size-9 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-              aria-label="Open menu"
-            >
-              <Menu className="size-5" />
-            </button>
-          </div>
-
-          {/* Desktop Navigation Links (hidden on mobile) */}
-          <div className="no-scrollbar hidden items-center gap-2 overflow-x-auto text-xs font-bold lg:hidden xl:flex">
-            <button
-              onClick={() => router.push('/vendor/dashboard')}
-              className="rounded-2xl bg-[#18201c] text-white px-4 py-2 transition shrink-0 shadow-xs"
-            >
-              Kitchen Orders
-            </button>
-            <Link
-              href="/vendor/menu"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <UtensilsCrossed className="size-3.5 text-amber-600" />
-              <span>Menu Management</span>
-            </Link>
-            <Link
-              href="/vendor/sales"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <ChartColumn className="size-3.5 text-[#86a018]" />
-              <span>Sales &amp; Earnings</span>
-            </Link>
-            <Link
-              href="/vendor/coupons"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <Percent className="size-3.5 text-purple-600" />
-              <span>Store Offers</span>
-            </Link>
-            <Link
-              href="/vendor/settings"
-              className="rounded-2xl bg-white text-gray-700 border border-gray-200 px-4 py-2 transition shrink-0 hover:bg-gray-50 flex items-center gap-1.5"
-            >
-              <Settings className="size-3.5 text-gray-600" />
-              <span>Bank &amp; Settings</span>
-            </Link>
-            <button
-              onClick={() => logout()}
-              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
-              title="Sign Out"
-            >
-              <LogOut className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Slide-Out Menu (slides in from right) */}
-      <div
-        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex h-full flex-col">
-          {/* Close button */}
-          <div className="flex items-center justify-between border-b border-gray-100 p-4">
-            <h2 className="text-lg font-bold text-[#18201c]">Menu</h2>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="grid size-7 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-              aria-label="Close menu"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1" aria-label="Mobile menu">
-            {[
-              { href: '/vendor/dashboard', label: 'Kitchen Orders', icon: ShoppingBag },
-              { href: '/vendor/menu', label: 'Menu Management', icon: UtensilsCrossed },
-              { href: '/vendor/sales', label: 'Sales & Earnings', icon: ChartColumn },
-              { href: '/vendor/coupons', label: 'Store Offers', icon: Percent },
-              { href: '/vendor/settings', label: 'Bank & Settings', icon: Settings },
-            ].map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
-                    isActive ? 'bg-[#18201c] text-white' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span>{label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-
-          <div className="border-t border-gray-100 p-4">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false)
-                logout()
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile overlay backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 sm:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Live Order Arrival Popup Banner */}
@@ -457,19 +232,11 @@ export default function VendorDashboard() {
                 </strong>
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/vendor/coupons"
-                className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition"
-              >
-                Create Promo Offer <ArrowUpRight className="size-3.5 text-[#d9f447]" />
-              </Link>
-            </div>
           </div>
         </div>
 
-        {/* 4 Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 3 Stats Cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
           {orderStats.map((item) => (
             <div
               key={item.label}
@@ -485,19 +252,15 @@ export default function VendorDashboard() {
                       ? 'bg-amber-50 text-amber-800'
                       : item.tone === 'green'
                         ? 'bg-emerald-50 text-emerald-800'
-                        : item.tone === 'blue'
-                          ? 'bg-blue-50 text-blue-800'
-                          : 'bg-purple-50 text-purple-800'
+                        : 'bg-blue-50 text-blue-800'
                   }`}
                 >
                   {item.tone === 'amber' ? (
                     <ShoppingBag className="size-4" />
                   ) : item.tone === 'green' ? (
                     <PackageCheck className="size-4" />
-                  ) : item.tone === 'blue' ? (
-                    <ChartColumn className="size-4" />
                   ) : (
-                    <Star className="size-4" />
+                    <ChartColumn className="size-4" />
                   )}
                 </div>
               </div>
@@ -657,27 +420,36 @@ export default function VendorDashboard() {
                   <span>₹{totalDailyRevenue}</span>
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full w-[85%] rounded-full bg-[#86a018]" />
+                  <div
+                    className="h-full rounded-full bg-[#86a018] transition-all duration-500"
+                    style={{ width: totalDailyRevenue > 0 ? '100%' : '0%' }}
+                  />
                 </div>
               </div>
 
               <div className="rounded-2xl bg-[#f7f8f3] p-4">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                  <span>On-Time Food Prep</span>
-                  <span>98%</span>
+                  <span>Order Completion Rate</span>
+                  <span>{completionRate}%</span>
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full w-[98%] rounded-full bg-emerald-500" />
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${completionRate}%` }}
+                  />
                 </div>
               </div>
 
               <div className="rounded-2xl bg-[#f7f8f3] p-4">
                 <div className="flex items-center justify-between text-xs font-bold text-gray-700">
                   <span>Completed Customer Drops</span>
-                  <span>{kitchenOrders.length} orders</span>
+                  <span>{completedDropsCount} orders</span>
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full w-[100%] rounded-full bg-blue-500" />
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${completionRate}%` }}
+                  />
                 </div>
               </div>
             </div>

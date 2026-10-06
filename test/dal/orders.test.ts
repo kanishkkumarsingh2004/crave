@@ -186,7 +186,7 @@ describe('Orders DAL', () => {
         driver_name: 'Rider A',
         driver_phone: '+919999999999',
         delivery_latitude: 12.9716,
-        delivery_longitude: 77.5946,
+        delivery_longitude: 77.4695,
       })
 
       expect(result).toEqual(mockUpdated)
@@ -197,7 +197,7 @@ describe('Orders DAL', () => {
           driver_name: 'Rider A',
           driver_phone: '+919999999999',
           delivery_latitude: 12.9716,
-          delivery_longitude: 77.5946,
+          delivery_longitude: 77.4695,
         },
       })
     })

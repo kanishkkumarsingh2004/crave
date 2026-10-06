@@ -64,7 +64,7 @@ describe('/api/user/addresses API Route', () => {
       address: '456 Business Park',
       is_default: true,
       latitude: 12.9716,
-      longitude: 77.5946,
+      longitude: 77.4695,
     })
 
     const req = new Request('http://localhost/api/user/addresses', {
@@ -74,7 +74,7 @@ describe('/api/user/addresses API Route', () => {
         label: 'Work',
         address: '456 Business Park',
         latitude: 12.9716,
-        longitude: 77.5946,
+        longitude: 77.4695,
         is_default: true,
       }),
     })
@@ -83,13 +83,13 @@ describe('/api/user/addresses API Route', () => {
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.address.latitude).toBe(12.9716)
-    expect(json.address.longitude).toBe(77.5946)
+    expect(json.address.longitude).toBe(77.4695)
     expect(createCustomerAddress).toHaveBeenCalledWith({
       customer_id: 'user_123',
       label: 'Work',
       address: '456 Business Park',
       latitude: 12.9716,
-      longitude: 77.5946,
+      longitude: 77.4695,
       is_default: true,
     })
   })

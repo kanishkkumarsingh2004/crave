@@ -17,11 +17,11 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
 
   test('Geographic Isolation: Bengaluru pickup excludes Delhi driver completely', async () => {
     // 1. Index Drivers in different cities
-    // Driver A: Bengaluru Center (lat: 12.9716, lng: 77.5946)
+    // Driver A: Bengaluru Center (lat: 12.9716, lng: 77.4695)
     await updateDriverLocation({
       driverId: 'drv_bengaluru_1',
       lat: 12.9716,
-      lng: 77.5946,
+      lng: 77.4695,
       status: 'ONLINE',
       available: true,
       vehicleType: 'EV_SCOOTER',
@@ -51,7 +51,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     const result = findGeofencedCandidateDrivers({
       requestId: 'req_blru_1',
       pickupLat: 12.9716,
-      pickupLng: 77.5946,
+      pickupLng: 77.4695,
       minCandidatesRequired: 2,
     })
 
@@ -113,7 +113,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     await updateDriverLocation({
       driverId: 'drv_fresh',
       lat: 12.9716,
-      lng: 77.5946,
+      lng: 77.4695,
       status: 'ONLINE',
       available: true,
     })
@@ -132,7 +132,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     const result = findGeofencedCandidateDrivers({
       requestId: 'req_fresh_1',
       pickupLat: 12.9716,
-      pickupLng: 77.5946,
+      pickupLng: 77.4695,
       minCandidatesRequired: 1,
     })
 
@@ -143,7 +143,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
 
   test('Haversine Distance & Multi-Factor Candidate Ranking', () => {
     // Haversine distance accuracy check: Bengaluru to Mysuru ~125-140 km
-    const distBlrMys = calculateHaversineDistanceKm(12.9716, 77.5946, 12.2958, 76.6394)
+    const distBlrMys = calculateHaversineDistanceKm(12.9716, 77.4695, 12.2958, 76.6394)
     expect(distBlrMys).toBeGreaterThan(120)
     expect(distBlrMys).toBeLessThan(145)
   })
@@ -152,7 +152,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     await updateDriverLocation({
       driverId: 'drv_lock_1',
       lat: 12.9716,
-      lng: 77.5946,
+      lng: 77.4695,
       status: 'ONLINE',
       available: true,
     })
@@ -170,7 +170,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     const searchB = findGeofencedCandidateDrivers({
       requestId: 'req_B',
       pickupLat: 12.9716,
-      pickupLng: 77.5946,
+      pickupLng: 77.4695,
       minCandidatesRequired: 1,
     })
 

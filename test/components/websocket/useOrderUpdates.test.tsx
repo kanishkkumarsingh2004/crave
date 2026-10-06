@@ -131,7 +131,7 @@ describe('WebSocket Hooks - useOrderUpdates', () => {
       mockWsInstance.onmessage({
         data: JSON.stringify({
           channel: 'driver_location',
-          data: { lat: 12.9716, lng: 77.5946 },
+          data: { lat: 12.9716, lng: 77.4695 },
         }),
       })
     })

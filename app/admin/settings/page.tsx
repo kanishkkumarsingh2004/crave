@@ -18,9 +18,25 @@ import React, { useState } from 'react'
 
 export default function AdminSettingsPage() {
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<
+  const [activeTab, setActiveTabState] = useState<
     'general' | 'security' | 'notifications' | 'onboarding'
   >('general')
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSettingsTab = localStorage.getItem('crave_admin_settings_tab')
+      if (savedSettingsTab) {
+        setActiveTabState(savedSettingsTab as any)
+      }
+    }
+  }, [])
+
+  const setActiveTab = (tab: 'general' | 'security' | 'notifications' | 'onboarding') => {
+    setActiveTabState(tab)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crave_admin_settings_tab', tab)
+    }
+  }
 
   // 1. General & Operations Settings
   const [appName, setAppName] = useState('crave. Food Delivery')

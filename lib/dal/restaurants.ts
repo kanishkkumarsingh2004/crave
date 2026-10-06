@@ -117,6 +117,8 @@ export async function createRestaurant(data: {
   commission_rate?: number
   payment_model?: string
   phone?: string
+  latitude?: number
+  longitude?: number
 }) {
   try {
     return await prisma.restaurant.create({ data: data as any })

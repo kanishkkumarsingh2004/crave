@@ -71,7 +71,7 @@ describe('WebSocket Hooks - useDriverLocation', () => {
       mockWsInstance.onmessage({
         data: JSON.stringify({
           channel: 'driver_location',
-          data: { lat: 12.9716, lng: 77.5946, orderId: 'ord_1', driverName: 'Rider A' },
+          data: { lat: 12.9716, lng: 77.4695, orderId: 'ord_1', driverName: 'Rider A' },
         }),
       })
     })
@@ -89,7 +89,7 @@ describe('WebSocket Hooks - useDriverLocation', () => {
       mockWsInstance.onmessage({
         data: JSON.stringify({
           channel: 'driver_location',
-          data: { lat: 12.9716, lng: 77.5946, orderId: 'ord_2' },
+          data: { lat: 12.9716, lng: 77.4695, orderId: 'ord_2' },
         }),
       })
     })
