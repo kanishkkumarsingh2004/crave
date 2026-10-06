@@ -1,6 +1,7 @@
 'use client'
 
 import { supabase } from '@/lib/supabase'
+import { useWebSocket, playChimeSound } from '@/lib/websocket'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export interface BroadcastOrderOffer {
@@ -150,6 +151,62 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }, 1000)
     return () => clearInterval(interval)
   }, [broadcastOffer, offerTimer])
+
+  // Live WebSocket listener for instant driver offer dispatch
+  useWebSocket({
+    channels: ['order_update', 'admin_orders'],
+    onMessage: (msg) => {
+      if (!isOnline || activeTask || broadcastOffer) return
+      if (msg.channel === 'order_update' || msg.channel === 'admin_orders') {
+        const data = msg.data as any
+        const target = data.order || data
+        if (
+          target &&
+          target.id &&
+          target.status !== 'delivered' &&
+          target.status !== 'completed' &&
+          target.status !== 'cancelled' &&
+          (!target.driver_name || target.driver_name === 'Unassigned')
+        ) {
+          playChimeSound()
+          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
+          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
+          const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
+
+          let itemsArr: any[] = []
+          try {
+            itemsArr =
+              typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+          } catch (e) {}
+
+          const realOtp =
+            target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+          const calcPayout = Math.max(
+            60,
+            Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
+          )
+
+          setOfferTimer(25)
+          setBroadcastOffer({
+            id: target.id,
+            orderNumber: `#${target.id.slice(0, 8)}`,
+            restaurantName: target.restaurant_name || 'Crave Kitchen Store',
+            restaurantAddress: target.customer_address
+              ? `Kitchen near ${target.customer_address}`
+              : 'Koramangala 5th Block, Bengaluru',
+            customerName: target.customer_name || 'Customer',
+            customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
+            basePayout: calcPayout,
+            surgeBonus: 25,
+            tip: 30,
+            distance: `${distKm || 1.8} km`,
+            itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+            otp: String(realOtp),
+          })
+        }
+      }
+    },
+  })
 
   // Poll /api/orders for live orders matching driver queue
   useEffect(() => {

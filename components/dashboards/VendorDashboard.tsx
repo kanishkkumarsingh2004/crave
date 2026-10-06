@@ -2,8 +2,10 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
+import { useVendorOrderUpdates, playChimeSound } from '@/lib/websocket'
 import {
   ArrowUpRight,
+  Bell,
   ChartColumn,
   CheckCircle2,
   CookingPot,
@@ -44,6 +46,11 @@ export default function VendorDashboard() {
   const pathname = usePathname()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [liveBanner, setLiveBanner] = useState<{
+    id: string
+    customerName: string
+    totalAmount: number
+  } | null>(null)
 
   const loadLiveKitchenOrders = async () => {
     try {
@@ -115,6 +122,29 @@ export default function VendorDashboard() {
     const timer = setInterval(loadLiveKitchenOrders, 3000)
     return () => clearInterval(timer)
   }, [user?.id, user?.restaurantId, user?.restaurantName])
+
+  // Live WebSocket order update listener for instant kitchen popups
+  useVendorOrderUpdates((data) => {
+    const o = data.order || data
+    if (!o || !o.id) return
+
+    const vendorId = user?.restaurantId || user?.id
+    const isMatch =
+      !vendorId ||
+      o.restaurant_id === vendorId ||
+      o.vendor_id === vendorId ||
+      (user?.restaurantName && o.restaurant_name === user.restaurantName)
+
+    if (isMatch) {
+      playChimeSound()
+      loadLiveKitchenOrders()
+      setLiveBanner({
+        id: o.id,
+        customerName: o.customer_name || 'Customer',
+        totalAmount: Number(o.total_amount || 0),
+      })
+    }
+  })
 
   const updateOrderStatus = async (orderId: string, nextStatus: string) => {
     try {
@@ -376,6 +406,39 @@ export default function VendorDashboard() {
       )}
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
+        {/* Live Order Arrival Popup Banner */}
+        {liveBanner && (
+          <div className="rounded-3xl border-2 border-[#d9f447] bg-[#18201c] p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] animate-bounce">
+                <Bell className="size-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase text-[#18201c]">
+                    LIVE NEW ORDER
+                  </span>
+                  <span className="font-mono text-xs font-bold text-gray-400">
+                    #{liveBanner.id.slice(0, 8)}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-extrabold">
+                  Order placed by <span className="text-[#d9f447]">{liveBanner.customerName}</span>{' '}
+                  · Total: ₹{liveBanner.totalAmount}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLiveBanner(null)}
+              className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition"
+              aria-label="Dismiss banner"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
+
         {/* Welcome Kitchen Banner */}
         <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

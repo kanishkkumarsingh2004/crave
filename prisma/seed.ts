@@ -43,6 +43,7 @@ async function seed() {
 
   // ─── Seed Demo Users ─────────────────────────────────────
   const SEED_PASSWORD = '1234567890'
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
   const demoUsers = [
     {
       id: 'usr_test_user',
@@ -52,7 +53,7 @@ async function seed() {
     },
     {
       id: 'usr_test_admin',
-      name: 'Test Admin',
+      name: 'Master Admin',
       email: 'admin@crave.com',
       role: 'admin' as UserRole,
     },
@@ -78,7 +79,8 @@ async function seed() {
   ]
 
   for (const u of demoUsers) {
-    const hash = crypto.scryptSync(SEED_PASSWORD, u.email, 64).toString('hex')
+    const userPass = u.role === 'admin' ? ADMIN_PASSWORD : SEED_PASSWORD
+    const hash = crypto.scryptSync(userPass, u.email, 64).toString('hex')
     await prisma.user.create({
       data: {
         id: u.id,
@@ -90,7 +92,7 @@ async function seed() {
         ...(u.restaurant_name && { restaurant_name: u.restaurant_name }),
       },
     })
-    console.log(`  ✅ Seeded user ${u.email}`)
+    console.log(`  ✅ Seeded user ${u.email} (Role: ${u.role})`)
   }
 
   // ─── Seed Restaurant ─────────────────────────────────────
