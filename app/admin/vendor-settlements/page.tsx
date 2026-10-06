@@ -119,29 +119,36 @@ export default function VendorSettlementsPage() {
         console.error('Failed to load settlements:', err)
       }
 
-      // Default initial partner store if no orders exist yet
-      setVendors([
-        {
-          id: 'vnd_1791063436223_iyet2',
-          name: 'Spice Garden & Quick Mart',
-          ownerName: 'Priya Patel',
-          email: 'vendor@crave.com',
-          phone: '+91 98765 43212',
-          cuisine: 'North Indian & Quick Commerce',
-          address: 'Koramangala 5th Block, Bengaluru',
-          fssaiLicense: '#11223344556677',
-          bankAccount: 'HDFC •••• 9821',
-          ifscCode: 'HDFC0001234',
-          weeklyGrossSales: 0,
-          commissionRate: 15,
-          packagingCapFee: 20,
-          promoSubsidyPct: 0,
-          settlementStatus: 'pending',
-          kitchenStatus: 'open',
-          activeOrdersCount: 0,
-          completedDropsCount: 0,
-        },
-      ])
+      try {
+        const restRes = await fetch('/api/restaurants')
+        const restJson = await restRes.json()
+        if (restJson.success && Array.isArray(restJson.restaurants) && restJson.restaurants.length > 0) {
+          const loaded: VendorFinancialRecord[] = restJson.restaurants.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            ownerName: r.owner?.name || 'Verified Partner Store',
+            email: r.owner?.email || 'partner@crave.com',
+            phone: r.phone || '+91 98765 43212',
+            cuisine: r.cuisine || 'Multi-Cuisine',
+            address: r.address || 'Bengaluru, India',
+            fssaiLicense: r.fssai_license || '#11223344556677',
+            bankAccount: r.bank_account_number || 'Pending Bank Sync',
+            ifscCode: r.bank_ifsc || 'N/A',
+            weeklyGrossSales: 0,
+            commissionRate: Number(r.commission_rate || activeCfg.vendorCommission || 15),
+            packagingCapFee: activeCfg.packagingCap,
+            promoSubsidyPct: 0,
+            settlementStatus: 'pending',
+            kitchenStatus: r.is_open ? 'open' : 'closed',
+            activeOrdersCount: 0,
+            completedDropsCount: 0,
+          }))
+          setVendors(loaded)
+          return
+        }
+      } catch (e) {}
+
+      setVendors([])
     }
     loadLiveSettlements()
   }, [])

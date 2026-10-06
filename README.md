@@ -84,12 +84,12 @@ Crave features an **Uber H3 Hierarchical Hexagonal Geospatial Indexing** system 
 
 ## 📦 Docker Container Services Matrix
 
-| Service              | Container Name   | Internal Port | External Port | Command / Entrypoint     |
-| :------------------- | :--------------- | :------------ | :------------ | :----------------------- |
-| **Frontend Web App** | `crave-frontend` | `3000`        | `3000`        | `node server.js`         |
-| **WebSocket Engine** | `crave-backend`  | `8000`        | `8000`        | `node ws-server.js`      |
-| **Database Init**    | `crave-db-init`  | N/A           | N/A           | `prisma db push && seed` |
-| **PostgreSQL 16**    | `crave-postgres` | `5432`        | `5433`        | `postgres:16-alpine`     |
+| Service              | Container Name   | Internal Port | External Port | Command / Entrypoint         |
+| :------------------- | :--------------- | :------------ | :------------ | :--------------------------- |
+| **Frontend Web App** | `crave-frontend` | `3000`        | `3000`        | `node server.js`             |
+| **WebSocket Engine** | `crave-backend`  | `8000`        | `8000`        | `node ws-server.js`          |
+| **Database Init**    | `crave-db-init`  | N/A           | N/A           | `prisma generate && db push` |
+| **PostgreSQL 16**    | `crave-postgres` | `5432`        | `5433`        | `postgres:16-alpine`         |
 
 ---
 
@@ -128,12 +128,6 @@ pnpm typecheck
 # Push Prisma schema to PostgreSQL database
 pnpm db:push
 
-# Reset PostgreSQL database and re-seed fresh demo data
-pnpm db:fresh
-
-# Seed initial database records (Users, Vendors, Menu Items, Drivers)
-pnpm db:seed
-
 # Open interactive Prisma Studio GUI database browser
 pnpm db:studio
 
@@ -141,32 +135,38 @@ pnpm db:studio
 pnpm db:admin
 ```
 
-### 🐳 Docker Container & Code Sync Scripts
+### 🐳 Docker Container & Code Sync Scripts (Safe for DB Data)
 
 ```bash
-# Launch containerized production stack in background
+# Launch containerized stack in background (Keeps DB data safe)
 pnpm dc:up
 
-# Stop all running Docker services
+# Stop all running Docker services (Keeps DB data safe)
 pnpm dc:down
 
-# Restart all running Docker containers
+# Restart app containers (Frontend & Backend) without touching PostgreSQL or db-init
 pnpm dc:restart
 
-# Stop containers and wipe persistent PostgreSQL volumes
-pnpm dc:clean
+# Restart entire stack (including PostgreSQL)
+pnpm dc:restart:all
 
-# Perform clean tear-down and rebuild/re-create all containers
-pnpm dc:fresh
-
-# Force-rebuild fresh Docker images from local code and launch stack
+# Rebuild Frontend & Backend containers with fresh code without touching PostgreSQL or running db-init
 pnpm dc:rebuild
 
-# Delete old frontend image and force-rebuild Next.js app with fresh local code
+# Force-rebuild Next.js frontend container with fresh local code
 pnpm dc:rebuild:frontend
 
-# Delete old backend image and force-rebuild WebSocket server with fresh local code
+# Force-rebuild WebSocket backend container with fresh local code
 pnpm dc:rebuild:backend
+
+# Rebuild entire stack including schema sync (keeps DB data safe)
+pnpm dc:rebuild:all
+
+# DANGER: Stop containers and delete persistent PostgreSQL database volume
+pnpm dc:clean
+
+# DANGER: Wipe database volume and force-rebuild all containers from scratch
+pnpm dc:wipe-all
 
 # Stream live real-time container logs
 pnpm dc:logs
@@ -237,9 +237,8 @@ pnpm install
 # 2. Copy environment file
 cp .env.example .env
 
-# 3. Initialize database & seed demo data
+# 3. Push database schema to PostgreSQL
 pnpm db:push
-pnpm db:seed
 
 # 4. Start Next.js Web App (Terminal 1)
 pnpm dev

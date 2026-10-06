@@ -31,12 +31,7 @@ services:
     environment:
       DATABASE_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
       DIRECT_URL: postgresql://crave:crave_secret@postgres:5432/crave_db?schema=public
-    command:
-      [
-        'sh',
-        '-c',
-        'npx prisma generate && npx prisma db push --accept-data-loss && ALLOW_DEMO_SEED=true NODE_ENV=development npx tsx prisma/seed.ts',
-      ]
+    command: ['sh', '-c', 'npx prisma generate && npx prisma db push']
     restart: 'no'
 
   backend:
