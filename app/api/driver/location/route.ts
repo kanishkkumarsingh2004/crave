@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server'
 import { updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+
+    const actor = token ? await verifyToken(token) : null
+    if (!actor) {
+      return NextResponse.json({ error: 'Authentication token required' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { driverId, lat, lng, status, available, vehicleType, resolution } = body
 
@@ -12,6 +23,11 @@ export async function POST(request: Request) {
         { error: 'Missing required parameters: driverId, lat, lng' },
         { status: 400 }
       )
+    }
+
+    // Authorization check: Ensure requesting user is a rider (or admin) and matching driverId
+    if (actor.role !== 'admin' && (actor.role !== 'rider' || actor.id !== driverId)) {
+      return NextResponse.json({ error: 'Unauthorized driver location update' }, { status: 403 })
     }
 
     const result = await updateDriverLocation({
@@ -25,7 +41,7 @@ export async function POST(request: Request) {
     })
 
     // Broadcast driver location update to WebSocket clients (e.g. Admin Map Analytics)
-    broadcast('driver_location', {
+    await broadcast('driver_location', {
       driverId,
       lat,
       lng,

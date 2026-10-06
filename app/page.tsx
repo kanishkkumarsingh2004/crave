@@ -335,7 +335,9 @@ export default function HomePage() {
                       XP
                     </span>
                     <div>
-                      <h3 className="text-xs font-bold text-white leading-tight">Crave XP Console</h3>
+                      <h3 className="text-xs font-bold text-white leading-tight">
+                        Crave XP Console
+                      </h3>
                       <p className="text-[10px] text-white/60">Kanakapura Road Hub #01</p>
                     </div>
                   </div>

@@ -1,7 +1,15 @@
 import { SignJWT, jwtVerify } from 'jose'
 
 function getJwtSecretKey(): Uint8Array {
-  const secret = process.env.JWT_SECRET || 'crave_jwt_secret_key_bengaluru_2026_super_secure_auth'
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'FATAL: JWT_SECRET environment variable is missing in production environment.'
+      )
+    }
+    return new TextEncoder().encode('crave_jwt_secret_key_bengaluru_2026_super_secure_auth')
+  }
   return new TextEncoder().encode(secret)
 }
 

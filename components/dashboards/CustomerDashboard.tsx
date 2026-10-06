@@ -296,8 +296,6 @@ export default function CustomerDashboard({
       }
     }
     fetchRestaurants()
-    const interval = setInterval(fetchRestaurants, 30000)
-    return () => clearInterval(interval)
   }, [])
 
   // Fetch Live Menu Items from local DB
@@ -335,8 +333,6 @@ export default function CustomerDashboard({
     }
 
     fetchLiveMenuItems()
-    const interval = setInterval(fetchLiveMenuItems, 15000)
-    return () => clearInterval(interval)
   }, [selectedRestaurant?.id, selectedRestaurant?.name, restaurantsList])
 
   const [ordersData, setOrdersData] = useState<any[]>([])

@@ -17,6 +17,21 @@ export type UseWebSocketOptions = {
   reconnectInterval?: number
 }
 
+let localBroadcastChannel: BroadcastChannel | null = null
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    localBroadcastChannel = new BroadcastChannel('crave_live_channel')
+  } catch (e) {}
+}
+
+export function publishLiveEvent(channel: string, data: any) {
+  if (localBroadcastChannel) {
+    try {
+      localBroadcastChannel.postMessage({ channel, data, ts: Date.now() })
+    } catch (e) {}
+  }
+}
+
 export function useWebSocket({
   channels = [],
   customerId,
@@ -33,6 +48,20 @@ export function useWebSocket({
 
   useEffect(() => {
     if (!channels.length) return
+
+    // Listen to local BroadcastChannel for zero-latency client-side events
+    const handleBroadcastMessage = (event: MessageEvent) => {
+      try {
+        const msg: WSMessage = event.data
+        if (channels.includes(msg.channel)) {
+          onMessage?.(msg)
+        }
+      } catch (e) {}
+    }
+
+    if (localBroadcastChannel) {
+      localBroadcastChannel.addEventListener('message', handleBroadcastMessage)
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const wsPort = process.env.NEXT_PUBLIC_WS_PORT || 8000
@@ -92,6 +121,9 @@ export function useWebSocket({
     connect()
 
     return () => {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.removeEventListener('message', handleBroadcastMessage)
+      }
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
       if (wsRef.current) wsRef.current.close()
     }
@@ -101,6 +133,7 @@ export function useWebSocket({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type, ...data }))
     }
+    publishLiveEvent(channels[0] || 'control', data)
   }
 
   return { connected, sendMessage }
