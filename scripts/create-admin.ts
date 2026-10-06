@@ -41,6 +41,25 @@ async function createAdminCredentials() {
     await prisma.user.deleteMany()
     console.log(`✅ Database wiped clean successfully!`)
 
+    // Broadcast live WebSocket event to connected Admin Dashboards
+    try {
+      const http = require('http')
+      const payload = JSON.stringify({ channel: 'admin_stats', data: { type: 'db_wiped' }, ts: Date.now() })
+      const req = http.request(
+        {
+          hostname: process.env.WS_BROADCAST_HOST || 'localhost',
+          port: process.env.WS_BROADCAST_PORT || 8000,
+          path: '/__ws/broadcast',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+        },
+        () => {}
+      )
+      req.on('error', () => {})
+      req.write(payload)
+      req.end()
+    } catch (e) {}
+
     const created = await prisma.user.create({
       data: {
         id: userId,

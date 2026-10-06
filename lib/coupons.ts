@@ -16,43 +16,6 @@ export interface Coupon {
   restaurantIds?: string[]
 }
 
-export const DEFAULT_COUPONS: Coupon[] = [
-  {
-    id: 'c1',
-    code: 'CRAVE50',
-    description: '50% OFF up to ₹100 on orders above ₹149',
-    discountType: 'percentage',
-    discountValue: 50,
-    minOrderAmount: 149,
-    maxDiscount: 100,
-    expiryDate: '2028-12-31',
-    usedCount: 0,
-    isActive: true,
-  },
-  {
-    id: 'c2',
-    code: 'WELCOME100',
-    description: 'Flat ₹100 OFF on orders above ₹299',
-    discountType: 'flat',
-    discountValue: 100,
-    minOrderAmount: 299,
-    expiryDate: '2028-12-31',
-    usedCount: 0,
-    isActive: true,
-  },
-  {
-    id: 'c3',
-    code: 'FREEDEL',
-    description: 'Flat ₹30 OFF on orders above ₹99',
-    discountType: 'flat',
-    discountValue: 30,
-    minOrderAmount: 99,
-    expiryDate: '2028-12-31',
-    usedCount: 0,
-    isActive: true,
-  },
-]
-
 export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<Coupon[]> {
   try {
     if (typeof window !== 'undefined') {
@@ -93,7 +56,7 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
     if (restaurantId) query = query.eq('restaurant_id', restaurantId)
     const { data, error } = await query
 
-    if (error || !data || data.length === 0) return DEFAULT_COUPONS
+    if (error || !data || data.length === 0) return []
 
     return data.map((item: any) => ({
       id: item.id,
@@ -117,7 +80,7 @@ export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<C
             : [],
     }))
   } catch (err) {
-    return DEFAULT_COUPONS
+    return []
   }
 }
 

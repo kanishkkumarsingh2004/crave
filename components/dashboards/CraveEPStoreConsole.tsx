@@ -3,6 +3,7 @@
 import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
+import { useVendorOrderUpdates } from '@/lib/websocket'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -118,15 +119,38 @@ export default function CraveXPStoreConsole() {
     const loadConsoleData = async () => {
       setDashboardError('')
       try {
-        const vendorId = 'cravexp_dark_store_01'
-        setRestaurantId('cravexp_dark_store_01')
-        setRestaurantName('craveXP Instamart Warehouse #01')
-        setRestaurantAddress('Kanakapura Road Central Dark Store Warehouse, Bengaluru')
+        let vendorId = user?.restaurantId || user?.id || 'cravexp_dark_store_01'
+        let name = user?.restaurantName || 'craveXP Instamart Warehouse #01'
+        let addr = user?.address || 'Kanakapura Road Central Dark Store Warehouse, Bengaluru'
+
+        try {
+          const restRes = await fetch('/api/restaurants', { cache: 'no-store' })
+          const restJson = await restRes.json()
+          if (restJson.success && Array.isArray(restJson.restaurants)) {
+            const matched = restJson.restaurants.find(
+              (r: any) =>
+                r.owner_id === user?.id ||
+                r.id === user?.restaurantId ||
+                r.is_dark_store === true ||
+                r.name?.toLowerCase().includes('cravexp') ||
+                r.cuisine?.toLowerCase().includes('cravexp')
+            )
+            if (matched) {
+              vendorId = matched.id
+              name = matched.name
+              if (matched.address) addr = matched.address
+            }
+          }
+        } catch (e) {}
+
+        setRestaurantId(vendorId)
+        setRestaurantName(name)
+        setRestaurantAddress(addr)
         setStoreOnline(true)
 
         const [ordersResponse, inventoryResponse] = await Promise.all([
-          fetch(`/api/orders?vendorId=${vendorId}`),
-          fetch(`/api/menu-items?restaurantId=${vendorId}`),
+          fetch(`/api/orders?vendorId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
+          fetch(`/api/menu-items?restaurantId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
         ])
         if (!ordersResponse.ok || !inventoryResponse.ok) {
           throw new Error('Failed to load CraveXP data from the local database')
@@ -178,7 +202,7 @@ export default function CraveXPStoreConsole() {
             category: item.category || 'Dairy & Eggs',
             inStock: item.status !== 'OUT_OF_STOCK' && item.in_stock !== false,
             restaurantId: item.vendorId || vendorId,
-            restaurantName: restaurantName || 'craveXP Store',
+            restaurantName: name || 'craveXP Store',
             stockCount: Number(item.stockCount ?? item.stock_count ?? 50),
             skuCode: item.sku || item.sku_code || item.id,
             expiryDate: item.expiry_date ?? null,
@@ -214,12 +238,48 @@ export default function CraveXPStoreConsole() {
     }
 
     loadConsoleData()
-    const refresh = setInterval(loadConsoleData, 15000)
     return () => {
       cancelled = true
-      clearInterval(refresh)
     }
-  }, [user?.id])
+  }, [user?.id, user?.restaurantId, user?.restaurantName])
+
+  useVendorOrderUpdates(() => {
+    fetch(`/api/orders?vendorId=${encodeURIComponent(restaurantId || user?.restaurantId || user?.id || 'cravexp_dark_store_01')}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.orders)) {
+          setOrders(
+            data.orders.map((order: any) => {
+              const rawItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
+              const items = Array.isArray(rawItems)
+                ? rawItems.map((item: Record<string, unknown>) => ({
+                    name: String(item.name ?? ''),
+                    qty: Number(item.qty ?? 1),
+                    unit: String(item.unit ?? ''),
+                    packed: Boolean(item.packed),
+                    skuCode: String(item.sku_code ?? item.menu_item_id ?? ''),
+                  }))
+                : []
+              const status = order.status === 'preparing' ? 'packing' : order.status
+              return {
+                id: order.id,
+                customerName: order.customer_name,
+                phone: order.customer_phone ?? '',
+                address: order.customer_address ?? '',
+                items,
+                total: Number(order.total_amount ?? 0),
+                paymentMethod: order.payment_method ?? '',
+                time: order.created_at ? new Date(order.created_at).toLocaleString() : '',
+                status: status === 'completed' ? 'picked_up' : status,
+                pickerName: order.picker_name ?? '',
+                batchZone: order.customer_address ?? '',
+              }
+            })
+          )
+        }
+      })
+      .catch(() => {})
+  })
 
   const triggerToast = (msg: string) => {
     const isError = /could not|failed|error|unable|not found/i.test(msg)

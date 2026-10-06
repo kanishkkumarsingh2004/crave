@@ -317,7 +317,7 @@ export default function HomePage() {
               <div className="mt-8">
                 <button
                   onClick={() => handleNavigateCustomer('/user/cravexp')}
-                  className="inline-flex items-center gap-3 rounded-2xl bg-[#18201c] px-8 py-4 text-xs font-extrabold text-white shadow-xl hover:bg-[#323f37] transition hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-[#18201c] px-6 sm:px-8 py-4 text-xs font-extrabold text-white shadow-xl hover:bg-[#323f37] transition hover:scale-105 active:scale-95"
                 >
                   <ShoppingBag className="size-4 text-[#d9f447]" />
                   Enter Crave XP Instamart Store
@@ -328,51 +328,51 @@ export default function HomePage() {
 
             {/* Right Graphic Preview */}
             <div className="lg:col-span-6">
-              <div className="rounded-[36px] border-4 border-white bg-gradient-to-br from-[#121815] to-[#1a231f] p-8 text-white shadow-2xl relative overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="rounded-[28px] sm:rounded-[36px] border-4 border-white bg-gradient-to-br from-[#121815] to-[#1a231f] p-4 sm:p-7 text-white shadow-2xl relative overflow-hidden">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between border-b border-white/10 pb-4 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-xs">
+                    <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-xs shrink-0">
                       XP
                     </span>
                     <div>
-                      <h3 className="text-xs font-bold text-white">Crave XP Console</h3>
+                      <h3 className="text-xs font-bold text-white leading-tight">Crave XP Console</h3>
                       <p className="text-[10px] text-white/60">Kanakapura Road Hub #01</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-black text-[#18201c]">
+                  <span className="rounded-full bg-[#d9f447] px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-[#18201c] shrink-0">
                     15 MIN EXPRESS
                   </span>
                 </div>
 
                 {/* Items Grid Preview */}
-                <div className="mt-6 grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-white/5 p-4 border border-white/10 flex items-center gap-3">
-                    <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447]">
-                      <ShoppingBag className="size-5" />
+                <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="rounded-2xl bg-white/5 p-3.5 sm:p-4 border border-white/10 flex items-center gap-3 min-w-0">
+                    <div className="grid size-9 sm:size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447] shrink-0">
+                      <ShoppingBag className="size-4 sm:size-5" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">Organic Milk 1L</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate">Organic Milk 1L</p>
                       <p className="text-[10px] text-[#d9f447] font-bold">In Stock · ₹68</p>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-white/5 p-4 border border-white/10 flex items-center gap-3">
-                    <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447]">
-                      <Zap className="size-5" />
+                  <div className="rounded-2xl bg-white/5 p-3.5 sm:p-4 border border-white/10 flex items-center gap-3 min-w-0">
+                    <div className="grid size-9 sm:size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447] shrink-0">
+                      <Zap className="size-4 sm:size-5" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">Cold Brew Coffee</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate">Cold Brew Coffee</p>
                       <p className="text-[10px] text-[#d9f447] font-bold">In Stock · ₹120</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Live Status Widget */}
-                <div className="mt-6 rounded-2xl bg-[#d9f447] p-4 text-[#18201c] flex items-center justify-between font-bold text-xs shadow-lg">
-                  <span className="flex items-center gap-2">
-                    <Truck className="size-4" /> Express Rider Assigned
+                <div className="mt-4 sm:mt-6 rounded-2xl bg-[#d9f447] p-3.5 sm:p-4 text-[#18201c] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 font-bold text-xs shadow-lg">
+                  <span className="flex items-center gap-2 text-xs">
+                    <Truck className="size-4 shrink-0" /> Express Rider Assigned
                   </span>
-                  <span className="rounded-lg bg-[#18201c] text-[#d9f447] px-2.5 py-1 text-[10px] font-mono">
+                  <span className="rounded-lg bg-[#18201c] text-[#d9f447] px-2.5 py-1 text-[10px] font-mono shrink-0">
                     12 MIN ETA
                   </span>
                 </div>

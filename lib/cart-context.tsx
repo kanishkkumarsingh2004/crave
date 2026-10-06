@@ -19,6 +19,7 @@ interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => void
   removeItem: (id: string) => void
+  updateItemQty: (id: string, delta: number) => void
   clearCart: () => void
   setItems: React.Dispatch<React.SetStateAction<CartItem[]>>
   totalCount: number
@@ -73,13 +74,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
+  const updateItemQty = (id: string, delta: number) => {
+    setItems((prev) =>
+      prev
+        .map((i) => {
+          if (i.id === id) {
+            const newQty = i.qty + delta
+            return newQty > 0 ? { ...i, qty: newQty } : null
+          }
+          return i
+        })
+        .filter(Boolean) as CartItem[]
+    )
+  }
+
   const clearCart = () => setItems([])
 
   const totalCount = items.reduce((sum, item) => sum + item.qty, 0)
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, clearCart, setItems, totalCount, isLoaded }}
+      value={{ items, addItem, removeItem, updateItemQty, clearCart, setItems, totalCount, isLoaded }}
     >
       {children}
     </CartContext.Provider>

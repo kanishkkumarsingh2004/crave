@@ -24,13 +24,13 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const res = await fetch('/api/admin/stats')
+        const res = await fetch('/api/admin/stats', { cache: 'no-store' })
         const json = await res.json()
         if (json.success) {
           setLiveUserCount(json.stats.totalUsers ?? 0)
           setLiveGrossRevenue(json.stats.weeklyRevenue ?? 0)
           setLiveCompletedOrders(json.stats.orderCount ?? 0)
-          if (json.restaurants) {
+          if (json.restaurants && json.restaurants.length > 0) {
             setTopVendors(
               json.restaurants.slice(0, 4).map((restaurant: any, index: number) => ({
                 name: restaurant.name ?? `Restaurant ${index + 1}`,
@@ -40,6 +40,8 @@ export default function AdminAnalyticsPage() {
                 model: restaurant.payment_model === 'markup' ? 'Price Markup' : 'Commission',
               }))
             )
+          } else {
+            setTopVendors([])
           }
         }
       } catch (error) {
@@ -50,8 +52,6 @@ export default function AdminAnalyticsPage() {
     }
 
     loadAnalytics()
-    const interval = setInterval(loadAnalytics, 30000)
-    return () => clearInterval(interval)
   }, [])
 
   const aov = liveCompletedOrders > 0 ? liveGrossRevenue / liveCompletedOrders : 0
