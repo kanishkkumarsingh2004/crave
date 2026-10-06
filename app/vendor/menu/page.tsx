@@ -3,14 +3,7 @@
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import {
-  Edit,
-  Plus,
-  Search,
-  Trash2,
-  Utensils,
-  X,
-} from 'lucide-react'
+import { Edit, Plus, Search, Trash2, Utensils, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 

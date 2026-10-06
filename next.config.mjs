@@ -6,7 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  allowedDevOrigins: ['*', '[2409:40f2:100a:d763:e938:6d7e:cc90:3ddd]'],
+  allowedDevOrigins: ['*'],
   serverExternalPackages: ['@prisma/adapter-pg', 'pg', 'pg-connection-string', 'pgpass'],
   env: {
     NEXT_PUBLIC_WS_PORT: process.env.WS_PORT || '8000',

@@ -25,7 +25,7 @@
     "db:admin": "tsx scripts/create-admin.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "db:admin:docker": "DATABASE_URL=postgresql://crave:crave_secret@localhost:5433/crave_db?schema=public tsx scripts/create-admin.ts",
+    "db:admin:docker": "tsx scripts/create-admin.ts",
     "test:coverage": "jest --coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -38,7 +38,7 @@
     "dc:rebuild:backend": "docker compose stop backend && docker rmi -f crave-food-delivery-backend 2>/dev/null || true && docker compose up --build -d backend",
     "dc:rebuild:all": "docker compose down && docker compose up --build --force-recreate -d",
     "dc:clean": "docker compose down -v",
-    "dc:wipe-all": "docker compose down -v && docker rmi -f crave-food-delivery-frontend crave-food-delivery-backend crave-food-delivery-db-init 2>/dev/null || true",
+    "dc:wipe-all": "docker compose down -v --remove-orphans && docker rmi -f crave-food-delivery-frontend crave-food-delivery-backend 2>/dev/null || true",
     "dc:logs": "docker compose logs -f",
     "dc:ps": "docker compose ps"
   },

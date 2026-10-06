@@ -10,17 +10,21 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  Briefcase,
+  Building,
   Check,
   CheckCircle2,
   ChevronRight,
   Copy,
-  CreditCard,
+  ExternalLink,
+  Home,
   MapPin,
   Minus,
   Plus,
   QrCode,
   ShoppingBag,
   ShoppingCart,
+  Smartphone,
   Sparkles,
   Tag,
   Trash2,
@@ -62,16 +66,58 @@ export default function CartPage() {
     user?.address || 'Kanakapura Road, Central Hub, Bengaluru'
   )
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '+91 98765 43210')
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cod' | 'card'>('upi')
+  const [paymentMethod, setPaymentMethod] = useState<'upi'>('upi')
   const [utrRef, setUtrRef] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
 
+  // Saved Addresses State
+  interface SavedAddress {
+    id: string
+    label: string
+    address: string
+    is_default: boolean
+  }
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [showAddressModal, setShowAddressModal] = useState(false)
+  const [newAddressLabel, setNewAddressLabel] = useState('Home')
+  const [newAddressText, setNewAddressText] = useState('')
+  const [isSavingAddress, setIsSavingAddress] = useState(false)
+
   // Sync user defaults when profile finishes loading
   useEffect(() => {
     if (user?.address) setDeliveryAddress(user.address)
     if (user?.phone) setCustomerPhone(user.phone)
+  }, [user])
+
+  // Fetch Saved Addresses
+  useEffect(() => {
+    async function loadUserAddresses() {
+      if (!user) return
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
+        const res = await fetch('/api/user/addresses', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (res.ok) {
+          const json = await res.json()
+          if (Array.isArray(json.addresses) && json.addresses.length > 0) {
+            setSavedAddresses(json.addresses)
+            const def = json.addresses.find((a: SavedAddress) => a.is_default) || json.addresses[0]
+            if (def) {
+              setSelectedAddressId(def.id)
+              setDeliveryAddress(def.address)
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch addresses:', e)
+      }
+    }
+
+    loadUserAddresses()
   }, [user])
 
   // Fetch payment config & coupons
@@ -120,7 +166,7 @@ export default function CartPage() {
   const activeConfig = paymentConfig || getLocalPaymentConfig()
 
   const roadDistanceKm = useMemo(() => {
-    return calculateRoadTravelDistanceKm(12.9716, 77.4695, 12.6417, 77.4366)
+    return calculateRoadTravelDistanceKm(12.9716, 77.5946, 12.965, 77.59)
   }, [])
 
   const pricingBreakdown = useMemo(() => {
@@ -181,6 +227,47 @@ export default function CartPage() {
     toast('Coupon removed', 'info')
   }
 
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newAddressText.trim()) {
+      toast('Please enter address details', 'error')
+      return
+    }
+
+    setIsSavingAddress(true)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
+      const res = await fetch('/api/user/addresses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          label: newAddressLabel,
+          address: newAddressText.trim(),
+          is_default: savedAddresses.length === 0,
+        }),
+      })
+
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to save address')
+      }
+
+      setSavedAddresses((prev) => [json.address, ...prev])
+      setSelectedAddressId(json.address.id)
+      setDeliveryAddress(json.address.address)
+      setNewAddressText('')
+      toast(`Address "${json.address.label}" saved & selected!`, 'success')
+      setShowAddressModal(false)
+    } catch (err: any) {
+      toast(err?.message || 'Could not save address', 'error')
+    } finally {
+      setIsSavingAddress(false)
+    }
+  }
+
   const handleCopyUpi = () => {
     const upi = activeConfig.upiVpa || 'crave@upi'
     navigator.clipboard?.writeText(upi)
@@ -202,11 +289,8 @@ export default function CartPage() {
       return
     }
 
-    if (paymentMethod === 'upi' && !utrRef.trim()) {
-      toast(
-        'Please enter your 12-digit UPI UTR reference number to complete payment verification',
-        'error'
-      )
+    if (utrRef.trim().length < 10) {
+      toast('Please enter a valid UPI UTR reference number (minimum 10 digits)', 'error')
       return
     }
 
@@ -217,7 +301,11 @@ export default function CartPage() {
         customer_name: user.name || 'Customer',
         customer_phone: customerPhone,
         customer_address: deliveryAddress,
-        restaurant_id: cart[0]?.restaurantId || cart[0]?.vendorId || '',
+        restaurant_id:
+          cart[0]?.restaurantId ||
+          cart[0]?.vendorId ||
+          (cart[0] as any)?.restaurant_id ||
+          undefined,
         restaurant_name: cart[0]?.restaurantName || 'Crave Partner Kitchen',
         items: cart.map((i) => ({
           id: i.id,
@@ -229,12 +317,7 @@ export default function CartPage() {
         packaging_fee: packagingFee,
         gst: 0,
         total_amount: grandTotal,
-        payment_method:
-          paymentMethod === 'upi'
-            ? 'UPI Online'
-            : paymentMethod === 'cod'
-              ? 'Cash on Delivery'
-              : 'Card',
+        payment_method: 'UPI Online',
         customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
         utr_ref: utrRef || undefined,
         coupon_code: appliedCoupon?.code || undefined,
@@ -427,22 +510,42 @@ export default function CartPage() {
 
                   {/* Delivery Location & Address Section */}
                   <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xs">
-                    <h2 className="text-sm sm:text-base font-bold text-[#18201c] mb-3 flex items-center gap-2">
-                      <MapPin className="size-4 text-[#849e16]" /> Delivery Address &amp; Contact
-                    </h2>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] flex items-center gap-2">
+                        <MapPin className="size-4 text-[#849e16]" /> Delivery Address &amp; Contact
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddressModal(true)}
+                        className="text-xs font-extrabold text-[#849e16] hover:text-[#5d7010] flex items-center gap-1 transition"
+                      >
+                        <MapPin className="size-3.5" />
+                        {savedAddresses.length > 0
+                          ? `Change Address (${savedAddresses.length})`
+                          : 'Manage Saved Addresses'}
+                      </button>
+                    </div>
 
                     <div className="space-y-3">
                       <div>
                         <label className="text-[11px] font-bold text-[#55635a] uppercase tracking-wider block mb-1">
                           Delivery Doorstep Address
                         </label>
-                        <input
-                          type="text"
-                          value={deliveryAddress}
-                          onChange={(e) => setDeliveryAddress(e.target.value)}
-                          placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
-                          className="w-full rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
+                            className="w-full rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden pr-20"
+                          />
+                          {selectedAddressId && (
+                            <span className="absolute right-3 top-2.5 bg-[#849e16] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                              {savedAddresses.find((a) => a.id === selectedAddressId)?.label ||
+                                'Saved'}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div>
@@ -720,58 +823,87 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  {/* Payment Method Selector */}
+                  {/* UPI Apps Redirect & Direct Payment Card */}
                   <div className="mt-6 pt-4 border-t border-[#f0f3eb]">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#55635a] block mb-2">
-                      Choose Payment Method
-                    </label>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:p-4 text-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-emerald-200/80 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="grid size-9 place-items-center rounded-xl bg-emerald-600 text-white font-bold shadow-xs">
+                            <QrCode className="size-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-[#18201c] text-xs sm:text-sm">
+                              UPI Instant Payment
+                            </h3>
+                            <p className="text-[11px] text-emerald-800 font-medium">
+                              Pay ₹{grandTotal} using installed UPI app
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-mono font-black text-emerald-900 bg-white border border-emerald-300 px-2.5 py-1 rounded-xl text-xs sm:text-sm shadow-2xs">
+                          ₹{grandTotal}
+                        </span>
+                      </div>
 
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('upi')}
-                        className={`rounded-2xl p-2.5 sm:p-3 text-center border text-[11px] sm:text-xs font-bold transition flex flex-col items-center gap-1 sm:gap-1.5 ${
-                          paymentMethod === 'upi'
-                            ? 'bg-[#18201c] text-white border-[#18201c] shadow-md'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        <QrCode className="size-4 text-[#d9f447]" />
-                        <span>UPI Online</span>
-                      </button>
+                      {/* Direct UPI App Deep-Link Action Buttons */}
+                      <div>
+                        <label className="font-bold text-[#18201c] flex items-center gap-1.5 mb-2 text-[11px] uppercase tracking-wider">
+                          <Smartphone className="size-3.5 text-emerald-700" /> Redirect &amp; Pay
+                          via Installed UPI Apps:
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <a
+                            href={`tez://upi/pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-blue-500 hover:bg-blue-50/50 transition group text-center shadow-2xs"
+                          >
+                            <span className="font-black text-xs text-blue-600 group-hover:scale-105 transition">
+                              GPay
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                              Google Pay
+                            </span>
+                          </a>
 
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('cod')}
-                        className={`rounded-2xl p-2.5 sm:p-3 text-center border text-[11px] sm:text-xs font-bold transition flex flex-col items-center gap-1 sm:gap-1.5 ${
-                          paymentMethod === 'cod'
-                            ? 'bg-[#18201c] text-white border-[#18201c] shadow-md'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        <ShoppingBag className="size-4 text-[#d9f447]" />
-                        <span>Cash (COD)</span>
-                      </button>
+                          <a
+                            href={`phonepe://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-purple-500 hover:bg-purple-50/50 transition group text-center shadow-2xs"
+                          >
+                            <span className="font-black text-xs text-purple-700 group-hover:scale-105 transition">
+                              PhonePe
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                              PhonePe App
+                            </span>
+                          </a>
 
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('card')}
-                        className={`rounded-2xl p-2.5 sm:p-3 text-center border text-[11px] sm:text-xs font-bold transition flex flex-col items-center gap-1 sm:gap-1.5 ${
-                          paymentMethod === 'card'
-                            ? 'bg-[#18201c] text-white border-[#18201c] shadow-md'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        <CreditCard className="size-4 text-[#d9f447]" />
-                        <span>Cards / Net</span>
-                      </button>
-                    </div>
-                  </div>
+                          <a
+                            href={`paytmmp://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-cyan-500 hover:bg-cyan-50/50 transition group text-center shadow-2xs"
+                          >
+                            <span className="font-black text-xs text-cyan-600 group-hover:scale-105 transition">
+                              Paytm
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                              Paytm Wallet
+                            </span>
+                          </a>
 
-                  {/* UPI QR & UTR Box */}
-                  {paymentMethod === 'upi' && (
-                    <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:p-4 text-xs space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          <a
+                            href={`upi://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
+                            className="flex flex-col items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-100/70 p-2.5 hover:bg-emerald-200/80 transition group text-center shadow-2xs"
+                          >
+                            <span className="font-black text-xs text-emerald-900 group-hover:scale-105 transition flex items-center gap-1">
+                              Any UPI App <ExternalLink className="size-3" />
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                              BHIM / App Chooser
+                            </span>
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Direct Company VPA Copy Box */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-emerald-200/60">
                         <span className="font-extrabold text-[#18201c]">Direct Company VPA:</span>
                         <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-white border border-emerald-300 rounded-xl px-2.5 py-1">
                           <span className="font-mono font-bold text-emerald-900 text-xs sm:text-sm">
@@ -793,6 +925,7 @@ export default function CartPage() {
                         </div>
                       </div>
 
+                      {/* 12-Digit UTR Reference Input */}
                       <div>
                         <label className="font-bold text-[#18201c] block mb-1">
                           12-Digit UTR Reference Number <span className="text-rose-600">*</span>
@@ -803,20 +936,31 @@ export default function CartPage() {
                           placeholder="e.g. 123456789012"
                           value={utrRef}
                           onChange={(e) =>
-                            setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 12))
+                            setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
                           }
                           className="w-full rounded-xl border border-emerald-300 bg-white px-3 py-2.5 text-xs font-mono font-bold text-[#18201c] focus:outline-hidden"
                         />
+                        {utrRef.trim().length < 10 ? (
+                          <p className="text-[10px] text-amber-700 font-semibold mt-1">
+                            Enter minimum 10 digits to enable order confirmation (
+                            {utrRef.trim().length}/10)
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="size-3 text-emerald-600" /> Valid UTR Reference
+                            length ({utrRef.trim().length} digits)
+                          </p>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Submit Order Button */}
                   <form onSubmit={handlePlaceOrder} className="mt-6">
                     <button
                       type="submit"
-                      disabled={isSubmittingOrder}
-                      className="w-full rounded-2xl bg-[#18201c] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white shadow-xl hover:bg-[#323d36] transition flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
+                      disabled={isSubmittingOrder || utrRef.trim().length < 10}
+                      className="w-full rounded-2xl bg-[#18201c] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white shadow-xl hover:bg-[#323d36] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 active:scale-[0.98]"
                     >
                       {isSubmittingOrder ? (
                         <>
@@ -973,6 +1117,179 @@ export default function CartPage() {
                 className="rounded-xl bg-[#f4f7ed] px-4 py-1.5 font-extrabold text-[#18201c] hover:bg-[#e2e7d8] transition"
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Address Selection Modal */}
+      {showAddressModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setShowAddressModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl border border-[#dfe4dc] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] text-[#849e16]">
+                  <MapPin className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-[#18201c]">
+                    Saved Delivery Addresses
+                  </h3>
+                  <p className="text-xs text-[#55635a] font-medium">
+                    Select a saved doorstep address or add a new one
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddressModal(false)}
+                className="grid size-9 place-items-center rounded-full bg-[#f4f7ed] text-[#55635a] hover:bg-[#e8ede0] hover:text-[#18201c] transition"
+                aria-label="Close modal"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Content List */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {/* Saved Addresses List */}
+              {savedAddresses.length > 0 && (
+                <div className="space-y-2.5">
+                  <p className="text-[11px] font-bold text-[#737e77] uppercase tracking-wider">
+                    Your Saved Locations ({savedAddresses.length})
+                  </p>
+                  <div className="grid gap-2.5">
+                    {savedAddresses.map((addr) => {
+                      const isSelected = deliveryAddress === addr.address
+                      return (
+                        <div
+                          key={addr.id}
+                          onClick={() => {
+                            setSelectedAddressId(addr.id)
+                            setDeliveryAddress(addr.address)
+                            toast(`Selected address: ${addr.label}`, 'success')
+                            setShowAddressModal(false)
+                          }}
+                          className={`rounded-2xl border p-3.5 sm:p-4 cursor-pointer transition flex items-start justify-between gap-3 ${
+                            isSelected
+                              ? 'border-[#849e16] bg-[#f7faec] ring-2 ring-[#849e16]/30 shadow-xs'
+                              : 'border-[#dfe4dc] bg-white hover:bg-[#fcfdfe]'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="grid size-8 place-items-center rounded-xl bg-[#f4f7ed] text-[#849e16] shrink-0 font-bold mt-0.5">
+                              {addr.label === 'Home' ? (
+                                <Home className="size-4" />
+                              ) : addr.label === 'Work' ? (
+                                <Briefcase className="size-4" />
+                              ) : (
+                                <Building className="size-4" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-xs text-[#18201c]">
+                                  {addr.label}
+                                </span>
+                                {addr.is_default && (
+                                  <span className="bg-[#18201c] text-[#d9f447] text-[9px] px-2 py-0.2 rounded-full font-mono font-bold">
+                                    DEFAULT
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-[#55635a] font-medium mt-1 leading-snug">
+                                {addr.address}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-black shrink-0 transition ${
+                              isSelected
+                                ? 'bg-[#849e16] text-white'
+                                : 'bg-[#18201c] text-white hover:bg-[#323d36]'
+                            }`}
+                          >
+                            {isSelected ? 'SELECTED' : 'DELIVER HERE'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Address Form */}
+              <div className="rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] p-4 space-y-3 mt-4">
+                <p className="text-xs font-black text-[#18201c] flex items-center gap-1.5">
+                  <Plus className="size-4 text-[#849e16]" /> Add a New Delivery Address
+                </p>
+
+                <form onSubmit={handleSaveNewAddress} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-[#55635a] uppercase block mb-1">
+                      Address Label
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {['Home', 'Work', 'Other'].map((lbl) => (
+                        <button
+                          key={lbl}
+                          type="button"
+                          onClick={() => setNewAddressLabel(lbl)}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
+                            newAddressLabel === lbl
+                              ? 'bg-[#18201c] text-white border-[#18201c]'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-[#55635a] uppercase block mb-1">
+                      Doorstep Address Details
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={newAddressText}
+                      onChange={(e) => setNewAddressText(e.target.value)}
+                      placeholder="House/Flat No, Building, Road / Landmark, Area, Bengaluru"
+                      className="w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-2 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingAddress}
+                    className="w-full rounded-xl bg-[#849e16] py-2.5 text-xs font-extrabold text-white hover:bg-[#728812] transition shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isSavingAddress ? 'Saving Address...' : 'Save & Deliver Here'}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-[#f0f3eb] flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowAddressModal(false)}
+                className="rounded-xl bg-[#f4f7ed] px-4 py-1.5 text-xs font-extrabold text-[#18201c] hover:bg-[#e2e7d8] transition"
+              >
+                Close
               </button>
             </div>
           </div>

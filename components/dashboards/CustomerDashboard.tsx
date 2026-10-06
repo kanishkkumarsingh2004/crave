@@ -90,6 +90,8 @@ interface MenuItem {
   image: string
   veg: boolean
   restaurantName?: string
+  restaurantId?: string
+  vendorId?: string
 }
 
 interface CartItem extends MenuItem {
@@ -258,6 +260,8 @@ export default function CustomerDashboard({
           image: item.image,
           veg: item.veg,
           restaurantName: item.restaurantName,
+          restaurantId: item.restaurantId,
+          vendorId: item.vendorId,
         }))
       )
     }
@@ -324,6 +328,8 @@ export default function CustomerDashboard({
             image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
             veg: Boolean(item.is_veg ?? true),
             restaurantName: selectedRestaurant?.name || 'Partner Kitchen',
+            restaurantId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
+            vendorId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
           }))
           setMenuItemsList(parsed)
         } else {
@@ -759,6 +765,7 @@ export default function CustomerDashboard({
   // Cart Handlers
   function addToCart(item: MenuItem) {
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
+    const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id
     if (cart.length > 0) {
       const currentRest = cart[0].restaurantName || selectedRestaurant?.name || 'Kitchen Store'
       if (
@@ -781,7 +788,16 @@ export default function CustomerDashboard({
       if (existing) {
         return prev.map((i) => (i.id === item.id ? { ...i, qty: i.qty + 1 } : i))
       }
-      return [...prev, { ...item, qty: 1, restaurantName: itemRest }]
+      return [
+        ...prev,
+        {
+          ...item,
+          qty: 1,
+          restaurantName: itemRest,
+          restaurantId: itemRestId,
+          vendorId: itemRestId,
+        },
+      ]
     })
     triggerToast(`🛒 Added ${item.name} to cart!`)
   }
@@ -846,11 +862,11 @@ export default function CustomerDashboard({
 
   // Dynamic Road Distance & Admin Payment Config Pricing Engine
   const activeRestaurantLat =
-    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.68
+    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.9716
   const activeRestaurantLng =
-    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.4695
-  const activeDestLat = selectedMapPin?.lat ?? 12.6417
-  const activeDestLng = selectedMapPin?.lng ?? 77.4366
+    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.5946
+  const activeDestLat = selectedMapPin?.lat ?? 12.965
+  const activeDestLng = selectedMapPin?.lng ?? 77.59
 
   const calculatedRoadDistanceKm = useMemo(() => {
     return calculateRoadTravelDistanceKm(
@@ -2423,7 +2439,7 @@ export default function CustomerDashboard({
                   <input
                     type="text"
                     required
-                    maxLength={12}
+                    maxLength={25}
                     placeholder="Enter the bank UTR reference"
                     value={utrRef}
                     onChange={(e) => {
@@ -2435,9 +2451,15 @@ export default function CustomerDashboard({
                   {utrError && (
                     <p className="mt-1 text-[11px] font-bold text-rose-600">{utrError}</p>
                   )}
-                  {utrRef.length > 0 && utrRef.length < 12 && (
-                    <p className="mt-1 text-[11px] font-bold text-gray-500">
-                      Enter at least 12 digits to continue ({utrRef.length}/12)
+                  {utrRef.length > 0 && utrRef.length < 10 && (
+                    <p className="mt-1 text-[11px] font-bold text-amber-700">
+                      Enter at least 10 digits to enable confirmation ({utrRef.length}/10)
+                    </p>
+                  )}
+                  {utrRef.length >= 10 && (
+                    <p className="mt-1 text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="size-3" /> Valid UTR Reference length (
+                      {utrRef.length} digits)
                     </p>
                   )}
                 </div>
@@ -2445,9 +2467,9 @@ export default function CustomerDashboard({
                 <button
                   type="submit"
                   disabled={
-                    !checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 12
+                    !checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 10
                   }
-                  className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-400"
                 >
                   Submit Order &amp; Start Verification (₹{grandTotal})
                 </button>

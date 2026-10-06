@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
+import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 
 function handleNumInput(val: string): number | '' {
   if (val === '') return ''
@@ -55,7 +56,7 @@ export default function AdminPaymentConfigPage() {
   const [driverPayoutShare, setDriverPayoutShare] = useState<number>(80) // 80% to driver
 
   // 4. Surge Pricing & Weather Settings
-  const [surgeMultiplier, setSurgeMultiplier] = useState<number>(1.25) // 1.25x
+  const [surgeMultiplier, setSurgeMultiplier] = useState<number>(1.0) // 1.0x (Normal)
   const [rainFee, setRainFee] = useState<number | ''>(20) // ₹20
   const [nightSurgeFee, setNightSurgeFee] = useState<number | ''>(15) // ₹15
   const [isRainModeActive, setIsRainModeActive] = useState<boolean>(false)
@@ -103,63 +104,58 @@ export default function AdminPaymentConfigPage() {
 
   // Live Playground Fee Calculation Math
   const playgroundCalc = useMemo(() => {
-    const baseFee = getNum(baseDeliveryFee)
-    const baseDist = getNum(baseDistanceKm)
-    const perKm = getNum(perKmRate)
-    const freeThresh = getNum(freeDeliveryThreshold)
-    const ordVal = getNum(testOrderValue)
-    const distKm = getNum(testDistanceKm)
-    const pFee = getNum(platformFee)
-    const hFee = getNum(handlingFee)
-    const vComm = getNum(vendorCommission)
-    const rFee = getNum(rainFee)
-    const nFee = getNum(nightSurgeFee)
-
-    // Delivery fee math (distance-based fare for the trip)
-    let rawDelivery = baseFee
-    if (distKm > baseDist) {
-      rawDelivery += (distKm - baseDist) * perKm
+    const activeCfg: PaymentConfig = {
+      upiVpa,
+      merchantName,
+      thankYouMessage,
+      mccCode,
+      ifscCode,
+      accountNumber,
+      platformFee: getNum(platformFee),
+      handlingFee: getNum(handlingFee),
+      vendorCommission: getNum(vendorCommission),
+      packagingCap: getNum(packagingCap),
+      baseDeliveryFee: getNum(baseDeliveryFee),
+      baseDistanceKm: getNum(baseDistanceKm),
+      perKmRate: getNum(perKmRate),
+      freeDeliveryThreshold: getNum(freeDeliveryThreshold),
+      driverPayoutShare,
+      surgeMultiplier,
+      rainFee: getNum(rainFee),
+      nightSurgeFee: getNum(nightSurgeFee),
+      isRainModeActive,
+      isNightSurgeActive,
+      enableCashOnDelivery,
+      enableUpiDeepLink,
+      requireUtrNumber,
     }
 
-    // Apply Free Delivery check for customer
-    const isFreeDelivery = ordVal >= freeThresh && freeThresh > 0
-    let finalDeliveryFee = isFreeDelivery ? 0 : rawDelivery
+    const calc = calculateCheckoutPricing({
+      cartSubtotal: testOrderValue,
+      roadDistanceKm: testDistanceKm,
+      config: activeCfg,
+    })
 
-    // Surge calculations based on actual trip distance fare
-    let surgeAddon = 0
-    if (surgeMultiplier > 1.0) {
-      surgeAddon += rawDelivery * (surgeMultiplier - 1.0)
-    }
-    if (isRainModeActive) {
-      surgeAddon += rFee
-    }
-    if (isNightSurgeActive) {
-      surgeAddon += nFee
-    }
-
-    // Trip Delivery Fare for driver payout (driver always receives share of full trip fare)
+    const rawDelivery = calc.baseDeliveryFee + calc.extraKmFee
+    const surgeAddon = calc.surgeFee + calc.rainFee + calc.nightSurgeFee
     const tripDeliveryFare = rawDelivery + surgeAddon
     const driverPayout = Math.round(tripDeliveryFare * (driverPayoutShare / 100))
 
-    // Total delivery charges paid by customer
-    const totalDeliveryCharges = Math.round((finalDeliveryFee + surgeAddon) * 100) / 100
-
-    // Customer Grand Total (includes Subtotal + Delivery + Platform Fee + Handling Charges)
-    const customerTotal = Math.round((ordVal + totalDeliveryCharges + pFee + hFee) * 100) / 100
-
-    // Breakdown Split
+    const ordVal = testOrderValue
+    const vComm = getNum(vendorCommission)
     const vendorCommissionAmount = (ordVal * vComm) / 100
     const vendorPayout = ordVal - vendorCommissionAmount
-    const platformNetProfit = Math.round((customerTotal - vendorPayout - driverPayout) * 100) / 100
+    const platformNetProfit =
+      Math.round((calc.grandTotal - vendorPayout - driverPayout) * 100) / 100
 
     return {
       rawDelivery,
-      isFreeDelivery,
-      finalDeliveryFee,
+      isFreeDelivery: calc.isFreeDelivery,
+      finalDeliveryFee: calc.deliveryFee,
       surgeAddon,
-      totalDeliveryCharges,
-      handlingFee: hFee,
-      customerTotal,
+      totalDeliveryCharges: calc.deliveryFee,
+      handlingFee: calc.handlingFee,
+      customerTotal: calc.grandTotal,
       vendorCommissionAmount,
       vendorPayout,
       driverPayout,
@@ -168,19 +164,29 @@ export default function AdminPaymentConfigPage() {
   }, [
     testOrderValue,
     testDistanceKm,
+    upiVpa,
+    merchantName,
+    thankYouMessage,
+    mccCode,
+    ifscCode,
+    accountNumber,
+    platformFee,
+    handlingFee,
+    vendorCommission,
+    packagingCap,
     baseDeliveryFee,
     baseDistanceKm,
     perKmRate,
     freeDeliveryThreshold,
-    surgeMultiplier,
-    isRainModeActive,
-    rainFee,
-    isNightSurgeActive,
-    nightSurgeFee,
-    platformFee,
-    handlingFee,
-    vendorCommission,
     driverPayoutShare,
+    surgeMultiplier,
+    rainFee,
+    nightSurgeFee,
+    isRainModeActive,
+    isNightSurgeActive,
+    enableCashOnDelivery,
+    enableUpiDeepLink,
+    requireUtrNumber,
   ])
 
   async function handleSaveConfig(e: React.FormEvent) {
@@ -627,10 +633,10 @@ export default function AdminPaymentConfigPage() {
               {testDistanceKm > getNum(baseDistanceKm) && (
                 <div className="flex justify-between text-white/70">
                   <span>
-                    Extra Distance ({(testDistanceKm - getNum(baseDistanceKm)).toFixed(1)}km @ ₹
+                    Extra Distance ({Math.ceil(testDistanceKm - getNum(baseDistanceKm))}km @ ₹
                     {getNum(perKmRate)}/km)
                   </span>
-                  <span>+₹{(testDistanceKm - getNum(baseDistanceKm)) * getNum(perKmRate)}</span>
+                  <span>+₹{playgroundCalc.rawDelivery - getNum(baseDeliveryFee)}</span>
                 </div>
               )}
 

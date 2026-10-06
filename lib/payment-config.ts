@@ -41,7 +41,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   perKmRate: 10,
   freeDeliveryThreshold: 500,
   driverPayoutShare: 80,
-  surgeMultiplier: 1.25,
+  surgeMultiplier: 1.0,
   rainFee: 20,
   nightSurgeFee: 15,
   isRainModeActive: false,

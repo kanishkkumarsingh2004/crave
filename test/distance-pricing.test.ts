@@ -7,8 +7,8 @@ import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
 
 describe('Distance & Pricing Calculation Engine', () => {
   test('calculateHaversineDistanceKm computes accurate geographic distance', () => {
-    // Bengaluru (12.9716, 77.4695) to Electronic City (12.8399, 77.6770) ~17-18 km
-    const dist = calculateHaversineDistanceKm(12.9716, 77.4695, 12.8399, 77.677)
+    // Bengaluru Central (12.9716, 77.5946) to Electronic City (12.8399, 77.6770) ~17-18 km
+    const dist = calculateHaversineDistanceKm(12.9716, 77.5946, 12.8399, 77.677)
     expect(dist).toBeGreaterThan(14)
     expect(dist).toBeLessThan(20)
   })

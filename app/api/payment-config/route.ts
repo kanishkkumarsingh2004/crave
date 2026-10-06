@@ -44,7 +44,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   perKmRate: 10,
   freeDeliveryThreshold: 500,
   driverPayoutShare: 80,
-  surgeMultiplier: 1.25,
+  surgeMultiplier: 1.0,
   rainFee: 20,
   nightSurgeFee: 15,
   isRainModeActive: false,
@@ -79,20 +79,83 @@ export async function GET(_request?: Request) {
         upiVpa: dbConfig.merchant_vpa || local?.upiVpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
         merchantName:
           dbConfig.merchant_name || local?.merchantName || DEFAULT_PAYMENT_CONFIG.merchantName,
+        thankYouMessage:
+          dbConfig.thank_you_message ||
+          local?.thankYouMessage ||
+          DEFAULT_PAYMENT_CONFIG.thankYouMessage,
         mccCode:
           dbConfig.merchant_category_code || local?.mccCode || DEFAULT_PAYMENT_CONFIG.mccCode,
-        baseDeliveryFee:
-          dbConfig.delivery_fee != null
-            ? Number(dbConfig.delivery_fee)
-            : (local?.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee),
+        ifscCode: dbConfig.ifsc_code || local?.ifscCode || DEFAULT_PAYMENT_CONFIG.ifscCode,
+        accountNumber:
+          dbConfig.account_number || local?.accountNumber || DEFAULT_PAYMENT_CONFIG.accountNumber,
+        platformFee:
+          dbConfig.platform_fee != null
+            ? Number(dbConfig.platform_fee)
+            : (local?.platformFee ?? DEFAULT_PAYMENT_CONFIG.platformFee),
         handlingFee:
           dbConfig.handling_fee != null
             ? Number(dbConfig.handling_fee)
             : (local?.handlingFee ?? DEFAULT_PAYMENT_CONFIG.handlingFee),
+        vendorCommission:
+          dbConfig.vendor_commission != null
+            ? Number(dbConfig.vendor_commission)
+            : (local?.vendorCommission ?? DEFAULT_PAYMENT_CONFIG.vendorCommission),
+        packagingCap:
+          dbConfig.packaging_cap != null
+            ? Number(dbConfig.packaging_cap)
+            : (local?.packagingCap ?? DEFAULT_PAYMENT_CONFIG.packagingCap),
+        baseDeliveryFee:
+          dbConfig.delivery_fee != null
+            ? Number(dbConfig.delivery_fee)
+            : (local?.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee),
+        baseDistanceKm:
+          dbConfig.base_distance_km != null
+            ? Number(dbConfig.base_distance_km)
+            : (local?.baseDistanceKm ?? DEFAULT_PAYMENT_CONFIG.baseDistanceKm),
+        perKmRate:
+          dbConfig.per_km_rate != null
+            ? Number(dbConfig.per_km_rate)
+            : (local?.perKmRate ?? DEFAULT_PAYMENT_CONFIG.perKmRate),
         freeDeliveryThreshold:
           dbConfig.free_delivery_threshold != null
             ? Number(dbConfig.free_delivery_threshold)
             : (local?.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold),
+        driverPayoutShare:
+          dbConfig.driver_payout_share != null
+            ? Number(dbConfig.driver_payout_share)
+            : (local?.driverPayoutShare ?? DEFAULT_PAYMENT_CONFIG.driverPayoutShare),
+        surgeMultiplier:
+          dbConfig.surge_multiplier != null
+            ? Number(dbConfig.surge_multiplier)
+            : (local?.surgeMultiplier ?? DEFAULT_PAYMENT_CONFIG.surgeMultiplier),
+        rainFee:
+          dbConfig.rain_fee != null
+            ? Number(dbConfig.rain_fee)
+            : (local?.rainFee ?? DEFAULT_PAYMENT_CONFIG.rainFee),
+        nightSurgeFee:
+          dbConfig.night_surge_fee != null
+            ? Number(dbConfig.night_surge_fee)
+            : (local?.nightSurgeFee ?? DEFAULT_PAYMENT_CONFIG.nightSurgeFee),
+        isRainModeActive:
+          dbConfig.is_rain_mode_active != null
+            ? Boolean(dbConfig.is_rain_mode_active)
+            : (local?.isRainModeActive ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive),
+        isNightSurgeActive:
+          dbConfig.is_night_surge_active != null
+            ? Boolean(dbConfig.is_night_surge_active)
+            : (local?.isNightSurgeActive ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive),
+        enableCashOnDelivery:
+          dbConfig.enable_cash_on_delivery != null
+            ? Boolean(dbConfig.enable_cash_on_delivery)
+            : (local?.enableCashOnDelivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery),
+        enableUpiDeepLink:
+          dbConfig.enable_upi_deep_link != null
+            ? Boolean(dbConfig.enable_upi_deep_link)
+            : (local?.enableUpiDeepLink ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink),
+        requireUtrNumber:
+          dbConfig.require_utr_number != null
+            ? Boolean(dbConfig.require_utr_number)
+            : (local?.requireUtrNumber ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber),
       }),
     }
 
@@ -119,9 +182,26 @@ export async function POST(request: Request) {
         merchant_vpa: fullConfig.upiVpa,
         merchant_name: fullConfig.merchantName,
         merchant_category_code: fullConfig.mccCode,
-        delivery_fee: fullConfig.baseDeliveryFee,
+        thank_you_message: fullConfig.thankYouMessage,
+        ifsc_code: fullConfig.ifscCode,
+        account_number: fullConfig.accountNumber,
+        platform_fee: fullConfig.platformFee,
         handling_fee: fullConfig.handlingFee,
+        vendor_commission: fullConfig.vendorCommission,
+        packaging_cap: fullConfig.packagingCap,
+        delivery_fee: fullConfig.baseDeliveryFee,
+        base_distance_km: fullConfig.baseDistanceKm,
+        per_km_rate: fullConfig.perKmRate,
         free_delivery_threshold: fullConfig.freeDeliveryThreshold,
+        driver_payout_share: fullConfig.driverPayoutShare,
+        surge_multiplier: fullConfig.surgeMultiplier,
+        rain_fee: fullConfig.rainFee,
+        night_surge_fee: fullConfig.nightSurgeFee,
+        is_rain_mode_active: fullConfig.isRainModeActive,
+        is_night_surge_active: fullConfig.isNightSurgeActive,
+        enable_cash_on_delivery: fullConfig.enableCashOnDelivery,
+        enable_upi_deep_link: fullConfig.enableUpiDeepLink,
+        require_utr_number: fullConfig.requireUtrNumber,
         is_active: true,
       })
     } catch (e) {
