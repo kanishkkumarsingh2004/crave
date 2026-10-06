@@ -471,7 +471,7 @@ export default function CustomerDashboard({
             address: user.address,
             tag: 'Primary',
             lat: 12.9716,
-            lng: 77.5946,
+            lng: 77.4695,
           },
         ])
         setDeliveryAddress((prev) => prev || user.address || '')
@@ -846,9 +846,9 @@ export default function CustomerDashboard({
 
   // Dynamic Road Distance & Admin Payment Config Pricing Engine
   const activeRestaurantLat =
-    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.9716
+    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.68
   const activeRestaurantLng =
-    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.5946
+    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.4695
   const activeDestLat = selectedMapPin?.lat ?? 12.6417
   const activeDestLng = selectedMapPin?.lng ?? 77.4366
 

@@ -171,7 +171,7 @@ describe('Orders PATCH - Order Status Flow', () => {
       {
         orderId: 'ord_1',
         driver_lat: 12.9716,
-        driver_lng: 77.5946,
+        driver_lng: 77.4695,
         driver_name: 'Rider A',
         driver_phone: '+919999999999',
       },
@@ -185,7 +185,7 @@ describe('Orders PATCH - Order Status Flow', () => {
       'ord_1',
       expect.objectContaining({
         delivery_latitude: 12.9716,
-        delivery_longitude: 77.5946,
+        delivery_longitude: 77.4695,
         driver_name: 'Rider A',
       })
     )
@@ -193,7 +193,7 @@ describe('Orders PATCH - Order Status Flow', () => {
       'driver_location',
       expect.objectContaining({
         lat: 12.9716,
-        lng: 77.5946,
+        lng: 77.4695,
         driverName: 'Rider A',
       })
     )

@@ -22,7 +22,7 @@ export default function LiveDriverMap({
   restaurantLng = 77.6245,
   restaurantName = 'Crave Kitchen Store',
   customerLat = 12.9716,
-  customerLng = 77.5946,
+  customerLng = 77.4695,
   customerAddress = 'HSR Layout, Bengaluru',
   driverLat = null,
   driverLng = null,

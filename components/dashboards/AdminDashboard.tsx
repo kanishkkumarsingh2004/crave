@@ -24,6 +24,9 @@ import {
 import { useLanguage } from '@/lib/language-context'
 import { useAdminStatsUpdates } from '@/lib/websocket'
 import { FormEvent, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
+
+const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { ssr: false })
 
 interface AccountRecord {
   id: string
@@ -42,6 +45,8 @@ interface AccountRecord {
   vendorType?: 'Restaurant Vendor' | 'XP Store'
   totalSpent?: number
   totalOrders?: number
+  latitude?: number
+  longitude?: number
 }
 
 interface PaymentReference {
@@ -80,17 +85,50 @@ interface VendorStore {
   commissionRate?: number
   commissionType?: string
   bannerUrl?: string
+  latitude?: number
+  longitude?: number
 }
 
 export default function AdminDashboard() {
   const { user } = useAuth()
   const { t } = useLanguage()
-  const [activeTab, setActiveTab] = useState<
+  const [activeTab, setActiveTabState] = useState<
     'overview' | 'analytics' | 'users' | 'menu-pricing' | 'payments' | 'system' | 'settings'
   >('users')
 
   // Sub-tabs in User Management
-  const [userTab, setUserTab] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>('vendors')
+  const [userTab, setUserTabState] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>(
+    'vendors'
+  )
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedActive = localStorage.getItem('crave_admin_active_tab')
+      if (savedActive) {
+        setActiveTabState(savedActive as any)
+      }
+      const savedUserTab = localStorage.getItem('crave_admin_user_tab')
+      if (savedUserTab) {
+        setUserTabState(savedUserTab as any)
+      }
+    }
+  }, [])
+
+  const setActiveTab = (
+    tab: 'overview' | 'analytics' | 'users' | 'menu-pricing' | 'payments' | 'system' | 'settings'
+  ) => {
+    setActiveTabState(tab)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crave_admin_active_tab', tab)
+    }
+  }
+
+  const setUserTab = (tab: 'vendors' | 'customers' | 'drivers' | 'admins') => {
+    setUserTabState(tab)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crave_admin_user_tab', tab)
+    }
+  }
   const [searchQuery, setSearchQuery] = useState('')
   const { toast } = useToast()
 
@@ -115,6 +153,41 @@ export default function AdminDashboard() {
     commissionRate: 15,
     paymentModel: 'commission' as 'commission' | 'markup',
     bannerUrl: '',
+    latitude: 12.9716,
+    longitude: 77.4695,
+  })
+
+  // Driver Onboarding Modal State
+  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false)
+  const [driverSubmitting, setDriverSubmitting] = useState(false)
+  const [newDriverForm, setNewDriverForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    vehicleType: 'Electric Scooter',
+    licensePlate: '',
+    address: '',
+  })
+
+  // Edit Account Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editingAccount, setEditingAccount] = useState<AccountRecord | null>(null)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    storeName: '',
+    cuisine: '',
+    commissionRate: 15,
+    paymentModel: 'commission' as 'commission' | 'markup',
+    vehicleType: 'Electric Scooter',
+    licensePlate: '',
+    latitude: 12.9716,
+    longitude: 77.4695,
   })
 
   // Admin Menu & Price Alteration Drawer / Modal State
@@ -178,6 +251,8 @@ export default function AdminDashboard() {
             commissionRate: r.commission_rate ?? 15,
             commissionType: r.payment_model || 'COMMISSION',
             bannerUrl: r.image,
+            latitude: r.latitude ? Number(r.latitude) : undefined,
+            longitude: r.longitude ? Number(r.longitude) : undefined,
           }))
         : []
 
@@ -214,7 +289,7 @@ export default function AdminDashboard() {
               u.role === 'restaurant_vendor' || u.role === 'vendor'
                 ? matchedVendor?.storeName || u.restaurant_name || 'Kitchen Vendor'
                 : u.role === 'rider' || u.role === 'driver'
-                  ? u.vehicle_type || 'Delivery Agent'
+                  ? `${u.vehicle_type || 'Electric Scooter'}${u.license_plate ? ` · ${u.license_plate}` : ''}`
                   : u.role === 'admin'
                     ? 'System Super Admin'
                     : u.role === 'cravexp_store_vendor'
@@ -232,6 +307,16 @@ export default function AdminDashboard() {
             vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
             totalSpent: Number(u.total_spent || 0),
             totalOrders: Number(u.total_orders || 0),
+            latitude: u.latitude
+              ? Number(u.latitude)
+              : matchedVendor?.latitude
+                ? Number(matchedVendor.latitude)
+                : undefined,
+            longitude: u.longitude
+              ? Number(u.longitude)
+              : matchedVendor?.longitude
+                ? Number(matchedVendor.longitude)
+                : undefined,
           })
         })
       }
@@ -262,6 +347,8 @@ export default function AdminDashboard() {
               vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
               totalSpent: 0,
               totalOrders: 0,
+              latitude: v.latitude ? Number(v.latitude) : undefined,
+              longitude: v.longitude ? Number(v.longitude) : undefined,
             })
           }
         })
@@ -346,6 +433,8 @@ export default function AdminDashboard() {
           commissionRate: newVendorForm.commissionRate,
           paymentModel: newVendorForm.paymentModel,
           bannerUrl: newVendorForm.bannerUrl,
+          latitude: newVendorForm.latitude,
+          longitude: newVendorForm.longitude,
         }),
       })
 
@@ -372,6 +461,8 @@ export default function AdminDashboard() {
         commissionRate: 15,
         paymentModel: 'commission',
         bannerUrl: '',
+        latitude: 12.9716,
+        longitude: 77.4695,
       })
 
       fetchAccountsAndVendors()
@@ -380,6 +471,141 @@ export default function AdminDashboard() {
       triggerToast(err.message || 'Could not onboard vendor. Try again.')
     } finally {
       setVendorSubmitting(false)
+    }
+  }
+
+  // Admin Driver Onboarding Handler
+  async function handleOnboardDriver(e: FormEvent) {
+    e.preventDefault()
+    if (!newDriverForm.name || !newDriverForm.email || !newDriverForm.password) {
+      triggerToast('Please fill in all required driver onboarding fields.')
+      return
+    }
+
+    setDriverSubmitting(true)
+
+    try {
+      const res = await fetch('/api/admin/create-driver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newDriverForm.name,
+          email: newDriverForm.email,
+          password: newDriverForm.password,
+          phone: newDriverForm.phone,
+          vehicle_type: newDriverForm.vehicleType,
+          license_plate: newDriverForm.licensePlate,
+          address: newDriverForm.address,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Driver creation failed')
+      }
+
+      triggerToast(`⚡ Driver '${newDriverForm.name}' successfully onboarded!`)
+      setIsAddDriverOpen(false)
+
+      setNewDriverForm({
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        vehicleType: 'Electric Scooter',
+        licensePlate: '',
+        address: '',
+      })
+
+      fetchAccountsAndVendors()
+    } catch (err: any) {
+      console.error('Driver onboarding error:', err)
+      triggerToast(err.message || 'Could not onboard driver. Try again.')
+    } finally {
+      setDriverSubmitting(false)
+    }
+  }
+
+  // Open Edit Modal for Account (Vendor, Customer, Driver, Admin)
+  function openEditModal(acc: AccountRecord) {
+    setEditingAccount(acc)
+    setEditForm({
+      name: acc.name || '',
+      email: acc.email || '',
+      phone: acc.phone || '',
+      address: acc.address || '',
+      password: '',
+      storeName: acc.restaurantName || acc.detail || '',
+      cuisine: acc.cuisine || '',
+      commissionRate: acc.commissionRate ?? 15,
+      paymentModel: acc.paymentModel || 'commission',
+      vehicleType:
+        acc.role === 'driver' || acc.role === 'rider'
+          ? acc.detail?.split('·')[0]?.trim() || 'Electric Scooter'
+          : 'Electric Scooter',
+      licensePlate:
+        acc.role === 'driver' || acc.role === 'rider'
+          ? acc.detail?.split('·')[1]?.trim() || ''
+          : '',
+      latitude: acc.latitude ?? 12.9716,
+      longitude: acc.longitude ?? 77.4695,
+    })
+    setIsEditModalOpen(true)
+  }
+
+  // Submit Save Edit Handler
+  async function handleSaveEdit(e: FormEvent) {
+    e.preventDefault()
+    if (!editingAccount) return
+
+    setEditSubmitting(true)
+    try {
+      const res = await fetch('/api/admin/edit-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingAccount.id,
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          address: editForm.address,
+          ...(editForm.password && { password: editForm.password }),
+          ...(editingAccount.role === 'vendor' ||
+          editingAccount.role === 'restaurant_vendor' ||
+          editingAccount.role === 'cravexp_store_vendor'
+            ? {
+                storeName: editForm.storeName,
+                cuisine: editForm.cuisine,
+                commissionRate: editForm.commissionRate,
+                paymentModel: editForm.paymentModel,
+                latitude: editForm.latitude,
+                longitude: editForm.longitude,
+              }
+            : {}),
+          ...(editingAccount.role === 'driver' || editingAccount.role === 'rider'
+            ? {
+                vehicleType: editForm.vehicleType,
+                licensePlate: editForm.licensePlate,
+              }
+            : {}),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to update account')
+      }
+
+      triggerToast(`✏️ Account for '${editForm.name || editingAccount.name}' successfully updated!`)
+      setIsEditModalOpen(false)
+      setEditingAccount(null)
+      fetchAccountsAndVendors()
+    } catch (err: any) {
+      console.error('Account edit error:', err)
+      triggerToast(err.message || 'Could not update account.')
+    } finally {
+      setEditSubmitting(false)
     }
   }
 
@@ -814,6 +1040,13 @@ export default function AdminDashboard() {
                               </button>
                             )}
                             <button
+                              onClick={() => openEditModal(account)}
+                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                              title="Edit Vendor Details"
+                            >
+                              <Edit3 className="size-3.5 text-blue-600" /> Edit
+                            </button>
+                            <button
                               onClick={() => toggleAccountStatus(account.id, account.status)}
                               className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${
                                 account.status === 'active'
@@ -959,16 +1192,25 @@ export default function AdminDashboard() {
                       </td>
 
                       <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => toggleAccountStatus(account.id, account.status)}
-                          className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
-                            account.status === 'active'
-                              ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                          }`}
-                        >
-                          {account.status === 'active' ? 'Suspend' : 'Activate'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(account)}
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                            title="Edit Customer Details"
+                          >
+                            <Edit3 className="size-3.5 text-blue-600" /> Edit
+                          </button>
+                          <button
+                            onClick={() => toggleAccountStatus(account.id, account.status)}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
+                              account.status === 'active'
+                                ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {account.status === 'active' ? 'Suspend' : 'Activate'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -981,50 +1223,124 @@ export default function AdminDashboard() {
 
       {/* SUB-TAB 3: DRIVERS */}
       {activeTab === 'users' && userTab === 'drivers' && (
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
-          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
-            <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
-              <tr>
-                <th className="px-4 py-3.5">Driver Name</th>
-                <th className="px-4 py-3.5">Contact Email &amp; Phone</th>
-                <th className="px-4 py-3.5">Vehicle Details</th>
-                <th className="px-4 py-3.5">Status</th>
-                <th className="px-4 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {driverAccounts.length === 0 ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-[#18201c]">Registered Delivery Partners</h3>
+              <p className="text-[11px] text-gray-500">
+                Admin onboarding. View fleet accounts, vehicle details, license numbers, and active
+                status.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsAddDriverOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black transition cursor-pointer"
+            >
+              <Plus className="size-3.5 text-[#d9f447]" /> + Add Driver
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+            <table className="w-full text-left text-xs border-collapse min-w-[850px]">
+              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
-                    No driver accounts found in Supabase users table.
-                  </td>
+                  <th className="px-4 py-3.5">Driver Name</th>
+                  <th className="px-4 py-3.5">Contact Email &amp; Phone</th>
+                  <th className="px-4 py-3.5">Vehicle &amp; License Details</th>
+                  <th className="px-4 py-3.5">Status</th>
+                  <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
-              ) : (
-                driverAccounts.map((driver) => (
-                  <tr key={driver.id} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-4 py-3.5 font-bold text-[#18201c]">{driver.name}</td>
-                    <td className="px-4 py-3.5 text-gray-600">
-                      {driver.email} · {driver.phone || 'Phone N/A'}
-                    </td>
-                    <td className="px-4 py-3.5 text-gray-600 font-semibold">{driver.detail}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                        Active Partner
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => toggleAccountStatus(driver.id, driver.status)}
-                        className="rounded-xl border border-gray-200 px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:bg-gray-50"
-                      >
-                        Toggle Status
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {driverAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
+                      No driver accounts found in Supabase users table. Click &apos;+ Add
+                      Driver&apos; to onboard one.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  driverAccounts.map((driver) => (
+                    <tr key={driver.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                        <div className="flex items-center gap-2.5">
+                          <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 text-cyan-800 font-bold shrink-0">
+                            <Zap className="size-4" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-[#18201c]">{driver.name}</p>
+                            <p className="text-[11px] text-gray-500 font-normal">
+                              Joined: {driver.joinedDate}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-600">
+                        <p className="font-semibold">{driver.email}</p>
+                        <p className="text-[11px] text-gray-500">{driver.phone || 'Phone N/A'}</p>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-600 font-semibold">
+                        <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium border border-gray-200">
+                          {driver.detail}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            driver.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          <span
+                            className={`size-1.5 rounded-full ${
+                              driver.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'
+                            }`}
+                          />
+                          {driver.status === 'active' ? 'Active Partner' : driver.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(driver)}
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                            title="Edit Driver Details"
+                          >
+                            <Edit3 className="size-3.5 text-blue-600" /> Edit
+                          </button>
+                          <button
+                            onClick={() => toggleAccountStatus(driver.id, driver.status)}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
+                              driver.status === 'active'
+                                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {driver.status === 'active' ? 'Suspend' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() =>
+                              setDeleteConfirmVendor({
+                                id: driver.id,
+                                name: driver.name,
+                                email: driver.email,
+                              })
+                            }
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition flex items-center gap-1"
+                            title="Delete Driver Account"
+                          >
+                            <Trash2 className="size-3.5" /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -1038,12 +1354,13 @@ export default function AdminDashboard() {
                 <th className="px-4 py-3.5">Email</th>
                 <th className="px-4 py-3.5">Role Privileges</th>
                 <th className="px-4 py-3.5">Status</th>
+                <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {adminAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-xs text-gray-500">
+                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
                     No admin records found in Supabase users table.
                   </td>
                 </tr>
@@ -1057,6 +1374,15 @@ export default function AdminDashboard() {
                       <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-900">
                         Active Admin
                       </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openEditModal(adm)}
+                        className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                        title="Edit Admin Details"
+                      >
+                        <Edit3 className="size-3.5 text-blue-600" /> Edit
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -1139,6 +1465,406 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* EDIT ACCOUNT MODAL (ADMIN CONTROL) */}
+      {isEditModalOpen && editingAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">
+                  Account Management &amp; Editing
+                </span>
+                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                  Edit{' '}
+                  {editingAccount.role === 'vendor' ||
+                  editingAccount.role === 'restaurant_vendor' ||
+                  editingAccount.role === 'cravexp_store_vendor'
+                    ? 'Store & Vendor'
+                    : editingAccount.role === 'rider' || editingAccount.role === 'driver'
+                      ? 'Driver Partner'
+                      : editingAccount.role === 'admin'
+                        ? 'Admin'
+                        : 'Customer'}{' '}
+                  Details
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false)
+                  setEditingAccount(null)
+                }}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Full Name / Owner Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="+91 98765 43210"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Vendor Specific Fields */}
+              {(editingAccount.role === 'vendor' ||
+                editingAccount.role === 'restaurant_vendor' ||
+                editingAccount.role === 'cravexp_store_vendor') && (
+                <div className="rounded-xl bg-amber-50/70 p-4 border border-amber-200 space-y-3">
+                  <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
+                    <Store className="size-4 text-amber-700" /> Store &amp; Commission Parameters
+                  </p>
+
+                  <div>
+                    <label className="font-bold text-gray-700">Store Name</label>
+                    <input
+                      type="text"
+                      value={editForm.storeName}
+                      onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="font-bold text-gray-700">Cuisine / Category</label>
+                      <input
+                        type="text"
+                        value={editForm.cuisine}
+                        onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
+                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-gray-700">Commission Rate (%)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={50}
+                        value={editForm.commissionRate}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Driver Specific Fields */}
+              {(editingAccount.role === 'rider' || editingAccount.role === 'driver') && (
+                <div className="rounded-xl bg-cyan-50/70 p-4 border border-cyan-200 space-y-3">
+                  <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
+                    <Zap className="size-4 text-cyan-700" /> Driver Vehicle &amp; Fleet Details
+                  </p>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="font-bold text-gray-700">Vehicle Type</label>
+                      <select
+                        value={editForm.vehicleType}
+                        onChange={(e) => setEditForm({ ...editForm, vehicleType: e.target.value })}
+                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                      >
+                        <option value="Electric Scooter">Electric Scooter (EV)</option>
+                        <option value="Electric Bike">Electric Bike (EV)</option>
+                        <option value="Motorcycle">Motorcycle / Petrol Bike</option>
+                        <option value="Bicycle">Bicycle</option>
+                        <option value="Car">Delivery Car / Van</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-gray-700">License Plate Number</label>
+                      <input
+                        type="text"
+                        placeholder="KA-05-EV-1234"
+                        value={editForm.licensePlate}
+                        onChange={(e) => setEditForm({ ...editForm, licensePlate: e.target.value })}
+                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-mono outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold text-[#18201c]">Address / Location</label>
+                <input
+                  type="text"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Store Location Map Picker (For Vendor accounts) */}
+              {(editingAccount.role === 'vendor' ||
+                editingAccount.role === 'restaurant_vendor' ||
+                editingAccount.role === 'cravexp_store_vendor') && (
+                <div className="rounded-2xl border border-gray-200 p-3 bg-gray-50/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
+                      <span>Store Location Pin</span>
+                    </h4>
+                    <span className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                      {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    Click or drag the map pin to adjust the store's exact coordinates.
+                  </p>
+                  <div className="overflow-hidden rounded-xl border border-gray-200">
+                    <LocationPickerMap
+                      initialLat={editForm.latitude}
+                      initialLng={editForm.longitude}
+                      onLocationSelect={(lat, lng, address) => {
+                        setEditForm((prev) => ({
+                          ...prev,
+                          latitude: lat,
+                          longitude: lng,
+                          ...(address ? { address } : {}),
+                        }))
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold text-[#18201c]">
+                  Reset Account Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Leave blank to keep unchanged"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false)
+                    setEditingAccount(null)
+                  }}
+                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="rounded-xl bg-blue-600 px-6 py-2 font-bold text-white shadow-md hover:bg-blue-700 transition flex items-center gap-2"
+                >
+                  {editSubmitting ? (
+                    <>
+                      <span className="size-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4 text-white" /> Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN DRIVER ONBOARDING MODAL */}
+      {isAddDriverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                  Fleet &amp; Logistics Management
+                </span>
+                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">Add New Delivery Driver</h3>
+              </div>
+              <button
+                onClick={() => setIsAddDriverOpen(false)}
+                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleOnboardDriver} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Driver Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Kumar"
+                  value={newDriverForm.name}
+                  onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                />
+              </div>
+
+              {/* Login Credentials Section */}
+              <div className="rounded-xl bg-amber-50/60 p-4 border border-amber-200 space-y-3">
+                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="size-4 text-amber-700" /> Driver Account Login Credentials
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="font-bold text-gray-700">Driver Email *</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="driver@crave.com"
+                      value={newDriverForm.email}
+                      onChange={(e) =>
+                        setNewDriverForm({ ...newDriverForm, email: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700">Initial Password *</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={newDriverForm.password}
+                      onChange={(e) =>
+                        setNewDriverForm({ ...newDriverForm, password: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="+91 98765 43210"
+                    value={newDriverForm.phone}
+                    onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Vehicle Type</label>
+                  <select
+                    value={newDriverForm.vehicleType}
+                    onChange={(e) =>
+                      setNewDriverForm({ ...newDriverForm, vehicleType: e.target.value })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                  >
+                    <option value="Electric Scooter">Electric Scooter (EV)</option>
+                    <option value="Electric Bike">Electric Bike (EV)</option>
+                    <option value="Motorcycle">Motorcycle / Petrol Bike</option>
+                    <option value="Bicycle">Bicycle</option>
+                    <option value="Car">Delivery Car / Van</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c]">Vehicle License Plate Number</label>
+                  <input
+                    type="text"
+                    placeholder="KA-05-EV-1234"
+                    value={newDriverForm.licensePlate}
+                    onChange={(e) =>
+                      setNewDriverForm({ ...newDriverForm, licensePlate: e.target.value })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-mono outline-none focus:border-[#86a018]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">Operating Hub / Address</label>
+                  <input
+                    type="text"
+                    placeholder="Indiranagar Hub, Bengaluru"
+                    value={newDriverForm.address}
+                    onChange={(e) =>
+                      setNewDriverForm({ ...newDriverForm, address: e.target.value })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddDriverOpen(false)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={driverSubmitting}
+                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black transition flex items-center gap-2"
+                >
+                  {driverSubmitting ? (
+                    <>
+                      <span className="size-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Onboarding Driver...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4 text-[#d9f447]" /> Onboard Driver
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* VENDOR ONBOARDING MODAL (ADMIN ONLY) */}
       {isAddVendorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1149,7 +1875,7 @@ export default function AdminDashboard() {
                   Admin Exclusive Flow
                 </span>
                 <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
-                  Onboard New Restaurant / XP Store Vendor
+                  Onboard New Restaurant Vendor
                 </h3>
                 <p className="text-xs text-gray-500">
                   Register vendor credentials, store profile, cuisine, and commission model in
@@ -1187,13 +1913,12 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({
                         ...newVendorForm,
-                        vendorType: e.target.value as 'Restaurant Vendor' | 'XP Store',
+                        vendorType: e.target.value as 'Restaurant Vendor',
                       })
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
                   >
                     <option value="Restaurant Vendor">Restaurant Vendor (Food &amp; Dining)</option>
-                    <option value="XP Store">XP Store (craveXP 10-Min Dark Store)</option>
                   </select>
                 </div>
               </div>
@@ -1301,6 +2026,36 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewVendorForm({ ...newVendorForm, address: e.target.value })}
                   className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
                 />
+              </div>
+
+              {/* Store Location Map Picker */}
+              <div className="rounded-2xl border border-gray-200 p-3 bg-gray-50/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
+                    <span>Store Location Pin</span>
+                  </h4>
+                  <span className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                    {newVendorForm.latitude.toFixed(4)}°, {newVendorForm.longitude.toFixed(4)}°
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Click or drag the map pin to mark the exact store coordinates for delivery
+                  calculation.
+                </p>
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <LocationPickerMap
+                    initialLat={newVendorForm.latitude}
+                    initialLng={newVendorForm.longitude}
+                    onLocationSelect={(lat, lng, address) => {
+                      setNewVendorForm((prev) => ({
+                        ...prev,
+                        latitude: lat,
+                        longitude: lng,
+                        ...(address ? { address } : {}),
+                      }))
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">

@@ -122,7 +122,11 @@ export default function VendorSettlementsPage() {
       try {
         const restRes = await fetch('/api/restaurants')
         const restJson = await restRes.json()
-        if (restJson.success && Array.isArray(restJson.restaurants) && restJson.restaurants.length > 0) {
+        if (
+          restJson.success &&
+          Array.isArray(restJson.restaurants) &&
+          restJson.restaurants.length > 0
+        ) {
           const loaded: VendorFinancialRecord[] = restJson.restaurants.map((r: any) => ({
             id: r.id,
             name: r.name,

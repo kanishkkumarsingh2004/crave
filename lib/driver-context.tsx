@@ -119,7 +119,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   // Real Mobile GPS
   const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>([
-    12.9716, 77.5946,
+    12.9716, 77.4695,
   ])
   const [gpsStatus, setGpsStatus] = useState<
     'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
@@ -169,8 +169,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           (!target.driver_name || target.driver_name === 'Unassigned')
         ) {
           playChimeSound()
-          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
-          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
+          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.68
+          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.4695
           const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
 
           let itemsArr: any[] = []
@@ -229,8 +229,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
           if (availableOrders.length > 0) {
             const target = availableOrders[availableOrders.length - 1]
-            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.9716
-            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.5946
+            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.68
+            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.4695
 
             const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
 

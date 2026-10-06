@@ -120,7 +120,7 @@ export default function CartPage() {
   const activeConfig = paymentConfig || getLocalPaymentConfig()
 
   const roadDistanceKm = useMemo(() => {
-    return calculateRoadTravelDistanceKm(12.9716, 77.5946, 12.6417, 77.4366)
+    return calculateRoadTravelDistanceKm(12.9716, 77.4695, 12.6417, 77.4366)
   }, [])
 
   const pricingBreakdown = useMemo(() => {

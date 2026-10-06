@@ -23,7 +23,7 @@ describe('Addresses DAL', () => {
         address: '123 Main St, Tech City',
         is_default: true,
         latitude: '12.9716',
-        longitude: '77.5946',
+        longitude: '77.4695',
         created_at: new Date(),
       },
     ])
@@ -37,7 +37,7 @@ describe('Addresses DAL', () => {
       address: '123 Main St, Tech City',
       is_default: true,
       latitude: 12.9716,
-      longitude: 77.5946,
+      longitude: 77.4695,
       created_at: expect.any(Date),
     })
     expect(mockPrisma.customerAddress.findMany).toHaveBeenCalledWith({

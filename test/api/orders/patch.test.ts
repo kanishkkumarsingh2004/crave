@@ -148,7 +148,7 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
     const req = makeRequest({
       orderId: 'ord_1',
       driver_lat: 12.9716,
-      driver_lng: 77.5946,
+      driver_lng: 77.4695,
       driver_name: 'Rider A',
     })
 
@@ -160,7 +160,7 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
       expect.objectContaining({
         orderId: 'ord_1',
         lat: 12.9716,
-        lng: 77.5946,
+        lng: 77.4695,
         driverName: 'Rider A',
       })
     )
@@ -180,7 +180,7 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
     const req = makeRequest({
       orderId: 'ord_1',
       driver_lat: 12.9716,
-      driver_lng: 77.5946,
+      driver_lng: 77.4695,
     })
 
     const response = await PATCH(req)
