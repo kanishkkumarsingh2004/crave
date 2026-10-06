@@ -87,8 +87,6 @@ export default function AdminPaymentsPage() {
 
   useEffect(() => {
     loadPayments()
-    const timer = setInterval(loadPayments, 5000)
-    return () => clearInterval(timer)
   }, [])
 
   async function updatePayment(orderId: string, newStatus: 'verified' | 'rejected') {

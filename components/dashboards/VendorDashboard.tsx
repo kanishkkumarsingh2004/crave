@@ -119,8 +119,6 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     loadLiveKitchenOrders()
-    const timer = setInterval(loadLiveKitchenOrders, 3000)
-    return () => clearInterval(timer)
   }, [user?.id, user?.restaurantId, user?.restaurantName])
 
   // Live WebSocket order update listener for instant kitchen popups

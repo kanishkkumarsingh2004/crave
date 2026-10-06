@@ -1,12 +1,10 @@
 'use client'
 
 import CraveLogo from '@/components/CraveLogo'
-import { useAuth } from '@/lib/auth-context'
+import { useCart } from '@/lib/cart-context'
 import {
   Apple,
   ArrowRight,
-  CheckCircle2,
-  Clock,
   Coffee,
   Cookie,
   Layers,
@@ -19,7 +17,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
-  Sparkles,
   Wheat,
   Zap,
 } from 'lucide-react'
@@ -48,16 +45,12 @@ const CATEGORY_ITEMS = [
 ]
 
 export default function CraveXPStore() {
-  const { user } = useAuth()
+  const { items: globalCartItems, addItem, updateItemQty: updateGlobalQty, totalCount: cartTotalItems } = useCart()
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('All Items')
   const [searchQuery, setSearchQuery] = useState('')
-  const [cart, setCart] = useState<{ item: CraveXPGroceryItem; qty: number }[]>([])
-  const [showCartDrawer, setShowCartDrawer] = useState(false)
-  const [orderPlaced, setOrderPlaced] = useState(false)
   const [groceryItems, setGroceryItems] = useState<CraveXPGroceryItem[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(true)
-  const [orderError, setOrderError] = useState('')
 
   useEffect(() => {
     ensureCraveXPDarkStore()
@@ -86,84 +79,32 @@ export default function CraveXPStore() {
     })
   }, [groceryItems, selectedCategory, searchQuery])
 
-  const cartTotalItems = useMemo(() => cart.reduce((sum, c) => sum + c.qty, 0), [cart])
-  const cartSubtotal = useMemo(() => cart.reduce((sum, c) => sum + c.item.price * c.qty, 0), [cart])
+  const cartSubtotal = useMemo(
+    () => globalCartItems.reduce((sum, c) => sum + c.price * c.qty, 0),
+    [globalCartItems]
+  )
 
   const getItemQty = (id: string) => {
-    return cart.find((c) => c.item.id === id)?.qty || 0
+    return globalCartItems.find((c) => c.id === id)?.qty || 0
   }
 
   const updateItemQty = (item: CraveXPGroceryItem, delta: number) => {
-    setCart((prev) => {
-      const existing = prev.find((c) => c.item.id === item.id)
-      if (!existing) {
-        if (delta > 0) return [...prev, { item, qty: 1 }]
-        return prev
-      }
-      const newQty = existing.qty + delta
-      if (newQty <= 0) {
-        return prev.filter((c) => c.item.id !== item.id)
-      }
-      return prev.map((c) => (c.item.id === item.id ? { ...c, qty: newQty } : c))
-    })
-  }
-
-  const handlePlaceOrder = async () => {
-    if (cart.length === 0) return
-    setOrderError('')
-    if (!user?.id) {
-      setOrderError('Please log in with a customer account to place your order.')
-      return
-    }
-
-    setOrderPlaced(true)
-    const orderId = crypto.randomUUID()
-    const itemsFormatted = cart.map((c) => ({
-      name: c.item.name,
-      qty: c.qty,
-      price: c.item.price,
-      menu_item_id: c.item.id,
-    }))
-
-    try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: orderId,
-          customer_id: user.id,
-          customer_name: user.name,
-          customer_phone: user.phone || null,
-          customer_address: user.address || 'Bengaluru',
-          restaurant_id: CRAVEXP_DARK_STORE_ID,
-          restaurant_name: CRAVEXP_DARK_STORE_INFO.name,
-          order_type: 'cravexp_grocery',
-          items: itemsFormatted,
-          subtotal: cartSubtotal,
-          packaging_fee: 0,
-          gst: 0,
-          total_amount: cartSubtotal,
-          status: 'payment_submitted',
-          payment_method: 'UPI Instant / COD',
-        }),
+    const currentQty = getItemQty(item.id)
+    if (currentQty === 0 && delta > 0) {
+      addItem({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        qty: 1,
+        image: item.image,
+        detail: item.unit,
+        restaurantName: CRAVEXP_DARK_STORE_INFO.name,
+        restaurantId: CRAVEXP_DARK_STORE_ID,
+        vendorId: CRAVEXP_DARK_STORE_ID,
       })
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}))
-        throw new Error(result.error || 'Order request failed')
-      }
-    } catch (error) {
-      console.error('Failed to place craveXP order:', error)
-      setOrderError('The order could not be saved. Please try again.')
-      setOrderPlaced(false)
-      return
+    } else {
+      updateGlobalQty(item.id, delta)
     }
-
-    setTimeout(() => {
-      setCart([])
-      setOrderPlaced(false)
-      setShowCartDrawer(false)
-      router.push('/user/track')
-    }, 1800)
   }
 
   return (
@@ -195,7 +136,7 @@ export default function CraveXPStore() {
             {/* Cart Trigger Card */}
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setShowCartDrawer(true)}
+                onClick={() => router.push('/user/cart')}
                 className="flex items-center gap-2.5 rounded-2xl bg-[#d9f447] px-5 py-3 text-xs font-black text-[#18201c] shadow-lg hover:bg-[#cbe638] transition"
               >
                 <ShoppingCart className="size-4" />
@@ -394,121 +335,12 @@ export default function CraveXPStore() {
             </div>
 
             <button
-              onClick={() => setShowCartDrawer(true)}
+              onClick={() => router.push('/user/cart')}
               className="flex items-center gap-2 rounded-xl bg-[#d9f447] px-4 py-2.5 text-xs font-black text-[#18201c] shadow-md hover:bg-[#cbe638] transition"
             >
               <span>View Cart</span>
               <ArrowRight className="size-4" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* CART & CHECKOUT SIDE DRAWER */}
-      {showCartDrawer && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
-            <div>
-              <div className="flex items-center justify-between border-b pb-4">
-                <div className="flex items-center gap-2">
-                  <div className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
-                    <Zap className="size-4 fill-current" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm text-[#18201c]">craveXP Dark Store Cart</h3>
-                    <p className="text-[10px] text-gray-500 font-bold">
-                      10-min delivery from central warehouse
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCartDrawer(false)}
-                  className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 font-bold text-xs"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {orderError && (
-                <div className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700 border border-red-200">
-                  {orderError}
-                </div>
-              )}
-
-              {/* Items List */}
-              <div className="mt-4 space-y-3">
-                {cart.map(({ item, qty }) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-2xl border border-gray-100 p-3 bg-gray-50/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="size-10 rounded-lg object-contain bg-white p-1"
-                      />
-                      <div>
-                        <p className="text-xs font-bold text-[#18201c] max-w-[170px] truncate">
-                          {item.name}
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-semibold">{item.unit}</p>
-                        <p className="text-xs font-black text-[#86a018]">₹{item.price * qty}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 rounded-xl bg-[#18201c] px-2 py-1 text-[#d9f447]">
-                      <button
-                        onClick={() => updateItemQty(item, -1)}
-                        className="p-0.5 hover:bg-white/20 rounded"
-                      >
-                        <Minus className="size-3" />
-                      </button>
-                      <span className="text-xs font-black px-1 text-white">{qty}</span>
-                      <button
-                        onClick={() => updateItemQty(item, 1)}
-                        className="p-0.5 hover:bg-white/20 rounded"
-                      >
-                        <Plus className="size-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Checkout Bottom Area */}
-            <div className="pt-6 border-t border-gray-200 space-y-3">
-              <div className="space-y-1.5 text-xs font-semibold text-gray-600">
-                <div className="flex justify-between">
-                  <span>Item Subtotal</span>
-                  <span className="font-bold text-[#18201c]">₹{cartSubtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>10-Min Dark Store Delivery</span>
-                  <span className="font-bold text-emerald-700">FREE</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t font-black text-sm text-[#18201c]">
-                  <span>Grand Total</span>
-                  <span className="text-[#86a018]">₹{cartSubtotal}</span>
-                </div>
-              </div>
-
-              {orderPlaced ? (
-                <div className="rounded-2xl bg-emerald-700 p-4 text-center text-xs font-black text-white flex items-center justify-center gap-2">
-                  <CheckCircle2 className="size-5 animate-bounce" />
-                  <span>Order Placed! Redirecting to Live Rider Tracking...</span>
-                </div>
-              ) : (
-                <button
-                  onClick={handlePlaceOrder}
-                  className="w-full rounded-2xl bg-[#18201c] py-3.5 text-xs font-black text-white shadow-lg hover:bg-[#323f37] transition flex items-center justify-center gap-2"
-                >
-                  <span>Place Order · ₹{cartSubtotal}</span>
-                  <ArrowRight className="size-4 text-[#d9f447]" />
-                </button>
-              )}
-            </div>
           </div>
         </div>
       )}

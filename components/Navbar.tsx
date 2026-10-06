@@ -220,6 +220,21 @@ export default function Navbar() {
 
           {/* Right side — auth & profile */}
           <div className="flex items-center gap-3">
+            {user && (
+              <Link
+                href="/user/cart"
+                className="relative grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] hover:bg-[#f1f4ed] transition shrink-0"
+                title="View Cart Page"
+              >
+                <ShoppingCart className="size-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#859d19] text-[9px] font-black text-white shadow-sm">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             {user ? (
               <div className="relative">
                 <button

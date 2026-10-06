@@ -36,49 +36,56 @@ export function useWebSocket({
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const wsPort = process.env.NEXT_PUBLIC_WS_PORT || 8000
-    const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.hostname
+    const wsHost =
+      (typeof window !== 'undefined' && window.location.hostname) ||
+      process.env.NEXT_PUBLIC_WS_HOST ||
+      'localhost'
     const wsUrl = `${protocol}//${wsHost}:${wsPort}/api/ws`
 
     const connect = () => {
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+      try {
+        const ws = new WebSocket(wsUrl)
+        wsRef.current = ws
 
-      ws.onopen = () => {
-        setConnected(true)
-        onConnect?.()
-        ws.send(
-          JSON.stringify({
-            type: 'subscribe',
-            channels,
-            customerId,
-            driverId,
-          })
-        )
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const msg: WSMessage = JSON.parse(event.data)
-          onMessage?.(msg)
-        } catch (e) {
-          console.error('WS message parse error:', e)
+        ws.onopen = () => {
+          setConnected(true)
+          onConnect?.()
+          try {
+            ws.send(
+              JSON.stringify({
+                type: 'subscribe',
+                channels,
+                customerId,
+                driverId,
+              })
+            )
+          } catch (e) {}
         }
-      }
 
-      ws.onclose = () => {
+        ws.onmessage = (event) => {
+          try {
+            const msg: WSMessage = JSON.parse(event.data)
+            onMessage?.(msg)
+          } catch (e) {}
+        }
+
+        ws.onclose = () => {
+          setConnected(false)
+          onDisconnect?.()
+          wsRef.current = null
+
+          if (autoReconnect) {
+            reconnectRef.current = setTimeout(() => {
+              connect()
+            }, reconnectInterval)
+          }
+        }
+
+        ws.onerror = () => {
+          // Graceful handling to prevent Next.js dev overlay error popup
+        }
+      } catch (err) {
         setConnected(false)
-        onDisconnect?.()
-        wsRef.current = null
-
-        if (autoReconnect) {
-          reconnectRef.current = setTimeout(() => {
-            connect()
-          }, reconnectInterval)
-        }
-      }
-
-      ws.onerror = (err) => {
-        console.error('WebSocket error:', err)
       }
     }
 

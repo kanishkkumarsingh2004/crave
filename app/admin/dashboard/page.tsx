@@ -36,56 +36,53 @@ export default function AdminDashboardPage() {
     { name: string; grossSales: number; commissionRate: number }[]
   >([])
 
+  const loadDashboardData = async () => {
+    try {
+      const res = await fetch('/api/admin/stats', { cache: 'no-store' })
+      const json = await res.json()
+      if (json.success) {
+        setWeeklyGross(json.stats.weeklyRevenue ?? 0)
+        setTotalCommission(json.stats.totalCommission ?? 0)
+        setNetVendorPay(json.stats.netVendorPay ?? 0)
+        setCustomerCount(json.stats.customerCount ?? 0)
+        setVendorCount(json.stats.vendorCount ?? 0)
+        setDriverCount(json.stats.driverCount ?? 0)
+        setAllTimeOrders(json.stats.orderCount ?? 0)
+        if (json.restaurants && json.restaurants.length > 0) {
+          setTopRestaurants(
+            json.restaurants.slice(0, 4).map((restaurant: any) => ({
+              name: restaurant.name ?? 'Restaurant',
+              grossSales: Number(restaurant.gross_sales ?? 0),
+              commissionRate: Number(restaurant.commission_rate ?? 15),
+            }))
+          )
+        } else {
+          setTopRestaurants([])
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load admin overview data:', error)
+    }
+  }
+
   // Subscribe to Live Server WebSocket Broadcast Stream (Zero Refresh Real-Time Server Updates)
   useAdminStatsUpdates((data) => {
     if (!data) return
 
     if (data.type === 'user_signup') {
       const role = data.role || data.user?.role || 'user'
-      if (role === 'user' || role === 'customer') {
-        setCustomerCount((prev) => prev + 1)
-      } else if (role === 'restaurant_vendor' || role === 'cravexp_store_vendor') {
-        setVendorCount((prev) => prev + 1)
-      } else if (role === 'rider' || role === 'driver') {
-        setDriverCount((prev) => prev + 1)
-      }
       setLiveNotice(
-        `⚡ LIVE SERVER EVENT: New ${role} registered (${data.user?.name || 'User'}) — Admin count updated live without refresh!`
+        `⚡ LIVE SERVER EVENT: New ${role} registered (${data.user?.name || 'User'}) — Admin count updated live!`
       )
     } else if (data.type === 'order_created') {
-      setAllTimeOrders((prev) => prev + 1)
       setLiveNotice('⚡ LIVE SERVER EVENT: New order created — Order count updated live!')
+    } else if (data.type === 'db_wiped') {
+      setLiveNotice('⚡ LIVE SERVER EVENT: Database reset — Stats synced live!')
     }
+    loadDashboardData()
   })
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const res = await fetch('/api/admin/stats')
-        const json = await res.json()
-        if (json.success) {
-          setWeeklyGross(json.stats.weeklyRevenue)
-          setTotalCommission(json.stats.totalCommission)
-          setNetVendorPay(json.stats.netVendorPay)
-          setCustomerCount(json.stats.customerCount)
-          setVendorCount(json.stats.vendorCount)
-          setDriverCount(json.stats.driverCount)
-          setAllTimeOrders(json.stats.orderCount ?? 0)
-          if (json.restaurants) {
-            setTopRestaurants(
-              json.restaurants.slice(0, 4).map((restaurant: any) => ({
-                name: restaurant.name ?? 'Restaurant',
-                grossSales: Number(restaurant.gross_sales ?? 150000),
-                commissionRate: Number(restaurant.commission_rate ?? 15),
-              }))
-            )
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load admin overview data:', error)
-      }
-    }
-
     loadDashboardData()
   }, [])
 

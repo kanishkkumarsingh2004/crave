@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useLanguage } from '@/lib/language-context'
+import { useAdminStatsUpdates } from '@/lib/websocket'
 import { FormEvent, useEffect, useState } from 'react'
 
 interface AccountRecord {
@@ -304,14 +305,14 @@ export default function AdminDashboard() {
     }
   }
 
+  useAdminStatsUpdates(() => {
+    fetchAccountsAndVendors()
+    fetchPayments()
+  })
+
   useEffect(() => {
     fetchAccountsAndVendors()
     fetchPayments()
-    const timer = setInterval(() => {
-      fetchAccountsAndVendors()
-      fetchPayments()
-    }, 12000)
-    return () => clearInterval(timer)
   }, [])
 
   // Admin Vendor Onboarding Handler
