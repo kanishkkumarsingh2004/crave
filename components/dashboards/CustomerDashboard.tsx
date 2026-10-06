@@ -42,6 +42,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
+import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { supabase } from '@/lib/supabase'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
@@ -77,6 +78,8 @@ interface Restaurant {
   address: string
   offer?: string
   isPureVeg?: boolean
+  latitude?: number | string | null
+  longitude?: number | string | null
 }
 
 interface MenuItem {
@@ -432,16 +435,29 @@ export default function CustomerDashboard({
         if (res.ok) {
           const json = await res.json()
           if (json.addresses && Array.isArray(json.addresses) && json.addresses.length > 0) {
-            setSavedAddresses(
-              json.addresses.map((row: any) => ({
-                id: row.id,
-                label: row.label,
-                address: row.address,
-                tag: row.is_default ? 'Primary' : row.label,
-                lat: row.latitude == null ? null : Number(row.latitude),
-                lng: row.longitude == null ? null : Number(row.longitude),
-              }))
-            )
+            const mapped = json.addresses.map((row: any) => ({
+              id: row.id,
+              label: row.label,
+              address: row.address,
+              tag: row.is_default ? 'Primary' : row.label,
+              lat: row.latitude == null ? null : Number(row.latitude),
+              lng: row.longitude == null ? null : Number(row.longitude),
+              isDefault: Boolean(row.is_default),
+            }))
+            setSavedAddresses(mapped)
+
+            const primary = mapped.find((a: any) => a.isDefault) || mapped[0]
+            const stored =
+              typeof window !== 'undefined' ? localStorage.getItem('crave_selected_address') : null
+            const chosen = stored || primary?.address || user?.address || ''
+
+            if (chosen) {
+              setDeliveryAddress(chosen)
+              const matchedObj = mapped.find((a: any) => a.address === chosen) || primary
+              if (matchedObj?.lat != null && matchedObj?.lng != null) {
+                setSelectedMapPin({ lat: matchedObj.lat, lng: matchedObj.lng })
+              }
+            }
             return
           }
         }
@@ -458,6 +474,7 @@ export default function CustomerDashboard({
             lng: 77.5946,
           },
         ])
+        setDeliveryAddress((prev) => prev || user.address || '')
       } else {
         setSavedAddresses([])
       }
@@ -473,7 +490,7 @@ export default function CustomerDashboard({
           const lat = parseFloat(pos.coords.latitude.toFixed(4))
           const lng = parseFloat(pos.coords.longitude.toFixed(4))
           setSelectedMapPin({ lat, lng })
-          setDeliveryAddress(`${lat}, ${lng}`)
+          updateDeliveryAddress(`${lat}, ${lng}`)
           setGpsDetecting(false)
           triggerToast(`GPS Location Detected: ${lat}° N, ${lng}° E`)
         },
@@ -525,7 +542,7 @@ export default function CustomerDashboard({
       }
 
       setSavedAddresses((prev) => [newEntry, ...prev.filter((a) => a.id !== newEntry.id)])
-      setDeliveryAddress(data.address)
+      updateDeliveryAddress(data.address)
       setNewAddressInput('')
       setShowLocationModal(false)
       triggerToast(`Address & coordinates saved & set as current delivery location!`)
@@ -536,7 +553,28 @@ export default function CustomerDashboard({
 
   // Profile editing
   const [editAddress, setEditAddress] = useState(false)
-  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+
+  const updateDeliveryAddress = (addr: string) => {
+    const trimmed = (addr || '').trim()
+    setDeliveryAddress(trimmed)
+    if (typeof window !== 'undefined' && trimmed) {
+      try {
+        localStorage.setItem('crave_selected_address', trimmed)
+      } catch {}
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('crave_selected_address')
+      if (stored) {
+        setDeliveryAddress(stored)
+      } else if (user?.address) {
+        setDeliveryAddress(user.address)
+      }
+    }
+  }, [user?.address])
 
   // Coupon Engine State
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
@@ -806,17 +844,37 @@ export default function CustomerDashboard({
     setCouponMessage(null)
   }
 
-  // Price Calculations
-  const deliveryFee =
-    checkoutConfig && cartSubtotal > 0 && cartSubtotal < checkoutConfig.freeDeliveryThreshold
-      ? checkoutConfig.deliveryFee
-      : 0
-  const packagingFee = cartSubtotal > 0 ? (checkoutConfig?.handlingFee ?? 0) : 0
-  const taxAmount = checkoutConfig ? Math.round((cartSubtotal * checkoutConfig.gstRate) / 100) : 0
-  const grandTotal = Math.max(
-    0,
-    cartSubtotal - couponDiscount + deliveryFee + packagingFee + taxAmount
-  )
+  // Dynamic Road Distance & Admin Payment Config Pricing Engine
+  const activeRestaurantLat =
+    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.9716
+  const activeRestaurantLng =
+    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.5946
+  const activeDestLat = selectedMapPin?.lat ?? 12.6417
+  const activeDestLng = selectedMapPin?.lng ?? 77.4366
+
+  const calculatedRoadDistanceKm = useMemo(() => {
+    return calculateRoadTravelDistanceKm(
+      activeRestaurantLat,
+      activeRestaurantLng,
+      activeDestLat,
+      activeDestLng
+    )
+  }, [activeRestaurantLat, activeRestaurantLng, activeDestLat, activeDestLng])
+
+  const pricingBreakdown = useMemo(() => {
+    return calculateCheckoutPricing({
+      cartSubtotal,
+      roadDistanceKm: calculatedRoadDistanceKm,
+      config: checkoutConfig,
+      couponDiscount,
+    })
+  }, [cartSubtotal, calculatedRoadDistanceKm, checkoutConfig, couponDiscount])
+
+  const deliveryFee = pricingBreakdown.deliveryFee
+  const packagingFee = pricingBreakdown.handlingFee
+  const platformFee = pricingBreakdown.platformFee
+  const taxAmount = 0
+  const grandTotal = pricingBreakdown.grandTotal
 
   // Filtered Restaurants Logic
   const filteredRestaurants = useMemo(() => {
@@ -935,8 +993,12 @@ export default function CustomerDashboard({
         restaurant_name: restName,
         items: cartWithOtp,
         subtotal: cartSubtotal,
-        packaging_fee: packagingFee,
-        gst: taxAmount,
+        packaging_fee: pricingBreakdown.handlingFee,
+        delivery_fee: pricingBreakdown.deliveryFee,
+        distance: `${pricingBreakdown.roadDistanceKm} km`,
+        discount_amount: couponDiscount,
+        coupon_code: appliedCoupon?.code,
+        gst: 0,
         total_amount: grandTotal,
         status: 'new',
         payment_method: 'UPI Online',
@@ -1044,7 +1106,7 @@ export default function CustomerDashboard({
                 </div>
                 <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] truncate">
                   <span className="truncate max-w-[110px] xs:max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
-                    {deliveryAddress}
+                    {deliveryAddress || user?.address || 'Select Delivery Location'}
                   </span>
                   <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
                 </div>
@@ -1303,15 +1365,6 @@ export default function CustomerDashboard({
           >
             <Zap className="size-5 text-emerald-600 fill-emerald-600" />
             <span>craveXP Instamart (10 Min)</span>
-          </Link>
-
-          <Link
-            href="/vendor/crave-ep"
-            onClick={() => setShowMobileSideMenu(false)}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] bg-[#f0f3eb] hover:bg-[#e2e7dc] transition"
-          >
-            <Store className="size-5 text-[#859d19]" />
-            <span>craveXP Partner Console</span>
           </Link>
         </div>
 
@@ -2294,24 +2347,72 @@ export default function CustomerDashboard({
                   </p>
                 )}
 
-                <div className="rounded-2xl bg-[#f8f9f6] p-4 text-xs">
-                  <div className="flex justify-between py-1 text-[#65716a]">
-                    <span>Items Subtotal ({totalCartItemCount} items)</span>
+                <div className="rounded-2xl bg-[#f8f9f6] p-4 text-xs space-y-2 border border-[#e2e7dd]">
+                  <div className="flex items-center justify-between font-semibold text-[#18201c]">
+                    <span className="flex items-center gap-1.5">
+                      <ShoppingBag className="size-3.5 text-gray-500" />
+                      Items Subtotal ({totalCartItemCount} items)
+                    </span>
                     <span>₹{cartSubtotal}</span>
                   </div>
+
+                  <div className="flex items-center justify-between text-[#65716a]">
+                    <span className="flex items-center gap-1.5">
+                      <Bike className="size-3.5 text-gray-500" />
+                      Delivery Partner Fee
+                    </span>
+                    {pricingBreakdown.isFreeDelivery ? (
+                      <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">
+                        FREE
+                      </span>
+                    ) : (
+                      <span className="font-bold text-[#18201c]">
+                        ₹{pricingBreakdown.deliveryFee}
+                      </span>
+                    )}
+                  </div>
+
+                  {(pricingBreakdown.surgeFee > 0 ||
+                    pricingBreakdown.rainFee > 0 ||
+                    pricingBreakdown.nightSurgeFee > 0) && (
+                    <div className="flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                      <span>Demand &amp; Weather Surge</span>
+                      <span className="font-bold">
+                        +₹
+                        {pricingBreakdown.surgeFee +
+                          pricingBreakdown.rainFee +
+                          pricingBreakdown.nightSurgeFee}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[#65716a]">
+                    <span>Packaging &amp; Handling</span>
+                    <span className="font-bold text-[#18201c]">
+                      ₹{pricingBreakdown.handlingFee}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[#65716a]">
+                    <span>Platform Service Fee</span>
+                    <span className="font-bold text-[#18201c]">
+                      ₹{pricingBreakdown.platformFee}
+                    </span>
+                  </div>
+
                   {appliedCoupon && couponDiscount > 0 && (
-                    <div className="flex justify-between py-1 font-semibold text-emerald-700">
-                      <span>Coupon Discount ({appliedCoupon.code})</span>
+                    <div className="flex items-center justify-between font-bold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                      <span className="flex items-center gap-1">
+                        <Tag className="size-3.5 text-emerald-600" />
+                        Coupon ({appliedCoupon.code})
+                      </span>
                       <span>-₹{couponDiscount}</span>
                     </div>
                   )}
-                  <div className="flex justify-between py-1 text-[#65716a]">
-                    <span>Delivery, packaging &amp; taxes</span>
-                    <span>₹{deliveryFee + packagingFee + taxAmount}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-[#e2e7dd] font-bold text-sm text-[#18201c]">
-                    <span>Total Amount</span>
-                    <span className="text-emerald-700">₹{grandTotal}</span>
+
+                  <div className="flex justify-between pt-2.5 border-t border-[#e2e7dd] font-black text-sm text-[#18201c]">
+                    <span>Final Customer Total</span>
+                    <span className="text-emerald-700 text-base">₹{grandTotal}</span>
                   </div>
                 </div>
 
@@ -2518,7 +2619,7 @@ export default function CustomerDashboard({
                         <div
                           key={addr.id}
                           onClick={() => {
-                            setDeliveryAddress(addr.address)
+                            updateDeliveryAddress(addr.address)
                             setSelectedMapPin(
                               addr.lat != null && addr.lng != null
                                 ? { lat: addr.lat, lng: addr.lng }

@@ -28,7 +28,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
+import React, { useEffect, useMemo, useState } from 'react'
 
 interface Coupon {
   id: string
@@ -114,39 +115,27 @@ export default function CartPage() {
     loadConfigAndCoupons()
   }, [])
 
-  // Calculate Subtotal & Fees
+  // Calculate Subtotal & Fees via Admin Config & Distance Engine
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const activeConfig = paymentConfig || getLocalPaymentConfig()
-  const packagingFee = cart.length > 0 ? activeConfig.packagingCap || 15 : 0
-  const freeThreshold = activeConfig.freeDeliveryThreshold || 500
-  const deliveryFee =
-    cartSubtotal >= freeThreshold || cartSubtotal === 0 ? 0 : activeConfig.baseDeliveryFee || 30
 
-  // Recalculate coupon discount whenever subtotal or coupon changes
-  useEffect(() => {
-    if (appliedCoupon) {
-      if (cartSubtotal < appliedCoupon.minOrderAmount) {
-        setAppliedCoupon(null)
-        setCouponDiscount(0)
-        setCouponMessage({
-          text: `Coupon removed. Minimum order for ${appliedCoupon.code} is ₹${appliedCoupon.minOrderAmount}.`,
-          type: 'error',
-        })
-        return
-      }
-      let discount = 0
-      if (appliedCoupon.discountType === 'percentage') {
-        discount = Math.round((cartSubtotal * appliedCoupon.discountValue) / 100)
-      } else {
-        discount = appliedCoupon.discountValue
-      }
-      setCouponDiscount(Math.min(discount, cartSubtotal))
-    } else {
-      setCouponDiscount(0)
-    }
-  }, [cartSubtotal, appliedCoupon])
+  const roadDistanceKm = useMemo(() => {
+    return calculateRoadTravelDistanceKm(12.9716, 77.5946, 12.6417, 77.4366)
+  }, [])
 
-  const grandTotal = Math.max(0, cartSubtotal + packagingFee + deliveryFee - couponDiscount)
+  const pricingBreakdown = useMemo(() => {
+    return calculateCheckoutPricing({
+      cartSubtotal,
+      roadDistanceKm,
+      config: activeConfig,
+      couponDiscount,
+    })
+  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount])
+
+  const deliveryFee = pricingBreakdown.deliveryFee
+  const packagingFee = pricingBreakdown.handlingFee
+  const platformFee = pricingBreakdown.platformFee
+  const grandTotal = pricingBreakdown.grandTotal
 
   const handleApplyCouponCode = (codeToApply?: string) => {
     const code = (codeToApply || couponCodeInput).trim().toUpperCase()
@@ -228,7 +217,7 @@ export default function CartPage() {
         customer_name: user.name || 'Customer',
         customer_phone: customerPhone,
         customer_address: deliveryAddress,
-        restaurant_id: cart[0]?.restaurantId || cart[0]?.vendorId || 'vnd_1791063436223_iyet2',
+        restaurant_id: cart[0]?.restaurantId || cart[0]?.vendorId || '',
         restaurant_name: cart[0]?.restaurantName || 'Crave Partner Kitchen',
         items: cart.map((i) => ({
           id: i.id,
@@ -677,28 +666,53 @@ export default function CartPage() {
                       <span className="font-bold text-[#18201c]">₹{cartSubtotal}</span>
                     </div>
 
+                    <div className="flex justify-between text-[#55635a]">
+                      <span>Delivery Partner Fee</span>
+                      {pricingBreakdown.isFreeDelivery ? (
+                        <span className="font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px]">
+                          FREE DELIVERY
+                        </span>
+                      ) : (
+                        <span className="font-bold text-[#18201c]">
+                          ₹{pricingBreakdown.deliveryFee}
+                        </span>
+                      )}
+                    </div>
+
+                    {(pricingBreakdown.surgeFee > 0 ||
+                      pricingBreakdown.rainFee > 0 ||
+                      pricingBreakdown.nightSurgeFee > 0) && (
+                      <div className="flex justify-between text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200 text-[11px]">
+                        <span>Demand &amp; Weather Surge</span>
+                        <span className="font-bold">
+                          +₹
+                          {pricingBreakdown.surgeFee +
+                            pricingBreakdown.rainFee +
+                            pricingBreakdown.nightSurgeFee}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between text-[#55635a]">
+                      <span>Packaging &amp; Handling</span>
+                      <span className="font-bold text-[#18201c]">
+                        ₹{pricingBreakdown.handlingFee}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-[#55635a]">
+                      <span>Platform Service Fee</span>
+                      <span className="font-bold text-[#18201c]">
+                        ₹{pricingBreakdown.platformFee}
+                      </span>
+                    </div>
+
                     {appliedCoupon && couponDiscount > 0 && (
                       <div className="flex justify-between font-bold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
                         <span>Coupon Savings ({appliedCoupon.code})</span>
                         <span>-₹{couponDiscount}</span>
                       </div>
                     )}
-
-                    <div className="flex justify-between text-[#55635a]">
-                      <span>Packaging &amp; Kitchen Taxes</span>
-                      <span className="font-bold text-[#18201c]">₹{packagingFee}</span>
-                    </div>
-
-                    <div className="flex justify-between text-[#55635a]">
-                      <span>Delivery Partner Fee</span>
-                      {deliveryFee === 0 ? (
-                        <span className="font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px]">
-                          FREE DELIVERY
-                        </span>
-                      ) : (
-                        <span className="font-bold text-[#18201c]">₹{deliveryFee}</span>
-                      )}
-                    </div>
 
                     <div className="flex justify-between border-t border-[#e5e9e1] pt-3 text-sm font-black text-[#18201c]">
                       <span>Final To Pay</span>
