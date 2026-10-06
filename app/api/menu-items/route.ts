@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       },
     })
 
-    broadcast('menu_items', { type: 'create', item, timestamp: new Date().toISOString() })
+    await broadcast('menu_items', { type: 'create', item, timestamp: new Date().toISOString() })
 
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
@@ -73,7 +73,7 @@ export async function PATCH(request: Request) {
 
     const item = await prisma.menuItem.update({ where: { id }, data })
 
-    broadcast('menu_items', { type: 'update', item, timestamp: new Date().toISOString() })
+    await broadcast('menu_items', { type: 'update', item, timestamp: new Date().toISOString() })
 
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
@@ -95,7 +95,7 @@ export async function DELETE(request: Request) {
 
     await prisma.menuItem.delete({ where: { id } })
 
-    broadcast('menu_items', { type: 'delete', id, timestamp: new Date().toISOString() })
+    await broadcast('menu_items', { type: 'delete', id, timestamp: new Date().toISOString() })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

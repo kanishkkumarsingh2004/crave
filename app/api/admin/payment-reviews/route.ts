@@ -51,7 +51,13 @@ export async function PATCH(request: Request) {
     })
 
     if (updated) {
-      broadcast('approval_update', { status, orderId: updated.order_id })
+      await broadcast('approval_update', { status, orderId: updated.order_id })
+      await broadcast('admin_stats', {
+        type: 'payment_review_updated',
+        id,
+        status,
+        timestamp: new Date().toISOString(),
+      })
     }
 
     return NextResponse.json({ success: true, count: 1 })

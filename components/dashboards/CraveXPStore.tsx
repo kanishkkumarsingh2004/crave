@@ -44,8 +44,15 @@ const CATEGORY_ITEMS = [
   { id: 'Cleaning & Household', name: 'Cleaning & Household', icon: ShieldCheck },
 ]
 
+import { useWebSocket } from '@/lib/websocket'
+
 export default function CraveXPStore() {
-  const { items: globalCartItems, addItem, updateItemQty: updateGlobalQty, totalCount: cartTotalItems } = useCart()
+  const {
+    items: globalCartItems,
+    addItem,
+    updateItemQty: updateGlobalQty,
+    totalCount: cartTotalItems,
+  } = useCart()
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('All Items')
   const [searchQuery, setSearchQuery] = useState('')
@@ -63,11 +70,20 @@ export default function CraveXPStore() {
     setIsLoadingItems(false)
   }
 
+  // Initial fetch on mount
   useEffect(() => {
     loadCatalog()
-    const poll = setInterval(loadCatalog, 5000)
-    return () => clearInterval(poll)
   }, [])
+
+  // Live WebSocket broadcast updates - instant live sync on catalog/order events
+  useWebSocket({
+    channels: ['catalog_update', 'order_update'],
+    onMessage: (msg) => {
+      if (msg.channel === 'catalog_update' || msg.channel === 'order_update') {
+        loadCatalog()
+      }
+    },
+  })
 
   const filteredItems = useMemo(() => {
     return groceryItems.filter((i) => {

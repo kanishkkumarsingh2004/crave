@@ -150,7 +150,9 @@ export default function CraveXPStoreConsole() {
 
         const [ordersResponse, inventoryResponse] = await Promise.all([
           fetch(`/api/orders?vendorId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
-          fetch(`/api/menu-items?restaurantId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
+          fetch(`/api/menu-items?restaurantId=${encodeURIComponent(vendorId)}`, {
+            cache: 'no-store',
+          }),
         ])
         if (!ordersResponse.ok || !inventoryResponse.ok) {
           throw new Error('Failed to load CraveXP data from the local database')
@@ -244,13 +246,17 @@ export default function CraveXPStoreConsole() {
   }, [user?.id, user?.restaurantId, user?.restaurantName])
 
   useVendorOrderUpdates(() => {
-    fetch(`/api/orders?vendorId=${encodeURIComponent(restaurantId || user?.restaurantId || user?.id || 'cravexp_dark_store_01')}`, { cache: 'no-store' })
+    fetch(
+      `/api/orders?vendorId=${encodeURIComponent(restaurantId || user?.restaurantId || user?.id || 'cravexp_dark_store_01')}`,
+      { cache: 'no-store' }
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.orders)) {
           setOrders(
             data.orders.map((order: any) => {
-              const rawItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
+              const rawItems =
+                typeof order.items === 'string' ? JSON.parse(order.items) : order.items
               const items = Array.isArray(rawItems)
                 ? rawItems.map((item: Record<string, unknown>) => ({
                     name: String(item.name ?? ''),

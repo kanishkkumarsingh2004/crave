@@ -51,7 +51,10 @@ export default function CartPage() {
   const [couponCodeInput, setCouponCodeInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const [couponMessage, setCouponMessage] = useState<{
+    text: string
+    type: 'success' | 'error'
+  } | null>(null)
 
   // Order & Payment State
   const [deliveryAddress, setDeliveryAddress] = useState(
@@ -84,7 +87,11 @@ export default function CartPage() {
 
         const couponsRes = await fetch('/api/admin/coupons', { cache: 'no-store' })
         const couponsJson = await couponsRes.json()
-        if (couponsJson.success && Array.isArray(couponsJson.coupons) && couponsJson.coupons.length > 0) {
+        if (
+          couponsJson.success &&
+          Array.isArray(couponsJson.coupons) &&
+          couponsJson.coupons.length > 0
+        ) {
           setAvailableCoupons(
             couponsJson.coupons.map((c: any) => ({
               id: c.id,
@@ -112,7 +119,8 @@ export default function CartPage() {
   const activeConfig = paymentConfig || getLocalPaymentConfig()
   const packagingFee = cart.length > 0 ? activeConfig.packagingCap || 15 : 0
   const freeThreshold = activeConfig.freeDeliveryThreshold || 500
-  const deliveryFee = cartSubtotal >= freeThreshold || cartSubtotal === 0 ? 0 : activeConfig.baseDeliveryFee || 30
+  const deliveryFee =
+    cartSubtotal >= freeThreshold || cartSubtotal === 0 ? 0 : activeConfig.baseDeliveryFee || 30
 
   // Recalculate coupon discount whenever subtotal or coupon changes
   useEffect(() => {
@@ -149,7 +157,10 @@ export default function CartPage() {
 
     const found = availableCoupons.find((c) => c.code.toUpperCase() === code)
     if (!found) {
-      setCouponMessage({ text: `Invalid coupon code "${code}". Try CRAVE50 or WELCOME100.`, type: 'error' })
+      setCouponMessage({
+        text: `Invalid coupon code "${code}". Try CRAVE50 or WELCOME100.`,
+        type: 'error',
+      })
       return
     }
 
@@ -203,7 +214,10 @@ export default function CartPage() {
     }
 
     if (paymentMethod === 'upi' && !utrRef.trim()) {
-      toast('Please enter your 12-digit UPI UTR reference number to complete payment verification', 'error')
+      toast(
+        'Please enter your 12-digit UPI UTR reference number to complete payment verification',
+        'error'
+      )
       return
     }
 
@@ -226,7 +240,12 @@ export default function CartPage() {
         packaging_fee: packagingFee,
         gst: 0,
         total_amount: grandTotal,
-        payment_method: paymentMethod === 'upi' ? 'UPI Online' : paymentMethod === 'cod' ? 'Cash on Delivery' : 'Card',
+        payment_method:
+          paymentMethod === 'upi'
+            ? 'UPI Online'
+            : paymentMethod === 'cod'
+              ? 'Cash on Delivery'
+              : 'Card',
         customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
         utr_ref: utrRef || undefined,
         coupon_code: appliedCoupon?.code || undefined,
@@ -373,7 +392,9 @@ export default function CartPage() {
                                   {item.restaurantName}
                                 </p>
                               )}
-                              <p className="text-xs font-bold text-[#849e16] mt-0.5">₹{item.price} each</p>
+                              <p className="text-xs font-bold text-[#849e16] mt-0.5">
+                                ₹{item.price} each
+                              </p>
                             </div>
                           </div>
 
@@ -612,9 +633,12 @@ export default function CartPage() {
                   <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] text-[#849e16] mb-4">
                     <ShoppingCart className="size-7 sm:size-8" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-[#18201c]">Your Cart is Currently Empty</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#18201c]">
+                    Your Cart is Currently Empty
+                  </h2>
                   <p className="mt-2 text-xs text-[#55635a] max-w-sm mx-auto leading-relaxed">
-                    Explore gourmet kitchens, pizzas, biryani, or instant 15-min groceries on Crave to get started!
+                    Explore gourmet kitchens, pizzas, biryani, or instant 15-min groceries on Crave
+                    to get started!
                   </p>
 
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -642,7 +666,9 @@ export default function CartPage() {
                 <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xl">
                   <h2 className="text-sm sm:text-base font-bold text-[#18201c] mb-4 flex items-center justify-between border-b border-[#f0f3eb] pb-3">
                     <span>Payment Summary</span>
-                    <span className="text-[10px] sm:text-xs font-normal text-gray-500">Prices in INR (₹)</span>
+                    <span className="text-[10px] sm:text-xs font-normal text-gray-500">
+                      Prices in INR (₹)
+                    </span>
                   </h2>
 
                   <div className="space-y-3 text-xs">
@@ -743,7 +769,11 @@ export default function CartPage() {
                             className="text-emerald-700 hover:text-emerald-900 flex items-center gap-1 text-[11px] font-bold"
                             title="Copy VPA"
                           >
-                            {copiedUpi ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+                            {copiedUpi ? (
+                              <Check className="size-3.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="size-3.5" />
+                            )}
                             {copiedUpi ? 'Copied' : 'Copy'}
                           </button>
                         </div>
@@ -758,7 +788,9 @@ export default function CartPage() {
                           required
                           placeholder="e.g. 123456789012"
                           value={utrRef}
-                          onChange={(e) => setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                          onChange={(e) =>
+                            setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 12))
+                          }
                           className="w-full rounded-xl border border-emerald-300 bg-white px-3 py-2.5 text-xs font-mono font-bold text-[#18201c] focus:outline-hidden"
                         />
                       </div>
@@ -815,7 +847,9 @@ export default function CartPage() {
                       {availableCoupons.length}
                     </span>
                   </h3>
-                  <p className="text-xs text-[#55635a] font-medium">Select a coupon to apply instant savings</p>
+                  <p className="text-xs text-[#55635a] font-medium">
+                    Select a coupon to apply instant savings
+                  </p>
                 </div>
               </div>
               <button
@@ -847,8 +881,8 @@ export default function CartPage() {
                         isApplied
                           ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
                           : isEligible
-                          ? 'border-[#dfe4dc] bg-white hover:border-[#849e16] hover:bg-[#fafce8]/60 shadow-xs'
-                          : 'border-gray-200 bg-gray-50 opacity-90'
+                            ? 'border-[#dfe4dc] bg-white hover:border-[#849e16] hover:bg-[#fafce8]/60 shadow-xs'
+                            : 'border-gray-200 bg-gray-50 opacity-90'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -865,11 +899,15 @@ export default function CartPage() {
                           </div>
 
                           <p className="text-xs font-bold text-[#18201c] leading-snug">
-                            {coupon.description || `Save ${coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} on your order`}
+                            {coupon.description ||
+                              `Save ${coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} on your order`}
                           </p>
 
                           <p className="text-[11px] font-semibold text-[#737e77]">
-                            Min order value: <span className="text-[#18201c] font-bold">₹{coupon.minOrderAmount}</span>
+                            Min order value:{' '}
+                            <span className="text-[#18201c] font-bold">
+                              ₹{coupon.minOrderAmount}
+                            </span>
                           </p>
                         </div>
 
@@ -912,7 +950,9 @@ export default function CartPage() {
 
             {/* Modal Footer */}
             <div className="pt-3 border-t border-[#f0f3eb] flex items-center justify-between text-xs text-[#55635a] shrink-0">
-              <span className="font-medium">{availableCoupons.length} discount coupons available</span>
+              <span className="font-medium">
+                {availableCoupons.length} discount coupons available
+              </span>
               <button
                 type="button"
                 onClick={() => setShowCouponsModal(false)}

@@ -220,12 +220,17 @@ export async function POST(request: Request) {
     }
 
     // Broadcast real-time order creation to Admin WebSocket channels
-    broadcast('admin_stats', {
+    await broadcast('admin_stats', {
       type: 'new_order',
       order,
       timestamp: new Date().toISOString(),
     })
-    broadcast('admin_orders', {
+    await broadcast('admin_orders', {
+      type: 'new_order',
+      order,
+      timestamp: new Date().toISOString(),
+    })
+    await broadcast('order_update', {
       type: 'new_order',
       order,
       timestamp: new Date().toISOString(),
@@ -319,18 +324,19 @@ export async function PATCH(request: Request) {
       try {
         await updatePaymentReviewStatus(orderId, newPaymentStatus)
       } catch (e) {}
-      broadcast('approval_update', { status: newPaymentStatus, orderId })
+      await broadcast('approval_update', { status: newPaymentStatus, orderId })
     }
 
     // Broadcast order status update to subscribed clients.
     if (status) {
-      broadcast('order_update', { order: updated, orderId })
+      await broadcast('order_update', { order: updated, orderId })
+      await broadcast('admin_orders', { order: updated, orderId })
     }
 
     // Broadcast driver location update if coordinates changed.
     // driver_id is passed from the request body, not the Order model.
     if (driver_lat != null && driver_lng != null) {
-      broadcast('driver_location', {
+      await broadcast('driver_location', {
         orderId,
         driverId: driver_id || null,
         lat: driver_lat,

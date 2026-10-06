@@ -2,7 +2,7 @@
 
 > **Production Ready Platform** · **100% Test Coverage Pass Rate (43/43 Test Suites, 246/246 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Server-Driven Real-Time WebSocket Engine**
 
-Crave is a full-stack, enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
+Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
 
 ---
 
@@ -22,7 +22,7 @@ Crave is a full-stack, enterprise-grade multi-vendor food delivery and **CraveXP
 │           └──────────────────────────────────────────────┼──────────────┤
 │                                                          │              │
 │           POST Broadcast: /__ws/broadcast                │              │
-│           (Triggered on live DB mutations)              │              │
+│           (Async trigger on live DB mutations)           │              │
 │                                                          │              │
 │           ┌──────────────────────────────────────────────┴────────────┐ │
 │           │                     crave-postgres                        │ │
@@ -34,45 +34,41 @@ Crave is a full-stack, enterprise-grade multi-vendor food delivery and **CraveXP
 
 ---
 
-## 🚀 Key Features & Multi-Role Portals
+## 💡 What This Codebase Is Used For
 
-### 🛍️ 1. Customer Ordering & Checkout (`/user/*`)
+Crave powers an end-to-end multi-party food & grocery delivery ecosystem across 4 dedicated web portals and specialized APIs:
 
-- **Dual-Engine Storefront**: Switch seamlessly between **Restaurant Food Delivery** and **CraveXP 10-Minute Dark Store Grocery Express**.
-- **Dynamic Pricing Engine**: Automated distance-based fare calculation, surge pricing (Rush Hour / Rain Mode / Night Surge), platform service fee, handling charges, and promo code validation.
-- **Interactive Map Pinning**: Precision delivery location selector using MapLibre GL with smooth camera fly-to centering.
-- **Saved Address Management**: Save multiple addresses with custom labels, map coordinates, and primary default flags.
-- **UPI UTR Reference Verification**: Instant 12-digit UTR payment submission with live 3-minute verification status updates.
-- **Real-Time Order Tracking**: Multi-stage progress tracking (_Submitted → Confirmed → Cooking → Rider En Route → Delivered_) with live driver GPS movement broadcasting on MapLibre GL maps.
+### 🛍️ 1. Customer Portal (`/user/*`)
 
-### 🏪 2. Kitchen Vendor & Dark Store Manager Console (`/vendor/*`)
+- **Dual-Engine Storefront**: Switch between **Restaurant Food Delivery** and **CraveXP 10-Minute Dark Store Grocery Express**.
+- **Coupons Engine with 1-Click Popup Modal**: Interactive modal listing all available discount coupon codes (`CRAVE50`, `WELCOME100`, etc.) fetched directly from the database with individual **APPLY** buttons and eligibility thresholds.
+- **Dynamic Billing Calculation**: Automatic distance-based delivery fees, surge pricing (Rain / Night Surge), packaging caps, service fees, and promo discounts.
+- **Interactive Delivery Location Picker**: MapLibre GL map selector for doorstep address pin placement.
+- **UPI UTR Reference Payment Verification**: Submit 12-digit UTR references with real-time status updates.
+- **Live Order Tracking**: Stage-by-stage status progress (_Submitted → Verified → Preparing → Out for Delivery → Delivered_) with live rider GPS tracking on interactive maps.
 
-- **Live Kitchen Order Manager**: Real-time incoming order popup banners and audio chimes, step-by-step order state progression (_Accept → Prepare → Pack → Ready for Pickup_).
-- **Instant WebSocket Sync**: Real-time kitchen queue updates without manual page refreshes.
-- **Catalog & SKU Management**: Add, edit, in-stock toggle, and delete menu items and dark store inventory SKUs.
-- **Coupons & Promotional Engine**: Create store-specific or platform-wide discount codes.
-- **CraveXP Express Terminal**: Dedicated dark store order dispatch interface for 10-minute grocery packing.
+### 🏪 2. Kitchen & Dark Store Vendor Console (`/vendor/*`)
+
+- **Live Kitchen Order Desk**: Real-time incoming order audio chimes, stage progression buttons (_Accept → Prepare → Pack → Ready for Pickup_).
+- **Zero-Polling Instant Sync**: Connected directly to WebSocket channels (`order_update`, `admin_orders`) for live queue updates without page refreshes.
+- **Menu & Stock Editor**: Create, edit, toggle in-stock status, and manage item SKUs.
+- **Vendor Store Discounts**: Manage store-specific promotional discount codes.
 
 ### 🛵 3. Delivery Partner Fleet Cockpit (`/driver/*`)
 
-- **Duty Toggle & Radar Scanning**: Online/Offline toggle with real-time driver spatial indexing.
-- **Live Dispatch Popups**: Real-time order dispatch modal with audio chime, pickup kitchen, delivery zone, trip distance, and calculated driver payout share.
-- **Live GPS Route Navigation**: Turn-by-turn route tracking and live GPS coordinate broadcasting.
-- **Handshake 4-Digit OTP Verification**: Secure delivery completion requiring customer OTP input.
-- **Instant Wallet & Earnings Log**: Real-time trip history and instant UPI cashout logs.
+- **Duty Toggle & Geofenced Dispatch Radar**: Online/Offline status switch with Uber H3 spatial hex indexing.
+- **Live Dispatch Popup Modals**: Order assignment popups with audio chime, pickup restaurant, delivery doorstep, trip distance, and calculated driver payout share.
+- **Live GPS Broadcasting**: Real-time driver coordinate broadcasts pushed directly to admin and customer tracking maps.
+- **Handshake 4-Digit OTP Confirmation**: Secure drop-off verification using customer OTP.
+- **Wallet & Earnings Log**: Real-time trip earnings ledger and instant payout history.
 
 ### 🛡️ 4. Master Admin Command Center (`/admin/*`)
 
-- **Platform Analytics & Financial Overview**: Live aggregated stats for total revenue, active orders, live devices, vendor payouts, and net commission profit.
-- **Uber H3 Geospatial Hex Analytics (`/admin/map-live-analytics`)**:
-  - Full-screen interactive MapLibre map with toggleable **Uber H3 Hexagonal Grid** overlay (Resolution 8).
-  - Real-time driver density calculation per hex cell.
-  - Interactive cell inspection modal on click showing active driver counts, status, and cell IDs.
-- **Live User & Vendor Management**: Onboard new vendors, review customer signups in real time, and delete vendor accounts cleanly.
-- **Payment Review Queue (UTR Verification)**: Live review interface to verify or reject customer 12-digit UPI UTR transactions.
-- **Vendor Settlements & Disbursal**: Weekly net payout calculation, commission percentage audit, and manual settlement disbursals.
-- **Dynamic Pricing & Surge Playground**: Interactive pricing simulator to test real-time fee breakdowns, surge multipliers, vendor commission cuts, and guaranteed driver delivery payouts.
-- **Coupons & Store Restrictions**: Create global or store-restricted promo codes with a multi-store selector popup modal.
+- **Platform Financial Analytics**: Real-time aggregate metrics for gross revenue, total orders, active users, vendor payouts, and net platform commissions.
+- **Uber H3 Geospatial Hex Analytics (`/admin/map-live-analytics`)**: Full-screen MapLibre map overlay showing live driver density per H3 hexagonal cell (Resolution 8) with interactive cell inspection modals.
+- **Payment UTR Verification Queue**: Live review interface to verify or reject customer 12-digit UPI UTR payment submissions.
+- **Vendor Onboarding & Settlements**: Create vendor accounts, calculate weekly net payouts, and disburse settlements.
+- **Coupons & Restrictions Manager**: Create platform-wide or store-restricted promo codes.
 
 ---
 
@@ -80,83 +76,147 @@ Crave is a full-stack, enterprise-grade multi-vendor food delivery and **CraveXP
 
 Crave features an **Uber H3 Hierarchical Hexagonal Geospatial Indexing** system (`h3-js`) for location-aware driver dispatch:
 
-1. **Driver Indexing**: Every driver's GPS location (`lat`, `lng`) is indexed into an H3 hexagonal cell (Resolution 8, ~0.737 km² per cell).
-2. **Geofenced Dispatch**: Pickup requests target candidate drivers within the pickup location's H3 cell and expanding `k-ring` concentric hexagonal rings.
-3. **Atomic Offer Locking**: In-memory atomic locking prevents duplicate offer assignments across drivers.
+1. **Driver Indexing**: Driver GPS positions (`lat`, `lng`) are indexed into H3 hexagonal cells (Resolution 8, ~0.737 km² per cell).
+2. **Geofenced Radius Dispatch**: Pickup requests locate candidate drivers within the pickup location's H3 cell and expanding `k-ring` concentric rings.
+3. **Atomic Offer Locking**: Prevents duplicate offer assignments across active drivers.
 
 ---
 
-## 🏗️ Architectural Proof: Persistent Stateful Server vs. Serverless
+## 📦 Docker Container Services Matrix
 
-Crave is engineered to run on a **dedicated, stateful Node.js server container environment** rather than stateless serverless functions (like Vercel Lambdas or AWS Lambda).
-
-| Architectural Feature      | Crave Implementation                                  | Serverless Lambdas (Vercel/AWS)                      | Benefit                                |
-| :------------------------- | :---------------------------------------------------- | :--------------------------------------------------- | :------------------------------------- |
-| **Server Process**         | Persistent Node.js Server (`server.js`)               | Ephemeral (Spun down after request)                  | **Zero Cold Starts**                   |
-| **Real-time WebSockets**   | Native Standalone TCP WS Server (`ws-server.js`)      | Impossible (Requires external 3rd party like Pusher) | **Zero Extra Cost / Native Latency**   |
-| **Active Heartbeat Loops** | Persistent 30s `setInterval` Ping Loop                | Suspended on Idle                                    | **Reliable Socket Maintenance**        |
-| **Containerization**       | Multi-Container Docker Compose (`docker-compose.yml`) | Zip / Lambda Function Bundles                        | **100% Production Environment Parity** |
-| **DB Connection Pool**     | Direct TCP PostgreSQL Pool                            | Requires HTTP Data Proxy                             | **Higher Query Throughput**            |
+| Service              | Container Name   | Internal Port | External Port | Command / Entrypoint     |
+| :------------------- | :--------------- | :------------ | :------------ | :----------------------- |
+| **Frontend Web App** | `crave-frontend` | `3000`        | `3000`        | `node server.js`         |
+| **WebSocket Engine** | `crave-backend`  | `8000`        | `8000`        | `node ws-server.js`      |
+| **Database Init**    | `crave-db-init`  | N/A           | N/A           | `prisma db push && seed` |
+| **PostgreSQL 16**    | `crave-postgres` | `5432`        | `5433`        | `postgres:16-alpine`     |
 
 ---
 
-## 📦 Services & Container Matrix
+## 📜 Full NPM & Docker Scripts Reference
 
-| Service              | Container Name   | Internal Port | External Port | Command / Entrypoint |
-| :------------------- | :--------------- | :------------ | :------------ | :------------------- |
-| **Frontend Web App** | `crave-frontend` | `3000`        | `3000`        | `node server.js`     |
-| **WebSocket Engine** | `crave-backend`  | `8000`        | `8000`        | `node ws-server.js`  |
-| **Database Init**    | `crave-db-init`  | N/A           | N/A           | `prisma db push`     |
-| **PostgreSQL 16**    | `crave-postgres` | `5432`        | `5433`        | `postgres:16-alpine` |
+Below is the complete catalog of executable scripts configured in `package.json`:
 
----
-
-## 🛠️ Quick Start (Docker Deployment)
-
-The fastest way to spin up the full production stack is using Docker Compose:
+### 🛠️ Development & Production Server Scripts
 
 ```bash
-# 1. Clone the repository & navigate to directory
+# Start Next.js web application in development mode (Port 3000)
+pnpm dev
+
+# Start Standalone WebSocket backend server in development mode (Port 8000)
+pnpm dev:ws
+
+# Build optimized Next.js production bundle
+pnpm build
+
+# Regenerate Prisma client and rebuild Next.js production bundle
+pnpm rebuild
+
+# Start Next.js web application in production mode
+pnpm start
+
+# Start Standalone WebSocket backend server in production mode
+pnpm start:ws
+
+# Execute fast TypeScript type validation across codebase
+pnpm typecheck
+```
+
+### 🗄️ Database Management Scripts
+
+```bash
+# Push Prisma schema to PostgreSQL database
+pnpm db:push
+
+# Reset PostgreSQL database and re-seed fresh demo data
+pnpm db:fresh
+
+# Seed initial database records (Users, Vendors, Menu Items, Drivers)
+pnpm db:seed
+
+# Open interactive Prisma Studio GUI database browser
+pnpm db:studio
+
+# Create or update Master Admin credentials
+pnpm db:admin
+```
+
+### 🐳 Docker Container & Code Sync Scripts
+
+```bash
+# Launch containerized production stack in background
+pnpm dc:up
+
+# Stop all running Docker services
+pnpm dc:down
+
+# Restart all running Docker containers
+pnpm dc:restart
+
+# Stop containers and wipe persistent PostgreSQL volumes
+pnpm dc:clean
+
+# Perform clean tear-down and rebuild/re-create all containers
+pnpm dc:fresh
+
+# Force-rebuild fresh Docker images from local code and launch stack
+pnpm dc:rebuild
+
+# Delete old frontend image and force-rebuild Next.js app with fresh local code
+pnpm dc:rebuild:frontend
+
+# Delete old backend image and force-rebuild WebSocket server with fresh local code
+pnpm dc:rebuild:backend
+
+# Stream live real-time container logs
+pnpm dc:logs
+
+# Check running container status and port mappings
+pnpm dc:ps
+```
+
+### 🧪 Testing & Code Quality Scripts
+
+```bash
+# Run full Jest unit & integration test suite (43 Test Suites, 246 Tests Passing)
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Generate code coverage report
+pnpm test:coverage
+
+# Format codebase using Prettier
+pnpm format
+
+# Check formatting compliance
+pnpm format:check
+```
+
+---
+
+## 🚀 Quick Start (Docker Deployment)
+
+Spin up the containerized production stack:
+
+```bash
+# 1. Clone repository
 git clone https://github.com/your-repo/crave.git
 cd crave
 
-# 2. Copy environment variables file
+# 2. Copy environment configuration
 cp .env.example .env
 
-# 3. Launch the containerized production stack
+# 3. Launch Docker containers
 pnpm dc:up
 ```
 
-Access services at:
+Access services:
 
 - **Frontend App**: [http://localhost:3000](http://localhost:3000)
 - **WebSocket Backend**: `ws://localhost:8000/api/ws`
 - **PostgreSQL Database**: `localhost:5433` (`crave_db`)
-
-### Useful Docker & Development Lifecycle Commands
-
-```bash
-# Rebuild application preserving database state
-pnpm rebuild
-
-# Launch interactive Prisma Studio GUI database manager
-pnpm db:studio
-
-# Create or update Master Admin credentials safely
-pnpm db:admin
-
-# Rebuild Docker containers (preserves DB volume)
-pnpm dc:rebuild
-
-# View real-time container logs
-pnpm dc:logs
-
-# Check running container status
-pnpm dc:ps
-
-# Stop all Docker services
-pnpm dc:down
-```
 
 ---
 
@@ -166,87 +226,39 @@ pnpm dc:down
 
 - **Node.js**: v20.0.0 or higher
 - **pnpm**: v9.0.0 or higher
-- **PostgreSQL**: Running locally on port `5432` (or adjust `DATABASE_URL`)
+- **PostgreSQL 16**: Running on port `5432`
 
-### Installation Steps
+### Setup Steps
 
 ```bash
 # 1. Install dependencies
 pnpm install
 
-# 2. Configure environment file
+# 2. Copy environment file
 cp .env.example .env
 
-# 3. Push Prisma schema & seed initial database records
+# 3. Initialize database & seed demo data
 pnpm db:push
 pnpm db:seed
 
-# 4. Start Next.js Frontend Server (Port 3000)
+# 4. Start Next.js Web App (Terminal 1)
 pnpm dev
 
-# 5. In a separate terminal, start the WebSocket backend (Port 8000)
-WS_PORT=8000 node ws-server.js
+# 5. Start Standalone WebSocket Server (Terminal 2)
+pnpm dev:ws
 ```
-
----
-
-## 🧪 Automated Test Suite Execution
-
-Crave includes a comprehensive **Jest + React Testing Library** test suite verifying database access layers (DAL), API routes, JWT authentication, H3 dispatch, and WebSocket hooks.
-
-```bash
-# Run complete test suite (43 Test Suites, 246 Tests Passing)
-pnpm test
-
-# Run tests with coverage report
-pnpm test:coverage
-
-# Run specific test file
-npx jest test/api/orders/post.test.ts
-```
-
----
-
-## 📋 Comprehensive API Route Catalog
-
-| Endpoint Route                  | Methods                          | Auth / Role     | Description                                                                            |
-| :------------------------------ | :------------------------------- | :-------------- | :------------------------------------------------------------------------------------- |
-| `/api/auth/signup`              | `POST`                           | Public          | Register new user, vendor, or driver account                                           |
-| `/api/auth/login`               | `POST`                           | Public          | Authenticate credentials & issue HTTP-only JWT cookie                                  |
-| `/api/auth/me`                  | `GET`                            | Authenticated   | Fetch active user profile and current session role                                     |
-| `/api/auth/logout`              | `POST`                           | Public          | Invalidate auth cookie session                                                         |
-| `/api/restaurants`              | `GET`, `POST`, `PATCH`           | Role Scoped     | List restaurants, create store, or toggle kitchen open status                          |
-| `/api/menu-items`               | `GET`, `POST`, `PATCH`, `DELETE` | Vendor / Admin  | Manage menu items and inventory SKUs                                                   |
-| `/api/orders`                   | `GET`, `POST`, `PATCH`           | Authenticated   | Create order with billing breakdown, update status, complete drop with OTP             |
-| `/api/cravexp/catalog`          | `GET`, `POST`                    | Public / Vendor | Fetch 10-minute dark store grocery catalog                                             |
-| `/api/admin/stats`              | `GET`                            | Admin           | Aggregated database revenue, order counts, and live metrics                            |
-| `/api/admin/map-live-analytics` | `GET`                            | Admin           | Fetch H3 cell driver density, active orders, and live driver GPS positions             |
-| `/api/admin/payment-reviews`    | `GET`, `PATCH`                   | Admin           | Review, approve, or reject customer UPI UTR payment references                         |
-| `/api/admin/settlements`        | `GET`, `POST`                    | Admin           | Calculate vendor commission splits and disburse settlements                            |
-| `/api/admin/coupons`            | `GET`, `POST`, `PATCH`, `DELETE` | Admin           | Create promo codes with store applicability restrictions                               |
-| `/api/admin/create-vendor`      | `POST`                           | Admin           | Onboard new kitchen or dark store vendor                                               |
-| `/api/admin/delete-vendor`      | `POST`                           | Admin           | Remove vendor and associated menu items cleanly                                        |
-| `/api/admin/users`              | `GET`                            | Admin           | List all registered users, vendors, and drivers                                        |
-| `/api/dispatch/candidates`      | `POST`                           | System / Driver | Search candidate drivers within H3 hexagonal radius rings                              |
-| `/api/dispatch/request`         | `POST`                           | System / Driver | Issue atomic dispatch offer to candidate driver                                        |
-| `/api/driver/accept`            | `POST`                           | Driver          | Accept assigned dispatch offer and mark driver on trip                                 |
-| `/api/driver/location`          | `POST`                           | Driver          | Update driver GPS coordinates and re-index into H3 cell                                |
-| `/api/user/addresses`           | `GET`, `POST`, `DELETE`          | Customer        | Manage customer saved delivery addresses & MapLibre coordinates                        |
-| `/api/user/update`              | `PATCH`                          | Customer        | Update user name, phone, or address profile                                            |
-| `/api/payment-config`           | `GET`, `POST`                    | Admin           | Configure platform fee, base delivery rate, surge multipliers, and driver payout share |
-| `/api/health`                   | `GET`                            | Public          | Healthcheck endpoint for Docker & load balancers                                       |
 
 ---
 
 ## 🔒 Security & Best Practices
 
-- **Password Hashing**: Secure `scrypt` hashing with unique salt generation.
-- **JWT Authentication**: `jose` JWT tokens signed with secret key, stored in `HTTPOnly`, `SameSite=Lax` cookies.
-- **Role-Based Access Control**: Middleware enforcement for `user`/`customer`, `restaurant_vendor`, `cravexp_store_vendor`, `rider`/`driver`, and `admin`.
-- **Prepared Statements**: Prisma ORM parameterized queries preventing SQL injection.
+- **Password Hashing**: Secure `scrypt` hashing with unique salts.
+- **JWT Authentication**: Signed `jose` JWTs in `HTTPOnly`, `SameSite=Lax` cookies.
+- **Role-Based Access Control**: Strict access controls for `user`, `restaurant_vendor`, `cravexp_store_vendor`, `rider`, and `admin`.
+- **Prepared Statements**: Prisma ORM parameterized queries protecting against SQL injection.
 
 ---
 
 ## 📄 License
 
-Private — All Rights Reserved. Built for **Crave Food & Dark Store Delivery Platform**.
+Private & Proprietary — All Rights Reserved.

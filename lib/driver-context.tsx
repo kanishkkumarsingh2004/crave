@@ -272,8 +272,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     checkLiveOrders()
-    const timer = setInterval(checkLiveOrders, 4000)
-    return () => clearInterval(timer)
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
   function requestMobileGps() {

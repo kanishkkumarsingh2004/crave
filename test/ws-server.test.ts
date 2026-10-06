@@ -46,7 +46,7 @@ describe('WebSocket Server Broadcast', () => {
       process.env.WS_BROADCAST_PORT = String(port)
 
       const { broadcast } = require('@/lib/ws-server')
-      const result = broadcast('order_update', { orderId: 'ord_1', status: 'preparing' })
+      const result = await broadcast('order_update', { orderId: 'ord_1', status: 'preparing' })
       expect(result).toBe(true)
 
       await new Promise((resolve) => {
@@ -73,11 +73,11 @@ describe('WebSocket Server Broadcast', () => {
   })
 
   describe('broadcast() returns false in browser context', () => {
-    it('returns false when window is defined', () => {
+    it('returns false when window is defined', async () => {
       jest.resetModules()
       ;(global as any).window = {}
       const { broadcast } = require('@/lib/ws-server')
-      const result = broadcast('order_update', { test: true })
+      const result = await broadcast('order_update', { test: true })
       expect(result).toBe(false)
       delete (global as any).window
     })

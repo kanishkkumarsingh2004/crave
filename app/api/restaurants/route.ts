@@ -50,7 +50,11 @@ export async function POST(request: Request) {
       },
     })
 
-    broadcast('restaurants', { type: 'create', restaurant, timestamp: new Date().toISOString() })
+    await broadcast('restaurants', {
+      type: 'create',
+      restaurant,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({ success: true, restaurant })
   } catch (error: any) {
@@ -72,7 +76,11 @@ export async function PATCH(request: Request) {
       data: { is_open: body.is_open },
     })
 
-    broadcast('restaurants', { type: 'update', restaurant, timestamp: new Date().toISOString() })
+    await broadcast('restaurants', {
+      type: 'update',
+      restaurant,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({ success: true, restaurant })
   } catch (error) {

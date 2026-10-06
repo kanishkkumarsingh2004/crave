@@ -11,7 +11,14 @@ async function createAdminCredentials() {
   }
 
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@crave.com').trim().toLowerCase()
-  const adminPassword = process.env.ADMIN_PASSWORD || '1234567890'
+  const adminPassword = process.env.ADMIN_PASSWORD
+  if (!adminPassword && process.env.NODE_ENV === 'production') {
+    console.error(
+      '❌ Error: ADMIN_PASSWORD environment variable must be explicitly provided in production environment.'
+    )
+    process.exit(1)
+  }
+  const effectivePassword = adminPassword || '1234567890'
   const adminName = process.env.ADMIN_NAME || 'System Administrator'
 
   console.log(`\n========================================`)
@@ -20,7 +27,7 @@ async function createAdminCredentials() {
   console.log(`Target Email:    ${adminEmail}`)
   console.log(`Role:            admin`)
 
-  const passwordHash = crypto.scryptSync(adminPassword, adminEmail, 64).toString('hex')
+  const passwordHash = crypto.scryptSync(effectivePassword, adminEmail, 64).toString('hex')
   const userId = `usr_admin_${crypto.randomUUID().slice(0, 8)}`
 
   try {
@@ -44,14 +51,21 @@ async function createAdminCredentials() {
     // Broadcast live WebSocket event to connected Admin Dashboards
     try {
       const http = require('http')
-      const payload = JSON.stringify({ channel: 'admin_stats', data: { type: 'db_wiped' }, ts: Date.now() })
+      const payload = JSON.stringify({
+        channel: 'admin_stats',
+        data: { type: 'db_wiped' },
+        ts: Date.now(),
+      })
       const req = http.request(
         {
           hostname: process.env.WS_BROADCAST_HOST || 'localhost',
           port: process.env.WS_BROADCAST_PORT || 8000,
           path: '/__ws/broadcast',
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
         },
         () => {}
       )
@@ -89,9 +103,11 @@ async function createAdminCredentials() {
     console.log(`\n✅ Admin account created successfully!`)
     console.log(`   User ID:  ${created.id}`)
     console.log(`   Email:    ${created.email}`)
-    console.log(`   Password: ${adminPassword}`)
+    console.log(`   Password: ${effectivePassword}`)
     console.log(`   Role:     ${created.role}`)
-    console.log(`\n🔒 Database now contains ONLY the Admin account and active payment configuration.`)
+    console.log(
+      `\n🔒 Database now contains ONLY the Admin account and active payment configuration.`
+    )
   } catch (error: any) {
     console.error(`\n❌ Failed to provision admin credentials:`, error?.message || error)
     process.exit(1)

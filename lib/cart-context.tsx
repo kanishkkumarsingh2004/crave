@@ -75,16 +75,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const updateItemQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((i) => {
-          if (i.id === id) {
-            const newQty = i.qty + delta
-            return newQty > 0 ? { ...i, qty: newQty } : null
-          }
-          return i
-        })
-        .filter(Boolean) as CartItem[]
+    setItems(
+      (prev) =>
+        prev
+          .map((i) => {
+            if (i.id === id) {
+              const newQty = i.qty + delta
+              return newQty > 0 ? { ...i, qty: newQty } : null
+            }
+            return i
+          })
+          .filter(Boolean) as CartItem[]
     )
   }
 
@@ -94,7 +95,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateItemQty, clearCart, setItems, totalCount, isLoaded }}
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateItemQty,
+        clearCart,
+        setItems,
+        totalCount,
+        isLoaded,
+      }}
     >
       {children}
     </CartContext.Provider>
