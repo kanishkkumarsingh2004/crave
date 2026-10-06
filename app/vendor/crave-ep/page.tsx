@@ -13,12 +13,12 @@ export default function CraveXPStorePage() {
     if (isLoading) return
     if (!user) {
       router.replace('/login')
-    } else if (user.role !== 'cravexp_store_vendor') {
+    } else if (user.role !== 'cravexp_store_vendor' && user.role !== 'admin') {
       router.replace(user.role === 'user' ? '/user/dashboard' : '/dashboard')
     }
   }, [user, isLoading, router])
 
-  if (isLoading || !user) {
+  if (isLoading || !user || (user.role !== 'cravexp_store_vendor' && user.role !== 'admin')) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
         <div className="text-center">

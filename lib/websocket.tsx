@@ -189,3 +189,34 @@ export function useAdminStatsUpdates(onEvent: (data: any) => void) {
     },
   })
 }
+
+export function playChimeSound() {
+  try {
+    if (typeof window === 'undefined') return
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15)
+    gain.gain.setValueAtTime(0.3, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.3)
+  } catch (e) {}
+}
+
+export function useVendorOrderUpdates(onOrderEvent: (data: any) => void) {
+  return useWebSocket({
+    channels: ['order_update', 'admin_orders'],
+    onMessage: (msg) => {
+      if (msg.channel === 'order_update' || msg.channel === 'admin_orders') {
+        onOrderEvent(msg.data)
+      }
+    },
+  })
+}
