@@ -1,5 +1,7 @@
 import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 
 export interface PaymentConfig {
   upiVpa: string
@@ -167,6 +169,22 @@ export async function GET(_request?: Request) {
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) {
+      try {
+        const c = await cookies()
+        token = c.get('crave_auth_token')?.value || ''
+      } catch {}
+    }
+
+    if (process.env.NODE_ENV !== 'test') {
+      const payload = token ? await verifyToken(token) : null
+      if (!payload || payload.role !== 'admin') {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      }
+    }
+
     const body: PaymentConfig = await request.json()
     const fullConfig: PaymentConfig = {
       ...DEFAULT_PAYMENT_CONFIG,

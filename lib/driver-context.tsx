@@ -17,6 +17,7 @@ export interface BroadcastOrderOffer {
   tip: number
   distance: string
   itemsCount: number
+  customerPhone?: string
   otp?: string
 }
 
@@ -205,6 +206,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
             tip: 30,
             distance: `${distKm || 1.8} km`,
             itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+            customerPhone: target.customer_phone || undefined,
             otp: String(realOtp),
           })
         }
@@ -266,6 +268,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               tip: 30,
               distance: `${distKm || 1.8} km`,
               itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+              customerPhone: target.customer_phone || undefined,
               otp: String(realOtp),
             })
           }
@@ -457,7 +460,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       restaurantAddress: broadcastOffer.restaurantAddress,
       customerName: broadcastOffer.customerName,
       customerAddress: broadcastOffer.customerAddress,
-      customerPhone: driverDisplayPhone,
+      customerPhone: broadcastOffer.customerPhone || '+91 98765 43210',
       basePayout: broadcastOffer.basePayout,
       surgeBonus: broadcastOffer.surgeBonus,
       payout: broadcastOffer.basePayout + broadcastOffer.surgeBonus,

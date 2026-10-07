@@ -62,6 +62,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = (item: CartItem) => {
     setItems((prev) => {
+      if (prev.length > 0 && item.restaurantId) {
+        const existingRestaurantId = prev[0].restaurantId
+        if (existingRestaurantId && existingRestaurantId !== item.restaurantId) {
+          return [item]
+        }
+      }
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {
         return prev.map((i) => (i.id === item.id ? { ...i, qty: i.qty + item.qty } : i))

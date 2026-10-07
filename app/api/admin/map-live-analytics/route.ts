@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { OrderStatus, UserRole } from '@prisma/client'
+import { getDriverLocation } from '@/lib/dispatch/driver-tracker'
 
 async function verifyAdminAuth(request: Request): Promise<boolean> {
   let token = ''
@@ -136,18 +137,19 @@ export async function GET(request: Request) {
 
     // Map Drivers
     drivers.forEach((d, idx) => {
-      const lat = 12.6415 + idx * 0.005
-      const lng = 77.4369 + idx * 0.005
+      const live = getDriverLocation(d.id)
+      const lat = live?.lat ?? (12.6415 + idx * 0.005)
+      const lng = live?.lng ?? (77.4369 + idx * 0.005)
       pins.push({
         id: `drv_${d.id}`,
         name: `${d.name} (${d.vehicle_type || 'EV Fleet'})`,
         type: 'driver',
-        status: 'Duty Active & Online',
+        status: live?.status ? `Duty ${live.status}` : 'Duty Active & Online',
         lat,
         lng,
         locationName: d.address || 'Bengaluru Fleet Sector',
         detail: `Plate: ${d.license_plate || 'EV-REG-01'} • Contact: ${d.phone || 'N/A'}`,
-        timestamp: 'GPS Locked',
+        timestamp: live ? 'GPS Locked' : 'Fleet Registered',
       })
     })
 
