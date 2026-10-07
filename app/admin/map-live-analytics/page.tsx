@@ -118,8 +118,8 @@ export default function MapLiveAnalyticsPage() {
           h3Resolution={7}
           pins={filterType === 'all' ? pins : pins.filter((p) => p.type === filterType)}
           className="relative w-full rounded-2xl overflow-hidden border border-gray-300 shadow-inner bg-[#f0f3ec] h-[calc(100vh-160px)] min-h-[620px]"
-          initialLat={selectedPin?.lat ?? 12.6817}
-          initialLng={selectedPin?.lng ?? 77.4729}
+          initialLat={selectedPin?.lat ?? 12.679898}
+          initialLng={selectedPin?.lng ?? 77.469493}
           onLocationSelect={(lat, lng) => {
             console.log('Map location:', lat, lng)
           }}

@@ -97,7 +97,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
       expect(screen.getByText(/Test Customer/i)).toBeInTheDocument()
     })
     expect(screen.getAllByText(/₹168/)[0]).toBeInTheDocument()
-    expect(screen.getByText(/Payment Pending/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Payment Pending/i)).not.toBeInTheDocument()
   })
 
   it('renders "Kitchen Cooking" badge for preparing orders', async () => {
@@ -120,7 +120,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     render(<VendorDashboard />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Kitchen Cooking/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Mark Ready/i)[0]).toBeInTheDocument()
     })
   })
 
@@ -163,7 +163,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     })
   })
 
-  it('calls PATCH orders API when "Start Preparing" is clicked', async () => {
+  it('calls PATCH orders API when "Accept Order" is clicked', async () => {
     const mockOrders = [{ id: 'ord_1', status: 'new', customer_name: 'A', total_amount: 100 }]
 
     ;(global.fetch as jest.Mock)
@@ -180,10 +180,10 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     render(<VendorDashboard />)
 
     await waitFor(() => {
-      expect(screen.getByText('New Order')).toBeInTheDocument()
+      expect(screen.getAllByText(/Accept Order/i)[0]).toBeInTheDocument()
     })
 
-    const startButton = screen.getByText('Start Preparing')
+    const startButton = screen.getAllByText(/Accept Order/i)[0]
     fireEvent.click(startButton)
 
     await waitFor(() => {

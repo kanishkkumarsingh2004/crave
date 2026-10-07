@@ -15,6 +15,7 @@ import {
   MapPin,
   Menu,
   Navigation,
+  PackageCheck,
   Power,
   Radio,
   Settings,
@@ -106,6 +107,12 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       label: 'Active Delivery Task',
       icon: Bike,
       badge: activeTask ? 'Active' : isOnline ? 'Searching' : 'Offline',
+    },
+    {
+      href: '/driver/orders',
+      label: 'Accepted Orders',
+      icon: PackageCheck,
+      badge: activeTask ? '1' : '0',
     },
     {
       href: '/driver/history',
@@ -378,8 +385,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Dashboard Body Content */}
         <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between">
           <div>
-            {/* Top 4 KPI Overview Cards (Rendered across all Driver pages) */}
-            <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
+            <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
               <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
@@ -420,44 +427,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   {completedTrips.length > 0 ? '100% On-time score' : '0 deliveries today'}
                 </p>
               </div>
-
-              <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
-                <div>
-                  <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] truncate">
-                      Active Duty Time
-                    </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 font-bold shrink-0">
-                      <Clock3 className="size-3.5 sm:size-5" />
-                    </span>
-                  </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c]">
-                    {activeDutyTimeText}
-                  </p>
-                </div>
-                <p className="mt-2 text-[11px] sm:text-xs text-blue-600 font-semibold truncate">
-                  {completedTrips.length > 0 ? 'Online & Accepting Drops' : 'Duty Ready'}
-                </p>
-              </div>
-
-              <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
-                <div>
-                  <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] truncate">
-                      Avg Delivery Pace
-                    </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-[#f0f5db] text-[#718714] font-bold shrink-0">
-                      <TrendingUp className="size-3.5 sm:size-5" />
-                    </span>
-                  </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c]">
-                    {avgPaceText}
-                  </p>
-                </div>
-                <p className="mt-2 text-[11px] sm:text-xs text-emerald-600 font-medium truncate">
-                  {completedTrips.length > 0 ? 'Optimal route efficiency' : 'No drops recorded'}
-                </p>
-              </div>
             </div>
 
             {/* Child Page Route Content */}
@@ -470,13 +439,25 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
           <Link
             href="/driver/dashboard"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
-              pathname === '/driver/dashboard'
+              pathname === '/driver/dashboard' || pathname === '/driver'
                 ? 'text-[#d9f447] font-bold'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
             <Navigation className="size-4" />
             <span className="text-[9px]">Map</span>
+          </Link>
+
+          <Link
+            href="/driver/orders"
+            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+              pathname === '/driver/orders'
+                ? 'text-[#d9f447] font-bold'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <PackageCheck className="size-4" />
+            <span className="text-[9px]">Orders</span>
           </Link>
 
           <Link
@@ -564,19 +545,21 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-white/10 p-3 flex items-center justify-between border border-white/10">
-                <div>
-                  <p className="text-[9px] font-bold uppercase text-[#d9f447]">
-                    Estimated Total Payout
-                  </p>
-                  <p className="text-xl font-extrabold text-emerald-400">
-                    ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-[#d9f447] bg-[#1d2722] px-2 py-0.5 rounded-md border border-[#303f37]">
-                    ~18 mins total
-                  </span>
+              <div className="rounded-2xl bg-white/10 p-3 border border-white/10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#d9f447]">
+                      Actual Driver Earning for this Order
+                    </p>
+                    <p className="text-2xl font-extrabold text-emerald-400">
+                      ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-[#d9f447] bg-[#1d2722] px-2 py-0.5 rounded-md border border-[#303f37]">
+                      ~18 mins total
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -116,7 +116,7 @@ describe('CustomerDashboard - Order Tracking View', () => {
     render(<CustomerDashboard />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Spice Garden/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Spice Garden/i)[0]).toBeInTheDocument()
     })
   })
 
@@ -165,7 +165,7 @@ describe('CustomerDashboard - Order Tracking View', () => {
     require('@/lib/websocket').useOrderUpdates.mockImplementation(() => {})
 
     const { default: CustomerDashboard } = await import('@/components/dashboards/CustomerDashboard')
-    render(<CustomerDashboard />)
+    render(<CustomerDashboard initialTab="live-order" initialOrderId="ord_new" />)
 
     await waitFor(() => {
       expect(screen.getByText(/Payment Pending/i)).toBeInTheDocument()

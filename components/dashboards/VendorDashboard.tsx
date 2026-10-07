@@ -164,7 +164,10 @@ export default function VendorDashboard() {
   const completedDropsCount = kitchenOrders.filter(
     (o) => o.status === 'delivered' || o.status === 'out_for_delivery'
   ).length
-  const totalDailyRevenue = kitchenOrders.reduce((acc, o) => acc + o.totalAmount, 0)
+  const totalDailyRevenue = kitchenOrders.reduce(
+    (acc, o) => acc + (o.subtotal > 0 ? o.subtotal : o.totalAmount),
+    0
+  )
   const completionRate =
     kitchenOrders.length > 0 ? Math.round((completedDropsCount / kitchenOrders.length) * 100) : 0
 
@@ -301,20 +304,9 @@ export default function VendorDashboard() {
                           <span className="font-mono text-xs font-bold text-gray-500">
                             #{order.id.slice(0, 8)}...
                           </span>
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${
-                              order.paymentStatus === 'verified'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-amber-100 text-amber-900 border border-amber-300'
-                            }`}
-                          >
-                            {order.paymentStatus === 'verified'
-                              ? '✓ Payment Verified'
-                              : '⏳ Payment Pending'}
-                          </span>
-                          {order.deliveryOtp && (
-                            <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-mono font-black text-[#18201c]">
-                              OTP: {order.deliveryOtp}
+                          {order.paymentStatus === 'verified' && (
+                            <span className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              ✓ Payment Verified
                             </span>
                           )}
                         </div>
@@ -333,26 +325,70 @@ export default function VendorDashboard() {
                       </div>
                       <div className="text-right">
                         <span className="text-base font-black text-emerald-700">
-                          ₹{order.totalAmount}
+                          ₹{order.subtotal > 0 ? order.subtotal : order.totalAmount}
                         </span>
-                        <div className="mt-1">
-                          <span
-                            className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                              order.status === 'ready' || order.status === 'out_for_delivery'
-                                ? 'bg-emerald-600 text-white'
-                                : order.status === 'preparing'
-                                  ? 'bg-amber-500 text-white'
-                                  : order.status === 'delivered'
-                                    ? 'bg-gray-800 text-white'
-                                    : 'bg-blue-600 text-white'
-                            }`}
-                          >
-                            {order.status === 'new' && 'New Order'}
-                            {order.status === 'preparing' && 'Kitchen Cooking'}
-                            {order.status === 'ready' && 'Ready for Pickup'}
-                            {order.status === 'out_for_delivery' && 'Out for Delivery'}
-                            {order.status === 'delivered' && 'Delivered'}
-                          </span>
+                        {order.subtotal > 0 && order.subtotal !== order.totalAmount && (
+                          <p className="text-[10px] text-gray-400 font-medium">
+                            Customer Total: ₹{order.totalAmount}
+                          </p>
+                        )}
+                        <div className="mt-1 flex justify-end">
+                          {(order.status === 'new' ||
+                            order.status === 'payment_submitted' ||
+                            order.status === 'payment_verified' ||
+                            order.status === 'sent_to_vendor' ||
+                            order.status === 'payment_pending' ||
+                            order.status === 'accepted') && (
+                            <button
+                              type="button"
+                              onClick={() => updateOrderStatus(order.id, 'preparing')}
+                              className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <CheckCircle2 className="size-3.5 text-[#d9f447]" />
+                              <span>Accept Order</span>
+                            </button>
+                          )}
+
+                          {(order.status === 'preparing' ||
+                            order.status === 'cooking' ||
+                            order.status === 'packing') && (
+                            <button
+                              type="button"
+                              onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}
+                              className="rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm hover:bg-amber-600 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <CookingPot className="size-3.5" />
+                              <span>Mark Ready</span>
+                            </button>
+                          )}
+
+                          {(order.status === 'ready' ||
+                            order.status === 'ready_for_pickup' ||
+                            order.status === 'rider_assigned') && (
+                            <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                              <CheckCircle2 className="size-3 text-emerald-600" /> Ready for Pickup
+                            </span>
+                          )}
+
+                          {(order.status === 'picked_up' ||
+                            order.status === 'out_for_delivery' ||
+                            order.status === 'arrived_customer') && (
+                            <span className="rounded-full bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                              Out for Delivery
+                            </span>
+                          )}
+
+                          {(order.status === 'delivered' || order.status === 'completed') && (
+                            <span className="rounded-full bg-gray-800 text-white border border-gray-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                              <CheckCircle2 className="size-3 text-emerald-400" /> Delivered
+                            </span>
+                          )}
+
+                          {order.status === 'cancelled' && (
+                            <span className="rounded-full bg-rose-100 text-rose-800 border border-rose-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                              Cancelled
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -360,51 +396,6 @@ export default function VendorDashboard() {
                     <p className="text-xs font-semibold text-gray-800 bg-[#f8f9f7] p-3 rounded-xl border border-gray-200">
                       🍱 {order.itemsText}
                     </p>
-
-                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-gray-100">
-                      {(order.status === 'new' || order.status === 'preparing') && (
-                        <button
-                          type="button"
-                          onClick={() => updateOrderStatus(order.id, 'preparing')}
-                          className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition flex items-center gap-1.5"
-                        >
-                          <CookingPot className="size-3.5 text-[#d9f447]" /> Start Preparing
-                        </button>
-                      )}
-                      {(order.status === 'new' || order.status === 'preparing') && (
-                        <button
-                          type="button"
-                          onClick={() => updateOrderStatus(order.id, 'ready')}
-                          className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 className="size-3.5" /> Mark Ready for Pickup
-                        </button>
-                      )}
-                      {(order.status === 'ready' || order.status === 'preparing') && (
-                        <button
-                          type="button"
-                          onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}
-                          className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition flex items-center gap-1.5"
-                        >
-                          <PackageCheck className="size-3.5" /> Dispatch Out for Delivery
-                        </button>
-                      )}
-                      {order.status === 'out_for_delivery' && (
-                        <button
-                          type="button"
-                          onClick={() => updateOrderStatus(order.id, 'delivered')}
-                          className="rounded-full bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 className="size-3.5" /> Mark Delivered
-                        </button>
-                      )}
-                      {order.status === 'delivered' && (
-                        <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                          <CheckCircle2 className="size-4 text-emerald-600" /> Order Completed &amp;
-                          Delivered
-                        </span>
-                      )}
-                    </div>
                   </div>
                 ))
               )}
@@ -413,45 +404,37 @@ export default function VendorDashboard() {
 
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
             <h3 className="text-lg font-bold text-[#18201c]">Kitchen Performance</h3>
-            <div className="space-y-4">
-              <div className="rounded-2xl bg-[#f7f8f3] p-4">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                  <span>Gross Orders Revenue</span>
-                  <span>₹{totalDailyRevenue}</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-[#86a018] transition-all duration-500"
-                    style={{ width: totalDailyRevenue > 0 ? '100%' : '0%' }}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-[#f7f8f3] p-4">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                  <span>Order Completion Rate</span>
-                  <span>{completionRate}%</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: `${completionRate}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-[#f7f8f3] p-4">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                  <span>Completed Customer Drops</span>
-                  <span>{completedDropsCount} orders</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${completionRate}%` }}
-                  />
-                </div>
-              </div>
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#f7f8f3]">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-100/80 text-gray-500 uppercase tracking-wider text-[10px] font-bold">
+                    <th className="py-3 px-4">Performance Metric</th>
+                    <th className="py-3 px-4 text-right">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200/70 bg-white">
+                  <tr className="hover:bg-gray-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-800">Gross Orders Revenue</td>
+                    <td className="py-3.5 px-4 text-right font-bold text-emerald-700">
+                      ₹{totalDailyRevenue}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-800">Order Completion Rate</td>
+                    <td className="py-3.5 px-4 text-right font-bold text-gray-900">
+                      {completionRate}%
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-800">
+                      Completed Customer Drops
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-bold text-gray-900">
+                      {completedDropsCount} orders
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

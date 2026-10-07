@@ -2,7 +2,6 @@
 
 import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
-import { supabase } from '@/lib/supabase'
 import {
   Building2,
   Check,
@@ -120,22 +119,16 @@ export default function AdminCouponsPage() {
         restaurant_ids: rIds,
       }
       try {
-        const { error } = await supabase.from('coupons').update(dbRecord).eq('id', editingCoupon.id)
-        if (error) throw error
-      } catch (err) {
-        console.warn('Supabase update coupon failed, using API route fallback...', err)
-        try {
-          const res = await fetch('/api/admin/coupons', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: editingCoupon.id, ...dbRecord }),
-          })
-          if (!res.ok) throw new Error('API update failed')
-        } catch (apiErr) {
-          console.error('Failed to update coupon via API:', apiErr)
-          showToast('Could not update the coupon in the database.')
-          return
-        }
+        const res = await fetch('/api/admin/coupons', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingCoupon.id, ...dbRecord }),
+        })
+        if (!res.ok) throw new Error('API update failed')
+      } catch (apiErr) {
+        console.error('Failed to update coupon via API:', apiErr)
+        showToast('Could not update the coupon in the database.')
+        return
       }
 
       updated = coupons.map((c) =>
@@ -179,22 +172,16 @@ export default function AdminCouponsPage() {
       }
 
       try {
-        const { error } = await supabase.from('coupons').insert([dbRecord])
-        if (error) throw error
-      } catch (err) {
-        console.warn('Supabase insert coupon failed, using API route fallback...', err)
-        try {
-          const res = await fetch('/api/admin/coupons', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dbRecord),
-          })
-          if (!res.ok) throw new Error('API insert failed')
-        } catch (apiErr) {
-          console.error('Failed to insert coupon via API:', apiErr)
-          showToast('Could not create the coupon in the database.')
-          return
-        }
+        const res = await fetch('/api/admin/coupons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dbRecord),
+        })
+        if (!res.ok) throw new Error('API insert failed')
+      } catch (apiErr) {
+        console.error('Failed to insert coupon via API:', apiErr)
+        showToast('Could not create the coupon in the database.')
+        return
       }
 
       const newCoupon: Coupon = {
@@ -225,22 +212,16 @@ export default function AdminCouponsPage() {
     if (!item) return
     const newStatus = !item.isActive
     try {
-      const { error } = await supabase.from('coupons').update({ is_active: newStatus }).eq('id', id)
-      if (error) throw error
-    } catch (err) {
-      console.warn('Supabase toggle failed, trying API route...', err)
-      try {
-        const res = await fetch('/api/admin/coupons', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, is_active: newStatus }),
-        })
-        if (!res.ok) throw new Error('API toggle failed')
-      } catch (apiErr) {
-        console.error('Failed to toggle coupon status:', apiErr)
-        showToast('Could not update coupon status.')
-        return
-      }
+      const res = await fetch('/api/admin/coupons', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_active: newStatus }),
+      })
+      if (!res.ok) throw new Error('API toggle failed')
+    } catch (apiErr) {
+      console.error('Failed to toggle coupon status:', apiErr)
+      showToast('Could not update coupon status.')
+      return
     }
     setCoupons(await fetchCouponsFromSupabase())
     showToast(`Coupon '${item.code}' status toggled to ${newStatus ? 'Active' : 'Inactive'}.`)
@@ -250,20 +231,14 @@ export default function AdminCouponsPage() {
     const item = coupons.find((c) => c.id === id)
     if (!confirm(`Are you sure you want to delete coupon '${item?.code}'?`)) return
     try {
-      const { error } = await supabase.from('coupons').delete().eq('id', id)
-      if (error) throw error
-    } catch (err) {
-      console.warn('Supabase delete failed, trying API route...', err)
-      try {
-        const res = await fetch(`/api/admin/coupons?id=${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-        })
-        if (!res.ok) throw new Error('API delete failed')
-      } catch (apiErr) {
-        console.error('Failed to delete coupon:', apiErr)
-        showToast('Could not delete coupon.')
-        return
-      }
+      const res = await fetch(`/api/admin/coupons?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('API delete failed')
+    } catch (apiErr) {
+      console.error('Failed to delete coupon:', apiErr)
+      showToast('Could not delete coupon.')
+      return
     }
     setCoupons(await fetchCouponsFromSupabase())
     showToast(`Coupon '${item?.code}' deleted successfully.`)

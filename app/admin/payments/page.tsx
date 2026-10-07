@@ -94,7 +94,7 @@ export default function AdminPaymentsPage() {
       await fetch('/api/admin/payment-reviews', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status: newStatus }),
+        body: JSON.stringify({ id: orderId, orderId, status: newStatus }),
       })
       setPayments((prev) =>
         prev.map((p) => (p.order_id === orderId ? { ...p, status: newStatus } : p))

@@ -72,11 +72,22 @@ export default function DriverDashboard() {
                 <span>Trip Distance:</span>
                 <span className="text-blue-700">{broadcastOffer.distance}</span>
               </div>
-              <div className="rounded-2xl bg-emerald-50 p-3 flex justify-between font-bold text-emerald-900 text-sm">
-                <span>Trip Earnings:</span>
-                <span>
-                  ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
-                </span>
+              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-900 space-y-1.5 border border-emerald-200">
+                <div className="flex justify-between font-bold text-sm">
+                  <span>Driver Trip Earnings:</span>
+                  <span className="text-emerald-700 font-extrabold text-base">
+                    ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] text-emerald-800/80 pt-1 border-t border-emerald-200/60 font-medium">
+                  <span>Base Pay: ₹{broadcastOffer.basePayout}</span>
+                  {broadcastOffer.surgeBonus > 0 && (
+                    <span>Surge: +₹{broadcastOffer.surgeBonus}</span>
+                  )}
+                  {broadcastOffer.tip > 0 && (
+                    <span className="font-bold text-emerald-900">Tip: +₹{broadcastOffer.tip}</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -198,13 +209,13 @@ export default function DriverDashboard() {
                   className="space-y-3 rounded-2xl bg-amber-50 p-4 border border-amber-200"
                 >
                   <label className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                    <KeyRound className="size-4 text-amber-600" /> Enter Customer Handshake 4-Digit
+                    <KeyRound className="size-4 text-amber-600" /> Enter Customer 6-Digit Delivery
                     OTP
                   </label>
                   <input
                     type="text"
-                    maxLength={4}
-                    placeholder="e.g. 4921"
+                    maxLength={6}
+                    placeholder="e.g. 123456"
                     value={otpValue}
                     onChange={(e) => setOtpValue(e.target.value)}
                     className="w-full rounded-xl border border-amber-300 bg-white p-2.5 font-mono text-center text-base font-bold outline-none"

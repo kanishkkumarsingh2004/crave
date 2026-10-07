@@ -174,8 +174,9 @@ export async function POST(request: Request) {
     // Driver receives payout share based on trip fare (if customer got free delivery, driver is still paid using base trip fare)
     const tripDeliveryFare =
       actualDeliveryFee > 0 ? actualDeliveryFee : paymentConfig.baseDeliveryFee || 30
+    const driverPayoutShare = paymentConfig.driverPayoutShare || 80
     const driverPayout =
-      Math.round(tripDeliveryFare * (paymentConfig.driverPayoutShare / 100)) + (Number(tip) || 0)
+      Math.round(tripDeliveryFare * (driverPayoutShare / 100)) + (Number(tip) || 0)
     const platformProfit =
       Math.round((Number(total_amount) - vendorNetPayout - driverPayout) * 100) / 100
 
@@ -183,6 +184,8 @@ export async function POST(request: Request) {
       subtotal: foodSubtotal,
       packaging_fee: capPackaging,
       delivery_fee: actualDeliveryFee,
+      platform_fee: Number(body.platform_fee) || paymentConfig.platformFee || 2,
+      handling_fee: capPackaging,
       gst: Number(gst) || 0,
       tip: Number(tip) || 0,
       discount_amount: Number(discount_amount) || 0,
@@ -191,7 +194,26 @@ export async function POST(request: Request) {
       vendor_commission_amount: commissionAmount,
       vendor_net_payout: vendorNetPayout,
       driver_payout: driverPayout,
+      driver_payout_share: driverPayoutShare,
       platform_net_profit: platformProfit,
+    }
+
+    const itemsList = Array.isArray(items)
+      ? items
+      : typeof items === 'string'
+        ? JSON.parse(items)
+        : []
+
+    if (itemsList.length > 0) {
+      itemsList[0].billing_breakdown = billingBreakdown
+    } else {
+      itemsList.push({
+        id: 'meta',
+        name: 'Order Metadata',
+        qty: 1,
+        price: 0,
+        billing_breakdown: billingBreakdown,
+      })
     }
 
     // ─── Create Order ────────────────────────────────────────
@@ -203,7 +225,7 @@ export async function POST(request: Request) {
       customer_address: customer_address || 'Bengaluru',
       restaurant_id: finalRestaurantId || undefined,
       restaurant_name: finalRestaurantName,
-      items: Array.isArray(items) ? items : typeof items === 'string' ? JSON.parse(items) : [],
+      items: itemsList,
       subtotal: foodSubtotal,
       packaging_fee: capPackaging,
       gst: Number(gst) || 0,
@@ -211,7 +233,11 @@ export async function POST(request: Request) {
       status: status as OrderStatus,
       order_type,
       payment_method,
-      delivery_otp: String(delivery_otp || '1234'),
+      delivery_otp: String(
+        delivery_otp && String(delivery_otp).trim().length >= 4
+          ? delivery_otp
+          : Math.floor(100000 + Math.random() * 900000)
+      ),
       tip: Number(tip) || 0,
       discount_amount: Number(discount_amount) || 0,
       coupon_code: coupon_code || undefined,
@@ -331,25 +357,36 @@ export async function PATCH(request: Request) {
     }
 
     const vendorStatuses: OrderStatus[] = ['preparing', 'packing', 'ready_for_pickup']
-    const riderStatuses: OrderStatus[] = ['picked_up', 'out_for_delivery', 'delivered', 'completed']
+    const riderStatuses: OrderStatus[] = [
+      'rider_assigned',
+      'ready_for_pickup',
+      'picked_up',
+      'out_for_delivery',
+      'delivered',
+      'completed',
+    ]
     const requestedStatus = status as OrderStatus | undefined
-    const isOwner = actor.role === 'user' && existing.customer_id === actor.id
+    const isOwner =
+      (actor.role === 'user' || (actor.role as string) === 'customer') &&
+      existing.customer_id === actor.id
     const isVendor =
       (actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
       (existing.restaurant_id === (actor as any).restaurantId ||
         existing.restaurant_name === actor.restaurantName)
+    const isRiderOrDriver =
+      actor.role === 'rider' || (actor.role as string) === 'driver' || actor.role === 'admin'
+
     const allowed =
       !status ||
-      (actor.role === 'admin' &&
-        ['payment_verified', 'sent_to_vendor', 'cancelled'].includes(status)) ||
+      actor.role === 'admin' ||
       (isVendor && vendorStatuses.includes(requestedStatus!)) ||
-      (actor.role === 'rider' && riderStatuses.includes(requestedStatus!)) ||
+      (isRiderOrDriver && riderStatuses.includes(requestedStatus!)) ||
       (isOwner && status === 'completed')
 
     if (
       !allowed ||
       (payment_status && actor.role !== 'admin') ||
-      (driver_lat != null && actor.role !== 'rider')
+      (driver_lat != null && actor.role !== 'rider' && (actor.role as string) !== 'driver')
     ) {
       return NextResponse.json(
         { error: 'You are not allowed to update this order' },

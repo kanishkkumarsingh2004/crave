@@ -26,8 +26,8 @@ interface LocationPickerMapProps {
 }
 
 export default function LocationPickerMap({
-  initialLat = 12.6817,
-  initialLng = 77.4729,
+  initialLat = 12.679898,
+  initialLng = 77.469493,
   onLocationSelect,
   className,
   showMarker = true,

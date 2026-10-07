@@ -1,10 +1,13 @@
 'use client'
 
 import { useDriver } from '@/lib/driver-context'
-import { Check } from 'lucide-react'
+import { Check, FileText } from 'lucide-react'
+import { useState } from 'react'
+import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 
 export default function DriverHistoryPage() {
   const { completedTrips } = useDriver()
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceOrderData | null>(null)
 
   return (
     <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
@@ -41,13 +44,25 @@ export default function DriverHistoryPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 text-xs">
-                <div className="text-right">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase">Breakdown</p>
-                  <p className="text-[11px] text-gray-600">
-                    Base ₹{trip.baseEarnings} + Surge ₹{trip.surge} + Tip ₹{trip.tip}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 text-xs">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedInvoice({
+                      id: trip.order.replace('#', ''),
+                      restaurantName: trip.restaurant,
+                      customerName: trip.customer,
+                      timestamp: trip.time,
+                      subtotal: trip.baseEarnings,
+                      tip: trip.tip,
+                      total: trip.total,
+                      status: 'Delivered',
+                    })
+                  }
+                  className="inline-flex items-center gap-1 rounded-full bg-[#18201c] text-[#d9f447] hover:bg-black px-3 py-1.5 text-xs font-bold shadow-xs transition cursor-pointer"
+                >
+                  <FileText className="size-3.5" /> Invoice
+                </button>
                 <div className="text-right">
                   <p className="text-[10px] text-emerald-700 font-bold uppercase">Total Earned</p>
                   <p className="text-base font-extrabold text-emerald-700">₹{trip.total}</p>
@@ -62,6 +77,9 @@ export default function DriverHistoryPage() {
           trip history logs.
         </div>
       )}
+
+      {/* Tax Invoice Modal */}
+      <InvoiceModal order={selectedInvoice} onClose={() => setSelectedInvoice(null)} />
     </div>
   )
 }

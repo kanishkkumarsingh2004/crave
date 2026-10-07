@@ -2,7 +2,6 @@
 
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import { Building2, FileText, Save, ShieldCheck, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
@@ -47,36 +46,37 @@ export default function VendorSettingsPage() {
     if (!user?.id || (role !== 'vendor' && role !== 'restaurant_vendor')) return
     const loadSettings = async () => {
       setSettingsLoading(true)
-      const { data: restaurant, error } = await supabase
-        .from('restaurants')
-        .select(
-          'id, bank_account_name, bank_name, bank_account_number, bank_ifsc, payout_vpa, fssai_license, is_open, address'
-        )
-        .eq('owner_id', user.id)
-        .maybeSingle()
-      if (error || !restaurant) {
-        setRestaurantId(null)
-        setAccountHolder('')
-        setBankName('')
-        setAccountNumber('')
-        setIfscCode('')
-        setPayoutUpi('')
-        setFssaiLicense('')
-        setKitchenOpen(false)
+      try {
+        const res = await fetch(`/api/restaurants?ownerId=${encodeURIComponent(user.id)}`)
+        const data = await res.json()
+        const restaurant = data.restaurants?.[0]
+        if (!restaurant) {
+          setRestaurantId(null)
+          setAccountHolder('')
+          setBankName('')
+          setAccountNumber('')
+          setIfscCode('')
+          setPayoutUpi('')
+          setFssaiLicense('')
+          setKitchenOpen(false)
+          setSettingsLoading(false)
+          return
+        }
+        setRestaurantId(restaurant.id)
+        setAccountHolder(restaurant.bank_account_name ?? '')
+        setBankName(restaurant.bank_name ?? '')
+        setAccountNumber(restaurant.bank_account_number ?? '')
+        setIfscCode(restaurant.bank_ifsc ?? '')
+        setPayoutUpi(restaurant.payout_vpa ?? '')
+        setFssaiLicense(restaurant.fssai_license ?? '')
+        setKitchenOpen(Boolean(restaurant.is_open))
+        setAddress(restaurant.address ?? user.address ?? '')
+        setPhone(user.phone ?? '')
+      } catch (err) {
+        console.error('Failed to load restaurant settings:', err)
+      } finally {
         setSettingsLoading(false)
-        return
       }
-      setRestaurantId(restaurant.id)
-      setAccountHolder(restaurant.bank_account_name ?? '')
-      setBankName(restaurant.bank_name ?? '')
-      setAccountNumber(restaurant.bank_account_number ?? '')
-      setIfscCode(restaurant.bank_ifsc ?? '')
-      setPayoutUpi(restaurant.payout_vpa ?? '')
-      setFssaiLicense(restaurant.fssai_license ?? '')
-      setKitchenOpen(Boolean(restaurant.is_open))
-      setAddress(restaurant.address ?? user.address ?? '')
-      setPhone(user.phone ?? '')
-      setSettingsLoading(false)
     }
     loadSettings()
   }, [user?.id, role])
@@ -92,46 +92,48 @@ export default function VendorSettingsPage() {
   async function handleSaveSettings(e: FormEvent) {
     e.preventDefault()
     if (!restaurantId || !user?.id) return
-    const { error: restaurantError } = await supabase
-      .from('restaurants')
-      .update({
-        bank_account_name: accountHolder || null,
-        bank_name: bankName || null,
-        bank_account_number: accountNumber || null,
-        bank_ifsc: ifscCode || null,
-        payout_vpa: payoutUpi || null,
-        fssai_license: fssaiLicense || null,
-        address: address || null,
+    try {
+      const res = await fetch('/api/restaurants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: restaurantId,
+          bank_account_name: accountHolder || null,
+          bank_name: bankName || null,
+          bank_account_number: accountNumber || null,
+          bank_ifsc: ifscCode || null,
+          payout_vpa: payoutUpi || null,
+          fssai_license: fssaiLicense || null,
+          address: address || null,
+        }),
       })
-      .eq('id', restaurantId)
-      .eq('owner_id', user.id)
-    const { error: userError } = await supabase
-      .from('users')
-      .update({ phone: phone || null, address: address || null })
-      .eq('id', user.id)
-    if (restaurantError || userError) {
+      if (!res.ok) throw new Error('Save failed')
+      setToastMsg('Bank account details & kitchen settings saved!')
+    } catch (err) {
       setToastMsg('Could not save settings to the database.')
+    } finally {
       setTimeout(() => setToastMsg(''), 3500)
-      return
     }
-    setToastMsg('Bank account details & kitchen settings saved!')
-    setTimeout(() => setToastMsg(''), 3500)
   }
 
   async function handleToggleKitchen() {
     if (!restaurantId || !user?.id) return
     const nextStatus = !kitchenOpen
-    const { error } = await supabase
-      .from('restaurants')
-      .update({ is_open: nextStatus })
-      .eq('id', restaurantId)
-      .eq('owner_id', user.id)
-    if (error) {
+    try {
+      const res = await fetch('/api/restaurants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: restaurantId,
+          is_open: nextStatus,
+        }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setKitchenOpen(nextStatus)
+    } catch (err) {
       setToastMsg('Could not update store availability.')
       setTimeout(() => setToastMsg(''), 3000)
-      return
     }
-    setKitchenOpen(nextStatus)
   }
 
   return (

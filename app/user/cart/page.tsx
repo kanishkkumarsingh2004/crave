@@ -166,7 +166,7 @@ export default function CartPage() {
   const activeConfig = paymentConfig || getLocalPaymentConfig()
 
   const roadDistanceKm = useMemo(() => {
-    return calculateRoadTravelDistanceKm(12.9716, 77.5946, 12.965, 77.59)
+    return calculateRoadTravelDistanceKm(12.679898, 77.469493, 12.679898, 77.469493)
   }, [])
 
   const pricingBreakdown = useMemo(() => {
@@ -315,6 +315,8 @@ export default function CartPage() {
         })),
         subtotal: cartSubtotal,
         packaging_fee: packagingFee,
+        delivery_fee: deliveryFee,
+        platform_fee: platformFee,
         gst: 0,
         total_amount: grandTotal,
         payment_method: 'UPI Online',

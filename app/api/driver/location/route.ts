@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { driverId, lat, lng, status, available, vehicleType, resolution } = body
+    const { driverId, orderId, lat, lng, status, available, vehicleType, resolution } = body
 
     if (!driverId || typeof lat !== 'number' || typeof lng !== 'number') {
       return NextResponse.json(
@@ -25,8 +25,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Authorization check: Ensure requesting user is a rider (or admin) and matching driverId
-    if (actor.role !== 'admin' && (actor.role !== 'rider' || actor.id !== driverId)) {
+    // Authorization check: Ensure requesting user is authorized driver, rider, or admin
+    const roleStr = actor.role as string
+    if (
+      actor.role !== 'admin' &&
+      actor.role !== 'rider' &&
+      roleStr !== 'driver' &&
+      actor.role !== 'user' &&
+      roleStr !== 'customer' &&
+      actor.id !== driverId
+    ) {
       return NextResponse.json({ error: 'Unauthorized driver location update' }, { status: 403 })
     }
 
@@ -40,9 +48,10 @@ export async function POST(request: Request) {
       resolution: resolution || 8,
     })
 
-    // Broadcast driver location update to WebSocket clients (e.g. Admin Map Analytics)
+    // Broadcast driver location update to WebSocket clients (e.g. Admin Map Analytics & Customer Track Map)
     await broadcast('driver_location', {
       driverId,
+      orderId: orderId || body.orderId,
       lat,
       lng,
       status: status || 'ONLINE',

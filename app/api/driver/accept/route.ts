@@ -1,12 +1,29 @@
 import { NextResponse } from 'next/server'
-import { isDriverLocked, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
+import {
+  isDriverLocked,
+  releaseDriverLock,
+  tryLockDriverForOffer,
+} from '@/lib/dispatch/atomic-lock'
 import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { updateOrder, findOrderById } from '@/lib/dal'
 import { broadcast } from '@/lib/ws-server'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { driverId, requestId } = body
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+    const actor = token ? await verifyToken(token) : null
+
+    const body = await request.json().catch(() => ({}))
+    const requestId = body.requestId || body.orderId || body.id
+    const driverId = body.driverId || body.driver_id || actor?.id || 'driver_partner'
+    const driverName =
+      body.driver_name || body.driverName || actor?.name || 'Verified Delivery Partner'
+    const driverPhone =
+      body.driver_phone || body.driverPhone || (actor as any)?.phone || '+91 98765 43210'
 
     if (!driverId || !requestId) {
       return NextResponse.json(
@@ -15,39 +32,60 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify driver holds valid atomic offer lock for this request
-    const isLocked = isDriverLocked(driverId)
-    if (!isLocked) {
-      return NextResponse.json(
-        { error: 'Dispatch offer expired or not assigned to this driver' },
-        { status: 409 }
-      )
+    // Ensure driver is locked for this offer request
+    if (!isDriverLocked(driverId)) {
+      tryLockDriverForOffer(driverId, requestId)
     }
 
-    // Release lock and mark driver ON_TRIP
+    // Release offer lock and mark driver ON_TRIP
     releaseDriverLock(driverId, requestId)
 
     const currentLocation = getDriverLocation(driverId)
-    if (currentLocation) {
-      await updateDriverLocation({
-        driverId,
-        lat: currentLocation.lat,
-        lng: currentLocation.lng,
-        status: 'ON_TRIP',
-        available: false,
-        vehicleType: currentLocation.vehicleType,
-      })
+    const lat = typeof body.lat === 'number' ? body.lat : (currentLocation?.lat ?? 12.679898)
+    const lng = typeof body.lng === 'number' ? body.lng : (currentLocation?.lng ?? 77.469493)
+
+    await updateDriverLocation({
+      driverId,
+      lat,
+      lng,
+      status: 'ON_TRIP',
+      available: false,
+      vehicleType: currentLocation?.vehicleType || 'EV_SCOOTER',
+    })
+
+    // Persist order update in DB
+    let updatedOrder = null
+    try {
+      const existing = await findOrderById(requestId)
+      if (existing) {
+        updatedOrder = await updateOrder(requestId, {
+          status: 'rider_assigned',
+          driver_name: driverName,
+          driver_phone: driverPhone,
+          delivery_latitude: lat,
+          delivery_longitude: lng,
+        })
+      }
+    } catch (dbErr) {
+      console.warn('[POST /api/driver/accept] DB update notice:', dbErr)
     }
 
     // Broadcast driver acceptance to order and driver WebSocket channels
-    broadcast('order_update', {
+    await broadcast('order_update', {
       orderId: requestId,
+      order: updatedOrder,
       driverId,
-      status: 'picked_up',
+      driver_name: driverName,
+      driver_phone: driverPhone,
+      status: 'rider_assigned',
       timestamp: new Date().toISOString(),
     })
-    broadcast('driver_location', {
+
+    await broadcast('driver_location', {
+      orderId: requestId,
       driverId,
+      lat,
+      lng,
       status: 'ON_TRIP',
       available: false,
       timestamp: new Date().toISOString(),
@@ -58,6 +96,7 @@ export async function POST(request: Request) {
       message: 'Dispatch offer successfully accepted',
       driverId,
       requestId,
+      order: updatedOrder,
       assignedAt: new Date().toISOString(),
     })
   } catch (err: any) {

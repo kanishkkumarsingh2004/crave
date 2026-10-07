@@ -2,7 +2,6 @@
 
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import { ArrowUpRight, Clock3, DollarSign, Percent, Search, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -62,12 +61,9 @@ export default function VendorSalesPage() {
     async function loadSalesOrders() {
       if (!user?.id) return
       try {
-        const { data: restaurant, error: restaurantError } = await supabase
-          .from('restaurants')
-          .select('id, commission_rate')
-          .eq('owner_id', user.id)
-          .maybeSingle()
-        if (restaurantError) throw restaurantError
+        const resResp = await fetch(`/api/restaurants?ownerId=${encodeURIComponent(user.id)}`)
+        const resData = await resResp.json()
+        const restaurant = resData.restaurants?.[0]
         if (!restaurant) {
           setRestaurantId(null)
           setOrders([])
@@ -77,35 +73,40 @@ export default function VendorSalesPage() {
 
         setRestaurantId(restaurant.id)
         setCommissionRate(Number(restaurant.commission_rate ?? 0))
-        const [orderResult, settlementResult] = await Promise.all([
-          supabase
-            .from('orders')
-            .select('*')
-            .eq('restaurant_id', restaurant.id)
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('vendor_settlements')
-            .select('*')
-            .eq('restaurant_id', restaurant.id)
-            .order('payout_date', { ascending: false }),
-        ])
-        if (orderResult.error) throw orderResult.error
-        if (settlementResult.error) throw settlementResult.error
 
-        setOrders((orderResult.data as any) ?? [])
+        const [orderResp, settlementResp] = await Promise.all([
+          fetch(`/api/orders?vendorId=${encodeURIComponent(restaurant.id)}`),
+          fetch(`/api/admin/settlements?vendorId=${encodeURIComponent(restaurant.id)}`),
+        ])
+
+        const orderData = await orderResp.json()
+        const settlementData = await settlementResp.json()
+
+        const ordersList = orderData.orders ?? []
+        setOrders(ordersList)
+
+        const rawSettlements = settlementData.settlements ?? []
         setSettlementsHistory(
-          (settlementResult.data ?? []).map((settlement: any) => ({
+          rawSettlements.map((settlement: any) => ({
             id: settlement.id,
             period:
               settlement.period_start && settlement.period_end
-                ? `${settlement.period_start} – ${settlement.period_end}`
-                : (settlement.payout_date ?? ''),
+                ? `${typeof settlement.period_start === 'string' ? settlement.period_start.split('T')[0] : settlement.period_start} – ${typeof settlement.period_end === 'string' ? settlement.period_end.split('T')[0] : settlement.period_end}`
+                : settlement.payout_date
+                  ? typeof settlement.payout_date === 'string'
+                    ? settlement.payout_date.split('T')[0]
+                    : settlement.payout_date
+                  : '',
             grossSales: Number(settlement.gross_sales ?? 0),
             commissionRate: Number(settlement.commission_rate ?? 0),
             commissionAmount: Number(settlement.commission_amount ?? 0),
             netPayout: Number(settlement.net_payout ?? 0),
             status: settlement.status ?? '',
-            payoutDate: settlement.payout_date ?? '',
+            payoutDate: settlement.payout_date
+              ? typeof settlement.payout_date === 'string'
+                ? settlement.payout_date.split('T')[0]
+                : settlement.payout_date
+              : '',
             transactionRef: settlement.transaction_ref ?? '',
           }))
         )
