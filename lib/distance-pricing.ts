@@ -137,6 +137,8 @@ export function calculateCheckoutPricing(params: {
   const input: CalculatorInput = {
     subtotal,
     distanceKm: distKm,
+    packagingFee: 0,
+    gstRatePercent: 0,
     platformFee: cfg.platformFee ?? cfg.platform_fee,
     handlingFee: cfg.handlingFee ?? cfg.handling_fee,
     vendorCommissionPercent: cfg.vendorCommission ?? cfg.vendor_commission,

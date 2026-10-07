@@ -110,7 +110,7 @@ export function calculateFullBreakdown(
 
   // 1. Delivery Fee Math
   const extraDistanceKm = Math.max(0, distanceKm - baseDistanceKm)
-  const extraDistanceFee = Math.round(extraDistanceKm * perKmRate)
+  const extraDistanceFee = Math.round(Math.ceil(extraDistanceKm) * perKmRate)
   const basePlusDistance = baseDeliveryFee + extraDistanceFee
   const surgeMultiplierAdd = Math.max(0, surgeMultiplier - 1.0)
   const surgeFee = Math.round(basePlusDistance * surgeMultiplierAdd)
