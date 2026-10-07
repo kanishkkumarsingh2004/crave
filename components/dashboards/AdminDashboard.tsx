@@ -813,14 +813,14 @@ export default function AdminDashboard() {
 
         <button
           onClick={fetchAccountsAndVendors}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202923] transition shadow-xs"
         >
           <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Supabase Data
         </button>
       </div>
 
       {/* Sub-Tabs: Vendors | Customers | Drivers | Admins | Menu & Price Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-[#18201c] p-3.5 rounded-2xl border border-gray-200 dark:border-[#27342d] shadow-xs">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
             onClick={() => {
@@ -829,8 +829,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'vendors'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
             }`}
           >
             <Store className="size-4 text-amber-400" />
@@ -844,8 +844,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'customers'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
             }`}
           >
             <Users className="size-4 text-emerald-400" />
@@ -859,8 +859,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'drivers'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
             }`}
           >
             <Zap className="size-4 text-blue-400" />
@@ -874,8 +874,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'admins'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
             }`}
           >
             <ShieldCheck className="size-4 text-purple-400" />
@@ -886,8 +886,8 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('menu-pricing')}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'menu-pricing'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
             }`}
           >
             <Utensils className="size-4 text-[#d9f447]" />
@@ -902,7 +902,7 @@ export default function AdminDashboard() {
             placeholder="Search store, owner or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-xs font-medium outline-none focus:border-[#86a018] focus:bg-white"
+            className="w-full rounded-xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] py-1.5 pl-8 pr-3 text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018]"
           />
         </div>
       </div>
@@ -912,8 +912,10 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c]">Registered Store Vendors</h3>
-              <p className="text-[11px] text-gray-500">
+              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                Registered Store Vendors
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
                 Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access
                 menus.
               </p>
@@ -921,15 +923,15 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setIsAddVendorOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black transition"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b51b] transition"
             >
-              <Plus className="size-3.5 text-[#d9f447]" /> + Onboard New Store
+              <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Onboard New Store
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-xs">
             <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
-              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+              <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5 w-[25%]">Store &amp; Owner</th>
                   <th className="px-4 py-3.5 w-[18%]">Vendor Category</th>
@@ -1226,8 +1228,10 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c]">Registered Delivery Partners</h3>
-              <p className="text-[11px] text-gray-500">
+              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                Registered Delivery Partners
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
                 Admin onboarding. View fleet accounts, vehicle details, license numbers, and active
                 status.
               </p>
@@ -1235,15 +1239,15 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setIsAddDriverOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b51b] transition cursor-pointer"
             >
-              <Plus className="size-3.5 text-[#d9f447]" /> + Add Driver
+              <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Add Driver
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-xs">
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
-              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+              <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5">Driver Name</th>
                   <th className="px-4 py-3.5">Contact Email &amp; Phone</th>
@@ -1252,36 +1256,46 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
                 {driverAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
+                    <td
+                      colSpan={5}
+                      className="p-8 text-center text-xs text-gray-500 dark:text-gray-400"
+                    >
                       No driver accounts found in Supabase users table. Click &apos;+ Add
                       Driver&apos; to onboard one.
                     </td>
                   </tr>
                 ) : (
                   driverAccounts.map((driver) => (
-                    <tr key={driver.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                    <tr
+                      key={driver.id}
+                      className="hover:bg-gray-50/80 dark:hover:bg-[#202923]/60 transition-colors"
+                    >
+                      <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
                         <div className="flex items-center gap-2.5">
-                          <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 text-cyan-800 font-bold shrink-0">
+                          <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-bold shrink-0">
                             <Zap className="size-4" />
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-[#18201c]">{driver.name}</p>
-                            <p className="text-[11px] text-gray-500 font-normal">
+                            <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                              {driver.name}
+                            </p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal">
                               Joined: {driver.joinedDate}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-gray-600">
+                      <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300">
                         <p className="font-semibold">{driver.email}</p>
-                        <p className="text-[11px] text-gray-500">{driver.phone || 'Phone N/A'}</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                          {driver.phone || 'Phone N/A'}
+                        </p>
                       </td>
-                      <td className="px-4 py-3.5 text-gray-600 font-semibold">
-                        <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium border border-gray-200">
+                      <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300 font-semibold">
+                        <span className="inline-block rounded-md bg-gray-100 dark:bg-[#121815] px-2 py-0.5 text-xs text-gray-800 dark:text-gray-200 font-medium border border-gray-200 dark:border-[#27342d]">
                           {driver.detail}
                         </span>
                       </td>
@@ -1289,8 +1303,8 @@ export default function AdminDashboard() {
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
                             driver.status === 'active'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                              : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                           }`}
                         >
                           <span
@@ -1305,17 +1319,17 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(driver)}
-                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition whitespace-nowrap flex items-center gap-1"
                             title="Edit Driver Details"
                           >
-                            <Edit3 className="size-3.5 text-blue-600" /> Edit
+                            <Edit3 className="size-3.5 text-blue-600 dark:text-blue-400" /> Edit
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(driver.id, driver.status)}
                             className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
                               driver.status === 'active'
-                                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                                : 'border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
                             }`}
                           >
                             {driver.status === 'active' ? 'Suspend' : 'Activate'}
@@ -1328,7 +1342,7 @@ export default function AdminDashboard() {
                                 email: driver.email,
                               })
                             }
-                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition flex items-center gap-1"
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition flex items-center gap-1"
                             title="Delete Driver Account"
                           >
                             <Trash2 className="size-3.5" /> Delete
@@ -1468,13 +1482,13 @@ export default function AdminDashboard() {
       {/* EDIT ACCOUNT MODAL (ADMIN CONTROL) */}
       {isEditModalOpen && editingAccount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Account Management &amp; Editing
                 </span>
-                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
                   Edit{' '}
                   {editingAccount.role === 'vendor' ||
                   editingAccount.role === 'restaurant_vendor' ||
@@ -1493,7 +1507,7 @@ export default function AdminDashboard() {
                   setIsEditModalOpen(false)
                   setEditingAccount(null)
                 }}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1501,36 +1515,40 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSaveEdit} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Full Name / Owner Name *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Full Name / Owner Name *
+                </label>
                 <input
                   type="text"
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Email Address *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Email Address *
+                  </label>
                   <input
                     type="email"
                     required
                     value={editForm.email}
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Phone Number</label>
                   <input
                     type="text"
                     placeholder="+91 98765 43210"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -1539,34 +1557,39 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                <div className="rounded-xl bg-amber-50/70 p-4 border border-amber-200 space-y-3">
-                  <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
-                    <Store className="size-4 text-amber-700" /> Store &amp; Commission Parameters
+                <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
+                  <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
+                    <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
+                    Commission Parameters
                   </p>
 
                   <div>
-                    <label className="font-bold text-gray-700">Store Name</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">Store Name</label>
                     <input
                       type="text"
                       value={editForm.storeName}
                       onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="font-bold text-gray-700">Cuisine / Category</label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        Cuisine / Category
+                      </label>
                       <input
                         type="text"
                         value={editForm.cuisine}
                         onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
-                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-blue-500"
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                       />
                     </div>
 
                     <div>
-                      <label className="font-bold text-gray-700">Commission Rate (%)</label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        Commission Rate (%)
+                      </label>
                       <input
                         type="number"
                         min={0}
@@ -1575,7 +1598,7 @@ export default function AdminDashboard() {
                         onChange={(e) =>
                           setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
                         }
-                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                       />
                     </div>
                   </div>
@@ -1584,18 +1607,21 @@ export default function AdminDashboard() {
 
               {/* Driver Specific Fields */}
               {(editingAccount.role === 'rider' || editingAccount.role === 'driver') && (
-                <div className="rounded-xl bg-cyan-50/70 p-4 border border-cyan-200 space-y-3">
-                  <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
-                    <Zap className="size-4 text-cyan-700" /> Driver Vehicle &amp; Fleet Details
+                <div className="rounded-xl bg-cyan-50/70 dark:bg-cyan-950/30 p-4 border border-cyan-200 dark:border-cyan-900/50 space-y-3">
+                  <p className="font-bold text-[#18201c] dark:text-cyan-200 flex items-center gap-1.5 text-xs">
+                    <Zap className="size-4 text-cyan-700 dark:text-cyan-400" /> Driver Vehicle &amp;
+                    Fleet Details
                   </p>
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="font-bold text-gray-700">Vehicle Type</label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        Vehicle Type
+                      </label>
                       <select
                         value={editForm.vehicleType}
                         onChange={(e) => setEditForm({ ...editForm, vehicleType: e.target.value })}
-                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-bold outline-none focus:border-blue-500"
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500"
                       >
                         <option value="Electric Scooter">Electric Scooter (EV)</option>
                         <option value="Electric Bike">Electric Bike (EV)</option>
@@ -1606,13 +1632,15 @@ export default function AdminDashboard() {
                     </div>
 
                     <div>
-                      <label className="font-bold text-gray-700">License Plate Number</label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        License Plate Number
+                      </label>
                       <input
                         type="text"
                         placeholder="KA-05-EV-1234"
                         value={editForm.licensePlate}
                         onChange={(e) => setEditForm({ ...editForm, licensePlate: e.target.value })}
-                        className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-mono outline-none focus:border-blue-500"
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                       />
                     </div>
                   </div>
@@ -1620,12 +1648,14 @@ export default function AdminDashboard() {
               )}
 
               <div>
-                <label className="font-bold text-[#18201c]">Address / Location</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Address / Location
+                </label>
                 <input
                   type="text"
                   value={editForm.address}
                   onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
@@ -1633,19 +1663,19 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                <div className="rounded-2xl border border-gray-200 p-3 bg-gray-50/50 space-y-2">
+                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
                       <span>Store Location Pin</span>
                     </h4>
-                    <span className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
                       {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
                     Click or drag the map pin to adjust the store's exact coordinates.
                   </p>
-                  <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
                     <LocationPickerMap
                       initialLat={editForm.latitude}
                       initialLng={editForm.longitude}
@@ -1663,7 +1693,7 @@ export default function AdminDashboard() {
               )}
 
               <div>
-                <label className="font-bold text-[#18201c]">
+                <label className="font-bold text-[#18201c] dark:text-white">
                   Reset Account Password (Optional)
                 </label>
                 <input
@@ -1671,25 +1701,25 @@ export default function AdminDashboard() {
                   placeholder="Leave blank to keep unchanged"
                   value={editForm.password}
                   onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-blue-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditModalOpen(false)
                     setEditingAccount(null)
                   }}
-                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
+                  className="rounded-xl border border-gray-300 dark:border-[#27342d] px-4 py-2 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editSubmitting}
-                  className="rounded-xl bg-blue-600 px-6 py-2 font-bold text-white shadow-md hover:bg-blue-700 transition flex items-center gap-2"
+                  className="rounded-xl bg-blue-600 dark:bg-blue-500 px-6 py-2 font-bold text-white shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 transition flex items-center gap-2"
                 >
                   {editSubmitting ? (
                     <>
@@ -1711,17 +1741,19 @@ export default function AdminDashboard() {
       {/* ADMIN DRIVER ONBOARDING MODAL */}
       {isAddDriverOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
                   Fleet &amp; Logistics Management
                 </span>
-                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">Add New Delivery Driver</h3>
+                <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
+                  Add New Delivery Driver
+                </h3>
               </div>
               <button
                 onClick={() => setIsAddDriverOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1729,26 +1761,31 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleOnboardDriver} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Driver Full Name *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Driver Full Name *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Ramesh Kumar"
                   value={newDriverForm.name}
                   onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               {/* Login Credentials Section */}
-              <div className="rounded-xl bg-amber-50/60 p-4 border border-amber-200 space-y-3">
-                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
-                  <ShieldCheck className="size-4 text-amber-700" /> Driver Account Login Credentials
+              <div className="rounded-xl bg-amber-50/60 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
+                <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="size-4 text-amber-700 dark:text-amber-400" /> Driver
+                  Account Login Credentials
                 </p>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="font-bold text-gray-700">Driver Email *</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Driver Email *
+                    </label>
                     <input
                       type="email"
                       required
@@ -1757,12 +1794,14 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNewDriverForm({ ...newDriverForm, email: e.target.value })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
 
                   <div>
-                    <label className="font-bold text-gray-700">Initial Password *</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Initial Password *
+                    </label>
                     <input
                       type="password"
                       required
@@ -1771,7 +1810,7 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNewDriverForm({ ...newDriverForm, password: e.target.value })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
                 </div>
@@ -1779,24 +1818,24 @@ export default function AdminDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Phone Number</label>
                   <input
                     type="text"
                     placeholder="+91 98765 43210"
                     value={newDriverForm.phone}
                     onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Vehicle Type</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Vehicle Type</label>
                   <select
                     value={newDriverForm.vehicleType}
                     onChange={(e) =>
                       setNewDriverForm({ ...newDriverForm, vehicleType: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018]"
                   >
                     <option value="Electric Scooter">Electric Scooter (EV)</option>
                     <option value="Electric Bike">Electric Bike (EV)</option>
@@ -1809,7 +1848,9 @@ export default function AdminDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Vehicle License Plate Number</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Vehicle License Plate Number
+                  </label>
                   <input
                     type="text"
                     placeholder="KA-05-EV-1234"
@@ -1817,12 +1858,14 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewDriverForm({ ...newDriverForm, licensePlate: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-mono outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Operating Hub / Address</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Operating Hub / Address
+                  </label>
                   <input
                     type="text"
                     placeholder="Indiranagar Hub, Bengaluru"
@@ -1830,32 +1873,33 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewDriverForm({ ...newDriverForm, address: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
                 <button
                   type="button"
                   onClick={() => setIsAddDriverOpen(false)}
-                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
+                  className="rounded-xl border border-gray-300 dark:border-[#27342d] px-4 py-2 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={driverSubmitting}
-                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black transition flex items-center gap-2"
+                  className="rounded-xl bg-[#18201c] dark:bg-[#86a018] px-6 py-2 font-bold text-white dark:text-[#121815] shadow-md hover:bg-black dark:hover:bg-[#97b41e] transition flex items-center gap-2"
                 >
                   {driverSubmitting ? (
                     <>
-                      <span className="size-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="size-3 border-2 border-white dark:border-[#121815] border-t-transparent rounded-full animate-spin" />
                       <span>Onboarding Driver...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="size-4 text-[#d9f447]" /> Onboard Driver
+                      <CheckCircle2 className="size-4 text-[#d9f447] dark:text-[#121815]" /> Onboard
+                      Driver
                     </>
                   )}
                 </button>
@@ -1867,24 +1911,24 @@ export default function AdminDashboard() {
 
       {/* VENDOR ONBOARDING MODAL (ADMIN ONLY) */}
       {isAddVendorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
                   Admin Exclusive Flow
                 </span>
-                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
                   Onboard New Restaurant Vendor
                 </h3>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Register vendor credentials, store profile, cuisine, and commission model in
                   Supabase.
                 </p>
               </div>
               <button
                 onClick={() => setIsAddVendorOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1893,7 +1937,7 @@ export default function AdminDashboard() {
             <form onSubmit={handleOnboardVendor} className="mt-5 space-y-4 text-xs">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Store Name *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Store Name *</label>
                   <input
                     type="text"
                     required
@@ -1902,12 +1946,14 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, storeName: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Vendor Category Type *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Vendor Category Type *
+                  </label>
                   <select
                     value={newVendorForm.vendorType}
                     onChange={(e) =>
@@ -1916,7 +1962,7 @@ export default function AdminDashboard() {
                         vendorType: e.target.value as 'Restaurant Vendor',
                       })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018]"
                   >
                     <option value="Restaurant Vendor">Restaurant Vendor (Food &amp; Dining)</option>
                   </select>
@@ -1925,7 +1971,9 @@ export default function AdminDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Owner / Contact Name *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Owner / Contact Name *
+                  </label>
                   <input
                     type="text"
                     required
@@ -1934,12 +1982,14 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, ownerName: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Cuisine / Store Specialties *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Cuisine / Store Specialties *
+                  </label>
                   <input
                     type="text"
                     required
@@ -1948,20 +1998,23 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, cuisine: e.target.value })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               {/* Login Credentials Section */}
-              <div className="rounded-xl bg-amber-50/60 p-4 border border-amber-200 space-y-3">
-                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
-                  <ShieldCheck className="size-4 text-amber-700" /> Vendor Account Login Credentials
+              <div className="rounded-xl bg-amber-50/60 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
+                <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="size-4 text-amber-700 dark:text-amber-400" /> Vendor
+                  Account Login Credentials
                 </p>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="font-bold text-gray-700">Vendor Login Email *</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Vendor Login Email *
+                    </label>
                     <input
                       type="email"
                       required
@@ -1970,12 +2023,14 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNewVendorForm({ ...newVendorForm, email: e.target.value })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
 
                   <div>
-                    <label className="font-bold text-gray-700">Initial Password *</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Initial Password *
+                    </label>
                     <input
                       type="password"
                       required
@@ -1984,7 +2039,7 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNewVendorForm({ ...newVendorForm, password: e.target.value })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
                 </div>
@@ -1992,18 +2047,20 @@ export default function AdminDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-[#18201c]">Phone Number</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Phone Number</label>
                   <input
                     type="text"
                     placeholder="+91 98765 43210"
                     value={newVendorForm.phone}
                     onChange={(e) => setNewVendorForm({ ...newVendorForm, phone: e.target.value })}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Commission Rate (%)</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Commission Rate (%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -2012,37 +2069,39 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, commissionRate: Number(e.target.value) })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Store Address / Location</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Store Address / Location
+                </label>
                 <input
                   type="text"
                   placeholder="104 Market St, Koramangala 4th Block, Bengaluru"
                   value={newVendorForm.address}
                   onChange={(e) => setNewVendorForm({ ...newVendorForm, address: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               {/* Store Location Map Picker */}
-              <div className="rounded-2xl border border-gray-200 p-3 bg-gray-50/50 space-y-2">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-[#18201c] flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
                     <span>Store Location Pin</span>
                   </h4>
-                  <span className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
                     {newVendorForm.latitude.toFixed(4)}°, {newVendorForm.longitude.toFixed(4)}°
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">
                   Click or drag the map pin to mark the exact store coordinates for delivery
                   calculation.
                 </p>
-                <div className="overflow-hidden rounded-xl border border-gray-200">
+                <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
                   <LocationPickerMap
                     initialLat={newVendorForm.latitude}
                     initialLng={newVendorForm.longitude}
@@ -2058,27 +2117,28 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
                 <button
                   type="button"
                   onClick={() => setIsAddVendorOpen(false)}
-                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50 transition"
+                  className="rounded-xl border border-gray-300 dark:border-[#27342d] px-4 py-2 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={vendorSubmitting}
-                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black transition flex items-center gap-2"
+                  className="rounded-xl bg-[#18201c] dark:bg-[#86a018] px-6 py-2 font-bold text-white dark:text-[#121815] shadow-md hover:bg-black dark:hover:bg-[#97b41e] transition flex items-center gap-2"
                 >
                   {vendorSubmitting ? (
                     <>
-                      <span className="size-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="size-3 border-2 border-white dark:border-[#121815] border-t-transparent rounded-full animate-spin" />
                       <span>Onboarding Vendor...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="size-4 text-[#d9f447]" /> Onboard Vendor
+                      <CheckCircle2 className="size-4 text-[#d9f447] dark:text-[#121815]" /> Onboard
+                      Vendor
                     </>
                   )}
                 </button>
@@ -2090,26 +2150,26 @@ export default function AdminDashboard() {
 
       {/* ADMIN MENU & PRICE ALTERATION DRAWER / MODAL */}
       {isMenuDrawerOpen && selectedVendorForMenu && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[92vh] overflow-y-auto flex flex-col justify-between">
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-900">
+                    <span className="rounded-md bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-900 dark:text-amber-300 border border-transparent dark:border-amber-900/50">
                       {selectedVendorForMenu.description?.toLowerCase().includes('xp')
                         ? 'XP Store'
                         : 'Restaurant'}
                     </span>
-                    <span className="text-xs font-bold text-emerald-700">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
                       {selectedVendorForMenu.commissionRate}% Commission Rate
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-[#18201c] mt-1">
+                  <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-1">
                     {selectedVendorForMenu.storeName} — Menu &amp; Price Controls
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Admin can alter regular prices, set compare prices (discounts), or add new items
                     directly.
                   </p>
@@ -2131,13 +2191,14 @@ export default function AdminDashboard() {
                       })
                       setIsAddProductOpen(true)
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-black"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b41e] transition-colors"
                   >
-                    <Plus className="size-3.5 text-[#d9f447]" /> + Add Item for Vendor
+                    <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Add Item for
+                    Vendor
                   </button>
                   <button
                     onClick={() => setIsMenuDrawerOpen(false)}
-                    className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                   >
                     <X className="size-4" />
                   </button>
@@ -2147,18 +2208,18 @@ export default function AdminDashboard() {
               {/* Products Table */}
               <div className="mt-5 space-y-4">
                 {productsLoading ? (
-                  <div className="p-8 text-center text-xs text-gray-500">
+                  <div className="p-8 text-center text-xs text-gray-500 dark:text-gray-400">
                     Loading store products from Supabase database...
                   </div>
                 ) : vendorProducts.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                  <div className="p-8 text-center text-xs text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-[#27342d] rounded-2xl">
                     No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos;
                     to create one.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#27342d]">
                     <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                      <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 uppercase font-bold text-[10px] tracking-wider">
+                      <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 uppercase font-bold text-[10px] tracking-wider">
                         <tr>
                           <th className="px-4 py-3">Product / Item</th>
                           <th className="px-4 py-3">Selling Price</th>
@@ -2168,7 +2229,7 @@ export default function AdminDashboard() {
                           <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100 bg-white">
+                      <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
                         {vendorProducts.map((product) => {
                           const hasDiscount =
                             product.comparePrice && product.comparePrice > product.price
@@ -2180,36 +2241,39 @@ export default function AdminDashboard() {
                             : 0
 
                           return (
-                            <tr key={product.id} className="hover:bg-gray-50/80 transition-colors">
-                              <td className="px-4 py-3 font-bold text-[#18201c]">
+                            <tr
+                              key={product.id}
+                              className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/80 transition-colors"
+                            >
+                              <td className="px-4 py-3 font-bold text-[#18201c] dark:text-white">
                                 <div className="flex items-center gap-3">
                                   {product.imageUrl ? (
                                     <img
                                       src={product.imageUrl}
                                       alt={product.name}
-                                      className="size-9 rounded-lg object-cover border border-gray-200 shrink-0"
+                                      className="size-9 rounded-lg object-cover border border-gray-200 dark:border-[#27342d] shrink-0"
                                     />
                                   ) : (
-                                    <div className="grid size-9 place-items-center rounded-lg bg-gray-100 text-gray-400 shrink-0">
+                                    <div className="grid size-9 place-items-center rounded-lg bg-gray-100 dark:bg-[#121815] text-gray-400 shrink-0">
                                       <Utensils className="size-4" />
                                     </div>
                                   )}
                                   <div>
-                                    <p className="font-bold text-sm text-[#18201c]">
+                                    <p className="font-bold text-sm text-[#18201c] dark:text-white">
                                       {product.name}
                                     </p>
-                                    <p className="text-[11px] font-normal text-gray-500 line-clamp-1">
+                                    <p className="text-[11px] font-normal text-gray-500 dark:text-gray-400 line-clamp-1">
                                       {product.description || 'No description'}
                                     </p>
                                   </div>
                                 </div>
                               </td>
 
-                              <td className="px-4 py-3 font-bold text-sm text-[#18201c] whitespace-nowrap">
+                              <td className="px-4 py-3 font-bold text-sm text-[#18201c] dark:text-white whitespace-nowrap">
                                 ₹{product.price}
                               </td>
 
-                              <td className="px-4 py-3 text-gray-500 font-medium whitespace-nowrap">
+                              <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
                                 {product.comparePrice ? (
                                   <span className="line-through">₹{product.comparePrice}</span>
                                 ) : (
@@ -2219,11 +2283,13 @@ export default function AdminDashboard() {
 
                               <td className="px-4 py-3 whitespace-nowrap">
                                 {hasDiscount ? (
-                                  <span className="rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-800 border border-rose-200">
+                                  <span className="rounded-md bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 text-[10px] font-black text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
                                     {discountPct}% OFF
                                   </span>
                                 ) : (
-                                  <span className="text-[11px] text-gray-400">Regular</span>
+                                  <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                                    Regular
+                                  </span>
                                 )}
                               </td>
 
@@ -2231,8 +2297,8 @@ export default function AdminDashboard() {
                                 <span
                                   className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                     product.status === 'ACTIVE'
-                                      ? 'bg-emerald-100 text-emerald-800'
-                                      : 'bg-rose-100 text-rose-800'
+                                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
+                                      : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
                                   }`}
                                 >
                                   {product.status}
@@ -2257,9 +2323,10 @@ export default function AdminDashboard() {
                                     })
                                     setIsAddProductOpen(true)
                                   }}
-                                  className="inline-flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-1.5 text-[11px] font-bold text-gray-800 hover:bg-gray-200 transition"
+                                  className="inline-flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-[#121815] px-3 py-1.5 text-[11px] font-bold text-gray-800 dark:text-gray-200 border border-transparent dark:border-[#27342d] hover:bg-gray-200 dark:hover:bg-gray-800 transition"
                                 >
-                                  <Edit3 className="size-3.5 text-amber-600" /> Alter Price / Edit
+                                  <Edit3 className="size-3.5 text-amber-600 dark:text-amber-400" />{' '}
+                                  Alter Price / Edit
                                 </button>
                               </td>
                             </tr>
@@ -2272,10 +2339,10 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-gray-100 flex justify-end">
+            <div className="mt-5 pt-3 border-t border-gray-100 dark:border-[#27342d] flex justify-end">
               <button
                 onClick={() => setIsMenuDrawerOpen(false)}
-                className="rounded-xl border border-gray-300 px-5 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-gray-300 dark:border-[#27342d] px-5 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 Close Drawer
               </button>
@@ -2287,13 +2354,13 @@ export default function AdminDashboard() {
       {/* EDIT / ADD PRODUCT MODAL FOR ADMIN */}
       {isAddProductOpen && selectedVendorForMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d]">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
                   Admin Price &amp; Menu Modifier
                 </span>
-                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
                   {editingProduct
                     ? `Alter '${editingProduct.name}' Price`
                     : 'Add New Product to Store'}
@@ -2301,7 +2368,7 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setIsAddProductOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -2309,25 +2376,28 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSaveProduct} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Product Name *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">Product Name *</label>
                 <input
                   type="text"
                   required
                   value={productForm.name}
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               {/* Price & Compare Price Alteration Box */}
-              <div className="rounded-xl bg-gray-50 p-3.5 border border-gray-200 space-y-3">
-                <p className="font-bold text-[#18201c] flex items-center gap-1.5 text-xs">
-                  <Tag className="size-4 text-amber-600" /> Admin Pricing &amp; Discount Presets
+              <div className="rounded-xl bg-gray-50 dark:bg-[#121815] p-3.5 border border-gray-200 dark:border-[#27342d] space-y-3">
+                <p className="font-bold text-[#18201c] dark:text-amber-400 flex items-center gap-1.5 text-xs">
+                  <Tag className="size-4 text-amber-600 dark:text-amber-400" /> Admin Pricing &amp;
+                  Discount Presets
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-gray-700">Selling Price (₹) *</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Selling Price (₹) *
+                    </label>
                     <input
                       type="number"
                       required
@@ -2339,12 +2409,14 @@ export default function AdminDashboard() {
                           price: e.target.value === '' ? '' : Number(e.target.value),
                         })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2 font-extrabold text-sm outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-2 font-extrabold text-sm outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
 
                   <div>
-                    <label className="font-bold text-gray-700">Original MRP / Compare (₹)</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Original MRP / Compare (₹)
+                    </label>
                     <input
                       type="number"
                       placeholder="e.g. 200"
@@ -2355,14 +2427,14 @@ export default function AdminDashboard() {
                           comparePrice: e.target.value === '' ? '' : Number(e.target.value),
                         })
                       }
-                      className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2 font-bold text-sm outline-none focus:border-[#86a018]"
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-2 font-bold text-sm outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                     />
                   </div>
                 </div>
 
                 {/* Quick Discount Tool */}
                 <div className="pt-1">
-                  <p className="text-[10px] font-bold text-gray-500 mb-1">
+                  <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">
                     Quick Discount Presets:
                   </p>
                   <div className="flex items-center gap-2">
@@ -2371,7 +2443,7 @@ export default function AdminDashboard() {
                         key={pct}
                         type="button"
                         onClick={() => applyQuickDiscount(pct)}
-                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-800 hover:bg-[#18201c] hover:text-white transition"
+                        className="rounded-lg border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-2.5 py-1 text-[10px] font-bold text-gray-800 dark:text-gray-200 hover:bg-[#18201c] dark:hover:bg-[#86a018] hover:text-white dark:hover:text-[#121815] transition"
                       >
                         {pct}% OFF
                       </button>
@@ -2381,27 +2453,33 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Description / Notes</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Description / Notes
+                </label>
                 <input
                   type="text"
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Product Image URL</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Product Image URL
+                </label>
                 <input
                   type="url"
                   value={productForm.imageUrl}
                   onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-2.5 font-mono text-[11px] outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono text-[11px] outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3 border border-gray-200">
-                <span className="font-bold text-[#18201c]">Product In-Stock Status</span>
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-[#121815] p-3 border border-gray-200 dark:border-[#27342d]">
+                <span className="font-bold text-[#18201c] dark:text-white">
+                  Product In-Stock Status
+                </span>
                 <select
                   value={productForm.status}
                   onChange={(e) =>
@@ -2410,24 +2488,24 @@ export default function AdminDashboard() {
                       status: e.target.value as 'ACTIVE' | 'INACTIVE',
                     })
                   }
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1 font-bold outline-none text-xs"
+                  className="rounded-lg border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white px-3 py-1 font-bold outline-none text-xs"
                 >
                   <option value="ACTIVE">Active (In Stock)</option>
                   <option value="INACTIVE">Out of Stock</option>
                 </select>
               </div>
 
-              <div className="mt-5 flex justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="mt-5 flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
                 <button
                   type="button"
                   onClick={() => setIsAddProductOpen(false)}
-                  className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-600 hover:bg-gray-50"
+                  className="rounded-xl border border-gray-300 dark:border-[#27342d] px-4 py-2 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-[#18201c] px-6 py-2 font-bold text-white shadow-md hover:bg-black"
+                  className="rounded-xl bg-[#18201c] dark:bg-[#86a018] px-6 py-2 font-bold text-white dark:text-[#121815] shadow-md hover:bg-black dark:hover:bg-[#97b41e] transition"
                 >
                   Save Product &amp; Update Prices
                 </button>
@@ -2440,16 +2518,16 @@ export default function AdminDashboard() {
       {/* DELETE STORE CONFIRMATION MODAL */}
       {deleteConfirmVendor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-rose-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-100 text-rose-700">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-rose-200 dark:border-rose-900/50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400">
               <Trash2 className="size-6" />
             </div>
-            <h3 className="mt-4 text-center text-lg font-bold text-[#18201c]">
+            <h3 className="mt-4 text-center text-lg font-bold text-[#18201c] dark:text-white">
               Delete Store / Restaurant?
             </h3>
-            <p className="mt-2 text-center text-xs text-gray-600 leading-relaxed">
+            <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
               Are you sure you want to permanently delete store{' '}
-              <strong className="text-gray-900">{deleteConfirmVendor.name}</strong>
+              <strong className="text-gray-900 dark:text-white">{deleteConfirmVendor.name}</strong>
               {deleteConfirmVendor.email ? ` (${deleteConfirmVendor.email})` : ''}? This action will
               erase the store, owner account, and all associated menu items from Supabase.
             </p>
@@ -2458,7 +2536,7 @@ export default function AdminDashboard() {
                 type="button"
                 onClick={() => setDeleteConfirmVendor(null)}
                 disabled={isDeletingVendor}
-                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+                className="flex-1 rounded-xl border border-gray-300 dark:border-[#27342d] py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 Cancel
               </button>
@@ -2472,7 +2550,7 @@ export default function AdminDashboard() {
                   )
                 }
                 disabled={isDeletingVendor}
-                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 transition flex items-center justify-center gap-2"
+                className="flex-1 rounded-xl bg-rose-600 dark:bg-rose-500 py-2.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 dark:hover:bg-rose-600 transition flex items-center justify-center gap-2"
               >
                 {isDeletingVendor ? 'Deleting...' : 'Yes, Delete Store'}
               </button>

@@ -1,6 +1,7 @@
 import { AuthProvider } from '@/lib/auth-context'
 import { CartProvider } from '@/lib/cart-context'
 import { LanguageProvider } from '@/lib/language-context'
+import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { Toaster } from '@/components/ui/Toaster'
 import { cn } from '@/lib/utils'
@@ -32,10 +33,12 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <LanguageProvider>
-              <ToastProvider>
-                {children}
-                <Toaster />
-              </ToastProvider>
+              <ThemeProvider>
+                <ToastProvider>
+                  {children}
+                  <Toaster />
+                </ToastProvider>
+              </ThemeProvider>
             </LanguageProvider>
           </CartProvider>
         </AuthProvider>

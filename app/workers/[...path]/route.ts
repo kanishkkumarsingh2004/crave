@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   try {
     const params = await context.params
     const workerPathSegments = params?.path || []

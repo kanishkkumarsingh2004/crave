@@ -25,7 +25,9 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
     <div className="h-[calc(100vh-200px)] min-h-[600px] w-full rounded-2xl bg-gray-100 flex items-center justify-center border border-gray-200">
       <div className="flex flex-col items-center gap-2">
         <div className="size-6 border-2 border-[#859d19] border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-gray-500">Loading Live Map Telemetry & Addresses...</span>
+        <span className="text-xs font-bold text-gray-500">
+          Loading Live Map Telemetry & Addresses...
+        </span>
       </div>
     </div>
   ),
@@ -149,9 +151,7 @@ export default function MapLiveAnalyticsPage() {
 
         if (driverId && !isNaN(lat) && !isNaN(lng)) {
           setPins((prevPins) => {
-            const exists = prevPins.some(
-              (p) => p.id === `drv_${driverId}` || p.id === driverId
-            )
+            const exists = prevPins.some((p) => p.id === `drv_${driverId}` || p.id === driverId)
 
             if (exists) {
               return prevPins.map((p) => {
@@ -213,9 +213,7 @@ export default function MapLiveAnalyticsPage() {
   })
 
   // Extract address pins specifically for the address telemetry list
-  const addressPins = pins.filter(
-    (p) => p.type === 'order'
-  )
+  const addressPins = pins.filter((p) => p.type === 'order')
 
   const counts = {
     total: pins.length,
@@ -236,24 +234,28 @@ export default function MapLiveAnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Full Screen Live Map & Telemetry Control Board */}
-      <div className="w-full rounded-3xl border border-[#e2e8de] bg-white p-5 sm:p-6 shadow-xs flex flex-col space-y-4">
+      <div className="w-full rounded-3xl border border-[#e2e8de] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-xs flex flex-col space-y-4">
         {/* Header Bar with Title, Filter Pills, Refresh & Settings Dropdown */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-100 dark:border-[#27342d] pb-4">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-2xl bg-[#859d19]/10 border border-[#859d19]/30 flex items-center justify-center text-[#859d19]">
+            <div className="size-10 rounded-2xl bg-[#859d19]/10 dark:bg-[#d9f447]/20 border border-[#859d19]/30 dark:border-[#d9f447]/30 flex items-center justify-center text-[#859d19] dark:text-[#d9f447]">
               <MapPin className="size-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-lg text-[#18201c]">Live Map & Address Analytics</h3>
+                <h3 className="font-extrabold text-lg text-[#18201c] dark:text-white">
+                  Live Map & Address Analytics
+                </h3>
                 {autoSyncInterval > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {autoSyncInterval === 1 ? '⚡ Real-Time Live (1s)' : `Auto ${autoSyncInterval}s`}
+                    {autoSyncInterval === 1
+                      ? '⚡ Real-Time Live (1s)'
+                      : `Auto ${autoSyncInterval}s`}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#5a655f]">
+              <p className="text-xs text-[#5a655f] dark:text-gray-400">
                 Real-time tracking of active rider fleet, kitchens, and customer delivery addresses.
               </p>
             </div>
@@ -261,7 +263,7 @@ export default function MapLiveAnalyticsPage() {
 
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-full border border-gray-200 text-xs font-bold overflow-x-auto max-w-full no-scrollbar whitespace-nowrap">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#121815] p-1 rounded-full border border-gray-200 dark:border-[#27342d] text-xs font-bold overflow-x-auto max-w-full no-scrollbar whitespace-nowrap">
               {[
                 { type: 'all', label: `All (${counts.total})` },
                 { type: 'driver', label: `Riders (${counts.drivers})` },
@@ -273,8 +275,8 @@ export default function MapLiveAnalyticsPage() {
                   onClick={() => setFilterType(f.type as any)}
                   className={`px-3 py-1.5 rounded-full transition shrink-0 ${
                     filterType === f.type
-                      ? 'bg-[#18201c] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-[#18201c]'
+                      ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#121815] shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                   }`}
                 >
                   {f.label}
@@ -286,10 +288,10 @@ export default function MapLiveAnalyticsPage() {
             <button
               onClick={() => fetchLiveTelemetry()}
               disabled={isRefreshing}
-              className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-50 px-3.5 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-100 active:scale-95 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] px-3.5 py-2 text-xs font-bold text-[#18201c] dark:text-white hover:bg-gray-100 dark:hover:bg-[#1a221d] active:scale-95 transition disabled:opacity-50"
             >
               <RefreshCw
-                className={`size-3.5 text-[#859d19] ${isRefreshing ? 'animate-spin' : ''}`}
+                className={`size-3.5 text-[#859d19] dark:text-[#d9f447] ${isRefreshing ? 'animate-spin' : ''}`}
               />
               <span className="hidden sm:inline">{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
             </button>
@@ -301,14 +303,18 @@ export default function MapLiveAnalyticsPage() {
                 onClick={() => setIsSettingsOpen((prev) => !prev)}
                 className={`flex items-center gap-1.5 rounded-full border p-2 text-xs font-bold transition ${
                   isSettingsOpen
-                    ? 'border-[#859d19] bg-[#859d19]/10 text-[#18201c] shadow-sm'
-                    : 'border-gray-300 bg-gray-50 text-[#18201c] hover:bg-gray-100 hover:scale-105 active:scale-95'
+                    ? 'border-[#859d19] dark:border-[#d9f447] bg-[#859d19]/10 dark:bg-[#d9f447]/20 text-[#18201c] dark:text-white shadow-sm'
+                    : 'border-gray-300 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] text-[#18201c] dark:text-white hover:bg-gray-100 dark:hover:bg-[#1a221d] hover:scale-105 active:scale-95'
                 }`}
                 title="Live Analytics Settings"
               >
-                <Settings className={`size-4 text-[#859d19] transition-transform duration-300 ${isSettingsOpen ? 'rotate-90' : ''}`} />
+                <Settings
+                  className={`size-4 text-[#859d19] dark:text-[#d9f447] transition-transform duration-300 ${isSettingsOpen ? 'rotate-90' : ''}`}
+                />
                 <span className="hidden sm:inline">Settings</span>
-                <ChevronDown className={`size-3 text-gray-500 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`size-3 text-gray-500 dark:text-gray-400 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* Settings Dropdown Menu */}
@@ -319,172 +325,188 @@ export default function MapLiveAnalyticsPage() {
                     className="fixed inset-0 z-40 bg-black/40 sm:hidden backdrop-blur-xs"
                   />
                   <div className="fixed inset-x-4 top-20 z-50 max-w-sm mx-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
-                    <div className="flex items-center gap-2 font-extrabold text-sm text-[#18201c]">
-                      <SlidersHorizontal className="size-4 text-[#859d19]" />
-                      <span>Map Live Settings</span>
-                    </div>
-                    <button
-                      onClick={() => setIsSettingsOpen(false)}
-                      className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-4 text-xs">
-                    {/* Telemetry Auto-Sync */}
-                    <div className="space-y-1.5">
-                      <label className="font-bold text-[#18201c] flex items-center justify-between">
-                        <span>Telemetry Stream Mode</span>
-                        <span className="text-[10px] text-emerald-700 font-bold font-mono">
-                          {autoSyncInterval === 1
-                            ? '⚡ Event-Driven Live Stream'
-                            : autoSyncInterval > 0
-                              ? `Polling every ${autoSyncInterval}s`
-                              : 'Disabled'}
-                        </span>
-                      </label>
-                      <div className="grid grid-cols-6 gap-1 bg-gray-100 p-1 rounded-xl">
-                        {[1, 3, 5, 10, 30, 0].map((interval) => (
-                          <button
-                            key={interval}
-                            onClick={() => setAutoSyncInterval(interval)}
-                            className={`py-1.5 rounded-lg font-extrabold text-[10px] sm:text-[11px] transition ${
-                              autoSyncInterval === interval
-                                ? interval === 1
-                                  ? 'bg-emerald-600 text-white shadow-xs'
-                                  : 'bg-[#18201c] text-white shadow-xs'
-                                : 'text-gray-600 hover:text-[#18201c]'
-                            }`}
-                          >
-                            {interval === 1 ? '⚡ Live' : interval === 0 ? 'Off' : `${interval}s`}
-                          </button>
-                        ))}
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
+                      <div className="flex items-center gap-2 font-extrabold text-sm text-[#18201c]">
+                        <SlidersHorizontal className="size-4 text-[#859d19]" />
+                        <span>Map Live Settings</span>
                       </div>
+                      <button
+                        onClick={() => setIsSettingsOpen(false)}
+                        className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                      >
+                        <X className="size-4" />
+                      </button>
                     </div>
 
-                    {/* H3 Spatial Grid Settings */}
-                    <div className="space-y-2 border-t border-gray-100 pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-[#18201c] flex items-center gap-1.5">
-                          <Hexagon className="size-3.5 text-[#859d19]" />
-                          <span>H3 Spatial Hex Grid</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setH3GridEnabled((prev) => !prev)}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            h3GridEnabled ? 'bg-[#859d19]' : 'bg-gray-300'
-                          }`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                              h3GridEnabled ? 'translate-x-4' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
-                      </div>
-
-                      {h3GridEnabled && (
-                        <div className="pl-5 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Grid Resolution</span>
-                            <div className="flex flex-wrap gap-1">
-                              {[5, 6, 7, 8, 9].map((res) => (
-                                <button
-                                  key={res}
-                                  onClick={() => setH3Resolution(res)}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    h3Resolution === res
-                                      ? 'bg-[#18201c] text-white'
-                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  Res {res}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-600 flex items-center gap-1">
-                              <Layers className="size-3 text-amber-500" />
-                              <span>Density Heatmap</span>
-                            </span>
+                    <div className="space-y-4 text-xs">
+                      {/* Telemetry Auto-Sync */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-[#18201c] flex items-center justify-between">
+                          <span>Telemetry Stream Mode</span>
+                          <span className="text-[10px] text-emerald-700 font-bold font-mono">
+                            {autoSyncInterval === 1
+                              ? '⚡ Event-Driven Live Stream'
+                              : autoSyncInterval > 0
+                                ? `Polling every ${autoSyncInterval}s`
+                                : 'Disabled'}
+                          </span>
+                        </label>
+                        <div className="grid grid-cols-6 gap-1 bg-gray-100 p-1 rounded-xl">
+                          {[1, 3, 5, 10, 30, 0].map((interval) => (
                             <button
-                              type="button"
-                              onClick={() => setH3HeatmapEnabled((prev) => !prev)}
-                              className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                                h3HeatmapEnabled ? 'bg-amber-500' : 'bg-gray-300'
+                              key={interval}
+                              onClick={() => setAutoSyncInterval(interval)}
+                              className={`py-1.5 rounded-lg font-extrabold text-[10px] sm:text-[11px] transition ${
+                                autoSyncInterval === interval
+                                  ? interval === 1
+                                    ? 'bg-emerald-600 text-white shadow-xs'
+                                    : 'bg-[#18201c] text-white shadow-xs'
+                                  : 'text-gray-600 hover:text-[#18201c]'
                               }`}
                             >
-                              <span
-                                className={`pointer-events-none inline-block size-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                  h3HeatmapEnabled ? 'translate-x-3' : 'translate-x-0'
-                                }`}
-                              />
+                              {interval === 1 ? '⚡ Live' : interval === 0 ? 'Off' : `${interval}s`}
                             </button>
-                          </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Layer Visibilities */}
-                    <div className="space-y-2 border-t border-gray-100 pt-3">
-                      <span className="font-bold text-[#18201c]">Pin Layers</span>
-                      <div className="space-y-1.5 pl-1">
-                        {[
-                          { key: 'addresses', label: 'Customer Addresses & Drops', color: 'bg-purple-500' },
-                          { key: 'drivers', label: 'Riders & Active Fleet', color: 'bg-emerald-500' },
-                          { key: 'restaurants', label: 'Kitchens & Dark Stores', color: 'bg-amber-500' },
-                        ].map((layer) => (
-                          <label
-                            key={layer.key}
-                            className="flex items-center justify-between text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded-lg"
+                      {/* H3 Spatial Grid Settings */}
+                      <div className="space-y-2 border-t border-gray-100 pt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#18201c] flex items-center gap-1.5">
+                            <Hexagon className="size-3.5 text-[#859d19]" />
+                            <span>H3 Spatial Hex Grid</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setH3GridEnabled((prev) => !prev)}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              h3GridEnabled ? 'bg-[#859d19]' : 'bg-gray-300'
+                            }`}
                           >
-                            <span className="flex items-center gap-2">
-                              <span className={`size-2 rounded-full ${layer.color}`} />
-                              <span>{layer.label}</span>
-                            </span>
-                            <input
-                              type="checkbox"
-                              checked={layerVisibility[layer.key as keyof typeof layerVisibility]}
-                              onChange={(e) =>
-                                setLayerVisibility((prev) => ({
-                                  ...prev,
-                                  [layer.key]: e.target.checked,
-                                }))
-                              }
-                              className="rounded text-[#859d19] focus:ring-[#859d19]"
+                            <span
+                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                h3GridEnabled ? 'translate-x-4' : 'translate-x-0'
+                              }`}
                             />
-                          </label>
-                        ))}
+                          </button>
+                        </div>
+
+                        {h3GridEnabled && (
+                          <div className="pl-5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Grid Resolution</span>
+                              <div className="flex flex-wrap gap-1">
+                                {[5, 6, 7, 8, 9].map((res) => (
+                                  <button
+                                    key={res}
+                                    onClick={() => setH3Resolution(res)}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                      h3Resolution === res
+                                        ? 'bg-[#18201c] text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    Res {res}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600 flex items-center gap-1">
+                                <Layers className="size-3 text-amber-500" />
+                                <span>Density Heatmap</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setH3HeatmapEnabled((prev) => !prev)}
+                                className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                  h3HeatmapEnabled ? 'bg-amber-500' : 'bg-gray-300'
+                                }`}
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block size-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                    h3HeatmapEnabled ? 'translate-x-3' : 'translate-x-0'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Layer Visibilities */}
+                      <div className="space-y-2 border-t border-gray-100 pt-3">
+                        <span className="font-bold text-[#18201c]">Pin Layers</span>
+                        <div className="space-y-1.5 pl-1">
+                          {[
+                            {
+                              key: 'addresses',
+                              label: 'Customer Addresses & Drops',
+                              color: 'bg-purple-500',
+                            },
+                            {
+                              key: 'drivers',
+                              label: 'Riders & Active Fleet',
+                              color: 'bg-emerald-500',
+                            },
+                            {
+                              key: 'restaurants',
+                              label: 'Kitchens & Dark Stores',
+                              color: 'bg-amber-500',
+                            },
+                          ].map((layer) => (
+                            <label
+                              key={layer.key}
+                              className="flex items-center justify-between text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded-lg"
+                            >
+                              <span className="flex items-center gap-2">
+                                <span className={`size-2 rounded-full ${layer.color}`} />
+                                <span>{layer.label}</span>
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={layerVisibility[layer.key as keyof typeof layerVisibility]}
+                                onChange={(e) =>
+                                  setLayerVisibility((prev) => ({
+                                    ...prev,
+                                    [layer.key]: e.target.checked,
+                                  }))
+                                }
+                                className="rounded text-[#859d19] focus:ring-[#859d19]"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quick View Controls */}
+                      <div className="space-y-2 border-t border-gray-100 pt-3">
+                        <button
+                          onClick={handleResetMapCenter}
+                          className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#18201c] py-2 font-bold transition"
+                        >
+                          <Compass className="size-4 text-[#859d19]" />
+                          <span>Center Kanakapura Fleet Sector</span>
+                        </button>
+
+                        <button
+                          onClick={() => setShowAddressDrawer((prev) => !prev)}
+                          className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 py-2 font-bold hover:bg-gray-50 transition"
+                        >
+                          <Home className="size-4 text-purple-600" />
+                          <span>
+                            {showAddressDrawer
+                              ? 'Hide Address Directory'
+                              : 'Show Address Directory'}
+                          </span>
+                        </button>
                       </div>
                     </div>
-
-                    {/* Quick View Controls */}
-                    <div className="space-y-2 border-t border-gray-100 pt-3">
-                      <button
-                        onClick={handleResetMapCenter}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#18201c] py-2 font-bold transition"
-                      >
-                        <Compass className="size-4 text-[#859d19]" />
-                        <span>Center Kanakapura Fleet Sector</span>
-                      </button>
-
-                      <button
-                        onClick={() => setShowAddressDrawer((prev) => !prev)}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 py-2 font-bold hover:bg-gray-50 transition"
-                      >
-                        <Home className="size-4 text-purple-600" />
-                        <span>{showAddressDrawer ? 'Hide Address Directory' : 'Show Address Directory'}</span>
-                      </button>
-                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -511,16 +533,19 @@ export default function MapLiveAnalyticsPage() {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-[#5a655f] self-end sm:self-auto font-medium">
-            <span>Showing <strong className="text-[#18201c] font-bold">{filteredPins.length}</strong> active telemetry locations</span>
+            <span>
+              Showing <strong className="text-[#18201c] font-bold">{filteredPins.length}</strong>{' '}
+              active telemetry locations
+            </span>
           </div>
         </div>
-
-
 
         {/* Map & Address Telemetry Grid Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Main Map View */}
-          <div className={`${showAddressDrawer ? 'lg:col-span-8 xl:col-span-9' : 'lg:col-span-12'} transition-all duration-300`}>
+          <div
+            className={`${showAddressDrawer ? 'lg:col-span-8 xl:col-span-9' : 'lg:col-span-12'} transition-all duration-300`}
+          >
             <LocationPickerMap
               showMarker={false}
               enableH3Grid={h3GridEnabled}
@@ -533,8 +558,7 @@ export default function MapLiveAnalyticsPage() {
               className="relative w-full rounded-2xl overflow-hidden border border-gray-300 shadow-inner bg-[#f0f3ec] h-[400px] sm:h-[500px] lg:h-[calc(100vh-250px)] lg:min-h-[550px]"
               initialLat={mapCenter.lat}
               initialLng={mapCenter.lng}
-              onLocationSelect={(lat, lng) => {
-              }}
+              onLocationSelect={(lat, lng) => {}}
             />
           </div>
 

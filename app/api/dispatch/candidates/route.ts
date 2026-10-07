@@ -15,8 +15,16 @@ export async function GET(request: Request) {
     }
     if (process.env.NODE_ENV !== 'test') {
       const actor = token ? await verifyToken(token) : null
-      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
-        return NextResponse.json({ error: 'Unauthorized to query driver candidates' }, { status: 403 })
+      if (
+        !actor ||
+        (actor.role !== 'admin' &&
+          actor.role !== 'restaurant_vendor' &&
+          actor.role !== 'cravexp_store_vendor')
+      ) {
+        return NextResponse.json(
+          { error: 'Unauthorized to query driver candidates' },
+          { status: 403 }
+        )
       }
     }
     const { searchParams } = new URL(request.url)

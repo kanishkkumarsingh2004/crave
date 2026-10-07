@@ -85,7 +85,12 @@ export interface FullCalculatorResult {
  */
 export function calculateFullBreakdown(
   input: CalculatorInput,
-  couponDetails?: { discount_type: 'percentage' | 'flat'; discount_value: number; max_discount?: number | null; min_order_amount?: number }
+  couponDetails?: {
+    discount_type: 'percentage' | 'flat'
+    discount_value: number
+    max_discount?: number | null
+    min_order_amount?: number
+  }
 ): FullCalculatorResult {
   const subtotal = Math.max(0, input.subtotal || 0)
   const distanceKm = Math.max(0, input.distanceKm || 0)
@@ -96,16 +101,21 @@ export function calculateFullBreakdown(
   const baseDeliveryFee = input.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee
   const baseDistanceKm = input.baseDistanceKm ?? DEFAULT_PAYMENT_CONFIG.baseDistanceKm
   const perKmRate = input.perKmRate ?? DEFAULT_PAYMENT_CONFIG.perKmRate
-  const freeDeliveryThreshold = input.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold
+  const freeDeliveryThreshold =
+    input.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold
   const platformFee = input.platformFee ?? DEFAULT_PAYMENT_CONFIG.platformFee
   const handlingFee = input.handlingFee ?? DEFAULT_PAYMENT_CONFIG.handlingFee
-  const vendorCommissionPercent = input.vendorCommissionPercent ?? DEFAULT_PAYMENT_CONFIG.vendorCommission
-  const driverPayoutSharePercent = input.driverPayoutSharePercent ?? DEFAULT_PAYMENT_CONFIG.driverPayoutShare
+  const vendorCommissionPercent =
+    input.vendorCommissionPercent ?? DEFAULT_PAYMENT_CONFIG.vendorCommission
+  const driverPayoutSharePercent =
+    input.driverPayoutSharePercent ?? DEFAULT_PAYMENT_CONFIG.driverPayoutShare
   const surgeMultiplier = input.surgeMultiplier ?? DEFAULT_PAYMENT_CONFIG.surgeMultiplier
   const isRainModeActive = input.isRainModeActive ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive
   const isNightSurgeActive = input.isNightSurgeActive ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive
   const rainFeeValue = isRainModeActive ? (input.rainFee ?? DEFAULT_PAYMENT_CONFIG.rainFee) : 0
-  const nightSurgeFeeValue = isNightSurgeActive ? (input.nightSurgeFee ?? DEFAULT_PAYMENT_CONFIG.nightSurgeFee) : 0
+  const nightSurgeFeeValue = isNightSurgeActive
+    ? (input.nightSurgeFee ?? DEFAULT_PAYMENT_CONFIG.nightSurgeFee)
+    : 0
   const gstRate = (input.gstRatePercent ?? 18) / 100
 
   // 1. Delivery Fee Math
@@ -139,7 +149,13 @@ export function calculateFullBreakdown(
 
   // 4. Grand Total Collected from Customer
   const grandTotal = Math.round(
-    taxableFoodSubtotal + packagingFee + netDeliveryFee + platformFee + handlingFee + gstAmount + tip
+    taxableFoodSubtotal +
+      packagingFee +
+      netDeliveryFee +
+      platformFee +
+      handlingFee +
+      gstAmount +
+      tip
   )
 
   const customerBilling: CustomerBillingBreakdown = {
@@ -177,8 +193,10 @@ export function calculateFullBreakdown(
   const deliveryShareMultiplier = driverPayoutSharePercent / 100
   const baseDistanceShare = Math.round(baseDeliveryFee * deliveryShareMultiplier)
   const extraDistanceShare = Math.round(extraDistanceFee * deliveryShareMultiplier)
-  const surgeRainShare = Math.round((surgeFee + rainFeeValue + nightSurgeFeeValue) * deliveryShareMultiplier)
-  const totalDriverEarnings = Math.round((grossDeliveryFee * deliveryShareMultiplier) + tip)
+  const surgeRainShare = Math.round(
+    (surgeFee + rainFeeValue + nightSurgeFeeValue) * deliveryShareMultiplier
+  )
+  const totalDriverEarnings = Math.round(grossDeliveryFee * deliveryShareMultiplier + tip)
 
   const driverEarnings: DriverEarningsBreakdown = {
     deliveryFeeCollected: grossDeliveryFee,
@@ -197,15 +215,23 @@ export function calculateFullBreakdown(
   const totalGstCollected = gstAmount
 
   const platformGrossRevenue = Math.round(
-    platformFee + handlingFee + commissionDeducted + (grossDeliveryFee * (1 - deliveryShareMultiplier))
+    platformFee +
+      handlingFee +
+      commissionDeducted +
+      grossDeliveryFee * (1 - deliveryShareMultiplier)
   )
   const platformNetProfit = Math.round(
-    totalCollectedFromCustomer - totalPaidToVendor - totalPaidToDriver - totalGstCollected - packagingFee
+    totalCollectedFromCustomer -
+      totalPaidToVendor -
+      totalPaidToDriver -
+      totalGstCollected -
+      packagingFee
   )
 
-  const profitMarginPercent = totalCollectedFromCustomer > 0
-    ? Number(((platformNetProfit / totalCollectedFromCustomer) * 100).toFixed(1))
-    : 0
+  const profitMarginPercent =
+    totalCollectedFromCustomer > 0
+      ? Number(((platformNetProfit / totalCollectedFromCustomer) * 100).toFixed(1))
+      : 0
 
   const platformEconomics: PlatformEconomicsBreakdown = {
     totalCollectedFromCustomer,

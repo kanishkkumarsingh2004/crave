@@ -49,7 +49,16 @@ self.onmessage = function (event) {
         return
       }
 
-      const { lat, lng, accuracy, speed, heading, driverId: msgDriverId, orderId: msgOrderId, isOnline: msgIsOnline } = payload
+      const {
+        lat,
+        lng,
+        accuracy,
+        speed,
+        heading,
+        driverId: msgDriverId,
+        orderId: msgOrderId,
+        isOnline: msgIsOnline,
+      } = payload
       if (msgDriverId) driverId = msgDriverId
       if (msgOrderId !== undefined) orderId = msgOrderId
       if (typeof msgIsOnline === 'boolean') isOnline = msgIsOnline
@@ -65,11 +74,13 @@ self.onmessage = function (event) {
       }
 
       // Event-driven threshold: Trigger instant update if moved >= 1.5 meters, or first position, or heading shifted
-      const headingShift = lastHeading !== null && heading !== null ? Math.abs(heading - lastHeading) : 0
+      const headingShift =
+        lastHeading !== null && heading !== null ? Math.abs(heading - lastHeading) : 0
       const isSignificantMove = distanceMoved >= 1.5 || headingShift >= 15 || lastLat === null
 
       if (isSignificantMove) {
-        if (distanceMoved < 500) { // filter GPS jumps > 500m
+        if (distanceMoved < 500) {
+          // filter GPS jumps > 500m
           totalDistanceKm += distanceMoved / 1000
         }
         lastLat = lat
@@ -78,7 +89,14 @@ self.onmessage = function (event) {
         lastSpeed = speed || lastSpeed
 
         // Instantly transmit live coordinate stream without timer delay
-        broadcastEventDrivenLocation(lat, lng, accuracy || 0, speed || 0, 'GPS_DELTA_TRIGGER', distanceMoved)
+        broadcastEventDrivenLocation(
+          lat,
+          lng,
+          accuracy || 0,
+          speed || 0,
+          'GPS_DELTA_TRIGGER',
+          distanceMoved
+        )
       }
       break
 
@@ -99,7 +117,14 @@ self.onmessage = function (event) {
   }
 }
 
-async function broadcastEventDrivenLocation(lat, lng, accuracy, speed, triggerReason, distanceMoved = 0) {
+async function broadcastEventDrivenLocation(
+  lat,
+  lng,
+  accuracy,
+  speed,
+  triggerReason,
+  distanceMoved = 0
+) {
   if (!driverId || !isOnline) return
 
   const eventPacket = {

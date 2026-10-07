@@ -379,16 +379,16 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex flex-col justify-between selection:bg-[#d9f447] selection:text-[#18201c]">
+    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] text-[#18201c] dark:text-white flex flex-col justify-between selection:bg-[#d9f447] selection:text-[#18201c]">
       <Navbar />
 
       <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 flex-1">
         {/* Top Header & Breadcrumb */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dc] pb-4 gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dc] dark:border-[#27342d] pb-4 gap-3">
           <div className="flex items-center gap-3">
             <Link
               href="/user/explore"
-              className="grid size-9 place-items-center rounded-2xl border border-[#dfe4dc] bg-white text-[#18201c] hover:bg-[#f3f6ee] transition shadow-xs shrink-0"
+              className="grid size-9 place-items-center rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] transition shadow-xs shrink-0"
             >
               <ArrowLeft className="size-4" />
             </Link>
@@ -396,7 +396,7 @@ export default function CartPage() {
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#849e16]">
                 Secure Checkout &amp; Basket
               </span>
-              <h1 className="text-xl sm:text-3xl font-black tracking-tight text-[#18201c]">
+              <h1 className="text-xl sm:text-3xl font-black tracking-tight text-[#18201c] dark:text-white">
                 Your Order Cart ({totalCount} {totalCount === 1 ? 'Item' : 'Items'})
               </h1>
             </div>
@@ -433,12 +433,12 @@ export default function CartPage() {
               {cart.length > 0 ? (
                 <>
                   {/* Cart Items Card */}
-                  <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xs">
-                    <h2 className="text-sm sm:text-base font-bold text-[#18201c] mb-4 flex items-center gap-2">
+                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
+                    <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white mb-4 flex items-center gap-2">
                       <ShoppingBag className="size-4 text-[#849e16]" /> Items in your Order
                     </h2>
 
-                    <div className="divide-y divide-[#f0f3eb]">
+                    <div className="divide-y divide-[#f0f3eb] dark:divide-[#27342d]">
                       {cart.map((item) => (
                         <div
                           key={item.id}
@@ -449,20 +449,25 @@ export default function CartPage() {
                               <img
                                 src={item.image}
                                 alt={item.name}
-                                className="size-12 sm:size-14 rounded-2xl object-cover shrink-0 border border-[#e5e9e1]"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null
+                                  e.currentTarget.src =
+                                    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'
+                                }}
+                                className="size-12 sm:size-14 rounded-2xl object-cover shrink-0 border border-[#e5e9e1] dark:border-[#27342d]"
                               />
                             ) : (
-                              <div className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-[#f4f7ed] text-[#849e16] shrink-0 font-bold text-[10px] sm:text-xs">
+                              <div className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] shrink-0 font-bold text-[10px] sm:text-xs">
                                 FOOD
                               </div>
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-xs sm:text-sm font-bold text-[#18201c] truncate">
+                              <h3 className="text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate">
                                 {item.name}
                               </h3>
                               {item.restaurantName && (
-                                <p className="text-[10px] sm:text-[11px] font-medium text-[#737e77] truncate">
+                                <p className="text-[10px] sm:text-[11px] font-medium text-[#737e77] dark:text-gray-400 truncate">
                                   {item.restaurantName}
                                 </p>
                               )}
@@ -472,11 +477,11 @@ export default function CartPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t border-gray-100 sm:border-t-0">
-                            <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] border border-[#e2e7dd] px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-extrabold text-[#18201c]">
+                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t border-gray-100 dark:border-[#27342d] sm:border-t-0">
+                            <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] dark:bg-[#121815] border border-[#e2e7dd] dark:border-[#27342d] px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-extrabold text-[#18201c] dark:text-white">
                               <button
                                 onClick={() => updateItemQty(item.id, -1)}
-                                className="text-[#55635a] hover:text-[#18201c] transition p-1"
+                                className="text-[#55635a] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white transition p-1"
                                 aria-label="Decrease quantity"
                               >
                                 <Minus className="size-3.5" />
@@ -484,7 +489,7 @@ export default function CartPage() {
                               <span className="min-w-[16px] text-center">{item.qty}</span>
                               <button
                                 onClick={() => updateItemQty(item.id, 1)}
-                                className="text-[#55635a] hover:text-[#18201c] transition p-1"
+                                className="text-[#55635a] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white transition p-1"
                                 aria-label="Increase quantity"
                               >
                                 <Plus className="size-3.5" />
@@ -492,7 +497,7 @@ export default function CartPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="font-black text-xs sm:text-sm text-[#18201c] w-14 text-right">
+                              <span className="font-black text-xs sm:text-sm text-[#18201c] dark:text-white w-14 text-right">
                                 ₹{item.price * item.qty}
                               </span>
 
@@ -511,9 +516,9 @@ export default function CartPage() {
                   </div>
 
                   {/* Delivery Location & Address Section */}
-                  <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xs">
+                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
                     <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] flex items-center gap-2">
+                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
                         <MapPin className="size-4 text-[#849e16]" /> Delivery Address &amp; Contact
                       </h2>
                       <button
@@ -530,7 +535,7 @@ export default function CartPage() {
 
                     <div className="space-y-3">
                       <div>
-                        <label className="text-[11px] font-bold text-[#55635a] uppercase tracking-wider block mb-1">
+                        <label className="text-[11px] font-bold text-[#55635a] dark:text-gray-400 uppercase tracking-wider block mb-1">
                           Delivery Doorstep Address
                         </label>
                         <div className="relative">
@@ -539,7 +544,7 @@ export default function CartPage() {
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
                             placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
-                            className="w-full rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden pr-20"
+                            className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden pr-20"
                           />
                           {selectedAddressId && (
                             <span className="absolute right-3 top-2.5 bg-[#849e16] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
@@ -551,7 +556,7 @@ export default function CartPage() {
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-[#55635a] uppercase tracking-wider block mb-1">
+                        <label className="text-[11px] font-bold text-[#55635a] dark:text-gray-400 uppercase tracking-wider block mb-1">
                           Customer Phone Number (For Rider OTP Delivery)
                         </label>
                         <input
@@ -559,16 +564,16 @@ export default function CartPage() {
                           value={customerPhone}
                           onChange={(e) => setCustomerPhone(e.target.value)}
                           placeholder="+91 98765 43210"
-                          className="w-full rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden"
+                          className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Coupons & Offers Card */}
-                  <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xs">
+                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
                     <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] flex items-center gap-2">
+                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
                         <Tag className="size-4 text-[#849e16]" /> Apply Promo Code / Coupon
                       </h2>
                       {appliedCoupon ? (
@@ -624,12 +629,12 @@ export default function CartPage() {
                                 handleApplyCouponCode()
                               }
                             }}
-                            className="flex-1 rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] px-4 py-2.5 sm:py-3 text-xs font-bold text-[#18201c] uppercase placeholder:normal-case placeholder:font-normal placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden"
+                            className="flex-1 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-4 py-2.5 sm:py-3 text-xs font-bold text-[#18201c] dark:text-white uppercase placeholder:normal-case placeholder:font-normal placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden"
                           />
                           <button
                             type="button"
                             onClick={() => handleApplyCouponCode()}
-                            className="rounded-2xl bg-[#18201c] px-6 py-2.5 sm:py-3 text-xs font-extrabold text-white hover:bg-[#323d36] transition shadow-md shrink-0"
+                            className="rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-2.5 sm:py-3 text-xs font-extrabold text-white dark:text-[#18201c] hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition shadow-md shrink-0"
                           >
                             Apply Code
                           </button>
@@ -639,20 +644,20 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => setShowCouponsModal(true)}
-                          className="w-full flex items-center justify-between rounded-2xl border border-dashed border-[#849e16]/60 bg-[#f7faec] p-3 sm:p-3.5 hover:bg-[#f0f7db] transition group text-left"
+                          className="w-full flex items-center justify-between rounded-2xl border border-dashed border-[#849e16]/60 bg-[#f7faec] dark:bg-[#121815] p-3 sm:p-3.5 hover:bg-[#f0f7db] dark:hover:bg-[#1c2420] transition group text-left"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shrink-0 font-bold shadow-2xs">
                               <Tag className="size-4" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-xs font-black text-[#18201c] flex items-center gap-2">
+                              <p className="text-xs font-black text-[#18201c] dark:text-white flex items-center gap-2">
                                 View &amp; Apply Available Coupons
-                                <span className="bg-[#18201c] text-[#d9f447] text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                                <span className="bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                                   {availableCoupons.length} Offers
                                 </span>
                               </p>
-                              <p className="text-[11px] font-medium text-[#55635a] truncate">
+                              <p className="text-[11px] font-medium text-[#55635a] dark:text-gray-400 truncate">
                                 Tap to open popup list &amp; apply coupon with 1-click
                               </p>
                             </div>
@@ -723,14 +728,14 @@ export default function CartPage() {
                   </div>
                 </>
               ) : (
-                <div className="rounded-3xl border border-[#dfe4dc] bg-white p-8 sm:p-12 text-center shadow-xs">
-                  <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] text-[#849e16] mb-4">
+                <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-8 sm:p-12 text-center shadow-xs">
+                  <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] mb-4">
                     <ShoppingCart className="size-7 sm:size-8" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-[#18201c]">
+                  <h2 className="text-lg sm:text-xl font-bold text-[#18201c] dark:text-white">
                     Your Cart is Currently Empty
                   </h2>
-                  <p className="mt-2 text-xs text-[#55635a] max-w-sm mx-auto leading-relaxed">
+                  <p className="mt-2 text-xs text-[#55635a] dark:text-gray-300 max-w-sm mx-auto leading-relaxed">
                     Explore gourmet kitchens, pizzas, biryani, or instant 15-min groceries on Crave
                     to get started!
                   </p>
@@ -738,13 +743,13 @@ export default function CartPage() {
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link
                       href="/user/explore"
-                      className="w-full sm:w-auto rounded-full bg-[#18201c] px-6 py-3 text-xs font-extrabold text-white shadow-md hover:bg-[#323d36] transition text-center"
+                      className="w-full sm:w-auto rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition text-center"
                     >
                       Explore Kitchens
                     </Link>
                     <Link
                       href="/user/cravexp"
-                      className="w-full sm:w-auto rounded-full bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-[#18201c] shadow-md hover:bg-[#c2dc37] transition text-center"
+                      className="w-full sm:w-auto rounded-full bg-[#d9f447] dark:bg-[#27342d] px-6 py-3 text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] shadow-md hover:bg-[#c2dc37] dark:hover:bg-[#324239] transition text-center"
                     >
                       craveXP Instamart (15 Min)
                     </Link>
@@ -757,28 +762,30 @@ export default function CartPage() {
             {cart.length > 0 && (
               <div className="space-y-6 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
                 {/* Bill Breakdown Card */}
-                <div className="rounded-3xl border border-[#dfe4dc] bg-white p-4 sm:p-6 shadow-xl">
-                  <h2 className="text-sm sm:text-base font-bold text-[#18201c] mb-4 flex items-center justify-between border-b border-[#f0f3eb] pb-3">
+                <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xl">
+                  <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white mb-4 flex items-center justify-between border-b border-[#f0f3eb] dark:border-[#27342d] pb-3">
                     <span>Payment Summary</span>
-                    <span className="text-[10px] sm:text-xs font-normal text-gray-500">
+                    <span className="text-[10px] sm:text-xs font-normal text-gray-500 dark:text-gray-400">
                       Prices in INR (₹)
                     </span>
                   </h2>
 
                   <div className="space-y-3 text-xs">
-                    <div className="flex justify-between text-[#55635a]">
+                    <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                       <span>Items Subtotal ({totalCount} items)</span>
-                      <span className="font-bold text-[#18201c]">₹{cartSubtotal}</span>
+                      <span className="font-bold text-[#18201c] dark:text-white">
+                        ₹{cartSubtotal}
+                      </span>
                     </div>
 
-                    <div className="flex justify-between text-[#55635a]">
+                    <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                       <span>Delivery Partner Fee</span>
                       {pricingBreakdown.isFreeDelivery ? (
-                        <span className="font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px]">
+                        <span className="font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px]">
                           FREE DELIVERY
                         </span>
                       ) : (
-                        <span className="font-bold text-[#18201c]">
+                        <span className="font-bold text-[#18201c] dark:text-white">
                           ₹{pricingBreakdown.deliveryFee}
                         </span>
                       )}
@@ -787,7 +794,7 @@ export default function CartPage() {
                     {(pricingBreakdown.surgeFee > 0 ||
                       pricingBreakdown.rainFee > 0 ||
                       pricingBreakdown.nightSurgeFee > 0) && (
-                      <div className="flex justify-between text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200 text-[11px]">
+                      <div className="flex justify-between text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 p-2 rounded-xl border border-amber-200 dark:border-amber-800 text-[11px]">
                         <span>Demand &amp; Weather Surge</span>
                         <span className="font-bold">
                           +₹
@@ -798,106 +805,108 @@ export default function CartPage() {
                       </div>
                     )}
 
-                    <div className="flex justify-between text-[#55635a]">
+                    <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                       <span>Packaging &amp; Handling</span>
-                      <span className="font-bold text-[#18201c]">
+                      <span className="font-bold text-[#18201c] dark:text-white">
                         ₹{pricingBreakdown.handlingFee}
                       </span>
                     </div>
 
-                    <div className="flex justify-between text-[#55635a]">
+                    <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                       <span>Platform Service Fee</span>
-                      <span className="font-bold text-[#18201c]">
+                      <span className="font-bold text-[#18201c] dark:text-white">
                         ₹{pricingBreakdown.platformFee}
                       </span>
                     </div>
 
                     {appliedCoupon && couponDiscount > 0 && (
-                      <div className="flex justify-between font-bold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                      <div className="flex justify-between font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800">
                         <span>Coupon Savings ({appliedCoupon.code})</span>
                         <span>-₹{couponDiscount}</span>
                       </div>
                     )}
 
-                    <div className="flex justify-between border-t border-[#e5e9e1] pt-3 text-sm font-black text-[#18201c]">
+                    <div className="flex justify-between border-t border-[#e5e9e1] dark:border-[#27342d] pt-3 text-sm font-black text-[#18201c] dark:text-white">
                       <span>Final To Pay</span>
-                      <span className="text-emerald-700 text-base sm:text-lg">₹{grandTotal}</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg">
+                        ₹{grandTotal}
+                      </span>
                     </div>
                   </div>
 
                   {/* UPI Apps Redirect & Direct Payment Card */}
-                  <div className="mt-6 pt-4 border-t border-[#f0f3eb]">
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:p-4 text-xs space-y-4">
-                      <div className="flex items-center justify-between border-b border-emerald-200/80 pb-3">
+                  <div className="mt-6 pt-4 border-t border-[#f0f3eb] dark:border-[#27342d]">
+                    <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 p-3.5 sm:p-4 text-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-emerald-200/80 dark:border-emerald-800/80 pb-3">
                         <div className="flex items-center gap-2.5">
                           <div className="grid size-9 place-items-center rounded-xl bg-emerald-600 text-white font-bold shadow-xs">
                             <QrCode className="size-5" />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-[#18201c] text-xs sm:text-sm">
+                            <h3 className="font-extrabold text-[#18201c] dark:text-white text-xs sm:text-sm">
                               UPI Instant Payment
                             </h3>
-                            <p className="text-[11px] text-emerald-800 font-medium">
+                            <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
                               Pay ₹{grandTotal} using installed UPI app
                             </p>
                           </div>
                         </div>
-                        <span className="font-mono font-black text-emerald-900 bg-white border border-emerald-300 px-2.5 py-1 rounded-xl text-xs sm:text-sm shadow-2xs">
+                        <span className="font-mono font-black text-emerald-900 dark:text-[#d9f447] bg-white dark:bg-[#18201c] border border-emerald-300 dark:border-emerald-800/80 px-2.5 py-1 rounded-xl text-xs sm:text-sm shadow-2xs">
                           ₹{grandTotal}
                         </span>
                       </div>
 
                       {/* Direct UPI App Deep-Link Action Buttons */}
                       <div>
-                        <label className="font-bold text-[#18201c] flex items-center gap-1.5 mb-2 text-[11px] uppercase tracking-wider">
-                          <Smartphone className="size-3.5 text-emerald-700" /> Redirect &amp; Pay
-                          via Installed UPI Apps:
+                        <label className="font-bold text-[#18201c] dark:text-white flex items-center gap-1.5 mb-2 text-[11px] uppercase tracking-wider">
+                          <Smartphone className="size-3.5 text-emerald-700 dark:text-emerald-400" />{' '}
+                          Redirect &amp; Pay via Installed UPI Apps:
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           <a
                             href={`tez://upi/pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-blue-500 hover:bg-blue-50/50 transition group text-center shadow-2xs"
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2.5 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition group text-center shadow-2xs"
                           >
-                            <span className="font-black text-xs text-blue-600 group-hover:scale-105 transition">
+                            <span className="font-black text-xs text-blue-600 dark:text-blue-400 group-hover:scale-105 transition">
                               GPay
                             </span>
-                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
                               Google Pay
                             </span>
                           </a>
 
                           <a
                             href={`phonepe://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-purple-500 hover:bg-purple-50/50 transition group text-center shadow-2xs"
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2.5 hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 transition group text-center shadow-2xs"
                           >
-                            <span className="font-black text-xs text-purple-700 group-hover:scale-105 transition">
+                            <span className="font-black text-xs text-purple-700 dark:text-purple-400 group-hover:scale-105 transition">
                               PhonePe
                             </span>
-                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
                               PhonePe App
                             </span>
                           </a>
 
                           <a
                             href={`paytmmp://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-2.5 hover:border-cyan-500 hover:bg-cyan-50/50 transition group text-center shadow-2xs"
+                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2.5 hover:border-cyan-500 dark:hover:border-cyan-400 hover:bg-cyan-50/50 dark:hover:bg-cyan-950/30 transition group text-center shadow-2xs"
                           >
-                            <span className="font-black text-xs text-cyan-600 group-hover:scale-105 transition">
+                            <span className="font-black text-xs text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition">
                               Paytm
                             </span>
-                            <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
                               Paytm Wallet
                             </span>
                           </a>
 
                           <a
                             href={`upi://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Order Payment crave')}`}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-100/70 p-2.5 hover:bg-emerald-200/80 transition group text-center shadow-2xs"
+                            className="flex flex-col items-center justify-center rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-100/70 dark:bg-emerald-950/60 p-2.5 hover:bg-emerald-200/80 dark:hover:bg-emerald-900/60 transition group text-center shadow-2xs"
                           >
-                            <span className="font-black text-xs text-emerald-900 group-hover:scale-105 transition flex items-center gap-1">
+                            <span className="font-black text-xs text-emerald-900 dark:text-emerald-300 group-hover:scale-105 transition flex items-center gap-1">
                               Any UPI App <ExternalLink className="size-3" />
                             </span>
-                            <span className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-0.5">
                               BHIM / App Chooser
                             </span>
                           </a>
@@ -905,20 +914,22 @@ export default function CartPage() {
                       </div>
 
                       {/* Direct Company VPA Copy Box */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-emerald-200/60">
-                        <span className="font-extrabold text-[#18201c]">Direct Company VPA:</span>
-                        <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-white border border-emerald-300 rounded-xl px-2.5 py-1">
-                          <span className="font-mono font-bold text-emerald-900 text-xs sm:text-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60">
+                        <span className="font-extrabold text-[#18201c] dark:text-white">
+                          Direct Company VPA:
+                        </span>
+                        <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-white dark:bg-[#18201c] border border-emerald-300 dark:border-emerald-800 rounded-xl px-2.5 py-1">
+                          <span className="font-mono font-bold text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm">
                             {activeConfig.upiVpa || 'crave@upi'}
                           </span>
                           <button
                             type="button"
                             onClick={handleCopyUpi}
-                            className="text-emerald-700 hover:text-emerald-900 flex items-center gap-1 text-[11px] font-bold"
+                            className="text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 flex items-center gap-1 text-[11px] font-bold"
                             title="Copy VPA"
                           >
                             {copiedUpi ? (
-                              <Check className="size-3.5 text-emerald-600" />
+                              <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                             ) : (
                               <Copy className="size-3.5" />
                             )}
@@ -929,7 +940,7 @@ export default function CartPage() {
 
                       {/* 12-Digit UTR Reference Input */}
                       <div>
-                        <label className="font-bold text-[#18201c] block mb-1">
+                        <label className="font-bold text-[#18201c] dark:text-white block mb-1">
                           12-Digit UTR Reference Number <span className="text-rose-600">*</span>
                         </label>
                         <input
@@ -940,17 +951,17 @@ export default function CartPage() {
                           onChange={(e) =>
                             setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
                           }
-                          className="w-full rounded-xl border border-emerald-300 bg-white px-3 py-2.5 text-xs font-mono font-bold text-[#18201c] focus:outline-hidden"
+                          className="w-full rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#121815] px-3 py-2.5 text-xs font-mono font-bold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-hidden focus:border-emerald-500 dark:focus:border-emerald-400"
                         />
                         {utrRef.trim().length < 10 ? (
-                          <p className="text-[10px] text-amber-700 font-semibold mt-1">
+                          <p className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold mt-1">
                             Enter minimum 10 digits to enable order confirmation (
                             {utrRef.trim().length}/10)
                           </p>
                         ) : (
-                          <p className="text-[10px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
-                            <CheckCircle2 className="size-3 text-emerald-600" /> Valid UTR Reference
-                            length ({utrRef.trim().length} digits)
+                          <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />{' '}
+                            Valid UTR Reference length ({utrRef.trim().length} digits)
                           </p>
                         )}
                       </div>
@@ -962,17 +973,17 @@ export default function CartPage() {
                     <button
                       type="submit"
                       disabled={isSubmittingOrder || utrRef.trim().length < 10}
-                      className="w-full rounded-2xl bg-[#18201c] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white shadow-xl hover:bg-[#323d36] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 active:scale-[0.98]"
+                      className="w-full rounded-2xl bg-[#18201c] dark:bg-[#d9f447] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white dark:text-[#18201c] shadow-xl hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-500 active:scale-[0.98]"
                     >
                       {isSubmittingOrder ? (
                         <>
-                          <div className="size-4 border-2 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
+                          <div className="size-4 border-2 border-[#d9f447] dark:border-[#18201c] border-t-transparent rounded-full animate-spin" />
                           Placing Order...
                         </>
                       ) : (
                         <>
                           Confirm &amp; Place Order (₹{grandTotal})
-                          <ArrowRight className="size-4 text-[#d9f447]" />
+                          <ArrowRight className="size-4 text-[#d9f447] dark:text-[#18201c]" />
                         </>
                       )}
                     </button>
@@ -991,23 +1002,23 @@ export default function CartPage() {
           onClick={() => setShowCouponsModal(false)}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl border border-[#dfe4dc] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-2xl border border-[#dfe4dc] dark:border-[#27342d] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] text-[#849e16]">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447]">
                   <Tag className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-[#18201c] flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black text-[#18201c] dark:text-white flex items-center gap-2">
                     Available Coupons &amp; Offers
                     <span className="bg-[#849e16] text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                       {availableCoupons.length}
                     </span>
                   </h3>
-                  <p className="text-xs text-[#55635a] font-medium">
+                  <p className="text-xs text-[#55635a] dark:text-gray-400 font-medium">
                     Select a coupon to apply instant savings
                   </p>
                 </div>
@@ -1015,7 +1026,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setShowCouponsModal(false)}
-                className="grid size-9 place-items-center rounded-full bg-[#f4f7ed] text-[#55635a] hover:bg-[#e8ede0] hover:text-[#18201c] transition"
+                className="grid size-9 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#55635a] dark:text-gray-300 hover:bg-[#e8ede0] dark:hover:bg-[#324239] hover:text-[#18201c] dark:hover:text-white transition"
                 aria-label="Close modal"
               >
                 <X className="size-5" />
@@ -1026,7 +1037,9 @@ export default function CartPage() {
             <div className="flex-1 overflow-y-auto py-4 space-y-3.5 pr-1">
               {availableCoupons.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-xs text-[#55635a]">No coupons currently available.</p>
+                  <p className="text-xs text-[#55635a] dark:text-gray-400">
+                    No coupons currently available.
+                  </p>
                 </div>
               ) : (
                 availableCoupons.map((coupon) => {
@@ -1039,10 +1052,10 @@ export default function CartPage() {
                       key={coupon.id}
                       className={`rounded-2xl border p-4 transition flex flex-col gap-3 ${
                         isApplied
-                          ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
+                          ? 'border-emerald-500 dark:border-emerald-500/80 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-xs'
                           : isEligible
-                            ? 'border-[#dfe4dc] bg-white hover:border-[#849e16] hover:bg-[#fafce8]/60 shadow-xs'
-                            : 'border-gray-200 bg-gray-50 opacity-90'
+                            ? 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-[#849e16] hover:bg-[#fafce8]/60 dark:hover:bg-[#1c2420] shadow-xs'
+                            : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-90'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -1051,21 +1064,21 @@ export default function CartPage() {
                             <span className="font-mono font-black text-xs text-[#18201c] bg-[#d9f447] border border-[#bce022] px-2.5 py-1 rounded-xl shadow-2xs tracking-wider">
                               {coupon.code}
                             </span>
-                            <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
                               {coupon.discountType === 'percentage'
                                 ? `${coupon.discountValue}% OFF`
                                 : `FLAT ₹${coupon.discountValue} OFF`}
                             </span>
                           </div>
 
-                          <p className="text-xs font-bold text-[#18201c] leading-snug">
+                          <p className="text-xs font-bold text-[#18201c] dark:text-gray-200 leading-snug">
                             {coupon.description ||
                               `Save ${coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} on your order`}
                           </p>
 
-                          <p className="text-[11px] font-semibold text-[#737e77]">
+                          <p className="text-[11px] font-semibold text-[#737e77] dark:text-gray-400">
                             Min order value:{' '}
-                            <span className="text-[#18201c] font-bold">
+                            <span className="text-[#18201c] dark:text-white font-bold">
                               ₹{coupon.minOrderAmount}
                             </span>
                           </p>
@@ -1086,7 +1099,7 @@ export default function CartPage() {
                                   setShowCouponsModal(false)
                                 }
                               }}
-                              className="rounded-2xl bg-[#18201c] px-4 py-2.5 text-xs font-black text-[#d9f447] hover:bg-[#323d36] active:scale-95 transition shadow-md"
+                              className="rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-4 py-2.5 text-xs font-black text-[#d9f447] dark:text-[#18201c] hover:bg-[#323d36] dark:hover:bg-[#cbe63c] active:scale-95 transition shadow-md"
                             >
                               APPLY
                             </button>
@@ -1095,9 +1108,9 @@ export default function CartPage() {
                       </div>
 
                       {!isEligible && !isApplied && (
-                        <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-1.5 text-[11px] font-semibold text-amber-800 flex items-center justify-between">
+                        <div className="rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-3 py-1.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 flex items-center justify-between">
                           <span>Add ₹{amountNeeded} more to unlock this code</span>
-                          <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-md">
                             Min ₹{coupon.minOrderAmount}
                           </span>
                         </div>
@@ -1109,14 +1122,14 @@ export default function CartPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="pt-3 border-t border-[#f0f3eb] flex items-center justify-between text-xs text-[#55635a] shrink-0">
+            <div className="pt-3 border-t border-[#f0f3eb] dark:border-[#27342d] flex items-center justify-between text-xs text-[#55635a] dark:text-gray-400 shrink-0">
               <span className="font-medium">
                 {availableCoupons.length} discount coupons available
               </span>
               <button
                 type="button"
                 onClick={() => setShowCouponsModal(false)}
-                className="rounded-xl bg-[#f4f7ed] px-4 py-1.5 font-extrabold text-[#18201c] hover:bg-[#e2e7d8] transition"
+                className="rounded-xl bg-[#f4f7ed] dark:bg-[#27342d] px-4 py-1.5 font-extrabold text-[#18201c] dark:text-white hover:bg-[#e2e7d8] dark:hover:bg-[#324239] transition"
               >
                 Done
               </button>
@@ -1132,20 +1145,20 @@ export default function CartPage() {
           onClick={() => setShowAddressModal(false)}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl border border-[#dfe4dc] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-2xl border border-[#dfe4dc] dark:border-[#27342d] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] text-[#849e16]">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447]">
                   <MapPin className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-[#18201c]">
+                  <h3 className="text-base sm:text-lg font-black text-[#18201c] dark:text-white">
                     Saved Delivery Addresses
                   </h3>
-                  <p className="text-xs text-[#55635a] font-medium">
+                  <p className="text-xs text-[#55635a] dark:text-gray-400 font-medium">
                     Select a saved doorstep address or add a new one
                   </p>
                 </div>
@@ -1153,7 +1166,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setShowAddressModal(false)}
-                className="grid size-9 place-items-center rounded-full bg-[#f4f7ed] text-[#55635a] hover:bg-[#e8ede0] hover:text-[#18201c] transition"
+                className="grid size-9 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#55635a] dark:text-gray-300 hover:bg-[#e8ede0] dark:hover:bg-[#324239] hover:text-[#18201c] dark:hover:text-white transition"
                 aria-label="Close modal"
               >
                 <X className="size-5" />
@@ -1165,7 +1178,7 @@ export default function CartPage() {
               {/* Saved Addresses List */}
               {savedAddresses.length > 0 && (
                 <div className="space-y-2.5">
-                  <p className="text-[11px] font-bold text-[#737e77] uppercase tracking-wider">
+                  <p className="text-[11px] font-bold text-[#737e77] dark:text-gray-400 uppercase tracking-wider">
                     Your Saved Locations ({savedAddresses.length})
                   </p>
                   <div className="grid gap-2.5">
@@ -1182,12 +1195,12 @@ export default function CartPage() {
                           }}
                           className={`rounded-2xl border p-3.5 sm:p-4 cursor-pointer transition flex items-start justify-between gap-3 ${
                             isSelected
-                              ? 'border-[#849e16] bg-[#f7faec] ring-2 ring-[#849e16]/30 shadow-xs'
-                              : 'border-[#dfe4dc] bg-white hover:bg-[#fcfdfe]'
+                              ? 'border-[#849e16] dark:border-[#d9f447] bg-[#f7faec] dark:bg-[#1f281b] ring-2 ring-[#849e16]/30 shadow-xs'
+                              : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:bg-[#fcfdfe] dark:hover:bg-[#18201c]'
                           }`}
                         >
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="grid size-8 place-items-center rounded-xl bg-[#f4f7ed] text-[#849e16] shrink-0 font-bold mt-0.5">
+                            <div className="grid size-8 place-items-center rounded-xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] shrink-0 font-bold mt-0.5">
                               {addr.label === 'Home' ? (
                                 <Home className="size-4" />
                               ) : addr.label === 'Work' ? (
@@ -1198,16 +1211,16 @@ export default function CartPage() {
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-extrabold text-xs text-[#18201c]">
+                                <span className="font-extrabold text-xs text-[#18201c] dark:text-white">
                                   {addr.label}
                                 </span>
                                 {addr.is_default && (
-                                  <span className="bg-[#18201c] text-[#d9f447] text-[9px] px-2 py-0.2 rounded-full font-mono font-bold">
+                                  <span className="bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] text-[9px] px-2 py-0.2 rounded-full font-mono font-bold">
                                     DEFAULT
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-[#55635a] font-medium mt-1 leading-snug">
+                              <p className="text-xs text-[#55635a] dark:text-gray-300 font-medium mt-1 leading-snug">
                                 {addr.address}
                               </p>
                             </div>
@@ -1218,7 +1231,7 @@ export default function CartPage() {
                             className={`rounded-xl px-3 py-1.5 text-[11px] font-black shrink-0 transition ${
                               isSelected
                                 ? 'bg-[#849e16] text-white'
-                                : 'bg-[#18201c] text-white hover:bg-[#323d36]'
+                                : 'bg-[#18201c] dark:bg-[#27342d] text-white dark:text-gray-200 hover:bg-[#323d36] dark:hover:bg-[#324239]'
                             }`}
                           >
                             {isSelected ? 'SELECTED' : 'DELIVER HERE'}
@@ -1231,14 +1244,15 @@ export default function CartPage() {
               )}
 
               {/* Add New Address Form */}
-              <div className="rounded-2xl border border-[#dfe4dc] bg-[#fcfdfe] p-4 space-y-3 mt-4">
-                <p className="text-xs font-black text-[#18201c] flex items-center gap-1.5">
-                  <Plus className="size-4 text-[#849e16]" /> Add a New Delivery Address
+              <div className="rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] p-4 space-y-3 mt-4">
+                <p className="text-xs font-black text-[#18201c] dark:text-white flex items-center gap-1.5">
+                  <Plus className="size-4 text-[#849e16] dark:text-[#d9f447]" /> Add a New Delivery
+                  Address
                 </p>
 
                 <form onSubmit={handleSaveNewAddress} className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-bold text-[#55635a] uppercase block mb-1">
+                    <label className="text-[10px] font-bold text-[#55635a] dark:text-gray-400 uppercase block mb-1">
                       Address Label
                     </label>
                     <div className="flex items-center gap-2">
@@ -1249,8 +1263,8 @@ export default function CartPage() {
                           onClick={() => setNewAddressLabel(lbl)}
                           className={`rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
                             newAddressLabel === lbl
-                              ? 'bg-[#18201c] text-white border-[#18201c]'
-                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447]'
+                              : 'bg-white dark:bg-[#1c2420] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#27342d] hover:bg-gray-100 dark:hover:bg-[#27342d]'
                           }`}
                         >
                           {lbl}
@@ -1260,7 +1274,7 @@ export default function CartPage() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-[#55635a] uppercase block mb-1">
+                    <label className="text-[10px] font-bold text-[#55635a] dark:text-gray-400 uppercase block mb-1">
                       Doorstep Address Details
                     </label>
                     <textarea
@@ -1269,7 +1283,7 @@ export default function CartPage() {
                       value={newAddressText}
                       onChange={(e) => setNewAddressText(e.target.value)}
                       placeholder="House/Flat No, Building, Road / Landmark, Area, Bengaluru"
-                      className="w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-2 text-xs font-semibold text-[#18201c] focus:border-[#849e16] focus:outline-hidden"
+                      className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#1c2420] px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#849e16] dark:focus:border-[#d9f447] focus:outline-hidden"
                     />
                   </div>
 
@@ -1285,11 +1299,11 @@ export default function CartPage() {
             </div>
 
             {/* Footer */}
-            <div className="pt-3 border-t border-[#f0f3eb] flex justify-end shrink-0">
+            <div className="pt-3 border-t border-[#f0f3eb] dark:border-[#27342d] flex justify-end shrink-0">
               <button
                 type="button"
                 onClick={() => setShowAddressModal(false)}
-                className="rounded-xl bg-[#f4f7ed] px-4 py-1.5 text-xs font-extrabold text-[#18201c] hover:bg-[#e2e7d8] transition"
+                className="rounded-xl bg-[#f4f7ed] dark:bg-[#27342d] px-4 py-1.5 text-xs font-extrabold text-[#18201c] dark:text-white hover:bg-[#e2e7d8] dark:hover:bg-[#324239] transition"
               >
                 Close
               </button>

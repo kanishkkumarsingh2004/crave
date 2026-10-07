@@ -1,8 +1,9 @@
 'use client'
 
+import ThemeSelector from '@/components/ThemeSelector'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { Building2, FileText, Save, ShieldCheck, Sparkles } from 'lucide-react'
+import { Building2, FileText, Palette, Save, ShieldCheck, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 
@@ -170,6 +171,22 @@ export default function VendorSettingsPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Theme & Visual Appearance Section */}
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+            <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
+              <Palette className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-[#18201c]">Appearance &amp; Theme Mode</h3>
+              <p className="text-xs text-gray-500">
+                Choose your preferred store portal display mode (Light, Dark, or System Sync).
+              </p>
+            </div>
+          </div>
+          <ThemeSelector />
         </div>
 
         {/* Bank & Payout Form */}

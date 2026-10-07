@@ -111,7 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pageTitle = currentItem ? currentItem.label : 'Admin Console'
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex">
+    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#0f1412] text-[#18201c] dark:text-[#f0f4f1] flex">
       {/* Mobile Overlay with Smooth Fade Transition */}
       <div
         onClick={() => setSidebarOpen(false)}
@@ -272,19 +272,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Body */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar for Admin */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] bg-white/90 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] dark:border-[#202923] bg-white/90 dark:bg-[#121815]/90 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19]">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19] dark:text-[#d9f447]">
                 {t.admin.commandCenter}
               </p>
-              <h1 className="text-lg font-bold tracking-tight text-[#18201c]">{pageTitle}</h1>
+              <h1 className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white">
+                {pageTitle}
+              </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c]">
-              <ShieldCheck className="size-4 text-[#859d19]" /> Master Admin Access
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c] dark:text-white">
+              <ShieldCheck className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Master Admin
+              Access
             </span>
 
             <LanguageSwitcher variant="pill" />
@@ -293,15 +296,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation menu"
-              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white shadow-xs lg:hidden hover:bg-gray-50 active:scale-95 transition"
+              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] dark:border-[#202923] bg-white dark:bg-[#18201c] shadow-xs lg:hidden hover:bg-gray-50 dark:hover:bg-[#202923] active:scale-95 transition"
             >
-              <Menu className="size-5 text-[#18201c]" />
+              <Menu className="size-5 text-[#18201c] dark:text-white" />
             </button>
           </div>
         </header>
 
         {/* Page Content - Generous Spacious Admin Padding */}
-        <main className="p-6 sm:p-8 lg:p-10 flex-1 bg-[#F8F8F6]">{children}</main>
+        <main className="p-6 sm:p-8 lg:p-10 flex-1 bg-[#F8F8F6] dark:bg-[#0f1412] text-[#18201c] dark:text-[#f0f4f1] transition-colors duration-200">
+          {children}
+        </main>
       </div>
     </div>
   )

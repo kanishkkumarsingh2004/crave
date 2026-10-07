@@ -7,7 +7,11 @@ self.onmessage = function (event) {
   switch (type) {
     case 'CALCULATE_DISPATCH_RADAR':
       if (payload && payload.driverLat && payload.driverLng && Array.isArray(payload.orders)) {
-        const matches = findNearbyDispatchCandidates(payload.driverLat, payload.driverLng, payload.orders)
+        const matches = findNearbyDispatchCandidates(
+          payload.driverLat,
+          payload.driverLng,
+          payload.orders
+        )
         self.postMessage({
           type: 'DISPATCH_RADAR_RESULTS',
           matches,

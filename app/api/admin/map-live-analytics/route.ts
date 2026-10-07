@@ -185,10 +185,15 @@ export async function GET(request: Request) {
       })) || []
 
     // Address deduplication map (merges order delivery spots with saved customer addresses)
-    const addressPinMap = new Map<string, typeof pins[0]>()
+    const addressPinMap = new Map<string, (typeof pins)[0]>()
 
     const getAddressKey = (addrStr?: string | null, lat?: number | null, lng?: number | null) => {
-      const normalizedAddr = addrStr ? addrStr.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : ''
+      const normalizedAddr = addrStr
+        ? addrStr
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+        : ''
       if (normalizedAddr) return normalizedAddr
       if (lat != null && lng != null) return `${lat.toFixed(4)}_${lng.toFixed(4)}`
       return null
@@ -198,7 +203,7 @@ export async function GET(request: Request) {
     customerAddresses.forEach((addr) => {
       if (addr.latitude != null && addr.longitude != null) {
         const key = getAddressKey(addr.address, Number(addr.latitude), Number(addr.longitude))
-        const pinObj: typeof pins[0] = {
+        const pinObj: (typeof pins)[0] = {
           id: `addr_${addr.id}`,
           name: `${addr.label || 'Saved Location'} (${addr.customer?.name || 'Customer'})`,
           type: 'order',
@@ -236,7 +241,7 @@ export async function GET(request: Request) {
         existing.detail = `${existing.detail} • Order total: ₹${o.total_amount}`
         if (o.created_at) existing.timestamp = new Date(o.created_at).toLocaleTimeString()
       } else {
-        const newPin: typeof pins[0] = {
+        const newPin: (typeof pins)[0] = {
           id: `ord_${o.id}`,
           name: `Order #${o.id.slice(0, 8)} (${o.customer_name})`,
           type: 'order',

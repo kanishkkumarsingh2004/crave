@@ -123,17 +123,17 @@ export default function AdminPaymentsPage() {
     const baseClasses = 'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200'
     const colorClasses = {
       amber: active
-        ? 'bg-amber-100 text-amber-900 ring-2 ring-amber-600/30'
-        : 'bg-amber-50 text-amber-700 hover:bg-amber-100',
+        ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300 ring-2 ring-amber-600/30'
+        : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100',
       emerald: active
-        ? 'bg-emerald-100 text-emerald-900 ring-2 ring-emerald-600/30'
-        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+        ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 ring-2 ring-emerald-600/30'
+        : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100',
       rose: active
-        ? 'bg-rose-100 text-rose-900 ring-2 ring-rose-600/30'
-        : 'bg-rose-50 text-rose-700 hover:bg-rose-100',
+        ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 ring-2 ring-rose-600/30'
+        : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100',
       gray: active
-        ? 'bg-gray-200 text-gray-800 ring-2 ring-gray-600/30'
-        : 'bg-gray-50 text-gray-600 hover:bg-gray-100',
+        ? 'bg-gray-200 dark:bg-[#202923] text-gray-800 dark:text-gray-200 ring-2 ring-gray-600/30'
+        : 'bg-gray-50 dark:bg-[#121815] text-gray-600 dark:text-gray-400 hover:bg-gray-100',
     }
     return (
       <button
@@ -149,11 +149,11 @@ export default function AdminPaymentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-xl font-bold text-[#18201c] flex items-center gap-2">
+          <h3 className="text-xl font-bold text-[#18201c] dark:text-white flex items-center gap-2">
             <CreditCard className="size-5 text-[#859d19]" />
             UPI Payment References Queue
           </h3>
-          <p className="text-xs text-[#737e77] mt-0.5">
+          <p className="text-xs text-[#737e77] dark:text-gray-400 mt-0.5">
             Review customer-submitted 12-digit UTR numbers before releasing funds to vendors.
           </p>
         </div>
@@ -166,7 +166,7 @@ export default function AdminPaymentsPage() {
               placeholder="Search UTR, Order ID, or VPA..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-xl border border-[#dfe4dc] bg-[#fcfdfe] pl-9 pr-4 py-2 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
+              className="rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 pl-9 pr-4 py-2 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-2 top-2.5">
@@ -175,7 +175,7 @@ export default function AdminPaymentsPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-[#5a655f]">
+          <div className="flex items-center gap-1.5 text-xs text-[#5a655f] dark:text-gray-400">
             <Filter className="size-3.5" />
             <StatusFilterButton label="Pending" value="pending" color="amber" />
             <StatusFilterButton label="All" value="all" color="gray" />
@@ -186,19 +186,21 @@ export default function AdminPaymentsPage() {
       </div>
 
       {loading && (
-        <div className="py-12 text-center text-xs text-[#737e77]">
+        <div className="py-12 text-center text-xs text-[#737e77] dark:text-gray-400">
           Loading payment references...
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl bg-rose-50 p-4 text-xs text-rose-700 border border-rose-200">
+        <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 p-4 text-xs text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
           {error}
         </div>
       )}
 
       {!loading && filteredPayments.length === 0 && !error && (
-        <div className="py-12 text-center text-xs text-[#737e77]">No payment references found.</div>
+        <div className="py-12 text-center text-xs text-[#737e77] dark:text-gray-400">
+          No payment references found.
+        </div>
       )}
 
       {/* Mobile Responsive Payment Cards */}
@@ -207,42 +209,46 @@ export default function AdminPaymentsPage() {
           {filteredPayments.map((p) => (
             <div
               key={p.id}
-              className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+              className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 bg-white dark:bg-[#18201c] flex flex-col gap-3 shadow-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-[#18201c]">{p.order_id}</span>
-                <span className="font-bold text-[#18201c] text-sm">₹{p.amount}</span>
+                <span className="font-bold text-sm text-[#18201c] dark:text-white">
+                  {p.order_id}
+                </span>
+                <span className="font-bold text-[#18201c] dark:text-white text-sm">
+                  ₹{p.amount}
+                </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[11px]">
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span className="font-mono bg-gray-100 dark:bg-[#121815] px-2 py-0.5 rounded text-[11px] text-gray-800 dark:text-gray-200">
                   {p.utr_ref}
                 </span>
                 <span className="text-[11px]">{formatTimeAgo(p.created_at)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[11px] text-[#737e77] truncate max-w-[120px]">
+                <span className="text-[11px] text-[#737e77] dark:text-gray-400 truncate max-w-[120px]">
                   {p.customer_vpa}
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
                     p.status === 'verified'
-                      ? 'bg-emerald-100 text-emerald-800'
+                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                       : p.status === 'rejected'
-                        ? 'bg-rose-100 text-rose-800'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                   }`}
                 >
                   {p.status}
                 </span>
               </div>
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-[#27342d]">
                 <button
                   onClick={() => updatePayment(p.order_id, 'verified')}
                   disabled={p.status === 'verified'}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
                     p.status === 'verified'
                       ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30 cursor-default'
-                      : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white'
+                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-600 hover:text-white'
                   }`}
                 >
                   {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
@@ -253,7 +259,7 @@ export default function AdminPaymentsPage() {
                   className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
                     p.status === 'rejected'
                       ? 'bg-rose-600 text-white ring-2 ring-rose-600/30 cursor-default'
-                      : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white'
+                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/50 hover:bg-rose-600 hover:text-white'
                   }`}
                 >
                   {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
@@ -266,10 +272,10 @@ export default function AdminPaymentsPage() {
 
       {/* Desktop & Tablet Table */}
       {!loading && filteredPayments.length > 0 && (
-        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
+        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c]">
           <table className="w-full text-left text-sm border-collapse min-w-[700px]">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/80 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <tr className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/80 dark:bg-[#121815] text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <th className="px-5 py-3.5 whitespace-nowrap">Order ID</th>
                 <th className="px-5 py-3.5 whitespace-nowrap">UTR Ref</th>
                 <th className="px-5 py-3.5 whitespace-nowrap">Customer VPA</th>
@@ -278,25 +284,28 @@ export default function AdminPaymentsPage() {
                 <th className="px-5 py-3.5 text-right whitespace-nowrap">Status / Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
               {filteredPayments.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="px-5 py-4 font-bold text-[#18201c] whitespace-nowrap">
+                <tr
+                  key={p.id}
+                  className="hover:bg-gray-50/60 dark:hover:bg-[#202923]/60 transition-colors"
+                >
+                  <td className="px-5 py-4 font-bold text-[#18201c] dark:text-white whitespace-nowrap">
                     {p.order_id}
                   </td>
-                  <td className="px-5 py-4 text-xs font-mono text-gray-600 whitespace-nowrap">
+                  <td className="px-5 py-4 text-xs font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
                     {p.utr_ref}
                   </td>
-                  <td className="px-5 py-4 text-xs text-gray-600 whitespace-nowrap">
+                  <td className="px-5 py-4 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
                     {p.customer_vpa}
                   </td>
                   <td className="px-5 py-4 text-xs whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-[#121815] px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
                       <Clock className="size-3" />
                       {formatTimeAgo(p.created_at)}
                     </span>
                   </td>
-                  <td className="px-5 py-4 font-bold text-[#18201c] text-right whitespace-nowrap">
+                  <td className="px-5 py-4 font-bold text-[#18201c] dark:text-white text-right whitespace-nowrap">
                     ₹{p.amount}
                   </td>
                   <td className="px-5 py-4 text-right whitespace-nowrap">
@@ -307,7 +316,7 @@ export default function AdminPaymentsPage() {
                         className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
                           p.status === 'verified'
                             ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30 cursor-default'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white'
+                            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-600 hover:text-white'
                         }`}
                       >
                         {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
@@ -318,7 +327,7 @@ export default function AdminPaymentsPage() {
                         className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
                           p.status === 'rejected'
                             ? 'bg-rose-600 text-white ring-2 ring-rose-600/30 cursor-default'
-                            : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white'
+                            : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/50 hover:bg-rose-600 hover:text-white'
                         }`}
                       >
                         {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}

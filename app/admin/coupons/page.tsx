@@ -307,83 +307,95 @@ export default function AdminCouponsPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 border border-purple-200">
+            <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
               Admin Promotional Engine
             </span>
-            <span className="text-xs text-gray-500">Global Customer Discount Codes</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Global Customer Discount Codes
+            </span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#18201c]">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#18201c] dark:text-white">
             Coupons &amp; Discounts Manager
           </h1>
-          <p className="mt-0.5 text-xs text-gray-600">
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
             Create, edit, deactivate, and monitor performance of platform promo codes.
           </p>
         </div>
 
         <button
           onClick={openCreateModal}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-[#121815] px-5 py-3 text-xs font-bold text-white shadow-md hover:bg-[#232f29] transition active:scale-95"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#86a018] px-5 py-3 text-xs font-bold text-white dark:text-[#121815] shadow-md hover:bg-[#232f29] dark:hover:bg-[#97b51b] transition active:scale-95"
         >
-          <Plus className="size-4 text-[#d9f447]" /> Create New Coupon
+          <Plus className="size-4 text-[#d9f447] dark:text-[#121815]" /> Create New Coupon
         </button>
       </div>
 
       {/* KPI Overview Grid */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Total Promo Codes
             </p>
-            <Tag className="size-4 text-purple-600" />
+            <Tag className="size-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-[#18201c]">{coupons.length}</p>
-          <p className="mt-1 text-xs text-gray-500">{activeCount} currently active</p>
+          <p className="mt-2 text-3xl font-bold text-[#18201c] dark:text-white">{coupons.length}</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {activeCount} currently active
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Active Coupons
             </p>
-            <CheckCircle2 className="size-4 text-emerald-600" />
+            <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-emerald-700">{activeCount}</p>
-          <p className="mt-1 text-xs text-emerald-600 font-medium">Ready in Customer Checkout</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+            {activeCount}
+          </p>
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            Ready in Customer Checkout
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Total Redemptions
             </p>
-            <TrendingUp className="size-4 text-blue-600" />
+            <TrendingUp className="size-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-blue-700">
+          <p className="mt-2 text-3xl font-bold text-blue-700 dark:text-blue-400">
             {totalRedemptions.toLocaleString('en-IN')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">Orders processed with discounts</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Orders processed with discounts
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Total Discount Savings
             </p>
-            <DollarSign className="size-4 text-amber-600" />
+            <DollarSign className="size-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-amber-700">
+          <p className="mt-2 text-3xl font-bold text-amber-700 dark:text-amber-400">
             ₹{totalDiscountGiven.toLocaleString('en-IN')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">Customer savings delivered</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Customer savings delivered
+          </p>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 shadow-sm">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-2.5 size-4 text-gray-400" />
           <input
@@ -391,19 +403,19 @@ export default function AdminCouponsPage() {
             placeholder="Search coupon by code or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 py-2 pl-10 pr-4 text-xs font-medium outline-none focus:border-[#121815]"
+            className="w-full rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#121815] py-2 pl-10 pr-4 text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018]"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 p-1 text-xs font-bold">
+        <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 dark:bg-[#121815] p-1 text-xs font-bold">
           {(['all', 'active', 'inactive'] as const).map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
               className={`rounded-xl px-4 py-1.5 capitalize transition ${
                 statusFilter === st
-                  ? 'bg-[#121815] text-white shadow-sm'
-                  : 'text-gray-600 hover:text-black'
+                  ? 'bg-[#121815] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
               }`}
             >
               {st}
@@ -413,11 +425,11 @@ export default function AdminCouponsPage() {
       </div>
 
       {/* Desktop Coupons Table View (hidden md:block) */}
-      <div className="hidden md:block rounded-3xl border border-[#e1e6df] bg-white shadow-sm overflow-hidden">
+      <div className="hidden md:block rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px] text-left text-xs">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/70 text-gray-500 font-bold uppercase text-[10px] tracking-wider">
+              <tr className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/70 dark:bg-[#121815] text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-wider">
                 <th className="py-3.5 px-4">Coupon Code</th>
                 <th className="py-3.5 px-4">Offer Description</th>
                 <th className="py-3.5 px-4">Applicable Stores</th>
@@ -429,19 +441,24 @@ export default function AdminCouponsPage() {
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 font-medium">
+            <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] font-medium">
               {filteredCoupons.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50/60 transition">
+                <tr
+                  key={c.id}
+                  className="hover:bg-gray-50/60 dark:hover:bg-[#202923]/60 transition"
+                >
                   <td className="py-4 px-4 font-bold text-sm">
-                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 px-3 py-1 text-purple-900 border border-purple-200 font-mono tracking-wider">
-                      <Tag className="size-3.5 text-purple-600" />
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 font-mono tracking-wider">
+                      <Tag className="size-3.5 text-purple-600 dark:text-purple-400" />
                       {c.code}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-gray-700 max-w-xs">{c.description}</td>
+                  <td className="py-4 px-4 text-gray-700 dark:text-gray-300 max-w-xs">
+                    {c.description}
+                  </td>
                   <td className="py-4 px-4">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 bg-purple-50 px-2.5 py-1 rounded-xl border border-purple-200">
-                      <Store className="size-3.5 text-purple-600" />
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1 rounded-xl border border-purple-200 dark:border-purple-800/50">
+                      <Store className="size-3.5 text-purple-600 dark:text-purple-400" />
                       {!c.restaurantIds || c.restaurantIds.length === 0
                         ? 'All Stores'
                         : c.restaurantIds.length === 1
@@ -450,24 +467,35 @@ export default function AdminCouponsPage() {
                           : `${c.restaurantIds.length} Stores`}
                     </span>
                   </td>
-                  <td className="py-4 px-4 font-bold text-[#18201c]">
+                  <td className="py-4 px-4 font-bold text-[#18201c] dark:text-white">
                     {c.discountType === 'percentage' ? (
-                      <span className="text-purple-700">{c.discountValue}% OFF</span>
+                      <span className="text-purple-700 dark:text-purple-400">
+                        {c.discountValue}% OFF
+                      </span>
                     ) : (
-                      <span className="text-emerald-700">Flat ₹{c.discountValue} OFF</span>
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        Flat ₹{c.discountValue} OFF
+                      </span>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-gray-600">
+                  <td className="py-4 px-4 text-gray-600 dark:text-gray-400">
                     <div>
-                      Min Order: <strong className="text-[#18201c]">₹{c.minOrderAmount}</strong>
+                      Min Order:{' '}
+                      <strong className="text-[#18201c] dark:text-white">
+                        ₹{c.minOrderAmount}
+                      </strong>
                     </div>
                     {c.maxDiscount && (
-                      <div className="text-[11px] text-gray-500">Cap: ₹{c.maxDiscount}</div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Cap: ₹{c.maxDiscount}
+                      </div>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-gray-600 font-mono">{c.expiryDate}</td>
+                  <td className="py-4 px-4 text-gray-600 dark:text-gray-300 font-mono">
+                    {c.expiryDate}
+                  </td>
                   <td className="py-4 px-4">
-                    <span className="font-bold text-[#18201c]">{c.usedCount}</span>
+                    <span className="font-bold text-[#18201c] dark:text-white">{c.usedCount}</span>
                     {c.usageLimit && <span className="text-gray-400"> / {c.usageLimit}</span>}
                   </td>
                   <td className="py-4 px-4">
@@ -475,8 +503,8 @@ export default function AdminCouponsPage() {
                       onClick={() => toggleCouponActive(c.id)}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
                         c.isActive
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
+                          : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 hover:bg-rose-200'
                       }`}
                     >
                       {c.isActive ? <Check className="size-3" /> : <X className="size-3" />}
@@ -487,14 +515,14 @@ export default function AdminCouponsPage() {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => openEditModal(c)}
-                        className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                        className="grid size-8 place-items-center rounded-xl bg-gray-100 dark:bg-[#121815] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#202923] transition"
                         title="Edit Coupon"
                       >
                         <Edit3 className="size-3.5" />
                       </button>
                       <button
                         onClick={() => deleteCoupon(c.id)}
-                        className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                        className="grid size-8 place-items-center rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                         title="Delete Coupon"
                       >
                         <Trash2 className="size-3.5" />
@@ -505,7 +533,10 @@ export default function AdminCouponsPage() {
               ))}
               {filteredCoupons.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-xs text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="py-12 text-center text-xs text-gray-500 dark:text-gray-400"
+                  >
                     No coupons found matching your filter criteria.
                   </td>
                 </tr>
@@ -520,27 +551,29 @@ export default function AdminCouponsPage() {
         {filteredCoupons.map((c) => (
           <div
             key={c.id}
-            className="rounded-3xl border border-[#e1e6df] bg-white p-5 shadow-sm flex flex-col gap-3"
+            className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm flex flex-col gap-3"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="rounded-xl bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 border border-purple-200 font-mono flex items-center gap-1.5">
-                <Tag className="size-3.5 text-purple-700" />
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
+              <span className="rounded-xl bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 font-mono flex items-center gap-1.5">
+                <Tag className="size-3.5 text-purple-700 dark:text-purple-400" />
                 {c.code}
               </span>
               <button
                 onClick={() => toggleCouponActive(c.id)}
                 className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                  c.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                  c.isActive
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                 }`}
               >
                 {c.isActive ? 'Active' : 'Inactive'}
               </button>
             </div>
 
-            <p className="text-xs font-bold text-[#18201c]">{c.description}</p>
+            <p className="text-xs font-bold text-[#18201c] dark:text-white">{c.description}</p>
 
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 bg-purple-50/80 px-2.5 py-1.5 rounded-xl border border-purple-200">
-              <Store className="size-3.5 text-purple-600" />
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 dark:text-purple-300 bg-purple-50/80 dark:bg-purple-950/40 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/50">
+              <Store className="size-3.5 text-purple-600 dark:text-purple-400" />
               <span>
                 {!c.restaurantIds || c.restaurantIds.length === 0
                   ? 'Applicable to All Restaurants'
@@ -552,33 +585,37 @@ export default function AdminCouponsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-50 p-3 text-xs">
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-50 dark:bg-[#121815] p-3 text-xs border border-transparent dark:border-[#27342d]">
               <div>
-                <span className="text-[10px] text-gray-500 font-bold uppercase">Discount</span>
-                <p className="font-bold text-[#18201c]">
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase">
+                  Discount
+                </span>
+                <p className="font-bold text-[#18201c] dark:text-white">
                   {c.discountType === 'percentage'
                     ? `${c.discountValue}% OFF`
                     : `Flat ₹${c.discountValue} OFF`}
                 </p>
               </div>
               <div>
-                <span className="text-[10px] text-gray-500 font-bold uppercase">Min Order</span>
-                <p className="font-bold text-[#18201c]">₹{c.minOrderAmount}</p>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase">
+                  Min Order
+                </span>
+                <p className="font-bold text-[#18201c] dark:text-white">₹{c.minOrderAmount}</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 text-xs border-t border-gray-100">
-              <span className="text-gray-500">Used {c.usedCount} times</span>
+            <div className="flex items-center justify-between pt-2 text-xs border-t border-gray-100 dark:border-[#27342d]">
+              <span className="text-gray-500 dark:text-gray-400">Used {c.usedCount} times</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => openEditModal(c)}
-                  className="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700"
+                  className="rounded-xl bg-gray-100 dark:bg-[#121815] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 border border-transparent dark:border-[#27342d]"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => deleteCoupon(c.id)}
-                  className="rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600"
+                  className="rounded-xl bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 border border-transparent dark:border-rose-900/50"
                 >
                   Delete
                 </button>
@@ -590,15 +627,15 @@ export default function AdminCouponsPage() {
 
       {/* Create / Edit Coupon Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#121815]/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in fade-in duration-200">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-lg font-bold text-[#18201c]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d]">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
+              <h3 className="text-lg font-bold text-[#18201c] dark:text-white">
                 {editingCoupon ? 'Edit Coupon Code' : 'Create New Promo Coupon'}
               </h3>
               <button
                 onClick={closeModal}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -607,23 +644,23 @@ export default function AdminCouponsPage() {
             <form onSubmit={handleSaveCoupon} className="mt-4 flex flex-col gap-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#18201c]">Coupon Code *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Coupon Code *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. SUMMER50"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-mono uppercase font-bold outline-none focus:border-[#121815]"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono uppercase font-bold outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Discount Type</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Discount Type</label>
                   <select
                     value={discountType}
                     onChange={(e) => setDiscountType(e.target.value as any)}
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none bg-white"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="flat">Flat Amount (₹)</option>
@@ -632,19 +669,21 @@ export default function AdminCouponsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Description / Display Subtitle</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Description / Display Subtitle
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. 50% OFF up to ₹120 on orders above ₹199"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#121815]"
+                  className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-[#18201c]">
+                  <label className="font-bold text-[#18201c] dark:text-white">
                     {discountType === 'percentage' ? 'Discount % *' : 'Flat Amount (₹) *'}
                   </label>
                   <input
@@ -655,12 +694,14 @@ export default function AdminCouponsPage() {
                     onChange={(e) =>
                       setDiscountValue(e.target.value === '' ? '' : parseFloat(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#121815]"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Min Order (₹) *</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Min Order (₹) *
+                  </label>
                   <input
                     type="number"
                     required
@@ -669,12 +710,12 @@ export default function AdminCouponsPage() {
                     onChange={(e) =>
                       setMinOrderAmount(e.target.value === '' ? '' : parseFloat(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-bold outline-none focus:border-[#121815]"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Max Cap (₹)</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Max Cap (₹)</label>
                   <input
                     type="number"
                     placeholder="120"
@@ -682,24 +723,26 @@ export default function AdminCouponsPage() {
                     onChange={(e) =>
                       setMaxDiscount(e.target.value === '' ? '' : parseFloat(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none focus:border-[#121815]"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#18201c]">Expiry Date</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Expiry Date</label>
                   <input
                     type="date"
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-mono outline-none bg-white"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Usage Limit (Optional)</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Usage Limit (Optional)
+                  </label>
                   <input
                     type="number"
                     placeholder="e.g. 500"
@@ -707,47 +750,49 @@ export default function AdminCouponsPage() {
                     onChange={(e) =>
                       setUsageLimit(e.target.value === '' ? '' : parseInt(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-gray-300 p-2.5 font-medium outline-none"
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               {/* Applicable Restaurants Section */}
-              <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-3.5 space-y-2">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-gray-50/80 dark:bg-[#121815] p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="font-bold text-[#18201c] flex items-center gap-1.5">
-                      <Store className="size-4 text-purple-600" /> Applicable Restaurants
+                    <label className="font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
+                      <Store className="size-4 text-purple-600 dark:text-purple-400" /> Applicable
+                      Restaurants
                     </label>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
                       Restrict to specific restaurants or allow platform-wide
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowRestaurantModal(true)}
-                    className="flex items-center gap-1.5 rounded-xl bg-[#121815] px-3 py-1.5 text-[11px] font-bold text-white hover:bg-[#232f29] transition active:scale-95 shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl bg-[#121815] dark:bg-[#86a018] px-3 py-1.5 text-[11px] font-bold text-white dark:text-[#121815] hover:bg-[#232f29] dark:hover:bg-[#97b41e] transition active:scale-95 shadow-sm"
                   >
-                    <Building2 className="size-3.5 text-[#d9f447]" /> Select Restaurants
+                    <Building2 className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> Select
+                    Restaurants
                   </button>
                 </div>
 
                 <div className="pt-1">
                   {selectedRestaurantIds.length === 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
-                      <Sparkles className="size-3 text-emerald-600" /> Platform-Wide (All
-                      Restaurants Allowed)
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50">
+                      <Sparkles className="size-3 text-emerald-600 dark:text-emerald-400" />{' '}
+                      Platform-Wide (All Restaurants Allowed)
                     </span>
                   ) : (
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-purple-900">
+                        <span className="font-bold text-purple-900 dark:text-purple-300">
                           {selectedRestaurantIds.length} Restaurant(s) Selected:
                         </span>
                         <button
                           type="button"
                           onClick={() => setSelectedRestaurantIds([])}
-                          className="text-[10px] text-rose-600 font-bold hover:underline"
+                          className="text-[10px] text-rose-600 dark:text-rose-400 font-bold hover:underline"
                         >
                           Clear Selection (Allow All)
                         </button>
@@ -758,7 +803,7 @@ export default function AdminCouponsPage() {
                           return (
                             <span
                               key={rId}
-                              className="inline-flex items-center gap-1 rounded-lg bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-900 border border-purple-200"
+                              className="inline-flex items-center gap-1 rounded-lg bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 text-[10px] font-bold text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50"
                             >
                               {rest?.name || rId}
                               <button
@@ -768,7 +813,7 @@ export default function AdminCouponsPage() {
                                     prev.filter((id) => id !== rId)
                                   )
                                 }
-                                className="text-purple-500 hover:text-purple-900"
+                                className="text-purple-500 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200"
                               >
                                 <X className="size-3" />
                               </button>
@@ -781,10 +826,10 @@ export default function AdminCouponsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-[#121815] p-3 border border-transparent dark:border-[#27342d]">
                 <div>
-                  <p className="font-bold text-[#18201c]">Active Status</p>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="font-bold text-[#18201c] dark:text-white">Active Status</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
                     Customers can use this coupon immediately in cart
                   </p>
                 </div>
@@ -792,13 +837,13 @@ export default function AdminCouponsPage() {
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="size-5 accent-[#121815] cursor-pointer"
+                  className="size-5 accent-[#86a018] cursor-pointer"
                 />
               </div>
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-full bg-[#121815] py-3 font-bold text-white shadow-md hover:bg-[#232f29] transition"
+                className="mt-2 w-full rounded-full bg-[#121815] dark:bg-[#86a018] py-3 font-bold text-white dark:text-[#121815] shadow-md hover:bg-[#232f29] dark:hover:bg-[#97b41e] transition"
               >
                 {editingCoupon ? 'Save Coupon Changes' : 'Publish Coupon'}
               </button>
@@ -810,20 +855,21 @@ export default function AdminCouponsPage() {
       {/* Restaurant Selection Popup Modal */}
       {showRestaurantModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] flex flex-col max-h-[85vh]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#18201c] flex items-center gap-2">
-                  <Store className="size-5 text-purple-600" /> Select Applicable Restaurants
+                <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
+                  <Store className="size-5 text-purple-600 dark:text-purple-400" /> Select
+                  Applicable Restaurants
                 </h3>
-                <p className="text-[11px] text-gray-500 mt-0.5">
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                   Choose restaurants where customers can redeem this coupon
                 </p>
               </div>
               <button
                 onClick={() => setShowRestaurantModal(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -837,29 +883,29 @@ export default function AdminCouponsPage() {
                 placeholder="Search restaurant by name or address..."
                 value={restaurantSearchQuery}
                 onChange={(e) => setRestaurantSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 py-2.5 pl-9 pr-4 text-xs font-medium outline-none focus:border-[#121815] focus:bg-white"
+                className="w-full rounded-2xl border border-gray-200 dark:border-[#27342d] bg-gray-50/80 dark:bg-[#121815] py-2.5 pl-9 pr-4 text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018]"
               />
             </div>
 
             {/* Quick Actions & Selection Counter */}
-            <div className="mt-3 flex items-center justify-between text-xs border-b border-gray-100 pb-2.5">
+            <div className="mt-3 flex items-center justify-between text-xs border-b border-gray-100 dark:border-[#27342d] pb-2.5">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedRestaurantIds(restaurantsList.map((r) => r.id))}
-                  className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200"
+                  className="rounded-lg bg-gray-100 dark:bg-[#121815] px-2.5 py-1 text-[11px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 border border-transparent dark:border-[#27342d]"
                 >
                   Select All ({restaurantsList.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedRestaurantIds([])}
-                  className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200"
+                  className="rounded-lg bg-gray-100 dark:bg-[#121815] px-2.5 py-1 text-[11px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 border border-transparent dark:border-[#27342d]"
                 >
                   Deselect All
                 </button>
               </div>
-              <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+              <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1 rounded-full border border-purple-200 dark:border-purple-800/50">
                 {selectedRestaurantIds.length} Selected
               </span>
             </div>
@@ -888,8 +934,8 @@ export default function AdminCouponsPage() {
                         key={rest.id}
                         className={`flex items-start gap-3 rounded-2xl p-3 border transition cursor-pointer ${
                           isChecked
-                            ? 'border-purple-300 bg-purple-50/40 shadow-sm'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            ? 'border-purple-300 dark:border-purple-800/50 bg-purple-50/40 dark:bg-purple-950/40 shadow-sm'
+                            : 'border-gray-200 dark:border-[#27342d] hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-[#121815]'
                         }`}
                       >
                         <input
@@ -907,8 +953,10 @@ export default function AdminCouponsPage() {
                           className="mt-0.5 size-4 accent-purple-700 cursor-pointer rounded"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-[#18201c] truncate">{rest.name}</p>
-                          <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          <p className="text-xs font-bold text-[#18201c] dark:text-white truncate">
+                            {rest.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
                             📍 {rest.address}
                           </p>
                         </div>
@@ -919,11 +967,11 @@ export default function AdminCouponsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="mt-4 border-t border-gray-100 pt-3">
+            <div className="mt-4 border-t border-gray-100 dark:border-[#27342d] pt-3">
               <button
                 type="button"
                 onClick={() => setShowRestaurantModal(false)}
-                className="w-full rounded-full bg-[#121815] py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#232f29] transition"
+                className="w-full rounded-full bg-[#121815] dark:bg-[#86a018] py-2.5 text-xs font-bold text-white dark:text-[#121815] shadow-md hover:bg-[#232f29] dark:hover:bg-[#97b41e] transition"
               >
                 Confirm &amp; Apply Selection ({selectedRestaurantIds.length} Selected)
               </button>

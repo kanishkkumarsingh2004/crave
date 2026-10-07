@@ -4,8 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token =
-    request.cookies.get('crave_auth_token')?.value ||
-    request.cookies.get('drop_auth_token')?.value
+    request.cookies.get('crave_auth_token')?.value || request.cookies.get('drop_auth_token')?.value
 
   const isAdminPath = pathname.startsWith('/admin')
   const isVendorPath = pathname.startsWith('/vendor')

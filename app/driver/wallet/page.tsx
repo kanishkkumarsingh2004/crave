@@ -5,7 +5,8 @@ import { Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function DriverWalletPage() {
-  const { completedTrips, payoutLogs, handleInstantCashout, savedUpiList, showCustomAlert } = useDriver()
+  const { completedTrips, payoutLogs, handleInstantCashout, savedUpiList, showCustomAlert } =
+    useDriver()
   const totalEarnings = completedTrips.reduce((acc, t) => acc + t.total, 0)
   const totalPayouts = payoutLogs.reduce((acc, p) => acc + p.amount, 0)
   const currentBalance = Math.max(0, totalEarnings - totalPayouts)

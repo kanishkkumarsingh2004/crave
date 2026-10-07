@@ -29,7 +29,11 @@ export async function POST(request: Request) {
     const roleStr = actor.role as string
     const isSelf = actor.id === driverId
     const isAuthorizedRider =
-      (actor.role === 'rider' || roleStr === 'driver' || actor.role === 'user' || roleStr === 'customer') && isSelf
+      (actor.role === 'rider' ||
+        roleStr === 'driver' ||
+        actor.role === 'user' ||
+        roleStr === 'customer') &&
+      isSelf
     const isAdmin = actor.role === 'admin'
 
     if (!isAuthorizedRider && !isAdmin) {
