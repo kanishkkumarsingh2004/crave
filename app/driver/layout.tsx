@@ -408,7 +408,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between">
           <div>
             {/* GPS Location Permission Access Banner */}
-            {(gpsStatus === 'denied' || gpsPermissionState === 'denied' || gpsStatus === 'error' || gpsPermissionState === 'prompt') && (
+            {(gpsStatus === 'denied' ||
+              gpsPermissionState === 'denied' ||
+              gpsStatus === 'error' ||
+              gpsPermissionState === 'prompt') && (
               <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm animate-in fade-in duration-200">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -417,9 +420,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-extrabold text-sm text-[#18201c]">GPS Location Access Required</h4>
+                        <h4 className="font-extrabold text-sm text-[#18201c]">
+                          GPS Location Access Required
+                        </h4>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase">
-                          {gpsStatus === 'denied' || gpsPermissionState === 'denied' ? 'Permission Denied' : 'Access Needed'}
+                          {gpsStatus === 'denied' || gpsPermissionState === 'denied'
+                            ? 'Permission Denied'
+                            : 'Access Needed'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-700 font-medium mt-0.5">

@@ -1,5 +1,6 @@
 'use client'
 
+import ThemeSelector from '@/components/ThemeSelector'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/lib/toast-context'
@@ -1174,26 +1175,26 @@ export default function CustomerDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] pb-24 text-[#18201c]">
+    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] pb-24 text-[#18201c] dark:text-white">
       {/* Top Header Navigation Banner */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-xs">
+      <div className="sticky top-0 z-30 border-b border-[#eaefe5] dark:border-[#27342d] bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-2 sm:gap-4">
           {/* Left Block: Logo + Location Selector */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               href="/"
-              className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] shrink-0 hover:opacity-90 transition"
+              className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] dark:text-white shrink-0 hover:opacity-90 transition"
             >
               crave<span className="text-[#86a018]">.</span>
             </Link>
 
-            <div className="hidden lg:block h-7 w-px bg-gray-200 mx-1 shrink-0" />
+            <div className="hidden lg:block h-7 w-px bg-gray-200 dark:bg-gray-800 mx-1 shrink-0" />
 
             <button
               onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1 hover:bg-gray-100/80 transition"
+              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1 hover:bg-gray-100/80 dark:hover:bg-[#18201c] transition"
             >
-              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] shrink-0 shadow-xs">
+              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-[#27342d] text-[#d9f447] shrink-0 shadow-xs">
                 <MapPin className="size-3.5 sm:size-4 lg:size-5" />
               </div>
               <div className="min-w-0">
@@ -1205,7 +1206,7 @@ export default function CustomerDashboard({
                     (Change)
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] truncate">
+                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate">
                   <span className="truncate max-w-[110px] xs:max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
                     {deliveryAddress || user?.address || 'Select Delivery Location'}
                   </span>
@@ -1221,12 +1222,12 @@ export default function CustomerDashboard({
               onClick={() => navigateToTab('explore')}
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'explore'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
-                  : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
               }`}
             >
               <Compass
-                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447] dark:text-[#18201c]' : 'text-[#859d19]'}`}
               />
               <span>Explore</span>
             </button>
@@ -1235,14 +1236,14 @@ export default function CustomerDashboard({
               onClick={() => navigateToTab('live-order')}
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'live-order'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
-                  : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
               }`}
             >
               <Bike className="size-4" />
               <span>Track Drop</span>
               {activeOrder && activeOrder.statusStep < 4 && (
-                <span className="size-2 rounded-full bg-[#d9f447] animate-pulse" />
+                <span className="size-2 rounded-full bg-[#d9f447] dark:bg-[#18201c] animate-pulse" />
               )}
             </button>
 
@@ -1250,8 +1251,8 @@ export default function CustomerDashboard({
               onClick={() => navigateToTab('orders')}
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'orders'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
-                  : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
               }`}
             >
               <History className="size-4" />
@@ -1262,8 +1263,8 @@ export default function CustomerDashboard({
               onClick={() => navigateToTab('profile')}
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
                 activeTab === 'profile'
-                  ? 'bg-[#18201c] text-white border-[#18201c] shadow-xs'
-                  : 'bg-[#f8fafc] text-gray-600 border-[#e2e8f0] hover:text-[#18201c] hover:bg-white'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
               }`}
             >
               <User className="size-4" />
@@ -1275,22 +1276,24 @@ export default function CustomerDashboard({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => router.push('/user/cart')}
-              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#2a3831] transition active:scale-95 shrink-0"
+              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-sm font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#2a3831] dark:hover:bg-[#c2dc37] transition active:scale-95 shrink-0"
             >
-              <ShoppingCart className="size-4 text-[#d9f447]" />
+              <ShoppingCart className="size-4 text-[#d9f447] dark:text-[#18201c]" />
               <span>Cart ({totalCartItemCount})</span>
               {cartSubtotal > 0 && (
-                <span className="text-[#d9f447] font-semibold">&bull; ₹{grandTotal}</span>
+                <span className="text-[#d9f447] dark:text-[#18201c] font-semibold">
+                  &bull; ₹{grandTotal}
+                </span>
               )}
             </button>
 
             {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
             <button
               onClick={() => setShowMobileSideMenu(true)}
-              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 bg-white text-[#18201c] shadow-xs hover:bg-gray-100 transition active:scale-95 shrink-0"
+              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0"
               aria-label="Open side menu"
             >
-              <Menu className="size-5 text-[#18201c]" />
+              <Menu className="size-5 text-[#18201c] dark:text-white" />
             </button>
           </div>
         </div>
@@ -1307,12 +1310,12 @@ export default function CustomerDashboard({
 
       <aside
         aria-label="Side menu options"
-        className={`fixed inset-y-0 right-0 z-[90] flex w-80 max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 right-0 z-[90] flex w-80 max-w-[85vw] flex-col bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
           showMobileSideMenu ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Side Drawer Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 bg-[#f9faf7]">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] px-5 py-4 bg-[#f9faf7] dark:bg-[#121815]">
           <div className="flex items-center gap-3">
             {user?.avatar ? (
               <img
@@ -1321,22 +1324,22 @@ export default function CustomerDashboard({
                 className="size-10 rounded-full object-cover border border-[#d9f447]"
               />
             ) : (
-              <span className="grid size-10 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] text-sm font-black shadow-xs">
+              <span className="grid size-10 place-items-center rounded-2xl bg-[#18201c] dark:bg-[#27342d] text-[#d9f447] text-sm font-black shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </span>
             )}
             <div className="min-w-0">
-              <p className="text-sm font-extrabold text-[#18201c] truncate">
+              <p className="text-sm font-extrabold text-[#18201c] dark:text-white truncate">
                 {user?.name || 'Customer'}
               </p>
-              <p className="text-[11px] text-gray-500 font-medium truncate">
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate">
                 {user?.email || 'Logged in'}
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowMobileSideMenu(false)}
-            className="grid size-9 place-items-center rounded-2xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition"
+            className="grid size-9 place-items-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#27342d] transition"
             aria-label="Close menu"
           >
             <X className="size-4" />
@@ -1356,13 +1359,17 @@ export default function CustomerDashboard({
             }}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'explore'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
             }`}
           >
             <span className="flex items-center gap-3">
               <Compass
-                className={`size-5 ${activeTab === 'explore' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+                className={`size-5 ${
+                  activeTab === 'explore'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#859d19] dark:text-[#d9f447]'
+                }`}
               />
               Explore Kitchens
             </span>
@@ -1375,13 +1382,17 @@ export default function CustomerDashboard({
             }}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'live-order'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
             }`}
           >
             <span className="flex items-center gap-3">
               <Bike
-                className={`size-5 ${activeTab === 'live-order' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+                className={`size-5 ${
+                  activeTab === 'live-order'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#859d19] dark:text-[#d9f447]'
+                }`}
               />
               Track Drop
             </span>
@@ -1400,18 +1411,22 @@ export default function CustomerDashboard({
             }}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'orders'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
             }`}
           >
             <span className="flex items-center gap-3">
               <History
-                className={`size-5 ${activeTab === 'orders' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+                className={`size-5 ${
+                  activeTab === 'orders'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#859d19] dark:text-[#d9f447]'
+                }`}
               />
               Orders History
             </span>
             {pastOrders.length > 0 && (
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-extrabold text-gray-700">
+              <span className="rounded-full bg-gray-100 dark:bg-[#27342d] px-2 py-0.5 text-xs font-extrabold text-gray-700 dark:text-gray-200">
                 {pastOrders.length}
               </span>
             )}
@@ -1424,15 +1439,19 @@ export default function CustomerDashboard({
             }}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'profile'
-                ? 'bg-[#18201c] text-white shadow-xs'
-                : 'text-[#18201c] hover:bg-[#f3f6ee]'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
             }`}
           >
             <span className="flex items-center gap-3">
               <User
-                className={`size-5 ${activeTab === 'profile' ? 'text-[#d9f447]' : 'text-[#859d19]'}`}
+                className={`size-5 ${
+                  activeTab === 'profile'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#859d19] dark:text-[#d9f447]'
+                }`}
               />
-              Profile & Account
+              Profile &amp; Account
             </span>
           </button>
 
@@ -1441,20 +1460,20 @@ export default function CustomerDashboard({
               setShowMobileSideMenu(false)
               router.push('/user/cart')
             }}
-            className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] hover:bg-[#f3f6ee] transition"
+            className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] transition"
           >
             <span className="flex items-center gap-3">
-              <ShoppingCart className="size-5 text-[#859d19]" />
+              <ShoppingCart className="size-5 text-[#859d19] dark:text-[#d9f447]" />
               My Cart
             </span>
             {totalCartItemCount > 0 && (
-              <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-xs font-bold text-[#d9f447]">
+              <span className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-2.5 py-0.5 text-xs font-bold text-[#d9f447] dark:text-[#18201c]">
                 {totalCartItemCount} items
               </span>
             )}
           </button>
 
-          <div className="my-3 border-t border-gray-100" />
+          <div className="my-3 border-t border-gray-100 dark:border-[#27342d]" />
           <p className="px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
             Quick Access
           </p>
@@ -1462,7 +1481,7 @@ export default function CustomerDashboard({
           <Link
             href="/user/cravexp"
             onClick={() => setShowMobileSideMenu(false)}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition"
           >
             <Zap className="size-5 text-emerald-600 fill-emerald-600" />
             <span>craveXP Instamart (10 Min)</span>
@@ -1470,14 +1489,14 @@ export default function CustomerDashboard({
         </div>
 
         {/* Side Drawer Footer / Sign Out */}
-        <div className="border-t border-gray-100 p-4 bg-[#f9faf7]">
+        <div className="border-t border-gray-100 dark:border-[#27342d] p-4 bg-[#f9faf7] dark:bg-[#121815]">
           <button
             onClick={async () => {
               setShowMobileSideMenu(false)
               await logout()
               router.push('/login')
             }}
-            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-rose-600 hover:bg-rose-50 transition"
+            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
           >
             <LogOut className="size-5" />
             <span>Sign Out</span>
@@ -1528,13 +1547,13 @@ export default function CustomerDashboard({
                   placeholder="Search dishes or cuisines..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-2xl border border-[#dfe4dc] bg-white py-3 pl-11 pr-4 text-xs shadow-xs outline-none transition focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/50 font-medium"
+                  className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white placeholder:text-gray-400 py-3 pl-11 pr-4 text-xs shadow-xs outline-none transition focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/50 font-medium"
                 />
               </div>
 
               {/* What's on your mind? Circular Food Categories */}
               <div>
-                <h3 className="text-sm font-bold text-[#18201c] mb-3 tracking-tight">
+                <h3 className="text-sm font-bold text-[#18201c] dark:text-white mb-3 tracking-tight">
                   What&apos;s on your mind?
                 </h3>
                 <div className="flex items-center gap-5 overflow-x-auto pb-2 no-scrollbar">
@@ -1549,8 +1568,8 @@ export default function CustomerDashboard({
                         <div
                           className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition ${
                             isSelected
-                              ? 'border-[#18201c] ring-2 ring-[#18201c]/20 scale-105'
-                              : 'border-transparent hover:border-gray-300'
+                              ? 'border-[#18201c] dark:border-[#d9f447] ring-2 ring-[#18201c]/20 dark:ring-[#d9f447]/30 scale-105'
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                         >
                           <img
@@ -1561,7 +1580,9 @@ export default function CustomerDashboard({
                         </div>
                         <span
                           className={`text-xs tracking-tight ${
-                            isSelected ? 'text-[#18201c] font-bold' : 'text-gray-600 font-medium'
+                            isSelected
+                              ? 'text-[#18201c] dark:text-white font-bold'
+                              : 'text-gray-600 dark:text-gray-400 font-medium'
                           }`}
                         >
                           {cat.label}
@@ -1574,15 +1595,15 @@ export default function CustomerDashboard({
 
               {/* Smart Filter Chips Bar */}
               <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
-                <span className="font-bold text-gray-500 flex items-center gap-1 text-[11px] uppercase mr-1">
-                  <Filter className="size-3.5 text-gray-600" /> Filters:
+                <span className="font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 text-[11px] uppercase mr-1">
+                  <Filter className="size-3.5 text-gray-600 dark:text-gray-400" /> Filters:
                 </span>
                 <button
                   onClick={() => setPureVegOnly(!pureVegOnly)}
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
                     pureVegOnly
                       ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      : 'bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-[#27342d] hover:bg-gray-50 dark:hover:bg-[#27342d]'
                   }`}
                 >
                   Pure Veg
@@ -1592,7 +1613,7 @@ export default function CustomerDashboard({
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
                     offersOnly
                       ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      : 'bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-[#27342d] hover:bg-gray-50 dark:hover:bg-[#27342d]'
                   }`}
                 >
                   Offers Only
@@ -1602,7 +1623,7 @@ export default function CustomerDashboard({
                   className={`rounded-full px-3.5 py-1.5 font-bold border transition ${
                     fastDeliveryOnly
                       ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      : 'bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-[#27342d] hover:bg-gray-50 dark:hover:bg-[#27342d]'
                   }`}
                 >
                   Under 25 Mins
@@ -1614,10 +1635,10 @@ export default function CustomerDashboard({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-base text-[#18201c] flex items-center gap-1.5">
+                  <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-1.5">
                     <Flame className="size-4 text-amber-500 fill-amber-500" /> Signature Dishes
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {selectedRestaurant?.name
                       ? `Menu items from ${selectedRestaurant.name}.`
                       : 'Menu items from available restaurants.'}
@@ -1629,7 +1650,7 @@ export default function CustomerDashboard({
                 {menuItemsList.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-2xl border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 transition"
+                    className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-gray-600 transition"
                   >
                     <div>
                       {item.image ? (
@@ -1639,16 +1660,22 @@ export default function CustomerDashboard({
                           className="h-36 w-full rounded-xl object-cover"
                         />
                       ) : (
-                        <div className="grid h-36 w-full place-items-center rounded-xl bg-gray-100 text-gray-400">
+                        <div className="grid h-36 w-full place-items-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400">
                           <ShoppingBag className="size-8" />
                         </div>
                       )}
-                      <p className="mt-3 font-bold text-sm text-[#18201c]">{item.name}</p>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.detail}</p>
+                      <p className="mt-3 font-bold text-sm text-[#18201c] dark:text-white">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                        {item.detail}
+                      </p>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
-                      <span className="font-bold text-sm text-[#18201c]">₹{item.price}</span>
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-[#27342d]">
+                      <span className="font-bold text-sm text-[#18201c] dark:text-white">
+                        ₹{item.price}
+                      </span>
                       <button
                         onClick={() => addToCart(item)}
                         className="rounded-full bg-[#d9f447] px-4 py-1.5 text-xs font-bold text-[#18201c] hover:scale-105 transition shadow-xs"
@@ -1665,16 +1692,18 @@ export default function CustomerDashboard({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-bold text-lg text-[#18201c]">
+                  <h3 className="font-bold text-lg text-[#18201c] dark:text-white">
                     Restaurants ({filteredRestaurants.length})
                   </h3>
-                  <p className="text-xs text-gray-500">Available restaurants from the database.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Available restaurants from the database.
+                  </p>
                 </div>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredRestaurants.length === 0 ? (
-                  <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+                  <p className="col-span-full rounded-2xl border border-dashed border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-8 text-center text-sm text-gray-600 dark:text-gray-400">
                     No restaurants match these filters.
                   </p>
                 ) : (
@@ -1682,7 +1711,7 @@ export default function CustomerDashboard({
                     <div
                       key={rest.id}
                       onClick={() => setSelectedRestaurant(rest)}
-                      className="group cursor-pointer overflow-hidden rounded-3xl border border-[#e1e6df] bg-white transition hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
+                      className="group cursor-pointer overflow-hidden rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] transition hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
                     >
                       <div>
                         <div className="relative h-48 w-full overflow-hidden">
@@ -1693,13 +1722,13 @@ export default function CustomerDashboard({
                               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="grid size-full place-items-center bg-gray-100 text-gray-400">
+                            <div className="grid size-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
                               <MapPin className="size-8" />
                             </div>
                           )}
                           <div className="absolute left-3 top-3 flex items-center gap-1.5">
                             {rest.tag && (
-                              <span className="rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4f5f15] backdrop-blur-md shadow-xs">
+                              <span className="rounded-full bg-white/95 dark:bg-[#18201c]/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4f5f15] dark:text-[#d9f447] backdrop-blur-md shadow-xs">
                                 {rest.tag}
                               </span>
                             )}
@@ -1726,14 +1755,16 @@ export default function CustomerDashboard({
                         <div className="p-4">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h3 className="font-bold text-base tracking-tight text-[#18201c]">
+                              <h3 className="font-bold text-base tracking-tight text-[#18201c] dark:text-white">
                                 {rest.name}
                               </h3>
-                              <p className="mt-0.5 text-xs text-[#737e77]">{rest.cuisine}</p>
+                              <p className="mt-0.5 text-xs text-[#737e77] dark:text-gray-400">
+                                {rest.cuisine}
+                              </p>
                             </div>
                           </div>
 
-                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#737e77]">
+                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#737e77] dark:text-gray-400">
                             {rest.address && (
                               <span className="flex min-w-0 items-center gap-1 truncate">
                                 <MapPin className="size-3.5 shrink-0 text-[#8aa31c]" />
@@ -1741,7 +1772,7 @@ export default function CustomerDashboard({
                               </span>
                             )}
                             {rest.costForTwo && (
-                              <span className="shrink-0 font-semibold text-gray-600">
+                              <span className="shrink-0 font-semibold text-gray-600 dark:text-gray-400">
                                 {rest.costForTwo}
                               </span>
                             )}
@@ -1750,8 +1781,8 @@ export default function CustomerDashboard({
                       </div>
 
                       <div className="p-4 pt-0">
-                        <div className="flex items-center justify-between border-t border-[#f0f3eb] pt-3 text-xs">
-                          <span className="text-emerald-700 font-semibold text-[11px]">
+                        <div className="flex items-center justify-between border-t border-[#f0f3eb] dark:border-[#27342d] pt-3 text-xs">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold text-[11px]">
                             {rest.eta ? `Delivery · ${rest.eta}` : 'Delivery time unavailable'}
                           </span>
                           <span className="font-bold text-[#86a018] group-hover:underline flex items-center gap-1">
@@ -1771,20 +1802,22 @@ export default function CustomerDashboard({
         {activeTab === 'orders' && (
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="text-2xl font-bold text-[#18201c]">Your Orders</h2>
-              <p className="mt-0.5 text-xs text-gray-500">{pastOrders.length} orders placed</p>
+              <h2 className="text-2xl font-bold text-[#18201c] dark:text-white">Your Orders</h2>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                {pastOrders.length} orders placed
+              </p>
             </div>
 
             {pastOrders.length === 0 ? (
-              <div className="rounded-3xl border border-[#e1e6df] bg-white p-16 text-center">
-                <ShoppingBag className="mx-auto size-14 text-gray-200 mb-3" />
-                <p className="font-bold text-[#18201c]">No Orders Yet</p>
-                <p className="text-xs text-gray-500 mt-1">
+              <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-16 text-center">
+                <ShoppingBag className="mx-auto size-14 text-gray-200 dark:text-gray-700 mb-3" />
+                <p className="font-bold text-[#18201c] dark:text-white">No Orders Yet</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Your order history will appear here after placing an order.
                 </p>
                 <button
                   onClick={() => navigateToTab('explore')}
-                  className="mt-5 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
+                  className="mt-5 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-2.5 text-xs font-bold text-white dark:text-[#18201c]"
                 >
                   Explore Kitchens
                 </button>
@@ -1794,9 +1827,9 @@ export default function CustomerDashboard({
                 {pastOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="overflow-hidden rounded-3xl border border-[#e1e6df] bg-white shadow-xs"
+                    className="overflow-hidden rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-xs"
                   >
-                    <div className="flex items-center gap-4 border-b border-[#f0f3ec] p-5">
+                    <div className="flex items-center gap-4 border-b border-[#f0f3ec] dark:border-[#27342d] p-5">
                       {order.restaurantImage ? (
                         <img
                           src={order.restaurantImage}
@@ -1804,7 +1837,7 @@ export default function CustomerDashboard({
                           className="size-14 rounded-2xl object-cover shrink-0"
                         />
                       ) : (
-                        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gray-100 text-gray-400">
+                        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400">
                           <Store className="size-5" />
                         </span>
                       )}
@@ -1813,10 +1846,10 @@ export default function CustomerDashboard({
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                               order.status === 'Delivered'
-                                ? 'bg-emerald-100 text-emerald-800'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                                 : order.status === 'In Progress'
-                                  ? 'bg-blue-100 text-blue-800 animate-pulse'
-                                  : 'bg-rose-100 text-rose-800'
+                                  ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 animate-pulse'
+                                  : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                             }`}
                           >
                             {order.status === 'Delivered' ? (
@@ -1835,15 +1868,17 @@ export default function CustomerDashboard({
                           </span>
                           <span className="text-[10px] text-gray-400">#{order.id}</span>
                         </div>
-                        <h3 className="mt-1 font-bold text-sm text-[#18201c] truncate">
+                        <h3 className="mt-1 font-bold text-sm text-[#18201c] dark:text-white truncate">
                           {order.restaurantName}
                         </h3>
-                        <p className="text-[11px] text-gray-500">
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
                           {order.date} · {order.time}
                         </p>
                       </div>
                       <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                        <p className="font-bold text-base text-[#18201c]">₹{order.total}</p>
+                        <p className="font-bold text-base text-[#18201c] dark:text-white">
+                          ₹{order.total}
+                        </p>
                         {(order.status === 'Delivered' ||
                           (order.status as string) === 'completed') && (
                           <button
@@ -1860,7 +1895,7 @@ export default function CustomerDashboard({
                                 status: order.status,
                               })
                             }
-                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] text-[#d9f447] hover:bg-black px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-black dark:hover:bg-[#c2dc37] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
                           >
                             <FileText className="size-3" /> View Invoice
                           </button>
@@ -1868,17 +1903,17 @@ export default function CustomerDashboard({
                       </div>
                     </div>
 
-                    <div className="px-5 py-3 border-b border-[#f5f6f3]">
+                    <div className="px-5 py-3 border-b border-[#f5f6f3] dark:border-[#27342d]">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
                         Items Ordered
                       </p>
                       <div className="flex flex-col gap-1">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-xs">
-                            <span className="text-gray-700">
+                            <span className="text-gray-700 dark:text-gray-300">
                               {item.qty}× {item.name}
                             </span>
-                            <span className="font-semibold text-[#18201c]">
+                            <span className="font-semibold text-[#18201c] dark:text-white">
                               ₹{item.price * item.qty}
                             </span>
                           </div>
@@ -1895,7 +1930,7 @@ export default function CustomerDashboard({
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
-            <div className="rounded-2xl border border-[#2a3831] bg-[#18201c] p-6 text-white sm:p-8">
+            <div className="rounded-2xl border border-[#2a3831] dark:border-[#27342d] bg-[#18201c] p-6 text-white sm:p-8">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
                   <div className="grid size-16 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-2xl shrink-0">
@@ -1924,7 +1959,7 @@ export default function CustomerDashboard({
                 </button>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 divide-x divide-[#2a3831] border-t border-[#2a3831] pt-6">
+              <div className="mt-6 grid grid-cols-2 divide-x divide-[#2a3831] dark:divide-[#27342d] border-t border-[#2a3831] dark:border-[#27342d] pt-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white">
                     {
@@ -1946,16 +1981,16 @@ export default function CustomerDashboard({
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6 flex flex-col justify-between">
+              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 mb-4">
-                    <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                      <User className="size-4 text-[#18201c]" /> Personal Details &amp; Delivery
-                      Address
+                  <div className="flex items-center justify-between border-b border-[#e2e8f0] dark:border-[#27342d] pb-4 mb-4">
+                    <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                      <User className="size-4 text-[#18201c] dark:text-white" /> Personal Details
+                      &amp; Delivery Address
                     </h3>
                     <button
                       onClick={() => setEditAddress(!editAddress)}
-                      className="text-xs font-semibold text-[#18201c] hover:underline"
+                      className="text-xs font-semibold text-[#18201c] dark:text-[#d9f447] hover:underline"
                     >
                       {editAddress ? 'Cancel' : 'Edit Info'}
                     </button>
@@ -1964,12 +1999,14 @@ export default function CustomerDashboard({
                   {editAddress ? (
                     <div className="space-y-4 text-xs">
                       <div>
-                        <label className="font-semibold text-gray-700">Delivery Address</label>
+                        <label className="font-semibold text-gray-700 dark:text-gray-300">
+                          Delivery Address
+                        </label>
                         <textarea
                           rows={3}
                           value={deliveryAddress}
                           onChange={(e) => setDeliveryAddress(e.target.value)}
-                          className="mt-1.5 w-full rounded-xl border border-[#e2e8f0] p-3 font-medium outline-none focus:border-[#18201c]"
+                          className="mt-1.5 w-full rounded-xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                         />
                       </div>
                       <button
@@ -1991,33 +2028,35 @@ export default function CustomerDashboard({
                             triggerToast('Could not save address. Please try again.')
                           }
                         }}
-                        className="w-full rounded-xl bg-[#18201c] py-2.5 font-semibold text-white hover:bg-[#2a3831] transition"
+                        className="w-full rounded-xl bg-[#18201c] dark:bg-[#d9f447] py-2.5 font-semibold text-white dark:text-[#18201c] hover:bg-[#2a3831] dark:hover:bg-[#c2dc37] transition"
                       >
                         Save Personal Info
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3.5 text-xs">
-                      <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
+                      <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
                         <div className="flex items-start gap-3">
-                          <MapPin className="size-4 text-[#18201c] shrink-0 mt-0.5" />
+                          <MapPin className="size-4 text-[#18201c] dark:text-[#d9f447] shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-xs font-semibold text-gray-500">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                               Primary Delivery Address
                             </p>
-                            <p className="font-medium text-[#18201c] mt-1">{deliveryAddress}</p>
+                            <p className="font-medium text-[#18201c] dark:text-white mt-1">
+                              {deliveryAddress}
+                            </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
+                      <div className="flex items-center justify-between rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
                         <div className="flex items-center gap-3">
-                          <PhoneCall className="size-4 text-[#18201c]" />
-                          <span className="font-medium text-[#18201c]">
+                          <PhoneCall className="size-4 text-[#18201c] dark:text-[#d9f447]" />
+                          <span className="font-medium text-[#18201c] dark:text-white">
                             {user?.phone || 'Phone Not Registered'}
                           </span>
                         </div>
-                        <span className="text-xs font-medium text-emerald-700">
+                        <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
                           {user?.phone ? 'Verified' : 'Unverified'}
                         </span>
                       </div>
@@ -2026,45 +2065,64 @@ export default function CustomerDashboard({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6 flex flex-col justify-between">
+              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 flex flex-col justify-between">
                 <div>
-                  <div className="border-b border-[#e2e8f0] pb-4 mb-4">
-                    <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-[#18201c]" /> Privacy &amp; Data Policy
+                  <div className="border-b border-[#e2e8f0] dark:border-[#27342d] pb-4 mb-4">
+                    <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Privacy
+                      &amp; Data Policy
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Your privacy and data protection terms
                     </p>
                   </div>
 
                   <div className="space-y-3 text-xs">
-                    <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
-                      <p className="font-bold text-[#18201c]">
+                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
+                      <p className="font-bold text-[#18201c] dark:text-white">
                         End-to-End Encryption &amp; Security
                       </p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                         All user accounts, delivery coordinates, and payment records are secured
                         using TLS encryption and Supabase PostgreSQL Row Level Security (RLS).
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
-                      <p className="font-bold text-[#18201c]">Zero Third-Party Data Selling</p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
+                      <p className="font-bold text-[#18201c] dark:text-white">
+                        Zero Third-Party Data Selling
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                         crave. never sells, rents, or trades your personal phone number, location
                         history, or order data to external advertising networks.
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0]">
-                      <p className="font-bold text-[#18201c]">Payment Verification</p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
+                      <p className="font-bold text-[#18201c] dark:text-white">
+                        Payment Verification
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                         Payment UTR references submitted for manual verification are cleared
                         directly with verified platform admin records and purged after processing.
                       </p>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* App Theme Preference Section */}
+              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 md:col-span-2 space-y-4">
+                <div className="border-b border-[#e2e8f0] dark:border-[#27342d] pb-4">
+                  <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                    <Sparkles className="size-4 text-[#859d19]" /> App Theme &amp; Visual Appearance
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Select your preferred application color theme mode (Light, Dark, or System
+                    Sync).
+                  </p>
+                </div>
+                <ThemeSelector />
               </div>
             </div>
           </div>
@@ -2235,12 +2293,12 @@ export default function CustomerDashboard({
                   </div>
 
                   {/* Progress Stepper Section */}
-                  <div className="p-4 sm:p-8 border-b border-gray-100 bg-white">
+                  <div className="p-4 sm:p-8 border-b border-gray-100 dark:border-[#27342d] bg-white dark:bg-[#18201c]">
                     <div className="flex items-center justify-between mb-4 sm:mb-6">
                       <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
                         Live Order Status
                       </p>
-                      <span className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Step {activeOrder.statusStep} of 4
                       </span>
@@ -2392,16 +2450,16 @@ export default function CustomerDashboard({
                   </div>
 
                   {/* Assigned Delivery Partner Card */}
-                  <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white">
+                  <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-[#18201c]">
                     <div className="flex items-center gap-3">
-                      <div className="grid size-10 sm:size-12 place-items-center rounded-xl sm:rounded-2xl bg-[#18201c] text-white shrink-0 shadow-md">
+                      <div className="grid size-10 sm:size-12 place-items-center rounded-xl sm:rounded-2xl bg-[#18201c] dark:bg-[#27342d] text-white shrink-0 shadow-md">
                         <Bike className="size-5 sm:size-6 text-[#d9f447]" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] sm:text-xs font-medium text-[#737e77]">
+                        <p className="text-[11px] sm:text-xs font-medium text-[#737e77] dark:text-gray-400">
                           Assigned Delivery Partner
                         </p>
-                        <p className="font-extrabold text-xs sm:text-sm text-[#18201c] mt-0.5 truncate">
+                        <p className="font-extrabold text-xs sm:text-sm text-[#18201c] dark:text-white mt-0.5 truncate">
                           {activeOrder.driverName || 'Awaiting driver assignment'}
                         </p>
                       </div>
@@ -2410,9 +2468,9 @@ export default function CustomerDashboard({
                       {activeOrder.driverPhone ? (
                         <a
                           href={`tel:${activeOrder.driverPhone}`}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] bg-[#18201c] px-4 sm:px-5 py-2.5 text-xs font-bold text-white hover:bg-[#2e3b34] transition shadow-sm"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] dark:border-[#27342d] bg-[#18201c] dark:bg-[#d9f447] px-4 sm:px-5 py-2.5 text-xs font-bold text-white dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c2dc37] transition shadow-sm"
                         >
-                          <PhoneCall className="size-3.5 text-[#d9f447]" />
+                          <PhoneCall className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
                           Call Partner
                         </a>
                       ) : (
@@ -2425,9 +2483,9 @@ export default function CustomerDashboard({
                 </div>
               </div>
             ) : inProgressOrders.length > 0 ? (
-              <div className="flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-[#dfe5db] bg-white p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-[#dfe5db] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] flex items-center gap-2">
+                  <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white flex items-center gap-2">
                     <span className="relative flex size-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d9f447] opacity-75"></span>
                       <span className="relative inline-flex rounded-full size-2.5 bg-[#859d19]"></span>
@@ -2552,18 +2610,20 @@ export default function CustomerDashboard({
                 </div>
               </div>
             ) : (
-              <div className="rounded-3xl border border-[#e1e6df] bg-white p-12 text-center">
-                <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-[#f0f5db] text-[#7f9815]">
+              <div className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-12 text-center text-[#18201c] dark:text-white">
+                <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-[#f0f5db] dark:bg-[#27342d] text-[#7f9815] dark:text-[#d9f447]">
                   <ShoppingBag className="size-8" />
                 </div>
-                <h3 className="mt-4 text-xl font-bold">No Active Order Right Now</h3>
-                <p className="mt-1 text-xs text-[#747e78] max-w-sm mx-auto">
+                <h3 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">
+                  No Active Order Right Now
+                </h3>
+                <p className="mt-1 text-xs text-[#747e78] dark:text-gray-300 max-w-sm mx-auto">
                   Browse your favourite dishes and place an order to see live delivery tracking
                   here.
                 </p>
                 <button
                   onClick={() => navigateToTab('explore')}
-                  className="mt-6 rounded-full bg-[#18201c] px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition"
+                  className="mt-6 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition"
                 >
                   Explore Kitchens
                 </button>
@@ -3196,17 +3256,23 @@ export default function CustomerDashboard({
       {/* Mobile Bottom Tab Bar */}
       <nav
         aria-label="Mobile bottom navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-gray-200 backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
           <button
             onClick={() => navigateToTab('explore')}
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-              activeTab === 'explore' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+              activeTab === 'explore'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
             }`}
           >
             <Compass
-              className={`size-5 ${activeTab === 'explore' ? 'text-[#859d19]' : 'text-gray-400'}`}
+              className={`size-5 ${
+                activeTab === 'explore'
+                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Explore</span>
           </button>
@@ -3214,12 +3280,18 @@ export default function CustomerDashboard({
           <button
             onClick={() => navigateToTab('live-order')}
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative ${
-              activeTab === 'live-order' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+              activeTab === 'live-order'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
             }`}
           >
             <div className="relative">
               <Bike
-                className={`size-5 ${activeTab === 'live-order' ? 'text-[#859d19]' : 'text-gray-400'}`}
+                className={`size-5 ${
+                  activeTab === 'live-order'
+                    ? 'text-[#859d19] dark:text-[#d9f447]'
+                    : 'text-gray-400 dark:text-gray-500'
+                }`}
               />
               {activeOrder && activeOrder.statusStep < 4 && (
                 <span className="absolute -top-1 -right-1 size-2 rounded-full bg-[#d9f447] animate-ping" />
@@ -3231,23 +3303,29 @@ export default function CustomerDashboard({
           <button
             onClick={() => navigateToTab('orders')}
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-              activeTab === 'orders' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+              activeTab === 'orders'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
             }`}
           >
             <History
-              className={`size-5 ${activeTab === 'orders' ? 'text-[#859d19]' : 'text-gray-400'}`}
+              className={`size-5 ${
+                activeTab === 'orders'
+                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Orders</span>
           </button>
 
           <button
             onClick={() => router.push('/user/cart')}
-            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-gray-400 font-bold"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-gray-400 dark:text-gray-500 font-bold"
           >
             <div className="relative">
-              <ShoppingCart className="size-5 text-gray-400" />
+              <ShoppingCart className="size-5 text-gray-400 dark:text-gray-500" />
               {totalCartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 bg-[#18201c] text-[#d9f447] text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                <span className="absolute -top-1.5 -right-2 bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] text-[9px] font-black px-1.5 py-0.2 rounded-full">
                   {totalCartItemCount}
                 </span>
               )}
@@ -3258,11 +3336,17 @@ export default function CustomerDashboard({
           <button
             onClick={() => navigateToTab('profile')}
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-              activeTab === 'profile' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+              activeTab === 'profile'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
             }`}
           >
             <User
-              className={`size-5 ${activeTab === 'profile' ? 'text-[#859d19]' : 'text-gray-400'}`}
+              className={`size-5 ${
+                activeTab === 'profile'
+                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Profile</span>
           </button>

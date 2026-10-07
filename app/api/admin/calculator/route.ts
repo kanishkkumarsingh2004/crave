@@ -16,23 +16,64 @@ export async function GET() {
     }
 
     const mergedConfig = {
-      platformFee: paymentConfig?.platform_fee != null ? Number(paymentConfig.platform_fee) : DEFAULT_PAYMENT_CONFIG.platformFee,
-      handlingFee: paymentConfig?.handling_fee != null ? Number(paymentConfig.handling_fee) : DEFAULT_PAYMENT_CONFIG.handlingFee,
-      vendorCommission: paymentConfig?.vendor_commission != null ? Number(paymentConfig.vendor_commission) : DEFAULT_PAYMENT_CONFIG.vendorCommission,
-      packagingCap: paymentConfig?.packaging_cap != null ? Number(paymentConfig.packaging_cap) : DEFAULT_PAYMENT_CONFIG.packagingCap,
-      baseDeliveryFee: paymentConfig?.delivery_fee != null ? Number(paymentConfig.delivery_fee) : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
-      baseDistanceKm: paymentConfig?.base_distance_km != null ? Number(paymentConfig.base_distance_km) : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
-      perKmRate: paymentConfig?.per_km_rate != null ? Number(paymentConfig.per_km_rate) : DEFAULT_PAYMENT_CONFIG.perKmRate,
-      freeDeliveryThreshold: paymentConfig?.free_delivery_threshold != null ? Number(paymentConfig.free_delivery_threshold) : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
-      driverPayoutShare: paymentConfig?.driver_payout_share != null ? Number(paymentConfig.driver_payout_share) : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
-      surgeMultiplier: paymentConfig?.surge_multiplier != null ? Number(paymentConfig.surge_multiplier) : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
-      rainFee: paymentConfig?.rain_fee != null ? Number(paymentConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
-      nightSurgeFee: paymentConfig?.night_surge_fee != null ? Number(paymentConfig.night_surge_fee) : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
-      isRainModeActive: paymentConfig?.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
-      isNightSurgeActive: paymentConfig?.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
-      enableCashOnDelivery: paymentConfig?.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
-      enableUpiDeepLink: paymentConfig?.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
-      requireUtrNumber: paymentConfig?.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
+      platformFee:
+        paymentConfig?.platform_fee != null
+          ? Number(paymentConfig.platform_fee)
+          : DEFAULT_PAYMENT_CONFIG.platformFee,
+      handlingFee:
+        paymentConfig?.handling_fee != null
+          ? Number(paymentConfig.handling_fee)
+          : DEFAULT_PAYMENT_CONFIG.handlingFee,
+      vendorCommission:
+        paymentConfig?.vendor_commission != null
+          ? Number(paymentConfig.vendor_commission)
+          : DEFAULT_PAYMENT_CONFIG.vendorCommission,
+      packagingCap:
+        paymentConfig?.packaging_cap != null
+          ? Number(paymentConfig.packaging_cap)
+          : DEFAULT_PAYMENT_CONFIG.packagingCap,
+      baseDeliveryFee:
+        paymentConfig?.delivery_fee != null
+          ? Number(paymentConfig.delivery_fee)
+          : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
+      baseDistanceKm:
+        paymentConfig?.base_distance_km != null
+          ? Number(paymentConfig.base_distance_km)
+          : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
+      perKmRate:
+        paymentConfig?.per_km_rate != null
+          ? Number(paymentConfig.per_km_rate)
+          : DEFAULT_PAYMENT_CONFIG.perKmRate,
+      freeDeliveryThreshold:
+        paymentConfig?.free_delivery_threshold != null
+          ? Number(paymentConfig.free_delivery_threshold)
+          : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
+      driverPayoutShare:
+        paymentConfig?.driver_payout_share != null
+          ? Number(paymentConfig.driver_payout_share)
+          : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
+      surgeMultiplier:
+        paymentConfig?.surge_multiplier != null
+          ? Number(paymentConfig.surge_multiplier)
+          : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
+      rainFee:
+        paymentConfig?.rain_fee != null
+          ? Number(paymentConfig.rain_fee)
+          : DEFAULT_PAYMENT_CONFIG.rainFee,
+      nightSurgeFee:
+        paymentConfig?.night_surge_fee != null
+          ? Number(paymentConfig.night_surge_fee)
+          : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
+      isRainModeActive:
+        paymentConfig?.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
+      isNightSurgeActive:
+        paymentConfig?.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
+      enableCashOnDelivery:
+        paymentConfig?.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
+      enableUpiDeepLink:
+        paymentConfig?.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
+      requireUtrNumber:
+        paymentConfig?.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
     }
 
     // 2. Fetch Restaurants from DB
@@ -137,8 +178,8 @@ export async function GET() {
           status: true,
           created_at: true,
           driver: {
-            select: { name: true, phone: true }
-          }
+            select: { name: true, phone: true },
+          },
         },
         orderBy: { created_at: 'desc' },
         take: 15,

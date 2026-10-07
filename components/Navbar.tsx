@@ -118,7 +118,7 @@ export default function Navbar() {
   if (!mounted) {
     return (
       <>
-        <header className="sticky top-0 z-50 border-b border-[#e5e9e1] bg-white/90 backdrop-blur-md">
+        <header className="sticky top-0 z-50 border-b border-[#e5e9e1] dark:border-[#27342d] bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
           <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
@@ -129,23 +129,23 @@ export default function Navbar() {
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
                   href="/login"
-                  className="rounded-full border border-[#dfe4dc] bg-white px-4 py-2 text-xs font-semibold text-[#18201c] transition hover:bg-[#f3f6ee]"
+                  className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-semibold text-[#18201c] dark:text-white transition hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#323c36]"
+                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
                 >
                   Sign up
                 </Link>
               </div>
               <button
                 onClick={() => setShowMobileMenu((v) => !v)}
-                className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
+                className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] lg:hidden"
                 aria-label="Toggle menu"
               >
-                <Menu className="size-4 text-[#18201c]" />
+                <Menu className="size-4 text-[#18201c] dark:text-white" />
               </button>
             </div>
           </nav>
@@ -156,7 +156,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#e5e9e1] bg-white/90 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-[#e5e9e1] dark:border-[#27342d] bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex items-center gap-6">
@@ -166,16 +166,16 @@ export default function Navbar() {
           </div>
 
           {/* Center navigation links */}
-          <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] lg:flex">
+          <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] dark:text-gray-300 lg:flex">
             {user ? (
               <>
                 {role === 'customer' ? (
                   <>
                     <Link
                       href="/user/explore"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
+                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
                         pathname.includes('/user/explore') || pathname.includes('/user/dashboard')
-                          ? 'text-[#18201c] font-bold'
+                          ? 'text-[#18201c] dark:text-white font-bold'
                           : ''
                       }`}
                     >
@@ -184,8 +184,10 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/user/cravexp"
-                      className={`flex items-center gap-1.5 transition hover:text-emerald-700 ${
-                        pathname.includes('/user/cravexp') ? 'text-emerald-700 font-bold' : ''
+                      className={`flex items-center gap-1.5 transition hover:text-emerald-700 dark:hover:text-emerald-400 ${
+                        pathname.includes('/user/cravexp')
+                          ? 'text-emerald-700 dark:text-emerald-400 font-bold'
+                          : ''
                       }`}
                     >
                       <Zap className="size-3.5 text-emerald-600 fill-emerald-600" />
@@ -195,8 +197,10 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/user/orders"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
-                        pathname.includes('/user/orders') ? 'text-[#18201c] font-bold' : ''
+                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
+                        pathname.includes('/user/orders')
+                          ? 'text-[#18201c] dark:text-white font-bold'
+                          : ''
                       }`}
                     >
                       <ShoppingBag className="size-3.5 text-[#859d19]" />
@@ -204,8 +208,10 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/user/track"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
-                        pathname.includes('/user/track') ? 'text-[#18201c] font-bold' : ''
+                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
+                        pathname.includes('/user/track')
+                          ? 'text-[#18201c] dark:text-white font-bold'
+                          : ''
                       }`}
                     >
                       <Bike className="size-3.5 text-[#859d19]" />
@@ -215,8 +221,10 @@ export default function Navbar() {
                 ) : (
                   <Link
                     href={currentDashboardLink}
-                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] ${
-                      pathname.includes('dashboard') ? 'text-[#18201c] font-bold' : ''
+                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
+                      pathname.includes('dashboard')
+                        ? 'text-[#18201c] dark:text-white font-bold'
+                        : ''
                     }`}
                   >
                     <LayoutDashboard className="size-3.5 text-[#859d19]" />
@@ -234,7 +242,7 @@ export default function Navbar() {
             {user && (
               <Link
                 href="/user/cart"
-                className="relative grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] hover:bg-[#f1f4ed] transition shrink-0"
+                className="relative grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-[#f8f9f6] dark:bg-[#18201c] text-[#18201c] dark:text-white hover:bg-[#f1f4ed] dark:hover:bg-[#27342d] transition shrink-0"
                 title="View Cart Page"
               >
                 <ShoppingCart className="size-4" />
@@ -250,7 +258,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserDropdown((v) => !v)}
-                  className="flex items-center gap-2.5 rounded-full border border-[#dbe1d7] bg-white p-1 pr-3 transition hover:bg-[#f4f7f1]"
+                  className="flex items-center gap-2.5 rounded-full border border-[#dbe1d7] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-1 pr-3 transition hover:bg-[#f4f7f1] dark:hover:bg-[#27342d]"
                 >
                   {user.avatar ? (
                     <img
@@ -264,20 +272,26 @@ export default function Navbar() {
                     </span>
                   )}
                   <div className="hidden text-left sm:block">
-                    <p className="text-xs font-bold leading-none text-[#18201c]">{user.name}</p>
-                    <p className="mt-0.5 text-[10px] font-medium capitalize text-[#75817a]">
+                    <p className="text-xs font-bold leading-none text-[#18201c] dark:text-white">
+                      {user.name}
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-medium capitalize text-[#75817a] dark:text-gray-400">
                       {user.role}
                     </p>
                   </div>
-                  <ChevronDown className="size-3.5 text-[#88928a]" />
+                  <ChevronDown className="size-3.5 text-[#88928a] dark:text-gray-400" />
                 </button>
 
                 {showUserDropdown && (
-                  <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] bg-white p-2 shadow-2xl">
+                  <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 shadow-2xl">
                     {/* User info header */}
-                    <div className="border-b border-[#eff2ed] px-3 py-2.5">
-                      <p className="text-xs font-bold text-[#18201c]">{user.name}</p>
-                      <p className="text-[11px] text-[#78827c] truncate">{user.email}</p>
+                    <div className="border-b border-[#eff2ed] dark:border-[#27342d] px-3 py-2.5">
+                      <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-[11px] text-[#78827c] dark:text-gray-400 truncate">
+                        {user.email}
+                      </p>
                       <span
                         className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${roleDetails[user.role]?.bg} ${roleDetails[user.role]?.color}`}
                       >
@@ -291,7 +305,7 @@ export default function Navbar() {
                         <Link
                           href="/user/explore"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
                         >
                           <Compass className="size-4 text-[#7d9518]" />
                           Explore Kitchens
@@ -299,7 +313,7 @@ export default function Navbar() {
                         <Link
                           href="/user/cravexp"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                         >
                           <Zap className="size-4 text-emerald-600 fill-emerald-600" />
                           craveXP. Instamart (10 Min)
@@ -307,7 +321,7 @@ export default function Navbar() {
                         <Link
                           href="/vendor/crave-ep"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] bg-[#f0f3eb] hover:bg-[#e2e7dc]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] dark:text-white bg-[#f0f3eb] dark:bg-[#27342d] hover:bg-[#e2e7dc] dark:hover:bg-[#324239]"
                         >
                           <Store className="size-4 text-[#7d9518]" />
                           craveXP. Console
@@ -315,7 +329,7 @@ export default function Navbar() {
                         <Link
                           href="/user/orders"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
                           <ShoppingBag className="size-4 text-[#7d9518]" />
                           My Orders
@@ -323,7 +337,7 @@ export default function Navbar() {
                         <Link
                           href="/user/track"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
                           <Bike className="size-4 text-[#7d9518]" />
                           Track Order
@@ -331,7 +345,7 @@ export default function Navbar() {
                         <Link
                           href="/user/profile"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
                           <LayoutDashboard className="size-4 text-[#7d9518]" />
                           My Profile Settings
@@ -342,7 +356,7 @@ export default function Navbar() {
                         <Link
                           href={currentDashboardLink}
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] hover:bg-[#f3f6ee] mt-1"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
                         >
                           <LayoutDashboard className="size-4 text-[#7d9518]" />
                           Go to Dashboard
@@ -350,7 +364,7 @@ export default function Navbar() {
                         <Link
                           href="/vendor/crave-ep"
                           onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                         >
                           <Store className="size-4 text-emerald-600" />
                           craveXP. Console
@@ -359,7 +373,7 @@ export default function Navbar() {
                     )}
 
                     {/* Language switcher row */}
-                    <div className="border-t border-[#eff2ed] mt-1 pt-2 px-1">
+                    <div className="border-t border-[#eff2ed] dark:border-[#27342d] mt-1 pt-2 px-1">
                       <LanguageSwitcher variant="menu" />
                     </div>
 
@@ -370,7 +384,7 @@ export default function Navbar() {
                         setShowUserDropdown(false)
                         router.push('/login')
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 border-t border-[#eff2ed] mt-1 pt-2"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-t border-[#eff2ed] dark:border-[#27342d] mt-1 pt-2"
                     >
                       <LogOut className="size-4" />
                       Sign Out
@@ -382,13 +396,13 @@ export default function Navbar() {
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
                   href="/login"
-                  className="rounded-full border border-[#dfe4dc] bg-white px-4 py-2 text-xs font-semibold text-[#18201c] transition hover:bg-[#f3f6ee]"
+                  className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-semibold text-[#18201c] dark:text-white transition hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[#18201c] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#323c36]"
+                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
                 >
                   Sign up
                 </Link>
@@ -403,13 +417,13 @@ export default function Navbar() {
                   setShowMobileMenu((v) => !v)
                 }
               }}
-              className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] bg-white lg:hidden"
+              className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] lg:hidden"
               aria-label="Toggle menu"
             >
               {showMobileMenu ? (
-                <X className="size-4 text-[#18201c]" />
+                <X className="size-4 text-[#18201c] dark:text-white" />
               ) : (
-                <Menu className="size-4 text-[#18201c]" />
+                <Menu className="size-4 text-[#18201c] dark:text-white" />
               )}
             </button>
           </div>
@@ -429,11 +443,11 @@ export default function Navbar() {
       <aside
         aria-label="Mobile navigation"
         aria-hidden={!showMobileMenu}
-        className={`fixed inset-y-0 right-0 z-[70] flex w-[min(20rem,85vw)] flex-col border-l border-[#e2e6de] bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 right-0 z-[70] flex w-[min(20rem,85vw)] flex-col border-l border-[#e2e6de] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
           showMobileMenu ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-[#e5e9e1] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[#e5e9e1] dark:border-[#27342d] px-5 py-4">
           <Link
             href={logoTargetLink}
             onClick={() => setShowMobileMenu(false)}
@@ -442,13 +456,13 @@ export default function Navbar() {
             <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
               <UtensilsCrossed className="size-5 fill-current" />
             </span>
-            <span className="text-xl font-bold text-[#18201c]">
+            <span className="text-xl font-bold text-[#18201c] dark:text-white">
               crave<span className="text-[#869c18]">.</span>
             </span>
           </Link>
           <button
             onClick={() => setShowMobileMenu(false)}
-            className="grid size-9 place-items-center rounded-full border border-[#dfe4dc]"
+            className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] text-gray-600 dark:text-gray-300"
             aria-label="Close menu"
           >
             <X className="size-4" />
@@ -461,20 +475,20 @@ export default function Navbar() {
               <Link
                 href={currentDashboardLink}
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#18201c] hover:bg-[#f3f6ee]"
+                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <span>Dashboard</span>
-                <span className="rounded-full bg-[#f0f5db] px-2 py-0.5 text-[10px] text-[#718714] capitalize">
+                <span className="rounded-full bg-[#f0f5db] dark:bg-[#27342d] px-2 py-0.5 text-[10px] text-[#718714] dark:text-[#d9f447] capitalize">
                   {role}
                 </span>
               </Link>
 
-              <div className="mt-2 border-t border-[#e5e9e1]" />
+              <div className="mt-2 border-t border-[#e5e9e1] dark:border-[#27342d]" />
 
               <Link
                 href="/user/explore"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <Compass className="size-5 text-[#859d19]" />
                 Explore
@@ -483,7 +497,7 @@ export default function Navbar() {
               <Link
                 href="/user/track"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <Bike className="size-5 text-[#859d19]" />
                 Track Drop
@@ -492,7 +506,7 @@ export default function Navbar() {
               <Link
                 href="/user/orders"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <ShoppingBag className="size-5 text-[#859d19]" />
                 Orders
@@ -501,7 +515,7 @@ export default function Navbar() {
               <Link
                 href="/user/profile"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <User className="size-5 text-[#859d19]" />
                 Profile
@@ -510,7 +524,7 @@ export default function Navbar() {
               <Link
                 href="/user/dashboard"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#2d3732] hover:bg-[#f3f6ee]"
+                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <span className="flex items-center gap-3">
                   <ShoppingCart className="size-5 text-[#859d19]" />
@@ -533,7 +547,7 @@ export default function Navbar() {
                   setShowMobileMenu(false)
                   router.push('/login')
                 }}
-                className="rounded-xl px-3 py-3 text-left font-semibold text-rose-600 hover:bg-rose-50"
+                className="rounded-xl px-3 py-3 text-left font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
               >
                 Sign Out
               </button>
@@ -543,7 +557,7 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-xl px-3 py-3 text-[#18201c] hover:bg-[#f3f6ee]"
+                className="rounded-xl px-3 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 Explore
               </Link>
@@ -554,14 +568,14 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setShowMobileMenu(false)}
-                className="mt-2 rounded-full border border-[#dfe4dc] px-4 py-3 text-center text-sm font-bold text-[#18201c] hover:bg-[#f3f6ee]"
+                className="mt-2 rounded-full border border-[#dfe4dc] dark:border-[#27342d] px-4 py-3 text-center text-sm font-bold text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 Log in
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-full bg-[#18201c] px-4 py-3 text-center text-sm font-bold text-white hover:bg-[#323c36]"
+                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-3 text-center text-sm font-bold text-white dark:text-[#18201c] hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
               >
                 Sign up
               </Link>

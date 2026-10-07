@@ -233,99 +233,107 @@ export default function VendorSettlementsPage() {
   return (
     <div className="flex flex-col gap-6 max-w-6xl pb-16">
       {/* Top Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] pb-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
             Restaurant Payouts & Commission Control
           </span>
-          <h2 className="mt-2 text-2xl font-bold text-[#18201c]">
+          <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
             Vendor Settlements & Financials
           </h2>
-          <p className="mt-0.5 text-xs text-[#717c76]">
+          <p className="mt-0.5 text-xs text-[#717c76] dark:text-gray-400">
             Inspect restaurant sales, calculate commission cuts, alter vendor pricing parameters,
             and process weekly payouts.
           </p>
         </div>
 
         {settlementProcessedSuccess && (
-          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
-            <CheckCircle2 className="size-4 text-emerald-700" /> Settlement Payout Processed
-            Successfully!
+          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 px-4 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50">
+            <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" /> Settlement
+            Payout Processed Successfully!
           </div>
         )}
       </div>
 
       {/* Network Financial Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] dark:text-gray-400">
               Weekly Gross
             </span>
-            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-purple-100 text-purple-800">
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300">
               <DollarSign className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-[#18201c]">
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-[#18201c] dark:text-white">
             ₹{totalGrossSales.toLocaleString()}
           </p>
-          <p className="mt-1 text-[10px] sm:text-xs font-semibold text-emerald-600 flex items-center gap-1">
+          <p className="mt-1 text-[10px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
             <TrendingUp className="size-3 sm:size-3.5" /> Across {vendors.length} kitchens
           </p>
         </div>
 
-        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] dark:text-gray-400">
               Our Commission
             </span>
-            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-800">
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
               <Percent className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-700">
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-700 dark:text-emerald-400">
             ₹{totalCommissionRevenue.toLocaleString()}
           </p>
-          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Net revenue cut</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77] dark:text-gray-400">
+            Net revenue cut
+          </p>
         </div>
 
-        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] dark:text-gray-400">
               Net Vendor Pay
             </span>
-            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-800">
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300">
               <Store className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-blue-700">
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-blue-700 dark:text-blue-400">
             ₹{totalNetVendorPayable.toLocaleString()}
           </p>
-          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">To be disbursed</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77] dark:text-gray-400">
+            To be disbursed
+          </p>
         </div>
 
-        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-xs">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-3.5 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77]">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] dark:text-gray-400">
               Pending Pay
             </span>
-            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-amber-100 text-amber-800">
+            <span className="grid size-7 sm:size-8 place-items-center rounded-lg sm:rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
               <Clock3 className="size-3.5 sm:size-4" />
             </span>
           </div>
-          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600">
+          <p className="mt-2 sm:mt-3 text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600 dark:text-amber-400">
             {pendingSettlementsCount} Kitchens
           </p>
-          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77]">Awaiting payout release</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-[#737e77] dark:text-gray-400">
+            Awaiting payout release
+          </p>
         </div>
       </div>
 
       {/* Main Vendor Settlements Table Section */}
-      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">
+      <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
           <div>
-            <h3 className="text-xl font-bold">Kitchen Vendor Financial Breakdown</h3>
-            <p className="text-xs text-[#737e77]">
+            <h3 className="text-xl font-bold text-[#18201c] dark:text-white">
+              Kitchen Vendor Financial Breakdown
+            </h3>
+            <p className="text-xs text-[#737e77] dark:text-gray-400">
               Select any restaurant to alter custom commission, set pricing, or disburse
               settlements.
             </p>
@@ -339,17 +347,19 @@ export default function VendorSettlementsPage() {
                 placeholder="Search restaurant or owner..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="rounded-full border border-[#dfe4dc] py-1.5 pl-8 pr-3 text-xs outline-none focus:border-[#86a018]"
+                className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 py-1.5 pl-8 pr-3 text-xs outline-none focus:border-[#86a018]"
               />
             </div>
 
-            <div className="flex items-center gap-1 rounded-full bg-gray-100 p-1 text-xs font-bold">
+            <div className="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-[#121815] p-1 text-xs font-bold">
               {['all', 'pending', 'settled'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st as any)}
                   className={`rounded-full px-3 py-1 text-[11px] capitalize transition ${
-                    statusFilter === st ? 'bg-[#18201c] text-white' : 'text-gray-600'
+                    statusFilter === st
+                      ? 'bg-[#18201c] dark:bg-[#86a018] text-white dark:text-[#121815]'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                   }`}
                 >
                   {st}
@@ -366,32 +376,32 @@ export default function VendorSettlementsPage() {
             return (
               <div
                 key={v.id}
-                className="rounded-2xl border border-gray-200 p-4 bg-white flex flex-col gap-3 shadow-xs"
+                className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 bg-white dark:bg-[#18201c] flex flex-col gap-3 shadow-xs"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-sm text-[#18201c]">{v.name}</h4>
-                    <p className="text-xs text-gray-500">
+                    <h4 className="font-bold text-sm text-[#18201c] dark:text-white">{v.name}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {v.ownerName} · {v.phone}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
                       v.settlementStatus === 'settled'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50'
                     }`}
                   >
                     {v.settlementStatus}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 border-y border-gray-100 py-2.5 text-xs">
+                <div className="grid grid-cols-2 gap-2 border-y border-gray-100 dark:border-[#27342d] py-2.5 text-xs">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-gray-400 block">
                       Weekly Gross
                     </span>
-                    <span className="font-bold text-[#18201c] text-sm">
+                    <span className="font-bold text-[#18201c] dark:text-white text-sm">
                       ₹{v.weeklyGrossSales.toLocaleString()}
                     </span>
                   </div>
@@ -399,27 +409,30 @@ export default function VendorSettlementsPage() {
                     <span className="text-[10px] uppercase font-bold text-gray-400 block">
                       Commission Cut ({v.commissionRate}%)
                     </span>
-                    <span className="font-bold text-emerald-700 text-sm">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
                       ₹{fin.commissionCut.toLocaleString()}
                     </span>
                   </div>
-                  <div className="col-span-2 pt-1 border-t border-dashed border-gray-100 flex items-center justify-between">
+                  <div className="col-span-2 pt-1 border-t border-dashed border-gray-100 dark:border-[#27342d] flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-gray-400">
                       Net Payable
                     </span>
-                    <span className="font-extrabold text-blue-700 text-sm">
+                    <span className="font-extrabold text-blue-700 dark:text-blue-400 text-sm">
                       ₹{fin.netPayable.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] text-gray-500 font-medium">{v.cuisine}</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    {v.cuisine}
+                  </span>
                   <button
                     onClick={() => setSelectedVendor(v)}
-                    className="rounded-full bg-[#18201c] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1.5"
+                    className="rounded-full bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] transition hover:bg-[#323d36] dark:hover:bg-[#97b51b] flex items-center gap-1.5"
                   >
-                    <Sliders className="size-3.5 text-[#d9f447]" /> Alter & Inspect
+                    <Sliders className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> Alter &
+                    Inspect
                   </button>
                 </div>
               </div>
@@ -428,9 +441,9 @@ export default function VendorSettlementsPage() {
         </div>
 
         {/* Desktop & Tablet Table (>= md) */}
-        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200">
+        <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d]">
           <table className="w-full text-left text-xs min-w-[850px]">
-            <thead className="border-b border-gray-200 bg-gray-50/80 text-gray-500 uppercase font-bold text-[10px] tracking-wider">
+            <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/80 dark:bg-[#121815] text-gray-500 dark:text-gray-400 uppercase font-bold text-[10px] tracking-wider">
               <tr>
                 <th className="px-4 py-3.5 whitespace-nowrap">Restaurant & Owner</th>
                 <th className="px-4 py-3.5 whitespace-nowrap">Cuisine / Location</th>
@@ -442,41 +455,44 @@ export default function VendorSettlementsPage() {
                 <th className="px-4 py-3.5 whitespace-nowrap text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
               {filteredVendors.map((v) => {
                 const fin = getVendorFinancials(v)
                 return (
-                  <tr key={v.id} className="hover:bg-gray-50/60 transition">
+                  <tr
+                    key={v.id}
+                    className="hover:bg-gray-50/60 dark:hover:bg-[#202923]/60 transition"
+                  >
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <p className="font-bold text-[#18201c] text-sm">{v.name}</p>
-                      <p className="text-[11px] text-gray-500">
+                      <p className="font-bold text-[#18201c] dark:text-white text-sm">{v.name}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
                         {v.ownerName} ({v.phone})
                       </p>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <p className="font-semibold text-gray-700">{v.cuisine}</p>
-                      <p className="text-[10px] text-gray-400">{v.address}</p>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">{v.cuisine}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">{v.address}</p>
                     </td>
-                    <td className="px-4 py-4 font-bold text-base text-[#18201c] whitespace-nowrap">
+                    <td className="px-4 py-4 font-bold text-base text-[#18201c] dark:text-white whitespace-nowrap">
                       ₹{v.weeklyGrossSales.toLocaleString()}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+                      <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/50 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
                         {v.commissionRate}%
                       </span>
                     </td>
-                    <td className="px-4 py-4 font-bold text-emerald-700 whitespace-nowrap">
+                    <td className="px-4 py-4 font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                       ₹{fin.commissionCut.toLocaleString()}
                     </td>
-                    <td className="px-4 py-4 font-bold text-blue-700 text-sm whitespace-nowrap">
+                    <td className="px-4 py-4 font-bold text-blue-700 dark:text-blue-400 text-sm whitespace-nowrap">
                       ₹{fin.netPayable.toLocaleString()}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span
                         className={`rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${
                           v.settlementStatus === 'settled'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50'
                         }`}
                       >
                         {v.settlementStatus}
@@ -485,9 +501,10 @@ export default function VendorSettlementsPage() {
                     <td className="px-4 py-4 text-right whitespace-nowrap">
                       <button
                         onClick={() => setSelectedVendor(v)}
-                        className="rounded-full bg-[#18201c] px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1.5 ml-auto"
+                        className="rounded-full bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-[11px] font-bold text-white dark:text-[#121815] transition hover:bg-[#323d36] dark:hover:bg-[#97b51b] flex items-center gap-1.5 ml-auto"
                       >
-                        <Sliders className="size-3 text-[#d9f447]" /> Alter & Inspect
+                        <Sliders className="size-3 text-[#d9f447] dark:text-[#121815]" /> Alter &
+                        Inspect
                       </button>
                     </td>
                   </tr>
@@ -501,22 +518,24 @@ export default function VendorSettlementsPage() {
       {/* Interactive Vendor Pricing & Financial Playground Modal / Drawer */}
       {selectedVendor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="flex items-start justify-between border-b border-gray-200 pb-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] text-gray-900 dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d]">
+            <div className="flex items-start justify-between border-b border-gray-200 dark:border-[#27342d] pb-4">
               <div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-900 uppercase">
+                <span className="rounded-full bg-amber-100 dark:bg-amber-950/60 px-3 py-1 text-[10px] font-bold text-amber-900 dark:text-amber-300 uppercase">
                   Vendor Pricing Playground & Monitor
                 </span>
-                <h3 className="mt-2 text-2xl font-bold text-[#18201c]">{selectedVendor.name}</h3>
-                <p className="text-xs text-gray-500">
+                <h3 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
+                  {selectedVendor.name}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedVendor.cuisine} · {selectedVendor.address}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedVendor(null)}
-                className="grid size-9 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+                className="grid size-9 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] hover:bg-gray-200 dark:hover:bg-[#202923]"
               >
-                <X className="size-5 text-gray-600" />
+                <X className="size-5 text-gray-600 dark:text-gray-300" />
               </button>
             </div>
 

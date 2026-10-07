@@ -40,7 +40,9 @@ export default function CalculatorPlaygroundPage() {
   const [dbData, setDbData] = useState<DbData | null>(null)
   const [loadingDb, setLoadingDb] = useState<boolean>(true)
   const [dbError, setDbError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'calculator' | 'db_config' | 'db_restaurants' | 'db_coupons' | 'db_orders'>('calculator')
+  const [activeTab, setActiveTab] = useState<
+    'calculator' | 'db_config' | 'db_restaurants' | 'db_coupons' | 'db_orders'
+  >('calculator')
 
   // Selected DB Presets
   const [selectedOrderId, setSelectedOrderId] = useState<string>('')
@@ -208,7 +210,8 @@ export default function CalculatorPlaygroundPage() {
               </h1>
             </div>
             <p className="text-sm text-gray-400">
-              Real-time database integration: Fetch live parameters from PostgreSQL and simulate customer bills, vendor payouts, driver earnings, and platform margin.
+              Real-time database integration: Fetch live parameters from PostgreSQL and simulate
+              customer bills, vendor payouts, driver earnings, and platform margin.
             </p>
           </div>
 
@@ -302,12 +305,16 @@ export default function CalculatorPlaygroundPage() {
                   <h3 className="text-sm font-bold text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
                     <Database className="size-4" /> Load Real Data from DB
                   </h3>
-                  <span className="text-[10px] bg-[#1e2722] px-2 py-0.5 rounded text-gray-400">Preset Loader</span>
+                  <span className="text-[10px] bg-[#1e2722] px-2 py-0.5 rounded text-gray-400">
+                    Preset Loader
+                  </span>
                 </div>
 
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-gray-300 font-semibold mb-1">Select DB Recent Order:</label>
+                    <label className="block text-gray-300 font-semibold mb-1">
+                      Select DB Recent Order:
+                    </label>
                     <select
                       value={selectedOrderId}
                       onChange={(e) => handleSelectDbOrder(e.target.value)}
@@ -316,7 +323,8 @@ export default function CalculatorPlaygroundPage() {
                       <option value="">-- Choose Order from Database --</option>
                       {dbData?.orders?.map((ord) => (
                         <option key={ord.id} value={ord.id}>
-                          {ord.customer_name} ({ord.restaurant_name}) - ₹{ord.total_amount} [{ord.status}]
+                          {ord.customer_name} ({ord.restaurant_name}) - ₹{ord.total_amount} [
+                          {ord.status}]
                         </option>
                       ))}
                     </select>
@@ -324,7 +332,9 @@ export default function CalculatorPlaygroundPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-300 font-semibold mb-1">DB Restaurant:</label>
+                      <label className="block text-gray-300 font-semibold mb-1">
+                        DB Restaurant:
+                      </label>
                       <select
                         value={selectedRestaurantId}
                         onChange={(e) => handleSelectDbRestaurant(e.target.value)}
@@ -349,7 +359,11 @@ export default function CalculatorPlaygroundPage() {
                         <option value="">None (No Discount)</option>
                         {dbData?.coupons?.map((coup) => (
                           <option key={coup.id} value={coup.code}>
-                            {coup.code} ({coup.discount_type === 'percentage' ? `${coup.discount_value}%` : `₹${coup.discount_value}`})
+                            {coup.code} (
+                            {coup.discount_type === 'percentage'
+                              ? `${coup.discount_value}%`
+                              : `₹${coup.discount_value}`}
+                            )
                           </option>
                         ))}
                       </select>
@@ -413,7 +427,9 @@ export default function CalculatorPlaygroundPage() {
                   <div className="space-y-1 pt-2">
                     <div className="flex justify-between font-semibold">
                       <span className="text-gray-300">Driver Payout Share (%)</span>
-                      <span className="text-emerald-400 font-bold">{driverPayoutSharePercent}%</span>
+                      <span className="text-emerald-400 font-bold">
+                        {driverPayoutSharePercent}%
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -429,7 +445,9 @@ export default function CalculatorPlaygroundPage() {
                   {/* Multi-column Inputs */}
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
-                      <label className="block text-gray-300 font-semibold mb-1">Vendor Commission %</label>
+                      <label className="block text-gray-300 font-semibold mb-1">
+                        Vendor Commission %
+                      </label>
                       <input
                         type="number"
                         value={vendorCommissionPercent}
@@ -438,7 +456,9 @@ export default function CalculatorPlaygroundPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-300 font-semibold mb-1">Platform Fee (₹)</label>
+                      <label className="block text-gray-300 font-semibold mb-1">
+                        Platform Fee (₹)
+                      </label>
                       <input
                         type="number"
                         value={platformFee}
@@ -447,7 +467,9 @@ export default function CalculatorPlaygroundPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-300 font-semibold mb-1">Handling Charge (₹)</label>
+                      <label className="block text-gray-300 font-semibold mb-1">
+                        Handling Charge (₹)
+                      </label>
                       <input
                         type="number"
                         value={handlingFee}
@@ -456,7 +478,9 @@ export default function CalculatorPlaygroundPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-300 font-semibold mb-1">Customer Tip (₹)</label>
+                      <label className="block text-gray-300 font-semibold mb-1">
+                        Customer Tip (₹)
+                      </label>
                       <input
                         type="number"
                         value={tip}
@@ -477,13 +501,17 @@ export default function CalculatorPlaygroundPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <CloudRain className={`size-4 ${isRainModeActive ? 'text-blue-400' : ''}`} />
+                        <CloudRain
+                          className={`size-4 ${isRainModeActive ? 'text-blue-400' : ''}`}
+                        />
                         <div>
                           <p className="font-bold text-xs">Rain Surge</p>
                           <p className="text-[10px] text-gray-400">+₹{rainFee}</p>
                         </div>
                       </div>
-                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isRainModeActive ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-400'}`}>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isRainModeActive ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-400'}`}
+                      >
                         {isRainModeActive ? 'ON' : 'OFF'}
                       </span>
                     </button>
@@ -503,7 +531,9 @@ export default function CalculatorPlaygroundPage() {
                           <p className="text-[10px] text-gray-400">+₹{nightSurgeFee}</p>
                         </div>
                       </div>
-                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isNightSurgeActive ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'}`}>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isNightSurgeActive ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'}`}
+                      >
                         {isNightSurgeActive ? 'ON' : 'OFF'}
                       </span>
                     </button>
@@ -630,7 +660,9 @@ export default function CalculatorPlaygroundPage() {
                     )}
                     <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
                       <span>Total Driver Payout</span>
-                      <span className="text-emerald-400">₹{driverEarnings.totalDriverEarnings}</span>
+                      <span className="text-emerald-400">
+                        ₹{driverEarnings.totalDriverEarnings}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -641,10 +673,15 @@ export default function CalculatorPlaygroundPage() {
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
                       <Coins className="size-3.5 text-yellow-400" /> Platform Margin
                     </span>
-                    <span className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded ${
-                      platformEconomics.platformNetProfit >= 0 ? 'text-yellow-400 bg-yellow-400/10' : 'text-red-400 bg-red-400/10'
-                    }`}>
-                      ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}%)
+                    <span
+                      className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded ${
+                        platformEconomics.platformNetProfit >= 0
+                          ? 'text-yellow-400 bg-yellow-400/10'
+                          : 'text-red-400 bg-red-400/10'
+                      }`}
+                    >
+                      ₹{platformEconomics.platformNetProfit} (
+                      {platformEconomics.profitMarginPercent}%)
                     </span>
                   </div>
 
@@ -667,7 +704,13 @@ export default function CalculatorPlaygroundPage() {
                     </div>
                     <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
                       <span>Platform Profit Margin</span>
-                      <span className={platformEconomics.platformNetProfit >= 0 ? 'text-yellow-400' : 'text-red-400'}>
+                      <span
+                        className={
+                          platformEconomics.platformNetProfit >= 0
+                            ? 'text-yellow-400'
+                            : 'text-red-400'
+                        }
+                      >
                         ₹{platformEconomics.platformNetProfit}
                       </span>
                     </div>
@@ -697,27 +740,47 @@ export default function CalculatorPlaygroundPage() {
                     <tbody className="divide-y divide-[#1e2722] text-gray-300">
                       <tr>
                         <td className="py-2.5 px-3 font-semibold text-white">Customer</td>
-                        <td className="py-2.5 px-3 text-[#d9f447] font-bold">₹{customerBilling.grandTotal}</td>
+                        <td className="py-2.5 px-3 text-[#d9f447] font-bold">
+                          ₹{customerBilling.grandTotal}
+                        </td>
                         <td className="py-2.5 px-3 text-gray-400">-</td>
                         <td className="py-2.5 px-3 text-gray-400">Order Fulfilled</td>
                       </tr>
                       <tr>
                         <td className="py-2.5 px-3 font-semibold text-white">Restaurant Vendor</td>
                         <td className="py-2.5 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
-                        <td className="py-2.5 px-3 text-red-400">-₹{vendorSettlement.commissionDeducted} (Commission)</td>
-                        <td className="py-2.5 px-3 text-orange-400 font-bold">₹{vendorSettlement.netVendorPayout}</td>
+                        <td className="py-2.5 px-3 text-red-400">
+                          -₹{vendorSettlement.commissionDeducted} (Commission)
+                        </td>
+                        <td className="py-2.5 px-3 text-orange-400 font-bold">
+                          ₹{vendorSettlement.netVendorPayout}
+                        </td>
                       </tr>
                       <tr>
                         <td className="py-2.5 px-3 font-semibold text-white">Delivery Driver</td>
-                        <td className="py-2.5 px-3">₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)</td>
+                        <td className="py-2.5 px-3">
+                          ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
+                        </td>
                         <td className="py-2.5 px-3 text-gray-400">-</td>
-                        <td className="py-2.5 px-3 text-emerald-400 font-bold">₹{driverEarnings.totalDriverEarnings}</td>
+                        <td className="py-2.5 px-3 text-emerald-400 font-bold">
+                          ₹{driverEarnings.totalDriverEarnings}
+                        </td>
                       </tr>
                       <tr className="bg-[#1b241f]">
                         <td className="py-2.5 px-3 font-bold text-[#d9f447]">Platform (Crave)</td>
-                        <td className="py-2.5 px-3 text-yellow-400 font-bold">₹{platformEconomics.platformGrossRevenue} (Gross Margin)</td>
-                        <td className="py-2.5 px-3 text-gray-400">₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor} (Payouts)</td>
-                        <td className="py-2.5 px-3 font-extrabold text-yellow-400">₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}%)</td>
+                        <td className="py-2.5 px-3 text-yellow-400 font-bold">
+                          ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
+                        </td>
+                        <td className="py-2.5 px-3 text-gray-400">
+                          ₹
+                          {platformEconomics.totalPaidToDriver +
+                            platformEconomics.totalPaidToVendor}{' '}
+                          (Payouts)
+                        </td>
+                        <td className="py-2.5 px-3 font-extrabold text-yellow-400">
+                          ₹{platformEconomics.platformNetProfit} (
+                          {platformEconomics.profitMarginPercent}%)
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -743,11 +806,15 @@ export default function CalculatorPlaygroundPage() {
         {activeTab === 'db_restaurants' && (
           <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Store className="size-4 text-orange-400" /> Loaded DB Restaurants ({dbData?.restaurants?.length || 0})
+              <Store className="size-4 text-orange-400" /> Loaded DB Restaurants (
+              {dbData?.restaurants?.length || 0})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {dbData?.restaurants?.map((rest) => (
-                <div key={rest.id} className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs">
+                <div
+                  key={rest.id}
+                  className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+                >
                   <p className="font-bold text-white text-sm">{rest.name}</p>
                   <p className="text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
                   <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
@@ -764,11 +831,15 @@ export default function CalculatorPlaygroundPage() {
         {activeTab === 'db_coupons' && (
           <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Tag className="size-4 text-[#d9f447]" /> Loaded DB Active Coupons ({dbData?.coupons?.length || 0})
+              <Tag className="size-4 text-[#d9f447]" /> Loaded DB Active Coupons (
+              {dbData?.coupons?.length || 0})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {dbData?.coupons?.map((coup) => (
-                <div key={coup.id} className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs">
+                <div
+                  key={coup.id}
+                  className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+                >
                   <span className="font-mono font-extrabold text-[#d9f447] bg-[#d9f447]/10 px-2 py-0.5 rounded">
                     {coup.code}
                   </span>
@@ -776,7 +847,9 @@ export default function CalculatorPlaygroundPage() {
                   <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
                     <span>Discount Value:</span>
                     <span className="text-emerald-400 font-bold">
-                      {coup.discount_type === 'percentage' ? `${coup.discount_value}%` : `₹${coup.discount_value}`}
+                      {coup.discount_type === 'percentage'
+                        ? `${coup.discount_value}%`
+                        : `₹${coup.discount_value}`}
                     </span>
                   </div>
                 </div>
@@ -789,7 +862,8 @@ export default function CalculatorPlaygroundPage() {
         {activeTab === 'db_orders' && (
           <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Layers className="size-4 text-purple-400" /> Recent Database Orders ({dbData?.orders?.length || 0})
+              <Layers className="size-4 text-purple-400" /> Recent Database Orders (
+              {dbData?.orders?.length || 0})
             </h3>
             <div className="overflow-x-auto text-xs font-mono">
               <table className="w-full text-left border-collapse">

@@ -1,8 +1,9 @@
 'use client'
 
+import ThemeSelector from '@/components/ThemeSelector'
 import { useAuth } from '@/lib/auth-context'
 import { useDriver } from '@/lib/driver-context'
-import { Plus, QrCode, ShieldCheck, Trash2 } from 'lucide-react'
+import { Palette, Plus, QrCode, ShieldCheck, Trash2 } from 'lucide-react'
 import React, { useState } from 'react'
 
 export default function DriverSettingsPage() {
@@ -31,6 +32,22 @@ export default function DriverSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Theme & Display Preference Card */}
+      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+          <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
+            <Palette className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-base text-[#18201c]">Display &amp; Theme Mode</h3>
+            <p className="text-xs text-gray-500">
+              Select your preferred mobile cockpit theme (Light, Dark, or System Sync).
+            </p>
+          </div>
+        </div>
+        <ThemeSelector />
+      </div>
+
       {/* Header Banner */}
       <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">

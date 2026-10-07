@@ -63,7 +63,8 @@ export default function LocationPickerMap({
   const [internalHeatmap, setInternalHeatmap] = useState<boolean>(showH3Heatmap)
   const [selectedCell, setSelectedCell] = useState<any | null>(null)
 
-  const gridVisible = controlledGridVisible !== undefined ? controlledGridVisible : internalGridVisible
+  const gridVisible =
+    controlledGridVisible !== undefined ? controlledGridVisible : internalGridVisible
   const activeResolution = h3Resolution !== undefined ? h3Resolution : internalResolution
   const heatmapEnabled = showH3Heatmap !== undefined ? showH3Heatmap : internalHeatmap
 
@@ -192,8 +193,6 @@ export default function LocationPickerMap({
     >
       {/* Top-Right Map Control Cluster (H3 Toggle OFF by default & Sync GPS) */}
       <div className="absolute top-3 right-3 z-20 flex flex-wrap items-center justify-end gap-2 max-w-[calc(100%-24px)]">
-
-
         {/* Sync GPS Location Button */}
         <button
           type="button"
@@ -315,9 +314,7 @@ export default function LocationPickerMap({
                   <div className="text-[10px] font-mono text-purple-300 font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/10">
                     {pin.detail}
                   </div>
-                  <div className="text-[9px] font-mono text-gray-400">
-                    {pin.timestamp}
-                  </div>
+                  <div className="text-[9px] font-mono text-gray-400">{pin.timestamp}</div>
                 </div>
               </MarkerTooltip>
             </MapMarker>

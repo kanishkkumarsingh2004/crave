@@ -99,24 +99,26 @@ export default function DriverProfilePage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 p-5 bg-gray-50/70 flex flex-col gap-4">
-              <h4 className="font-bold text-sm text-[#18201c] flex items-center gap-2">
-                <User className="size-4 text-emerald-600" /> Personal Details
+            <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-5 bg-gray-50/70 dark:bg-[#121815] flex flex-col gap-4">
+              <h4 className="font-bold text-sm text-[#18201c] dark:text-white flex items-center gap-2">
+                <User className="size-4 text-emerald-600 dark:text-emerald-400" /> Personal Details
               </h4>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Full Name:</label>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Full Name:
+                </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                  className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500 shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Registered Phone (+91):
                 </label>
                 <input
@@ -124,12 +126,12 @@ export default function DriverProfilePage() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                  className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500 shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Operating Base Address:
                 </label>
                 <input
@@ -137,24 +139,25 @@ export default function DriverProfilePage() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="e.g. 100ft Rd, Indiranagar, Bengaluru"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                  className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500 shadow-xs"
                 />
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 p-5 bg-gray-50/70 flex flex-col gap-4">
-              <h4 className="font-bold text-sm text-[#18201c] flex items-center gap-2">
-                <Bike className="size-4 text-emerald-600" /> Vehicle &amp; Fleet Specs
+            <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-5 bg-gray-50/70 dark:bg-[#121815] flex flex-col gap-4">
+              <h4 className="font-bold text-sm text-[#18201c] dark:text-white flex items-center gap-2">
+                <Bike className="size-4 text-emerald-600 dark:text-emerald-400" /> Vehicle &amp;
+                Fleet Specs
               </h4>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Vehicle Type / Category:
                 </label>
                 <select
                   value={vehicleType}
                   onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                  className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 shadow-xs"
                 >
                   <option value="Commercial EV Delivery Scooter">
                     Commercial EV Delivery Scooter (Green Plate)
@@ -168,7 +171,7 @@ export default function DriverProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Registration License Plate No:
                 </label>
                 <input
@@ -177,13 +180,13 @@ export default function DriverProfilePage() {
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value)}
                   placeholder="e.g. KA-01-EV-9876"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs uppercase font-mono"
+                  className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-emerald-600 dark:focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500 shadow-xs uppercase font-mono"
                 />
               </div>
 
-              <div className="rounded-xl bg-emerald-100/60 p-3 text-[11px] text-emerald-900 border border-emerald-200 mt-2">
+              <div className="rounded-xl bg-emerald-100/60 dark:bg-emerald-950/40 p-3 text-[11px] text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 mt-2">
                 <p className="font-bold">Active Delivery Zone:</p>
-                <p className="text-gray-700 mt-0.5">
+                <p className="text-gray-700 dark:text-gray-300 mt-0.5">
                   Indiranagar &amp; Koramangala 5th Block, Bengaluru
                 </p>
               </div>
@@ -194,7 +197,7 @@ export default function DriverProfilePage() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-emerald-600 px-8 py-3 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700 transition flex items-center gap-2"
+              className="rounded-full bg-emerald-600 dark:bg-emerald-500 px-8 py-3 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700 dark:hover:bg-emerald-600 transition flex items-center gap-2"
             >
               <Save className="size-4" /> {loading ? 'Saving...' : 'Save Profile Changes'}
             </button>

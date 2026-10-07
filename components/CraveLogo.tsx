@@ -11,9 +11,9 @@ export default function CraveLogo({
   theme = 'dark',
   size = 'md',
 }: CraveLogoProps) {
-  const textColor = theme === 'light' ? 'text-white' : 'text-[#18201c]'
-  const dotColor = theme === 'light' ? 'bg-[#d9f447]' : 'bg-[#849e16]'
-  const xpColor = theme === 'light' ? 'text-[#d9f447]' : 'text-[#7d9518]'
+  const textColor = theme === 'light' ? 'text-white' : 'text-[#18201c] dark:text-white'
+  const dotColor = theme === 'light' ? 'bg-[#d9f447]' : 'bg-[#849e16] dark:bg-[#d9f447]'
+  const xpColor = theme === 'light' ? 'text-[#d9f447]' : 'text-[#7d9518] dark:text-[#d9f447]'
 
   const sizeStyles = {
     sm: { text: 'text-lg font-black tracking-tight', dot: 'size-1.5 ml-[1px]' },

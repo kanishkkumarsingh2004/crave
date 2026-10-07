@@ -34,21 +34,57 @@ async function getActiveConfig(): Promise<PaymentConfig> {
       mccCode: dbConfig.merchant_category_code || DEFAULT_PAYMENT_CONFIG.mccCode,
       ifscCode: dbConfig.ifsc_code || DEFAULT_PAYMENT_CONFIG.ifscCode,
       accountNumber: dbConfig.account_number || DEFAULT_PAYMENT_CONFIG.accountNumber,
-      platformFee: dbConfig.platform_fee != null ? Number(dbConfig.platform_fee) : DEFAULT_PAYMENT_CONFIG.platformFee,
-      handlingFee: dbConfig.handling_fee != null ? Number(dbConfig.handling_fee) : DEFAULT_PAYMENT_CONFIG.handlingFee,
-      vendorCommission: dbConfig.vendor_commission != null ? Number(dbConfig.vendor_commission) : DEFAULT_PAYMENT_CONFIG.vendorCommission,
-      packagingCap: dbConfig.packaging_cap != null ? Number(dbConfig.packaging_cap) : DEFAULT_PAYMENT_CONFIG.packagingCap,
-      baseDeliveryFee: dbConfig.delivery_fee != null ? Number(dbConfig.delivery_fee) : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
-      baseDistanceKm: dbConfig.base_distance_km != null ? Number(dbConfig.base_distance_km) : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
-      perKmRate: dbConfig.per_km_rate != null ? Number(dbConfig.per_km_rate) : DEFAULT_PAYMENT_CONFIG.perKmRate,
-      freeDeliveryThreshold: dbConfig.free_delivery_threshold != null ? Number(dbConfig.free_delivery_threshold) : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
-      driverPayoutShare: dbConfig.driver_payout_share != null ? Number(dbConfig.driver_payout_share) : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
-      surgeMultiplier: dbConfig.surge_multiplier != null ? Number(dbConfig.surge_multiplier) : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
-      rainFee: dbConfig.rain_fee != null ? Number(dbConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
-      nightSurgeFee: dbConfig.night_surge_fee != null ? Number(dbConfig.night_surge_fee) : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
+      platformFee:
+        dbConfig.platform_fee != null
+          ? Number(dbConfig.platform_fee)
+          : DEFAULT_PAYMENT_CONFIG.platformFee,
+      handlingFee:
+        dbConfig.handling_fee != null
+          ? Number(dbConfig.handling_fee)
+          : DEFAULT_PAYMENT_CONFIG.handlingFee,
+      vendorCommission:
+        dbConfig.vendor_commission != null
+          ? Number(dbConfig.vendor_commission)
+          : DEFAULT_PAYMENT_CONFIG.vendorCommission,
+      packagingCap:
+        dbConfig.packaging_cap != null
+          ? Number(dbConfig.packaging_cap)
+          : DEFAULT_PAYMENT_CONFIG.packagingCap,
+      baseDeliveryFee:
+        dbConfig.delivery_fee != null
+          ? Number(dbConfig.delivery_fee)
+          : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
+      baseDistanceKm:
+        dbConfig.base_distance_km != null
+          ? Number(dbConfig.base_distance_km)
+          : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
+      perKmRate:
+        dbConfig.per_km_rate != null
+          ? Number(dbConfig.per_km_rate)
+          : DEFAULT_PAYMENT_CONFIG.perKmRate,
+      freeDeliveryThreshold:
+        dbConfig.free_delivery_threshold != null
+          ? Number(dbConfig.free_delivery_threshold)
+          : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
+      driverPayoutShare:
+        dbConfig.driver_payout_share != null
+          ? Number(dbConfig.driver_payout_share)
+          : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
+      surgeMultiplier:
+        dbConfig.surge_multiplier != null
+          ? Number(dbConfig.surge_multiplier)
+          : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
+      rainFee:
+        dbConfig.rain_fee != null ? Number(dbConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
+      nightSurgeFee:
+        dbConfig.night_surge_fee != null
+          ? Number(dbConfig.night_surge_fee)
+          : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
       isRainModeActive: dbConfig.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
-      isNightSurgeActive: dbConfig.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
-      enableCashOnDelivery: dbConfig.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
+      isNightSurgeActive:
+        dbConfig.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
+      enableCashOnDelivery:
+        dbConfig.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
       enableUpiDeepLink: dbConfig.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
       requireUtrNumber: dbConfig.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
     }
@@ -221,7 +257,9 @@ export async function POST(request: Request) {
         isRainModeActive: paymentConfig.isRainModeActive,
         isNightSurgeActive: paymentConfig.isNightSurgeActive,
       },
-      discount_amount > 0 ? { discount_type: 'flat', discount_value: Number(discount_amount) } : undefined
+      discount_amount > 0
+        ? { discount_type: 'flat', discount_value: Number(discount_amount) }
+        : undefined
     )
 
     const capPackaging = calcResult.customerBilling.packagingFee

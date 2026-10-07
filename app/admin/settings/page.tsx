@@ -1,5 +1,6 @@
 'use client'
 
+import ThemeSelector from '@/components/ThemeSelector'
 import { useToast } from '@/lib/toast-context'
 import {
   AlertTriangle,
@@ -8,6 +9,7 @@ import {
   FileCheck,
   Globe,
   Lock,
+  Palette,
   RotateCcw,
   Save,
   ShieldCheck,
@@ -110,30 +112,30 @@ export default function AdminSettingsPage() {
   return (
     <div className="flex flex-col gap-8 max-w-6xl pb-16">
       {/* Top Title Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dd] pb-5 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5 gap-4">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
             System Administration
           </span>
-          <h2 className="mt-2 text-2xl font-bold text-[#18201c]">
+          <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
             Admin Security &amp; Operational Controls
           </h2>
-          <p className="mt-0.5 text-xs text-[#717c76]">
+          <p className="mt-0.5 text-xs text-[#717c76] dark:text-gray-400">
             Manage platform identity, operational thresholds, security rules, notification gateways,
             and partner compliance.
           </p>
         </div>
 
         {savedSuccess && (
-          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 px-4 py-2.5 text-xs font-bold text-emerald-900 border border-emerald-300 shadow-sm animate-fade-in">
-            <CheckCircle2 className="size-4 text-emerald-700" /> Admin Master Settings Saved &amp;
-            Applied!
+          <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 px-4 py-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 shadow-sm animate-fade-in">
+            <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" /> Admin Master
+            Settings Saved &amp; Applied!
           </div>
         )}
       </div>
 
       {/* Relevant Navigation Sub-Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-[#27342d] pb-2">
         {[
           { id: 'general', label: 'Platform & Operations', icon: Globe },
           { id: 'security', label: 'Security & Auth', icon: Lock },
@@ -148,8 +150,8 @@ export default function AdminSettingsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition ${
                 isActive
-                  ? 'bg-[#18201c] text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-md'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 dark:bg-[#18201c] dark:text-gray-300 dark:border-[#27342d] dark:hover:bg-[#202923]'
               }`}
             >
               <Icon className="size-4" />
@@ -162,59 +164,81 @@ export default function AdminSettingsPage() {
       <form onSubmit={handleSave} className="flex flex-col gap-6">
         {/* TAB 1: PLATFORM & OPERATIONS */}
         {activeTab === 'general' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Globe className="size-4 text-[#859d19]" /> Platform Identity &amp; Dispatch
-                Thresholds
+          <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
+            <div className="border-b dark:border-[#27342d] pb-4">
+              <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                <Globe className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Platform Identity
+                &amp; Dispatch Thresholds
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Set brand credentials, support contacts, dispatch radius, and emergency maintenance.
               </p>
             </div>
 
+            {/* Theme & Visual Appearance Option */}
+            <div className="rounded-2xl border border-purple-100 dark:border-purple-900/50 bg-purple-50/40 dark:bg-purple-950/20 p-4 space-y-3">
+              <div>
+                <h4 className="font-bold text-sm text-[#18201c] dark:text-white flex items-center gap-2">
+                  <Palette className="size-4 text-purple-600 dark:text-purple-400" /> Application
+                  Theme &amp; Visual Appearance
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Customize your admin workspace theme preference (Light, Dark, or System Sync).
+                </p>
+              </div>
+              <ThemeSelector />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Application / Platform Name *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Application / Platform Name *
+                </label>
                 <input
                   type="text"
                   required
                   value={appName}
                   onChange={(e) => setAppName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Customer Support Email *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Customer Support Email *
+                </label>
                 <input
                   type="email"
                   required
                   value={supportEmail}
                   onChange={(e) => setSupportEmail(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Customer Helpline Phone *</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Customer Helpline Phone *
+                </label>
                 <input
                   type="text"
                   required
                   value={supportPhone}
                   onChange={(e) => setSupportPhone(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Max Delivery Radius (km)</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Max Delivery Radius (km)
+                </label>
                 <input
                   type="number"
                   required
                   value={deliveryRadius}
                   onChange={(e) => setDeliveryRadius(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">
                   Maximum customer order distance allowed
@@ -222,13 +246,15 @@ export default function AdminSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Max Kitchen Prep Timeout (mins)</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Max Kitchen Prep Timeout (mins)
+                </label>
                 <input
                   type="number"
                   required
                   value={maxPreparationTime}
                   onChange={(e) => setMaxPreparationTime(parseFloat(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">
                   Target cooking &amp; packing time window
@@ -236,26 +262,27 @@ export default function AdminSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">
+                <label className="font-bold text-[#18201c] dark:text-white">
                   Operating Currency &amp; Timezone
                 </label>
                 <input
                   type="text"
                   disabled
                   value={`${currency} · ${timezone}`}
-                  className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 font-bold text-gray-500 cursor-not-allowed"
+                  className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815]/50 px-3.5 py-2.5 font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed"
                 />
               </div>
             </div>
 
             {/* Rider Auto-Dispatch Box */}
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-xs">
+            <div className="rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20 p-4 text-xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-blue-900 flex items-center gap-1.5">
-                    <Truck className="size-4 text-blue-600" /> Auto-Assign Nearby Delivery Rider
+                  <h4 className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                    <Truck className="size-4 text-blue-600 dark:text-blue-400" /> Auto-Assign Nearby
+                    Delivery Rider
                   </h4>
-                  <p className="text-[11px] text-blue-700 mt-0.5">
+                  <p className="text-[11px] text-blue-700 dark:text-blue-400 mt-0.5">
                     Automatically match new confirmed orders with the nearest online rider.
                   </p>
                 </div>
@@ -263,7 +290,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setAutoAssignDrivers((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoAssignDrivers ? 'bg-blue-600' : 'bg-gray-300'
+                    autoAssignDrivers ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -276,13 +303,14 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Maintenance Mode Card */}
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-xs">
+            <div className="rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 p-4 text-xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
-                    <AlertTriangle className="size-4 text-amber-600" /> Platform Maintenance Mode
+                  <h4 className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" /> Platform
+                    Maintenance Mode
                   </h4>
-                  <p className="text-[11px] text-amber-700 mt-0.5">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
                     Temporarily pause new customer checkouts during system updates.
                   </p>
                 </div>
@@ -291,7 +319,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setIsMaintenanceMode((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    isMaintenanceMode ? 'bg-amber-600' : 'bg-gray-300'
+                    isMaintenanceMode ? 'bg-amber-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -303,15 +331,15 @@ export default function AdminSettingsPage() {
               </div>
 
               {isMaintenanceMode && (
-                <div className="mt-3 pt-3 border-t border-amber-200">
-                  <label className="font-bold text-amber-900">
+                <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-900/50">
+                  <label className="font-bold text-amber-900 dark:text-amber-300">
                     Public Maintenance Notice Message
                   </label>
                   <textarea
                     rows={2}
                     value={maintenanceNotice}
                     onChange={(e) => setMaintenanceNotice(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-amber-300 bg-white p-2.5 font-medium outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none"
                   />
                 </div>
               )}
@@ -321,50 +349,56 @@ export default function AdminSettingsPage() {
 
         {/* TAB 2: SECURITY & AUTH */}
         {activeTab === 'security' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Lock className="size-4 text-[#859d19]" /> Security, JWT Tokens &amp; Access
-                Controls
+          <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
+            <div className="border-b dark:border-[#27342d] pb-4">
+              <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                <Lock className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Security, JWT Tokens
+                &amp; Access Controls
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Manage authentication cookie expiry, admin two-factor policies, and API rate limits.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">JWT Cookie Expiry (Days)</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  JWT Cookie Expiry (Days)
+                </label>
                 <input
                   type="number"
                   required
                   value={jwtExpiryDays}
                   onChange={(e) => setJwtExpiryDays(parseFloat(e.target.value) || 1)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Auth cookie validity duration</p>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Session Idle Timeout (Minutes)</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Session Idle Timeout (Minutes)
+                </label>
                 <input
                   type="number"
                   required
                   value={sessionTimeoutMins}
                   onChange={(e) => setSessionTimeoutMins(parseFloat(e.target.value) || 5)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">Auto logout on inactivity</p>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">API Rate Limit (Req/min/IP)</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  API Rate Limit (Req/min/IP)
+                </label>
                 <input
                   type="number"
                   required
                   value={rateLimitPerMin}
                   onChange={(e) => setRateLimitPerMin(parseFloat(e.target.value) || 10)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
                 <p className="mt-1 text-[10px] text-gray-400">
                   DDoS &amp; brute-force throttling limit
@@ -373,10 +407,12 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815]/60 p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[#18201c]">Require Admin 2-Factor Authentication</p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Require Admin 2-Factor Authentication
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
                     Enforce OTP verification for master admin accounts
                   </p>
                 </div>
@@ -384,7 +420,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setRequireAdmin2FA((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireAdmin2FA ? 'bg-emerald-600' : 'bg-gray-300'
+                    requireAdmin2FA ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -395,10 +431,12 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815]/60 p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[#18201c]">Enforce Strong Passwords</p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Enforce Strong Passwords
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
                     Require uppercase, numbers &amp; symbols
                   </p>
                 </div>
@@ -406,7 +444,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setEnforceStrongPassword((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enforceStrongPassword ? 'bg-emerald-600' : 'bg-gray-300'
+                    enforceStrongPassword ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -422,24 +460,26 @@ export default function AdminSettingsPage() {
 
         {/* TAB 3: NOTIFICATION GATEWAYS */}
         {activeTab === 'notifications' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <Bell className="size-4 text-[#859d19]" /> Customer &amp; Partner Notification
-                Gateways
+          <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
+            <div className="border-b dark:border-[#27342d] pb-4">
+              <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                <Bell className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Customer &amp;
+                Partner Notification Gateways
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Configure SMS providers, WhatsApp Business alerts, and email receipt triggers.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Active SMS Gateway Provider</label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Active SMS Gateway Provider
+                </label>
                 <select
                   value={smsProvider}
                   onChange={(e) => setSmsProvider(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] bg-white"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018] dark:focus:border-[#d9f447] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
                 >
                   <option value="Twilio SMS Gateway">Twilio SMS Gateway</option>
                   <option value="Fast2SMS India">Fast2SMS India</option>
@@ -447,10 +487,10 @@ export default function AdminSettingsPage() {
                 </select>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-gray-50/50">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-gray-50/50 dark:bg-[#121815]/60">
                 <div>
-                  <p className="font-bold text-[#18201c]">SMS Gateway Alerts</p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="font-bold text-[#18201c] dark:text-white">SMS Gateway Alerts</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
                     Order verification &amp; delivery OTPs
                   </p>
                 </div>
@@ -458,7 +498,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setSendSmsAlerts((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendSmsAlerts ? 'bg-emerald-600' : 'bg-gray-300'
+                    sendSmsAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -471,16 +511,20 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
                 <div>
-                  <p className="font-bold text-[#18201c]">WhatsApp Business Alerts</p>
-                  <p className="text-[10px] text-gray-500">Live drop tracking updates</p>
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    WhatsApp Business Alerts
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Live drop tracking updates
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSendWhatsappAlerts((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendWhatsappAlerts ? 'bg-emerald-600' : 'bg-gray-300'
+                    sendWhatsappAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -491,16 +535,20 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
                 <div>
-                  <p className="font-bold text-[#18201c]">Email Invoices &amp; Receipts</p>
-                  <p className="text-[10px] text-gray-500">Tax invoices on completed drops</p>
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Email Invoices &amp; Receipts
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Tax invoices on completed drops
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSendEmailReceipts((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendEmailReceipts ? 'bg-emerald-600' : 'bg-gray-300'
+                    sendEmailReceipts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -511,18 +559,21 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex items-center justify-between bg-white">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
                 <div>
-                  <p className="font-bold text-[#18201c] flex items-center gap-1">
-                    <Volume2 className="size-3.5 text-[#859d19]" /> Audio Order Chimes
+                  <p className="font-bold text-[#18201c] dark:text-white flex items-center gap-1">
+                    <Volume2 className="size-3.5 text-[#859d19] dark:text-[#d9f447]" /> Audio Order
+                    Chimes
                   </p>
-                  <p className="text-[10px] text-gray-500">Play sound alert on new orders</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Play sound alert on new orders
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setEnableSoundAlerts((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enableSoundAlerts ? 'bg-emerald-600' : 'bg-gray-300'
+                    enableSoundAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -538,22 +589,22 @@ export default function AdminSettingsPage() {
 
         {/* TAB 4: PARTNER COMPLIANCE & ONBOARDING */}
         {activeTab === 'onboarding' && (
-          <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm flex flex-col gap-6">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-[#18201c] flex items-center gap-2">
-                <FileCheck className="size-4 text-[#859d19]" /> Partner Onboarding &amp; Legal
-                Compliance
+          <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
+            <div className="border-b dark:border-[#27342d] pb-4">
+              <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                <FileCheck className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Partner
+                Onboarding &amp; Legal Compliance
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Set verification requirements for new kitchen vendors and delivery riders.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
-              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
                 <div>
-                  <p className="font-bold text-[#18201c]">Auto-Approve Vendors</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
+                  <p className="font-bold text-[#18201c] dark:text-white">Auto-Approve Vendors</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     Bypass manual admin verification
                   </p>
                 </div>
@@ -561,7 +612,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setAutoApproveVendors((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoApproveVendors ? 'bg-emerald-600' : 'bg-gray-300'
+                    autoApproveVendors ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -572,10 +623,12 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
                 <div>
-                  <p className="font-bold text-[#18201c]">Mandatory FSSAI License</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Mandatory FSSAI License
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     Require food safety license upload
                   </p>
                 </div>
@@ -583,7 +636,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setRequireFssaiLicense((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireFssaiLicense ? 'bg-emerald-600' : 'bg-gray-300'
+                    requireFssaiLicense ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -594,10 +647,12 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
                 <div>
-                  <p className="font-bold text-[#18201c]">Mandatory GSTIN Registration</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Mandatory GSTIN Registration
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     Require tax GST number for payouts
                   </p>
                 </div>
@@ -605,7 +660,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setRequireGstin((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireGstin ? 'bg-emerald-600' : 'bg-gray-300'
+                    requireGstin ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -616,10 +671,12 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4 flex flex-col justify-between bg-white gap-3">
+              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
                 <div>
-                  <p className="font-bold text-[#18201c]">Mandatory Driver License &amp; RC</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Mandatory Driver License &amp; RC
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     Require driving &amp; vehicle documents
                   </p>
                 </div>
@@ -627,7 +684,7 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setRequireDriverLicense((v) => !v)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireDriverLicense ? 'bg-emerald-600' : 'bg-gray-300'
+                    requireDriverLicense ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                   }`}
                 >
                   <span
@@ -645,16 +702,16 @@ export default function AdminSettingsPage() {
         <div className="flex items-center gap-4 pt-2">
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-full bg-[#18201c] px-6 py-3.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#323d36]"
+            className="flex items-center justify-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3.5 text-xs font-bold text-white dark:text-[#121815] shadow-lg transition hover:bg-[#323d36] dark:hover:bg-[#c6e336]"
           >
             <Save className="size-4" /> Save System &amp; Security Settings
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3.5 text-xs font-bold text-gray-700 transition hover:bg-gray-100"
+            className="flex items-center justify-center gap-2 rounded-full border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-5 py-3.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:bg-gray-100 dark:hover:bg-[#202923]"
           >
-            <RotateCcw className="size-4 text-gray-500" /> Reset Defaults
+            <RotateCcw className="size-4 text-gray-500 dark:text-gray-400" /> Reset Defaults
           </button>
         </div>
       </form>

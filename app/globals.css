@@ -207,10 +207,20 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
-    transition: border-color 0.15s ease-in-out;
+    transition: all 0.15s ease-in-out;
   }
   .mac-card:hover {
     border-color: #85c441;
+  }
+
+  .dark .mac-card {
+    background: #18201c;
+    border-color: #27342d;
+    color: #f0f4f1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+  .dark .mac-card:hover {
+    border-color: #d9f447;
   }
 
   .mac-btn-primary {
@@ -268,6 +278,17 @@
     transform: scale(0.96);
   }
 
+  .dark .mac-btn-secondary {
+    background-color: #18201c;
+    color: #f0f4f1;
+    border-color: #27342d;
+  }
+  .dark .mac-btn-secondary:hover {
+    background-color: #202923;
+    border-color: #d9f447;
+    color: #ffffff;
+  }
+
   .mac-btn-dark {
     display: inline-flex;
     align-items: center;
@@ -294,6 +315,16 @@
     transform: scale(0.96);
   }
 
+  .dark .mac-btn-dark {
+    background-color: #d9f447;
+    color: #121815;
+    border-color: #d9f447;
+  }
+  .dark .mac-btn-dark:hover {
+    background-color: #c8e639;
+    color: #121815;
+  }
+
   .mac-input {
     border-radius: 0.75rem;
     border: 1px solid #cfe1bc;
@@ -310,6 +341,15 @@
     border-color: #1a1a1a;
   }
 
+  .dark .mac-input {
+    background-color: #121815;
+    border-color: #27342d;
+    color: #ffffff;
+  }
+  .dark .mac-input:focus {
+    border-color: #d9f447;
+  }
+
   .mac-badge-outline {
     display: inline-flex;
     align-items: center;
@@ -322,6 +362,119 @@
     font-weight: 700;
     color: #1a1a1a;
   }
+
+  .dark .mac-badge-outline {
+    border-color: #27342d;
+    color: #d9f447;
+  }
+}
+
+/* Dark mode theme overrides for overall application elements */
+.dark body {
+  background-color: #0f1412 !important;
+  color: #f0f4f1 !important;
+}
+
+/* Card & Section Container Theme Sync */
+.dark section,
+.dark .card-theme,
+.dark div.rounded-3xl,
+.dark div.rounded-2xl {
+  border-color: #27342d;
+}
+
+/* Table Headers & Table Rows in Dark Mode */
+.dark thead,
+.dark thead tr,
+.dark th {
+  background-color: #121815 !important;
+  color: #a0b2a7 !important;
+  border-color: #27342d !important;
+}
+
+.dark tbody tr {
+  border-color: #27342d !important;
+}
+
+.dark tbody tr:hover {
+  background-color: #1a221d !important;
+}
+
+/* Sub-card rows & inner boxes */
+.dark .bg-gray-50,
+.dark .bg-slate-50,
+.dark .bg-\[\#f8f9f7\],
+.dark .bg-\[\#F8F8F6\] {
+  background-color: #121815 !important;
+  color: #f0f4f1 !important;
+  border-color: #27342d !important;
+}
+
+/* Light Mode Input Defaults */
+:root:not(.dark) input:-webkit-autofill,
+:root:not(.dark) input:-webkit-autofill:hover,
+:root:not(.dark) input:-webkit-autofill:focus,
+:root:not(.dark) input:-webkit-autofill:active,
+:root:not(.dark) textarea:-webkit-autofill,
+:root:not(.dark) textarea:-webkit-autofill:hover,
+:root:not(.dark) textarea:-webkit-autofill:focus,
+:root:not(.dark) textarea:-webkit-autofill:active,
+:root:not(.dark) select:-webkit-autofill,
+:root:not(.dark) select:-webkit-autofill:hover,
+:root:not(.dark) select:-webkit-autofill:focus,
+:root:not(.dark) select:-webkit-autofill:active {
+  -webkit-text-fill-color: #18201c !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:root:not(.dark) input,
+:root:not(.dark) select,
+:root:not(.dark) textarea {
+  color: #18201c;
+}
+
+/* Dark Mode Input & Select Fields */
+.dark input[type='text'],
+.dark input[type='email'],
+.dark input[type='number'],
+.dark input[type='password'],
+.dark input[type='url'],
+.dark select,
+.dark textarea {
+  background-color: #121815 !important;
+  color: #f0f4f1 !important;
+  border-color: #27342d !important;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active,
+.dark textarea:-webkit-autofill,
+.dark textarea:-webkit-autofill:hover,
+.dark textarea:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill:active,
+.dark select:-webkit-autofill,
+.dark select:-webkit-autofill:hover,
+.dark select:-webkit-autofill:focus,
+.dark select:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #121815 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #62746a !important;
+}
+
+.dark input:disabled,
+.dark select:disabled,
+.dark textarea:disabled {
+  background-color: #1a221d !important;
+  color: #7d8e84 !important;
+  border-color: #232d27 !important;
 }
 
 /* Toast progress bar shrink animation */

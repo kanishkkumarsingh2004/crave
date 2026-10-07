@@ -248,17 +248,17 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-        <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center justify-between gap-3 border-b border-[#f0f3ec] pb-4">
+        <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-3 border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#18201c]">
+              <h3 className="text-lg font-bold text-[#18201c] dark:text-white">
                 {t.admin.managementModules || 'Management Modules'}
               </h3>
-              <p className="text-xs text-[#737e77]">
+              <p className="text-xs text-[#737e77] dark:text-gray-400">
                 {t.admin.managementModulesDesc || 'Each section has its own dedicated page.'}
               </p>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#f1f6d9] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6a8014]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#f1f6d9] dark:bg-[#d9f447]/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6a8014] dark:text-[#d9f447]">
               <LayoutDashboard className="size-3.5" /> {t.admin.overview || 'Overview'}
             </span>
           </div>
@@ -268,42 +268,49 @@ export default function AdminDashboardPage() {
               <Link
                 key={href}
                 href={href}
-                className="group rounded-2xl border border-[#e2e7dc] bg-[#f8f9f7] p-4 transition hover:-translate-y-0.5 hover:border-[#cdd7c4] hover:bg-white"
+                className="group rounded-2xl border border-[#e2e7dc] dark:border-[#27342d] bg-[#f8f9f7] dark:bg-[#121815] p-4 transition hover:-translate-y-0.5 hover:border-[#cdd7c4] dark:hover:border-[#384a40] hover:bg-white dark:hover:bg-[#1a221d]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center rounded-xl bg-[#18201c] text-[#d9f447]">
+                    <span className="grid size-9 place-items-center rounded-xl bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815]">
                       <Icon className="size-4" />
                     </span>
-                    <span className="text-sm font-bold text-[#18201c]">{label}</span>
+                    <span className="text-sm font-bold text-[#18201c] dark:text-white">
+                      {label}
+                    </span>
                   </div>
-                  <ArrowUpRight className="size-4 text-[#6a8014] transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight className="size-4 text-[#6a8014] dark:text-[#d9f447] transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
-                <p className="mt-3 text-xs leading-relaxed text-[#737e77]">{description}</p>
+                <p className="mt-3 text-xs leading-relaxed text-[#737e77] dark:text-gray-400">
+                  {description}
+                </p>
               </Link>
             ))}
           </div>
         </section>
 
         <div className="space-y-6">
-          <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
+          <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
               <div>
-                <h3 className="text-base font-bold text-[#18201c]">
+                <h3 className="text-base font-bold text-[#18201c] dark:text-white">
                   {t.admin.partnerRestaurants || 'Partner Restaurants'}
                 </h3>
-                <p className="text-xs text-[#737e77]">
+                <p className="text-xs text-[#737e77] dark:text-gray-400">
                   {t.admin.liveSettlementSnapshot || 'Live settlement snapshot'}
                 </p>
               </div>
-              <Link href="/admin/vendor-settlements" className="text-xs font-bold text-[#86a018]">
+              <Link
+                href="/admin/vendor-settlements"
+                className="text-xs font-bold text-[#86a018] dark:text-[#d9f447]"
+              >
                 {t.common.viewAll || 'View all'}
               </Link>
             </div>
 
             <div className="mt-4 space-y-3">
               {topRestaurants.length === 0 ? (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {t.common.noData || 'No restaurant data is available yet.'}
                 </p>
               ) : (
@@ -312,14 +319,19 @@ export default function AdminDashboardPage() {
                     (restaurant.grossSales * restaurant.commissionRate) / 100
                   )
                   return (
-                    <div key={`${restaurant.name}-${index}`} className="rounded-2xl bg-gray-50 p-3">
+                    <div
+                      key={`${restaurant.name}-${index}`}
+                      className="rounded-2xl bg-gray-50 dark:bg-[#121815] border border-transparent dark:border-[#27342d] p-3"
+                    >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-bold text-[#18201c]">{restaurant.name}</span>
-                        <span className="text-xs font-bold text-emerald-700">
+                        <span className="font-bold text-[#18201c] dark:text-white">
+                          {restaurant.name}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
                           ₹{restaurant.grossSales.toLocaleString()}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] text-gray-500">
+                      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                         {restaurant.commissionRate}% cut · ₹{commission.toLocaleString()} commission
                       </p>
                     </div>
@@ -329,12 +341,15 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-              <h3 className="text-base font-bold text-[#18201c]">
+          <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
+              <h3 className="text-base font-bold text-[#18201c] dark:text-white">
                 {t.admin.userDistribution || 'User Distribution'}
               </h3>
-              <Link href="/admin/users" className="text-xs font-bold text-[#86a018]">
+              <Link
+                href="/admin/users"
+                className="text-xs font-bold text-[#86a018] dark:text-[#d9f447]"
+              >
                 {t.admin.manageUsers || 'Manage users'}
               </Link>
             </div>
@@ -349,29 +364,29 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#f0f3ec] pb-4">
-              <h3 className="text-base font-bold text-[#18201c]">
+          <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
+              <h3 className="text-base font-bold text-[#18201c] dark:text-white">
                 {t.admin.quickActions || 'Quick Actions'}
               </h3>
-              <ShieldCheck className="size-5 text-[#859d19]" />
+              <ShieldCheck className="size-5 text-[#859d19] dark:text-[#d9f447]" />
             </div>
             <div className="mt-4 flex flex-col gap-3 text-sm">
               <Link
                 href="/admin/users"
-                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+                className="rounded-2xl bg-[#f8f9f7] dark:bg-[#121815] border border-transparent dark:border-[#27342d] p-3 font-semibold text-[#18201c] dark:text-white hover:bg-[#eef2e9] dark:hover:bg-[#1a221d]"
               >
                 {t.admin.reviewUserAccounts || 'Review user accounts'}
               </Link>
               <Link
                 href="/admin/payments"
-                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+                className="rounded-2xl bg-[#f8f9f7] dark:bg-[#121815] border border-transparent dark:border-[#27342d] p-3 font-semibold text-[#18201c] dark:text-white hover:bg-[#eef2e9] dark:hover:bg-[#1a221d]"
               >
                 {t.admin.reviewPaymentReferences || 'Review payment references'}
               </Link>
               <Link
                 href="/admin/settings"
-                className="rounded-2xl bg-[#f8f9f7] p-3 font-semibold text-[#18201c] hover:bg-[#eef2e9]"
+                className="rounded-2xl bg-[#f8f9f7] dark:bg-[#121815] border border-transparent dark:border-[#27342d] p-3 font-semibold text-[#18201c] dark:text-white hover:bg-[#eef2e9] dark:hover:bg-[#1a221d]"
               >
                 {t.admin.updatePlatformSettings || 'Update platform settings'}
               </Link>
@@ -397,18 +412,18 @@ function SummaryCard({
   note: string
 }) {
   const colors = {
-    purple: 'bg-purple-100 text-purple-800',
-    emerald: 'bg-emerald-100 text-emerald-800',
-    amber: 'bg-amber-100 text-amber-800',
-    blue: 'bg-blue-100 text-blue-800',
-    indigo: 'bg-indigo-100 text-indigo-800',
-    violet: 'bg-violet-100 text-violet-800',
+    purple: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300',
+    emerald: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300',
+    amber: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300',
+    blue: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300',
+    indigo: 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300',
+    violet: 'bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300',
   }
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] bg-white p-3.5 sm:p-5 shadow-sm hover:shadow-md transition">
+    <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-3.5 sm:p-5 shadow-sm hover:shadow-md transition">
       <div className="flex items-center justify-between gap-1">
-        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 truncate">
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 truncate">
           {title}
         </span>
         <span
@@ -417,10 +432,10 @@ function SummaryCard({
           {icon}
         </span>
       </div>
-      <p className="mt-2 sm:mt-4 text-base sm:text-2xl font-bold text-[#18201c] truncate">
+      <p className="mt-2 sm:mt-4 text-base sm:text-2xl font-bold text-[#18201c] dark:text-white truncate">
         {value}
       </p>
-      <p className="mt-1 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-600 truncate">
+      <p className="mt-1 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate">
         <TrendingUp className="size-3 sm:size-3.5 shrink-0" />{' '}
         <span className="truncate">{note}</span>
       </p>
@@ -445,11 +460,11 @@ function RoleBar({
 
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-700">
+      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300">
         <span>{label}</span>
         <span>{count}</span>
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
+      <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-[#121815]">
         <div
           className={`h-full rounded-full ${colors[color]}`}
           style={{ width: count ? '100%' : '0%' }}

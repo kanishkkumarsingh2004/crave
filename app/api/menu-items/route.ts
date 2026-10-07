@@ -43,7 +43,12 @@ export async function POST(request: Request) {
   try {
     const actor = await getActor(request)
     if (process.env.NODE_ENV !== 'test') {
-      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
+      if (
+        !actor ||
+        (actor.role !== 'admin' &&
+          actor.role !== 'restaurant_vendor' &&
+          actor.role !== 'cravexp_store_vendor')
+      ) {
         return NextResponse.json({ error: 'Unauthorized to modify menu items' }, { status: 403 })
       }
     }
@@ -81,7 +86,12 @@ export async function PATCH(request: Request) {
   try {
     const actor = await getActor(request)
     if (process.env.NODE_ENV !== 'test') {
-      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
+      if (
+        !actor ||
+        (actor.role !== 'admin' &&
+          actor.role !== 'restaurant_vendor' &&
+          actor.role !== 'cravexp_store_vendor')
+      ) {
         return NextResponse.json({ error: 'Unauthorized to modify menu items' }, { status: 403 })
       }
     }
@@ -114,7 +124,12 @@ export async function DELETE(request: Request) {
   try {
     const actor = await getActor(request)
     if (process.env.NODE_ENV !== 'test') {
-      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
+      if (
+        !actor ||
+        (actor.role !== 'admin' &&
+          actor.role !== 'restaurant_vendor' &&
+          actor.role !== 'cravexp_store_vendor')
+      ) {
         return NextResponse.json({ error: 'Unauthorized to delete menu items' }, { status: 403 })
       }
     }
