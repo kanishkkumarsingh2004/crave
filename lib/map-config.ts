@@ -55,7 +55,7 @@ export interface MapThemeConfig {
 
 export const CUSTOM_MAP_PALETTE = {
   overlay: '#f8fafc',
-  text: '#35455c',
+  text: '#0f172a',
   land: '#f8fafc',
   landcover: '#eef2f6',
   water: '#e2e8f0',
@@ -69,7 +69,7 @@ export const CUSTOM_MAP_PALETTE = {
   roadMinorMid: '#5e7086',
   roadMinorLow: '#9faec0',
   roadPath: '#b0bccb',
-  roadOutline: '#f8fafc',
+  roadOutline: '#ffffff',
 } as const
 
 export const DEFAULT_MAP_THEME_KEY = 'slateMinimal'

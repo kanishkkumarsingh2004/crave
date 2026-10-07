@@ -141,8 +141,17 @@ export default function DriverAcceptedOrdersPage() {
 
   const filteredOrders = liveOrders.filter((order) => {
     if (filter === 'accepted')
-      return order.status === 'accepted' || order.status === 'sent_to_vendor'
-    if (filter === 'preparing') return order.status === 'preparing' || order.status === 'cooking'
+      return (
+        order.status === 'accepted' ||
+        order.status === 'rider_assigned' ||
+        order.status === 'picked_up' ||
+        order.status === 'out_for_delivery' ||
+        order.status === 'sent_to_vendor'
+      )
+    if (filter === 'preparing')
+      return (
+        order.status === 'preparing' || order.status === 'cooking' || order.status === 'packing'
+      )
     if (filter === 'ready') return order.status === 'ready' || order.status === 'ready_for_pickup'
     return true
   })

@@ -18,6 +18,8 @@ export async function listOrders(filters?: {
   customerId?: string
   restaurantId?: string
   restaurantName?: string
+  driverId?: string
+  riderId?: string
   status?: OrderStatus
   limit?: number
 }) {
@@ -25,6 +27,11 @@ export async function listOrders(filters?: {
 
   if (filters?.customerId) {
     where.customer_id = filters.customerId
+  }
+
+  if (filters?.driverId || filters?.riderId) {
+    const driverId = filters.driverId || filters.riderId
+    where.OR = [{ rider_id: driverId }, { customer_id: driverId }]
   }
 
   if (filters?.status) {
@@ -60,7 +67,10 @@ export async function listOrders(filters?: {
       })
     }
 
-    if (vendorConditions.length === 1 && restIds.length === 1 && !filters?.restaurantName) {
+    if (where.OR) {
+      where.AND = [{ OR: where.OR }, { OR: vendorConditions }]
+      delete where.OR
+    } else if (vendorConditions.length === 1 && restIds.length === 1 && !filters?.restaurantName) {
       where.restaurant_id = restIds[0]
     } else if (vendorConditions.length > 0) {
       where.OR = vendorConditions

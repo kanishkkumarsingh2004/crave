@@ -148,6 +148,9 @@ function applyCustomPalette(map: MapLibreGL.Map) {
       if (type === 'symbol') {
         try {
           map.setPaintProperty(layer.id, 'text-color', CUSTOM_MAP_PALETTE.text)
+          map.setPaintProperty(layer.id, 'text-halo-color', '#ffffff')
+          map.setPaintProperty(layer.id, 'text-halo-width', 2.5)
+          map.setPaintProperty(layer.id, 'text-halo-blur', 0.2)
         } catch (e) {}
       }
     }

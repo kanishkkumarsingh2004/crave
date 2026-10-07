@@ -7,7 +7,7 @@ import React, { useState } from 'react'
 
 export default function DriverSettingsPage() {
   const { user } = useAuth()
-  const { savedUpiList, handleAddUpiId, setPrimaryUpi, deleteUpiId } = useDriver()
+  const { savedUpiList, handleAddUpiId, setPrimaryUpi, deleteUpiId, showCustomAlert } = useDriver()
 
   const [newUpiVpa, setNewUpiVpa] = useState('')
   const [newUpiProvider, setNewUpiProvider] = useState('Google Pay / PhonePe UPI')
@@ -16,7 +16,11 @@ export default function DriverSettingsPage() {
   function onSubmitForm(e: React.FormEvent) {
     e.preventDefault()
     if (!newUpiVpa || !newUpiVpa.includes('@')) {
-      alert('Please enter a valid UPI VPA ID (e.g. name@okicici or 9876543210@paytm)')
+      showCustomAlert({
+        title: 'Invalid UPI VPA',
+        message: 'Please enter a valid UPI VPA ID (e.g. name@okicici or 9876543210@paytm)',
+        variant: 'error',
+      })
       return
     }
     handleAddUpiId(newUpiVpa, newUpiProvider)

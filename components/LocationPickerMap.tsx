@@ -21,8 +21,14 @@ interface LocationPickerMapProps {
   pins?: TelemetryPin[]
   enableH3Grid?: boolean
   defaultGridVisible?: boolean
+  gridVisible?: boolean
+  onGridVisibleChange?: (visible: boolean) => void
   h3Resolution?: number
+  onResolutionChange?: (res: number) => void
   showH3Heatmap?: boolean
+  onHeatmapEnabledChange?: (enabled: boolean) => void
+  onPinSelect?: (pin: TelemetryPin) => void
+  selectedPinId?: string
 }
 
 export default function LocationPickerMap({
@@ -34,8 +40,14 @@ export default function LocationPickerMap({
   pins = [],
   enableH3Grid = false,
   defaultGridVisible = false,
+  gridVisible: controlledGridVisible,
+  onGridVisibleChange,
   h3Resolution = 7,
+  onResolutionChange,
   showH3Heatmap = true,
+  onHeatmapEnabledChange,
+  onPinSelect,
+  selectedPinId,
 }: LocationPickerMapProps) {
   const mapRef = useRef<MapRef | null>(null)
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>({
@@ -45,11 +57,31 @@ export default function LocationPickerMap({
   const [, setDetectedAddress] = useState<string>('')
   const [isLocating, setIsLocating] = useState<boolean>(false)
 
-  // H3 Grid State (OFF by default)
-  const [gridVisible, setGridVisible] = useState<boolean>(defaultGridVisible)
-  const [activeResolution, setActiveResolution] = useState<number>(h3Resolution)
-  const [heatmapEnabled, setHeatmapEnabled] = useState<boolean>(showH3Heatmap)
+  // H3 Grid State (OFF by default or controlled)
+  const [internalGridVisible, setInternalGridVisible] = useState<boolean>(defaultGridVisible)
+  const [internalResolution, setInternalResolution] = useState<number>(h3Resolution)
+  const [internalHeatmap, setInternalHeatmap] = useState<boolean>(showH3Heatmap)
   const [selectedCell, setSelectedCell] = useState<any | null>(null)
+
+  const gridVisible = controlledGridVisible !== undefined ? controlledGridVisible : internalGridVisible
+  const activeResolution = h3Resolution !== undefined ? h3Resolution : internalResolution
+  const heatmapEnabled = showH3Heatmap !== undefined ? showH3Heatmap : internalHeatmap
+
+  const handleToggleGrid = (val: boolean) => {
+    setInternalGridVisible(val)
+    onGridVisibleChange?.(val)
+    if (!val) setSelectedCell(null)
+  }
+
+  const handleResolutionChange = (res: number) => {
+    setInternalResolution(res)
+    onResolutionChange?.(res)
+  }
+
+  const handleToggleHeatmap = (val: boolean) => {
+    setInternalHeatmap(val)
+    onHeatmapEnabledChange?.(val)
+  }
 
   // Reverse Geocoding helper via OpenStreetMap Nominatim
   const fetchReverseGeocode = async (lat: number, lng: number) => {
@@ -160,61 +192,7 @@ export default function LocationPickerMap({
     >
       {/* Top-Right Map Control Cluster (H3 Toggle OFF by default & Sync GPS) */}
       <div className="absolute top-3 right-3 z-20 flex flex-wrap items-center justify-end gap-2 max-w-[calc(100%-24px)]">
-        {enableH3Grid && (
-          <div className="flex items-center gap-1.5 bg-[#121815]/95 p-1 rounded-full border border-white/20 text-white shadow-xl backdrop-blur-md">
-            {/* Toggle H3 Hex Grid ON/OFF */}
-            <button
-              type="button"
-              onClick={() => {
-                setGridVisible((prev) => !prev)
-                if (gridVisible) setSelectedCell(null)
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold transition active:scale-95 ${
-                gridVisible
-                  ? 'bg-[#d9f447] text-[#121815] shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <Hexagon className="size-3.5" />
-              <span>{gridVisible ? 'H3 Grid ON' : 'H3 Grid OFF'}</span>
-            </button>
 
-            {gridVisible && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setHeatmapEnabled((prev) => !prev)}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
-                    heatmapEnabled
-                      ? 'bg-amber-400 text-gray-950'
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                  title="Toggle Density Heatmap"
-                >
-                  <Layers className="size-3" />
-                  <span className="hidden sm:inline">Heatmap</span>
-                </button>
-
-                <div className="hidden sm:flex items-center gap-0.5 bg-white/10 p-0.5 rounded-full">
-                  {H3_RESOLUTIONS.map((res) => (
-                    <button
-                      key={res.level}
-                      type="button"
-                      onClick={() => setActiveResolution(res.level)}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition ${
-                        activeResolution === res.level
-                          ? 'bg-[#d9f447] text-[#121815]'
-                          : 'text-gray-300 hover:text-white'
-                      }`}
-                    >
-                      Res {res.level}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
 
         {/* Sync GPS Location Button */}
         <button
@@ -282,41 +260,64 @@ export default function LocationPickerMap({
           </MapMarker>
         )}
 
-        {/* Live Telemetry Pins (Drivers, Kitchens, Orders, Saved Customer Addresses) */}
+        {/* Live Telemetry Pins (Drivers, Kitchens, Addresses) */}
         {pins.map((pin) => {
           const isDriver = pin.type === 'driver'
           const isRestaurant = pin.type === 'restaurant'
+          const isAddress = pin.type === 'order'
+          const isSelected = selectedPinId === pin.id
+
           return (
             <MapMarker key={pin.id} longitude={pin.lng} latitude={pin.lat}>
               <MarkerContent>
-                <div className="relative flex items-center justify-center cursor-pointer group hover:scale-110 transition">
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onPinSelect?.(pin)
+                  }}
+                  className={`relative flex items-center justify-center cursor-pointer group transition ${
+                    isSelected ? 'scale-125 z-30' : 'hover:scale-110 z-10'
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="absolute -inset-1 rounded-full bg-[#859d19] animate-ping opacity-75" />
+                  )}
                   <div
-                    className={`size-7 rounded-full border-2 border-white flex items-center justify-center shadow-lg ${
+                    className={`size-7 rounded-full border-2 border-white flex items-center justify-center shadow-lg transition ${
                       isDriver
                         ? 'bg-emerald-600 text-white'
                         : isRestaurant
                           ? 'bg-amber-500 text-white'
                           : 'bg-purple-600 text-white'
-                    }`}
+                    } ${isSelected ? 'ring-4 ring-[#859d19]' : ''}`}
                   >
                     {isDriver ? (
                       <Bike className="size-3.5" />
                     ) : isRestaurant ? (
                       <Utensils className="size-3.5" />
                     ) : (
-                      <Package className="size-3.5" />
+                      <MapPin className="size-3.5" />
                     )}
                   </div>
                 </div>
               </MarkerContent>
               <MarkerTooltip>
-                <div className="flex flex-col gap-0.5 p-1 text-xs">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <span className="capitalize">{pin.type}:</span>
-                    <span>{pin.name}</span>
+                <div className="flex flex-col gap-1 p-2 text-xs max-w-xs bg-[#121815]/95 text-white rounded-xl shadow-2xl border border-white/20 backdrop-blur-md">
+                  <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#d9f447]">
+                    <span className="capitalize px-1.5 py-0.5 rounded bg-white/10 text-[10px] tracking-wide">
+                      {isAddress ? 'Address' : pin.type}
+                    </span>
+                    <span className="truncate">{pin.name}</span>
                   </div>
-                  <div className="text-[10px] text-gray-300">{pin.locationName}</div>
-                  <div className="text-[9px] font-mono text-emerald-400">{pin.detail}</div>
+                  <div className="text-[11px] text-gray-100 font-bold leading-snug">
+                    {pin.locationName}
+                  </div>
+                  <div className="text-[10px] font-mono text-purple-300 font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                    {pin.detail}
+                  </div>
+                  <div className="text-[9px] font-mono text-gray-400">
+                    {pin.timestamp}
+                  </div>
                 </div>
               </MarkerTooltip>
             </MapMarker>
@@ -326,7 +327,7 @@ export default function LocationPickerMap({
 
       {/* H3 Spatial Hexagon Click-Triggered Info Card (Bottom-Left) */}
       {gridVisible && activeCellData && (
-        <div className="absolute bottom-3 left-3 z-20 w-72 rounded-2xl border border-white/20 bg-[#121815]/95 p-3.5 text-white shadow-2xl backdrop-blur-md animate-in fade-in duration-200">
+        <div className="absolute bottom-3 left-3 z-20 w-72 max-w-[calc(100vw-2.5rem)] rounded-2xl border border-white/20 bg-[#121815]/95 p-3.5 text-white shadow-2xl backdrop-blur-md animate-in fade-in duration-200">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#d9f447]">
               <Hexagon className="size-4 animate-spin-slow" />

@@ -118,6 +118,8 @@ export async function fetchOSRMDrivingDistanceKm(
   return calculateRoadTravelDistanceKm(restLat, restLng, destLat, destLng)
 }
 
+import { calculateFullBreakdown, CalculatorInput } from './calculator'
+
 /**
  * Calculates comprehensive customer checkout billing according to Admin Payment Configuration.
  */
@@ -132,61 +134,43 @@ export function calculateCheckoutPricing(params: {
   const distKm = Math.max(0.1, Number(params.roadDistanceKm) || 1.8)
   const discount = Math.max(0, Number(params.couponDiscount) || 0)
 
-  const freeThreshold = cfg.freeDeliveryThreshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold
-  const isFreeDelivery = subtotal >= freeThreshold && subtotal > 0
-
-  let baseFee = cfg.baseDeliveryFee ?? cfg.deliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee
-  let extraKmFee = 0
-  const baseKmThreshold = cfg.baseDistanceKm ?? DEFAULT_PAYMENT_CONFIG.baseDistanceKm
-  const perKmRate = cfg.perKmRate ?? DEFAULT_PAYMENT_CONFIG.perKmRate
-
-  if (distKm > baseKmThreshold) {
-    const extraDistance = Math.ceil(distKm - baseKmThreshold)
-    extraKmFee = extraDistance * perKmRate
+  const input: CalculatorInput = {
+    subtotal,
+    distanceKm: distKm,
+    platformFee: cfg.platformFee ?? cfg.platform_fee,
+    handlingFee: cfg.handlingFee ?? cfg.handling_fee,
+    vendorCommissionPercent: cfg.vendorCommission ?? cfg.vendor_commission,
+    baseDeliveryFee: cfg.baseDeliveryFee ?? cfg.delivery_fee,
+    baseDistanceKm: cfg.baseDistanceKm ?? cfg.base_distance_km,
+    perKmRate: cfg.perKmRate ?? cfg.per_km_rate,
+    freeDeliveryThreshold: cfg.freeDeliveryThreshold ?? cfg.free_delivery_threshold,
+    driverPayoutSharePercent: cfg.driverPayoutShare ?? cfg.driver_payout_share,
+    surgeMultiplier: cfg.surgeMultiplier ?? cfg.surge_multiplier,
+    rainFee: cfg.rainFee ?? cfg.rain_fee,
+    nightSurgeFee: cfg.nightSurgeFee ?? cfg.night_surge_fee,
+    isRainModeActive: cfg.isRainModeActive ?? cfg.is_rain_mode_active,
+    isNightSurgeActive: cfg.isNightSurgeActive ?? cfg.is_night_surge_active,
   }
 
-  const calculatedBaseDelivery = baseFee + extraKmFee
-  let deliveryBeforeSurge = isFreeDelivery ? 0 : calculatedBaseDelivery
-
-  let surgeFee = 0
-  let rainFee = 0
-  let nightSurgeFee = 0
-
-  if (!isFreeDelivery && deliveryBeforeSurge > 0) {
-    if (cfg.surgeMultiplier && cfg.surgeMultiplier > 1.0) {
-      surgeFee = Math.round(deliveryBeforeSurge * (cfg.surgeMultiplier - 1.0))
-    }
-    if (cfg.isRainModeActive) {
-      rainFee = cfg.rainFee || 0
-    }
-    if (cfg.isNightSurgeActive) {
-      nightSurgeFee = cfg.nightSurgeFee || 0
-    }
-  }
-
-  const finalDeliveryFee = isFreeDelivery
-    ? 0
-    : deliveryBeforeSurge + surgeFee + rainFee + nightSurgeFee
-
-  const handlingFee =
-    subtotal > 0 ? (cfg.handlingFee ?? cfg.packagingCap ?? DEFAULT_PAYMENT_CONFIG.handlingFee) : 0
-  const platformFee = subtotal > 0 ? (cfg.platformFee ?? DEFAULT_PAYMENT_CONFIG.platformFee) : 0
-
-  const grandTotal = Math.max(0, subtotal + finalDeliveryFee + handlingFee + platformFee - discount)
+  const result = calculateFullBreakdown(
+    input,
+    discount > 0 ? { discount_type: 'flat', discount_value: discount } : undefined
+  )
+  const b = result.customerBilling
 
   return {
-    cartSubtotal: subtotal,
+    cartSubtotal: b.subtotal,
     roadDistanceKm: distKm,
-    baseDeliveryFee: isFreeDelivery ? 0 : baseFee,
-    extraKmFee: isFreeDelivery ? 0 : extraKmFee,
-    surgeFee,
-    rainFee,
-    nightSurgeFee,
-    deliveryFee: finalDeliveryFee,
-    isFreeDelivery,
-    handlingFee,
-    platformFee,
-    couponDiscount: Math.min(discount, subtotal),
-    grandTotal,
+    baseDeliveryFee: b.baseDeliveryFee,
+    extraKmFee: b.extraDistanceFee,
+    surgeFee: b.surgeFee,
+    rainFee: b.rainFee,
+    nightSurgeFee: b.nightSurgeFee,
+    deliveryFee: b.netDeliveryFee,
+    isFreeDelivery: b.isFreeDelivery,
+    handlingFee: b.handlingFee,
+    platformFee: b.platformFee,
+    couponDiscount: b.couponDiscount,
+    grandTotal: b.grandTotal,
   }
 }

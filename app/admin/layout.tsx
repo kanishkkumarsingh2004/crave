@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/language-context'
 import {
   Activity,
   BarChart3,
+  Calculator,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -42,7 +43,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!user) {
       router.replace('/login')
     } else if (role !== 'admin') {
-      const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+      const redirectPath =
+        role === 'customer' || role === 'user'
+          ? '/user/dashboard'
+          : role === 'rider' || role === 'driver'
+            ? '/driver/dashboard'
+            : role === 'restaurant_vendor' || role === 'vendor'
+              ? '/vendor/dashboard'
+              : role === 'cravexp_store_vendor'
+                ? '/vendor/crave-ep'
+                : '/login'
       router.replace(redirectPath)
     }
   }, [user, role, isLoading, router])
@@ -79,6 +89,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: '/admin/ai-analytics',
       label: (t.admin as any).aiAnalytics || 'AI Analytics',
       icon: Sparkles,
+    },
+    {
+      href: '/admin/calculator',
+      label: 'Calculator Playground',
+      icon: Calculator,
     },
     { href: '/admin/payments', label: t.admin.paymentReviewQueue, icon: CreditCard },
     { href: '/admin/users', label: t.admin.userAccounts, icon: Users },
