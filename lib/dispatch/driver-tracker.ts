@@ -89,21 +89,7 @@ export async function updateDriverLocation(params: {
   // Update primary spatial cache
   driverSpatialIndex.set(driverId, updatedState)
 
-  // Persist to PostgreSQL in background (or mock safe)
-  try {
-    if (prisma.user?.update) {
-      await prisma.user
-        .update({
-          where: { id: driverId },
-          data: {
-            address: `H3Cell:${newH3Cell}`,
-          },
-        })
-        .catch(() => {})
-    }
-  } catch {
-    // Ignore persistence errors in transient mock environments
-  }
+  // Spatial index state is maintained in-memory cache and broadcast via real-time WebSocket channels
 
   return {
     state: updatedState,

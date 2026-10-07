@@ -42,7 +42,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!user) {
       router.replace('/login')
     } else if (role !== 'admin') {
-      const redirectPath = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+      const redirectPath =
+        role === 'rider' || (role as string) === 'driver'
+          ? '/driver/dashboard'
+          : role === 'restaurant_vendor' || (role as string) === 'vendor'
+            ? '/vendor/dashboard'
+            : role === 'cravexp_store_vendor'
+              ? '/vendor/crave-ep'
+              : '/user/dashboard'
       router.replace(redirectPath)
     }
   }, [user, role, isLoading, router])

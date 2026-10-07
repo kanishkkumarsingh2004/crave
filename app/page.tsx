@@ -25,7 +25,16 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      const targetDashboard = role === 'customer' ? '/user/explore' : `/${role}/dashboard`
+      const targetDashboard =
+        role === 'admin'
+          ? '/admin/dashboard'
+          : role === 'rider' || (role as string) === 'driver'
+            ? '/driver/dashboard'
+            : role === 'restaurant_vendor' || (role as string) === 'vendor'
+              ? '/vendor/dashboard'
+              : role === 'cravexp_store_vendor'
+                ? '/vendor/crave-ep'
+                : '/user/explore'
       router.replace(targetDashboard)
     }
   }, [user, role, isLoading, router])

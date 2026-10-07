@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     const vendorRole =
       vendorType === 'CraveXP Store Vendor' ? 'cravexp_store_vendor' : 'restaurant_vendor'
 
+    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
+    const isDarkStore = vendorRole === 'cravexp_store_vendor'
+
     // Insert user record via Prisma
     try {
       await createUser({
@@ -67,38 +71,40 @@ export async function POST(request: Request) {
         name: String(name).trim(),
         email: cleanEmail,
         role: vendorRole,
+        password_hash: passwordHash,
         phone: phone || null,
         address: address || null,
         restaurant_name: String(storeName).trim(),
-        cuisine: cuisine || vendorType,
+        cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : vendorType),
       })
     } catch (err: any) {
       console.warn('Could not insert user profile:', err?.message)
     }
 
-    // Insert restaurant record via Prisma
-    if (vendorType === 'Restaurant Vendor' || vendorType === 'restaurant') {
-      try {
-        await createRestaurant({
-          id: vendorId,
-          name: String(storeName).trim(),
-          cuisine: cuisine || 'Multi-Cuisine',
-          rating: 4.5,
-          delivery_minutes: 25,
-          image:
-            bannerUrl ||
-            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
-          is_open: true,
-          address: address || 'Bengaluru',
-          owner_id: finalUserId,
-          commission_rate: Number(commissionRate),
-          payment_model: paymentModel,
-          latitude: latitude ? Number(latitude) : undefined,
-          longitude: longitude ? Number(longitude) : undefined,
-        })
-      } catch (err: any) {
-        console.warn('Could not insert restaurant record:', err?.message)
-      }
+    // Insert restaurant record via Prisma (for both standard restaurants and dark stores)
+    try {
+      await createRestaurant({
+        id: vendorId,
+        name: String(storeName).trim(),
+        cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : 'Multi-Cuisine'),
+        rating: 4.8,
+        delivery_minutes: isDarkStore ? 10 : 25,
+        image:
+          bannerUrl ||
+          (isDarkStore
+            ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80'
+            : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'),
+        is_open: true,
+        is_dark_store: isDarkStore,
+        address: address || 'Bengaluru',
+        owner_id: finalUserId,
+        commission_rate: Number(commissionRate),
+        payment_model: paymentModel,
+        latitude: latitude ? Number(latitude) : undefined,
+        longitude: longitude ? Number(longitude) : undefined,
+      })
+    } catch (err: any) {
+      console.warn('Could not insert restaurant record:', err?.message)
     }
 
     // Broadcast real-time vendor creation to Admin WebSocket channels

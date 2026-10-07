@@ -1,4 +1,4 @@
-import { updateUser } from '@/lib/dal/users'
+import { updateUser, findUserById } from '@/lib/dal/users'
 import { updateRestaurant } from '@/lib/dal/restaurants'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
@@ -61,10 +61,18 @@ export async function POST(request: Request) {
       userUpdateData.license_plate = finalLicensePlate ? String(finalLicensePlate).trim() : null
 
     if (password && String(password).trim().length > 0) {
-      const targetEmail = cleanEmail || 'user@crave.com'
-      userUpdateData.password_hash = crypto
-        .scryptSync(String(password), targetEmail, 64)
-        .toString('hex')
+      let targetEmail = cleanEmail
+      if (!targetEmail) {
+        try {
+          const existingUser: any = await findUserById(id)
+          targetEmail = existingUser?.email
+        } catch {}
+      }
+      if (targetEmail) {
+        userUpdateData.password_hash = crypto
+          .scryptSync(String(password), targetEmail, 64)
+          .toString('hex')
+      }
     }
 
     // Update User record in database
