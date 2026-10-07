@@ -3,7 +3,16 @@
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
+import CustomAlertModal from '@/components/CustomAlertModal'
 import React, { createContext, useContext, useEffect, useState } from 'react'
+
+export interface CustomAlertOptions {
+  title?: string
+  message: string
+  variant?: 'warning' | 'info' | 'error' | 'success'
+  actionLabel?: string
+  actionPath?: string
+}
 
 export interface BroadcastOrderOffer {
   id: string
@@ -98,10 +107,16 @@ interface DriverContextType {
   payoutLogs: PayoutLogItem[]
   driverGpsCoords: [number, number] | null
   gpsStatus: 'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
+  gpsPermissionState: 'granted' | 'prompt' | 'denied' | 'unknown'
   gpsAccuracy: number | null
   lastGpsUpdate: string
+  isBackgroundWorkerActive: boolean
+  workerLastSyncTime: string
+  backgroundSyncIntervalMs: number
+  setBackgroundSyncIntervalMs: (ms: number) => void
   completedSummaryModal: CompletedTripItem | null
   setCompletedSummaryModal: React.Dispatch<React.SetStateAction<CompletedTripItem | null>>
+  showCustomAlert: (opts: CustomAlertOptions) => void
   requestMobileGps: () => void
   triggerSimulatedOffer: () => void
   acceptBroadcastOffer: () => void
@@ -122,17 +137,22 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [broadcastOffer, setBroadcastOffer] = useState<BroadcastOrderOffer | null>(null)
   const [offerTimer, setOfferTimer] = useState(15)
 
-  // Real Mobile GPS
-  const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>([
-    12.679898, 77.469493,
-  ])
+  // Real Mobile GPS (null by default until acquired from device)
+  const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>(null)
   const [gpsStatus, setGpsStatus] = useState<
     'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
-  >('connected')
+  >('idle')
+  const [gpsPermissionState, setGpsPermissionState] = useState<
+    'granted' | 'prompt' | 'denied' | 'unknown'
+  >('unknown')
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(12)
   const [lastGpsUpdate, setLastGpsUpdate] = useState<string>('Just now')
 
-  // Summary Modal
+  // Background Web Worker & Sync State
+  const [isBackgroundWorkerActive, setIsBackgroundWorkerActive] = useState<boolean>(false)
+  const [workerLastSyncTime, setWorkerLastSyncTime] = useState<string>('Never')
+  const [backgroundSyncIntervalMs, setBackgroundSyncIntervalMs] = useState<number>(3000)
+  const workerRef = React.useRef<Worker | null>(null)
   const [completedSummaryModal, setCompletedSummaryModal] = useState<CompletedTripItem | null>(null)
 
   // Completed Trips
@@ -143,6 +163,73 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   // Payout Logs
   const [payoutLogs, setPayoutLogs] = useState<PayoutLogItem[]>([])
+
+  // Load Driver Profile Data (Orders, UPI, Payouts) from DB
+  useEffect(() => {
+    if (!user?.id) return
+
+    const loadDriverData = async () => {
+      try {
+        // 1. Fetch Orders (active task & completed trips)
+        const ordersRes = await fetch(`/api/driver/orders?driverId=${user.id}`)
+        const ordersJson = await ordersRes.json()
+        if (ordersJson.success) {
+          if (ordersJson.completedTrips && Array.isArray(ordersJson.completedTrips)) {
+            setCompletedTrips(ordersJson.completedTrips)
+          }
+          if (ordersJson.activeOrder && !activeTask) {
+            const o = ordersJson.activeOrder
+            let step: 'assigned' | 'at_restaurant' | 'picked_up' | 'arrived_customer' = 'assigned'
+            if (o.status === 'ready_for_pickup') step = 'at_restaurant'
+            else if (o.status === 'picked_up') step = 'picked_up'
+            else if (o.status === 'out_for_delivery') step = 'arrived_customer'
+
+            let itemsArr: any[] = []
+            try {
+              itemsArr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
+            } catch (e) {}
+
+            setActiveTask({
+              id: o.id,
+              orderNumber: `#${o.id.slice(0, 8)}`,
+              restaurantName: o.restaurant_name || 'Crave Kitchen',
+              restaurantAddress: o.customer_address
+                ? `Kitchen near ${o.customer_address}`
+                : 'Koramangala',
+              customerName: o.customer_name || 'Customer',
+              customerAddress: o.customer_address || 'Indiranagar',
+              customerPhone: o.customer_phone || user.phone || '+91 98765 43210',
+              basePayout: 45,
+              surgeBonus: 25,
+              payout: 70,
+              tip: Number(o.tip || 0),
+              distance: '2.4 km',
+              step,
+              otp: String(o.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''),
+            })
+          }
+        }
+
+        // 2. Fetch UPI Saved Accounts
+        const upiRes = await fetch(`/api/driver/upi?driverId=${user.id}`)
+        const upiJson = await upiRes.json()
+        if (upiJson.success && Array.isArray(upiJson.savedUpiList)) {
+          setSavedUpiList(upiJson.savedUpiList)
+        }
+
+        // 3. Fetch Payout Logs
+        const payoutsRes = await fetch(`/api/driver/payouts?driverId=${user.id}`)
+        const payoutsJson = await payoutsRes.json()
+        if (payoutsJson.success && Array.isArray(payoutsJson.payoutLogs)) {
+          setPayoutLogs(payoutsJson.payoutLogs)
+        }
+      } catch (err) {
+        console.error('Failed to load driver profile data:', err)
+      }
+    }
+
+    loadDriverData()
+  }, [user?.id])
 
   // Broadcast Offer Timer
   useEffect(() => {
@@ -156,6 +243,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }, 1000)
     return () => clearInterval(interval)
   }, [broadcastOffer, offerTimer])
+
+  // Sync driver duty status ONLINE/OFFLINE with backend tracker
+  useEffect(() => {
+    if (!user?.id) return
+    fetch('/api/driver/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driverId: user.id,
+        isOnline,
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      }),
+    }).catch(() => {})
+  }, [isOnline, user?.id])
 
   // Live WebSocket listener for instant driver offer dispatch
   useWebSocket({
@@ -278,6 +379,111 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
+  // Query Browser Geolocation Permissions API
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((result) => {
+          setGpsPermissionState(result.state as any)
+          if (result.state === 'denied') {
+            setGpsStatus('denied')
+          }
+          result.onchange = () => {
+            setGpsPermissionState(result.state as any)
+            if (result.state === 'granted') {
+              setGpsStatus('connected')
+            } else if (result.state === 'denied') {
+              setGpsStatus('denied')
+            }
+          }
+        })
+        .catch(() => {})
+    }
+  }, [])
+
+  // Register Service Worker & Web Worker for background GPS telemetry sync
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/workers/sw-background.js', { scope: '/' })
+        .then(() => {})
+        .catch(() => {})
+    }
+
+    try {
+      const worker = new Worker('/workers/driver/location-stream.worker.js')
+      workerRef.current = worker
+
+      worker.onmessage = (e) => {
+        if (e.data?.type === 'LIVE_STREAM_SUCCESS' || e.data?.type === 'LIVE_STREAM_EMIT') {
+          setIsBackgroundWorkerActive(true)
+          setWorkerLastSyncTime(
+            new Date().toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          )
+        }
+      }
+
+      if (user?.id && isOnline) {
+        worker.postMessage({
+          type: 'INIT',
+          payload: {
+            driverId: user.id,
+            orderId: activeTask?.id || undefined,
+            lat: driverGpsCoords ? driverGpsCoords[0] : null,
+            lng: driverGpsCoords ? driverGpsCoords[1] : null,
+            isOnline,
+          },
+        })
+      }
+    } catch (err) {
+      console.warn('Web Worker setup warning:', err)
+    }
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'STOP' })
+        workerRef.current.terminate()
+        workerRef.current = null
+      }
+    }
+  }, [user?.id, isOnline, backgroundSyncIntervalMs])
+
+  // Screen Wake Lock API to prevent mobile browser sleep when app is in background/recent apps
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isOnline) return
+
+    let wakeLock: any = null
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen')
+        }
+      } catch (err) {}
+    }
+
+    requestWakeLock()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      if (wakeLock) wakeLock.release?.().catch(() => {})
+    }
+  }, [isOnline])
+
   // Continuous Driver Mobile Device GPS Location Watcher
   useEffect(() => {
     if (typeof window === 'undefined' || !('geolocation' in navigator) || !isOnline) {
@@ -293,6 +499,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         setDriverGpsCoords([lat, lng])
         setGpsAccuracy(Math.round(position.coords.accuracy))
         setGpsStatus('connected')
+        setGpsPermissionState('granted')
         setLastGpsUpdate(
           new Date().toLocaleTimeString([], {
             hour: '2-digit',
@@ -302,7 +509,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         )
 
         // Broadcast driver's actual mobile location to system and customer track map
-        const activeDriverId = user?.id || 'driver_partner'
+        const activeDriverId = user?.id
+        if (!activeDriverId) return
         publishLiveEvent('driver_location', {
           driverId: activeDriverId,
           orderId: activeTask?.id || undefined,
@@ -321,10 +529,32 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
             status: isOnline ? 'ONLINE' : 'OFFLINE',
           }),
         }).catch(() => {})
+
+        // Relay live position event to dedicated location stream Web Worker
+        if (workerRef.current) {
+          workerRef.current.postMessage({
+            type: 'EVENT_GPS_UPDATE',
+            payload: {
+              driverId: activeDriverId,
+              orderId: activeTask?.id || undefined,
+              lat,
+              lng,
+              accuracy: position.coords.accuracy,
+              speed: position.coords.speed,
+              heading: position.coords.heading,
+              isOnline,
+            },
+          })
+        }
       },
       (err) => {
         console.warn('Driver mobile GPS watch warning:', err)
-        setGpsStatus('connected')
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsStatus('denied')
+          setGpsPermissionState('denied')
+        } else {
+          setGpsStatus('error')
+        }
       },
       {
         enableHighAccuracy: true,
@@ -338,9 +568,37 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isOnline, user?.id, activeTask?.id])
 
+  // Custom Alert Modal State
+  const [customAlert, setCustomAlert] = useState<{
+    isOpen: boolean
+    title?: string
+    message: string
+    variant?: 'warning' | 'info' | 'error' | 'success'
+    actionLabel?: string
+    actionPath?: string
+  }>({
+    isOpen: false,
+    message: '',
+  })
+
+  const showCustomAlert = (opts: CustomAlertOptions) => {
+    setCustomAlert({
+      isOpen: true,
+      title: opts.title || 'Order Queue Notice',
+      message: opts.message,
+      variant: opts.variant || 'warning',
+      actionLabel: opts.actionLabel,
+      actionPath: opts.actionPath,
+    })
+  }
+
   function requestMobileGps() {
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
-      alert('Geolocation is not supported on this browser or mobile device.')
+      showCustomAlert({
+        title: 'Geolocation Unsupported',
+        message: 'Geolocation is not supported on this browser or mobile device.',
+        variant: 'error',
+      })
       return
     }
     setGpsStatus('acquiring')
@@ -351,6 +609,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         setDriverGpsCoords([lat, lng])
         setGpsAccuracy(Math.round(position.coords.accuracy))
         setGpsStatus('connected')
+        setGpsPermissionState('granted')
         setLastGpsUpdate(
           new Date().toLocaleTimeString([], {
             hour: '2-digit',
@@ -359,7 +618,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           })
         )
 
-        const activeDriverId = user?.id || 'driver_partner'
+        const activeDriverId = user?.id
+        if (!activeDriverId) return
         publishLiveEvent('driver_location', {
           driverId: activeDriverId,
           orderId: activeTask?.id || undefined,
@@ -380,8 +640,24 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => {})
       },
       (err) => {
-        setGpsStatus('connected')
-        setDriverGpsCoords([12.679898, 77.469493])
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsStatus('denied')
+          setGpsPermissionState('denied')
+          showCustomAlert({
+            title: 'GPS Permission Access Blocked',
+            message:
+              'Location permission was denied. Please tap the lock icon next to the browser URL to allow location permissions so orders can be dispatched to your cockpit.',
+            variant: 'error',
+          })
+        } else {
+          setGpsStatus('error')
+          showCustomAlert({
+            title: 'GPS Position Unavailable',
+            message:
+              'Unable to acquire high accuracy location. Please ensure device location / GPS services are enabled on your device.',
+            variant: 'warning',
+          })
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
@@ -432,13 +708,16 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {}
 
-    // No real customer orders available - do NOT trigger fake offer
+    // No real customer orders available - trigger custom modal popup
     setBroadcastOffer(null)
-    if (typeof window !== 'undefined') {
-      alert(
-        'No active real customer orders currently waiting for pickup in the queue. Please place an order as a customer first!'
-      )
-    }
+    showCustomAlert({
+      title: 'No Orders In Queue',
+      message:
+        'No active real customer orders currently waiting for pickup in the queue. Please place an order as a customer first!',
+      variant: 'warning',
+      actionLabel: 'Place Order as Customer',
+      actionPath: '/user/dashboard',
+    })
   }
 
   async function acceptBroadcastOffer() {
@@ -661,7 +940,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     return { success: true, message: 'Delivery completed successfully with OTP handshake!' }
   }
 
-  function handleAddUpiId(vpa: string, provider: string) {
+  async function handleAddUpiId(vpa: string, provider: string) {
     if (!vpa || !vpa.includes('@')) return
     const newEntry: SavedUpiItem = {
       id: `upi_${Date.now()}`,
@@ -671,6 +950,19 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       isVerified: true,
     }
     setSavedUpiList((prev) => [...prev, newEntry])
+
+    try {
+      await fetch('/api/driver/upi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: user?.id,
+          vpa: vpa.trim(),
+          bankName: provider,
+          isPrimary: savedUpiList.length === 0,
+        }),
+      })
+    } catch (e) {}
   }
 
   function setPrimaryUpi(id: string) {
@@ -682,8 +974,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  function deleteUpiId(id: string) {
+  async function deleteUpiId(id: string) {
     setSavedUpiList((prev) => prev.filter((item) => item.id !== id))
+    try {
+      await fetch(`/api/driver/upi?id=${id}`, { method: 'DELETE' })
+    } catch (e) {}
   }
 
   function handleInstantCashout(amount: number) {
@@ -698,6 +993,18 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       },
       ...prev,
     ])
+
+    try {
+      fetch('/api/driver/payouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: user?.id,
+          amount,
+          vpa: primaryVpa,
+        }),
+      }).catch(() => {})
+    } catch (e) {}
     return true
   }
 
@@ -717,10 +1024,16 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         payoutLogs,
         driverGpsCoords,
         gpsStatus,
+        gpsPermissionState,
         gpsAccuracy,
         lastGpsUpdate,
+        isBackgroundWorkerActive,
+        workerLastSyncTime,
+        backgroundSyncIntervalMs,
+        setBackgroundSyncIntervalMs,
         completedSummaryModal,
         setCompletedSummaryModal,
+        showCustomAlert,
         requestMobileGps,
         triggerSimulatedOffer,
         acceptBroadcastOffer,
@@ -733,6 +1046,17 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+
+      {/* Global Custom Alert Modal Popup */}
+      <CustomAlertModal
+        isOpen={customAlert.isOpen}
+        title={customAlert.title}
+        message={customAlert.message}
+        variant={customAlert.variant}
+        actionLabel={customAlert.actionLabel}
+        actionPath={customAlert.actionPath}
+        onClose={() => setCustomAlert((prev) => ({ ...prev, isOpen: false }))}
+      />
     </DriverContext.Provider>
   )
 }

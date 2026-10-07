@@ -4,9 +4,11 @@ import {
   updatePaymentReviewStatus,
   createVendorSettlement,
   createDriverPayout,
+  getActivePaymentConfig,
 } from '@/lib/dal/payments'
 import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
+import { calculateFullBreakdown } from '@/lib/calculator'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
@@ -20,8 +22,39 @@ async function getActor(request: Request): Promise<JWTPayload | null> {
   return token ? verifyToken(token) : null
 }
 
-function getActiveConfig(): PaymentConfig {
-  return DEFAULT_PAYMENT_CONFIG
+async function getActiveConfig(): Promise<PaymentConfig> {
+  try {
+    const dbConfig: any = await getActivePaymentConfig()
+    if (!dbConfig) return DEFAULT_PAYMENT_CONFIG
+    return {
+      ...DEFAULT_PAYMENT_CONFIG,
+      upiVpa: dbConfig.merchant_vpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
+      merchantName: dbConfig.merchant_name || DEFAULT_PAYMENT_CONFIG.merchantName,
+      thankYouMessage: dbConfig.thank_you_message || DEFAULT_PAYMENT_CONFIG.thankYouMessage,
+      mccCode: dbConfig.merchant_category_code || DEFAULT_PAYMENT_CONFIG.mccCode,
+      ifscCode: dbConfig.ifsc_code || DEFAULT_PAYMENT_CONFIG.ifscCode,
+      accountNumber: dbConfig.account_number || DEFAULT_PAYMENT_CONFIG.accountNumber,
+      platformFee: dbConfig.platform_fee != null ? Number(dbConfig.platform_fee) : DEFAULT_PAYMENT_CONFIG.platformFee,
+      handlingFee: dbConfig.handling_fee != null ? Number(dbConfig.handling_fee) : DEFAULT_PAYMENT_CONFIG.handlingFee,
+      vendorCommission: dbConfig.vendor_commission != null ? Number(dbConfig.vendor_commission) : DEFAULT_PAYMENT_CONFIG.vendorCommission,
+      packagingCap: dbConfig.packaging_cap != null ? Number(dbConfig.packaging_cap) : DEFAULT_PAYMENT_CONFIG.packagingCap,
+      baseDeliveryFee: dbConfig.delivery_fee != null ? Number(dbConfig.delivery_fee) : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
+      baseDistanceKm: dbConfig.base_distance_km != null ? Number(dbConfig.base_distance_km) : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
+      perKmRate: dbConfig.per_km_rate != null ? Number(dbConfig.per_km_rate) : DEFAULT_PAYMENT_CONFIG.perKmRate,
+      freeDeliveryThreshold: dbConfig.free_delivery_threshold != null ? Number(dbConfig.free_delivery_threshold) : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
+      driverPayoutShare: dbConfig.driver_payout_share != null ? Number(dbConfig.driver_payout_share) : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
+      surgeMultiplier: dbConfig.surge_multiplier != null ? Number(dbConfig.surge_multiplier) : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
+      rainFee: dbConfig.rain_fee != null ? Number(dbConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
+      nightSurgeFee: dbConfig.night_surge_fee != null ? Number(dbConfig.night_surge_fee) : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
+      isRainModeActive: dbConfig.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
+      isNightSurgeActive: dbConfig.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
+      enableCashOnDelivery: dbConfig.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
+      enableUpiDeepLink: dbConfig.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
+      requireUtrNumber: dbConfig.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
+    }
+  } catch {
+    return DEFAULT_PAYMENT_CONFIG
+  }
 }
 
 export async function GET(request: Request) {
@@ -31,6 +64,7 @@ export async function GET(request: Request) {
     const vendorId = searchParams.get('vendorId')
     const vendorName = searchParams.get('vendorName')
     const orderId = searchParams.get('orderId')
+    const driverId = searchParams.get('driverId') || searchParams.get('riderId')
 
     if (orderId) {
       const order = await findOrderById(orderId)
@@ -45,6 +79,7 @@ export async function GET(request: Request) {
       customerId: customerId ?? undefined,
       restaurantId: vendorId ?? undefined,
       restaurantName: vendorName ?? undefined,
+      driverId: driverId ?? undefined,
     })
 
     return NextResponse.json({ success: true, orders })
@@ -117,7 +152,7 @@ export async function POST(request: Request) {
         : '')
 
     const orderId = id || crypto.randomUUID()
-    const paymentConfig = getActiveConfig()
+    const paymentConfig = await getActiveConfig()
 
     // ─── Resolve Valid Restaurant Record ────────────────────────
     let restaurant: any = null
@@ -161,40 +196,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Restaurant is required' }, { status: 400 })
     }
 
-    // ─── Live Billing Split Calculation ──────────────────────
+    // ─── Live Billing Split Calculation via Central Calculator Engine ───
     const commissionRate = restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15
     const foodSubtotal = Number(subtotal) || 0
-    const commissionAmount = Math.round((foodSubtotal * commissionRate) / 100)
-    const capPackaging = Math.min(Number(packaging_fee) || 0, paymentConfig.packagingCap || 20)
-    const vendorNetPayout = foodSubtotal - commissionAmount + capPackaging
 
-    const actualDeliveryFee = Number(
-      delivery_fee != null ? delivery_fee : paymentConfig.baseDeliveryFee
+    const calcResult = calculateFullBreakdown(
+      {
+        subtotal: foodSubtotal,
+        distanceKm: 2.5,
+        packagingFee: Number(packaging_fee) || 20,
+        tip: Number(tip) || 0,
+        restaurantName: finalRestaurantName,
+        vendorCommissionPercent: commissionRate,
+        driverPayoutSharePercent: paymentConfig.driverPayoutShare,
+        platformFee: paymentConfig.platformFee,
+        handlingFee: paymentConfig.handlingFee,
+        baseDeliveryFee: paymentConfig.baseDeliveryFee,
+        baseDistanceKm: paymentConfig.baseDistanceKm,
+        perKmRate: paymentConfig.perKmRate,
+        freeDeliveryThreshold: paymentConfig.freeDeliveryThreshold,
+        surgeMultiplier: paymentConfig.surgeMultiplier,
+        rainFee: paymentConfig.rainFee,
+        nightSurgeFee: paymentConfig.nightSurgeFee,
+        isRainModeActive: paymentConfig.isRainModeActive,
+        isNightSurgeActive: paymentConfig.isNightSurgeActive,
+      },
+      discount_amount > 0 ? { discount_type: 'flat', discount_value: Number(discount_amount) } : undefined
     )
-    // Driver receives payout share based on trip fare (if customer got free delivery, driver is still paid using base trip fare)
-    const tripDeliveryFare =
-      actualDeliveryFee > 0 ? actualDeliveryFee : paymentConfig.baseDeliveryFee || 30
-    const driverPayoutShare = paymentConfig.driverPayoutShare || 80
-    const driverPayout =
-      Math.round(tripDeliveryFare * (driverPayoutShare / 100)) + (Number(tip) || 0)
-    const platformProfit =
-      Math.round((Number(total_amount) - vendorNetPayout - driverPayout) * 100) / 100
+
+    const capPackaging = calcResult.customerBilling.packagingFee
+    const vendorNetPayout = calcResult.vendorSettlement.netVendorPayout
+    const driverPayout = calcResult.driverEarnings.totalDriverEarnings
+    const platformProfit = calcResult.platformEconomics.platformNetProfit
 
     const billingBreakdown = {
       subtotal: foodSubtotal,
       packaging_fee: capPackaging,
-      delivery_fee: actualDeliveryFee,
-      platform_fee: Number(body.platform_fee) || paymentConfig.platformFee || 2,
-      handling_fee: capPackaging,
-      gst: Number(gst) || 0,
-      tip: Number(tip) || 0,
-      discount_amount: Number(discount_amount) || 0,
-      total_amount: Number(total_amount),
+      delivery_fee: calcResult.customerBilling.netDeliveryFee,
+      platform_fee: calcResult.customerBilling.platformFee,
+      handling_fee: calcResult.customerBilling.handlingFee,
+      gst: calcResult.customerBilling.gstAmount,
+      tip: calcResult.customerBilling.tip,
+      discount_amount: calcResult.customerBilling.couponDiscount,
+      total_amount: Number(total_amount) || calcResult.customerBilling.grandTotal,
       vendor_commission_rate: commissionRate,
-      vendor_commission_amount: commissionAmount,
+      vendor_commission_amount: calcResult.vendorSettlement.commissionDeducted,
       vendor_net_payout: vendorNetPayout,
       driver_payout: driverPayout,
-      driver_payout_share: driverPayoutShare,
+      driver_payout_share: paymentConfig.driverPayoutShare,
       platform_net_profit: platformProfit,
     }
 
@@ -269,7 +318,7 @@ export async function POST(request: Request) {
         restaurant_id,
         gross_sales: foodSubtotal,
         commission_rate: commissionRate,
-        commission_amount: commissionAmount,
+        commission_amount: calcResult.vendorSettlement.commissionDeducted,
         net_payout: vendorNetPayout,
         status: 'scheduled',
         period_start: new Date(),
@@ -399,10 +448,11 @@ export async function PATCH(request: Request) {
       ...(status && { status: status as OrderStatus }),
       ...(driver_name && { driver_name }),
       ...(driver_phone && { driver_phone }),
+      ...((driver_id || (actor as any)?.id) && { rider_id: driver_id || (actor as any)?.id }),
       ...(driver_lat != null && { delivery_latitude: driver_lat }),
       ...(driver_lng != null && { delivery_longitude: driver_lng }),
       ...(items && { items }),
-      ...(status === 'completed' && { delivered_at: new Date() }),
+      ...((status === 'completed' || status === 'delivered') && { delivered_at: new Date() }),
     })
 
     // Sync payment status to payment_reviews (separate table — not on Order).
@@ -436,7 +486,7 @@ export async function PATCH(request: Request) {
     // If order completed, record driver payout.
     if (status === 'completed') {
       try {
-        const paymentConfig = getActiveConfig()
+        const paymentConfig = await getActiveConfig()
         const deliveryFee = paymentConfig.baseDeliveryFee
         const driverPayoutAmount =
           Math.round(deliveryFee * (paymentConfig.driverPayoutShare / 100)) +

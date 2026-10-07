@@ -5,7 +5,7 @@ import { Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function DriverWalletPage() {
-  const { completedTrips, payoutLogs, handleInstantCashout, savedUpiList } = useDriver()
+  const { completedTrips, payoutLogs, handleInstantCashout, savedUpiList, showCustomAlert } = useDriver()
   const totalEarnings = completedTrips.reduce((acc, t) => acc + t.total, 0)
   const totalPayouts = payoutLogs.reduce((acc, p) => acc + p.amount, 0)
   const currentBalance = Math.max(0, totalEarnings - totalPayouts)
@@ -20,7 +20,11 @@ export default function DriverWalletPage() {
     if (!cashoutAmount || parseFloat(cashoutAmount) <= 0) return
     const amt = parseFloat(cashoutAmount)
     if (amt > currentBalance) {
-      alert('Cashout amount cannot exceed available wallet balance.')
+      showCustomAlert({
+        title: 'Insufficient Balance',
+        message: 'Cashout amount cannot exceed available wallet balance.',
+        variant: 'error',
+      })
       return
     }
     const success = handleInstantCashout(amt)

@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { OrderStatus, UserRole } from '@prisma/client'
+import { getDriverLocation, getAllDriverLocations } from '@/lib/dispatch/driver-tracker'
 
 async function verifyAdminAuth(request: Request): Promise<boolean> {
   let token = ''
@@ -111,44 +112,58 @@ export async function GET(request: Request) {
       })
     })
 
-    // Map Orders
-    const inTransitOrders = orders.filter(
-      (o) =>
-        o.status !== OrderStatus.delivered &&
-        o.status !== OrderStatus.cancelled &&
-        o.status !== OrderStatus.completed
-    )
-    orders.forEach((o) => {
-      const lat = o.delivery_latitude != null ? Number(o.delivery_latitude) : 12.679898
-      const lng = o.delivery_longitude != null ? Number(o.delivery_longitude) : 77.469493
-      pins.push({
-        id: `ord_${o.id}`,
-        name: `Order #${o.id.slice(0, 8)} (${o.customer_name})`,
-        type: 'order',
-        status: `Status: ${o.status.replace(/_/g, ' ')}`,
-        lat,
-        lng,
-        locationName: o.customer_address || 'Delivery Address',
-        detail: `Restaurant: ${o.restaurant_name} • Total: ₹${o.total_amount}`,
-        timestamp: o.created_at ? new Date(o.created_at).toLocaleTimeString() : 'Recent',
-      })
+    // Map Drivers with Real-Time Live Device GPS Coordinates (Only if GPS is acquired from device)
+    const trackedDriverIds = new Set<string>()
+
+    drivers.forEach((d) => {
+      const cleanId = d.id.replace(/^drv_/, '')
+      trackedDriverIds.add(d.id)
+      trackedDriverIds.add(cleanId)
+      trackedDriverIds.add(`drv_${cleanId}`)
+
+      const liveLoc = getDriverLocation(d.id) || getDriverLocation(cleanId)
+
+      // Only display rider pin if actual live device GPS coordinates are present
+      if (liveLoc && typeof liveLoc.lat === 'number' && typeof liveLoc.lng === 'number') {
+        pins.push({
+          id: `drv_${cleanId}`,
+          name: `${d.name} (${d.vehicle_type || 'EV Fleet'})`,
+          type: 'driver',
+          status: `Status: ${liveLoc.status || 'ONLINE'}`,
+          lat: liveLoc.lat,
+          lng: liveLoc.lng,
+          locationName: d.address || 'Live Mobile GPS Feed',
+          detail: `Plate: ${d.license_plate || 'EV-REG-01'} • Contact: ${d.phone || 'N/A'}`,
+          timestamp: `Live Device GPS (${new Date(liveLoc.lastUpdated).toLocaleTimeString()})`,
+        })
+      }
     })
 
-    // Map Drivers
-    drivers.forEach((d, idx) => {
-      const lat = 12.6415 + idx * 0.005
-      const lng = 77.4369 + idx * 0.005
-      pins.push({
-        id: `drv_${d.id}`,
-        name: `${d.name} (${d.vehicle_type || 'EV Fleet'})`,
-        type: 'driver',
-        status: 'Duty Active & Online',
-        lat,
-        lng,
-        locationName: d.address || 'Bengaluru Fleet Sector',
-        detail: `Plate: ${d.license_plate || 'EV-REG-01'} • Contact: ${d.phone || 'N/A'}`,
-        timestamp: 'GPS Locked',
-      })
+    // Include any live device driver sessions registered in memory tracker
+    getAllDriverLocations().forEach((liveLoc) => {
+      const cleanLocId = liveLoc.driverId.replace(/^drv_/, '')
+      if (
+        liveLoc.driverId !== 'driver_partner' &&
+        !trackedDriverIds.has(liveLoc.driverId) &&
+        !trackedDriverIds.has(cleanLocId) &&
+        !trackedDriverIds.has(`drv_${cleanLocId}`) &&
+        typeof liveLoc.lat === 'number' &&
+        typeof liveLoc.lng === 'number'
+      ) {
+        trackedDriverIds.add(liveLoc.driverId)
+        trackedDriverIds.add(cleanLocId)
+        pins.push({
+          id: `drv_${cleanLocId}`,
+          name: liveLoc.name || `Rider (${cleanLocId.slice(0, 8)})`,
+          type: 'driver',
+          status: `Status: ${liveLoc.status || 'ONLINE'}`,
+          lat: liveLoc.lat,
+          lng: liveLoc.lng,
+          locationName: 'Live Device GPS Feed',
+          detail: `Vehicle: ${liveLoc.vehicleType || 'EV_SCOOTER'} • Active Telemetry`,
+          timestamp: `Live Device GPS (${new Date(liveLoc.lastUpdated).toLocaleTimeString()})`,
+        })
+      }
     })
 
     // 4. Fetch Customer Saved Addresses from DB with Latitude and Longitude
@@ -169,11 +184,23 @@ export async function GET(request: Request) {
         take: 25,
       })) || []
 
+    // Address deduplication map (merges order delivery spots with saved customer addresses)
+    const addressPinMap = new Map<string, typeof pins[0]>()
+
+    const getAddressKey = (addrStr?: string | null, lat?: number | null, lng?: number | null) => {
+      const normalizedAddr = addrStr ? addrStr.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : ''
+      if (normalizedAddr) return normalizedAddr
+      if (lat != null && lng != null) return `${lat.toFixed(4)}_${lng.toFixed(4)}`
+      return null
+    }
+
+    // Process Saved Customer Addresses
     customerAddresses.forEach((addr) => {
       if (addr.latitude != null && addr.longitude != null) {
-        pins.push({
+        const key = getAddressKey(addr.address, Number(addr.latitude), Number(addr.longitude))
+        const pinObj: typeof pins[0] = {
           id: `addr_${addr.id}`,
-          name: `${addr.label || 'Saved Address'} (${addr.customer?.name || 'Customer'})`,
+          name: `${addr.label || 'Saved Location'} (${addr.customer?.name || 'Customer'})`,
           type: 'order',
           status: 'Customer Saved Location',
           lat: Number(addr.latitude),
@@ -181,9 +208,55 @@ export async function GET(request: Request) {
           locationName: addr.address,
           detail: `Saved Address: ${addr.address} • User: ${addr.customer?.name || 'Customer'}`,
           timestamp: 'Saved in DB',
-        })
+        }
+        if (key) {
+          addressPinMap.set(key, pinObj)
+        } else {
+          pins.push(pinObj)
+        }
       }
     })
+
+    // Process Orders - if delivery address matches a saved address, merge order status instead of creating duplicate pin
+    const inTransitOrders = orders.filter(
+      (o) =>
+        o.status !== OrderStatus.delivered &&
+        o.status !== OrderStatus.cancelled &&
+        o.status !== OrderStatus.completed
+    )
+
+    orders.forEach((o) => {
+      const lat = o.delivery_latitude != null ? Number(o.delivery_latitude) : 12.679898
+      const lng = o.delivery_longitude != null ? Number(o.delivery_longitude) : 77.469493
+      const key = getAddressKey(o.customer_address, lat, lng)
+
+      if (key && addressPinMap.has(key)) {
+        const existing = addressPinMap.get(key)!
+        existing.status = `Order #${o.id.slice(0, 8)} (${o.status.replace(/_/g, ' ')})`
+        existing.detail = `${existing.detail} • Order total: ₹${o.total_amount}`
+        if (o.created_at) existing.timestamp = new Date(o.created_at).toLocaleTimeString()
+      } else {
+        const newPin: typeof pins[0] = {
+          id: `ord_${o.id}`,
+          name: `Order #${o.id.slice(0, 8)} (${o.customer_name})`,
+          type: 'order',
+          status: `Status: ${o.status.replace(/_/g, ' ')}`,
+          lat,
+          lng,
+          locationName: o.customer_address || 'Delivery Address',
+          detail: `Restaurant: ${o.restaurant_name} • Total: ₹${o.total_amount}`,
+          timestamp: o.created_at ? new Date(o.created_at).toLocaleTimeString() : 'Recent',
+        }
+        if (key) {
+          addressPinMap.set(key, newPin)
+        } else {
+          pins.push(newPin)
+        }
+      }
+    })
+
+    // Append deduplicated address pins
+    pins.push(...Array.from(addressPinMap.values()))
 
     const openKitchensCount = restaurants.filter((r) => r.is_open).length
     const activeRidersCount = drivers.length

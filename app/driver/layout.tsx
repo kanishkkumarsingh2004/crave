@@ -49,6 +49,11 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
     setCompletedSummaryModal,
     triggerSimulatedOffer,
     acceptBroadcastOffer,
+    gpsStatus,
+    gpsPermissionState,
+    requestMobileGps,
+    isBackgroundWorkerActive,
+    workerLastSyncTime,
   } = useDriver()
 
   useEffect(() => {
@@ -125,6 +130,12 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       label: 'Wallet & Earnings',
       icon: Wallet,
       badge: `₹${totalEarningsToday}`,
+    },
+    {
+      href: '/driver/incentives',
+      label: 'Quests & Incentives',
+      icon: Target,
+      badge: 'Surge',
     },
     { href: '/driver/profile', label: 'Vehicle & Profile', icon: User, badge: 'Profile' },
     { href: '/driver/settings', label: 'UPI Payout Settings', icon: Settings, badge: 'UPI' },
@@ -359,6 +370,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Background Worker Sync Badge */}
+            {isBackgroundWorkerActive && (
+              <div
+                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-900 border border-emerald-300"
+                title={`Background Web Worker active in recent apps / background tab (Last sync: ${workerLastSyncTime})`}
+              >
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Background GPS: Active (3s)</span>
+              </div>
+            )}
+
             {/* Test Simulation Radar Trigger */}
             <button
               onClick={triggerSimulatedOffer}
@@ -385,6 +407,41 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Dashboard Body Content */}
         <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between">
           <div>
+            {/* GPS Location Permission Access Banner */}
+            {(gpsStatus === 'denied' || gpsPermissionState === 'denied' || gpsStatus === 'error' || gpsPermissionState === 'prompt') && (
+              <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm animate-in fade-in duration-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                      <Navigation className="size-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-sm text-[#18201c]">GPS Location Access Required</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase">
+                          {gpsStatus === 'denied' || gpsPermissionState === 'denied' ? 'Permission Denied' : 'Access Needed'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700 font-medium mt-0.5">
+                        {gpsStatus === 'denied' || gpsPermissionState === 'denied'
+                          ? 'Location permission is currently blocked by your browser. Please tap the lock icon next to the browser URL to allow location permissions.'
+                          : 'Real-time GPS access is required to receive nearby delivery orders and update live customer telemetry.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={requestMobileGps}
+                    className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-black transition shrink-0 active:scale-95"
+                  >
+                    <MapPin className="size-3.5 text-[#d9f447]" />
+                    <span>Allow GPS Access</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
             <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
               <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">

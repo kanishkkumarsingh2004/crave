@@ -64,12 +64,13 @@ export function useWebSocket({
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsPort = process.env.NEXT_PUBLIC_WS_PORT || 8000
-    const wsHost =
-      (typeof window !== 'undefined' && window.location.hostname) ||
-      process.env.NEXT_PUBLIC_WS_HOST ||
-      'localhost'
-    const wsUrl = `${protocol}//${wsHost}:${wsPort}/api/ws`
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
+      (typeof window !== 'undefined'
+        ? `${protocol}//${window.location.host}/api/ws`
+        : `ws://localhost:3000/api/ws`)
+
+    let attemptCount = 0
 
     const connect = () => {
       try {
@@ -78,6 +79,7 @@ export function useWebSocket({
 
         ws.onopen = () => {
           setConnected(true)
+          attemptCount = 0
           onConnect?.()
           try {
             ws.send(
@@ -101,17 +103,21 @@ export function useWebSocket({
         ws.onclose = () => {
           setConnected(false)
           onDisconnect?.()
-          wsRef.current = null
+          if (wsRef.current === ws) {
+            wsRef.current = null
+          }
 
           if (autoReconnect) {
+            attemptCount++
+            const backoffMs = Math.min(30000, Math.round(reconnectInterval * Math.pow(1.5, Math.min(attemptCount, 5))))
             reconnectRef.current = setTimeout(() => {
               connect()
-            }, reconnectInterval)
+            }, backoffMs)
           }
         }
 
         ws.onerror = () => {
-          // Graceful handling to prevent Next.js dev overlay error popup
+          setConnected(false)
         }
       } catch (err) {
         setConnected(false)
@@ -125,7 +131,22 @@ export function useWebSocket({
         localBroadcastChannel.removeEventListener('message', handleBroadcastMessage)
       }
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
-      if (wsRef.current) wsRef.current.close()
+      if (wsRef.current) {
+        const socket = wsRef.current
+        wsRef.current = null
+        if (socket.readyState === WebSocket.CONNECTING) {
+          socket.onopen = () => {
+            try {
+              socket.close()
+            } catch (e) {}
+          }
+          socket.onerror = () => {}
+        } else if (socket.readyState === WebSocket.OPEN) {
+          try {
+            socket.close()
+          } catch (e) {}
+        }
+      }
     }
   }, [channels.join(','), customerId, driverId, autoReconnect, reconnectInterval])
 

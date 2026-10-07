@@ -41,17 +41,19 @@ export async function POST(request: Request) {
     releaseDriverLock(driverId, requestId)
 
     const currentLocation = getDriverLocation(driverId)
-    const lat = typeof body.lat === 'number' ? body.lat : (currentLocation?.lat ?? 12.679898)
-    const lng = typeof body.lng === 'number' ? body.lng : (currentLocation?.lng ?? 77.469493)
+    const lat = typeof body.lat === 'number' ? body.lat : currentLocation?.lat
+    const lng = typeof body.lng === 'number' ? body.lng : currentLocation?.lng
 
-    await updateDriverLocation({
-      driverId,
-      lat,
-      lng,
-      status: 'ON_TRIP',
-      available: false,
-      vehicleType: currentLocation?.vehicleType || 'EV_SCOOTER',
-    })
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      await updateDriverLocation({
+        driverId,
+        lat,
+        lng,
+        status: 'ON_TRIP',
+        available: false,
+        vehicleType: currentLocation?.vehicleType || 'EV_SCOOTER',
+      })
+    }
 
     // Persist order update in DB
     let updatedOrder = null

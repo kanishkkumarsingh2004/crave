@@ -26,9 +26,11 @@ export interface H3CellProperties {
 }
 
 export const H3_RESOLUTIONS = [
+  { level: 5, label: 'Res 5 (~252 km² Metro)' },
   { level: 6, label: 'Res 6 (~36 km² Zone)' },
   { level: 7, label: 'Res 7 (~5.1 km² Sector)' },
   { level: 8, label: 'Res 8 (~0.7 km² Micro)' },
+  { level: 9, label: 'Res 9 (~0.1 km² Block)' },
 ] as const
 
 /**

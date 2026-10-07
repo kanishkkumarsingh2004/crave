@@ -112,11 +112,52 @@ export async function updateDriverLocation(params: {
   }
 }
 
-/**
- * Retrieve driver location state by ID
- */
 export function getDriverLocation(driverId: string): DriverLocationState | undefined {
-  return driverSpatialIndex.get(driverId)
+  const loc = driverSpatialIndex.get(driverId)
+  if (!loc) return undefined
+  // Return undefined if location is stale (> 2 minutes)
+  if (Date.now() - loc.lastUpdated > DEFAULT_MAX_LOCATION_AGE_MS) {
+    removeDriverLocation(driverId)
+    return undefined
+  }
+  return loc
+}
+
+/**
+ * Remove a driver location from spatial index
+ */
+export function removeDriverLocation(driverId: string): void {
+  const existing = driverSpatialIndex.get(driverId)
+  if (existing) {
+    if (existing.h3Cell) {
+      const cellSet = cellToDriverMap.get(existing.h3Cell)
+      if (cellSet) {
+        cellSet.delete(driverId)
+        if (cellSet.size === 0) cellToDriverMap.delete(existing.h3Cell)
+      }
+    }
+    driverSpatialIndex.delete(driverId)
+  }
+}
+
+/**
+ * Retrieve all live driver locations currently in memory index (excluding stale entries)
+ */
+export function getAllDriverLocations(
+  maxAgeMs: number = DEFAULT_MAX_LOCATION_AGE_MS
+): DriverLocationState[] {
+  const now = Date.now()
+  const activeLocations: DriverLocationState[] = []
+
+  driverSpatialIndex.forEach((loc, id) => {
+    if (now - loc.lastUpdated <= maxAgeMs) {
+      activeLocations.push(loc)
+    } else {
+      removeDriverLocation(id)
+    }
+  })
+
+  return activeLocations
 }
 
 /**

@@ -101,7 +101,18 @@ export default function Navbar() {
     setMounted(true)
   }, [])
 
-  const currentDashboardLink = role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`
+  const currentDashboardLink =
+    role === 'customer' || role === 'user'
+      ? '/user/dashboard'
+      : role === 'rider' || role === 'driver'
+        ? '/driver/dashboard'
+        : role === 'restaurant_vendor' || role === 'vendor'
+          ? '/vendor/dashboard'
+          : role === 'cravexp_store_vendor'
+            ? '/vendor/crave-ep'
+            : role === 'admin'
+              ? '/admin/dashboard'
+              : '/'
   const logoTargetLink = user ? currentDashboardLink : '/'
 
   if (!mounted) {
