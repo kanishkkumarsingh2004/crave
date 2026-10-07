@@ -60,12 +60,13 @@ export async function POST(request: Request) {
     try {
       const existing = await findOrderById(requestId)
       if (existing) {
+        if (existing.driver_name && existing.driver_name !== 'Unassigned' && existing.driver_name !== driverName) {
+          return NextResponse.json({ error: 'Order has already been assigned to another driver' }, { status: 409 })
+        }
         updatedOrder = await updateOrder(requestId, {
           status: 'rider_assigned',
           driver_name: driverName,
           driver_phone: driverPhone,
-          delivery_latitude: lat,
-          delivery_longitude: lng,
         })
       }
     } catch (dbErr) {

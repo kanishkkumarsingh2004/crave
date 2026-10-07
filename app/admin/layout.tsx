@@ -46,9 +46,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const redirectPath =
         role === 'customer' || role === 'user'
           ? '/user/dashboard'
-          : role === 'rider' || role === 'driver'
+          : role === 'rider' || (role as string) === 'driver'
             ? '/driver/dashboard'
-            : role === 'restaurant_vendor' || role === 'vendor'
+            : role === 'restaurant_vendor' || (role as string) === 'vendor'
               ? '/vendor/dashboard'
               : role === 'cravexp_store_vendor'
                 ? '/vendor/crave-ep'
