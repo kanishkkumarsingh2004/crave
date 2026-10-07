@@ -82,38 +82,59 @@ export default function MapLiveAnalyticsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const fetchLiveTelemetry = useCallback(async () => {
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  const fetchLiveTelemetry = useCallback(async (signal?: AbortSignal) => {
     try {
-      setIsRefreshing(true)
+      if (isMountedRef.current) setIsRefreshing(true)
       const res = await fetch('/api/admin/map-live-analytics', {
-        headers: { 'Accept': 'application/json' },
+        headers: { Accept: 'application/json' },
+        signal,
       })
-      if (res.ok) {
+      if (res.ok && isMountedRef.current) {
         const data = await res.json()
-        if (data.pins && Array.isArray(data.pins)) {
+        if (data.pins && Array.isArray(data.pins) && isMountedRef.current) {
           setPins(data.pins)
           setSelectedPin((prev) => prev || (data.pins.length > 0 ? data.pins[0] : null))
         }
       }
-    } catch (err) {
-      console.error('Error fetching live map telemetry:', err)
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return
+      if (isMountedRef.current) {
+        console.warn('Live map telemetry fetch deferred:', err?.message || err)
+      }
     } finally {
-      setIsRefreshing(false)
+      if (isMountedRef.current) {
+        setIsRefreshing(false)
+      }
     }
   }, [])
 
   useEffect(() => {
-    fetchLiveTelemetry()
+    const controller = new AbortController()
+    fetchLiveTelemetry(controller.signal)
+    return () => controller.abort()
   }, [fetchLiveTelemetry])
 
   // Auto-sync interval handler
   useEffect(() => {
     if (autoSyncInterval <= 0) return
+    const controller = new AbortController()
     const timer = setInterval(() => {
-      fetchLiveTelemetry()
+      fetchLiveTelemetry(controller.signal)
     }, autoSyncInterval * 1000)
 
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(timer)
+      controller.abort()
+    }
   }, [autoSyncInterval, fetchLiveTelemetry])
 
   // Real-time live WebSocket stream listener for driver device coordinates
@@ -263,7 +284,7 @@ export default function MapLiveAnalyticsPage() {
 
             {/* Manual Sync Button */}
             <button
-              onClick={fetchLiveTelemetry}
+              onClick={() => fetchLiveTelemetry()}
               disabled={isRefreshing}
               className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-50 px-3.5 py-2 text-xs font-bold text-[#18201c] hover:bg-gray-100 active:scale-95 transition disabled:opacity-50"
             >
