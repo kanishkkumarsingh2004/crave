@@ -6,6 +6,7 @@ import { useToast } from '@/lib/toast-context'
 import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Bike,
   Check,
@@ -14,6 +15,7 @@ import {
   Compass,
   Copy,
   ExternalLink,
+  FileText,
   Filter,
   Flame,
   History,
@@ -37,6 +39,7 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
@@ -163,8 +166,10 @@ const categoryList = [
 
 export default function CustomerDashboard({
   initialTab = 'explore',
+  initialOrderId,
 }: {
   initialTab?: 'explore' | 'live-order' | 'orders' | 'profile'
+  initialOrderId?: string
 }) {
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -476,8 +481,8 @@ export default function CustomerDashboard({
             label: 'Home',
             address: user.address,
             tag: 'Primary',
-            lat: 12.9716,
-            lng: 77.4695,
+            lat: 12.679898,
+            lng: 77.469493,
           },
         ])
         setDeliveryAddress((prev) => prev || user.address || '')
@@ -601,8 +606,23 @@ export default function CustomerDashboard({
   const [upiError, setUpiError] = useState('')
   const [utrError, setUtrError] = useState('')
   const [paymentDone, setPaymentDone] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(initialOrderId)
   const [activeOrder, setActiveOrder] = useState<any>(null)
   const [liveDriverPos, setLiveDriverPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [invoiceModalOrder, setInvoiceModalOrder] = useState<InvoiceOrderData | null>(null)
+
+  useEffect(() => {
+    if (initialOrderId) {
+      setSelectedOrderId(initialOrderId)
+    }
+  }, [initialOrderId])
+
+  const inProgressOrders = useMemo(() => {
+    if (!user?.id || !ordersData.length) return []
+    return ordersData.filter(
+      (o: any) => o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
+    )
+  }, [user?.id, ordersData])
 
   // Subscribe to live driver location updates via WebSocket
   useDriverLocation(activeOrder?.id, (data: any) => {
@@ -617,12 +637,14 @@ export default function CustomerDashboard({
       return
     }
 
-    const active = ordersData
-      .slice()
-      .reverse()
-      .find(
-        (o: any) => o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
-      )
+    const activeList = ordersData.filter(
+      (o: any) => o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
+    )
+
+    let active = null
+    if (selectedOrderId) {
+      active = ordersData.find((o: any) => String(o.id) === String(selectedOrderId))
+    }
 
     if (active) {
       let statusStep = 1
@@ -631,13 +653,16 @@ export default function CustomerDashboard({
       } else if (
         active.status === 'out_for_delivery' ||
         active.status === 'picked_up' ||
-        active.status === 'arrived_customer'
+        active.status === 'arrived_customer' ||
+        active.status === 'ready' ||
+        active.status === 'ready_for_pickup' ||
+        active.status === 'rider_assigned'
       ) {
         statusStep = 3
       } else if (
         active.status === 'preparing' ||
         active.status === 'cooking' ||
-        active.status === 'ready' ||
+        active.status === 'packing' ||
         active.status === 'accepted' ||
         active.status === 'at_restaurant' ||
         active.payment_status === 'verified'
@@ -645,17 +670,59 @@ export default function CustomerDashboard({
         statusStep = 2
       }
 
+      const statusTextMap: Record<string, string> = {
+        payment_submitted: 'Order Confirmed',
+        payment_verified: 'Payment Verified',
+        sent_to_vendor: 'Order Sent to Kitchen',
+        accepted: 'Vendor Accepted Order',
+        preparing: 'Kitchen Preparing Food',
+        cooking: 'Chef Cooking Order',
+        packing: 'Order Being Packed',
+        ready: 'Food Ready for Pickup',
+        ready_for_pickup: 'Food Ready for Pickup',
+        rider_assigned: 'Rider Assigned & Ready for Pickup',
+        at_restaurant: 'Rider Arrived at Kitchen',
+        picked_up: 'Food Picked Up by Rider',
+        out_for_delivery: 'Rider Out for Delivery',
+        arrived_customer: 'Rider Arrived at Doorstep',
+        delivered: 'Delivered to Doorstep',
+        completed: 'Order Completed',
+        cancelled: 'Order Cancelled',
+      }
+      const rawStatusStr = typeof active.status === 'string' ? active.status : ''
+      const statusText =
+        statusTextMap[rawStatusStr] || rawStatusStr.replace(/_/g, ' ') || 'Order Confirmed'
+
       let itemsArr: CartItem[] = []
       try {
         itemsArr = typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
       } catch (e) {}
 
-      const formattedTime = active.createdAt
-        ? new Date(active.createdAt).toLocaleTimeString([], {
+      const rawDateVal =
+        active.created_at || active.createdAt || active.timestamp || active.created_time
+      let formattedTime = ''
+      if (rawDateVal) {
+        const d = new Date(rawDateVal)
+        if (!isNaN(d.getTime())) {
+          const timeStr = d.toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
+            hour12: true,
           })
-        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          const now = new Date()
+          const isToday = d.toDateString() === now.toDateString()
+          formattedTime = isToday
+            ? timeStr
+            : `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${timeStr}`
+        }
+      }
+      if (!formattedTime) {
+        formattedTime = new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+      }
 
       setActiveOrder({
         id: active.id,
@@ -664,18 +731,24 @@ export default function CustomerDashboard({
         subtotal: Number(active.subtotal || 0),
         total: Number(active.total_amount || 0),
         statusStep,
-        otp: active.delivery_otp || '1234',
+        statusText,
+        rawStatus: active.status,
+        otp: active.delivery_otp || active.deliveryOtp || undefined,
         driverName: active.driver_name || null,
         driverPhone: active.driver_phone || null,
         driverLat: liveDriverPos?.lat ?? active.driver_lat ?? active.driver_latitude ?? null,
         driverLng: liveDriverPos?.lng ?? active.driver_lng ?? active.driver_longitude ?? null,
+        restaurantLat: active.restaurant_lat ?? active.restaurant_latitude ?? null,
+        restaurantLng: active.restaurant_lng ?? active.restaurant_longitude ?? null,
+        customerLat: active.customer_lat ?? active.delivery_lat ?? active.latitude ?? null,
+        customerLng: active.customer_lng ?? active.delivery_lng ?? active.longitude ?? null,
         timestamp: formattedTime,
         paymentStatus: active.payment_status || 'pending',
       })
     } else {
       setActiveOrder(null)
     }
-  }, [user?.id, ordersData, liveDriverPos])
+  }, [user?.id, ordersData, selectedOrderId, liveDriverPos])
 
   // Fetch Company UPI Config dynamically & listen for admin updates
   useEffect(() => {
@@ -862,11 +935,11 @@ export default function CustomerDashboard({
 
   // Dynamic Road Distance & Admin Payment Config Pricing Engine
   const activeRestaurantLat =
-    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.9716
+    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.679898
   const activeRestaurantLng =
-    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.5946
-  const activeDestLat = selectedMapPin?.lat ?? 12.965
-  const activeDestLng = selectedMapPin?.lng ?? 77.59
+    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.469493
+  const activeDestLat = selectedMapPin?.lat ?? 12.679898
+  const activeDestLng = selectedMapPin?.lng ?? 77.469493
 
   const calculatedRoadDistanceKm = useMemo(() => {
     return calculateRoadTravelDistanceKm(
@@ -989,7 +1062,7 @@ export default function CustomerDashboard({
     const orderId = crypto.randomUUID()
     const otpBytes = new Uint32Array(1)
     crypto.getRandomValues(otpBytes)
-    const generatedOtp = String(1000 + (otpBytes[0] % 9000))
+    const generatedOtp = String(100000 + (otpBytes[0] % 900000))
     const restName = targetRestaurantName
 
     const cartWithOtp = cart.map((item) => ({
@@ -1035,7 +1108,15 @@ export default function CustomerDashboard({
 
       const savedOrder = resData.order
 
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const rawDateVal = savedOrder.created_at || savedOrder.createdAt || savedOrder.timestamp
+      const nowTime =
+        rawDateVal && !isNaN(new Date(rawDateVal).getTime())
+          ? new Date(rawDateVal).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })
+          : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
 
       setActiveOrder({
         id: savedOrder.id,
@@ -1054,7 +1135,11 @@ export default function CustomerDashboard({
         err?.message || (typeof err === 'string' ? err : 'Order creation fallback activated')
       console.warn('Order submission notice, using client fallback:', errorMsg)
 
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const nowTime = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
 
       setActiveOrder({
         id: orderId,
@@ -1757,8 +1842,29 @@ export default function CustomerDashboard({
                           {order.date} · {order.time}
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         <p className="font-bold text-base text-[#18201c]">₹{order.total}</p>
+                        {(order.status === 'Delivered' ||
+                          (order.status as string) === 'completed') && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setInvoiceModalOrder({
+                                id: order.id,
+                                restaurantName: order.restaurantName,
+                                customerName: user?.name || 'Customer',
+                                customerAddress: user?.address || 'Bengaluru',
+                                timestamp: `${order.date}, ${order.time}`,
+                                items: order.items,
+                                total: order.total,
+                                status: order.status,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] text-[#d9f447] hover:bg-black px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                          >
+                            <FileText className="size-3" /> View Invoice
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1966,209 +2072,483 @@ export default function CustomerDashboard({
 
         {/* Live Order Tracking View */}
         {activeTab === 'live-order' && (
-          <div className="max-w-4xl mx-auto flex flex-col gap-6">
+          <div className="max-w-4xl mx-auto flex flex-col gap-4 sm:gap-6 px-1 sm:px-0">
             {activeOrder ? (
-              <div className="overflow-hidden rounded-3xl border border-[#dfe5db] bg-white shadow-xl">
-                {/* Header Banner */}
-                <div className="bg-gradient-to-br from-[#18201c] via-[#222c27] to-[#18201c] p-6 sm:p-7 text-white relative overflow-hidden">
-                  {/* Subtle Background Glow */}
-                  <div className="absolute -right-12 -top-12 size-48 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none" />
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex items-center justify-between px-1">
+                  <button
+                    onClick={() => {
+                      setSelectedOrderId(undefined)
+                      router.push('/user/track')
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-600 hover:text-[#18201c] transition"
+                  >
+                    <ArrowLeft className="size-4" />
+                    <span>All Active Orders</span>
+                  </button>
+                </div>
 
-                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-                    <div className="space-y-3 min-w-0">
-                      {/* Status Badges */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-black text-[#18201c] shadow-xs tracking-wide uppercase">
-                          <span className="size-1.5 rounded-full bg-[#18201c] animate-pulse" />
-                          Order #
-                          {typeof activeOrder.id === 'string' && activeOrder.id.length > 10
-                            ? activeOrder.id.slice(0, 8).toUpperCase()
-                            : activeOrder.id}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs font-bold text-emerald-300 backdrop-blur-xs">
-                          {activeOrder.statusStep === 1 && 'Order Confirmed'}
-                          {activeOrder.statusStep === 2 && 'Kitchen Cooking'}
-                          {activeOrder.statusStep === 3 && 'Out for Delivery'}
-                          {activeOrder.statusStep === 4 && 'Delivered to Doorstep'}
-                        </span>
-                        {activeOrder.otp && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-3 py-1 text-xs font-mono font-black text-[#18201c] shadow-xs">
-                            <span className="text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">
-                              OTP
+                <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-[#dfe5db] bg-white shadow-xl">
+                  {/* Header Banner */}
+                  <div className="bg-gradient-to-br from-[#18201c] via-[#222c27] to-[#18201c] p-4 sm:p-7 text-white relative overflow-hidden">
+                    {/* Subtle Background Glow */}
+                    <div className="absolute -right-12 -top-12 size-48 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none" />
+
+                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
+                      <div className="space-y-2.5 sm:space-y-3 min-w-0">
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black text-[#18201c] shadow-xs tracking-wide uppercase">
+                            <span className="size-1.5 rounded-full bg-[#18201c] animate-pulse" />
+                            Order #
+                            {typeof activeOrder.id === 'string' && activeOrder.id.length > 10
+                              ? activeOrder.id.slice(0, 8).toUpperCase()
+                              : activeOrder.id}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-emerald-300 backdrop-blur-xs">
+                            {activeOrder.statusText || 'Order Confirmed'}
+                          </span>
+                          {activeOrder.otp &&
+                            (activeOrder.statusStep >= 3 ||
+                              activeOrder.rawStatus === 'ready' ||
+                              activeOrder.rawStatus === 'ready_for_pickup' ||
+                              activeOrder.rawStatus === 'rider_assigned' ||
+                              activeOrder.rawStatus === 'out_for_delivery' ||
+                              activeOrder.rawStatus === 'picked_up' ||
+                              activeOrder.rawStatus === 'arrived_customer') && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-mono font-black text-[#18201c] shadow-xs">
+                                <span className="text-[9px] sm:text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">
+                                  Delivery OTP
+                                </span>
+                                <span className="tracking-widest">{activeOrder.otp}</span>
+                              </span>
+                            )}
+                          {activeOrder.paymentStatus === 'pending' && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-amber-200">
+                              Payment Pending
                             </span>
-                            <span className="tracking-widest">{activeOrder.otp}</span>
-                          </span>
-                        )}
-                        {activeOrder.paymentStatus === 'pending' && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-3 py-1 text-xs font-bold text-amber-200">
-                            Payment Pending
-                          </span>
-                        )}
+                          )}
+                          {(activeOrder.statusStep === 4 ||
+                            activeOrder.rawStatus === 'delivered' ||
+                            activeOrder.rawStatus === 'completed') && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setInvoiceModalOrder({
+                                  id: activeOrder.id,
+                                  restaurantName: activeOrder.restaurantName,
+                                  customerName: user?.name || 'Customer',
+                                  customerAddress: deliveryAddress,
+                                  customerPhone: user?.phone,
+                                  timestamp: activeOrder.timestamp,
+                                  items: activeOrder.items,
+                                  subtotal: activeOrder.subtotal,
+                                  total: activeOrder.total,
+                                  paymentMethod:
+                                    activeOrder.paymentStatus === 'verified' ? 'UPI Online' : 'UPI',
+                                  otp: activeOrder.otp,
+                                  status: activeOrder.statusText,
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] hover:bg-[#b8d629] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black text-[#18201c] shadow-md transition cursor-pointer shrink-0"
+                            >
+                              <FileText className="size-3 sm:size-3.5 text-[#18201c]" /> View Tax
+                              Invoice
+                            </button>
+                          )}
+                        </div>
+
+                        <div>
+                          <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                            {activeOrder.restaurantName}
+                          </h2>
+                          <p className="mt-1 text-[11px] sm:text-xs text-white/70 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <span>Placed at {activeOrder.timestamp}</span>
+                            <span>•</span>
+                            <span className="font-semibold text-white">
+                              Total ₹{activeOrder.total}
+                            </span>
+                            {activeOrder.items && activeOrder.items.length > 0 && (
+                              <>
+                                <span>•</span>
+                                <span>
+                                  {activeOrder.items.length}{' '}
+                                  {activeOrder.items.length === 1 ? 'item' : 'items'}
+                                </span>
+                              </>
+                            )}
+                          </p>
+                        </div>
                       </div>
 
+                      <div className="shrink-0 rounded-xl sm:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md p-3 sm:px-5 sm:py-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shadow-inner">
+                        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
+                          Estimated Delivery
+                        </p>
+                        <p className="text-lg sm:text-2xl font-black text-white sm:mt-0.5 tracking-tight">
+                          {activeOrder.statusStep === 4
+                            ? 'Delivered'
+                            : `${Math.max(
+                                10,
+                                Math.round(
+                                  calculateRoadTravelDistanceKm(
+                                    activeOrder.restaurantLat
+                                      ? Number(activeOrder.restaurantLat)
+                                      : 12.6817,
+                                    activeOrder.restaurantLng
+                                      ? Number(activeOrder.restaurantLng)
+                                      : 77.4729,
+                                    activeOrder.customerLat
+                                      ? Number(activeOrder.customerLat)
+                                      : (selectedMapPin?.lat ?? 12.679898),
+                                    activeOrder.customerLng
+                                      ? Number(activeOrder.customerLng)
+                                      : (selectedMapPin?.lng ?? 77.469493)
+                                  ) *
+                                    3 +
+                                    10
+                                )
+                              )} - ${Math.max(
+                                15,
+                                Math.round(
+                                  calculateRoadTravelDistanceKm(
+                                    activeOrder.restaurantLat
+                                      ? Number(activeOrder.restaurantLat)
+                                      : 12.6817,
+                                    activeOrder.restaurantLng
+                                      ? Number(activeOrder.restaurantLng)
+                                      : 77.4729,
+                                    activeOrder.customerLat
+                                      ? Number(activeOrder.customerLat)
+                                      : (selectedMapPin?.lat ?? 12.679898),
+                                    activeOrder.customerLng
+                                      ? Number(activeOrder.customerLng)
+                                      : (selectedMapPin?.lng ?? 77.469493)
+                                  ) *
+                                    3 +
+                                    15
+                                )
+                              )} mins`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Stepper Section */}
+                  <div className="p-4 sm:p-8 border-b border-gray-100 bg-white">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Live Order Status
+                      </p>
+                      <span className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Step {activeOrder.statusStep} of 4
+                      </span>
+                    </div>
+
+                    {/* Connected Horizontal Timeline */}
+                    <div className="relative max-w-3xl mx-auto px-1 sm:px-2 py-1 sm:py-2">
+                      {/* Connecting Track Line */}
+                      <div className="absolute top-4 sm:top-5 left-6 right-6 sm:left-8 sm:right-8 h-1 bg-gray-100 rounded-full -z-0">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#d9f447] to-emerald-500 rounded-full transition-all duration-700 ease-in-out"
+                          style={{
+                            width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
+                          }}
+                        />
+                      </div>
+
+                      {/* Step Nodes */}
+                      <div className="grid grid-cols-4 gap-1 text-center relative z-10">
+                        {[
+                          { num: 1, title: 'Confirmed', desc: 'Order placed' },
+                          { num: 2, title: 'Cooking', desc: 'In kitchen' },
+                          {
+                            num: 3,
+                            title:
+                              activeOrder.rawStatus === 'ready' ||
+                              activeOrder.rawStatus === 'ready_for_pickup' ||
+                              activeOrder.rawStatus === 'rider_assigned'
+                                ? 'Ready / Pickup'
+                                : 'On the Way',
+                            desc:
+                              activeOrder.rawStatus === 'ready' ||
+                              activeOrder.rawStatus === 'ready_for_pickup' ||
+                              activeOrder.rawStatus === 'rider_assigned'
+                                ? 'Food prepared'
+                                : 'Out for delivery',
+                          },
+                          { num: 4, title: 'Delivered', desc: 'At doorstep' },
+                        ].map((step) => {
+                          const isDone = activeOrder.statusStep > step.num
+                          const isCurrent = activeOrder.statusStep === step.num
+                          const isPassedOrCurrent = activeOrder.statusStep >= step.num
+
+                          return (
+                            <div key={step.num} className="flex flex-col items-center group">
+                              {/* Circle Indicator */}
+                              <div
+                                className={`grid size-8 sm:size-11 place-items-center rounded-full font-black text-[10px] sm:text-xs transition-all duration-300 ${
+                                  isDone
+                                    ? 'bg-[#d9f447] text-[#18201c] shadow-md ring-2 sm:ring-4 ring-[#d9f447]/30 scale-105'
+                                    : isCurrent
+                                      ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-2 sm:ring-4 ring-[#18201c]/20 animate-pulse scale-105 sm:scale-110'
+                                      : 'bg-white border-2 border-gray-200 text-gray-400'
+                                }`}
+                              >
+                                {isDone ? (
+                                  <Check className="size-4 sm:size-5 stroke-[3]" />
+                                ) : (
+                                  step.num
+                                )}
+                              </div>
+
+                              {/* Label */}
+                              <div className="mt-2 sm:mt-3 space-y-0.5">
+                                <p
+                                  className={`text-[10px] sm:text-xs font-bold transition-colors leading-tight ${
+                                    isPassedOrCurrent ? 'text-[#18201c]' : 'text-gray-400'
+                                  }`}
+                                >
+                                  {step.title}
+                                </p>
+                                <p className="text-[10px] text-gray-400 hidden sm:block">
+                                  {step.desc}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Rider Delivery Route View */}
+                  <div className="p-4 sm:p-6 bg-[#f8f9f6] border-b border-gray-200 flex flex-col gap-3 sm:gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                          {activeOrder.restaurantName}
-                        </h2>
-                        <p className="mt-1 text-xs text-white/70 flex flex-wrap items-center gap-2">
-                          <span>Placed at {activeOrder.timestamp}</span>
-                          <span>•</span>
-                          <span className="font-semibold text-white">
-                            Total ₹{activeOrder.total}
-                          </span>
-                          {activeOrder.items && activeOrder.items.length > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>
-                                {activeOrder.items.length}{' '}
-                                {activeOrder.items.length === 1 ? 'item' : 'items'}
-                              </span>
-                            </>
-                          )}
+                        <h4 className="font-extrabold text-sm sm:text-base text-[#18201c] flex items-center gap-2">
+                          <Compass
+                            className="size-4 sm:size-5 text-emerald-600 animate-spin"
+                            style={{ animationDuration: '8s' }}
+                          />
+                          Live Rider Delivery Route
+                        </h4>
+                        <p className="text-[11px] sm:text-xs text-[#737e77] mt-0.5">
+                          {activeOrder.driverName && activeOrder.driverName !== 'Unassigned'
+                            ? `Tracking rider moving live on road from kitchen counter to ${deliveryAddress}.`
+                            : 'Live GPS route mapping will activate once a driver accepts your pickup.'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="shrink-0 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md px-5 py-3 text-left sm:text-right shadow-inner">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
-                        Estimated Delivery
-                      </p>
-                      <p className="text-xl sm:text-2xl font-black text-white mt-0.5 tracking-tight">
-                        18 - 22 mins
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Stepper Section */}
-                <div className="p-6 sm:p-8 border-b border-gray-100 bg-white">
-                  <div className="flex items-center justify-between mb-6">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                      Live Order Status
-                    </p>
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Step {activeOrder.statusStep} of 4
-                    </span>
-                  </div>
-
-                  {/* Connected Horizontal Timeline */}
-                  <div className="relative max-w-3xl mx-auto px-2 py-2">
-                    {/* Connecting Track Line */}
-                    <div className="absolute top-5 left-8 right-8 h-1 bg-gray-100 rounded-full -z-0">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#d9f447] to-emerald-500 rounded-full transition-all duration-700 ease-in-out"
-                        style={{
-                          width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
-                        }}
+                    {activeOrder.driverName && activeOrder.driverName !== 'Unassigned' ? (
+                      <LiveDriverMap
+                        restaurantName={activeOrder.restaurantName}
+                        customerAddress={deliveryAddress}
+                        driverName={activeOrder.driverName}
+                        statusStep={activeOrder.statusStep}
+                        driverLat={
+                          liveDriverPos?.lat ??
+                          (activeOrder.driverLat ? Number(activeOrder.driverLat) : null)
+                        }
+                        driverLng={
+                          liveDriverPos?.lng ??
+                          (activeOrder.driverLng ? Number(activeOrder.driverLng) : null)
+                        }
+                        restaurantLat={
+                          activeOrder.restaurantLat ? Number(activeOrder.restaurantLat) : undefined
+                        }
+                        restaurantLng={
+                          activeOrder.restaurantLng ? Number(activeOrder.restaurantLng) : undefined
+                        }
+                        customerLat={
+                          activeOrder.customerLat
+                            ? Number(activeOrder.customerLat)
+                            : (selectedMapPin?.lat ?? undefined)
+                        }
+                        customerLng={
+                          activeOrder.customerLng
+                            ? Number(activeOrder.customerLng)
+                            : (selectedMapPin?.lng ?? undefined)
+                        }
                       />
-                    </div>
-
-                    {/* Step Nodes */}
-                    <div className="grid grid-cols-4 gap-1 text-center relative z-10">
-                      {[
-                        { num: 1, title: 'Confirmed', desc: 'Order placed' },
-                        { num: 2, title: 'Cooking', desc: 'In kitchen' },
-                        { num: 3, title: 'On the Way', desc: 'Out for delivery' },
-                        { num: 4, title: 'Delivered', desc: 'At doorstep' },
-                      ].map((step) => {
-                        const isDone = activeOrder.statusStep > step.num
-                        const isCurrent = activeOrder.statusStep === step.num
-                        const isPassedOrCurrent = activeOrder.statusStep >= step.num
-
-                        return (
-                          <div key={step.num} className="flex flex-col items-center group">
-                            {/* Circle Indicator */}
-                            <div
-                              className={`grid size-10 sm:size-11 place-items-center rounded-full font-black text-xs transition-all duration-300 ${
-                                isDone
-                                  ? 'bg-[#d9f447] text-[#18201c] shadow-md ring-4 ring-[#d9f447]/30 scale-105'
-                                  : isCurrent
-                                    ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-4 ring-[#18201c]/20 animate-pulse scale-110'
-                                    : 'bg-white border-2 border-gray-200 text-gray-400'
-                              }`}
-                            >
-                              {isDone ? <Check className="size-5 stroke-[3]" /> : step.num}
-                            </div>
-
-                            {/* Label */}
-                            <div className="mt-3 space-y-0.5">
-                              <p
-                                className={`text-xs font-bold transition-colors ${
-                                  isPassedOrCurrent ? 'text-[#18201c]' : 'text-gray-400'
-                                }`}
-                              >
-                                {step.title}
-                              </p>
-                              <p className="text-[10px] text-gray-400 hidden sm:block">
-                                {step.desc}
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Live Rider Delivery Route View */}
-                <div className="p-6 bg-[#f8f9f6] border-b border-gray-200 flex flex-col gap-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <h4 className="font-extrabold text-base text-[#18201c] flex items-center gap-2">
-                        <Compass
-                          className="size-5 text-emerald-600 animate-spin"
-                          style={{ animationDuration: '8s' }}
-                        />
-                        Live Rider Delivery Route
-                      </h4>
-                      <p className="text-xs text-[#737e77] mt-0.5">
-                        Tracking rider moving live on road from kitchen counter to {deliveryAddress}
-                        .
-                      </p>
-                    </div>
-                  </div>
-
-                  <LiveDriverMap
-                    restaurantName={activeOrder.restaurantName}
-                    customerAddress={deliveryAddress}
-                    driverName={activeOrder.driverName || 'Assigned Delivery Partner'}
-                    statusStep={activeOrder.statusStep}
-                    driverLat={activeOrder.driverLat || null}
-                    driverLng={activeOrder.driverLng || null}
-                  />
-                </div>
-
-                {/* Assigned Delivery Partner Card */}
-                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
-                  <div className="flex items-center gap-3.5">
-                    <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-white shrink-0 shadow-md">
-                      <Bike className="size-6 text-[#d9f447]" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-[#737e77]">
-                        Assigned Delivery Partner
-                      </p>
-                      <p className="font-extrabold text-sm text-[#18201c] mt-0.5">
-                        {activeOrder.driverName || 'Awaiting driver assignment'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {activeOrder.driverPhone ? (
-                      <a
-                        href={`tel:${activeOrder.driverPhone}`}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#2e3b34] transition shadow-sm"
-                      >
-                        <PhoneCall className="size-3.5 text-[#d9f447]" />
-                        Call Partner
-                      </a>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">
-                        Contact details available upon pickup
-                      </span>
+                      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-2.5 sm:gap-3 shadow-xs">
+                        <div className="size-11 sm:size-12 rounded-2xl bg-[#f0f5db] text-[#7f9815] flex items-center justify-center shadow-xs">
+                          <Bike className="size-5 sm:size-6 animate-pulse" />
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-xs sm:text-sm text-[#18201c]">
+                            Awaiting Driver Acceptance
+                          </h5>
+                          <p className="text-[11px] sm:text-xs text-[#737e77] max-w-md mt-1 leading-relaxed">
+                            Your order is confirmed and being prepared. The live GPS map will be
+                            displayed here as soon as a delivery partner accepts the pickup request.
+                          </p>
+                        </div>
+                      </div>
                     )}
                   </div>
+
+                  {/* Assigned Delivery Partner Card */}
+                  <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white">
+                    <div className="flex items-center gap-3">
+                      <div className="grid size-10 sm:size-12 place-items-center rounded-xl sm:rounded-2xl bg-[#18201c] text-white shrink-0 shadow-md">
+                        <Bike className="size-5 sm:size-6 text-[#d9f447]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] sm:text-xs font-medium text-[#737e77]">
+                          Assigned Delivery Partner
+                        </p>
+                        <p className="font-extrabold text-xs sm:text-sm text-[#18201c] mt-0.5 truncate">
+                          {activeOrder.driverName || 'Awaiting driver assignment'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                      {activeOrder.driverPhone ? (
+                        <a
+                          href={`tel:${activeOrder.driverPhone}`}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] bg-[#18201c] px-4 sm:px-5 py-2.5 text-xs font-bold text-white hover:bg-[#2e3b34] transition shadow-sm"
+                        >
+                          <PhoneCall className="size-3.5 text-[#d9f447]" />
+                          Call Partner
+                        </a>
+                      ) : (
+                        <span className="text-[11px] sm:text-xs text-gray-400 italic">
+                          Contact details available upon pickup
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : inProgressOrders.length > 0 ? (
+              <div className="flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-[#dfe5db] bg-white p-4 sm:p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] flex items-center gap-2">
+                    <span className="relative flex size-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d9f447] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full size-2.5 bg-[#859d19]"></span>
+                    </span>
+                    Active Orders Under Process ({inProgressOrders.length})
+                  </h3>
+                  <span className="text-[10px] sm:text-xs text-gray-500 font-medium hidden sm:inline">
+                    Click an order to view live map &amp; status
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {inProgressOrders.map((ord: any) => {
+                    const isCurrentSelected =
+                      activeOrder && String(activeOrder.id) === String(ord.id)
+                    let itemsArr: any[] = []
+                    try {
+                      itemsArr =
+                        typeof ord.items === 'string'
+                          ? JSON.parse(ord.items || '[]')
+                          : ord.items || []
+                    } catch (e) {}
+
+                    const statusTextMap: Record<string, string> = {
+                      payment_submitted: 'Order Confirmed',
+                      payment_verified: 'Payment Verified',
+                      sent_to_vendor: 'Sent to Kitchen',
+                      accepted: 'Accepted',
+                      preparing: 'Preparing Food',
+                      cooking: 'Cooking',
+                      packing: 'Packing Food',
+                      ready: 'Ready for Pickup',
+                      at_restaurant: 'Rider at Kitchen',
+                      picked_up: 'Food Picked Up',
+                      out_for_delivery: 'Out for Delivery',
+                      arrived_customer: 'Rider Arrived',
+                    }
+                    const ordStatusText =
+                      statusTextMap[ord.status] || ord.status?.replace(/_/g, ' ') || 'In Progress'
+
+                    const rawDateVal = ord.created_at || ord.createdAt || ord.timestamp
+                    const timeStr =
+                      rawDateVal && !isNaN(new Date(rawDateVal).getTime())
+                        ? new Date(rawDateVal).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : ''
+
+                    return (
+                      <div
+                        key={ord.id}
+                        onClick={() => {
+                          setSelectedOrderId(String(ord.id))
+                          router.push(`/user/track/${ord.id}`)
+                        }}
+                        className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 ${
+                          isCurrentSelected
+                            ? 'bg-[#18201c] text-white border-[#18201c] shadow-lg ring-2 ring-[#d9f447]'
+                            : 'bg-[#f8f9f6] text-[#18201c] border-[#e1e6df] hover:border-gray-300 hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 min-w-0">
+                          <div className="min-w-0">
+                            <p
+                              className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider ${isCurrentSelected ? 'text-[#d9f447]' : 'text-gray-400'}`}
+                            >
+                              Order #{String(ord.id).slice(0, 8).toUpperCase()}
+                            </p>
+                            <h4 className="font-extrabold text-xs sm:text-sm truncate mt-0.5">
+                              {ord.restaurant_name || ord.restaurantName || 'Crave Kitchen Store'}
+                            </h4>
+                          </div>
+                          <span
+                            className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                              isCurrentSelected
+                                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            }`}
+                          >
+                            {ordStatusText}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-white/10 pt-2.5 text-xs">
+                          <div className="min-w-0 flex flex-col">
+                            <span className={isCurrentSelected ? 'text-gray-300' : 'text-gray-500'}>
+                              {itemsArr.length} {itemsArr.length === 1 ? 'item' : 'items'} &bull; ₹
+                              {ord.total_amount || ord.subtotal || 0}
+                            </span>
+                            {timeStr && (
+                              <span
+                                className={`text-[10px] ${isCurrentSelected ? 'text-gray-400' : 'text-gray-400'}`}
+                              >
+                                Placed at {timeStr}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedOrderId(String(ord.id))
+                              router.push(`/user/track/${ord.id}`)
+                            }}
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 ${
+                              isCurrentSelected
+                                ? 'bg-[#d9f447] text-[#18201c] hover:bg-[#c2dc37]'
+                                : 'bg-[#18201c] text-[#ffffff] hover:bg-[#2e3b34]'
+                            }`}
+                          >
+                            <Bike className="size-3" />
+                            <span>{isCurrentSelected ? 'Live' : 'Track Order'}</span>
+                            <ArrowRight className="size-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ) : (
@@ -2709,8 +3089,8 @@ export default function CustomerDashboard({
                 </div>
 
                 <LocationPickerMap
-                  initialLat={selectedMapPin?.lat ?? 12.6817}
-                  initialLng={selectedMapPin?.lng ?? 77.4729}
+                  initialLat={selectedMapPin?.lat ?? 12.679898}
+                  initialLng={selectedMapPin?.lng ?? 77.469493}
                   onLocationSelect={(lat, lng, address) => {
                     setSelectedMapPin({ lat, lng })
                     if (address) {
@@ -2807,6 +3187,87 @@ export default function CustomerDashboard({
           </div>
         </div>
       )}
+
+      {/* Invoice Modal */}
+      {invoiceModalOrder && (
+        <InvoiceModal order={invoiceModalOrder} onClose={() => setInvoiceModalOrder(null)} />
+      )}
+
+      {/* Mobile Bottom Tab Bar */}
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-gray-200 backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg"
+      >
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          <button
+            onClick={() => navigateToTab('explore')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'explore' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+            }`}
+          >
+            <Compass
+              className={`size-5 ${activeTab === 'explore' ? 'text-[#859d19]' : 'text-gray-400'}`}
+            />
+            <span className="text-[10px]">Explore</span>
+          </button>
+
+          <button
+            onClick={() => navigateToTab('live-order')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative ${
+              activeTab === 'live-order' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+            }`}
+          >
+            <div className="relative">
+              <Bike
+                className={`size-5 ${activeTab === 'live-order' ? 'text-[#859d19]' : 'text-gray-400'}`}
+              />
+              {activeOrder && activeOrder.statusStep < 4 && (
+                <span className="absolute -top-1 -right-1 size-2 rounded-full bg-[#d9f447] animate-ping" />
+              )}
+            </div>
+            <span className="text-[10px]">Track</span>
+          </button>
+
+          <button
+            onClick={() => navigateToTab('orders')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'orders' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+            }`}
+          >
+            <History
+              className={`size-5 ${activeTab === 'orders' ? 'text-[#859d19]' : 'text-gray-400'}`}
+            />
+            <span className="text-[10px]">Orders</span>
+          </button>
+
+          <button
+            onClick={() => router.push('/user/cart')}
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-gray-400 font-bold"
+          >
+            <div className="relative">
+              <ShoppingCart className="size-5 text-gray-400" />
+              {totalCartItemCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#18201c] text-[#d9f447] text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                  {totalCartItemCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px]">Cart</span>
+          </button>
+
+          <button
+            onClick={() => navigateToTab('profile')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'profile' ? 'text-[#18201c] font-black' : 'text-gray-400 font-bold'
+            }`}
+          >
+            <User
+              className={`size-5 ${activeTab === 'profile' ? 'text-[#859d19]' : 'text-gray-400'}`}
+            />
+            <span className="text-[10px]">Profile</span>
+          </button>
+        </div>
+      </nav>
     </div>
   )
 }

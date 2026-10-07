@@ -1,7 +1,6 @@
 'use client'
 
 import { getLocalPaymentConfig } from '@/lib/payment-config'
-import { supabase } from '@/lib/supabase'
 import {
   CheckCircle2,
   Clock3,
@@ -50,7 +49,9 @@ export default function VendorSettlementsPage() {
     async function loadLiveSettlements() {
       const activeCfg = getLocalPaymentConfig()
       try {
-        const { data: setts } = await supabase.from('vendor_settlements').select('*')
+        const settsResp = await fetch('/api/admin/settlements')
+        const settsJson = await settsResp.json()
+        const setts = settsJson.settlements
         if (setts && setts.length > 0) {
           const loaded: VendorFinancialRecord[] = setts.map((s: any) => ({
             id: s.id,

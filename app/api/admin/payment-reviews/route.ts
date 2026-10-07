@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
@@ -39,26 +40,81 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { id, status } = body
+    const { id, orderId, status } = body
+    const targetId = id || orderId
 
-    if (!id || !status) {
+    if (!targetId || !status) {
       return NextResponse.json({ error: 'Review ID and status are required' }, { status: 400 })
     }
 
-    const updated = await prisma.paymentReview.update({
-      where: { id },
-      data: { status },
-    })
+    let targetOrderId = orderId || id
+    let review: any = null
 
-    if (updated) {
-      await broadcast('approval_update', { status, orderId: updated.order_id })
-      await broadcast('admin_stats', {
-        type: 'payment_review_updated',
-        id,
-        status,
-        timestamp: new Date().toISOString(),
-      })
+    // 1. Update Payment Review in DB (Prisma & Supabase)
+    try {
+      if (id) {
+        review = await prisma.paymentReview.update({
+          where: { id },
+          data: { status },
+        })
+        if (review?.order_id) targetOrderId = review.order_id
+      }
+    } catch {}
+
+    if (!review && targetOrderId) {
+      try {
+        await prisma.paymentReview.updateMany({
+          where: { order_id: targetOrderId },
+          data: { status },
+        })
+      } catch {}
+      try {
+        await supabase.from('payment_reviews').update({ status }).eq('order_id', targetOrderId)
+      } catch {}
     }
+
+    // 2. Update the corresponding Order record in database (Prisma & Supabase)
+    const newPaymentStatus =
+      status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
+    const newOrderStatus = status === 'verified' ? 'sent_to_vendor' : undefined
+
+    let updatedOrder: any = null
+    if (targetOrderId) {
+      try {
+        updatedOrder = await prisma.order.update({
+          where: { id: targetOrderId },
+          data: {
+            payment_status: newPaymentStatus,
+            ...(newOrderStatus ? { status: newOrderStatus as any } : {}),
+          },
+        })
+      } catch (e) {
+        try {
+          const updatePayload: any = { payment_status: newPaymentStatus }
+          if (newOrderStatus) updatePayload.status = newOrderStatus
+          const { data } = await supabase
+            .from('orders')
+            .update(updatePayload)
+            .eq('id', targetOrderId)
+            .select()
+            .single()
+          updatedOrder = data
+        } catch (err) {}
+      }
+    }
+
+    // 3. Broadcast real-time WebSocket events across all dashboards
+    await broadcast('approval_update', { status, orderId: targetOrderId })
+    if (updatedOrder) {
+      await broadcast('order_update', { order: updatedOrder, orderId: targetOrderId })
+      await broadcast('admin_orders', { order: updatedOrder, orderId: targetOrderId })
+    }
+    await broadcast('admin_stats', {
+      type: 'payment_review_updated',
+      id: targetOrderId,
+      status,
+      timestamp: new Date().toISOString(),
+    })
 
     return NextResponse.json({ success: true, count: 1 })
   } catch (error: any) {

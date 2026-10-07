@@ -21,13 +21,54 @@ export async function listOrders(filters?: {
   status?: OrderStatus
   limit?: number
 }) {
+  const where: any = {}
+
+  if (filters?.customerId) {
+    where.customer_id = filters.customerId
+  }
+
+  if (filters?.status) {
+    where.status = filters.status
+  }
+
+  if (filters?.restaurantId || filters?.restaurantName) {
+    let restIds: string[] = filters?.restaurantId ? [filters.restaurantId] : []
+    if (filters?.restaurantId) {
+      try {
+        const owned = await prisma.restaurant.findMany({
+          where: {
+            OR: [
+              { id: filters.restaurantId },
+              { owner_id: filters.restaurantId },
+              ...(filters.restaurantName ? [{ name: filters.restaurantName }] : []),
+            ],
+          },
+          select: { id: true },
+        })
+        const found = owned.map((r) => r.id)
+        restIds = Array.from(new Set([...restIds, ...found]))
+      } catch (e) {}
+    }
+
+    const vendorConditions: any[] = []
+    if (restIds.length > 0) {
+      vendorConditions.push({ restaurant_id: { in: restIds } })
+    }
+    if (filters?.restaurantName) {
+      vendorConditions.push({
+        restaurant_name: { contains: filters.restaurantName, mode: 'insensitive' },
+      })
+    }
+
+    if (vendorConditions.length === 1 && restIds.length === 1 && !filters?.restaurantName) {
+      where.restaurant_id = restIds[0]
+    } else if (vendorConditions.length > 0) {
+      where.OR = vendorConditions
+    }
+  }
+
   return prisma.order.findMany({
-    where: {
-      ...(filters?.customerId && { customer_id: filters.customerId }),
-      ...(filters?.restaurantId && { restaurant_id: filters.restaurantId }),
-      ...(filters?.restaurantName && { restaurant_name: filters.restaurantName }),
-      ...(filters?.status && { status: filters.status }),
-    },
+    where,
     orderBy: { created_at: 'desc' },
     take: filters?.limit,
   })

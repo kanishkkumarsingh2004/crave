@@ -7,18 +7,24 @@ import { NextResponse } from 'next/server'
 
 export async function GET(request?: Request) {
   try {
+    let restaurantId: string | undefined
     if (request) {
+      const requestUrl = request.url || 'http://localhost/api/admin/settlements'
+      const { searchParams } = new URL(requestUrl)
+      restaurantId = searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
+
       const authHeader = request.headers.get('authorization')
       let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
       if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
 
       const payload = token ? await verifyToken(token) : null
-      if (!payload || payload.role !== 'admin') {
+      if (!restaurantId && (!payload || payload.role !== 'admin')) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
       }
     }
 
     const settlements = await prisma.vendorSettlement.findMany({
+      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
       orderBy: { payout_date: 'desc' },
       include: { restaurant: true },
     })

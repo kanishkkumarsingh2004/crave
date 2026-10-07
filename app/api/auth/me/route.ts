@@ -31,6 +31,27 @@ export async function GET(request: Request) {
       )
     }
 
+    if (
+      !payload.restaurantId &&
+      (payload.role === 'restaurant_vendor' || payload.role === 'cravexp_store_vendor')
+    ) {
+      try {
+        const { prisma } = await import('@/lib/prisma')
+        const rest = await prisma.restaurant.findFirst({
+          where: {
+            OR: [
+              { owner_id: payload.id },
+              ...(payload.restaurantName ? [{ name: payload.restaurantName }] : []),
+            ],
+          },
+        })
+        if (rest) {
+          payload.restaurantId = rest.id
+          if (!payload.restaurantName) payload.restaurantName = rest.name
+        }
+      } catch (e) {}
+    }
+
     return NextResponse.json({ authenticated: true, user: payload })
   } catch (error) {
     return NextResponse.json(

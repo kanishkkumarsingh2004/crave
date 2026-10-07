@@ -1,7 +1,8 @@
 'use client'
 
+import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
-import { useWebSocket, playChimeSound } from '@/lib/websocket'
+import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export interface BroadcastOrderOffer {
@@ -27,6 +28,8 @@ export interface DeliveryTask {
   customerName: string
   customerAddress: string
   customerPhone: string
+  basePayout?: number
+  surgeBonus?: number
   payout: number
   tip: number
   distance: string
@@ -89,6 +92,7 @@ interface DriverContextType {
   broadcastOffer: BroadcastOrderOffer | null
   setBroadcastOffer: React.Dispatch<React.SetStateAction<BroadcastOrderOffer | null>>
   offerTimer: number
+  setOfferTimer: React.Dispatch<React.SetStateAction<number>>
   completedTrips: CompletedTripItem[]
   savedUpiList: SavedUpiItem[]
   payoutLogs: PayoutLogItem[]
@@ -112,6 +116,7 @@ interface DriverContextType {
 const DriverContext = createContext<DriverContextType | undefined>(undefined)
 
 export function DriverProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
   const [isOnline, setIsOnline] = useState(true)
   const [activeTask, setActiveTask] = useState<DeliveryTask | null>(null)
   const [broadcastOffer, setBroadcastOffer] = useState<BroadcastOrderOffer | null>(null)
@@ -119,7 +124,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   // Real Mobile GPS
   const [driverGpsCoords, setDriverGpsCoords] = useState<[number, number] | null>([
-    12.9716, 77.4695,
+    12.679898, 77.469493,
   ])
   const [gpsStatus, setGpsStatus] = useState<
     'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
@@ -169,8 +174,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           (!target.driver_name || target.driver_name === 'Unassigned')
         ) {
           playChimeSound()
-          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.68
-          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.4695
+          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
+          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
           const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
 
           let itemsArr: any[] = []
@@ -179,8 +184,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
           } catch (e) {}
 
-          const realOtp =
-            target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
           const calcPayout = Math.max(
             60,
             Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
@@ -229,8 +233,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
           if (availableOrders.length > 0) {
             const target = availableOrders[availableOrders.length - 1]
-            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.68
-            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.4695
+            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
+            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
 
             const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
 
@@ -241,7 +245,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
             } catch (e) {}
 
             const realOtp =
-              target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+              target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
             const calcPayout = Math.max(
               60,
               Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
@@ -274,6 +278,66 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
+  // Continuous Driver Mobile Device GPS Location Watcher
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('geolocation' in navigator) || !isOnline) {
+      return
+    }
+
+    setGpsStatus('acquiring')
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const lat = parseFloat(position.coords.latitude.toFixed(6))
+        const lng = parseFloat(position.coords.longitude.toFixed(6))
+        setDriverGpsCoords([lat, lng])
+        setGpsAccuracy(Math.round(position.coords.accuracy))
+        setGpsStatus('connected')
+        setLastGpsUpdate(
+          new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+        )
+
+        // Broadcast driver's actual mobile location to system and customer track map
+        const activeDriverId = user?.id || 'driver_partner'
+        publishLiveEvent('driver_location', {
+          driverId: activeDriverId,
+          orderId: activeTask?.id || undefined,
+          lat,
+          lng,
+          status: isOnline ? 'ONLINE' : 'OFFLINE',
+        })
+        fetch('/api/driver/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            driverId: activeDriverId,
+            orderId: activeTask?.id || undefined,
+            lat,
+            lng,
+            status: isOnline ? 'ONLINE' : 'OFFLINE',
+          }),
+        }).catch(() => {})
+      },
+      (err) => {
+        console.warn('Driver mobile GPS watch warning:', err)
+        setGpsStatus('connected')
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 2000,
+      }
+    )
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId)
+    }
+  }, [isOnline, user?.id, activeTask?.id])
+
   function requestMobileGps() {
     if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       alert('Geolocation is not supported on this browser or mobile device.')
@@ -294,10 +358,30 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
             second: '2-digit',
           })
         )
+
+        const activeDriverId = user?.id || 'driver_partner'
+        publishLiveEvent('driver_location', {
+          driverId: activeDriverId,
+          orderId: activeTask?.id || undefined,
+          lat,
+          lng,
+          status: 'ONLINE',
+        })
+        fetch('/api/driver/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            driverId: activeDriverId,
+            orderId: activeTask?.id || undefined,
+            lat,
+            lng,
+            status: 'ONLINE',
+          }),
+        }).catch(() => {})
       },
       (err) => {
         setGpsStatus('connected')
-        setDriverGpsCoords([12.6817, 77.4729])
+        setDriverGpsCoords([12.679898, 77.469493])
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
@@ -320,8 +404,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
           } catch (e) {}
 
-          const realOtp =
-            target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || '1234'
+          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
           const calcPayout = Math.max(
             60,
             Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
@@ -362,6 +445,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     if (!broadcastOffer) return
 
     const realId = broadcastOffer.id
+    const driverDisplayName = user?.name || 'Verified Delivery Partner'
+    const driverDisplayPhone = user?.phone || '+91 98765 43210'
+    const currentLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
+    const currentLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
+
     const task: DeliveryTask = {
       id: realId,
       orderNumber: broadcastOffer.orderNumber,
@@ -369,45 +457,78 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       restaurantAddress: broadcastOffer.restaurantAddress,
       customerName: broadcastOffer.customerName,
       customerAddress: broadcastOffer.customerAddress,
-      customerPhone: '+91 98765 43210',
+      customerPhone: driverDisplayPhone,
+      basePayout: broadcastOffer.basePayout,
+      surgeBonus: broadcastOffer.surgeBonus,
       payout: broadcastOffer.basePayout + broadcastOffer.surgeBonus,
       tip: broadcastOffer.tip,
       distance: broadcastOffer.distance,
       step: 'assigned',
-      otp: broadcastOffer.otp || '1234',
+      otp: broadcastOffer.otp || '',
     }
 
     setActiveTask(task)
 
     try {
+      // 1. Post to dedicated driver accept endpoint
+      await fetch('/api/driver/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: realId,
+          orderId: realId,
+          driverId: user?.id || 'driver_partner',
+          driver_name: driverDisplayName,
+          driver_phone: driverDisplayPhone,
+          lat: currentLat,
+          lng: currentLng,
+        }),
+      }).catch(() => {})
+
+      // 2. Patch orders API for standard order status sync
       await fetch('/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: realId,
-          status: 'out_for_delivery',
-          driver_name: 'Verified Delivery Partner',
-          driver_phone: '+91 98765 43210',
+          status: 'rider_assigned',
+          driver_name: driverDisplayName,
+          driver_phone: driverDisplayPhone,
+          driver_id: user?.id,
+          driver_lat: currentLat,
+          driver_lng: currentLng,
         }),
-      })
+      }).catch(() => {})
 
       await supabase
         .from('orders')
         .update({
-          driver_name: 'Verified Delivery Partner',
-          driver_phone: '+91 98765 43210',
-          status: 'picked_up',
+          driver_name: driverDisplayName,
+          driver_phone: driverDisplayPhone,
+          status: 'rider_assigned',
         })
         .eq('id', realId)
     } catch (e) {
       console.error('Failed to update driver assignment:', e)
     }
 
+    // Immediately publish driver live GPS position to WebSocket broadcast
+    publishLiveEvent('driver_location', {
+      driverId: user?.id || 'driver_partner',
+      orderId: realId,
+      lat: currentLat,
+      lng: currentLng,
+      status: 'ONLINE',
+    })
+
     setBroadcastOffer(null)
   }
 
   async function advanceStep() {
     if (!activeTask) return
+    const driverDisplayName = user?.name || 'Verified Delivery Partner'
+    const driverDisplayPhone = user?.phone || '+91 98765 43210'
+
     if (activeTask.step === 'assigned') {
       setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
       try {
@@ -416,10 +537,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: activeTask.id,
-            status: 'preparing',
-            driver_name: 'Verified Delivery Partner',
-            driver_phone: '+91 98765 43210',
+            status: 'ready_for_pickup',
+            driver_name: driverDisplayName,
+            driver_phone: driverDisplayPhone,
           }),
+        })
+        publishLiveEvent('order_update', {
+          orderId: activeTask.id,
+          status: 'ready_for_pickup',
         })
       } catch (e) {}
     } else if (activeTask.step === 'at_restaurant') {
@@ -430,10 +555,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: activeTask.id,
-            status: 'out_for_delivery',
-            driver_name: 'Verified Delivery Partner',
-            driver_phone: '+91 98765 43210',
+            status: 'picked_up',
+            driver_name: driverDisplayName,
+            driver_phone: driverDisplayPhone,
           }),
+        })
+        publishLiveEvent('order_update', {
+          orderId: activeTask.id,
+          status: 'picked_up',
         })
       } catch (e) {}
     } else if (activeTask.step === 'picked_up') {
@@ -445,7 +574,13 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({
             orderId: activeTask.id,
             status: 'out_for_delivery',
+            driver_name: driverDisplayName,
+            driver_phone: driverDisplayPhone,
           }),
+        })
+        publishLiveEvent('order_update', {
+          orderId: activeTask.id,
+          status: 'out_for_delivery',
         })
       } catch (e) {}
     }
@@ -454,25 +589,37 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   function completeDelivery(otpInput?: string): { success: boolean; message: string } {
     if (!activeTask) return { success: false, message: 'No active delivery task.' }
 
-    const expectedOtp = String(activeTask.otp || '1234').trim()
+    const expectedOtp = String(activeTask.otp || '').trim()
     const providedOtp = String(otpInput || '').trim()
 
-    if (providedOtp && providedOtp !== expectedOtp) {
+    if (expectedOtp && providedOtp && providedOtp !== expectedOtp) {
       return {
         success: false,
-        message: `Incorrect OTP (${providedOtp}). Expected ${expectedOtp}. Ask customer for the 4-digit OTP from their live tracking screen.`,
+        message: `Incorrect OTP (${providedOtp}). Ask customer for the 6-digit Delivery OTP shown on their live tracking screen.`,
       }
     }
+
+    if (expectedOtp && !providedOtp) {
+      return {
+        success: false,
+        message: 'Please enter the Delivery OTP provided by the customer.',
+      }
+    }
+
+    const basePay = activeTask.basePayout ?? Math.round(activeTask.payout * 0.7)
+    const surgePay = activeTask.surgeBonus ?? Math.round(activeTask.payout * 0.3)
+    const tipPay = activeTask.tip || 0
+    const totalEarnings = basePay + surgePay + tipPay
 
     const newTrip: CompletedTripItem = {
       id: `trip_${Date.now()}`,
       order: activeTask.orderNumber,
       restaurant: activeTask.restaurantName,
       customer: activeTask.customerName,
-      baseEarnings: Math.round(activeTask.payout * 0.7),
-      surge: Math.round(activeTask.payout * 0.3),
-      tip: activeTask.tip,
-      total: activeTask.payout + activeTask.tip,
+      baseEarnings: basePay,
+      surge: surgePay,
+      tip: tipPay,
+      total: totalEarnings,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       distance: activeTask.distance,
     }
@@ -486,6 +633,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           status: 'delivered',
         }),
       }).catch(() => {})
+
+      fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: activeTask.id,
+          status: 'completed',
+        }),
+      }).catch(() => {})
+
+      publishLiveEvent('order_update', {
+        orderId: activeTask.id,
+        status: 'delivered',
+      })
 
       supabase
         .from('orders')
@@ -550,6 +711,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         broadcastOffer,
         setBroadcastOffer,
         offerTimer,
+        setOfferTimer,
         completedTrips,
         savedUpiList,
         payoutLogs,

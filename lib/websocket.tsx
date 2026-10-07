@@ -211,7 +211,7 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
     onMessage: (msg) => {
       if (msg.channel === 'driver_location') {
         const data = msg.data as any
-        if (data.orderId === orderId) {
+        if (!data.orderId || !orderId || data.orderId === orderId) {
           onLocation(data)
         }
       }

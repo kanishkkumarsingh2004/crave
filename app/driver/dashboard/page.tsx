@@ -213,21 +213,21 @@ export default function DriverDashboardPage() {
               {activeTask.step === 'arrived_customer' && (
                 <div className="mt-4 pt-3 border-t border-blue-200 bg-white p-3.5 rounded-xl border">
                   <label className="block text-xs font-bold text-[#18201c] mb-1">
-                    Ask Customer for 4-Digit Delivery PIN:
+                    Ask Customer for 6-Digit Delivery OTP:
                   </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="text"
-                      maxLength={4}
+                      maxLength={6}
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value)}
-                      className="w-32 rounded-xl border border-blue-300 px-3 py-2 text-center text-base font-extrabold tracking-widest outline-none focus:border-blue-600 font-mono"
-                      placeholder={activeTask.otp || '1234'}
+                      className="w-36 rounded-xl border border-blue-300 px-3 py-2 text-center text-base font-extrabold tracking-widest outline-none focus:border-blue-600 font-mono"
+                      placeholder={activeTask.otp || '123456'}
                     />
                     <span className="text-xs text-[#737e77] font-medium">
                       Customer OTP:{' '}
                       <strong className="font-mono font-bold text-[#18201c]">
-                        {activeTask.otp || '1234'}
+                        {activeTask.otp || '123456'}
                       </strong>
                     </span>
                   </div>
@@ -273,7 +273,7 @@ export default function DriverDashboardPage() {
                 }}
                 className="mt-2 w-full rounded-full bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-md transition hover:bg-emerald-700 flex items-center justify-center gap-2"
               >
-                <CheckCircle2 className="size-4 text-white" /> Verify PIN &amp; Complete Delivery
+                <CheckCircle2 className="size-4 text-white" /> Verify OTP &amp; Complete Delivery
               </button>
             )}
           </div>
@@ -341,7 +341,7 @@ export default function DriverDashboardPage() {
                   "I'm at the kitchen collecting your fresh food order!",
                   'On my way with your order! ETA ~10 minutes.',
                   'I have arrived at your building doorstep / lobby.',
-                  'Please share your 4-digit PIN for order delivery.',
+                  'Please share your 6-digit OTP for order delivery.',
                 ].map((txt, idx) => (
                   <button
                     key={idx}

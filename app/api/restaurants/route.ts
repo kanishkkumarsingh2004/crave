@@ -68,12 +68,23 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json()
-    if (!body.id || typeof body.is_open !== 'boolean') {
-      return NextResponse.json({ error: 'Restaurant id and is_open are required' }, { status: 400 })
+    if (!body.id) {
+      return NextResponse.json({ error: 'Restaurant id is required' }, { status: 400 })
     }
+    const updateData: any = {}
+    if (typeof body.is_open === 'boolean') updateData.is_open = body.is_open
+    if (body.bank_account_name !== undefined) updateData.bank_account_name = body.bank_account_name
+    if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
+    if (body.bank_account_number !== undefined)
+      updateData.bank_account_number = body.bank_account_number
+    if (body.bank_ifsc !== undefined) updateData.bank_ifsc = body.bank_ifsc
+    if (body.payout_vpa !== undefined) updateData.payout_vpa = body.payout_vpa
+    if (body.fssai_license !== undefined) updateData.fssai_license = body.fssai_license
+    if (body.address !== undefined) updateData.address = body.address
+
     const restaurant = await prisma.restaurant.update({
       where: { id: body.id },
-      data: { is_open: body.is_open },
+      data: updateData,
     })
 
     await broadcast('restaurants', {

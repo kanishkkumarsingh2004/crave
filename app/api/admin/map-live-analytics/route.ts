@@ -96,8 +96,8 @@ export async function GET(request: Request) {
 
     // Map Restaurants
     restaurants.forEach((r) => {
-      const lat = r.latitude != null ? Number(r.latitude) : 12.6501
-      const lng = r.longitude != null ? Number(r.longitude) : 77.4421
+      const lat = r.latitude != null ? Number(r.latitude) : 12.679898
+      const lng = r.longitude != null ? Number(r.longitude) : 77.469493
       pins.push({
         id: `rst_${r.id}`,
         name: r.name,
@@ -119,8 +119,8 @@ export async function GET(request: Request) {
         o.status !== OrderStatus.completed
     )
     orders.forEach((o) => {
-      const lat = o.delivery_latitude != null ? Number(o.delivery_latitude) : 12.6455
-      const lng = o.delivery_longitude != null ? Number(o.delivery_longitude) : 77.4398
+      const lat = o.delivery_latitude != null ? Number(o.delivery_latitude) : 12.679898
+      const lng = o.delivery_longitude != null ? Number(o.delivery_longitude) : 77.469493
       pins.push({
         id: `ord_${o.id}`,
         name: `Order #${o.id.slice(0, 8)} (${o.customer_name})`,

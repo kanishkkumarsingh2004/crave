@@ -153,8 +153,8 @@ export default function AdminDashboard() {
     commissionRate: 15,
     paymentModel: 'commission' as 'commission' | 'markup',
     bannerUrl: '',
-    latitude: 12.9716,
-    longitude: 77.4695,
+    latitude: 12.679898,
+    longitude: 77.469493,
   })
 
   // Driver Onboarding Modal State
@@ -186,8 +186,8 @@ export default function AdminDashboard() {
     paymentModel: 'commission' as 'commission' | 'markup',
     vehicleType: 'Electric Scooter',
     licensePlate: '',
-    latitude: 12.9716,
-    longitude: 77.4695,
+    latitude: 12.679898,
+    longitude: 77.469493,
   })
 
   // Admin Menu & Price Alteration Drawer / Modal State
@@ -461,8 +461,8 @@ export default function AdminDashboard() {
         commissionRate: 15,
         paymentModel: 'commission',
         bannerUrl: '',
-        latitude: 12.9716,
-        longitude: 77.4695,
+        latitude: 12.679898,
+        longitude: 77.469493,
       })
 
       fetchAccountsAndVendors()
@@ -548,8 +548,8 @@ export default function AdminDashboard() {
         acc.role === 'driver' || acc.role === 'rider'
           ? acc.detail?.split('·')[1]?.trim() || ''
           : '',
-      latitude: acc.latitude ?? 12.9716,
-      longitude: acc.longitude ?? 77.4695,
+      latitude: acc.latitude ?? 12.679898,
+      longitude: acc.longitude ?? 77.469493,
     })
     setIsEditModalOpen(true)
   }

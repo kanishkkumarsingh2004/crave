@@ -34,7 +34,9 @@ export const broadcast = async (
       )
 
       req.on('error', (err: any) => {
-        console.error('Broadcast HTTP error:', err.message)
+        if (err.code !== 'ECONNREFUSED') {
+          console.error('Broadcast HTTP error:', err.message)
+        }
         resolve(false)
       })
 
