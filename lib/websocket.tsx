@@ -109,7 +109,7 @@ export function useWebSocket({
 
           if (autoReconnect) {
             attemptCount++
-            const backoffMs = Math.min(30000, Math.round(reconnectInterval * Math.pow(1.5, Math.min(attemptCount, 5))))
+            const backoffMs = Math.min(30000, Math.round(reconnectInterval * Math.pow(1.5, Math.max(0, attemptCount - 1))))
             reconnectRef.current = setTimeout(() => {
               connect()
             }, backoffMs)
