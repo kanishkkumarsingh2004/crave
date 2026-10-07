@@ -26,17 +26,15 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading && user) {
       const targetDashboard =
-        role === 'customer' || role === 'user'
-          ? '/user/dashboard'
-          : role === 'rider' || role === 'driver'
+        role === 'admin'
+          ? '/admin/dashboard'
+          : role === 'rider' || (role as string) === 'driver'
             ? '/driver/dashboard'
-            : role === 'restaurant_vendor' || role === 'vendor'
+            : role === 'restaurant_vendor' || (role as string) === 'vendor'
               ? '/vendor/dashboard'
               : role === 'cravexp_store_vendor'
                 ? '/vendor/crave-ep'
-                : role === 'admin'
-                  ? '/admin/dashboard'
-                  : '/login'
+                : '/user/dashboard'
       router.replace(targetDashboard)
     }
   }, [user, role, isLoading, router])

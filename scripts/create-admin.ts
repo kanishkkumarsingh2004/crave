@@ -31,62 +31,37 @@ async function createAdminCredentials() {
   const userId = `usr_admin_${crypto.randomUUID().slice(0, 8)}`
 
   try {
-    console.log(`\n🧹 Clearing all existing database data (users, restaurants, orders, etc)...`)
-    await prisma.paymentReview.deleteMany()
-    await prisma.vendorSettlement.deleteMany()
-    await prisma.driverPayout.deleteMany()
-    await prisma.driverUpiAccount.deleteMany()
-    await prisma.driverIncentive.deleteMany()
-    await prisma.customerAddress.deleteMany()
-    await prisma.coldChainSensor.deleteMany()
-    await prisma.pickerMetric.deleteMany()
-    await prisma.coupon.deleteMany()
-    await prisma.menuItem.deleteMany()
-    await prisma.order.deleteMany()
-    await prisma.restaurant.deleteMany()
-    await prisma.paymentConfig.deleteMany()
-    await prisma.user.deleteMany()
-    console.log(`✅ Database wiped clean successfully!`)
+    const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } })
+    let adminRecord: any = null
 
-    // Broadcast live WebSocket event to connected Admin Dashboards
-    try {
-      const http = require('http')
-      const payload = JSON.stringify({
-        channel: 'admin_stats',
-        data: { type: 'db_wiped' },
-        ts: Date.now(),
-      })
-      const req = http.request(
-        {
-          hostname: process.env.WS_BROADCAST_HOST || 'localhost',
-          port: process.env.WS_BROADCAST_PORT || 8000,
-          path: '/__ws/broadcast',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(payload),
-          },
+    if (existingAdmin) {
+      adminRecord = await prisma.user.update({
+        where: { email: adminEmail },
+        data: {
+          name: adminName,
+          password_hash: passwordHash,
+          role: 'admin',
         },
-        () => {}
-      )
-      req.on('error', () => {})
-      req.write(payload)
-      req.end()
-    } catch (e) {}
+      })
+      console.log(`\n✅ Existing administrator account credentials updated.`)
+    } else {
+      adminRecord = await prisma.user.create({
+        data: {
+          id: userId,
+          name: adminName,
+          email: adminEmail,
+          role: 'admin',
+          password_hash: passwordHash,
+          locale: 'en',
+        },
+      })
+      console.log(`\n✅ Administrator account created successfully.`)
+    }
 
-    const created = await prisma.user.create({
-      data: {
-        id: userId,
-        name: adminName,
-        email: adminEmail,
-        role: 'admin',
-        password_hash: passwordHash,
-        locale: 'en',
-      },
-    })
-
-    await prisma.paymentConfig.create({
-      data: {
+    await prisma.paymentConfig.upsert({
+      where: { id: 'default_config' },
+      update: { is_active: true },
+      create: {
         id: 'default_config',
         name: 'Default Active Config',
         merchant_vpa: 'crave@upi',
@@ -100,14 +75,10 @@ async function createAdminCredentials() {
       },
     })
 
-    console.log(`\n✅ Admin account created successfully!`)
-    console.log(`   User ID:  ${created.id}`)
-    console.log(`   Email:    ${created.email}`)
+    console.log(`   User ID:  ${adminRecord.id}`)
+    console.log(`   Email:    ${adminRecord.email}`)
     console.log(`   Password: ${effectivePassword}`)
-    console.log(`   Role:     ${created.role}`)
-    console.log(
-      `\n🔒 Database now contains ONLY the Admin account and active payment configuration.`
-    )
+    console.log(`   Role:     ${adminRecord.role}`)
   } catch (error: any) {
     console.error(`\n❌ Failed to provision admin credentials:`, error?.message || error)
     process.exit(1)

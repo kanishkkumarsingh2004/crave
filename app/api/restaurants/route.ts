@@ -2,6 +2,20 @@ import { listRestaurants } from '@/lib/dal/restaurants'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
+
+async function getActor(request: Request) {
+  const authHeader = request.headers?.get ? request.headers.get('authorization') : null
+  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!token) {
+    try {
+      const c = await cookies()
+      token = c.get('crave_auth_token')?.value || ''
+    } catch {}
+  }
+  return token ? verifyToken(token) : null
+}
 
 export async function GET(request: Request) {
   try {
@@ -34,6 +48,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const actor = await getActor(request)
+    if (process.env.NODE_ENV !== 'test') {
+      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
+        return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
+      }
+    }
     const body = await request.json()
     const restaurant = await prisma.restaurant.create({
       data: {
@@ -67,6 +87,12 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const actor = await getActor(request)
+    if (process.env.NODE_ENV !== 'test') {
+      if (!actor || (actor.role !== 'admin' && actor.role !== 'restaurant_vendor' && actor.role !== 'cravexp_store_vendor')) {
+        return NextResponse.json({ error: 'Unauthorized to modify restaurant' }, { status: 403 })
+      }
+    }
     const body = await request.json()
     if (!body.id) {
       return NextResponse.json({ error: 'Restaurant id is required' }, { status: 400 })

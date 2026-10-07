@@ -25,16 +25,14 @@ export async function POST(request: Request) {
       )
     }
 
-    // Authorization check: Ensure requesting user is authorized driver, rider, or admin
+    // Authorization check: Ensure requesting user is updating their own location or is admin
     const roleStr = actor.role as string
-    if (
-      actor.role !== 'admin' &&
-      actor.role !== 'rider' &&
-      roleStr !== 'driver' &&
-      actor.role !== 'user' &&
-      roleStr !== 'customer' &&
-      actor.id !== driverId
-    ) {
+    const isSelf = actor.id === driverId
+    const isAuthorizedRider =
+      (actor.role === 'rider' || roleStr === 'driver' || actor.role === 'user' || roleStr === 'customer') && isSelf
+    const isAdmin = actor.role === 'admin'
+
+    if (!isAuthorizedRider && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized driver location update' }, { status: 403 })
     }
 
