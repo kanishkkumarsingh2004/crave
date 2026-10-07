@@ -85,14 +85,14 @@ export default function MapLiveAnalyticsPage() {
   const fetchLiveTelemetry = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const res = await fetch('/api/admin/map-live-analytics')
+      const res = await fetch('/api/admin/map-live-analytics', {
+        headers: { 'Accept': 'application/json' },
+      })
       if (res.ok) {
         const data = await res.json()
         if (data.pins && Array.isArray(data.pins)) {
           setPins(data.pins)
-          if (data.pins.length > 0 && !selectedPin) {
-            setSelectedPin(data.pins[0])
-          }
+          setSelectedPin((prev) => prev || (data.pins.length > 0 ? data.pins[0] : null))
         }
       }
     } catch (err) {
@@ -100,7 +100,7 @@ export default function MapLiveAnalyticsPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [selectedPin])
+  }, [])
 
   useEffect(() => {
     fetchLiveTelemetry()
