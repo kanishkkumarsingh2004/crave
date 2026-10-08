@@ -3,14 +3,23 @@ pmOnFail: ignore
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
-  - lucide-react@1.51.0 || 1.52.0
+  - lucide-react@1.51.0 || 1.52.0 || 1.53.0
   - maplibre-gl@6.12.0
 
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/client': true
   '@prisma/engines': true
+  core-js: false
   esbuild: true
   prisma: true
   unrs-resolver: true
   workerd: true
+
+overrides:
+  deepmerge-ts@<8.0.0: ^8.0.0
+  lodash@<=4.17.23: ^4.18.1
+  lodash@>=4.0.0 <=4.17.22: ^4.17.23
+  lodash@>=4.0.0 <=4.17.23: ^4.18.1
+  mysql2@<3.22.0: ^3.22.0
+  mysql2@<=3.23.0: ^3.23.1

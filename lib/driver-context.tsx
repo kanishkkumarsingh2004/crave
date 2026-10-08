@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
+import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import CustomAlertModal from '@/components/CustomAlertModal'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
@@ -28,6 +29,10 @@ export interface BroadcastOrderOffer {
   itemsCount: number
   customerPhone?: string
   otp?: string
+  restaurantLat?: number
+  restaurantLng?: number
+  customerLat?: number
+  customerLng?: number
 }
 
 export interface DeliveryTask {
@@ -45,6 +50,10 @@ export interface DeliveryTask {
   distance: string
   step: 'assigned' | 'at_restaurant' | 'picked_up' | 'arrived_customer'
   otp?: string
+  restaurantLat?: number
+  restaurantLng?: number
+  customerLat?: number
+  customerLng?: number
 }
 
 export interface CompletedTripItem {
@@ -190,6 +199,21 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               itemsArr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
             } catch (e) {}
 
+            const subtotal = Number(o.subtotal || o.total_amount || 250)
+            const tipVal = Number(o.tip || 0)
+            const pricing = calculateCheckoutPricing({
+              cartSubtotal: subtotal,
+              roadDistanceKm: 2.4,
+            })
+            const dEarn = pricing.driverEarnings || {
+              baseDistanceShare: 28,
+              extraDistanceShare: 0,
+              surgeRainShare: 0,
+              totalDriverEarnings: 28 + tipVal,
+            }
+            const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
+            const surgeBonus = dEarn.surgeRainShare
+
             setActiveTask({
               id: o.id,
               orderNumber: `#${o.id.slice(0, 8)}`,
@@ -200,13 +224,17 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               customerName: o.customer_name || 'Customer',
               customerAddress: o.customer_address || 'Indiranagar',
               customerPhone: o.customer_phone || user.phone || '+91 98765 43210',
-              basePayout: 45,
-              surgeBonus: 25,
-              payout: 70,
-              tip: Number(o.tip || 0),
+              basePayout,
+              surgeBonus,
+              payout: basePayout + surgeBonus,
+              tip: tipVal,
               distance: '2.4 km',
               step,
               otp: String(o.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''),
+              restaurantLat: o.restaurant_lat ? Number(o.restaurant_lat) : 12.6817,
+              restaurantLng: o.restaurant_lng ? Number(o.restaurant_lng) : 77.4729,
+              customerLat: o.customer_lat ? Number(o.customer_lat) : 12.679898,
+              customerLng: o.customer_lng ? Number(o.customer_lng) : 77.469493,
             })
           }
         }
@@ -270,10 +298,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         if (
           target &&
           target.id &&
-          target.status !== 'delivered' &&
-          target.status !== 'completed' &&
-          target.status !== 'cancelled' &&
-          (!target.driver_name || target.driver_name === 'Unassigned')
+          (target.status === 'ready_for_pickup' || target.status === 'ready') &&
+          (!target.driver_name ||
+            target.driver_name === 'Unassigned' ||
+            target.driver_name === 'Unassigned Driver')
         ) {
           playChimeSound()
           const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
@@ -287,10 +315,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           } catch (e) {}
 
           const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const calcPayout = Math.max(
-            60,
-            Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
-          )
+          const foodTotal = Number(target.total_amount || 250)
+          const tipVal = Number(target.tip || target.tip_amount || 0)
+          const pricing = calculateCheckoutPricing({
+            cartSubtotal: foodTotal,
+            roadDistanceKm: distKm || 1.8,
+          })
+          const dEarn = pricing.driverEarnings || {
+            baseDistanceShare: 24,
+            extraDistanceShare: 0,
+            surgeRainShare: 0,
+            totalDriverEarnings: 24,
+          }
+          const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
+          const surgeBonus = dEarn.surgeRainShare
 
           setOfferTimer(25)
           setBroadcastOffer({
@@ -302,9 +340,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               : 'Koramangala 5th Block, Bengaluru',
             customerName: target.customer_name || 'Customer',
             customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-            basePayout: calcPayout,
-            surgeBonus: 25,
-            tip: 30,
+            basePayout,
+            surgeBonus,
+            tip: tipVal,
             distance: `${distKm || 1.8} km`,
             itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
             customerPhone: target.customer_phone || undefined,
@@ -328,10 +366,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           // Find active orders needing driver pickup
           const availableOrders = json.orders.filter(
             (o: any) =>
-              o.status !== 'delivered' &&
-              o.status !== 'completed' &&
-              o.status !== 'cancelled' &&
-              (!o.driver_name || o.driver_name === 'Unassigned')
+              (o.status === 'ready_for_pickup' || o.status === 'ready') &&
+              (!o.driver_name ||
+                o.driver_name === 'Unassigned' ||
+                o.driver_name === 'Unassigned Driver')
           )
 
           if (availableOrders.length > 0) {
@@ -349,10 +387,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
             const realOtp =
               target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-            const calcPayout = Math.max(
-              60,
-              Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
-            )
+            const foodTotal = Number(target.total_amount || 250)
+            const tipVal = Number(target.tip || target.tip_amount || 0)
+            const pricing = calculateCheckoutPricing({
+              cartSubtotal: foodTotal,
+              roadDistanceKm: distKm || 1.8,
+            })
+            const dEarn = pricing.driverEarnings || {
+              baseDistanceShare: 24,
+              extraDistanceShare: 0,
+              surgeRainShare: 0,
+              totalDriverEarnings: 24,
+            }
+            const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
+            const surgeBonus = dEarn.surgeRainShare
 
             setOfferTimer(25)
             setBroadcastOffer({
@@ -364,13 +412,17 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
                 : 'Koramangala 5th Block, Bengaluru',
               customerName: target.customer_name || 'Customer',
               customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-              basePayout: calcPayout,
-              surgeBonus: 25,
-              tip: 30,
+              basePayout,
+              surgeBonus,
+              tip: tipVal,
               distance: `${distKm || 1.8} km`,
               itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
               customerPhone: target.customer_phone || undefined,
               otp: String(realOtp),
+              restaurantLat: target.restaurant_lat ? Number(target.restaurant_lat) : 12.6817,
+              restaurantLng: target.restaurant_lng ? Number(target.restaurant_lng) : 77.4729,
+              customerLat: target.customer_lat ? Number(target.customer_lat) : 12.679898,
+              customerLng: target.customer_lng ? Number(target.customer_lng) : 77.469493,
             })
           }
         }
@@ -673,7 +725,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
+            (o.status === 'ready_for_pickup' || o.status === 'ready') &&
+            (!o.driver_name ||
+              o.driver_name === 'Unassigned' ||
+              o.driver_name === 'Unassigned Driver')
         )
         if (availableOrders.length > 0) {
           const target = availableOrders[availableOrders.length - 1]
@@ -684,10 +739,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           } catch (e) {}
 
           const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const calcPayout = Math.max(
-            60,
-            Math.round(Number(target.total_amount ?? 250) * 0.15) + 35
-          )
+          const foodTotal = Number(target.total_amount || 250)
+          const tipVal = Number(target.tip || target.tip_amount || 0)
+          const pricing = calculateCheckoutPricing({
+            cartSubtotal: foodTotal,
+            roadDistanceKm: 1.8,
+          })
+          const dEarn = pricing.driverEarnings || {
+            baseDistanceShare: 24,
+            extraDistanceShare: 0,
+            surgeRainShare: 0,
+            totalDriverEarnings: 24,
+          }
+          const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
+          const surgeBonus = dEarn.surgeRainShare
 
           setOfferTimer(25)
           setBroadcastOffer({
@@ -699,12 +764,16 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               : 'Koramangala, Bengaluru',
             customerName: target.customer_name || 'Customer',
             customerAddress: target.customer_address || 'Indiranagar',
-            basePayout: calcPayout,
-            surgeBonus: 25,
-            tip: 30,
+            basePayout,
+            surgeBonus,
+            tip: tipVal,
             distance: '1.8 km',
             itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
             otp: String(realOtp),
+            restaurantLat: target.restaurant_lat ? Number(target.restaurant_lat) : 12.6817,
+            restaurantLng: target.restaurant_lng ? Number(target.restaurant_lng) : 77.4729,
+            customerLat: target.customer_lat ? Number(target.customer_lat) : 12.679898,
+            customerLng: target.customer_lng ? Number(target.customer_lng) : 77.469493,
           })
           return
         }
@@ -747,6 +816,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       distance: broadcastOffer.distance,
       step: 'assigned',
       otp: broadcastOffer.otp || '',
+      restaurantLat: broadcastOffer.restaurantLat ?? 12.6817,
+      restaurantLng: broadcastOffer.restaurantLng ?? 77.4729,
+      customerLat: broadcastOffer.customerLat ?? 12.679898,
+      customerLng: broadcastOffer.customerLng ?? 77.469493,
     }
 
     setActiveTask(task)

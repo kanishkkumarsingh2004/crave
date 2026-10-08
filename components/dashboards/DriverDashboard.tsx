@@ -173,8 +173,10 @@ export default function DriverDashboard() {
             <div className="grid gap-4 md:grid-cols-2">
               <InfoRow
                 icon={<MapPinned className="size-4" />}
-                label="Pickup"
+                label="Pickup Kitchen"
                 value={activeTask.restaurantAddress}
+                actionHref={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
+                actionLabel="Navigate to Kitchen Coordinates →"
               />
               <InfoRow
                 icon={<Navigation className="size-4" />}
@@ -215,7 +217,7 @@ export default function DriverDashboard() {
                   <input
                     type="text"
                     maxLength={6}
-                    placeholder="e.g. 123456"
+                    placeholder="xxxxxx"
                     value={otpValue}
                     onChange={(e) => setOtpValue(e.target.value)}
                     className="w-full rounded-xl border border-[#25332a] bg-[#1c2620] p-2.5 font-mono text-center text-base font-bold text-white outline-none focus:border-[#d9f447]"
@@ -328,14 +330,38 @@ function MiniCard({
   )
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+  actionHref,
+  actionLabel,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+  actionHref?: string
+  actionLabel?: string
+}) {
   return (
-    <div className="rounded-2xl border border-[#25332a] bg-[#121815] p-3 text-white">
-      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#9eb3a4]">
-        {icon}
-        {label}
+    <div className="rounded-2xl border border-[#25332a] bg-[#121815] p-3 text-white flex flex-col justify-between">
+      <div>
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#9eb3a4]">
+          {icon}
+          {label}
+        </div>
+        <div className="mt-2 text-sm font-bold text-white">{value}</div>
       </div>
-      <div className="mt-2 text-sm font-bold text-white">{value}</div>
+      {actionHref && (
+        <a
+          href={actionHref}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-bold text-[#d9f447] hover:underline"
+        >
+          <Navigation className="size-3" /> {actionLabel || 'GPS Map →'}
+        </a>
+      )}
     </div>
   )
 }

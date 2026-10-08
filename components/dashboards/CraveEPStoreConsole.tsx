@@ -245,46 +245,60 @@ export default function CraveXPStoreConsole() {
     }
   }, [user?.id, user?.restaurantId, user?.restaurantName])
 
-  useVendorOrderUpdates(() => {
-    fetch(
-      `/api/orders?vendorId=${encodeURIComponent(restaurantId || user?.restaurantId || user?.id || 'cravexp_dark_store_01')}`,
-      { cache: 'no-store' }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.orders)) {
-          setOrders(
-            data.orders.map((order: any) => {
-              const rawItems =
-                typeof order.items === 'string' ? JSON.parse(order.items) : order.items
-              const items = Array.isArray(rawItems)
-                ? rawItems.map((item: Record<string, unknown>) => ({
-                    name: String(item.name ?? ''),
-                    qty: Number(item.qty ?? 1),
-                    unit: String(item.unit ?? ''),
-                    packed: Boolean(item.packed),
-                    skuCode: String(item.sku_code ?? item.menu_item_id ?? ''),
-                  }))
-                : []
-              const status = order.status === 'preparing' ? 'packing' : order.status
-              return {
-                id: order.id,
-                customerName: order.customer_name,
-                phone: order.customer_phone ?? '',
-                address: order.customer_address ?? '',
-                items,
-                total: Number(order.total_amount ?? 0),
-                paymentMethod: order.payment_method ?? '',
-                time: order.created_at ? new Date(order.created_at).toLocaleString() : '',
-                status: status === 'completed' ? 'picked_up' : status,
-                pickerName: order.picker_name ?? '',
-                batchZone: order.customer_address ?? '',
-              }
-            })
-          )
-        }
-      })
-      .catch(() => {})
+  useVendorOrderUpdates((evtData) => {
+    const o = evtData?.order || evtData
+    const isApproved =
+      !o ||
+      !o.id ||
+      o.payment_status === 'verified' ||
+      (o.status && !['payment_pending', 'payment_submitted'].includes(o.status))
+
+    if (isApproved) {
+      fetch(
+        `/api/orders?vendorId=${encodeURIComponent(restaurantId || user?.restaurantId || user?.id || 'cravexp_dark_store_01')}`,
+        { cache: 'no-store' }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.orders)) {
+            const approvedOrders = data.orders.filter(
+              (order: any) =>
+                order.payment_status === 'verified' ||
+                !['payment_pending', 'payment_submitted'].includes(order.status)
+            )
+            setOrders(
+              approvedOrders.map((order: any) => {
+                const rawItems =
+                  typeof order.items === 'string' ? JSON.parse(order.items) : order.items
+                const items = Array.isArray(rawItems)
+                  ? rawItems.map((item: Record<string, unknown>) => ({
+                      name: String(item.name ?? ''),
+                      qty: Number(item.qty ?? 1),
+                      unit: String(item.unit ?? ''),
+                      packed: Boolean(item.packed),
+                      skuCode: String(item.sku_code ?? item.menu_item_id ?? ''),
+                    }))
+                  : []
+                const status = order.status === 'preparing' ? 'packing' : order.status
+                return {
+                  id: order.id,
+                  customerName: order.customer_name,
+                  phone: order.customer_phone ?? '',
+                  address: order.customer_address ?? '',
+                  items,
+                  total: Number(order.total_amount ?? 0),
+                  paymentMethod: order.payment_method ?? '',
+                  time: order.created_at ? new Date(order.created_at).toLocaleString() : '',
+                  status: status === 'completed' ? 'picked_up' : status,
+                  pickerName: order.picker_name ?? '',
+                  batchZone: order.customer_address ?? '',
+                }
+              })
+            )
+          }
+        })
+        .catch(() => {})
+    }
   })
 
   const triggerToast = (msg: string) => {

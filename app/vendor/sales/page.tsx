@@ -155,9 +155,7 @@ export default function VendorSalesPage() {
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
                 Financial performance for{' '}
-                <strong className="text-white">
-                  {user?.restaurantName || 'Your restaurant'}
-                </strong>
+                <strong className="text-white">{user?.restaurantName || 'Your restaurant'}</strong>
               </p>
             </div>
             <Link
@@ -195,7 +193,9 @@ export default function VendorSalesPage() {
                 <Percent className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-amber-400">-₹{totalCommission}</p>
+            <p className="mt-3 text-3xl font-black tracking-tight text-amber-400">
+              -₹{totalCommission}
+            </p>
             <p className="text-[11px] text-gray-400 mt-1">
               Rate loaded from the restaurant profile
             </p>
@@ -210,7 +210,9 @@ export default function VendorSalesPage() {
                 <TrendingUp className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-[#d9f447]">₹{totalNetEarnings}</p>
+            <p className="mt-3 text-3xl font-black tracking-tight text-[#d9f447]">
+              ₹{totalNetEarnings}
+            </p>
             <p className="text-[11px] text-emerald-400 font-semibold mt-1">
               Transferrable to bank account
             </p>
@@ -226,7 +228,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-3 text-3xl font-black tracking-tight text-white">
-              {orders.filter((order) => order.status === 'completed' || order.status === 'delivered').length}
+              {
+                orders.filter(
+                  (order) => order.status === 'completed' || order.status === 'delivered'
+                ).length
+              }
             </p>
             <p className="text-[11px] text-gray-400 mt-1">Completed orders in database</p>
           </div>
@@ -353,7 +359,9 @@ export default function VendorSalesPage() {
                         <td className="py-3.5 px-4">
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                              o.status === 'completed' || o.status === 'delivered' || o.status === 'ready'
+                              o.status === 'completed' ||
+                              o.status === 'delivered' ||
+                              o.status === 'ready'
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                                 : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                             }`}

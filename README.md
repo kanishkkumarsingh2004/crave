@@ -1,8 +1,8 @@
 # Crave — Next-Gen Multi-Vendor Food & Dark Store Delivery Platform
 
-> **Production Ready Platform** · **100% Test Coverage Pass Rate (48/48 Test Suites, 263/263 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Server-Driven Real-Time WebSocket Engine**
+> **Production Ready Platform** · **100% Test Coverage Pass Rate (48/48 Test Suites, 265/265 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Real-Time WebSocket Engine** · **Dual Commercial Tax Invoice PDF Generator**
 
-Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
+Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router (SWC Compiler)**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, **HTML2PDF**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
 
 ---
 
@@ -34,39 +34,57 @@ Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute 
 
 ---
 
-## 💡 What This Codebase Is Used For
+## 📚 Complete Documentation Index
 
-Crave powers an end-to-end multi-party food & grocery delivery ecosystem across 4 dedicated web portals and specialized APIs:
+All architectural specifications, database sync reports, calculator guides, and product specifications are linked below:
+
+- 🏛️ [ARCHITECTURE.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/ARCHITECTURE.md) — Technical System Architecture, Module Topology & Data Pipelines
+- 📑 [PRD.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/PRD.md) — Product Requirements Document & User Role Specs
+- 📈 [PROGRESS.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/PROGRESS.md) — Feature Completion Status & Milestone History
+- 🧮 [COMMERCIAL_PRICING_AND_CALCULATIONS_GUIDE.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/COMMERCIAL_PRICING_AND_CALCULATIONS_GUIDE.md) — Commercial Pricing Engine & Calculator API Specification
+- 🚗 [CODEBASE_STRUCTURE_AND_DRIVER_ROUTES_REPORT.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/CODEBASE_STRUCTURE_AND_DRIVER_ROUTES_REPORT.md) — Driver Pricing Synchronization Audit Report
+- 🔄 [COMMERCIAL_ENGINE_DATABASE_SYNC_REPORT.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/COMMERCIAL_ENGINE_DATABASE_SYNC_REPORT.md) — Database Schema & Commercial Engine Audit Report
+- 🛝 [PAYMENT_DELIVERY_SURGE_PLAYGROUND_REPORT.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/PAYMENT_DELIVERY_SURGE_PLAYGROUND_REPORT.md) — Payment, Delivery & Surge Charge Playground Guide
+- 📡 [REALTIME_API_ARCHITECTURE.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/REALTIME_API_ARCHITECTURE.md) — Real-Time WebSocket Architecture & Event Specifications
+- 💼 [commercial-engine.md](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/commercial-engine.md) — Platform Commission & Financial Governance Contract Guide
+
+---
+
+## 💡 Portals & Features Overview
+
+Crave powers an end-to-end multi-party food & grocery delivery ecosystem across 4 dedicated web portals:
 
 ### 🛍️ 1. Customer Portal (`/user/*`)
 
-- **Dual-Engine Storefront**: Switch between **Restaurant Food Delivery** and **CraveXP 10-Minute Dark Store Grocery Express**.
-- **Coupons Engine with 1-Click Popup Modal**: Interactive modal listing all available discount coupon codes (`CRAVE50`, `WELCOME100`, etc.) fetched directly from the database with individual **APPLY** buttons and eligibility thresholds.
-- **Dynamic Billing Calculation**: Automatic distance-based delivery fees, surge pricing (Rain / Night Surge), packaging caps, service fees, and promo discounts.
-- **Interactive Delivery Location Picker**: MapLibre GL map selector for doorstep address pin placement.
-- **UPI UTR Reference Payment Verification**: Submit 12-digit UTR references with real-time status updates.
-- **Live Order Tracking**: Stage-by-stage status progress (_Submitted → Verified → Preparing → Out for Delivery → Delivered_) with live rider GPS tracking on interactive maps.
+- **Dual Storefront**: Toggle between **Restaurant Food Delivery** and **CraveXP 10-Minute Dark Store Grocery Express**.
+- **1-Click Coupon Modal**: Interactive popup listing all active promo codes (`CRAVE50`, `WELCOME100`) fetched from DB with one-tap application.
+- **Dynamic Pricing Engine**: Automated distance-based delivery fees ($1.30\times$ road curvature factor), demand/rain/night surge fees, packaging caps, service fees, and promo discounts.
+- **Doorstep Address Selector**: MapLibre GL location pin picker for exact delivery coordinates.
+- **UPI Verification**: Deep-links for GPay, PhonePe, Paytm, BHIM, VPA copy (`crave@upi`), and 12-digit UTR validation queue.
+- **Live Order Tracking**: Stage-by-stage status progress (_Submitted → Verified → Preparing → Out for Delivery → Delivered_) with live rider map telemetry.
+- **Dual Commercial Tax Invoice Modal**: FSSAI compliant Customer Tax Invoice & Vendor Commission Tax Invoice with client-side PDF export (`html2pdf.js`) and browser printing (`@media print`).
 
 ### 🏪 2. Kitchen & Dark Store Vendor Console (`/vendor/*`)
 
-- **Live Kitchen Order Desk**: Real-time incoming order audio chimes, stage progression buttons (_Accept → Prepare → Pack → Ready for Pickup_).
-- **Zero-Polling Instant Sync**: Connected directly to WebSocket channels (`order_update`, `admin_orders`) for live queue updates without page refreshes.
-- **Menu & Stock Editor**: Create, edit, toggle in-stock status, and manage item SKUs.
+- **Live Kitchen Desk**: Audio order chimes, stage progression buttons (_Accept → Prepare → Pack → Ready for Pickup_).
+- **WebSocket Synchronization**: Connected to `order_update` & `admin_orders` channels for instant queue updates.
+- **Menu & Inventory Editor**: Create, edit, toggle in-stock status, and manage item SKUs for food & CraveXP dark stores.
 - **Vendor Store Discounts**: Manage store-specific promotional discount codes.
 
 ### 🛵 3. Delivery Partner Fleet Cockpit (`/driver/*`)
 
 - **Duty Toggle & Geofenced Dispatch Radar**: Online/Offline status switch with Uber H3 spatial hex indexing.
 - **Live Dispatch Popup Modals**: Order assignment popups with audio chime, pickup restaurant, delivery doorstep, trip distance, and calculated driver payout share.
-- **Live GPS Broadcasting**: Real-time driver coordinate broadcasts pushed directly to admin and customer tracking maps.
+- **Calculator API Sync**: Uses `/api/calculator` to display exact driver earnings without client-side miscalculations.
+- **Live GPS Broadcasting**: Pushes driver coordinates directly to admin and customer tracking maps.
 - **Handshake 4-Digit OTP Confirmation**: Secure drop-off verification using customer OTP.
 - **Wallet & Earnings Log**: Real-time trip earnings ledger and instant payout history.
 
 ### 🛡️ 4. Master Admin Command Center (`/admin/*`)
 
 - **Platform Financial Analytics**: Real-time aggregate metrics for gross revenue, total orders, active users, vendor payouts, and net platform commissions.
-- **Uber H3 Geospatial Hex Analytics (`/admin/map-live-analytics`)**: Full-screen MapLibre map overlay showing live driver density per H3 hexagonal cell (Resolution 8) with interactive cell inspection modals.
-- **Payment UTR Verification Queue**: Live review interface to verify or reject customer 12-digit UPI UTR payment submissions.
+- **Uber H3 Geospatial Hex Analytics (`/admin/map-live-analytics`)**: Full-screen MapLibre map overlay showing live driver density per H3 hexagonal cell (Resolution 8) with cell inspection modals.
+- **Payment UTR Verification Queue**: Review queue to verify or reject customer 12-digit UPI UTR payment submissions.
 - **Vendor Onboarding & Settlements**: Create vendor accounts, calculate weekly net payouts, and disburse settlements.
 - **Coupons & Restrictions Manager**: Create platform-wide or store-restricted promo codes.
 
@@ -78,7 +96,7 @@ Crave features an **Uber H3 Hierarchical Hexagonal Geospatial Indexing** system 
 
 1. **Driver Indexing**: Driver GPS positions (`lat`, `lng`) are indexed into H3 hexagonal cells (Resolution 8, ~0.737 km² per cell).
 2. **Geofenced Radius Dispatch**: Pickup requests locate candidate drivers within the pickup location's H3 cell and expanding `k-ring` concentric rings.
-3. **Atomic Offer Locking**: Prevents duplicate offer assignments across active drivers.
+3. **Atomic Offer Locking**: Prevents duplicate offer assignments across active drivers (`lib/dispatch/atomic-lock.ts`).
 
 ---
 
@@ -106,7 +124,7 @@ pnpm dev
 # Start Standalone WebSocket backend server in development mode (Port 8000)
 pnpm dev:ws
 
-# Build optimized Next.js production bundle
+# Build optimized Next.js production bundle using SWC compiler
 pnpm build
 
 # Regenerate Prisma client and rebuild Next.js production bundle
@@ -178,7 +196,7 @@ pnpm dc:ps
 ### 🧪 Testing & Code Quality Scripts
 
 ```bash
-# Run full Jest unit & integration test suite (48 Test Suites, 263 Tests Passing)
+# Run full Jest unit & integration test suite (48 Test Suites, 265 Tests Passing)
 pnpm test
 
 # Run tests in watch mode
@@ -251,10 +269,11 @@ pnpm dev:ws
 
 ## 🔒 Security & Best Practices
 
-- **Password Hashing**: Secure `scrypt` hashing with unique salts.
+- **Password Hashing**: Secure `scrypt` hashing with unique salt buffers.
 - **JWT Authentication**: Signed `jose` JWTs in `HTTPOnly`, `SameSite=Lax` cookies.
 - **Role-Based Access Control**: Strict access controls for `user`, `restaurant_vendor`, `cravexp_store_vendor`, `rider`, and `admin`.
 - **Prepared Statements**: Prisma ORM parameterized queries protecting against SQL injection.
+- **Compilation Performance**: Native SWC compiler builds for Next.js with zero Babel overhead.
 
 ---
 

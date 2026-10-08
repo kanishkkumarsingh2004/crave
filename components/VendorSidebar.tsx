@@ -190,7 +190,9 @@ export default function VendorSidebar() {
                   onClick={() => setMobileMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
-                    isActive ? 'bg-[#d9f447] text-[#0d1310] font-black' : 'text-gray-300 hover:bg-[#1d2621] hover:text-white'
+                    isActive
+                      ? 'bg-[#d9f447] text-[#0d1310] font-black'
+                      : 'text-gray-300 hover:bg-[#1d2621] hover:text-white'
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />
