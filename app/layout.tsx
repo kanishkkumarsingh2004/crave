@@ -4,6 +4,7 @@ import { LanguageProvider } from '@/lib/language-context'
 import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { Toaster } from '@/components/ui/Toaster'
+import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
@@ -15,11 +16,31 @@ export const metadata: Metadata = {
   title: 'crave. | Next-Gen Multi-Role Food Delivery Platform',
   description:
     'Instant food delivery platform connecting Customers, Kitchen Vendors, Delivery Drivers, and System Admins in real-time.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Crave',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 }
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   colorScheme: 'light dark',
-  themeColor: '#d9f447',
+  themeColor: '#18201c',
 }
 
 export default function RootLayout({
@@ -29,6 +50,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={cn('font-sans', geist.variable)}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="Crave" />
+      </head>
       <body className="antialiased bg-[#f8f9f7] text-[#18201c]" suppressHydrationWarning>
         <AuthProvider>
           <CartProvider>
@@ -37,6 +66,7 @@ export default function RootLayout({
                 <ToastProvider>
                   {children}
                   <Toaster />
+                  <PwaInstallPrompt />
                 </ToastProvider>
               </ThemeProvider>
             </LanguageProvider>
@@ -46,3 +76,4 @@ export default function RootLayout({
     </html>
   )
 }
+
