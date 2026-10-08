@@ -171,10 +171,10 @@ export default function LiveDriverMap({
         <MapMarker longitude={restaurantLng} latitude={restaurantLat}>
           <MarkerContent>
             <div className="flex flex-col items-center">
-              <div className="bg-[#10b981] text-white px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold whitespace-nowrap shadow-md mb-1 border border-white">
-                🏬 {restaurantName}
+              <div className="bg-[#d9f447] text-white px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold whitespace-nowrap shadow-md mb-1 border border-white">
+                {restaurantName}
               </div>
-              <div className="size-6 sm:size-7 rounded-full bg-[#10b981] border-2 border-white flex items-center justify-center shadow-lg">
+              <div className="size-6 sm:size-7 rounded-full bg-[#d9f447] border-2 border-white flex items-center justify-center shadow-lg">
                 <Store className="size-3 sm:size-3.5 text-white" />
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function LiveDriverMap({
           <MarkerContent>
             <div className="flex flex-col items-center">
               <div className="bg-[#ef4444] text-white px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold whitespace-nowrap shadow-md mb-1 border border-white">
-                📍 Destination
+                Destination
               </div>
               <div className="size-6 sm:size-7 rounded-full bg-[#ef4444] border-2 border-white flex items-center justify-center shadow-lg">
                 <MapPin className="size-3 sm:size-3.5 text-white" />

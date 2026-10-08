@@ -157,14 +157,14 @@ export default function PwaInstallPrompt() {
 
           {/* Text Details */}
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+            <h4 className="font-bold text-sm tracking-tight text-white flex items-center gap-2 flex-wrap">
               <span>Install Crave App</span>
-              <span className="text-[10px] bg-[#d9f447]/20 text-[#d9f447] font-semibold px-1.5 py-0.5 rounded-full border border-[#d9f447]/30">
+              <span className="inline-flex items-center text-[10px] bg-[#d9f447]/15 text-[#d9f447] font-bold px-2 py-0.5 rounded-full border border-[#d9f447]/30 whitespace-nowrap shrink-0 shadow-xs">
                 Fast &amp; Free
               </span>
             </h4>
-            <p className="text-xs text-white/70 truncate">
-              {isIos ? 'Add to Home Screen for 1-tap food delivery' : 'Get instant 10-min dark store delivery'}
+            <p className="text-xs text-white/70 truncate mt-0.5">
+              {isIos ? 'Add to Home Screen for 1-tap food delivery' : 'Get instant CraveXP 10 Store delivery'}
             </p>
           </div>
 

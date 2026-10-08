@@ -16,7 +16,7 @@ export default function CookiesPolicyPage() {
       <div className="space-y-10 text-gray-700">
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">1.</span> What Are Cookies?
+            <span className="text-[#b5de28]">1.</span> What Are Cookies?
           </h2>
           <p className="leading-relaxed">
             Cookies are small text files placed on your computer, smartphone, or tablet when you
@@ -28,7 +28,7 @@ export default function CookiesPolicyPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">2.</span> Categories of Cookies Used by crave.
+            <span className="text-[#b5de28]">2.</span> Categories of Cookies Used by crave.
           </h2>
           <p className="leading-relaxed">
             <strong className="text-[#18201c]">crave.</strong> uses four primary categories of
@@ -82,7 +82,7 @@ export default function CookiesPolicyPage() {
 
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">3.</span> Managing Cookie Preferences
+            <span className="text-[#b5de28]">3.</span> Managing Cookie Preferences
           </h2>
           <p className="leading-relaxed">
             You can modify your browser settings to decline or clear cookies at any time. Most

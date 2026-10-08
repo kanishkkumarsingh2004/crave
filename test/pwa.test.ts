@@ -11,7 +11,7 @@ describe('Progressive Web App (PWA) Configuration', () => {
     const raw = fs.readFileSync(manifestPath, 'utf8')
     const manifest = JSON.parse(raw)
 
-    expect(manifest.name).toBe('Crave - Multi-Vendor Food & Dark Store Delivery')
+    expect(manifest.name).toBe('Crave - Multi-Vendor Food & CraveXP 10 Store Delivery')
     expect(manifest.short_name).toBe('Crave')
     expect(manifest.start_url).toBe('/')
     expect(manifest.display).toBe('standalone')

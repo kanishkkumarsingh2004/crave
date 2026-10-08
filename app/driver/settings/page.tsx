@@ -156,7 +156,7 @@ export default function DriverSettingsPage() {
                       )}
                       {upi.isVerified && (
                         <span className="text-[10px] font-bold text-[#d9f447] bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
-                          ✓ NPCI Verified
+                          NPCI Verified
                         </span>
                       )}
                     </div>

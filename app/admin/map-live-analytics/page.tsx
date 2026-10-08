@@ -24,7 +24,7 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
   loading: () => (
     <div className="h-[calc(100vh-200px)] min-h-[600px] w-full rounded-2xl bg-gray-100 flex items-center justify-center border border-gray-200">
       <div className="flex flex-col items-center gap-2">
-        <div className="size-6 border-2 border-[#859d19] border-t-transparent rounded-full animate-spin" />
+        <div className="size-6 border-2 border-[#b5de28] border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-bold text-gray-500">
           Loading Live Map Telemetry & Addresses...
         </span>
@@ -238,7 +238,7 @@ export default function MapLiveAnalyticsPage() {
         {/* Header Bar with Title, Filter Pills, Refresh & Settings Dropdown */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-100 dark:border-[#27342d] pb-4">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-2xl bg-[#859d19]/10 dark:bg-[#d9f447]/20 border border-[#859d19]/30 dark:border-[#d9f447]/30 flex items-center justify-center text-[#859d19] dark:text-[#d9f447]">
+            <div className="size-10 rounded-2xl bg-[#b5de28]/10 dark:bg-[#d9f447]/20 border border-[#b5de28]/30 dark:border-[#d9f447]/30 flex items-center justify-center text-[#b5de28] dark:text-[#d9f447]">
               <MapPin className="size-5" />
             </div>
             <div>
@@ -250,7 +250,7 @@ export default function MapLiveAnalyticsPage() {
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {autoSyncInterval === 1
-                      ? '⚡ Real-Time Live (1s)'
+                      ? 'Real-Time Live (1s)'
                       : `Auto ${autoSyncInterval}s`}
                   </span>
                 )}
@@ -291,7 +291,7 @@ export default function MapLiveAnalyticsPage() {
               className="flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] px-3.5 py-2 text-xs font-bold text-[#18201c] dark:text-white hover:bg-gray-100 dark:hover:bg-[#1a221d] active:scale-95 transition disabled:opacity-50"
             >
               <RefreshCw
-                className={`size-3.5 text-[#859d19] dark:text-[#d9f447] ${isRefreshing ? 'animate-spin' : ''}`}
+                className={`size-3.5 text-[#b5de28] dark:text-[#d9f447] ${isRefreshing ? 'animate-spin' : ''}`}
               />
               <span className="hidden sm:inline">{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
             </button>
@@ -303,13 +303,13 @@ export default function MapLiveAnalyticsPage() {
                 onClick={() => setIsSettingsOpen((prev) => !prev)}
                 className={`flex items-center gap-1.5 rounded-full border p-2 text-xs font-bold transition ${
                   isSettingsOpen
-                    ? 'border-[#859d19] dark:border-[#d9f447] bg-[#859d19]/10 dark:bg-[#d9f447]/20 text-[#18201c] dark:text-white shadow-sm'
+                    ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#b5de28]/10 dark:bg-[#d9f447]/20 text-[#18201c] dark:text-white shadow-sm'
                     : 'border-gray-300 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] text-[#18201c] dark:text-white hover:bg-gray-100 dark:hover:bg-[#1a221d] hover:scale-105 active:scale-95'
                 }`}
                 title="Live Analytics Settings"
               >
                 <Settings
-                  className={`size-4 text-[#859d19] dark:text-[#d9f447] transition-transform duration-300 ${isSettingsOpen ? 'rotate-90' : ''}`}
+                  className={`size-4 text-[#b5de28] dark:text-[#d9f447] transition-transform duration-300 ${isSettingsOpen ? 'rotate-90' : ''}`}
                 />
                 <span className="hidden sm:inline">Settings</span>
                 <ChevronDown
@@ -327,7 +327,7 @@ export default function MapLiveAnalyticsPage() {
                   <div className="fixed inset-x-4 top-20 z-50 max-w-sm mx-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
                       <div className="flex items-center gap-2 font-extrabold text-sm text-[#18201c]">
-                        <SlidersHorizontal className="size-4 text-[#859d19]" />
+                        <SlidersHorizontal className="size-4 text-[#b5de28]" />
                         <span>Map Live Settings</span>
                       </div>
                       <button
@@ -345,7 +345,7 @@ export default function MapLiveAnalyticsPage() {
                           <span>Telemetry Stream Mode</span>
                           <span className="text-[10px] text-emerald-700 font-bold font-mono">
                             {autoSyncInterval === 1
-                              ? '⚡ Event-Driven Live Stream'
+                              ? 'Event-Driven Live Stream'
                               : autoSyncInterval > 0
                                 ? `Polling every ${autoSyncInterval}s`
                                 : 'Disabled'}
@@ -364,7 +364,7 @@ export default function MapLiveAnalyticsPage() {
                                   : 'text-gray-600 hover:text-[#18201c]'
                               }`}
                             >
-                              {interval === 1 ? '⚡ Live' : interval === 0 ? 'Off' : `${interval}s`}
+                              {interval === 1 ? 'Live' : interval === 0 ? 'Off' : `${interval}s`}
                             </button>
                           ))}
                         </div>
@@ -374,14 +374,14 @@ export default function MapLiveAnalyticsPage() {
                       <div className="space-y-2 border-t border-gray-100 pt-3">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-[#18201c] flex items-center gap-1.5">
-                            <Hexagon className="size-3.5 text-[#859d19]" />
+                            <Hexagon className="size-3.5 text-[#b5de28]" />
                             <span>H3 Spatial Hex Grid</span>
                           </span>
                           <button
                             type="button"
                             onClick={() => setH3GridEnabled((prev) => !prev)}
                             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                              h3GridEnabled ? 'bg-[#859d19]' : 'bg-gray-300'
+                              h3GridEnabled ? 'bg-[#b5de28]' : 'bg-gray-300'
                             }`}
                           >
                             <span
@@ -474,7 +474,7 @@ export default function MapLiveAnalyticsPage() {
                                     [layer.key]: e.target.checked,
                                   }))
                                 }
-                                className="rounded text-[#859d19] focus:ring-[#859d19]"
+                                className="rounded text-[#b5de28] focus:ring-[#b5de28]"
                               />
                             </label>
                           ))}
@@ -487,7 +487,7 @@ export default function MapLiveAnalyticsPage() {
                           onClick={handleResetMapCenter}
                           className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#18201c] py-2 font-bold transition"
                         >
-                          <Compass className="size-4 text-[#859d19]" />
+                          <Compass className="size-4 text-[#b5de28]" />
                           <span>Center Kanakapura Fleet Sector</span>
                         </button>
 
@@ -520,7 +520,7 @@ export default function MapLiveAnalyticsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search addresses, customer names, riders, kitchens..."
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 pl-10 pr-9 py-2 text-xs text-[#18201c] placeholder-gray-400 focus:bg-white focus:border-[#859d19] focus:outline-none transition shadow-xs"
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 pl-10 pr-9 py-2 text-xs text-[#18201c] placeholder-gray-400 focus:bg-white focus:border-[#b5de28] focus:outline-none transition shadow-xs"
             />
             {searchQuery && (
               <button

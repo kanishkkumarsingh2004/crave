@@ -234,7 +234,7 @@ export default function AdminDashboard() {
   const [isDeletingVendor, setIsDeletingVendor] = useState<boolean>(false)
 
   function triggerToast(msg: string) {
-    const clean = msg.replace(/^[^\w\s₹🗑️]+\s*/, '')
+    const clean = msg.replace(/^[^\w\s₹️]+\s*/, '')
     const isError = /could not|failed|error|unable|invalid/i.test(clean)
     toast(clean, isError ? 'error' : 'success')
   }
@@ -475,7 +475,7 @@ export default function AdminDashboard() {
       }
 
       triggerToast(
-        `🎉 ${newVendorForm.storeName} successfully onboarded as ${newVendorForm.vendorType}!`
+        `${newVendorForm.storeName} successfully onboarded as ${newVendorForm.vendorType}!`
       )
       setIsAddVendorOpen(false)
 
@@ -550,7 +550,7 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Driver creation failed')
       }
 
-      triggerToast(`⚡ Driver '${newDriverForm.name}' successfully onboarded!`)
+      triggerToast(`Driver '${newDriverForm.name}' successfully onboarded!`)
       setIsAddDriverOpen(false)
 
       setNewDriverForm({
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Failed to update account')
       }
 
-      triggerToast(`✏️ Account for '${editForm.name || editingAccount.name}' successfully updated!`)
+      triggerToast(`Account for '${editForm.name || editingAccount.name}' successfully updated!`)
       setIsEditModalOpen(false)
       setEditingAccount(null)
       fetchAccountsAndVendors()
@@ -667,7 +667,7 @@ export default function AdminDashboard() {
       if (!res.ok || data.error) {
         throw new Error(data.error || 'Failed to delete vendor')
       }
-      triggerToast(`🗑️ Store '${name || 'Vendor'}' has been permanently deleted!`)
+      triggerToast(`Store '${name || 'Vendor'}' has been permanently deleted!`)
       setDeleteConfirmVendor(null)
       fetchAccountsAndVendors()
     } catch (err: any) {

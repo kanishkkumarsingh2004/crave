@@ -162,7 +162,7 @@ export default function LoginPage() {
             Don't have an account yet?{' '}
             <Link
               href="/signup"
-              className="font-bold text-[#7d9518] dark:text-[#a3c428] hover:underline"
+              className="font-bold text-[#b5de28] dark:text-[#a3c428] hover:underline"
             >
               Sign Up for Free
             </Link>

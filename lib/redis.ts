@@ -20,12 +20,13 @@ function createRedisInstance(options: RedisOptions = {}): Redis | null {
   }
 
   try {
+    let warnLogged = false
     const defaultOptions: RedisOptions = {
       maxRetriesPerRequest: 1,
       enableReadyCheck: true,
       retryStrategy: (times) => {
-        if (times > 3) return null // Stop retrying after 3 attempts if offline
-        return Math.min(times * 100, 1000)
+        if (times > 1) return null // Stop retrying after 1 attempt if offline
+        return 300
       },
       lazyConnect: true,
       ...options,
@@ -34,9 +35,10 @@ function createRedisInstance(options: RedisOptions = {}): Redis | null {
     const client = redisUrl ? new Redis(redisUrl, defaultOptions) : new Redis(defaultOptions)
 
     client.on('error', (err) => {
-      // Gracefully log without crashing the application process
-      if ((process.env.NODE_ENV as string) !== 'test') {
-        console.warn('⚠️ [Redis] Connection notice:', err.message)
+      // Gracefully log single notice without crashing or spamming
+      if ((process.env.NODE_ENV as string) !== 'test' && !warnLogged) {
+        warnLogged = true
+        console.log(`ℹ️ [Redis] Local Redis not detected (${err.message}). Using in-memory fallback.`)
       }
       g.__redisAvailable = false
     })

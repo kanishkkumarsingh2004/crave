@@ -41,23 +41,30 @@ const REDIS_CHANNEL = 'crave:ws:events'
 if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !== 'test') {
   try {
     const Redis = require('ioredis')
+    let warnLogged = false
+
     const redisOptions = {
       maxRetriesPerRequest: 1,
       enableReadyCheck: true,
-      retryStrategy: (times) => (times > 5 ? null : Math.min(times * 200, 1500)),
+      retryStrategy: (times) => {
+        if (times > 1) return null // Stop retrying quickly if Redis is offline
+        return 300
+      },
       lazyConnect: false,
     }
 
     redisPub = new Redis(REDIS_URL, redisOptions)
     redisSub = new Redis(REDIS_URL, redisOptions)
 
-    redisPub.on('error', (err) => {
-      console.warn('⚠️ [ws-server] Redis Publisher notice:', err.message)
-    })
+    const handleRedisError = (type, err) => {
+      if (!warnLogged) {
+        warnLogged = true
+        console.log(`ℹ️ [ws-server] Local Redis not detected (${err.code || err.message}). Operating in fast in-memory WebSocket mode.`)
+      }
+    }
 
-    redisSub.on('error', (err) => {
-      console.warn('⚠️ [ws-server] Redis Subscriber notice:', err.message)
-    })
+    redisPub.on('error', (err) => handleRedisError('Publisher', err))
+    redisSub.on('error', (err) => handleRedisError('Subscriber', err))
 
     redisSub.subscribe(REDIS_CHANNEL, (err) => {
       if (!err) {
@@ -77,7 +84,7 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
       }
     })
   } catch (err) {
-    console.warn('⚠️ [ws-server] Redis initialization skipped:', err.message)
+    console.log('ℹ️ [ws-server] Redis initialization skipped:', err.message)
   }
 }
 

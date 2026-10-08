@@ -263,7 +263,7 @@ export default function CommercialContractsPage() {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#dfe4dc] dark:border-[#27342d] pb-5 gap-4">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#b5de28] dark:text-[#d9f447]">
             Commercial &amp; Financial Governance
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
@@ -423,7 +423,7 @@ export default function CommercialContractsPage() {
 
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#18201c] dark:text-white">
-                        <Tag className="size-3 text-[#849e16]" /> {c.priceTaxMode}
+                        <Tag className="size-3 text-[#b5de28]" /> {c.priceTaxMode}
                       </span>
                     </td>
 
@@ -480,7 +480,7 @@ export default function CommercialContractsPage() {
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] p-6 shadow-2xl border border-gray-200 dark:border-[#27342d] text-[#18201c] dark:text-white">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#849e16] dark:text-[#d9f447]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#b5de28] dark:text-[#d9f447]">
                   Commercial Contract Governance
                 </span>
                 <h3 className="text-lg font-bold text-[#18201c] dark:text-white">

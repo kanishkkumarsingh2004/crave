@@ -28,7 +28,7 @@ export default function DriverHistoryPage() {
           {completedTrips.map((trip) => (
             <div
               key={trip.id}
-              className="rounded-2xl border border-[#25332a] p-4 bg-[#121815] hover:border-[#859d19] transition shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="rounded-2xl border border-[#25332a] p-4 bg-[#121815] hover:border-[#b5de28] transition shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4">
                 <div className="grid size-10 place-items-center rounded-2xl bg-emerald-500/20 text-[#d9f447] border border-emerald-500/30 font-bold shrink-0">
@@ -40,7 +40,7 @@ export default function DriverHistoryPage() {
                     <span className="text-[10px] text-[#a0ab9f] font-mono">{trip.time}</span>
                   </div>
                   <p className="text-xs font-semibold text-white/90 mt-1">
-                    {trip.restaurant} ➔ {trip.customer}
+                    {trip.restaurant} &rarr; {trip.customer}
                   </p>
                   <p className="text-[11px] text-[#a0ab9f] mt-0.5 font-mono">
                     Distance: {trip.distance}

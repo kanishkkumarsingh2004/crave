@@ -451,7 +451,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
             <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
-              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#859d19] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#b5de28] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
                     <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">
@@ -473,7 +473,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 </Link>
               </div>
 
-              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#859d19] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#b5de28] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
                     <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">

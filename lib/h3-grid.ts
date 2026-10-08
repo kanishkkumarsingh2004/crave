@@ -95,7 +95,7 @@ export function generateH3GridGeoJSON(
       // Dynamic heatmap styling based on pin density
       let fillColor = '#d9f447' // default crave lime tint
       let fillOpacity = 0.12
-      let strokeColor = '#859d19'
+      let strokeColor = '#b5de28'
 
       if (counts.total >= 5) {
         fillColor = '#ef4444' // High density (Red)

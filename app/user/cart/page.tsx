@@ -457,7 +457,7 @@ export default function CartPage() {
               <ArrowLeft className="size-4" />
             </Link>
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#849e16]">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#b5de28]">
                 Secure Checkout &amp; Basket
               </span>
               <h1 className="text-xl sm:text-3xl font-black tracking-tight text-[#18201c] dark:text-white">
@@ -499,7 +499,7 @@ export default function CartPage() {
                   {/* Cart Items Card */}
                   <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
                     <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white mb-4 flex items-center gap-2">
-                      <ShoppingBag className="size-4 text-[#849e16]" /> Items in your Order
+                      <ShoppingBag className="size-4 text-[#b5de28]" /> Items in your Order
                     </h2>
 
                     <div className="divide-y divide-[#f0f3eb] dark:divide-[#27342d]">
@@ -521,7 +521,7 @@ export default function CartPage() {
                                 className="size-12 sm:size-14 rounded-2xl object-cover shrink-0 border border-[#e5e9e1] dark:border-[#27342d]"
                               />
                             ) : (
-                              <div className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] shrink-0 font-bold text-[10px] sm:text-xs">
+                              <div className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0 font-bold text-[10px] sm:text-xs">
                                 FOOD
                               </div>
                             )}
@@ -535,7 +535,7 @@ export default function CartPage() {
                                   {item.restaurantName}
                                 </p>
                               )}
-                              <p className="text-xs font-bold text-[#849e16] mt-0.5">
+                              <p className="text-xs font-bold text-[#b5de28] mt-0.5">
                                 ₹{item.price} each
                               </p>
                             </div>
@@ -583,12 +583,12 @@ export default function CartPage() {
                   <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-                        <MapPin className="size-4 text-[#849e16]" /> Delivery Address &amp; Contact
+                        <MapPin className="size-4 text-[#b5de28]" /> Delivery Address &amp; Contact
                       </h2>
                       <button
                         type="button"
                         onClick={() => setShowAddressModal(true)}
-                        className="text-xs font-extrabold text-[#849e16] hover:text-[#5d7010] flex items-center gap-1 transition"
+                        className="text-xs font-extrabold text-[#b5de28] hover:text-[#5d7010] flex items-center gap-1 transition"
                       >
                         <MapPin className="size-3.5" />
                         {savedAddresses.length > 0
@@ -608,10 +608,10 @@ export default function CartPage() {
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
                             placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
-                            className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden pr-20"
+                            className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#b5de28] focus:outline-hidden pr-20"
                           />
                           {selectedAddressId && (
-                            <span className="absolute right-3 top-2.5 bg-[#849e16] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                            <span className="absolute right-3 top-2.5 bg-[#b5de28] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
                               {savedAddresses.find((a) => a.id === selectedAddressId)?.label ||
                                 'Saved'}
                             </span>
@@ -628,7 +628,7 @@ export default function CartPage() {
                           value={customerPhone}
                           onChange={(e) => setCustomerPhone(e.target.value)}
                           placeholder="+91 98765 43210"
-                          className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden"
+                          className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#b5de28] focus:outline-hidden"
                         />
                       </div>
                     </div>
@@ -638,7 +638,7 @@ export default function CartPage() {
                   <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-                        <Tag className="size-4 text-[#849e16]" /> Apply Promo Code / Coupon
+                        <Tag className="size-4 text-[#b5de28]" /> Apply Promo Code / Coupon
                       </h2>
                       {appliedCoupon ? (
                         <button
@@ -652,7 +652,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => setShowCouponsModal(true)}
-                          className="text-xs font-extrabold text-[#849e16] hover:text-[#5d7010] flex items-center gap-1 transition"
+                          className="text-xs font-extrabold text-[#b5de28] hover:text-[#5d7010] flex items-center gap-1 transition"
                         >
                           <Sparkles className="size-3.5" /> View All ({availableCoupons.length})
                         </button>
@@ -693,12 +693,12 @@ export default function CartPage() {
                                 handleApplyCouponCode()
                               }
                             }}
-                            className="flex-1 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-4 py-2.5 sm:py-3 text-xs font-bold text-[#18201c] dark:text-white uppercase placeholder:normal-case placeholder:font-normal placeholder:text-gray-400 focus:border-[#849e16] focus:outline-hidden"
+                            className="flex-1 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-4 py-2.5 sm:py-3 text-xs font-bold text-[#18201c] dark:text-white uppercase placeholder:normal-case placeholder:font-normal placeholder:text-gray-400 focus:border-[#b5de28] focus:outline-hidden"
                           />
                           <button
                             type="button"
                             onClick={() => handleApplyCouponCode()}
-                            className="rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-2.5 sm:py-3 text-xs font-extrabold text-white dark:text-[#18201c] hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition shadow-md shrink-0"
+                            className="rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-2.5 sm:py-3 text-xs font-extrabold text-white dark:text-[#18201c] hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition shadow-md shrink-0"
                           >
                             Apply Code
                           </button>
@@ -708,7 +708,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => setShowCouponsModal(true)}
-                          className="w-full flex items-center justify-between rounded-2xl border border-dashed border-[#849e16]/60 bg-[#f7faec] dark:bg-[#121815] p-3 sm:p-3.5 hover:bg-[#f0f7db] dark:hover:bg-[#1c2420] transition group text-left"
+                          className="w-full flex items-center justify-between rounded-2xl border border-dashed border-[#b5de28]/60 bg-[#f7faec] dark:bg-[#121815] p-3 sm:p-3.5 hover:bg-[#f0f7db] dark:hover:bg-[#1c2420] transition group text-left"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shrink-0 font-bold shadow-2xs">
@@ -726,7 +726,7 @@ export default function CartPage() {
                               </p>
                             </div>
                           </div>
-                          <ChevronRight className="size-4 text-[#849e16] group-hover:translate-x-1 transition shrink-0" />
+                          <ChevronRight className="size-4 text-[#b5de28] group-hover:translate-x-1 transition shrink-0" />
                         </button>
                       </div>
                     )}
@@ -758,7 +758,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => setShowCouponsModal(true)}
-                            className="text-[11px] font-bold text-[#849e16] hover:underline"
+                            className="text-[11px] font-bold text-[#b5de28] hover:underline"
                           >
                             View All List →
                           </button>
@@ -767,7 +767,7 @@ export default function CartPage() {
                           {availableCoupons.slice(0, 2).map((c) => (
                             <div
                               key={c.id}
-                              className="flex items-center justify-between rounded-2xl border border-dashed border-[#849e16]/40 bg-[#f8faee] p-3 hover:bg-[#f2f7e4] transition"
+                              className="flex items-center justify-between rounded-2xl border border-dashed border-[#b5de28]/40 bg-[#f8faee] p-3 hover:bg-[#f2f7e4] transition"
                             >
                               <div className="pr-2 min-w-0">
                                 <span className="font-mono font-black text-xs text-[#18201c] bg-[#d9f447] px-2 py-0.5 rounded">
@@ -793,7 +793,7 @@ export default function CartPage() {
                 </>
               ) : (
                 <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-8 sm:p-12 text-center shadow-xs">
-                  <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] mb-4">
+                  <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] mb-4">
                     <ShoppingCart className="size-7 sm:size-8" />
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold text-[#18201c] dark:text-white">
@@ -807,13 +807,13 @@ export default function CartPage() {
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link
                       href="/user/explore"
-                      className="w-full sm:w-auto rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition text-center"
+                      className="w-full sm:w-auto rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition text-center"
                     >
                       Explore Kitchens
                     </Link>
                     <Link
                       href="/user/cravexp"
-                      className="w-full sm:w-auto rounded-full bg-[#d9f447] dark:bg-[#27342d] px-6 py-3 text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] shadow-md hover:bg-[#c2dc37] dark:hover:bg-[#324239] transition text-center"
+                      className="w-full sm:w-auto rounded-full bg-[#d9f447] dark:bg-[#27342d] px-6 py-3 text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] shadow-md hover:bg-[#c8e434] dark:hover:bg-[#324239] transition text-center"
                     >
                       craveXP Instamart (15 Min)
                     </Link>
@@ -1069,7 +1069,7 @@ export default function CartPage() {
                     <button
                       type="submit"
                       disabled={isSubmittingOrder || utrRef.trim().length < 10}
-                      className="w-full rounded-2xl bg-[#18201c] dark:bg-[#d9f447] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white dark:text-[#18201c] shadow-xl hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-500 active:scale-[0.98]"
+                      className="w-full rounded-2xl bg-[#18201c] dark:bg-[#d9f447] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white dark:text-[#18201c] shadow-xl hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-500 active:scale-[0.98]"
                     >
                       {isSubmittingOrder ? (
                         <>
@@ -1131,13 +1131,13 @@ export default function CartPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447]">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447]">
                   <Tag className="size-5" />
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-[#18201c] dark:text-white flex items-center gap-2">
                     Available Coupons &amp; Offers
-                    <span className="bg-[#849e16] text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    <span className="bg-[#b5de28] text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                       {availableCoupons.length}
                     </span>
                   </h3>
@@ -1177,7 +1177,7 @@ export default function CartPage() {
                         isApplied
                           ? 'border-emerald-500 dark:border-emerald-500/80 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-xs'
                           : isEligible
-                            ? 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-[#849e16] hover:bg-[#fafce8]/60 dark:hover:bg-[#1c2420] shadow-xs'
+                            ? 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-[#b5de28] hover:bg-[#fafce8]/60 dark:hover:bg-[#1c2420] shadow-xs'
                             : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-90'
                       }`}
                     >
@@ -1274,7 +1274,7 @@ export default function CartPage() {
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447]">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447]">
                   <MapPin className="size-5" />
                 </div>
                 <div>
@@ -1318,12 +1318,12 @@ export default function CartPage() {
                           }}
                           className={`rounded-2xl border p-3.5 sm:p-4 cursor-pointer transition flex items-start justify-between gap-3 ${
                             isSelected
-                              ? 'border-[#849e16] dark:border-[#d9f447] bg-[#f7faec] dark:bg-[#1f281b] ring-2 ring-[#849e16]/30 shadow-xs'
+                              ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#f7faec] dark:bg-[#1f281b] ring-2 ring-[#b5de28]/30 shadow-xs'
                               : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:bg-[#fcfdfe] dark:hover:bg-[#18201c]'
                           }`}
                         >
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="grid size-8 place-items-center rounded-xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#849e16] dark:text-[#d9f447] shrink-0 font-bold mt-0.5">
+                            <div className="grid size-8 place-items-center rounded-xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0 font-bold mt-0.5">
                               {addr.label === 'Home' ? (
                                 <Home className="size-4" />
                               ) : addr.label === 'Work' ? (
@@ -1353,7 +1353,7 @@ export default function CartPage() {
                             type="button"
                             className={`rounded-xl px-3 py-1.5 text-[11px] font-black shrink-0 transition ${
                               isSelected
-                                ? 'bg-[#849e16] text-white'
+                                ? 'bg-[#b5de28] text-white'
                                 : 'bg-[#18201c] dark:bg-[#27342d] text-white dark:text-gray-200 hover:bg-[#323d36] dark:hover:bg-[#324239]'
                             }`}
                           >
@@ -1369,7 +1369,7 @@ export default function CartPage() {
               {/* Add New Address Form */}
               <div className="rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] p-4 space-y-3 mt-4">
                 <p className="text-xs font-black text-[#18201c] dark:text-white flex items-center gap-1.5">
-                  <Plus className="size-4 text-[#849e16] dark:text-[#d9f447]" /> Add a New Delivery
+                  <Plus className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Add a New Delivery
                   Address
                 </p>
 
@@ -1406,14 +1406,14 @@ export default function CartPage() {
                       value={newAddressText}
                       onChange={(e) => setNewAddressText(e.target.value)}
                       placeholder="House/Flat No, Building, Road / Landmark, Area, Bengaluru"
-                      className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#1c2420] px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#849e16] dark:focus:border-[#d9f447] focus:outline-hidden"
+                      className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#1c2420] px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#b5de28] dark:focus:border-[#d9f447] focus:outline-hidden"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSavingAddress}
-                    className="w-full rounded-xl bg-[#849e16] py-2.5 text-xs font-extrabold text-white hover:bg-[#728812] transition shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="w-full rounded-xl bg-[#b5de28] py-2.5 text-xs font-extrabold text-white hover:bg-[#728812] transition shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     {isSavingAddress ? 'Saving Address...' : 'Save & Deliver Here'}
                   </button>
@@ -1472,7 +1472,7 @@ export default function CartPage() {
             className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-[#18201c] dark:text-white font-black"
           >
             <div className="relative">
-              <ShoppingCart className="size-5 text-[#859d19] dark:text-[#d9f447]" />
+              <ShoppingCart className="size-5 text-[#b5de28] dark:text-[#d9f447]" />
               {totalCount > 0 && (
                 <span className="absolute -top-1.5 -right-2 bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] text-[9px] font-black px-1.5 py-0.2 rounded-full">
                   {totalCount}

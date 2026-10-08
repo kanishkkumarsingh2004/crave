@@ -230,7 +230,7 @@ export default function VendorDashboard() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between relative z-10">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-block size-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-pulse" />
+                <span className="inline-block size-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#d9f447] animate-pulse" />
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
                   Kitchen Active • Accepting Orders
                 </span>
@@ -323,7 +323,7 @@ export default function VendorDashboard() {
                           </span>
                           {order.paymentStatus === 'verified' && (
                             <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                              ✓ Payment Verified
+                              Payment Verified
                             </span>
                           )}
                         </div>
@@ -359,7 +359,7 @@ export default function VendorDashboard() {
                             <button
                               type="button"
                               onClick={() => updateOrderStatus(order.id, 'preparing')}
-                              className="rounded-full bg-[#d9f447] px-4 py-1.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                              className="rounded-full bg-[#d9f447] px-4 py-1.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                             >
                               <CheckCircle2 className="size-3.5 text-[#0d1310]" />
                               <span>Accept Order</span>
@@ -411,7 +411,7 @@ export default function VendorDashboard() {
                     </div>
 
                     <p className="text-xs font-semibold text-gray-200 bg-[#121714] p-3 rounded-xl border border-[#222e27]">
-                      🍱 {order.itemsText}
+                      {order.itemsText}
                     </p>
                   </div>
                 ))

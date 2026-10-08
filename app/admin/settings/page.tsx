@@ -114,7 +114,7 @@ export default function AdminSettingsPage() {
       {/* Top Title Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5 gap-4">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#b5de28] dark:text-[#d9f447]">
             System Administration
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
@@ -167,7 +167,7 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b dark:border-[#27342d] pb-4">
               <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                <Globe className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Platform Identity
+                <Globe className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Platform Identity
                 &amp; Dispatch Thresholds
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -352,7 +352,7 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b dark:border-[#27342d] pb-4">
               <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                <Lock className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Security, JWT Tokens
+                <Lock className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Security, JWT Tokens
                 &amp; Access Controls
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -463,7 +463,7 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b dark:border-[#27342d] pb-4">
               <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                <Bell className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Customer &amp;
+                <Bell className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Customer &amp;
                 Partner Notification Gateways
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -562,7 +562,7 @@ export default function AdminSettingsPage() {
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
                 <div>
                   <p className="font-bold text-[#18201c] dark:text-white flex items-center gap-1">
-                    <Volume2 className="size-3.5 text-[#859d19] dark:text-[#d9f447]" /> Audio Order
+                    <Volume2 className="size-3.5 text-[#b5de28] dark:text-[#d9f447]" /> Audio Order
                     Chimes
                   </p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400">
@@ -592,7 +592,7 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm flex flex-col gap-6">
             <div className="border-b dark:border-[#27342d] pb-4">
               <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                <FileCheck className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Partner
+                <FileCheck className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Partner
                 Onboarding &amp; Legal Compliance
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">

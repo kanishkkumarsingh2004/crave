@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 1 */}
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">1.</span> Applicability and Scope
+            <span className="text-[#b5de28]">1.</span> Applicability and Scope
           </h2>
           <p className="leading-relaxed">
             <strong className="text-[#18201c]">crave. Technologies India Limited</strong> (formerly
@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 2 */}
         <section className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">2.</span> Information We Collect
+            <span className="text-[#b5de28]">2.</span> Information We Collect
           </h2>
           <p className="leading-relaxed">
             We collect several categories of information from and about users of our Services:
@@ -115,7 +115,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 3 */}
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">3.</span> How We Use Your Information
+            <span className="text-[#b5de28]">3.</span> How We Use Your Information
           </h2>
           <p className="leading-relaxed">
             We process your personal information for specific, legitimate operational purposes:
@@ -152,7 +152,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 4 */}
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">4.</span> Disclosure of Information to Third Parties
+            <span className="text-[#b5de28]">4.</span> Disclosure of Information to Third Parties
           </h2>
           <p className="leading-relaxed">
             We do not sell your personal data. We disclose your information only to necessary
@@ -201,7 +201,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 5 */}
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">5.</span> Data Security &amp; Retention Policy
+            <span className="text-[#b5de28]">5.</span> Data Security &amp; Retention Policy
           </h2>
           <p className="leading-relaxed">
             crave. employs industry-standard encryption protocols (TLS 1.3 in transit, AES-256 at
@@ -214,7 +214,7 @@ export default function PrivacyPolicyPage() {
         {/* Section 6 */}
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">6.</span> Your Rights &amp; Account Deletion
+            <span className="text-[#b5de28]">6.</span> Your Rights &amp; Account Deletion
           </h2>
           <p className="leading-relaxed">
             You have the right to access, update, or correct your profile data at any time via your

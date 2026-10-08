@@ -4,7 +4,7 @@ export const CRAVEXP_DARK_STORE_ID = 'cravexp_dark_store_01'
 
 export const CRAVEXP_DARK_STORE_INFO = {
   id: CRAVEXP_DARK_STORE_ID,
-  name: 'craveXP Dark Store Warehouse',
+  name: 'craveXP 10 Store Hub',
   address: 'Kanakapura Road Central Warehouse, Bengaluru',
   is_dark_store: true,
 }

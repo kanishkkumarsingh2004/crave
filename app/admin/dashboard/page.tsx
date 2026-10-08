@@ -72,12 +72,12 @@ export default function AdminDashboardPage() {
     if (data.type === 'user_signup') {
       const role = data.role || data.user?.role || 'user'
       setLiveNotice(
-        `⚡ LIVE SERVER EVENT: New ${role} registered (${data.user?.name || 'User'}) — Admin count updated live!`
+        `LIVE SERVER EVENT: New ${role} registered (${data.user?.name || 'User'}) — Admin count updated live!`
       )
     } else if (data.type === 'order_created') {
-      setLiveNotice('⚡ LIVE SERVER EVENT: New order created — Order count updated live!')
+      setLiveNotice('LIVE SERVER EVENT: New order created — Order count updated live!')
     } else if (data.type === 'db_wiped') {
-      setLiveNotice('⚡ LIVE SERVER EVENT: Database reset — Stats synced live!')
+      setLiveNotice('LIVE SERVER EVENT: Database reset — Stats synced live!')
     }
     loadDashboardData()
   })
@@ -227,7 +227,7 @@ export default function AdminDashboardPage() {
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Link
             href="/vendor/crave-ep"
-            className="rounded-full bg-[#d9f447] px-5 py-3 text-xs font-black text-[#121815] shadow-lg hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
+            className="rounded-full bg-[#d9f447] px-5 py-3 text-xs font-black text-[#121815] shadow-lg hover:bg-[#c8e434] transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
           >
             {t.admin.manageCravexpConsole || 'Manage craveXP Console'}{' '}
             <ArrowUpRight className="size-4" />
@@ -357,7 +357,7 @@ export default function AdminDashboardPage() {
               <h3 className="text-base font-bold text-[#18201c] dark:text-white">
                 {t.admin.quickActions || 'Quick Actions'}
               </h3>
-              <ShieldCheck className="size-5 text-[#859d19] dark:text-[#d9f447]" />
+              <ShieldCheck className="size-5 text-[#b5de28] dark:text-[#d9f447]" />
             </div>
             <div className="mt-4 flex flex-col gap-3 text-sm">
               <Link

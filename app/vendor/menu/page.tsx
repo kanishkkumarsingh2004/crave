@@ -261,7 +261,7 @@ export default function VendorMenuPage() {
       triggerToast(`Updated dish '${itemData.name}'!`)
     } else {
       setMenuItems((prev) => [itemData, ...prev])
-      triggerToast(`🎉 Added new dish '${itemData.name}' to live menu!`)
+      triggerToast(`Added new dish '${itemData.name}' to live menu!`)
     }
 
     setShowItemModal(false)
@@ -350,7 +350,7 @@ export default function VendorMenuPage() {
             <button
               onClick={openAddModal}
               disabled={!restaurantId}
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition"
             >
               <Plus className="size-4 text-[#0d1310]" /> Add New Dish
             </button>
@@ -644,7 +644,7 @@ export default function VendorMenuPage() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#d9f447] px-7 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] transition"
+                  className="rounded-full bg-[#d9f447] px-7 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] transition"
                 >
                   {editingItem ? 'Save Dish Changes' : 'Add Dish to Menu'}
                 </button>
