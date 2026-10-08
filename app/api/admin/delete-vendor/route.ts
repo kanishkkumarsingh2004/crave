@@ -27,10 +27,6 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log(
-      `[Admin Delete Vendor] Processing deletion for vendorId: ${vendorId}, userId: ${userId}, email: ${email}`
-    )
-
     let targetUserId = userId
     let targetVendorId = vendorId
 

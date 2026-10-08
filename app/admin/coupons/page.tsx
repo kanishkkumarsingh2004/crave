@@ -39,6 +39,12 @@ export default function AdminCouponsPage() {
   const [usageLimit, setUsageLimit] = useState<number | ''>('')
   const [isActive, setIsActive] = useState(true)
 
+  // Commercial Engine Funding Allocation (Section 17 & 18)
+  const [fundingSource, setFundingSource] = useState<'RESTAURANT' | 'PLATFORM' | 'SHARED' | 'BANK'>(
+    'SHARED'
+  )
+  const [restaurantContributionPct, setRestaurantContributionPct] = useState<number>(60)
+
   // Restaurants State for Applicable Restaurants Selection
   const [restaurantsList, setRestaurantsList] = useState<
     { id: string; name: string; address: string }[]
@@ -753,6 +759,58 @@ export default function AdminCouponsPage() {
                     className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
+              </div>
+
+              {/* Commercial Discount Funding Allocation (commercial-engine.md Section 17 & 18) */}
+              <div className="rounded-2xl border border-purple-200 dark:border-purple-800/50 bg-purple-50/50 dark:bg-purple-950/30 p-3.5 space-y-2 text-xs">
+                <label className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                  <DollarSign className="size-3.5 text-purple-600 dark:text-purple-400" />{' '}
+                  Commercial Funding Source Allocation
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                      Funding Source
+                    </label>
+                    <select
+                      value={fundingSource}
+                      onChange={(e) => setFundingSource(e.target.value as any)}
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    >
+                      <option value="SHARED">SHARED (Vendor + Platform)</option>
+                      <option value="RESTAURANT">RESTAURANT FUNDED (100%)</option>
+                      <option value="PLATFORM">PLATFORM FUNDED (100%)</option>
+                      <option value="BANK">BANK OFFER (Sponsored)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                      Vendor Funding Share (%)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={restaurantContributionPct}
+                      onChange={(e) =>
+                        setRestaurantContributionPct(
+                          Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+                <p className="text-[10px] text-purple-800 dark:text-purple-300 italic">
+                  Vendor bears {restaurantContributionPct}% of discount (₹
+                  {Math.round(
+                    ((typeof discountValue === 'number' ? discountValue : 50) *
+                      restaurantContributionPct) /
+                      100
+                  )}
+                  ), Platform bears {100 - restaurantContributionPct}%.
+                </p>
               </div>
 
               {/* Applicable Restaurants Section */}

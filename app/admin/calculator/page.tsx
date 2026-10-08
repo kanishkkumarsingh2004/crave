@@ -109,6 +109,48 @@ export default function CalculatorPlaygroundPage() {
     fetchDbData()
   }, [])
 
+  // Quick Preset Handlers
+  const resetToSystemDefaults = () => {
+    setSelectedOrderId('')
+    setSelectedRestaurantId('')
+    setSelectedCouponCode('')
+    setSubtotal(450)
+    setDistanceKm(3.5)
+    setPackagingFee(20)
+    setTip(30)
+    setVendorCommissionPercent(15)
+    setDriverPayoutSharePercent(80)
+    setPlatformFee(6)
+    setHandlingFee(5)
+    setBaseDeliveryFee(30)
+    setBaseDistanceKm(3)
+    setPerKmRate(10)
+    setFreeDeliveryThreshold(500)
+    setSurgeMultiplier(1.0)
+    setRainFee(20)
+    setNightSurgeFee(15)
+    setIsRainModeActive(false)
+    setIsNightSurgeActive(false)
+  }
+
+  const applyRainSurgePreset = () => {
+    setIsRainModeActive(true)
+    setRainFee(25)
+    setSurgeMultiplier(1.2)
+  }
+
+  const applyNightSurgePreset = () => {
+    setIsNightSurgeActive(true)
+    setNightSurgeFee(20)
+    setSurgeMultiplier(1.25)
+  }
+
+  const applyHighValueOrderPreset = () => {
+    setSubtotal(650)
+    setFreeDeliveryThreshold(500)
+    setSelectedCouponCode('')
+  }
+
   // Handle Preset Selection: Load Order from DB
   const handleSelectDbOrder = (orderId: string) => {
     setSelectedOrderId(orderId)
@@ -374,10 +416,53 @@ export default function CalculatorPlaygroundPage() {
 
               {/* Playground Inputs & Controls */}
               <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-5 shadow-lg">
-                <div className="flex items-center justify-between border-b border-[#242f29] pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#242f29] pb-3 gap-2">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                     <Sliders className="size-4 text-[#d9f447]" /> Financial Parameters
                   </h3>
+                  <button
+                    onClick={resetToSystemDefaults}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-[#1e2722] hover:bg-[#28352e] border border-[#2d3a33] rounded-lg text-xs font-bold text-[#d9f447] transition"
+                  >
+                    <RefreshCw className="size-3" /> Reset System Defaults
+                  </button>
+                </div>
+
+                {/* Quick Simulation Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    Quick Simulation Presets:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={resetToSystemDefaults}
+                      className="px-2.5 py-1 bg-[#1e2722] border border-[#2d3a33] text-gray-300 hover:text-white rounded-lg text-xs font-semibold transition"
+                    >
+                      🎯 Standard Meal (₹450)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyRainSurgePreset}
+                      className="px-2.5 py-1 bg-blue-950/60 border border-blue-500/40 text-blue-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                    >
+                      <CloudRain className="size-3" /> Heavy Rain (+₹25)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyNightSurgePreset}
+                      className="px-2.5 py-1 bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                    >
+                      <Moon className="size-3" /> Late Night Surge (+₹20)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyHighValueOrderPreset}
+                      className="px-2.5 py-1 bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                    >
+                      <Sparkles className="size-3" /> High Value (Free Delivery)
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-4 text-xs">

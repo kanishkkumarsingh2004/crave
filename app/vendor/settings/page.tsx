@@ -26,6 +26,15 @@ export default function VendorSettingsPage() {
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
 
+  // Commercial Engine Tax & Contract State
+  const [gstin, setGstin] = useState('')
+  const [gstStatus, setGstStatus] = useState('REGISTERED')
+  const [supplierState, setSupplierState] = useState('Karnataka')
+  const [priceTaxMode, setPriceTaxMode] = useState('TAX_INCLUSIVE')
+  const [commercialModel, setCommercialModel] = useState('commission')
+  const [commissionRate, setCommissionRate] = useState(15)
+  const [markupRate, setMarkupRate] = useState(0)
+
   useEffect(() => {
     if (isLoading) return
     if (!user) {
@@ -73,6 +82,13 @@ export default function VendorSettingsPage() {
         setKitchenOpen(Boolean(restaurant.is_open))
         setAddress(restaurant.address ?? user.address ?? '')
         setPhone(user.phone ?? '')
+        setGstin(restaurant.gstin ?? '')
+        setGstStatus(restaurant.gst_status ?? 'REGISTERED')
+        setSupplierState(restaurant.supplier_state ?? 'Karnataka')
+        setPriceTaxMode(restaurant.price_tax_mode ?? 'TAX_INCLUSIVE')
+        setCommercialModel(restaurant.commercial_model ?? 'commission')
+        setCommissionRate(Number(restaurant.commission_rate ?? 15))
+        setMarkupRate(Number(restaurant.markup_rate ?? 0))
       } catch (err) {
         console.error('Failed to load restaurant settings:', err)
       } finally {
@@ -106,10 +122,17 @@ export default function VendorSettingsPage() {
           payout_vpa: payoutUpi || null,
           fssai_license: fssaiLicense || null,
           address: address || null,
+          gstin: gstin || null,
+          gst_status: gstStatus || 'REGISTERED',
+          supplier_state: supplierState || 'Karnataka',
+          price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
+          commercial_model: commercialModel,
+          commission_rate: commissionRate,
+          markup_rate: markupRate,
         }),
       })
       if (!res.ok) throw new Error('Save failed')
-      setToastMsg('Bank account details & kitchen settings saved!')
+      setToastMsg('Bank account details, GST profile & commercial settings saved to DB!')
     } catch (err) {
       setToastMsg('Could not save settings to the database.')
     } finally {
@@ -329,13 +352,152 @@ export default function VendorSettingsPage() {
             </div>
           </div>
 
+          {/* Commercial Tax & GST Profile Card (commercial-engine.md Section 20) */}
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
+                <ShieldCheck className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#18201c]">
+                  GST Tax Registration &amp; Pricing Mode
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Commercial engine tax profile &amp; place of supply configuration
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">GSTIN Registration Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 29AAAAA0000A1Z5"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono font-bold uppercase outline-none focus:border-[#86a018] bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">GST Registration Status</label>
+                <select
+                  value={gstStatus}
+                  onChange={(e) => setGstStatus(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                >
+                  <option value="REGISTERED">REGISTERED (Regular Taxable)</option>
+                  <option value="UNREGISTERED">UNREGISTERED</option>
+                  <option value="COMPOSITION">COMPOSITION SCHEME</option>
+                  <option value="EXEMPT">EXEMPT</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Supplier Registration State</label>
+                <input
+                  type="text"
+                  value={supplierState}
+                  onChange={(e) => setSupplierState(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">Default Menu Price Tax Mode</label>
+                <select
+                  value={priceTaxMode}
+                  onChange={(e) => setPriceTaxMode(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                >
+                  <option value="TAX_INCLUSIVE">
+                    TAX INCLUSIVE (Displayed price includes 5% GST)
+                  </option>
+                  <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE (5% GST added at checkout)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Commercial Model & Commission / Markup Settings */}
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-amber-100 text-amber-800 font-bold">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#18201c]">
+                  Commercial Settlement &amp; Pricing Model
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Configure separate commission cut (%) and platform customer markup (%)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3 text-xs">
+              <div>
+                <label className="font-bold text-[#18201c]">Commercial Model</label>
+                <select
+                  value={commercialModel}
+                  onChange={(e) => setCommercialModel(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                >
+                  <option value="commission">COMMISSION (Vendor pays % cut on order)</option>
+                  <option value="markup">MARKUP (Platform adds % markup for customer)</option>
+                  <option value="hybrid">
+                    HYBRID (Both Commission cut &amp; Customer Markup apply)
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">
+                  Commission Rate (%) {commercialModel === 'markup' && '(Disabled)'}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  disabled={commercialModel === 'markup'}
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(Number(e.target.value))}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c]">
+                  Platform Markup Rate (%) {commercialModel === 'commission' && '(Disabled)'}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  disabled={commercialModel === 'commission'}
+                  value={markupRate}
+                  onChange={(e) => setMarkupRate(Number(e.target.value))}
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-500 bg-amber-50/70 border border-amber-200/80 p-3 rounded-2xl">
+              💡 <strong>Example:</strong> Under <strong>Commission (e.g., 15%)</strong>, the vendor
+              pays 15% to the platform. Under <strong>Markup (e.g., 10%)</strong>, the platform adds
+              10% on top of the vendor's base menu price for customers.
+            </p>
+          </div>
+
           {/* Submit Save Button */}
           <div className="flex justify-end">
             <button
               type="submit"
               className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-8 py-3.5 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition"
             >
-              <Save className="size-4 text-[#d9f447]" /> Save Bank &amp; Profile Settings
+              <Save className="size-4 text-[#d9f447]" /> Save Bank, Profile &amp; Commercial
+              Settings
             </button>
           </div>
         </form>

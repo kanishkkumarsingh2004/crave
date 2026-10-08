@@ -21,12 +21,6 @@ async function createAdminCredentials() {
   const effectivePassword = adminPassword || '1234567890'
   const adminName = process.env.ADMIN_NAME || 'System Administrator'
 
-  console.log(`\n========================================`)
-  console.log(` 🛡️  Crave Admin Credential Provisioner`)
-  console.log(`========================================`)
-  console.log(`Target Email:    ${adminEmail}`)
-  console.log(`Role:            admin`)
-
   const passwordHash = crypto.scryptSync(effectivePassword, adminEmail, 64).toString('hex')
   const userId = `usr_admin_${crypto.randomUUID().slice(0, 8)}`
 
@@ -43,7 +37,6 @@ async function createAdminCredentials() {
           role: 'admin',
         },
       })
-      console.log(`\n✅ Existing administrator account credentials updated.`)
     } else {
       adminRecord = await prisma.user.create({
         data: {
@@ -55,7 +48,6 @@ async function createAdminCredentials() {
           locale: 'en',
         },
       })
-      console.log(`\n✅ Administrator account created successfully.`)
     }
 
     await prisma.paymentConfig.upsert({
@@ -74,11 +66,6 @@ async function createAdminCredentials() {
         updated_at: new Date(),
       },
     })
-
-    console.log(`   User ID:  ${adminRecord.id}`)
-    console.log(`   Email:    ${adminRecord.email}`)
-    console.log(`   Password: ${effectivePassword}`)
-    console.log(`   Role:     ${adminRecord.role}`)
   } catch (error: any) {
     console.error(`\n❌ Failed to provision admin credentials:`, error?.message || error)
     process.exit(1)
