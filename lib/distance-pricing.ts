@@ -18,6 +18,8 @@ export interface CheckoutPricingBreakdown {
   handlingFee: number
   platformFee: number
   gstAmount: number
+  exactGst?: number
+  roundingAdjustment: number
   couponDiscount: number
   grandTotal: number
   driverEarnings?: {
@@ -193,6 +195,8 @@ export function calculateCheckoutPricing(params: {
     handlingFee: b.handlingFee,
     platformFee: b.platformFee,
     gstAmount: b.gstAmount,
+    exactGst: b.exactGst,
+    roundingAdjustment: b.roundingAdjustment,
     couponDiscount: b.couponDiscount,
     grandTotal: b.grandTotal,
     driverEarnings: {

@@ -263,14 +263,14 @@ export function calculateTaxBase(amount: number, taxRatePercent: number, mode: P
 
   if (mode === 'TAX_INCLUSIVE') {
     // Base = P / (1 + R/100)
-    const taxableBase = Math.round((amount / (1 + taxRatePercent / 100)) * 100) / 100
-    const gstAmount = Math.round((amount - taxableBase) * 100) / 100
+    const taxableBase = Math.ceil(amount / (1 + taxRatePercent / 100))
+    const gstAmount = Math.ceil(amount - taxableBase)
     return { taxableBase, gstAmount, totalAmount: amount }
   } else {
     // Exclusive: Base = P, Tax = P * (R/100)
     const taxableBase = amount
-    const gstAmount = Math.round(((amount * taxRatePercent) / 100) * 100) / 100
-    const totalAmount = Math.round((taxableBase + gstAmount) * 100) / 100
+    const gstAmount = Math.ceil((amount * taxRatePercent) / 100)
+    const totalAmount = Math.ceil(taxableBase + gstAmount)
     return { taxableBase, gstAmount, totalAmount }
   }
 }
@@ -286,8 +286,8 @@ export function resolveTaxSplit(taxAmount: number, supplierState: string, custom
     !supplierState
 
   if (isIntraState) {
-    const cgst = Math.round((taxAmount / 2) * 100) / 100
-    const sgst = Math.round((taxAmount - cgst) * 100) / 100
+    const cgst = Math.ceil(taxAmount / 2)
+    const sgst = Math.ceil(taxAmount - cgst)
     return { taxMode: 'CGST_SGST' as TaxMode, cgst, sgst, igst: 0 }
   } else {
     return { taxMode: 'IGST' as TaxMode, cgst: 0, sgst: 0, igst: taxAmount }
@@ -377,15 +377,15 @@ export function calculateOrderPriceSnapshot(input: PriceCalculationInput): Immut
   })
 
   // 2. Discount Allocation (Section 17 & 18)
-  const grossDiscount = Math.min(rawSubtotal, Math.round(input.couponDiscountAmount || 0))
+  const grossDiscount = Math.min(rawSubtotal, Math.ceil(input.couponDiscountAmount || 0))
   const restContribPct = input.restaurantDiscountContributionPercent ?? 50
-  const restaurantDiscount = Math.round((grossDiscount * restContribPct) / 100)
-  const platformDiscount = Math.round(grossDiscount - restaurantDiscount)
+  const restaurantDiscount = Math.ceil((grossDiscount * restContribPct) / 100)
+  const platformDiscount = Math.ceil(grossDiscount - restaurantDiscount)
   const netItemSubtotal = Math.max(0, rawSubtotal - grossDiscount)
 
   // Markup amount calculated on gross item subtotal
   const markupAmount = isMarkupApplicable
-    ? Math.round((rawSubtotal * effectiveMarkupRate) / 100) + (contract.fixedMarkupAmount || 0)
+    ? Math.ceil((rawSubtotal * effectiveMarkupRate) / 100) + (contract.fixedMarkupAmount || 0)
     : 0
 
   // 3. Fees Calculation
@@ -398,12 +398,12 @@ export function calculateOrderPriceSnapshot(input: PriceCalculationInput): Immut
 
   // Platform service tax (18% GST on platform service fees: platformFee + handlingFee)
   const platformServiceTaxableBase = platformFee + handlingFee
-  const platformServiceGst = Math.round(platformServiceTaxableBase * 0.18 * 100) / 100
+  const platformServiceGst = Math.ceil(platformServiceTaxableBase * 0.18)
 
   const tip = Math.max(0, input.tip || 0)
 
   // 4. Customer Payable Total (Includes markupAmount when operating under markup/hybrid model)
-  const customerPayable = Math.round(
+  const customerPayable = Math.ceil(
     netItemSubtotal +
       markupAmount +
       packagingFee +
@@ -417,13 +417,13 @@ export function calculateOrderPriceSnapshot(input: PriceCalculationInput): Immut
 
   // 5. Platform Commission & Tax (Section 28)
   const grossCommission = isCommissionApplicable
-    ? Math.round(
+    ? Math.ceil(
         contract.commissionModel === 'FIXED'
           ? contract.fixedCommissionAmount || 50
           : (rawSubtotal * effectiveCommissionRate) / 100
       )
     : 0
-  const commissionGst = Math.round(grossCommission * 0.18 * 100) / 100 // 18% GST on platform service charge
+  const commissionGst = Math.ceil(grossCommission * 0.18) // 18% GST on platform service charge
   const totalCommissionDeduction = grossCommission + commissionGst
 
   // 6. Restaurant Payable / Settlement (Section 30)
@@ -434,13 +434,13 @@ export function calculateOrderPriceSnapshot(input: PriceCalculationInput): Immut
   const restaurantPayableGross = restaurantNetSales + restaurantPackagingFeeShare
   const restaurantPayableNet = Math.max(
     0,
-    Math.round(restaurantPayableGross - totalCommissionDeduction)
+    Math.ceil(restaurantPayableGross - totalCommissionDeduction)
   )
 
   // 7. Platform Economics
   const platformGrossRevenue = grossCommission + markupAmount + platformFee + handlingFee
   const platformServiceGstLiability = commissionGst + platformServiceGst
-  const platformNetRevenue = Math.round(platformGrossRevenue - platformDiscount)
+  const platformNetRevenue = Math.ceil(platformGrossRevenue - platformDiscount)
 
   return {
     snapshotId,

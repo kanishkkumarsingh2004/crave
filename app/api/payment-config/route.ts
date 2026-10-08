@@ -180,7 +180,7 @@ export async function POST(request: Request) {
     if (!token) {
       try {
         const c = await cookies()
-        token = c.get('crave_auth_token')?.value || ''
+        token = c.get('crave_auth_token')?.value || c.get('crave_token')?.value || ''
       } catch {}
     }
 

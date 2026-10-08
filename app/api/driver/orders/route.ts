@@ -39,33 +39,41 @@ export async function GET(request: Request) {
         } catch (e) {}
 
         const tip = Number(o.tip || 0)
-        const subtotal = Number(o.subtotal || o.total_amount || 0)
-        const storedBreakdown = itemsArr.length > 0 ? itemsArr[0]?.billing_breakdown : null
+        const storedBreakdown =
+          o.pricing_breakdown || (itemsArr.length > 0 ? itemsArr[0]?.billing_breakdown : null)
 
         let basePay = 0
         let surgePay = 0
-        let driverPayout = Number(o.driver_payout || 0)
+        let driverPayout = 0
 
-        if (storedBreakdown && storedBreakdown.driver_payout != null) {
-          driverPayout = Number(storedBreakdown.driver_payout)
-          basePay = Number(
-            storedBreakdown.driver_base_payout ?? Math.round((driverPayout - tip) * 0.7)
+        if (
+          o.driver_payout != null &&
+          !isNaN(Number(o.driver_payout)) &&
+          Number(o.driver_payout) > 0
+        ) {
+          driverPayout = Number(o.driver_payout)
+          basePay = Number(storedBreakdown?.driver_base_payout ?? Math.max(0, driverPayout - tip))
+          surgePay = Number(storedBreakdown?.driver_surge_payout ?? 0)
+        } else if (
+          storedBreakdown &&
+          (storedBreakdown.driver_payout != null || storedBreakdown.totalDriverEarnings != null)
+        ) {
+          driverPayout = Number(
+            storedBreakdown.driver_payout ?? storedBreakdown.totalDriverEarnings
           )
-          surgePay =
-            Number(storedBreakdown.driver_surge_payout ?? 0) +
-            Number(storedBreakdown.driver_extra_distance_payout ?? 0)
+          basePay = Number(storedBreakdown.driver_base_payout ?? Math.max(0, driverPayout - tip))
+          surgePay = Number(storedBreakdown.driver_surge_payout ?? 0)
         } else {
+          const foodSubtotal = Number(o.subtotal || storedBreakdown?.subtotal || 250)
           const calcResult = calculateFullBreakdown({
-            subtotal,
+            subtotal: foodSubtotal,
             distanceKm: 2.4,
             tip,
           })
           const dEarnings = calcResult.driverEarnings
           basePay = dEarnings.baseDistanceShare + dEarnings.extraDistanceShare
           surgePay = dEarnings.surgeRainShare
-          if (!driverPayout) {
-            driverPayout = dEarnings.totalDriverEarnings
-          }
+          driverPayout = dEarnings.totalDriverEarnings
         }
 
         return {

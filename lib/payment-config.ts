@@ -37,7 +37,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   handlingFee: 5,
   vendorCommission: 15,
   packagingCap: 20,
-  gstRatePercent: 18,
+  gstRatePercent: 5,
   baseDeliveryFee: 30,
   baseDistanceKm: 3,
   perKmRate: 10,
@@ -77,9 +77,18 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
   }
 
   try {
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('crave_token') || localStorage.getItem('crave_auth_token') || ''
+        : ''
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const res = await fetch('/api/payment-config', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(config),
     })
     return res.ok

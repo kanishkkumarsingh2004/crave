@@ -68,14 +68,47 @@ export async function listPaymentReviews(status?: string) {
 
 export async function getActivePaymentConfig() {
   try {
-    return await prisma.paymentConfig.findFirst({ where: { is_active: true } })
+    let config = await prisma.paymentConfig.findFirst({ where: { is_active: true } })
+    if (!config) {
+      config = await prisma.paymentConfig.findFirst({ orderBy: { updated_at: 'desc' } })
+    }
+    if (config) {
+      return {
+        ...config,
+        ...(config.gst_rate != null && { gst_rate_percent: Number(config.gst_rate) }),
+        ...(config.surge_multiplier != null && {
+          surge_multiplier: Number(config.surge_multiplier),
+        }),
+      }
+    }
+    return null
   } catch {
     try {
-      const { data } = await supabase
+      let { data } = await supabase
         .from('payment_configs')
         .select('*')
         .eq('is_active', true)
         .maybeSingle()
+      if (!data) {
+        const { data: latest } = await supabase
+          .from('payment_configs')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        data = latest
+      }
+      if (data) {
+        return {
+          ...data,
+          ...(data.gst_rate != null
+            ? { gst_rate_percent: Number(data.gst_rate) }
+            : data.gst_rate_percent != null
+              ? { gst_rate_percent: Number(data.gst_rate_percent) }
+              : {}),
+          ...(data.surge_multiplier != null && { surge_multiplier: Number(data.surge_multiplier) }),
+        }
+      }
       return data
     } catch {
       return null
@@ -112,13 +145,41 @@ export async function upsertPaymentConfig(data: {
   require_utr_number?: boolean
   is_active?: boolean
 }) {
+  const { gst_rate_percent, ...rest } = data
+  const intFields = [
+    'platform_fee',
+    'handling_fee',
+    'vendor_commission',
+    'packaging_cap',
+    'delivery_fee',
+    'base_distance_km',
+    'per_km_rate',
+    'free_delivery_threshold',
+    'driver_payout_share',
+    'rain_fee',
+    'night_surge_fee',
+  ]
+  const cleaned: Record<string, any> = { ...rest }
+  for (const k of intFields) {
+    if (cleaned[k] != null && typeof cleaned[k] === 'number') {
+      cleaned[k] = Math.round(cleaned[k])
+    }
+  }
+
+  const prismaData = {
+    ...cleaned,
+    ...(gst_rate_percent != null && { gst_rate: gst_rate_percent }),
+    updated_at: new Date(),
+  }
+
   try {
     return await prisma.paymentConfig.upsert({
       where: { id: data.id },
-      create: { ...data, updated_at: new Date() },
-      update: { ...data, updated_at: new Date() },
+      create: prismaData as any,
+      update: prismaData as any,
     })
-  } catch {
+  } catch (e) {
+    console.error('Prisma upsertPaymentConfig error:', e)
     try {
       const { data: upserted } = await supabase
         .from('payment_configs')

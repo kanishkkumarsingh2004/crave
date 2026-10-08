@@ -1978,6 +1978,18 @@ export default function CustomerDashboard({
                         <p className="font-bold text-base text-[#18201c] dark:text-white">
                           ₹{order.total}
                         </p>
+                        {order.status === 'In Progress' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedOrderId(String(order.id))
+                              router.push(`/user/track/${order.id}`)
+                            }}
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c2dc37] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                          >
+                            <Bike className="size-3" /> Track Live Order
+                          </button>
+                        )}
                         {(order.status === 'Delivered' ||
                           (order.status as string) === 'completed') && (
                           <button

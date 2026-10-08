@@ -336,6 +336,11 @@ export async function POST(request: Request) {
       platform_fee: calcResult.customerBilling.platformFee,
       handling_fee: calcResult.customerBilling.handlingFee,
       gst: calcResult.customerBilling.gstAmount,
+      gst_rate_percent: (() => {
+        const itemRate = itemsList.find((i: any) => i.taxRate != null)?.taxRate
+        if (itemRate != null) return Number(itemRate)
+        return paymentConfig.gstRatePercent ?? 5
+      })(),
       tip: calcResult.customerBilling.tip,
       discount_amount: calcResult.customerBilling.couponDiscount,
       total_amount: Number(total_amount) || calcResult.customerBilling.grandTotal,

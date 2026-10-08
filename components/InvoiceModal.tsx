@@ -44,6 +44,7 @@ export interface InvoiceOrderData {
     hsnSacCode?: string
     taxCategory?: string
     priceTaxMode?: PriceTaxMode
+    taxRate?: number
   }>
   subtotal?: number
   packagingFee?: number
@@ -65,14 +66,16 @@ export interface InvoiceOrderData {
 interface InvoiceModalProps {
   order: InvoiceOrderData | null
   onClose: () => void
+  showVendorTab?: boolean
 }
 
-export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
+export default function InvoiceModal({ order, onClose, showVendorTab = false }: InvoiceModalProps) {
   const [dbData, setDbData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'tax_invoice' | 'commission_invoice'>('tax_invoice')
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [gstRatePercent, setGstRatePercent] = useState<number | null>(null)
 
   useEffect(() => {
     if (!order?.id) return
@@ -98,6 +101,19 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
       })
       .finally(() => {
         if (isMounted) setLoading(false)
+      })
+
+    // Fetch the live admin payment config to resolve the actual food GST rate from DB
+    fetch('/api/payment-config', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json) => {
+        if (!isMounted) return
+        if (json.success && json.config && json.config.gstRatePercent != null) {
+          setGstRatePercent(Number(json.config.gstRatePercent))
+        }
+      })
+      .catch(() => {
+        // Fallback silently; resolvedTaxRate will fall back to other sources
       })
 
     return () => {
@@ -129,6 +145,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
           price: Number(item.price || item.mrp || 0),
           hsnSacCode: item.hsnSacCode || '996331',
           priceTaxMode: (item.priceTaxMode as PriceTaxMode) || 'TAX_INCLUSIVE',
+          taxRate: item.taxRate != null ? Number(item.taxRate) : undefined,
         }))
     : []
 
@@ -209,34 +226,25 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
   })
 
   // Resolved final financial breakdown
-  const finalSubtotal =
-    storedBreakdown?.subtotal ?? dbData?.subtotal ?? order.subtotal ?? priceSnapshot.subtotal
-  const finalPackagingFee =
-    storedBreakdown?.packaging_fee ??
-    dbData?.packaging_fee ??
-    order.packagingFee ??
-    priceSnapshot.packagingFee
-  const finalDeliveryFee =
-    storedBreakdown?.delivery_fee ??
-    dbData?.delivery_fee ??
-    order.deliveryFee ??
-    priceSnapshot.deliveryFee
-  const finalPlatformFee =
-    storedBreakdown?.platform_fee ??
-    dbData?.platform_fee ??
-    order.platformFee ??
-    priceSnapshot.platformFee
-  const finalHandlingFee =
-    storedBreakdown?.handling_fee ??
-    dbData?.handling_fee ??
-    order.handlingFee ??
-    priceSnapshot.handlingFee
-  const finalGst = storedBreakdown?.gst ?? dbData?.gst ?? order.gst ?? priceSnapshot.foodGstTotal
-  const finalTotal =
-    storedBreakdown?.total_amount ??
-    dbData?.total_amount ??
-    order.total ??
-    priceSnapshot.customerPayable
+  const finalSubtotal = priceSnapshot.subtotal
+  const finalPackagingFee = priceSnapshot.packagingFee
+  const finalDeliveryFee = priceSnapshot.deliveryFee
+  const finalPlatformFee = priceSnapshot.platformFee
+  const finalHandlingFee = priceSnapshot.handlingFee
+  const finalGst = priceSnapshot.foodGstTotal
+  const finalTotal = priceSnapshot.customerPayable
+
+  const exactUnroundedSum =
+    Number(finalSubtotal || 0) -
+    Number(discountAmount || 0) +
+    Number(finalDeliveryFee || 0) +
+    Number(finalPackagingFee || 0) +
+    Number(finalPlatformFee || 0) +
+    Number(finalHandlingFee || 0) +
+    Number(finalGst || 0) +
+    Number(tip || 0)
+
+  const finalRoundingAdjustment = Math.max(0, Number(finalTotal || 0) - exactUnroundedSum)
 
   const vendorCommissionRate =
     storedBreakdown?.vendor_commission_rate ?? priceSnapshot.commissionRate
@@ -250,6 +258,17 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
         timeStyle: 'short',
       })
     : order.timestamp || new Date().toLocaleString('en-IN')
+
+  // Resolve the actual food GST rate applied to this order.
+  // Priority: per-item taxRate → stored billing breakdown → live DB payment config → default 5%.
+  const resolvedTaxRate = (() => {
+    const itemRate = itemsList.find((i) => i.taxRate != null)?.taxRate
+    if (itemRate != null) return itemRate
+    const storedRate = storedBreakdown?.gst_rate_percent
+    if (storedRate != null) return Number(storedRate)
+    if (gstRatePercent != null) return gstRatePercent
+    return 5
+  })()
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -304,25 +323,71 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
       {/* Print Styles Sheet */}
       <style jsx global>{`
         @media print {
+          @page {
+            margin: 0;
+            size: A4 portrait;
+          }
+          html,
+          body {
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .fixed.inset-0 {
+            position: static !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+          }
+          div[class*='max-h-'] {
+            position: static !important;
+            max-height: none !important;
+            overflow: visible !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            background: white !important;
+            color: black !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
           body * {
-            visibility: hidden;
+            visibility: hidden !important;
           }
           #printable-invoice-modal-content,
           #printable-invoice-modal-content * {
-            visibility: visible;
+            visibility: visible !important;
           }
           #printable-invoice-modal-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            max-width: 100% !important;
-            margin: 0;
-            padding: 20px;
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 190mm !important;
+            margin: 0 auto !important;
+            padding-top: 15mm !important;
+            padding-bottom: 15mm !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
             background: white !important;
             color: black !important;
+          }
+          table,
+          tr,
+          td,
+          th {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .no-print {
             display: none !important;
@@ -332,25 +397,25 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
 
       <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-7 shadow-2xl border border-gray-200 dark:border-[#27342d] text-[#18201c] dark:text-white">
         {/* Top Header & Actions (hidden during print) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4 mb-4 gap-3 no-print">
-          <div className="flex items-center gap-2.5">
-            <span className="grid size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] font-black text-base shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4 mb-4 gap-3.5 no-print">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="grid size-9 sm:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] font-black text-sm sm:text-base shadow-xs shrink-0">
               c.
             </span>
-            <div>
-              <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white flex items-center gap-1.5">
-                <FileText className="size-4.5 text-emerald-600 dark:text-emerald-400" /> OFFICIAL
-                GST TAX INVOICE
+            <div className="min-w-0 flex-1">
+              <h3 className="font-extrabold text-sm sm:text-lg text-[#18201c] dark:text-white flex items-center gap-1.5 truncate">
+                <FileText className="size-4 sm:size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                OFFICIAL GST TAX INVOICE
               </h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-wider font-bold">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-wider font-bold truncate max-w-[140px] sm:max-w-none">
                   INV-{String(order.id).replace('#', '').toUpperCase()}
                 </span>
-                <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full uppercase">
+                <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full uppercase shrink-0">
                   Contract {priceSnapshot.contractNumber}
                 </span>
                 {loading && (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full shrink-0">
                     <Loader2 className="size-3 animate-spin" /> Live Sync
                   </span>
                 )}
@@ -358,61 +423,49 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
-            {/* View Switcher Tabs */}
-            <div className="flex items-center rounded-xl bg-gray-100 dark:bg-[#121815] p-1 text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => setActiveTab('tax_invoice')}
-                className={`rounded-lg px-2.5 py-1 transition ${
-                  activeTab === 'tax_invoice'
-                    ? 'bg-white dark:bg-[#27342d] text-[#18201c] dark:text-white shadow-xs'
-                    : 'text-gray-500 hover:text-black dark:hover:text-white'
-                }`}
-              >
-                Customer Tax Invoice
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('commission_invoice')}
-                className={`rounded-lg px-2.5 py-1 transition ${
-                  activeTab === 'commission_invoice'
-                    ? 'bg-white dark:bg-[#27342d] text-[#18201c] dark:text-white shadow-xs'
-                    : 'text-gray-500 hover:text-black dark:hover:text-white'
-                }`}
-              >
-                Vendor Commission Tax
-              </button>
-            </div>
-
-            {/* HTML to PDF Download Button */}
-            <button
-              type="button"
-              onClick={exportPdfInvoice}
-              disabled={downloadingPdf}
-              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-[#d9f447] px-3.5 py-1.5 text-xs font-extrabold text-[#121815] hover:bg-[#c2dc3a] transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              {downloadingPdf ? (
-                <Loader2 className="size-3.5 animate-spin text-[#121815]" />
-              ) : (
-                <Download className="size-3.5 text-[#121815]" />
-              )}
-              Download PDF
-            </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center justify-end w-full sm:w-auto">
+            {/* View Switcher Tabs (Only shown when showVendorTab is enabled) */}
+            {showVendorTab && (
+              <div className="flex items-center rounded-xl bg-gray-100 dark:bg-[#121815] p-1 text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('tax_invoice')}
+                  className={`rounded-lg px-2.5 py-1 transition ${
+                    activeTab === 'tax_invoice'
+                      ? 'bg-white dark:bg-[#27342d] text-[#18201c] dark:text-white shadow-xs'
+                      : 'text-gray-500 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  Customer Tax Invoice
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('commission_invoice')}
+                  className={`rounded-lg px-2.5 py-1 transition ${
+                    activeTab === 'commission_invoice'
+                      ? 'bg-white dark:bg-[#27342d] text-[#18201c] dark:text-white shadow-xs'
+                      : 'text-gray-500 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  Vendor Commission Tax
+                </button>
+              </div>
+            )}
 
             {/* Browser Print Button */}
             <button
               type="button"
               onClick={handlePrint}
-              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 shadow-xs cursor-pointer"
+              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0"
             >
-              <Printer className="size-3.5 text-emerald-600 dark:text-emerald-400" /> Print
+              <Printer className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Print</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#27342d] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#324239] transition cursor-pointer"
+              className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#27342d] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#324239] transition cursor-pointer shrink-0"
             >
               <X className="size-4" />
             </button>
@@ -424,35 +477,6 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
           {/* TAB 1: CUSTOMER GST TAX INVOICE */}
           {activeTab === 'tax_invoice' ? (
             <div>
-              {/* Status & Payment Bar */}
-              <div className="flex flex-wrap items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-3 mb-4 text-xs font-bold text-emerald-900 dark:text-emerald-200 gap-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <div>
-                    <span className="capitalize text-emerald-950 dark:text-emerald-100 font-black">
-                      {String(orderStatus).replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 block font-normal">
-                      Payment: <strong className="uppercase">{paymentStatus}</strong> via{' '}
-                      {paymentMethod} ({utrRef})
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md uppercase font-black">
-                    Place of Supply: {priceSnapshot.placeOfSupply} ({priceSnapshot.taxMode})
-                  </span>
-                  {deliveryOtp && (
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400 block font-mono mt-0.5">
-                      Delivery OTP:{' '}
-                      <strong className="text-emerald-900 dark:text-emerald-300">
-                        {deliveryOtp}
-                      </strong>
-                    </span>
-                  )}
-                </div>
-              </div>
-
               {/* Merchant & Customer Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 rounded-2xl bg-gray-50 dark:bg-[#121815] p-4 border border-gray-100 dark:border-[#27342d] text-xs mb-4">
                 {/* Merchant Supplier Details */}
@@ -523,10 +547,11 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                     Itemized Tax Invoice Breakdown
                   </p>
                   <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                    {priceSnapshot.items.length} items · Price Mode: TAX INCLUSIVE (5% GST)
+                    {priceSnapshot.items.length} items · Price Mode: TAX INCLUSIVE (
+                    {resolvedTaxRate}% GST)
                   </span>
                 </div>
-                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] overflow-hidden">
+                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] overflow-x-auto no-scrollbar">
                   <table className="w-full text-xs text-left">
                     <thead className="bg-gray-100 dark:bg-[#121815] text-[#18201c] dark:text-gray-200 font-bold text-[9px] uppercase border-b border-gray-200 dark:border-[#27342d]">
                       <tr>
@@ -534,7 +559,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                         <th className="p-2 text-center">Qty</th>
                         <th className="p-2 text-right">Unit Price</th>
                         <th className="p-2 text-right">Taxable Base</th>
-                        <th className="p-2 text-right">GST (5%)</th>
+                        <th className="p-2 text-right">GST ({resolvedTaxRate}%)</th>
                         <th className="p-2 text-right">Total</th>
                       </tr>
                     </thead>
@@ -601,15 +626,25 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>
                     Food GST Breakdown (
-                    {priceSnapshot.taxMode === 'CGST_SGST' ? 'CGST 2.5% + SGST 2.5%' : 'IGST 5%'})
+                    {priceSnapshot.taxMode === 'CGST_SGST'
+                      ? `CGST ${resolvedTaxRate / 2}% + SGST ${resolvedTaxRate / 2}%`
+                      : `IGST ${resolvedTaxRate}%`}
+                    )
                   </span>
-                  <span className="font-mono font-bold">₹{finalGst}</span>
+                  <span className="font-mono font-bold">₹{Number(finalGst).toFixed(2)}</span>
                 </div>
 
                 {tip > 0 && (
                   <div className="flex justify-between text-blue-700 dark:text-blue-400 font-semibold">
                     <span>Rider Tip (100% passed to driver)</span>
                     <span>₹{tip}</span>
+                  </div>
+                )}
+
+                {finalRoundingAdjustment > 0 && (
+                  <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-semibold text-[11px]">
+                    <span>Rounding Off (Ceiling)</span>
+                    <span>+₹{finalRoundingAdjustment.toFixed(2)}</span>
                   </div>
                 )}
 
@@ -673,7 +708,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                     GST on Commission (18%)
                   </span>
                   <p className="font-bold text-emerald-700 dark:text-emerald-400">
-                    ₹{Math.round(vendorCommissionAmount * 0.18)}
+                    ₹{Math.ceil(vendorCommissionAmount * 0.18)}
                   </p>
                 </div>
 
@@ -682,7 +717,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                     Total Vendor Deduction (Commission + GST)
                   </span>
                   <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
-                    -₹{Math.round(vendorCommissionAmount * 1.18)}
+                    -₹{Math.ceil(vendorCommissionAmount * 1.18)}
                   </span>
                 </div>
 
