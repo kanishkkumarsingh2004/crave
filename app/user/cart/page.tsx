@@ -222,6 +222,9 @@ export default function CartPage() {
         handlingFee: calculatorApiBreakdown.handlingFee ?? localBreakdown.handlingFee,
         platformFee: calculatorApiBreakdown.platformFee ?? localBreakdown.platformFee,
         gstAmount: calculatorApiBreakdown.gstAmount ?? localBreakdown.gstAmount,
+        exactGst: calculatorApiBreakdown.exactGst ?? localBreakdown.exactGst,
+        roundingAdjustment:
+          calculatorApiBreakdown.roundingAdjustment ?? localBreakdown.roundingAdjustment,
         grandTotal: calculatorApiBreakdown.grandTotal ?? localBreakdown.grandTotal,
       }
     }
@@ -369,7 +372,7 @@ export default function CartPage() {
         packaging_fee: packagingFee,
         delivery_fee: deliveryFee,
         platform_fee: platformFee,
-        gst: pricingBreakdown.gstAmount ?? 0,
+        gst: pricingBreakdown.exactGst ?? pricingBreakdown.gstAmount ?? 0,
         total_amount: grandTotal,
         payment_method: 'UPI Online',
         customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
@@ -395,12 +398,17 @@ export default function CartPage() {
         throw new Error(json.error || 'Failed to place order')
       }
 
+      const createdOrderId = json.order?.id || json.orderId
       clearCart()
       setOrderSuccess(true)
       toast('Order placed successfully! Tracking your delivery live...', 'success')
 
       setTimeout(() => {
-        router.push('/user/track')
+        if (createdOrderId) {
+          router.push(`/user/track/${createdOrderId}`)
+        } else {
+          router.push('/user/track')
+        }
       }, 2000)
     } catch (err: any) {
       toast(err?.message || 'Could not process order', 'error')
@@ -886,7 +894,19 @@ export default function CartPage() {
                       <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                         <span>GST &amp; Taxes</span>
                         <span className="font-bold text-[#18201c] dark:text-white">
-                          ₹{pricingBreakdown.gstAmount ?? 0}
+                          ₹
+                          {pricingBreakdown.exactGst != null
+                            ? pricingBreakdown.exactGst.toFixed(2)
+                            : (pricingBreakdown.gstAmount ?? 0)}
+                        </span>
+                      </div>
+                    )}
+
+                    {(pricingBreakdown.roundingAdjustment ?? 0) > 0 && (
+                      <div className="flex justify-between text-[#55635a] dark:text-gray-400 text-[11px]">
+                        <span>Rounding Off (Ceiling)</span>
+                        <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                          +₹{pricingBreakdown.roundingAdjustment.toFixed(2)}
                         </span>
                       </div>
                     )}

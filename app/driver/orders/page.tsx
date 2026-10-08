@@ -1,6 +1,6 @@
 'use client'
 
-import { useDriver } from '@/lib/driver-context'
+import { useDriver, getDriverPayoutDetails } from '@/lib/driver-context'
 import {
   calculateCheckoutPricing,
   calculateRoadTravelDistanceKm,
@@ -93,9 +93,6 @@ export default function DriverAcceptedOrdersPage() {
               if (Array.isArray(arr)) itemsCount = arr.length
             } catch (e) {}
 
-            const foodTotal = Number(o.total_amount || 250)
-            const tip = Number(o.tip || 0)
-
             const restLat = o.restaurant_lat ? Number(o.restaurant_lat) : 12.9716
             const restLng = o.restaurant_lng ? Number(o.restaurant_lng) : 77.5946
             const destLat = o.customer_lat ? Number(o.customer_lat) : 12.9591
@@ -108,22 +105,7 @@ export default function DriverAcceptedOrdersPage() {
               roadKm = calculateRoadTravelDistanceKm(restLat, restLng, destLat, destLng)
             }
 
-            const pricing = calculateCheckoutPricing({
-              cartSubtotal: foodTotal,
-              roadDistanceKm: roadKm,
-            })
-
-            const driverEarnings = pricing.driverEarnings || {
-              baseDistanceShare: 24,
-              extraDistanceShare: Math.max(0, Math.round((roadKm - 3) * 8)),
-              surgeRainShare: 0,
-              totalDriverEarnings: 24 + Math.max(0, Math.round((roadKm - 3) * 8)),
-            }
-
-            let driverPayout = Number(o.driver_payout || 0)
-            if (!driverPayout) {
-              driverPayout = driverEarnings.totalDriverEarnings + tip
-            }
+            const { basePayout, surgeBonus, tip, totalDriverPayout } = getDriverPayoutDetails(o)
 
             return {
               id: o.id,
@@ -137,12 +119,12 @@ export default function DriverAcceptedOrdersPage() {
               customerPhone: o.customer_phone,
               status: o.status || 'new',
               itemsCount,
-              totalAmount: foodTotal,
-              basePayout: driverEarnings.baseDistanceShare,
-              extraDistanceShare: driverEarnings.extraDistanceShare,
-              surgeBonus: driverEarnings.surgeRainShare,
+              totalAmount: Number(o.subtotal || o.total_amount || 250),
+              basePayout,
+              extraDistanceShare: 0,
+              surgeBonus,
               tip,
-              payout: driverPayout,
+              payout: totalDriverPayout,
               distanceKm: roadKm,
               distanceStr: `${roadKm.toFixed(1)} km`,
               otp: o.delivery_otp || '',

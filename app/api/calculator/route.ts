@@ -233,7 +233,7 @@ export async function POST(req: Request) {
           ? Number(gstRatePercent)
           : paymentConfig?.gst_rate_percent != null
             ? Number(paymentConfig.gst_rate_percent)
-            : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 18),
+            : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 5),
     }
 
     const breakdown = calculateFullBreakdown(input, couponDetails)

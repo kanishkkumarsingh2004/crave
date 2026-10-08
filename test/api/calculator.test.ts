@@ -48,7 +48,7 @@ describe('/api/calculator API Route', () => {
     expect(json.breakdown.customerBilling.baseDeliveryFee).toBe(20)
     expect(json.breakdown.customerBilling.platformFee).toBe(2)
     expect(json.breakdown.customerBilling.handlingFee).toBe(5)
-    expect(json.breakdown.customerBilling.grandTotal).toBe(499)
+    expect(json.breakdown.customerBilling.grandTotal).toBe(447)
     expect(json.breakdown.vendorSettlement.netVendorPayout).toBe(340)
   })
 

@@ -46,6 +46,8 @@ export interface CustomerBillingBreakdown {
   handlingFee: number
   couponDiscount: number
   gstAmount: number
+  exactGst?: number
+  roundingAdjustment: number
   tip: number
   grandTotal: number
 }
@@ -115,7 +117,7 @@ export function calculateFullBreakdown(
   // Markup Engine Calculation
   let markupAmount = 0
   if (commercialModel === 'markup' || commercialModel === 'hybrid') {
-    markupAmount = Math.round((subtotal * markupPercent) / 100 + fixedMarkup)
+    markupAmount = Math.ceil((subtotal * markupPercent) / 100 + fixedMarkup)
   }
   const customerFoodSubtotal = subtotal + markupAmount
 
@@ -138,14 +140,14 @@ export function calculateFullBreakdown(
   const nightSurgeFeeValue = isNightSurgeActive
     ? (input.nightSurgeFee ?? DEFAULT_PAYMENT_CONFIG.nightSurgeFee)
     : 0
-  const gstRate = (input.gstRatePercent ?? 18) / 100
+  const gstRate = (input.gstRatePercent ?? 5) / 100
 
   // 1. Delivery Fee Calculation
   const extraDistanceKm = Math.max(0, distanceKm - baseDistanceKm)
-  const extraDistanceFee = Math.round(Math.ceil(extraDistanceKm) * perKmRate)
+  const extraDistanceFee = Math.ceil(Math.ceil(extraDistanceKm) * perKmRate)
   const basePlusDistance = baseDeliveryFee + extraDistanceFee
   const surgeMultiplierAdd = Math.max(0, surgeMultiplier - 1.0)
-  const surgeFee = Math.round(basePlusDistance * surgeMultiplierAdd)
+  const surgeFee = Math.ceil(basePlusDistance * surgeMultiplierAdd)
   const grossDeliveryFee = basePlusDistance + surgeFee + rainFeeValue + nightSurgeFeeValue
 
   const isFreeDelivery = freeDeliveryThreshold > 0 && customerFoodSubtotal >= freeDeliveryThreshold
@@ -163,22 +165,18 @@ export function calculateFullBreakdown(
       couponDiscount = couponDetails.discount_value
     }
   }
-  couponDiscount = Math.min(customerFoodSubtotal, Math.round(couponDiscount))
+  couponDiscount = Math.min(customerFoodSubtotal, Math.ceil(couponDiscount))
 
   // 3. GST Calculation
   const taxableFoodSubtotal = Math.max(0, customerFoodSubtotal - couponDiscount)
-  const gstAmount = Math.round((taxableFoodSubtotal + packagingFee) * gstRate)
+  const exactGst = (taxableFoodSubtotal + packagingFee) * gstRate
+  const gstAmount = Math.ceil(exactGst)
 
   // 4. Grand Total Collected from Customer
-  const grandTotal = Math.round(
-    taxableFoodSubtotal +
-      packagingFee +
-      netDeliveryFee +
-      platformFee +
-      handlingFee +
-      gstAmount +
-      tip
-  )
+  const exactTotal =
+    taxableFoodSubtotal + packagingFee + netDeliveryFee + platformFee + handlingFee + exactGst + tip
+  const grandTotal = Math.ceil(exactTotal)
+  const roundingAdjustment = Math.max(0, Number((grandTotal - exactTotal).toFixed(2)))
 
   const customerBilling: CustomerBillingBreakdown = {
     subtotal,
@@ -197,6 +195,8 @@ export function calculateFullBreakdown(
     handlingFee,
     couponDiscount,
     gstAmount,
+    exactGst: Number(exactGst.toFixed(2)),
+    roundingAdjustment,
     tip,
     grandTotal,
   }
@@ -204,7 +204,7 @@ export function calculateFullBreakdown(
   // 5. Vendor Settlement Math
   let commissionDeducted = 0
   if (commercialModel === 'commission' || commercialModel === 'hybrid') {
-    commissionDeducted = Math.round((subtotal * vendorCommissionPercent) / 100 + fixedCommission)
+    commissionDeducted = Math.ceil((subtotal * vendorCommissionPercent) / 100 + fixedCommission)
   }
   const netVendorPayout = Math.max(0, subtotal - commissionDeducted)
 
@@ -220,12 +220,12 @@ export function calculateFullBreakdown(
 
   // 6. Driver Earnings Math
   const deliveryShareMultiplier = driverPayoutSharePercent / 100
-  const baseDistanceShare = Math.round(baseDeliveryFee * deliveryShareMultiplier)
-  const extraDistanceShare = Math.round(extraDistanceFee * deliveryShareMultiplier)
-  const surgeRainShare = Math.round(
+  const baseDistanceShare = Math.ceil(baseDeliveryFee * deliveryShareMultiplier)
+  const extraDistanceShare = Math.ceil(extraDistanceFee * deliveryShareMultiplier)
+  const surgeRainShare = Math.ceil(
     (surgeFee + rainFeeValue + nightSurgeFeeValue) * deliveryShareMultiplier
   )
-  const totalDriverEarnings = Math.round(grossDeliveryFee * deliveryShareMultiplier + tip)
+  const totalDriverEarnings = Math.ceil(grossDeliveryFee * deliveryShareMultiplier + tip)
 
   const driverEarnings: DriverEarningsBreakdown = {
     deliveryFeeCollected: grossDeliveryFee,
@@ -243,14 +243,14 @@ export function calculateFullBreakdown(
   const totalPaidToDriver = totalDriverEarnings
   const totalGstCollected = gstAmount
 
-  const platformGrossRevenue = Math.round(
+  const platformGrossRevenue = Math.ceil(
     platformFee +
       handlingFee +
       commissionDeducted +
       markupAmount +
       grossDeliveryFee * (1 - deliveryShareMultiplier)
   )
-  const platformNetProfit = Math.round(
+  const platformNetProfit = Math.ceil(
     totalCollectedFromCustomer -
       totalPaidToVendor -
       totalPaidToDriver -

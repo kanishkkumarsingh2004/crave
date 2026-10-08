@@ -140,6 +140,79 @@ interface DriverContextType {
 
 const DriverContext = createContext<DriverContextType | undefined>(undefined)
 
+export function getDriverPayoutDetails(order: any): {
+  basePayout: number
+  surgeBonus: number
+  tip: number
+  totalDriverPayout: number
+} {
+  if (!order) {
+    return { basePayout: 24, surgeBonus: 0, tip: 0, totalDriverPayout: 24 }
+  }
+
+  let itemsArr: any[] = []
+  try {
+    itemsArr = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || []
+  } catch (e) {}
+
+  const storedBreakdown =
+    order.pricing_breakdown || (itemsArr.length > 0 && itemsArr[0]?.billing_breakdown) || null
+
+  const tip = Number(order.tip || order.tip_amount || storedBreakdown?.tip || 0)
+
+  // 1. Direct driver_payout from DB column or stored breakdown
+  if (
+    order.driver_payout != null &&
+    !isNaN(Number(order.driver_payout)) &&
+    Number(order.driver_payout) > 0
+  ) {
+    const totalDriverPayout = Number(order.driver_payout)
+    const basePayout = Number(
+      storedBreakdown?.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
+    )
+    const surgeBonus = Number(storedBreakdown?.driver_surge_payout ?? 0)
+    return { basePayout, surgeBonus, tip, totalDriverPayout }
+  }
+
+  if (
+    storedBreakdown &&
+    (storedBreakdown.driver_payout != null || storedBreakdown.totalDriverEarnings != null)
+  ) {
+    const totalDriverPayout = Number(
+      storedBreakdown.driver_payout ?? storedBreakdown.totalDriverEarnings
+    )
+    const basePayout = Number(
+      storedBreakdown.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
+    )
+    const surgeBonus = Number(storedBreakdown.driver_surge_payout ?? 0)
+    return { basePayout, surgeBonus, tip, totalDriverPayout }
+  }
+
+  // 2. Fallback to calculation using food subtotal (not total_amount)
+  const foodSubtotal = Number(
+    order.subtotal ||
+      storedBreakdown?.subtotal ||
+      (order.total_amount ? Math.round(order.total_amount * 0.75) : 250)
+  )
+  const roadKm = Number(order.distance_km || order.distance || 1.8)
+  const pricing = calculateCheckoutPricing({
+    cartSubtotal: foodSubtotal,
+    roadDistanceKm: roadKm,
+  })
+  const dEarn = pricing.driverEarnings || {
+    baseDistanceShare: 24,
+    extraDistanceShare: 0,
+    surgeRainShare: 0,
+    totalDriverEarnings: 24,
+  }
+
+  const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
+  const surgeBonus = dEarn.surgeRainShare
+  const totalDriverPayout = dEarn.totalDriverEarnings
+
+  return { basePayout, surgeBonus, tip, totalDriverPayout }
+}
+
 export function DriverProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const [isOnline, setIsOnline] = useState(true)
@@ -199,20 +272,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               itemsArr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
             } catch (e) {}
 
-            const subtotal = Number(o.subtotal || o.total_amount || 250)
-            const tipVal = Number(o.tip || 0)
-            const pricing = calculateCheckoutPricing({
-              cartSubtotal: subtotal,
-              roadDistanceKm: 2.4,
-            })
-            const dEarn = pricing.driverEarnings || {
-              baseDistanceShare: 28,
-              extraDistanceShare: 0,
-              surgeRainShare: 0,
-              totalDriverEarnings: 28 + tipVal,
-            }
-            const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-            const surgeBonus = dEarn.surgeRainShare
+            const {
+              basePayout,
+              surgeBonus,
+              tip: tipVal,
+              totalDriverPayout,
+            } = getDriverPayoutDetails(o)
 
             setActiveTask({
               id: o.id,
@@ -226,9 +291,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               customerPhone: o.customer_phone || user.phone || '+91 98765 43210',
               basePayout,
               surgeBonus,
-              payout: basePayout + surgeBonus,
+              payout: totalDriverPayout,
               tip: tipVal,
-              distance: '2.4 km',
+              distance: `${o.distance_km || 2.4} km`,
               step,
               otp: String(o.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''),
               restaurantLat: o.restaurant_lat ? Number(o.restaurant_lat) : 12.6817,
@@ -315,20 +380,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           } catch (e) {}
 
           const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const foodTotal = Number(target.total_amount || 250)
-          const tipVal = Number(target.tip || target.tip_amount || 0)
-          const pricing = calculateCheckoutPricing({
-            cartSubtotal: foodTotal,
-            roadDistanceKm: distKm || 1.8,
-          })
-          const dEarn = pricing.driverEarnings || {
-            baseDistanceShare: 24,
-            extraDistanceShare: 0,
-            surgeRainShare: 0,
-            totalDriverEarnings: 24,
-          }
-          const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-          const surgeBonus = dEarn.surgeRainShare
+          const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
 
           setOfferTimer(25)
           setBroadcastOffer({
@@ -387,20 +439,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
             const realOtp =
               target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-            const foodTotal = Number(target.total_amount || 250)
-            const tipVal = Number(target.tip || target.tip_amount || 0)
-            const pricing = calculateCheckoutPricing({
-              cartSubtotal: foodTotal,
-              roadDistanceKm: distKm || 1.8,
-            })
-            const dEarn = pricing.driverEarnings || {
-              baseDistanceShare: 24,
-              extraDistanceShare: 0,
-              surgeRainShare: 0,
-              totalDriverEarnings: 24,
-            }
-            const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-            const surgeBonus = dEarn.surgeRainShare
+            const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
 
             setOfferTimer(25)
             setBroadcastOffer({
@@ -739,20 +778,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           } catch (e) {}
 
           const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const foodTotal = Number(target.total_amount || 250)
-          const tipVal = Number(target.tip || target.tip_amount || 0)
-          const pricing = calculateCheckoutPricing({
-            cartSubtotal: foodTotal,
-            roadDistanceKm: 1.8,
-          })
-          const dEarn = pricing.driverEarnings || {
-            baseDistanceShare: 24,
-            extraDistanceShare: 0,
-            surgeRainShare: 0,
-            totalDriverEarnings: 24,
-          }
-          const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-          const surgeBonus = dEarn.surgeRainShare
+          const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
 
           setOfferTimer(25)
           setBroadcastOffer({
@@ -961,10 +987,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const basePay = activeTask.basePayout ?? Math.round(activeTask.payout * 0.7)
-    const surgePay = activeTask.surgeBonus ?? Math.round(activeTask.payout * 0.3)
+    const basePay = activeTask.basePayout ?? Math.max(0, activeTask.payout - (activeTask.tip || 0))
+    const surgePay = activeTask.surgeBonus ?? 0
     const tipPay = activeTask.tip || 0
-    const totalEarnings = basePay + surgePay + tipPay
+    const totalEarnings = activeTask.payout || basePay + surgePay + tipPay
 
     const newTrip: CompletedTripItem = {
       id: `trip_${Date.now()}`,
