@@ -1,6 +1,21 @@
 name: crave-food-delivery
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: crave-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -9,8 +24,12 @@ services:
         DATABASE_URL: ${DATABASE_URL}
         DIRECT_URL: ${DIRECT_URL}
         JWT_SECRET: ${JWT_SECRET}
+        REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     container_name: crave-backend
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -19,6 +38,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
       JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     command: ['node', 'ws-server.js']
     ports:
       - '8000:8000'
@@ -42,10 +62,13 @@ services:
         DATABASE_URL: ${DATABASE_URL}
         DIRECT_URL: ${DIRECT_URL}
         JWT_SECRET: ${JWT_SECRET}
+        REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
       backend:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     env_file:
       - .env
@@ -60,6 +83,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       DIRECT_URL: ${DIRECT_URL}
       JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       NEXT_PUBLIC_WS_PORT: 8000
       NEXT_PUBLIC_WS_HOST: localhost
     command: ['node', 'server.js']
@@ -77,3 +101,6 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
+
+volumes:
+  redis_data:

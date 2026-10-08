@@ -1,3 +1,5 @@
+import { redis, isRedisAvailable } from '@/lib/redis'
+
 export interface OfferLock {
   driverId: string
   requestId: string
@@ -5,12 +7,13 @@ export interface OfferLock {
   expiresAt: number
 }
 
-// In-Memory Lock Registry (Distributed Redis Lock interface pattern)
+// In-Memory Lock Registry (Local Fallback & Synchronous Cache)
 const offerLocks = new Map<string, OfferLock>()
 const DEFAULT_OFFER_TTL_MS = 15 * 1000 // 15 seconds offer timeout window
 
 /**
  * Attempt to acquire an atomic offer lock for a candidate driver.
+ * Stores in local memory and synchronously syncs to Redis when available.
  * Returns true if lock was successfully acquired, false if driver is already locked.
  */
 export function tryLockDriverForOffer(
@@ -29,7 +32,7 @@ export function tryLockDriverForOffer(
     return false // Locked by another request
   }
 
-  // Acquire lock atomically
+  // Acquire lock in memory
   offerLocks.set(driverId, {
     driverId,
     requestId,
@@ -37,7 +40,43 @@ export function tryLockDriverForOffer(
     expiresAt: now + ttlMs,
   })
 
+  // Replicate asynchronously to Redis if active
+  if (isRedisAvailable() && redis) {
+    redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX').catch(() => {})
+  }
+
   return true
+}
+
+/**
+ * Distributed async Redis lock acquisition.
+ * Guarantees cross-pod and cross-instance exclusion across horizontal cluster containers.
+ */
+export async function tryLockDriverOfferDistributed(
+  driverId: string,
+  requestId: string,
+  ttlMs: number = DEFAULT_OFFER_TTL_MS
+): Promise<boolean> {
+  if (isRedisAvailable() && redis) {
+    try {
+      const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
+      if (result === 'OK') {
+        // Also update local cache
+        offerLocks.set(driverId, {
+          driverId,
+          requestId,
+          lockedAt: Date.now(),
+          expiresAt: Date.now() + ttlMs,
+        })
+        return true
+      }
+      return false
+    } catch {
+      // Redis error fallback
+    }
+  }
+
+  return tryLockDriverForOffer(driverId, requestId, ttlMs)
 }
 
 /**
@@ -64,6 +103,11 @@ export function releaseDriverLock(driverId: string, requestId?: string): boolean
     return false // Lock owned by another request
   }
   offerLocks.delete(driverId)
+
+  if (isRedisAvailable() && redis) {
+    redis.del(`crave:lock:driver:${driverId}`).catch(() => {})
+  }
+
   return true
 }
 

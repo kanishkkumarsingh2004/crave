@@ -1,5 +1,6 @@
 import * as h3 from 'h3-js'
 import { prisma } from '@/lib/prisma'
+import { redis, isRedisAvailable } from '@/lib/redis'
 
 export interface DriverLocationState {
   driverId: string
@@ -89,7 +90,10 @@ export async function updateDriverLocation(params: {
   // Update primary spatial cache
   driverSpatialIndex.set(driverId, updatedState)
 
-  // Spatial index state is maintained in-memory cache and broadcast via real-time WebSocket channels
+  // Replicate to Redis distributed cache with 120s TTL if available
+  if (isRedisAvailable() && redis) {
+    redis.set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120).catch(() => {})
+  }
 
   return {
     state: updatedState,
@@ -124,6 +128,9 @@ export function removeDriverLocation(driverId: string): void {
     }
     driverSpatialIndex.delete(driverId)
   }
+  if (isRedisAvailable() && redis) {
+    redis.del(`crave:driver:loc:${driverId}`).catch(() => {})
+  }
 }
 
 /**
@@ -134,14 +141,20 @@ export function getAllDriverLocations(
 ): DriverLocationState[] {
   const now = Date.now()
   const activeLocations: DriverLocationState[] = []
+  const staleIds: string[] = []
 
   driverSpatialIndex.forEach((loc, id) => {
     if (now - loc.lastUpdated <= maxAgeMs) {
       activeLocations.push(loc)
     } else {
-      removeDriverLocation(id)
+      staleIds.push(id)
     }
   })
+
+  // Remove stale entries after iteration is complete — never mutate during forEach
+  for (const id of staleIds) {
+    removeDriverLocation(id)
+  }
 
   return activeLocations
 }
