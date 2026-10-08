@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: crave-food-delivery
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm rebuild
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: WS_PORT
+        value: 8000
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
