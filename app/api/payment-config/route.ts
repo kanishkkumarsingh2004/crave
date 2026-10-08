@@ -14,6 +14,7 @@ export interface PaymentConfig {
   handlingFee: number
   vendorCommission: number
   packagingCap: number
+  gstRatePercent: number
   baseDeliveryFee: number
   baseDistanceKm: number
   perKmRate: number
@@ -41,6 +42,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   handlingFee: 5,
   vendorCommission: 15,
   packagingCap: 20,
+  gstRatePercent: 18,
   baseDeliveryFee: 30,
   baseDistanceKm: 3,
   perKmRate: 10,
@@ -106,6 +108,10 @@ export async function GET(_request?: Request) {
           dbConfig.packaging_cap != null
             ? Number(dbConfig.packaging_cap)
             : (local?.packagingCap ?? DEFAULT_PAYMENT_CONFIG.packagingCap),
+        gstRatePercent:
+          dbConfig.gst_rate_percent != null
+            ? Number(dbConfig.gst_rate_percent)
+            : (local?.gstRatePercent ?? DEFAULT_PAYMENT_CONFIG.gstRatePercent),
         baseDeliveryFee:
           dbConfig.delivery_fee != null
             ? Number(dbConfig.delivery_fee)
@@ -207,6 +213,7 @@ export async function POST(request: Request) {
         handling_fee: fullConfig.handlingFee,
         vendor_commission: fullConfig.vendorCommission,
         packaging_cap: fullConfig.packagingCap,
+        gst_rate_percent: fullConfig.gstRatePercent,
         delivery_fee: fullConfig.baseDeliveryFee,
         base_distance_km: fullConfig.baseDistanceKm,
         per_km_rate: fullConfig.perKmRate,

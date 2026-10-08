@@ -100,24 +100,24 @@ export default function VendorSidebar() {
       </aside>
 
       {/* Top Header Navigation Bar */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-xs">
+      <div className="sticky top-0 z-30 border-b border-[#202d25] bg-[#0f1512]/90 backdrop-blur-xl px-4 py-3.5 sm:px-8 shadow-lg">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Brand Logo & Kitchen Name */}
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
             <Link
               href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#18201c] shrink-0 lg:hidden"
+              className="font-black text-2xl sm:text-3xl tracking-tighter text-white shrink-0 lg:hidden"
             >
-              crave<span className="text-[#86a018]">.</span>
+              crave<span className="text-[#d9f447]">.</span>
             </Link>
-            <span className="rounded-full bg-[#18201c] px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-[#d9f447]">
+            <span className="rounded-full bg-[#d9f447]/10 border border-[#d9f447]/30 px-2.5 py-0.5 text-[10px] font-black uppercase text-[#d9f447]">
               VENDOR
             </span>
 
-            <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1 shrink-0" />
+            <div className="hidden sm:block h-6 w-px bg-[#202d25] mx-1 shrink-0" />
 
-            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-[#18201c] truncate">
-              <Store className="size-4 text-[#86a018] shrink-0" />
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-200 truncate">
+              <Store className="size-4 text-[#d9f447] shrink-0" />
               <span className="truncate max-w-[200px]">
                 {user?.restaurantName || 'The Green Table'}
               </span>
@@ -125,7 +125,7 @@ export default function VendorSidebar() {
 
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="sm:hidden grid size-9 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              className="sm:hidden grid size-9 place-items-center rounded-xl bg-[#18201c] text-white hover:bg-[#222e27] transition border border-[#27342d]"
               aria-label="Open menu"
             >
               <Menu className="size-5" />
@@ -142,8 +142,8 @@ export default function VendorSidebar() {
                   href={href}
                   className={`rounded-2xl px-4 py-2 transition shrink-0 flex items-center gap-1.5 ${
                     isActive
-                      ? 'bg-[#18201c] text-white shadow-xs'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                      ? 'bg-[#d9f447] text-[#0d1310] font-black shadow-md shadow-[#d9f447]/10'
+                      : 'bg-[#161d19] text-gray-300 border border-[#27342d] hover:bg-[#1f2923] hover:text-white'
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -153,7 +153,7 @@ export default function VendorSidebar() {
             })}
             <button
               onClick={() => logout()}
-              className="rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 flex items-center gap-1"
+              className="rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 px-3.5 py-2 transition shrink-0 hover:bg-rose-500/20 flex items-center gap-1"
               title="Sign Out"
             >
               <LogOut className="size-3.5" />
@@ -164,16 +164,16 @@ export default function VendorSidebar() {
 
       {/* Mobile Slide-Out Menu */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:hidden ${
+        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-[#202923] bg-[#121815] text-white shadow-2xl transition-transform duration-300 ease-in-out sm:hidden ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-gray-100 p-4">
-            <h2 className="text-lg font-bold text-[#18201c]">Menu</h2>
+          <div className="flex items-center justify-between border-b border-[#202923] p-4">
+            <h2 className="text-lg font-extrabold text-white">Menu</h2>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="grid size-7 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              className="grid size-7 place-items-center rounded-xl bg-[#1d2621] text-gray-400 hover:text-white transition"
               aria-label="Close menu"
             >
               <X className="size-4" />
@@ -190,7 +190,7 @@ export default function VendorSidebar() {
                   onClick={() => setMobileMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
-                    isActive ? 'bg-[#18201c] text-white' : 'text-gray-700 hover:bg-gray-50'
+                    isActive ? 'bg-[#d9f447] text-[#0d1310] font-black' : 'text-gray-300 hover:bg-[#1d2621] hover:text-white'
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />
@@ -200,13 +200,13 @@ export default function VendorSidebar() {
             })}
           </nav>
 
-          <div className="border-t border-gray-100 p-4">
+          <div className="border-t border-[#202923] p-4">
             <button
               onClick={() => {
                 setMobileMenuOpen(false)
                 logout()
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition"
             >
               <LogOut className="size-4" />
               Sign out

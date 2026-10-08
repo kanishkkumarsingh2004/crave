@@ -65,6 +65,7 @@
 
 - Engineered dedicated `app/api/calculator/route.ts` REST endpoint backed by `lib/calculator.ts` for evaluating real-time order pricing breakdown.
 - Computes base fees, per-km dynamic rates, rain & late night surge multipliers, platform commission splits, vendor payouts, and driver delivery earnings.
+- Generated full specification guide: [`docs/COMMERCIAL_PRICING_AND_CALCULATIONS_GUIDE.md`](file:///home/kanishk/Desktop/kk-code/New%20Folder/docs/COMMERCIAL_PRICING_AND_CALCULATIONS_GUIDE.md).
 - Added comprehensive unit test coverage (`test/api/calculator.test.ts`).
 
 ### Milestone 7: Admin Dashboard Dark Mode Contrast & Sub-Header Styling

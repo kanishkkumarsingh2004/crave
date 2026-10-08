@@ -951,19 +951,76 @@ export default function CustomerDashboard({
     )
   }, [activeRestaurantLat, activeRestaurantLng, activeDestLat, activeDestLng])
 
+  const [calculatorApiBreakdown, setCalculatorApiBreakdown] = useState<any>(null)
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      setCalculatorApiBreakdown(null)
+      return
+    }
+    let isMounted = true
+    const restId =
+      selectedRestaurant?.id ||
+      cart[0]?.restaurantId ||
+      cart[0]?.vendorId ||
+      (cart[0] as any)?.restaurant_id ||
+      undefined
+
+    fetch('/api/calculator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subtotal: cartSubtotal,
+        distanceKm: calculatedRoadDistanceKm,
+        restaurantId: restId,
+        couponCode: appliedCoupon?.code,
+        couponDiscount: couponDiscount,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.success && data.breakdown?.customerBilling) {
+          setCalculatorApiBreakdown(data.breakdown.customerBilling)
+        }
+      })
+      .catch((err) => {
+        console.warn('Calculator API fetch failed in CustomerDashboard:', err)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [cartSubtotal, calculatedRoadDistanceKm, selectedRestaurant, cart, appliedCoupon, couponDiscount])
+
   const pricingBreakdown = useMemo(() => {
-    return calculateCheckoutPricing({
+    const localBreakdown = calculateCheckoutPricing({
       cartSubtotal,
       roadDistanceKm: calculatedRoadDistanceKm,
       config: checkoutConfig,
       couponDiscount,
     })
-  }, [cartSubtotal, calculatedRoadDistanceKm, checkoutConfig, couponDiscount])
+
+    if (calculatorApiBreakdown) {
+      return {
+        ...localBreakdown,
+        deliveryFee: calculatorApiBreakdown.deliveryFee ?? localBreakdown.deliveryFee,
+        handlingFee: calculatorApiBreakdown.handlingFee ?? localBreakdown.handlingFee,
+        platformFee: calculatorApiBreakdown.platformFee ?? localBreakdown.platformFee,
+        gstAmount: calculatorApiBreakdown.gstAmount ?? 0,
+        grandTotal: calculatorApiBreakdown.grandTotal ?? localBreakdown.grandTotal,
+      }
+    }
+
+    return {
+      ...localBreakdown,
+      gstAmount: 0,
+    }
+  }, [cartSubtotal, calculatedRoadDistanceKm, checkoutConfig, couponDiscount, calculatorApiBreakdown])
 
   const deliveryFee = pricingBreakdown.deliveryFee
   const packagingFee = pricingBreakdown.handlingFee
   const platformFee = pricingBreakdown.platformFee
-  const taxAmount = 0
+  const taxAmount = pricingBreakdown.gstAmount ?? 0
   const grandTotal = pricingBreakdown.grandTotal
 
   // Filtered Restaurants Logic
@@ -1085,10 +1142,11 @@ export default function CustomerDashboard({
         subtotal: cartSubtotal,
         packaging_fee: pricingBreakdown.handlingFee,
         delivery_fee: pricingBreakdown.deliveryFee,
+        platform_fee: pricingBreakdown.platformFee,
         distance: `${pricingBreakdown.roadDistanceKm} km`,
         discount_amount: couponDiscount,
         coupon_code: appliedCoupon?.code,
-        gst: 0,
+        gst: pricingBreakdown.gstAmount ?? 0,
         total_amount: grandTotal,
         status: 'new',
         payment_method: 'UPI Online',
@@ -2857,6 +2915,13 @@ export default function CustomerDashboard({
                     <span>Platform Service Fee</span>
                     <span className="font-bold text-white">₹{pricingBreakdown.platformFee}</span>
                   </div>
+
+                  {(pricingBreakdown.gstAmount ?? 0) >= 0 && (
+                    <div className="flex items-center justify-between text-[#9eb3a4]">
+                      <span>GST &amp; Taxes</span>
+                      <span className="font-bold text-white">₹{pricingBreakdown.gstAmount ?? 0}</span>
+                    </div>
+                  )}
 
                   {appliedCoupon && couponDiscount > 0 && (
                     <div className="flex items-center justify-between font-bold text-[#d9f447] bg-[#d9f447]/10 p-2 rounded-xl border border-[#d9f447]/30">

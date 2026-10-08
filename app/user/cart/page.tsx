@@ -161,6 +161,8 @@ export default function CartPage() {
     loadConfigAndCoupons()
   }, [])
 
+  const [calculatorApiBreakdown, setCalculatorApiBreakdown] = useState<any>(null)
+
   // Calculate Subtotal & Fees via Admin Config & Distance Engine
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const activeConfig = paymentConfig || getLocalPaymentConfig()
@@ -169,17 +171,70 @@ export default function CartPage() {
     return calculateRoadTravelDistanceKm(12.679898, 77.469493, 12.679898, 77.469493)
   }, [])
 
+  useEffect(() => {
+    if (cart.length === 0) {
+      setCalculatorApiBreakdown(null)
+      return
+    }
+    let isMounted = true
+    const restId =
+      cart[0]?.restaurantId ||
+      cart[0]?.vendorId ||
+      (cart[0] as any)?.restaurant_id ||
+      undefined
+
+    fetch('/api/calculator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subtotal: cartSubtotal,
+        distanceKm: roadDistanceKm,
+        restaurantId: restId,
+        couponCode: appliedCoupon?.code,
+        couponDiscount: couponDiscount,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.success && data.breakdown?.customerBilling) {
+          setCalculatorApiBreakdown(data.breakdown.customerBilling)
+        }
+      })
+      .catch((err) => {
+        console.warn('Calculator API fetch failed in cart:', err)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [cartSubtotal, roadDistanceKm, cart, appliedCoupon, couponDiscount])
+
   const pricingBreakdown = useMemo(() => {
-    return calculateCheckoutPricing({
+    const localBreakdown = calculateCheckoutPricing({
       cartSubtotal,
       roadDistanceKm,
       config: activeConfig,
       couponDiscount,
     })
-  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount])
+
+    if (calculatorApiBreakdown) {
+      return {
+        ...localBreakdown,
+        deliveryFee: calculatorApiBreakdown.deliveryFee ?? localBreakdown.deliveryFee,
+        packagingFee: calculatorApiBreakdown.packagingFee ?? localBreakdown.packagingFee,
+        handlingFee: calculatorApiBreakdown.handlingFee ?? localBreakdown.handlingFee,
+        platformFee: calculatorApiBreakdown.platformFee ?? localBreakdown.platformFee,
+        gstAmount: calculatorApiBreakdown.gstAmount ?? localBreakdown.gstAmount,
+        grandTotal: calculatorApiBreakdown.grandTotal ?? localBreakdown.grandTotal,
+      }
+    }
+
+    return localBreakdown
+  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount, calculatorApiBreakdown])
 
   const deliveryFee = pricingBreakdown.deliveryFee
-  const packagingFee = pricingBreakdown.handlingFee
+  const packagingFee = pricingBreakdown.packagingFee
+  const handlingFee = pricingBreakdown.handlingFee
   const platformFee = pricingBreakdown.platformFee
   const grandTotal = pricingBreakdown.grandTotal
 
@@ -317,7 +372,7 @@ export default function CartPage() {
         packaging_fee: packagingFee,
         delivery_fee: deliveryFee,
         platform_fee: platformFee,
-        gst: 0,
+        gst: pricingBreakdown.gstAmount ?? 0,
         total_amount: grandTotal,
         payment_method: 'UPI Online',
         customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
@@ -805,12 +860,23 @@ export default function CartPage() {
                       </div>
                     )}
 
-                    <div className="flex justify-between text-[#55635a] dark:text-gray-400">
-                      <span>Packaging &amp; Handling</span>
-                      <span className="font-bold text-[#18201c] dark:text-white">
-                        ₹{pricingBreakdown.handlingFee}
-                      </span>
-                    </div>
+                    {pricingBreakdown.packagingFee > 0 && (
+                      <div className="flex justify-between text-[#55635a] dark:text-gray-400">
+                        <span>Packaging Charge</span>
+                        <span className="font-bold text-[#18201c] dark:text-white">
+                          ₹{pricingBreakdown.packagingFee}
+                        </span>
+                      </div>
+                    )}
+
+                    {pricingBreakdown.handlingFee > 0 && (
+                      <div className="flex justify-between text-[#55635a] dark:text-gray-400">
+                        <span>Packaging &amp; Handling</span>
+                        <span className="font-bold text-[#18201c] dark:text-white">
+                          ₹{pricingBreakdown.handlingFee}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-[#55635a] dark:text-gray-400">
                       <span>Platform Service Fee</span>
@@ -818,6 +884,15 @@ export default function CartPage() {
                         ₹{pricingBreakdown.platformFee}
                       </span>
                     </div>
+
+                    {(pricingBreakdown.gstAmount ?? 0) >= 0 && (
+                      <div className="flex justify-between text-[#55635a] dark:text-gray-400">
+                        <span>GST &amp; Taxes</span>
+                        <span className="font-bold text-[#18201c] dark:text-white">
+                          ₹{pricingBreakdown.gstAmount ?? 0}
+                        </span>
+                      </div>
+                    )}
 
                     {appliedCoupon && couponDiscount > 0 && (
                       <div className="flex justify-between font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800">

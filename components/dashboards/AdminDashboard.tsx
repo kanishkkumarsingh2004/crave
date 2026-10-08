@@ -162,6 +162,7 @@ export default function AdminDashboard() {
     fssaiLicense: '',
     gstin: '',
     gstStatus: 'REGISTERED',
+    gstRatePercent: 18,
     supplierState: 'Karnataka',
     priceTaxMode: 'TAX_INCLUSIVE',
     bankAccountName: '',
@@ -456,6 +457,7 @@ export default function AdminDashboard() {
           fssaiLicense: newVendorForm.fssaiLicense,
           gstin: newVendorForm.gstin,
           gstStatus: newVendorForm.gstStatus,
+          gstRatePercent: newVendorForm.gstRatePercent,
           supplierState: newVendorForm.supplierState,
           priceTaxMode: newVendorForm.priceTaxMode,
           bankAccountName: newVendorForm.bankAccountName,
@@ -498,6 +500,7 @@ export default function AdminDashboard() {
         fssaiLicense: '',
         gstin: '',
         gstStatus: 'REGISTERED',
+        gstRatePercent: 18,
         supplierState: 'Karnataka',
         priceTaxMode: 'TAX_INCLUSIVE',
         bankAccountName: '',
@@ -971,7 +974,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1173,7 +1176,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Customer Directory Table */}
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[900px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1285,7 +1288,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1390,7 +1393,7 @@ export default function AdminDashboard() {
 
       {/* SUB-TAB 4: ADMINS */}
       {activeTab === 'users' && userTab === 'admins' && (
-        <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
+        <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[800px]">
             <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
               <tr>
@@ -1512,7 +1515,7 @@ export default function AdminDashboard() {
       {/* EDIT ACCOUNT MODAL (ADMIN CONTROL) */}
       {isEditModalOpen && editingAccount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
@@ -1771,7 +1774,7 @@ export default function AdminDashboard() {
       {/* ADMIN DRIVER ONBOARDING MODAL */}
       {isAddDriverOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
@@ -1942,7 +1945,7 @@ export default function AdminDashboard() {
       {/* VENDOR ONBOARDING MODAL (ADMIN ONLY) */}
       {isAddVendorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
@@ -1989,12 +1992,13 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNewVendorForm({
                         ...newVendorForm,
-                        vendorType: e.target.value as 'Restaurant Vendor',
+                        vendorType: e.target.value as any,
                       })
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018]"
                   >
                     <option value="Restaurant Vendor">Restaurant Vendor (Food &amp; Dining)</option>
+                    <option value="CraveXP Store Vendor">CraveXP Store Vendor (Dark Store Grocery)</option>
                   </select>
                 </div>
               </div>
@@ -2075,7 +2079,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="font-bold text-[#18201c] dark:text-white">Phone Number</label>
                   <input
@@ -2088,9 +2092,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c] dark:text-white">
-                    Commercial Model
-                  </label>
+                  <label className="font-bold text-[#18201c] dark:text-white">Commercial Model</label>
                   <select
                     value={newVendorForm.commercialModel}
                     onChange={(e) =>
@@ -2106,6 +2108,17 @@ export default function AdminDashboard() {
                     <option value="markup">Markup (% added for customer)</option>
                     <option value="hybrid">Hybrid (Both Commission &amp; Markup)</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c] dark:text-white">Banner Image URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/photo-1555396273..."
+                    value={newVendorForm.bannerUrl}
+                    onChange={(e) => setNewVendorForm({ ...newVendorForm, bannerUrl: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
+                  />
                 </div>
               </div>
 
@@ -2140,6 +2153,42 @@ export default function AdminDashboard() {
                     value={newVendorForm.markupRate}
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, markupRate: Number(e.target.value) })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Fixed Commission (₹ per order) {newVendorForm.commercialModel === 'markup' && '(N/A)'}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    disabled={newVendorForm.commercialModel === 'markup'}
+                    value={newVendorForm.fixedCommission}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, fixedCommission: Number(e.target.value) })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Fixed Markup (₹ per order) {newVendorForm.commercialModel === 'commission' && '(N/A)'}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    disabled={newVendorForm.commercialModel === 'commission'}
+                    value={newVendorForm.fixedMarkup}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, fixedMarkup: Number(e.target.value) })
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
                   />
@@ -2198,7 +2247,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="font-bold text-gray-700 dark:text-gray-300">GST Status</label>
                     <select
@@ -2215,6 +2264,30 @@ export default function AdminDashboard() {
                     </select>
                   </div>
 
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Vendor GST Rate (%)
+                    </label>
+                    <select
+                      value={newVendorForm.gstRatePercent}
+                      onChange={(e) =>
+                        setNewVendorForm({
+                          ...newVendorForm,
+                          gstRatePercent: Number(e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    >
+                      <option value={0}>0% (Exempt / Zero Tax)</option>
+                      <option value={5}>5% (Standard Prepared Food / Restaurant)</option>
+                      <option value={12}>12% (12% Rate)</option>
+                      <option value={18}>18% (18% Service / Standard Rate)</option>
+                      <option value={28}>28% (28% Rate)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="font-bold text-gray-700 dark:text-gray-300">
                       Supplier State
@@ -2397,7 +2470,7 @@ export default function AdminDashboard() {
       {/* ADMIN MENU & PRICE ALTERATION DRAWER / MODAL */}
       {isMenuDrawerOpen && selectedVendorForMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[92vh] overflow-y-auto flex flex-col justify-between">
+          <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] max-h-[92vh] overflow-y-auto custom-scrollbar flex flex-col justify-between">
             <div>
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">

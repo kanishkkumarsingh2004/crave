@@ -122,8 +122,8 @@ export default function VendorSalesPage() {
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="size-8 border-4 border-[#86a018] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#0a0f0d] flex items-center justify-center p-4">
+        <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -139,116 +139,116 @@ export default function VendorSalesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16 lg:pl-64">
+    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Sales Overview Banner */}
-        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
+        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                 Restaurant Financial Analytics
               </span>
-              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white">
                 Sales Revenue &amp; Settlements
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-400 mt-0.5">
                 Financial performance for{' '}
-                <strong className="text-[#18201c]">
+                <strong className="text-white">
                   {user?.restaurantName || 'Your restaurant'}
                 </strong>
               </p>
             </div>
             <Link
               href="/vendor/settings"
-              className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#323d36] transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition"
             >
-              Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#d9f447]" />
+              Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#0d1310]" />
             </Link>
           </div>
         </div>
 
         {/* 4 Financial KPI Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
                 Gross Sales
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-emerald-50 text-emerald-800">
+              <div className="grid size-9 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <DollarSign className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-2xl font-bold text-[#18201c]">₹{totalGrossSales}</p>
-            <p className="text-[11px] text-gray-500 mt-1">
+            <p className="mt-3 text-3xl font-black tracking-tight text-white">₹{totalGrossSales}</p>
+            <p className="text-[11px] text-gray-400 mt-1">
               Total revenue across {orders.length} orders
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
                 Platform Commission ({commissionRate}%)
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-amber-50 text-amber-800">
+              <div className="grid size-9 place-items-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 <Percent className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-2xl font-bold text-amber-900">-₹{totalCommission}</p>
-            <p className="text-[11px] text-gray-500 mt-1">
+            <p className="mt-3 text-3xl font-black tracking-tight text-amber-400">-₹{totalCommission}</p>
+            <p className="text-[11px] text-gray-400 mt-1">
               Rate loaded from the restaurant profile
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
                 Net Vendor Payout
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-blue-50 text-blue-800">
+              <div className="grid size-9 place-items-center rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 <TrendingUp className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-2xl font-bold text-emerald-700">₹{totalNetEarnings}</p>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+            <p className="mt-3 text-3xl font-black tracking-tight text-[#d9f447]">₹{totalNetEarnings}</p>
+            <p className="text-[11px] text-emerald-400 font-semibold mt-1">
               Transferrable to bank account
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs">
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
                 Settlement Schedule
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-purple-50 text-purple-800">
+              <div className="grid size-9 place-items-center rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
                 <Clock3 className="size-4" />
               </div>
             </div>
-            <p className="mt-3 text-lg font-bold text-[#18201c]">
-              {orders.filter((order) => order.status === 'completed').length}
+            <p className="mt-3 text-3xl font-black tracking-tight text-white">
+              {orders.filter((order) => order.status === 'completed' || order.status === 'delivered').length}
             </p>
-            <p className="text-[11px] text-gray-500 mt-1">Completed orders in database</p>
+            <p className="text-[11px] text-gray-400 mt-1">Completed orders in database</p>
           </div>
         </div>
 
         {/* Weekly Settlement Transfers Table */}
-        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+        <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-[#202b24] pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#18201c]">Weekly Bank Settlements History</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="text-lg font-black text-white">Weekly Bank Settlements History</h3>
+              <p className="text-xs text-gray-400">
                 Payout records transferred to your registered bank account
               </p>
             </div>
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold text-gray-700">
+            <span className="rounded-full bg-[#1c2620] border border-[#28372e] px-3 py-1 text-[10px] font-bold text-gray-300">
               {settlementsHistory.length} records
             </span>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-400 font-bold bg-gray-50/50">
+          <div className="overflow-x-auto no-scrollbar rounded-2xl border border-[#222e27]">
+            <table className="w-full text-left text-xs text-gray-300">
+              <thead className="border-b border-[#222e27] text-[10px] uppercase tracking-wider text-gray-400 font-extrabold bg-[#18201c]">
                 <tr>
                   <th className="py-3 px-4">Period</th>
                   <th className="py-3 px-4">Gross Sales</th>
@@ -258,29 +258,29 @@ export default function VendorSalesPage() {
                   <th className="py-3 px-4">Bank Ref UTR</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 font-medium">
+              <tbody className="divide-y divide-[#222e27] bg-[#171f1b]">
                 {settlementsHistory.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-gray-500">
+                    <td colSpan={6} className="p-8 text-center text-gray-400 bg-[#121815]">
                       No settlement records are stored for this restaurant.
                     </td>
                   </tr>
                 ) : (
                   settlementsHistory.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50/60 transition">
-                      <td className="py-3.5 px-4 font-bold text-[#18201c]">{s.period || '—'}</td>
-                      <td className="py-3.5 px-4 font-semibold text-gray-700">₹{s.grossSales}</td>
-                      <td className="py-3.5 px-4 text-rose-600 font-semibold">
+                    <tr key={s.id} className="hover:bg-[#1c2620] transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-white">{s.period || '—'}</td>
+                      <td className="py-3.5 px-4 font-semibold text-gray-300">₹{s.grossSales}</td>
+                      <td className="py-3.5 px-4 text-rose-400 font-semibold">
                         -₹{s.commissionAmount}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-emerald-700">₹{s.netPayout}</td>
+                      <td className="py-3.5 px-4 font-black text-[#d9f447]">₹{s.netPayout}</td>
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-bold text-gray-800">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#1c2620] border border-[#28372e] px-2.5 py-0.5 text-[10px] font-bold text-gray-300">
                           {s.status || 'Status unavailable'}
                           {s.payoutDate ? ` · ${s.payoutDate}` : ''}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-500">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
                         {s.transactionRef || '—'}
                       </td>
                     </tr>
@@ -292,33 +292,33 @@ export default function VendorSalesPage() {
         </div>
 
         {/* Individual Order Transactions Table */}
-        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-4">
+        <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#202b24] pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#18201c]">Individual Customer Orders</h3>
-              <p className="text-xs text-gray-500">Breakdown of orders and earnings</p>
+              <h3 className="text-lg font-black text-white">Individual Customer Orders</h3>
+              <p className="text-xs text-gray-400">Breakdown of orders and earnings</p>
             </div>
 
             <div className="relative max-w-xs w-full">
-              <Search className="absolute left-3 top-2.5 size-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-2.5 size-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search order ID or customer..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-2 pl-9 pr-3 text-xs outline-none focus:border-[#86a018]"
+                className="w-full rounded-full border border-[#233228] bg-[#141c17] py-2 pl-9 pr-3 text-xs text-white placeholder-gray-500 outline-none focus:border-[#d9f447]"
               />
             </div>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar">
+          <div className="overflow-x-auto no-scrollbar rounded-2xl border border-[#222e27]">
             {filteredOrders.length === 0 ? (
-              <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+              <div className="p-8 text-center text-xs text-gray-400 bg-[#121815]">
                 No orders match your search query.
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-400 font-bold bg-gray-50/50">
+              <table className="w-full text-left text-xs text-gray-300">
+                <thead className="border-b border-[#222e27] text-[10px] uppercase tracking-wider text-gray-400 font-extrabold bg-[#18201c]">
                   <tr>
                     <th className="py-3 px-4">Order ID</th>
                     <th className="py-3 px-4">Customer Name</th>
@@ -328,17 +328,17 @@ export default function VendorSalesPage() {
                     <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 font-medium">
+                <tbody className="divide-y divide-[#222e27] bg-[#171f1b]">
                   {filteredOrders.map((o) => {
                     const gross = Number(o.subtotal || 0)
                     const net = Math.round(gross * (1 - commissionRate / 100))
                     return (
-                      <tr key={o.id} className="hover:bg-gray-50/60 transition">
-                        <td className="py-3.5 px-4 font-mono font-bold text-[#18201c]">#{o.id}</td>
-                        <td className="py-3.5 px-4 font-semibold text-[#18201c]">
+                      <tr key={o.id} className="hover:bg-[#1c2620] transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-gray-300">#{o.id}</td>
+                        <td className="py-3.5 px-4 font-extrabold text-white">
                           {o.customer_name || '—'}
                         </td>
-                        <td className="py-3.5 px-4 text-gray-500">
+                        <td className="py-3.5 px-4 text-gray-400">
                           {o.created_at
                             ? new Date(o.created_at).toLocaleString([], {
                                 month: 'short',
@@ -348,14 +348,14 @@ export default function VendorSalesPage() {
                               })
                             : '—'}
                         </td>
-                        <td className="py-3.5 px-4 font-bold text-[#18201c]">₹{gross}</td>
-                        <td className="py-3.5 px-4 font-bold text-emerald-700">₹{net}</td>
+                        <td className="py-3.5 px-4 font-bold text-white">₹{gross}</td>
+                        <td className="py-3.5 px-4 font-black text-[#d9f447]">₹{net}</td>
                         <td className="py-3.5 px-4">
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                              o.status === 'completed' || o.status === 'ready'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-blue-100 text-blue-800'
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                              o.status === 'completed' || o.status === 'delivered' || o.status === 'ready'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                             }`}
                           >
                             {o.status}

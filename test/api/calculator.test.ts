@@ -65,4 +65,25 @@ describe('/api/calculator API Route', () => {
     expect(json.breakdown.customerBilling.subtotal).toBe(600)
     expect(json.breakdown.customerBilling.isFreeDelivery).toBe(true)
   })
+
+  test('POST /api/calculator respects 0% GST rate', async () => {
+    const req = new Request('http://localhost:3000/api/calculator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subtotal: 400,
+        distanceKm: 5.5,
+        packagingFee: 0,
+        gstRatePercent: 0,
+      }),
+    })
+
+    const res = await POST(req)
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.breakdown.customerBilling.gstAmount).toBe(0)
+    expect(json.breakdown.customerBilling.grandTotal).toBe(427)
+  })
 })

@@ -9,6 +9,7 @@ export interface PaymentConfig {
   handlingFee: number
   vendorCommission: number
   packagingCap: number
+  gstRatePercent: number
   baseDeliveryFee: number
   baseDistanceKm: number
   perKmRate: number
@@ -36,6 +37,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   handlingFee: 5,
   vendorCommission: 15,
   packagingCap: 20,
+  gstRatePercent: 18,
   baseDeliveryFee: 30,
   baseDistanceKm: 3,
   perKmRate: 10,

@@ -53,7 +53,7 @@ export default function CalculatorPlaygroundPage() {
   const [subtotal, setSubtotal] = useState<number>(450)
   const [distanceKm, setDistanceKm] = useState<number>(4.2)
   const [packagingFee, setPackagingFee] = useState<number>(20)
-  const [tip, setTip] = useState<number>(30)
+  const [tip, setTip] = useState<number>(0)
   const [vendorCommissionPercent, setVendorCommissionPercent] = useState<number>(15)
   const [driverPayoutSharePercent, setDriverPayoutSharePercent] = useState<number>(80)
   const [platformFee, setPlatformFee] = useState<number>(6)
@@ -117,7 +117,7 @@ export default function CalculatorPlaygroundPage() {
     setSubtotal(450)
     setDistanceKm(3.5)
     setPackagingFee(20)
-    setTip(30)
+    setTip(0)
     setVendorCommissionPercent(15)
     setDriverPayoutSharePercent(80)
     setPlatformFee(6)
@@ -177,12 +177,24 @@ export default function CalculatorPlaygroundPage() {
   // Handle Preset Selection: Load Restaurant from DB
   const handleSelectDbRestaurant = (restId: string) => {
     setSelectedRestaurantId(restId)
+    setSelectedOrderId('')
     if (!restId || !dbData?.restaurants) return
     const rest = dbData.restaurants.find((r) => r.id === restId)
     if (rest && rest.commission_rate != null) {
       setVendorCommissionPercent(rest.commission_rate)
     }
   }
+
+  // Filtered DB Orders belonging to selected DB Restaurant
+  const filteredDbOrders = useMemo(() => {
+    if (!selectedRestaurantId || !dbData?.orders) return []
+    const targetRest = dbData.restaurants?.find((r) => r.id === selectedRestaurantId)
+    return dbData.orders.filter(
+      (ord) =>
+        ord.restaurant_id === selectedRestaurantId ||
+        (targetRest && ord.restaurant_name === targetRest.name)
+    )
+  }, [selectedRestaurantId, dbData])
 
   // Active Coupon details for breakdown math
   const activeCouponObj = useMemo(() => {
@@ -353,25 +365,6 @@ export default function CalculatorPlaygroundPage() {
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-1">
-                      Select DB Recent Order:
-                    </label>
-                    <select
-                      value={selectedOrderId}
-                      onChange={(e) => handleSelectDbOrder(e.target.value)}
-                      className="w-full bg-[#0d1210] border border-[#2d3a33] rounded-lg px-3 py-2 text-white focus:border-[#d9f447] outline-none"
-                    >
-                      <option value="">-- Choose Order from Database --</option>
-                      {dbData?.orders?.map((ord) => (
-                        <option key={ord.id} value={ord.id}>
-                          {ord.customer_name} ({ord.restaurant_name}) - ₹{ord.total_amount} [
-                          {ord.status}]
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-gray-300 font-semibold mb-1">
@@ -382,7 +375,7 @@ export default function CalculatorPlaygroundPage() {
                         onChange={(e) => handleSelectDbRestaurant(e.target.value)}
                         className="w-full bg-[#0d1210] border border-[#2d3a33] rounded-lg px-2.5 py-2 text-white focus:border-[#d9f447] outline-none truncate"
                       >
-                        <option value="">-- Restaurant --</option>
+                        <option value="">-- Choose Restaurant --</option>
                         {dbData?.restaurants?.map((rest) => (
                           <option key={rest.id} value={rest.id}>
                             {rest.name} ({rest.commission_rate ?? 15}%)
@@ -410,6 +403,44 @@ export default function CalculatorPlaygroundPage() {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-gray-300 font-semibold">
+                        Select DB Recent Order:
+                      </label>
+                      {!selectedRestaurantId && (
+                        <span className="text-[10px] text-amber-400 font-medium">
+                          Select restaurant first
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={selectedOrderId}
+                      disabled={!selectedRestaurantId}
+                      onChange={(e) => handleSelectDbOrder(e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 outline-none transition ${
+                        !selectedRestaurantId
+                          ? 'bg-[#121614] border-[#1f2923] text-gray-500 cursor-not-allowed'
+                          : 'bg-[#0d1210] border-[#2d3a33] text-white focus:border-[#d9f447]'
+                      }`}
+                    >
+                      {!selectedRestaurantId ? (
+                        <option value="">-- Select a Restaurant First --</option>
+                      ) : filteredDbOrders.length === 0 ? (
+                        <option value="">-- No Recent Orders Found for this Restaurant --</option>
+                      ) : (
+                        <option value="">
+                          -- Choose Order from Database ({filteredDbOrders.length} available) --
+                        </option>
+                      )}
+                      {filteredDbOrders.map((ord) => (
+                        <option key={ord.id} value={ord.id}>
+                          #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [{ord.status}]
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
