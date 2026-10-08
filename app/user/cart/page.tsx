@@ -10,13 +10,16 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  Bike,
   Briefcase,
   Building,
   Check,
   CheckCircle2,
   ChevronRight,
+  Compass,
   Copy,
   ExternalLink,
+  History,
   Home,
   MapPin,
   Minus,
@@ -28,6 +31,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  User,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -442,7 +446,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] text-[#18201c] dark:text-white flex flex-col justify-between selection:bg-[#d9f447] selection:text-[#18201c]">
       <Navbar />
 
-      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 flex-1">
+      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 flex-1 pb-28 lg:pb-8">
         {/* Top Header & Breadcrumb */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dc] dark:border-[#27342d] pb-4 gap-3">
           <div className="flex items-center gap-3">
@@ -1061,7 +1065,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Submit Order Button */}
-                  <form onSubmit={handlePlaceOrder} className="mt-6">
+                  <form onSubmit={handlePlaceOrder} id="checkout-action-section" className="mt-6">
                     <button
                       type="submit"
                       disabled={isSubmittingOrder || utrRef.trim().length < 10}
@@ -1086,6 +1090,33 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
+      {/* Floating Sticky Mobile Checkout Pill */}
+      {cart.length > 0 && !orderSuccess && (
+        <div className="fixed bottom-[4.2rem] left-4 right-4 z-30 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center justify-between rounded-2xl bg-[#18201c] dark:bg-[#d9f447] p-3.5 shadow-2xl border border-gray-700/60 dark:border-black/10 backdrop-blur-md">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#9eb3a4] dark:text-[#18201c]/80">
+                {totalCount} {totalCount === 1 ? 'item' : 'items'} &bull; Total
+              </p>
+              <p className="text-lg font-black text-[#d9f447] dark:text-[#18201c]">₹{grandTotal}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const target = document.getElementById('checkout-action-section')
+                if (target) {
+                  target.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-[#d9f447] dark:bg-[#18201c] px-4 py-2 text-xs font-black text-[#18201c] dark:text-[#d9f447] shadow-sm active:scale-95 transition"
+            >
+              <span>Proceed to Pay</span>
+              <ArrowRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Available Coupons & Offers Popup Modal */}
       {showCouponsModal && (
@@ -1405,6 +1436,61 @@ export default function CartPage() {
       )}
 
       <Footer />
+
+      {/* Mobile Customer Bottom Navigation Bar */}
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe"
+      >
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          <Link
+            href="/user/explore"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-gray-400 dark:text-gray-500 font-bold"
+          >
+            <Compass className="size-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-[10px]">Explore</span>
+          </Link>
+
+          <Link
+            href="/user/track"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-gray-400 dark:text-gray-500 font-bold"
+          >
+            <Bike className="size-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-[10px]">Track</span>
+          </Link>
+
+          <Link
+            href="/user/orders"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-gray-400 dark:text-gray-500 font-bold"
+          >
+            <History className="size-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-[10px]">Orders</span>
+          </Link>
+
+          <Link
+            href="/user/cart"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-[#18201c] dark:text-white font-black"
+          >
+            <div className="relative">
+              <ShoppingCart className="size-5 text-[#859d19] dark:text-[#d9f447]" />
+              {totalCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                  {totalCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px]">Cart</span>
+          </Link>
+
+          <Link
+            href="/user/profile"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-gray-400 dark:text-gray-500 font-bold"
+          >
+            <User className="size-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-[10px]">Profile</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   )
 }

@@ -48,12 +48,25 @@ export function checkRateLimit(
 }
 
 export function getClientIp(request: Request): string {
-  const xff = request.headers.get('x-forwarded-for')
-  if (xff) {
-    return xff.split(',')[0].trim()
-  }
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp) return realIp.trim()
+  try {
+    const cfConnectingIp = request.headers?.get ? request.headers.get('cf-connecting-ip') : null
+    if (cfConnectingIp) {
+      return cfConnectingIp.trim().replace(/[^a-zA-Z0-9.:_-]/g, '')
+    }
+
+    const realIp = request.headers?.get ? request.headers.get('x-real-ip') : null
+    if (realIp) {
+      return realIp.trim().replace(/[^a-zA-Z0-9.:_-]/g, '')
+    }
+
+    const xff = request.headers?.get ? request.headers.get('x-forwarded-for') : null
+    if (xff) {
+      const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+      if (parts.length > 0) {
+        return parts[0].replace(/[^a-zA-Z0-9.:_-]/g, '')
+      }
+    }
+  } catch {}
   return '127.0.0.1'
 }
 

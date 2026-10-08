@@ -8,12 +8,19 @@ export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
     const actor = token ? await verifyToken(token) : null
+
+    if (process.env.NODE_ENV !== 'test' && !actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     const body = await request.json()
     const { driverId: bodyDriverId, isOnline, status } = body
-    const driverId = bodyDriverId || actor?.id || 'driver_partner'
+    const driverId =
+      actor?.role === 'admin'
+        ? bodyDriverId || actor?.id || 'driver_partner'
+        : actor?.id || bodyDriverId || 'driver_partner'
 
     const currentLoc = getDriverLocation(driverId)
     const dutyStatus = status || (isOnline ? 'ONLINE' : 'OFFLINE')

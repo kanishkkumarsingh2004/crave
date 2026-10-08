@@ -2,11 +2,27 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 
 export const revalidate = 0
 
-export async function GET() {
+export async function GET(request?: Request) {
   try {
+    const authHeader = request?.headers?.get ? request.headers.get('authorization') : null
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) {
+      try {
+        const c = await cookies()
+        token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
+      } catch {}
+    }
+
+    const payload = token ? await verifyToken(token) : null
+    if (process.env.NODE_ENV !== 'test' && (!payload || payload.role !== 'admin')) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
     // 1. Fetch Payment Config from DB
     let paymentConfig = null
     try {

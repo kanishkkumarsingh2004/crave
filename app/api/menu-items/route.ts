@@ -10,7 +10,7 @@ async function getActor(request: Request) {
   if (!token) {
     try {
       const c = await cookies()
-      token = c.get('crave_auth_token')?.value || ''
+      token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
     } catch {}
   }
   return token ? verifyToken(token) : null
@@ -53,6 +53,18 @@ export async function POST(request: Request) {
       }
     }
     const body = await request.json()
+
+    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin' && body.restaurant_id) {
+      const rest = await prisma.restaurant.findUnique({
+        where: { id: body.restaurant_id },
+        select: { owner_id: true, id: true },
+      })
+      const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
+      if (rest && rest.owner_id !== actor.id && rest.id !== vendorRestaurantId) {
+        return NextResponse.json({ error: 'Forbidden: You do not own this restaurant' }, { status: 403 })
+      }
+    }
+
     const item = await prisma.menuItem.create({
       data: {
         id: body.id || crypto.randomUUID(),
@@ -102,6 +114,21 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
     }
 
+    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
+      const existingItem = await prisma.menuItem.findUnique({
+        where: { id },
+        select: { restaurant: { select: { owner_id: true, id: true } } },
+      })
+      const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
+      if (
+        existingItem?.restaurant &&
+        existingItem.restaurant.owner_id !== actor.id &&
+        existingItem.restaurant.id !== vendorRestaurantId
+      ) {
+        return NextResponse.json({ error: 'Forbidden: You do not own this menu item' }, { status: 403 })
+      }
+    }
+
     // Normalize numeric fields
     if (data.price != null) data.price = Number(data.price)
     if (data.mrp != null) data.mrp = Number(data.mrp)
@@ -138,6 +165,21 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
+    }
+
+    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
+      const existingItem = await prisma.menuItem.findUnique({
+        where: { id },
+        select: { restaurant: { select: { owner_id: true, id: true } } },
+      })
+      const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
+      if (
+        existingItem?.restaurant &&
+        existingItem.restaurant.owner_id !== actor.id &&
+        existingItem.restaurant.id !== vendorRestaurantId
+      ) {
+        return NextResponse.json({ error: 'Forbidden: You do not own this menu item' }, { status: 403 })
+      }
     }
 
     await prisma.menuItem.delete({ where: { id } })

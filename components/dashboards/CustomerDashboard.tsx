@@ -1386,6 +1386,20 @@ export default function CustomerDashboard({
               )}
             </button>
 
+            {/* Quick Mobile Cart Button */}
+            <button
+              onClick={() => router.push('/user/cart')}
+              className="lg:hidden relative grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0"
+              aria-label="View Cart"
+            >
+              <ShoppingCart className="size-4 text-[#18201c] dark:text-white" />
+              {totalCartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#859d19] text-[9px] font-black text-white shadow-sm">
+                  {totalCartItemCount}
+                </span>
+              )}
+            </button>
+
             {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
             <button
               onClick={() => setShowMobileSideMenu(true)}
@@ -3195,8 +3209,17 @@ export default function CustomerDashboard({
 
       {/* Location Selector & GPS Map Pin Drop Modal */}
       {showLocationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowLocationModal(false)}
+        >
+          <div
+            className="w-full max-w-xl overflow-hidden rounded-t-[2rem] sm:rounded-3xl bg-white shadow-2xl border-t sm:border border-gray-200 flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300 pb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Sheet Drag Handle */}
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-2.5 sm:hidden shrink-0" />
+
             <div className="flex items-center justify-between border-b border-gray-100 p-5 bg-[#18201c] text-white">
               <div className="flex items-center gap-3">
                 <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-bold">
@@ -3438,7 +3461,7 @@ export default function CustomerDashboard({
       {/* Mobile Bottom Tab Bar */}
       <nav
         aria-label="Mobile bottom navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
           <button
