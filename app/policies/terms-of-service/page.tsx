@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
           {/* Section I */}
           <section id="i-acceptance-of-terms" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">I.</span> Acceptance of terms
+              <span className="text-[#b5de28]">I.</span> Acceptance of terms
             </h2>
             <p>
               Thank you for using <strong className="text-[#18201c]">crave.</strong>. These Terms of
@@ -90,7 +90,7 @@ export default function TermsOfServicePage() {
           {/* Section II */}
           <section id="ii-definitions" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">II.</span> Definitions
+              <span className="text-[#b5de28]">II.</span> Definitions
             </h2>
             <div className="space-y-3">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -141,7 +141,7 @@ export default function TermsOfServicePage() {
           {/* Section III */}
           <section id="iii-eligibility-to-use-the-services" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">III.</span> Eligibility to use the services
+              <span className="text-[#b5de28]">III.</span> Eligibility to use the services
             </h2>
             <p>
               1. You hereby represent and warrant that you are at least eighteen (18) years of age
@@ -161,7 +161,7 @@ export default function TermsOfServicePage() {
           {/* Section IV */}
           <section id="iv-changes-to-the-terms" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">IV.</span> Changes to the terms
+              <span className="text-[#b5de28]">IV.</span> Changes to the terms
             </h2>
             <p>
               crave. may vary or amend or change or update these Terms from time to time entirely at
@@ -174,7 +174,7 @@ export default function TermsOfServicePage() {
           {/* Section V */}
           <section id="v-translation-of-the-terms" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">V.</span> Translation of the terms
+              <span className="text-[#b5de28]">V.</span> Translation of the terms
             </h2>
             <p>
               crave. may provide a translation of the English version of the Terms into other
@@ -188,7 +188,7 @@ export default function TermsOfServicePage() {
           {/* Section VI */}
           <section id="vi-provision-of-services" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">VI.</span> Provision of the services offered by
+              <span className="text-[#b5de28]">VI.</span> Provision of the services offered by
               crave.
             </h2>
             <p>
@@ -215,7 +215,7 @@ export default function TermsOfServicePage() {
           {/* Section VII */}
           <section id="vii-use-of-services" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">VII.</span> Use of services by you or Customer
+              <span className="text-[#b5de28]">VII.</span> Use of services by you or Customer
             </h2>
             <h3 className="font-bold text-[#18201c] text-base">
               1. Customer Account &amp; Claim Business Listing
@@ -247,7 +247,7 @@ export default function TermsOfServicePage() {
           {/* Section VIII */}
           <section id="viii-content" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">VIII.</span> Content &amp; Intellectual Property
+              <span className="text-[#b5de28]">VIII.</span> Content &amp; Intellectual Property
             </h2>
             <h3 className="font-bold text-[#18201c] text-base">
               1. Ownership of crave. Content &amp; Trademarks
@@ -274,7 +274,7 @@ export default function TermsOfServicePage() {
           {/* Section IX */}
           <section id="ix-content-guidelines-and-privacy" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">IX.</span> Content guidelines and privacy policy
+              <span className="text-[#b5de28]">IX.</span> Content guidelines and privacy policy
             </h2>
             <p>
               You represent that you have read, understood and agreed to our Privacy Policy and
@@ -287,7 +287,7 @@ export default function TermsOfServicePage() {
           {/* Section X */}
           <section id="x-restrictions-on-use" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">X.</span> Restrictions on use
+              <span className="text-[#b5de28]">X.</span> Restrictions on use
             </h2>
             <p>
               Without limiting these Terms, you specifically agree NOT to post or transmit content
@@ -321,7 +321,7 @@ export default function TermsOfServicePage() {
           {/* Section XI */}
           <section id="xi-customer-feedback" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XI.</span> Customer feedback &amp; submissions
+              <span className="text-[#b5de28]">XI.</span> Customer feedback &amp; submissions
             </h2>
             <p>
               If you share suggestions or feedback regarding crave. Services, you grant crave. a
@@ -333,7 +333,7 @@ export default function TermsOfServicePage() {
           {/* Section XII */}
           <section id="xii-advertising" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XII.</span> Advertising &amp; promotions
+              <span className="text-[#b5de28]">XII.</span> Advertising &amp; promotions
             </h2>
             <p>
               Some Services are supported by advertising revenue. Merchant promotional banners and
@@ -345,7 +345,7 @@ export default function TermsOfServicePage() {
           {/* Section XIII */}
           <section id="xiii-additional-terms" className="space-y-6 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XIII.</span> Additional Terms for crave. Services
+              <span className="text-[#b5de28]">XIII.</span> Additional Terms for crave. Services
             </h2>
 
             <div className="space-y-4">
@@ -412,7 +412,7 @@ export default function TermsOfServicePage() {
           {/* Section XIV */}
           <section id="xiv-disclaimer-and-limitation" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XIV.</span> Disclaimer of warranties &amp; limitation
+              <span className="text-[#b5de28]">XIV.</span> Disclaimer of warranties &amp; limitation
               of liability
             </h2>
             <p className="uppercase text-xs font-mono bg-gray-100 p-4 rounded-xl border border-gray-200 text-gray-800 leading-relaxed">
@@ -426,7 +426,7 @@ export default function TermsOfServicePage() {
           {/* Section XV */}
           <section id="xv-termination" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XV.</span> Termination of your access
+              <span className="text-[#b5de28]">XV.</span> Termination of your access
             </h2>
             <p>
               You may delete your account at any time via Profile &gt; Settings &gt; Security &gt;
@@ -438,7 +438,7 @@ export default function TermsOfServicePage() {
           {/* Section XVI */}
           <section id="xvi-general-terms" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XVI.</span> General terms
+              <span className="text-[#b5de28]">XVI.</span> General terms
             </h2>
             <p>
               <strong className="text-[#18201c]">Governing Law &amp; Jurisdiction:</strong> These
@@ -456,7 +456,7 @@ export default function TermsOfServicePage() {
           {/* Section XVII */}
           <section id="xvii-notice-of-copyright" className="space-y-4 scroll-mt-28">
             <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="text-[#849e16]">XVII.</span> Notice of copyright infringement
+              <span className="text-[#b5de28]">XVII.</span> Notice of copyright infringement
             </h2>
             <p>
               If you believe copyrighted material is being infringed on crave., submit a takedown

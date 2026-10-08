@@ -160,7 +160,7 @@ export default function VendorSalesPage() {
             </div>
             <Link
               href="/vendor/settings"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition"
             >
               Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#0d1310]" />
             </Link>

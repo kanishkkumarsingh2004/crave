@@ -150,7 +150,7 @@ export default function AdminPaymentsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <CreditCard className="size-5 text-[#859d19]" />
+            <CreditCard className="size-5 text-[#b5de28]" />
             UPI Payment References Queue
           </h3>
           <p className="text-xs text-[#737e77] dark:text-gray-400 mt-0.5">
@@ -251,7 +251,7 @@ export default function AdminPaymentsPage() {
                       : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-600 hover:text-white'
                   }`}
                 >
-                  {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
+                  {p.status === 'verified' ? 'Approved' : 'Approve Payment'}
                 </button>
                 <button
                   onClick={() => updatePayment(p.order_id, 'rejected')}
@@ -262,7 +262,7 @@ export default function AdminPaymentsPage() {
                       : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/50 hover:bg-rose-600 hover:text-white'
                   }`}
                 >
-                  {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
+                  {p.status === 'rejected' ? 'Rejected' : 'Reject / Flag'}
                 </button>
               </div>
             </div>
@@ -319,7 +319,7 @@ export default function AdminPaymentsPage() {
                             : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-600 hover:text-white'
                         }`}
                       >
-                        {p.status === 'verified' ? '✓ Approved' : 'Approve Payment'}
+                        {p.status === 'verified' ? 'Approved' : 'Approve Payment'}
                       </button>
                       <button
                         onClick={() => updatePayment(p.order_id, 'rejected')}
@@ -330,7 +330,7 @@ export default function AdminPaymentsPage() {
                             : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/50 hover:bg-rose-600 hover:text-white'
                         }`}
                       >
-                        {p.status === 'rejected' ? '✕ Rejected' : 'Reject / Flag'}
+                        {p.status === 'rejected' ? 'Rejected' : 'Reject / Flag'}
                       </button>
                     </div>
                   </td>

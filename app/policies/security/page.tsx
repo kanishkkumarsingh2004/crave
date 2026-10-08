@@ -16,7 +16,7 @@ export default function SecurityPolicyPage() {
       <div className="space-y-10 text-gray-700">
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">1.</span> Enterprise Infrastructure Security
+            <span className="text-[#b5de28]">1.</span> Enterprise Infrastructure Security
           </h2>
           <p className="leading-relaxed">
             At <strong className="text-[#18201c]">crave.</strong>, security is built into every
@@ -28,7 +28,7 @@ export default function SecurityPolicyPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">2.</span> Data Protection &amp; Access Controls
+            <span className="text-[#b5de28]">2.</span> Data Protection &amp; Access Controls
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-200">
@@ -66,7 +66,7 @@ export default function SecurityPolicyPage() {
 
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">3.</span> Vulnerability Disclosure &amp; Bug Bounty
+            <span className="text-[#b5de28]">3.</span> Vulnerability Disclosure &amp; Bug Bounty
           </h2>
           <p className="leading-relaxed">
             We welcome security researchers and ethical hackers to report vulnerabilities under our

@@ -75,13 +75,13 @@ export default function HomePage() {
           <div className="text-center max-w-3xl mx-auto">
             {/* Location Eyebrow (Plain Text, Zero Background Pill) */}
             <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
-              <MapPin className="size-3.5 text-[#849e16]" />
+              <MapPin className="size-3.5 text-[#b5de28]" />
               <span>Live on Kanakapura Road, Bengaluru</span>
             </div>
 
             <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-extrabold leading-[1.05] tracking-tight text-[#18201c]">
               Order food &amp; groceries. <br />
-              Discover best kitchens. <span className="text-[#849e16]">Crave it!</span>
+              Discover best kitchens. <span className="text-[#b5de28]">Crave it!</span>
             </h1>
 
             <p className="mt-4 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl mx-auto">
@@ -98,7 +98,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* Location Selector */}
                 <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1] sm:max-w-[220px] shrink-0">
-                  <MapPin className="size-4 text-[#849e16] shrink-0" />
+                  <MapPin className="size-4 text-[#b5de28] shrink-0" />
                   <input
                     type="text"
                     value={selectedCity}
@@ -139,20 +139,20 @@ export default function HomePage() {
             {/* ENTRY CARD 1: FOOD DELIVERY */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
                     UP TO 60% OFF
                   </span>
-                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#849e16] group-hover:scale-110 transition-transform">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#b5de28] group-hover:scale-110 transition-transform">
                     <UtensilsCrossed className="size-6" />
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
                     FOOD DELIVERY
                   </h3>
                   <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
@@ -166,10 +166,10 @@ export default function HomePage() {
               </div>
 
               <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
                   Order Food Now
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#849e16] group-hover:text-white transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#b5de28] group-hover:text-white transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>
@@ -178,11 +178,11 @@ export default function HomePage() {
             {/* ENTRY CARD 2: CRAVE XP (INSTAMART / DARK STORE) */}
             <div
               onClick={() => handleNavigateCustomer('/user/cravexp')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
                     15 MIN EXPRESS DROPS
                   </span>
                   <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] group-hover:scale-110 transition-transform">
@@ -191,7 +191,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
                     INSTANT GROCERY
                   </h3>
                   <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
@@ -205,10 +205,10 @@ export default function HomePage() {
               </div>
 
               <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
                   Explore Crave XP Store
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#849e16] text-white group-hover:bg-[#18201c] group-hover:text-[#d9f447] transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#b5de28] text-white group-hover:bg-[#18201c] group-hover:text-[#d9f447] transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>
@@ -217,20 +217,20 @@ export default function HomePage() {
             {/* ENTRY CARD 3: DINEOUT & OFFERS */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#849e16] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#849e16]">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
                     UP TO 50% SAVINGS
                   </span>
-                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#849e16] group-hover:scale-110 transition-transform">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#b5de28] group-hover:scale-110 transition-transform">
                     <Star className="size-6" />
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#849e16] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
                     TOP OFFERS &amp; DEALS
                   </h3>
                   <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
@@ -244,10 +244,10 @@ export default function HomePage() {
               </div>
 
               <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#849e16] transition-colors">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
                   View Today&apos;s Offers
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#849e16] group-hover:text-white transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#b5de28] group-hover:text-white transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>
@@ -266,12 +266,12 @@ export default function HomePage() {
             <div className="lg:col-span-6">
               {/* Eyebrow (Plain Text, Zero Background Pill) */}
               <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
-                <Zap className="size-3.5 text-[#849e16] fill-current" />
+                <Zap className="size-3.5 text-[#b5de28] fill-current" />
                 <span>Introducing Crave XP Store</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] tracking-tight leading-tight">
-                Instant Grocery Delivery in <span className="text-[#849e16]">15 Minutes.</span>
+                Instant Grocery Delivery in <span className="text-[#b5de28]">15 Minutes.</span>
               </h2>
 
               <p className="mt-4 text-sm sm:text-base text-[#55635a] font-medium leading-relaxed">
@@ -282,7 +282,7 @@ export default function HomePage() {
               {/* Feature Points */}
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
                     1
                   </div>
                   <div>
@@ -296,7 +296,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
                     2
                   </div>
                   <div>
@@ -310,7 +310,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#849e16] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
                     3
                   </div>
                   <div>
@@ -414,7 +414,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
                   onClick={() => handleNavigateCustomer('/user/explore')}
-                  className="rounded-full bg-[#d9f447] px-8 py-4 text-sm font-extrabold text-[#121815] shadow-xl hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95"
+                  className="rounded-full bg-[#d9f447] px-8 py-4 text-sm font-extrabold text-[#121815] shadow-xl hover:bg-[#c8e434] transition hover:scale-105 active:scale-95"
                 >
                   Start Food Order Now
                 </button>

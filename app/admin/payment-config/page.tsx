@@ -214,7 +214,7 @@ export default function AdminPaymentConfigPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#b5de28] dark:text-[#d9f447]">
             Payment & Fee Engine
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
@@ -240,7 +240,7 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 1: Platform Fees & Commission */}
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-              <Percent className="size-4 text-[#859d19]" /> Platform Service Fees & Vendor
+              <Percent className="size-4 text-[#b5de28]" /> Platform Service Fees & Vendor
               Commission
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -328,7 +328,7 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 2: Delivery Charges Configuration */}
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-              <Truck className="size-4 text-[#859d19]" /> Delivery Fee Calculation Engine
+              <Truck className="size-4 text-[#b5de28]" /> Delivery Fee Calculation Engine
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Distance-based delivery fare structure and driver payout allocation.
@@ -532,7 +532,7 @@ export default function AdminPaymentConfigPage() {
           {/* SECTION 4: UPI Receiver Credentials & Customer Thank You Message */}
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
             <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-              <QrCode className="size-4 text-[#859d19]" /> Merchant Receiver UPI & Confirmation
+              <QrCode className="size-4 text-[#b5de28]" /> Merchant Receiver UPI & Confirmation
               Configs
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -726,15 +726,15 @@ export default function AdminPaymentConfigPage() {
                   Settlement Payout Split
                 </p>
                 <div className="flex justify-between text-amber-300">
-                  <span>🏪 Kitchen Vendor Payout ({100 - getNum(vendorCommission)}%):</span>
+                  <span>Kitchen Vendor Payout ({100 - getNum(vendorCommission)}%):</span>
                   <span className="font-bold">₹{playgroundCalc.vendorPayout}</span>
                 </div>
                 <div className="flex justify-between text-blue-300">
-                  <span>🛵 Driver Delivery Payout ({driverPayoutShare}%):</span>
+                  <span>Driver Delivery Payout ({driverPayoutShare}%):</span>
                   <span className="font-bold">₹{playgroundCalc.driverPayout}</span>
                 </div>
                 <div className="flex justify-between text-emerald-300">
-                  <span>🛡️ Platform Net Commission Profit:</span>
+                  <span>Platform Net Commission Profit:</span>
                   <span className="font-bold">₹{playgroundCalc.platformNetProfit}</span>
                 </div>
               </div>

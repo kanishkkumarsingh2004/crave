@@ -70,7 +70,7 @@ export default function AdminAnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19] dark:text-[#d9f447]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#b5de28] dark:text-[#d9f447]">
             Executive intelligence
           </p>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
@@ -112,7 +112,7 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
           <h3 className="flex items-center gap-2 text-base font-bold text-[#18201c] dark:text-white">
-            <TrendingUp className="size-5 text-[#859d19] dark:text-[#d9f447]" /> Revenue trend
+            <TrendingUp className="size-5 text-[#b5de28] dark:text-[#d9f447]" /> Revenue trend
           </h3>
 
           <div className="mt-6 flex h-56 items-end gap-3">
@@ -132,7 +132,7 @@ export default function AdminAnalyticsPage() {
 
         <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
           <h3 className="flex items-center gap-2 text-base font-bold text-[#18201c] dark:text-white">
-            <PieChart className="size-5 text-[#859d19] dark:text-[#d9f447]" /> Category mix
+            <PieChart className="size-5 text-[#b5de28] dark:text-[#d9f447]" /> Category mix
           </h3>
 
           <div className="mt-6 space-y-4">
@@ -156,7 +156,7 @@ export default function AdminAnalyticsPage() {
       <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
           <h3 className="flex items-center gap-2 text-base font-bold text-[#18201c] dark:text-white">
-            <Store className="size-5 text-[#859d19] dark:text-[#d9f447]" /> Top performing vendors
+            <Store className="size-5 text-[#b5de28] dark:text-[#d9f447]" /> Top performing vendors
           </h3>
           <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Live snapshot</span>
         </div>

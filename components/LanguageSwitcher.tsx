@@ -90,7 +90,7 @@ export default function LanguageSwitcher({
           aria-haspopup="listbox"
           className="flex items-center gap-1.5 rounded-full border border-[#dfe4dc] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#18201c] transition hover:bg-[#f3f6ee] active:scale-95"
         >
-          <Globe className="size-3.5 text-[#859d19] shrink-0" />
+          <Globe className="size-3.5 text-[#b5de28] shrink-0" />
           <span className="hidden sm:inline">
             {saving ? t.language.saving : currentLang.nativeName}
           </span>
@@ -201,7 +201,7 @@ export default function LanguageSwitcher({
         aria-haspopup="listbox"
         className="group relative grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white text-[#18201c] transition hover:bg-[#f3f6ee] active:scale-95"
       >
-        <Globe className="size-4 text-[#859d19]" />
+        <Globe className="size-4 text-[#b5de28]" />
         {/* tiny locale badge */}
         <span className="absolute -bottom-1 -right-1 rounded-full bg-[#d9f447] px-1 py-px text-[8px] font-bold text-[#18201c] leading-none uppercase">
           {locale}

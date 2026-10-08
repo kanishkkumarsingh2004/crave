@@ -235,7 +235,7 @@ export default function VendorSettlementsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#849e16] dark:text-[#d9f447]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#b5de28] dark:text-[#d9f447]">
             Restaurant Payouts & Commission Control
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
@@ -712,7 +712,7 @@ export default function VendorSettlementsPage() {
                 </button>
               ) : (
                 <span className="rounded-full bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
-                  ✓ Settlement Disbursed & Completed
+                  Settlement Disbursed & Completed
                 </span>
               )}
             </div>

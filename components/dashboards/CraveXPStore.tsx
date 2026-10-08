@@ -132,15 +132,15 @@ export default function CraveXPStore() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <CraveLogo variant="cravexp" size="lg" />
-                <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#18201c]">
-                  10-Min Instamart Dark Store
+                <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#18201c] whitespace-nowrap">
+                  CraveXP 10 Store
                 </span>
               </div>
               <h1 className="text-2xl font-black sm:text-3xl text-white">
                 Ultra-fast Grocery & Daily Essentials
               </h1>
               <p className="mt-1 text-xs text-gray-300 max-w-xl font-medium">
-                Sourced directly from our central dark store warehouse. Delivered to your doorstep
+                Sourced directly from our CraveXP 10 Store hub. Delivered to your doorstep
                 in 10 minutes.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#d9f447]">
@@ -153,7 +153,7 @@ export default function CraveXPStore() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push('/user/cart')}
-                className="flex items-center gap-2.5 rounded-2xl bg-[#d9f447] px-5 py-3 text-xs font-black text-[#18201c] shadow-lg hover:bg-[#cbe638] transition"
+                className="flex items-center gap-2.5 rounded-2xl bg-[#d9f447] px-5 py-3 text-xs font-black text-[#18201c] shadow-lg hover:bg-[#c8e434] hover:text-white transition"
               >
                 <ShoppingCart className="size-4" />
                 <span>{cartTotalItems} items</span>
@@ -167,13 +167,13 @@ export default function CraveXPStore() {
       {/* SEARCH BAR & CATEGORY BAR CONTAINER */}
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6">
         {/* Search Bar */}
-        <div className="relative flex items-center rounded-2xl border-2 border-[#e2e7dc] bg-white px-4 py-3 shadow-sm focus-within:border-[#86a018]">
+        <div className="relative flex items-center rounded-2xl border-2 border-[#e2e7dc] bg-white px-4 py-3 shadow-sm focus-within:border-[#d9f447]">
           <Search className="size-4 text-gray-400 mr-2.5 shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search products in craveXP Dark Store..."
+            placeholder="Search products in CraveXP 10 Store..."
             className="w-full bg-transparent text-xs font-bold outline-none placeholder:text-gray-400"
           />
           {searchQuery && (
@@ -232,7 +232,7 @@ export default function CraveXPStore() {
               <Package className="size-6" />
             </div>
             <h4 className="text-base font-bold text-[#18201c]">
-              No products found in craveXP Dark Store
+              No products found in CraveXP 10 Store
             </h4>
             <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
               Products are added dynamically through the craveXP Hub Operator Console (

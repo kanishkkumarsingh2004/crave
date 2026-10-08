@@ -31,7 +31,7 @@ export default function PolicyLayout({
   const pathname = usePathname()
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex flex-col font-sans selection:bg-[#849e16]/20 selection:text-[#18201c]">
+    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] flex flex-col font-sans selection:bg-[#b5de28]/20 selection:text-[#18201c]">
       {/* =========================================================================
           POLICY HEADER / NAVBAR (LIGHT THEME)
          ========================================================================= */}
@@ -43,7 +43,7 @@ export default function PolicyLayout({
             </Link>
             <span className="hidden sm:inline-block h-4 w-px bg-gray-200" />
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider">
-              <ShieldCheck className="size-4 text-[#849e16]" />
+              <ShieldCheck className="size-4 text-[#b5de28]" />
               Trust &amp; Legal Center
             </span>
           </div>
@@ -54,7 +54,7 @@ export default function PolicyLayout({
               <input
                 type="text"
                 placeholder="Search policies..."
-                className="w-full bg-gray-50 border border-gray-200 rounded-full pl-9 pr-4 py-1.5 text-xs text-[#18201c] placeholder-gray-400 focus:outline-none focus:border-[#849e16] focus:bg-white transition"
+                className="w-full bg-gray-50 border border-gray-200 rounded-full pl-9 pr-4 py-1.5 text-xs text-[#18201c] placeholder-gray-400 focus:outline-none focus:border-[#b5de28] focus:bg-white transition"
               />
             </div>
             <Link
@@ -87,12 +87,12 @@ export default function PolicyLayout({
                     href={item.href}
                     className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
                       isActive
-                        ? 'bg-[#849e16]/15 text-[#5e720d] border border-[#849e16]/30 font-bold'
+                        ? 'bg-[#b5de28]/15 text-[#5e720d] border border-[#b5de28]/30 font-bold'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-[#18201c]'
                     }`}
                   >
                     <span>{item.label}</span>
-                    {isActive && <span className="size-1.5 rounded-full bg-[#849e16]" />}
+                    {isActive && <span className="size-1.5 rounded-full bg-[#b5de28]" />}
                   </Link>
                 )
               })}
@@ -100,7 +100,7 @@ export default function PolicyLayout({
 
             <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-500 flex flex-col gap-3">
               <div className="flex items-center gap-2 text-[#18201c] font-bold">
-                <Lock className="size-3.5 text-[#849e16]" />
+                <Lock className="size-3.5 text-[#b5de28]" />
                 <span>Security Assurance</span>
               </div>
               <p className="text-[11px] leading-relaxed text-gray-500">

@@ -1323,7 +1323,7 @@ export default function CraveXPStoreConsole() {
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-[#18201c]"
               >
-                ✕
+                
               </button>
             </div>
 
@@ -1636,7 +1636,7 @@ function CameraBarcodeScannerModal({
             }}
             className="text-gray-400 hover:text-[#18201c] text-lg font-bold"
           >
-            ✕
+            
           </button>
         </div>
 

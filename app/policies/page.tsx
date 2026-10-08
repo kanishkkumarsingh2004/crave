@@ -62,15 +62,15 @@ export default function PoliciesIndexPage() {
               <Link
                 key={card.href}
                 href={card.href}
-                className="group bg-gray-50/80 p-5 rounded-2xl border border-gray-200 hover:border-[#849e16] hover:bg-white transition shadow-xs flex flex-col justify-between"
+                className="group bg-gray-50/80 p-5 rounded-2xl border border-gray-200 hover:border-[#b5de28] hover:bg-white transition shadow-xs flex flex-col justify-between"
               >
                 <div>
-                  <div className="size-9 rounded-xl bg-[#849e16]/15 text-[#5e720d] flex items-center justify-center mb-3 group-hover:bg-[#18201c] group-hover:text-white transition">
+                  <div className="size-9 rounded-xl bg-[#b5de28]/15 text-[#5e720d] flex items-center justify-center mb-3 group-hover:bg-[#18201c] group-hover:text-white transition">
                     <Icon className="size-4" />
                   </div>
                   <h3 className="font-extrabold text-[#18201c] text-base mb-1.5 flex items-center justify-between">
                     <span>{card.title}</span>
-                    <ArrowRight className="size-4 text-gray-400 group-hover:text-[#849e16] group-hover:translate-x-1 transition" />
+                    <ArrowRight className="size-4 text-gray-400 group-hover:text-[#b5de28] group-hover:translate-x-1 transition" />
                   </h3>
                   <p className="text-xs text-gray-600 leading-relaxed">{card.desc}</p>
                 </div>

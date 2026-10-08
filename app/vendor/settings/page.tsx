@@ -199,7 +199,7 @@ export default function VendorSettingsPage() {
         {/* Toast Alert Message */}
         {toastMsg && (
           <div className="rounded-2xl border border-[#d9f447]/40 bg-[#d9f447]/10 p-4 text-xs font-bold text-[#d9f447] shadow-lg animate-in fade-in duration-200">
-            ✓ {toastMsg}
+            {toastMsg}
           </div>
         )}
 
@@ -487,7 +487,7 @@ export default function VendorSettingsPage() {
             </div>
 
             <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 p-3 rounded-2xl">
-              💡 <strong>Example:</strong> Under <strong>Commission (e.g., 15%)</strong>, the vendor
+              <strong>Example:</strong> Under <strong>Commission (e.g., 15%)</strong>, the vendor
               pays 15% to the platform. Under <strong>Markup (e.g., 10%)</strong>, the platform adds
               10% on top of the vendor's base menu price for customers.
             </p>
@@ -497,7 +497,7 @@ export default function VendorSettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/10 hover:bg-[#c8e337] active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/10 hover:bg-[#c8e434] active:scale-95 transition"
             >
               <Save className="size-4 text-[#0d1310]" /> Save Bank, Profile &amp; Commercial
               Settings

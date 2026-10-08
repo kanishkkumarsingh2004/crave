@@ -136,7 +136,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
+                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
                 >
                   Sign up
                 </Link>
@@ -180,7 +180,7 @@ export default function Navbar() {
                           : ''
                       }`}
                     >
-                      <Compass className="size-3.5 text-[#859d19]" />
+                      <Compass className="size-3.5 text-[#b5de28]" />
                       Explore Kitchens
                     </Link>
                     <Link
@@ -204,7 +204,7 @@ export default function Navbar() {
                           : ''
                       }`}
                     >
-                      <ShoppingBag className="size-3.5 text-[#859d19]" />
+                      <ShoppingBag className="size-3.5 text-[#b5de28]" />
                       My Orders
                     </Link>
                     <Link
@@ -215,7 +215,7 @@ export default function Navbar() {
                           : ''
                       }`}
                     >
-                      <Bike className="size-3.5 text-[#859d19]" />
+                      <Bike className="size-3.5 text-[#b5de28]" />
                       Track Live Drop
                     </Link>
                   </>
@@ -228,7 +228,7 @@ export default function Navbar() {
                         : ''
                     }`}
                   >
-                    <LayoutDashboard className="size-3.5 text-[#859d19]" />
+                    <LayoutDashboard className="size-3.5 text-[#b5de28]" />
                     Dashboard ({roleDetails[role]?.title})
                   </Link>
                 )}
@@ -248,7 +248,7 @@ export default function Navbar() {
               >
                 <ShoppingCart className="size-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#859d19] text-[9px] font-black text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#b5de28] text-[9px] font-black text-white shadow-sm">
                     {cartCount}
                   </span>
                 )}
@@ -308,7 +308,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
                         >
-                          <Compass className="size-4 text-[#7d9518]" />
+                          <Compass className="size-4 text-[#b5de28]" />
                           Explore Kitchens
                         </Link>
                         <Link
@@ -324,7 +324,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] dark:text-white bg-[#f0f3eb] dark:bg-[#27342d] hover:bg-[#e2e7dc] dark:hover:bg-[#324239]"
                         >
-                          <Store className="size-4 text-[#7d9518]" />
+                          <Store className="size-4 text-[#b5de28]" />
                           craveXP. Console
                         </Link>
                         <Link
@@ -332,7 +332,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
-                          <ShoppingBag className="size-4 text-[#7d9518]" />
+                          <ShoppingBag className="size-4 text-[#b5de28]" />
                           My Orders
                         </Link>
                         <Link
@@ -340,7 +340,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
-                          <Bike className="size-4 text-[#7d9518]" />
+                          <Bike className="size-4 text-[#b5de28]" />
                           Track Order
                         </Link>
                         <Link
@@ -348,7 +348,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
-                          <LayoutDashboard className="size-4 text-[#7d9518]" />
+                          <LayoutDashboard className="size-4 text-[#b5de28]" />
                           My Profile Settings
                         </Link>
                       </>
@@ -359,7 +359,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
                         >
-                          <LayoutDashboard className="size-4 text-[#7d9518]" />
+                          <LayoutDashboard className="size-4 text-[#b5de28]" />
                           Go to Dashboard
                         </Link>
                         <Link
@@ -386,7 +386,7 @@ export default function Navbar() {
                       }}
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                     >
-                      <Download className="size-4 text-[#859d19]" />
+                      <Download className="size-4 text-[#b5de28]" />
                       Install Crave App
                     </button>
 
@@ -415,7 +415,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
+                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
                 >
                   Sign up
                 </Link>
@@ -491,7 +491,7 @@ export default function Navbar() {
                 className="flex items-center justify-between rounded-xl px-3 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <span>Dashboard</span>
-                <span className="rounded-full bg-[#f0f5db] dark:bg-[#27342d] px-2 py-0.5 text-[10px] text-[#718714] dark:text-[#d9f447] capitalize">
+                <span className="rounded-full bg-[#f0f5db] dark:bg-[#27342d] px-2 py-0.5 text-[10px] text-[#b5de28] dark:text-[#d9f447] capitalize">
                   {role}
                 </span>
               </Link>
@@ -503,7 +503,7 @@ export default function Navbar() {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
-                <Compass className="size-5 text-[#859d19]" />
+                <Compass className="size-5 text-[#b5de28]" />
                 Explore
               </Link>
 
@@ -512,7 +512,7 @@ export default function Navbar() {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
-                <Bike className="size-5 text-[#859d19]" />
+                <Bike className="size-5 text-[#b5de28]" />
                 Track Drop
               </Link>
 
@@ -521,7 +521,7 @@ export default function Navbar() {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
-                <ShoppingBag className="size-5 text-[#859d19]" />
+                <ShoppingBag className="size-5 text-[#b5de28]" />
                 Orders
               </Link>
 
@@ -530,7 +530,7 @@ export default function Navbar() {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
-                <User className="size-5 text-[#859d19]" />
+                <User className="size-5 text-[#b5de28]" />
                 Profile
               </Link>
 
@@ -540,11 +540,11 @@ export default function Navbar() {
                 className="flex items-center justify-between rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
               >
                 <span className="flex items-center gap-3">
-                  <ShoppingCart className="size-5 text-[#859d19]" />
+                  <ShoppingCart className="size-5 text-[#b5de28]" />
                   Cart
                 </span>
                 {cartCount > 0 && (
-                  <span className="rounded-full bg-[#859d19] px-2 py-0.5 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-[#b5de28] px-2 py-0.5 text-[10px] font-bold text-white">
                     {cartCount}
                   </span>
                 )}
@@ -563,7 +563,7 @@ export default function Navbar() {
                 }}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
               >
-                <Download className="size-5 text-[#859d19]" />
+                <Download className="size-5 text-[#b5de28]" />
                 Install Crave App
               </button>
 
@@ -600,7 +600,7 @@ export default function Navbar() {
                 }}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
               >
-                <Download className="size-5 text-[#859d19]" />
+                <Download className="size-5 text-[#b5de28]" />
                 Install Crave App
               </button>
 
@@ -614,7 +614,7 @@ export default function Navbar() {
               <Link
                 href="/signup"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-3 text-center text-sm font-bold text-white dark:text-[#18201c] hover:bg-[#323c36] dark:hover:bg-[#c2dc37]"
+                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-3 text-center text-sm font-bold text-white dark:text-[#18201c] hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
               >
                 Sign up
               </Link>

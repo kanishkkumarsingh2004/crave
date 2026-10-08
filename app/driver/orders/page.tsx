@@ -442,7 +442,7 @@ export default function DriverAcceptedOrdersPage() {
               {filteredOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="rounded-2xl border border-[#25332a] p-4 hover:border-[#859d19] transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#121815]"
+                  className="rounded-2xl border border-[#25332a] p-4 hover:border-[#b5de28] transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#121815]"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
@@ -453,7 +453,7 @@ export default function DriverAcceptedOrdersPage() {
                         {order.status}
                       </span>
                       <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold font-mono">
-                        📍 OSRM: {order.distanceStr}
+                        OSRM: {order.distanceStr}
                       </span>
                     </div>
                     <h4 className="font-bold text-sm text-white">{order.restaurantName}</h4>

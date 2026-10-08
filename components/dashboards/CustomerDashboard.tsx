@@ -12,6 +12,7 @@ import {
   Award,
   Bell,
   Bike,
+  Building2,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -28,7 +29,9 @@ import {
   Heart,
   HelpCircle,
   History,
+  Home,
   KeyRound,
+  Leaf,
   LocateFixed,
   Lock,
   LogOut,
@@ -924,7 +927,7 @@ export default function CustomerDashboard({
         },
       ]
     })
-    triggerToast(`🛒 Added ${item.name} to cart!`)
+    triggerToast(`Added ${item.name} to cart!`)
   }
 
   function handleResolveConflictClear() {
@@ -933,7 +936,7 @@ export default function CustomerDashboard({
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
     setCart([{ ...item, qty: 1, restaurantName: itemRest }])
     setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })
-    triggerToast(`🛒 Cart reset. Added ${item.name}!`)
+    triggerToast(`Cart reset. Added ${item.name}!`)
   }
 
   function updateItemQty(id: string, delta: number) {
@@ -1349,7 +1352,7 @@ export default function CustomerDashboard({
               }`}
             >
               <Compass
-                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447] dark:text-[#18201c]' : 'text-[#859d19]'}`}
+                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447] dark:text-[#18201c]' : 'text-[#b5de28]'}`}
               />
               <span>Explore</span>
             </button>
@@ -1398,7 +1401,7 @@ export default function CustomerDashboard({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => router.push('/user/cart')}
-              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-sm font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#2a3831] dark:hover:bg-[#c2dc37] transition active:scale-95 shrink-0"
+              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-sm font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#2a3831] dark:hover:bg-[#c8e434] transition active:scale-95 shrink-0"
             >
               <ShoppingCart className="size-4 text-[#d9f447] dark:text-[#18201c]" />
               <span>Cart ({totalCartItemCount})</span>
@@ -1417,7 +1420,7 @@ export default function CustomerDashboard({
             >
               <ShoppingCart className="size-4 text-[#18201c] dark:text-white" />
               {totalCartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#859d19] text-[9px] font-black text-white shadow-sm">
+                <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#b5de28] text-[9px] font-black text-white shadow-sm">
                   {totalCartItemCount}
                 </span>
               )}
@@ -1504,7 +1507,7 @@ export default function CustomerDashboard({
                 className={`size-5 ${
                   activeTab === 'explore'
                     ? 'text-[#d9f447] dark:text-[#18201c]'
-                    : 'text-[#859d19] dark:text-[#d9f447]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
                 }`}
               />
               Explore Kitchens
@@ -1527,7 +1530,7 @@ export default function CustomerDashboard({
                 className={`size-5 ${
                   activeTab === 'live-order'
                     ? 'text-[#d9f447] dark:text-[#18201c]'
-                    : 'text-[#859d19] dark:text-[#d9f447]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
                 }`}
               />
               Track Drop
@@ -1556,7 +1559,7 @@ export default function CustomerDashboard({
                 className={`size-5 ${
                   activeTab === 'orders'
                     ? 'text-[#d9f447] dark:text-[#18201c]'
-                    : 'text-[#859d19] dark:text-[#d9f447]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
                 }`}
               />
               Orders History
@@ -1584,7 +1587,7 @@ export default function CustomerDashboard({
                 className={`size-5 ${
                   activeTab === 'profile'
                     ? 'text-[#d9f447] dark:text-[#18201c]'
-                    : 'text-[#859d19] dark:text-[#d9f447]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
                 }`}
               />
               Profile &amp; Account
@@ -1599,7 +1602,7 @@ export default function CustomerDashboard({
             className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] transition"
           >
             <span className="flex items-center gap-3">
-              <ShoppingCart className="size-5 text-[#859d19] dark:text-[#d9f447]" />
+              <ShoppingCart className="size-5 text-[#b5de28] dark:text-[#d9f447]" />
               My Cart
             </span>
             {totalCartItemCount > 0 && (
@@ -1667,7 +1670,7 @@ export default function CustomerDashboard({
 
               <Link
                 href="/user/cravexp"
-                className="rounded-2xl bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#121815] shadow-xl hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 shrink-0 flex items-center gap-2"
+                className="rounded-2xl bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#121815] shadow-xl hover:bg-[#c8e434] transition hover:scale-105 active:scale-95 shrink-0 flex items-center gap-2"
               >
                 Open craveXP Instamart Store
                 <ArrowRight className="size-4" />
@@ -2022,7 +2025,7 @@ export default function CustomerDashboard({
                               setSelectedOrderId(String(order.id))
                               router.push(`/user/track/${order.id}`)
                             }}
-                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c2dc37] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
                           >
                             <Bike className="size-3" /> Track Live Order
                           </button>
@@ -2043,7 +2046,7 @@ export default function CustomerDashboard({
                                 status: order.status,
                               })
                             }
-                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-black dark:hover:bg-[#c2dc37] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-black dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
                           >
                             <FileText className="size-3" /> View Invoice
                           </button>
@@ -2083,7 +2086,7 @@ export default function CustomerDashboard({
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4 sm:gap-5">
                   <div className="relative">
-                    <div className="grid size-16 sm:size-20 place-items-center rounded-2xl bg-linear-to-tr from-[#859d19] to-[#d9f447] text-[#18201c] font-black text-2xl sm:text-3xl shadow-md">
+                    <div className="grid size-16 sm:size-20 place-items-center rounded-2xl bg-linear-to-tr from-[#b5de28] to-[#d9f447] text-[#18201c] font-black text-2xl sm:text-3xl shadow-md">
                       {(user?.name || 'C').charAt(0).toUpperCase()}
                     </div>
                     <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-[#18201c]">
@@ -2107,12 +2110,12 @@ export default function CustomerDashboard({
 
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#55635a] dark:text-gray-300 font-medium">
                       <span className="flex items-center gap-1">
-                        <Mail className="size-3 text-[#859d19]" />
+                        <Mail className="size-3 text-[#b5de28]" />
                         {user?.email || 'authenticated@crave.com'}
                       </span>
                       <span>&bull;</span>
                       <span className="flex items-center gap-1">
-                        <PhoneCall className="size-3 text-[#859d19]" />
+                        <PhoneCall className="size-3 text-[#b5de28]" />
                         {user?.phone || '+91 98765 43210'}
                       </span>
                     </div>
@@ -2211,7 +2214,7 @@ export default function CustomerDashboard({
             {editAddress && (
               <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-md animate-in slide-in-from-top-4 duration-200">
                 <h3 className="text-sm font-bold text-[#18201c] dark:text-white mb-3 flex items-center gap-2">
-                  <User className="size-4 text-[#859d19]" /> Edit Profile &amp; Contact Details
+                  <User className="size-4 text-[#b5de28]" /> Edit Profile &amp; Contact Details
                 </h3>
                 <div className="space-y-4 text-xs">
                   <div>
@@ -2222,7 +2225,7 @@ export default function CustomerDashboard({
                       rows={2}
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
-                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#859d19]"
+                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#b5de28]"
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -2251,7 +2254,7 @@ export default function CustomerDashboard({
                           triggerToast('Could not save address. Please try again.')
                         }
                       }}
-                      className="rounded-xl bg-[#859d19] px-5 py-2 font-black text-white hover:bg-[#728812] transition shadow-xs"
+                      className="rounded-xl bg-[#b5de28] px-5 py-2 font-black text-white hover:bg-[#728812] transition shadow-xs"
                     >
                       Save Changes
                     </button>
@@ -2265,14 +2268,14 @@ export default function CustomerDashboard({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] gap-2 mb-5">
                 <div>
                   <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                    <Sun className="size-4 text-[#859d19]" />
+                    <Sun className="size-4 text-[#b5de28]" />
                     <span>App Theme &amp; Visual Appearance</span>
                   </h3>
                   <p className="text-xs text-[#55635a] dark:text-gray-400 mt-1 font-medium">
-                    Crave defaults to fresh <strong className="text-[#859d19]">Light Theme</strong>. If you prefer low-light viewing, select <strong className="text-[#18201c] dark:text-white">Dark Mode</strong> below anytime.
+                    Crave defaults to fresh <strong className="text-[#b5de28]">Light Theme</strong>. If you prefer low-light viewing, select <strong className="text-[#18201c] dark:text-white">Dark Mode</strong> below anytime.
                   </p>
                 </div>
-                <span className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-full bg-[#f4f7ed] dark:bg-[#27342d] px-3 py-1 text-[11px] font-bold text-[#859d19] dark:text-[#d9f447]">
+                <span className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-full bg-[#f4f7ed] dark:bg-[#27342d] px-3 py-1 text-[11px] font-bold text-[#b5de28] dark:text-[#d9f447]">
                   <Sparkles className="size-3" /> Live Switching
                 </span>
               </div>
@@ -2284,7 +2287,7 @@ export default function CustomerDashboard({
               <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
                 <div>
                   <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                    <MapPin className="size-4 text-[#859d19]" />
+                    <MapPin className="size-4 text-[#b5de28]" />
                     <span>Saved Delivery Addresses</span>
                   </h3>
                   <p className="text-xs text-[#55635a] dark:text-gray-400 mt-0.5 font-medium">
@@ -2295,7 +2298,7 @@ export default function CustomerDashboard({
                 <button
                   type="button"
                   onClick={() => setShowLocationModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#859d19] hover:bg-[#728812] px-3.5 py-1.5 text-xs font-black text-white transition shadow-xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#b5de28] hover:bg-[#728812] px-3.5 py-1.5 text-xs font-black text-white transition shadow-xs"
                 >
                   <Plus className="size-3.5" />
                   <span>Add New</span>
@@ -2317,14 +2320,20 @@ export default function CustomerDashboard({
                         key={addr.id}
                         className={`flex flex-col justify-between rounded-2xl p-4 border transition-all ${
                           isSelected
-                            ? 'border-[#859d19] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
+                            ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
                             : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="grid size-7 place-items-center rounded-lg bg-[#f0f3eb] dark:bg-[#27342d] text-[#859d19] dark:text-[#d9f447] text-xs font-bold">
-                              {addr.label.toLowerCase().includes('work') ? '🏢' : addr.label.toLowerCase().includes('home') ? '🏠' : '📍'}
+                            <span className="grid size-7 place-items-center rounded-lg bg-[#f0f3eb] dark:bg-[#27342d] text-[#d9f447] text-xs font-bold">
+                              {addr.label.toLowerCase().includes('work') ? (
+                                <Building2 className="size-3.5 text-[#d9f447]" />
+                              ) : addr.label.toLowerCase().includes('home') ? (
+                                <Home className="size-3.5 text-[#d9f447]" />
+                              ) : (
+                                <MapPin className="size-3.5 text-[#d9f447]" />
+                              )}
                             </span>
                             <span className="font-extrabold text-xs text-[#18201c] dark:text-white capitalize">
                               {addr.label}
@@ -2350,7 +2359,7 @@ export default function CustomerDashboard({
                           }}
                           className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
                             isSelected
-                              ? 'bg-[#859d19] text-white'
+                              ? 'bg-[#d9f447] text-[#18201c]'
                               : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc]'
                           }`}
                         >
@@ -2367,7 +2376,7 @@ export default function CustomerDashboard({
             <div className="grid gap-6 md:grid-cols-2">
               <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs">
                 <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
-                  <Utensils className="size-4 text-[#859d19]" /> Dining &amp; Dietary Preferences
+                  <Utensils className="size-4 text-[#d9f447]" /> Dining &amp; Dietary Preferences
                 </h3>
 
                 <div className="space-y-4">
@@ -2377,9 +2386,9 @@ export default function CustomerDashboard({
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'all', label: 'All Dishes', emoji: '🍽️' },
-                        { id: 'veg', label: 'Veg Only', emoji: '🟢' },
-                        { id: 'non-veg', label: 'Non-Veg', emoji: '🍗' },
+                        { id: 'all', label: 'All Dishes', icon: Utensils },
+                        { id: 'veg', label: 'Veg Only', icon: Leaf },
+                        { id: 'non-veg', label: 'Non-Veg', icon: Flame },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -2390,11 +2399,11 @@ export default function CustomerDashboard({
                           }}
                           className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-xs font-bold transition ${
                             dietaryPref === item.id
-                              ? 'border-[#859d19] bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white ring-1 ring-[#859d19]'
+                              ? 'border-[#b5de28] bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white ring-1 ring-[#b5de28]'
                               : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-gray-600 dark:text-gray-300 hover:bg-gray-50'
                           }`}
                         >
-                          <span className="text-sm mb-0.5">{item.emoji}</span>
+                          <item.icon className="size-4 mb-1 text-[#d9f447]" />
                           <span>{item.label}</span>
                         </button>
                       ))}
@@ -2414,7 +2423,7 @@ export default function CustomerDashboard({
                           setOptCutlery(e.target.checked)
                           triggerToast(e.target.checked ? 'Eco-cutlery preference saved' : 'Cutlery opt-in saved')
                         }}
-                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                        className="size-4 accent-[#b5de28] rounded cursor-pointer"
                       />
                     </label>
 
@@ -2430,7 +2439,7 @@ export default function CustomerDashboard({
                           setOptContactless(e.target.checked)
                           triggerToast(e.target.checked ? 'Contactless drop enabled' : 'Hand-to-hand delivery enabled')
                         }}
-                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                        className="size-4 accent-[#b5de28] rounded cursor-pointer"
                       />
                     </label>
                   </div>
@@ -2441,7 +2450,7 @@ export default function CustomerDashboard({
               <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs flex flex-col justify-between">
                 <div>
                   <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
-                    <Wallet className="size-4 text-[#859d19]" /> Crave Cash &amp; Payments
+                    <Wallet className="size-4 text-[#b5de28]" /> Crave Cash &amp; Payments
                   </h3>
 
                   <div className="rounded-2xl bg-linear-to-tr from-[#18201c] to-[#26352c] p-4 text-white shadow-sm mb-4">
@@ -2456,7 +2465,7 @@ export default function CustomerDashboard({
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
                       <div className="flex items-center gap-2.5">
-                        <CreditCard className="size-4 text-[#859d19]" />
+                        <CreditCard className="size-4 text-[#b5de28]" />
                         <div>
                           <p className="text-xs font-bold text-[#18201c] dark:text-white">UPI Direct Transfer</p>
                           <p className="text-[10px] text-gray-500 font-mono">crave@upi &bull; Verified Receiver</p>
@@ -2469,7 +2478,7 @@ export default function CustomerDashboard({
 
                     <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
                       <div className="flex items-center gap-2.5">
-                        <Smartphone className="size-4 text-[#859d19]" />
+                        <Smartphone className="size-4 text-[#b5de28]" />
                         <div>
                           <p className="text-xs font-bold text-[#18201c] dark:text-white">App Notifications</p>
                           <p className="text-[10px] text-gray-500">Live order status SMS &amp; WhatsApp alerts</p>
@@ -2479,7 +2488,7 @@ export default function CustomerDashboard({
                         type="checkbox"
                         checked={optNotifications}
                         onChange={(e) => setOptNotifications(e.target.checked)}
-                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                        className="size-4 accent-[#b5de28] rounded cursor-pointer"
                       />
                     </div>
                   </div>
@@ -2489,7 +2498,7 @@ export default function CustomerDashboard({
                   <span className="flex items-center gap-1 font-semibold">
                     <Lock className="size-3 text-emerald-600" /> 256-Bit TLS Bank Encrypted
                   </span>
-                  <Link href="/policies/security" className="font-bold text-[#859d19] hover:underline">
+                  <Link href="/policies/security" className="font-bold text-[#b5de28] hover:underline">
                     Security Details
                   </Link>
                 </div>
@@ -2499,7 +2508,7 @@ export default function CustomerDashboard({
             {/* 7. Help, Support & Trust Policies Footer Bar */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 text-left">
-                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#859d19] dark:text-[#d9f447] shrink-0">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0">
                   <HelpCircle className="size-5" />
                 </div>
                 <div>
@@ -2701,7 +2710,7 @@ export default function CustomerDashboard({
                           <span>{activeOrder.statusText}</span>
                           {activeOrder.paymentStatus === 'verified' && (
                             <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                              ✓ Payment Verified
+                              Payment Verified
                             </span>
                           )}
                         </h3>
@@ -2905,7 +2914,7 @@ export default function CustomerDashboard({
                       {activeOrder.driverPhone ? (
                         <a
                           href={`tel:${activeOrder.driverPhone}`}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] dark:border-[#27342d] bg-[#18201c] dark:bg-[#d9f447] px-4 sm:px-5 py-2.5 text-xs font-bold text-white dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c2dc37] transition shadow-sm"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8ded4] dark:border-[#27342d] bg-[#18201c] dark:bg-[#d9f447] px-4 sm:px-5 py-2.5 text-xs font-bold text-white dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c8e434] transition shadow-sm"
                         >
                           <PhoneCall className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
                           Call Partner
@@ -2947,7 +2956,7 @@ export default function CustomerDashboard({
                   <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white flex items-center gap-2">
                     <span className="relative flex size-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d9f447] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full size-2.5 bg-[#859d19]"></span>
+                      <span className="relative inline-flex rounded-full size-2.5 bg-[#b5de28]"></span>
                     </span>
                     Active Orders Under Process ({inProgressOrders.length})
                   </h3>
@@ -3054,7 +3063,7 @@ export default function CustomerDashboard({
                             }}
                             className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 ${
                               isCurrentSelected
-                                ? 'bg-[#d9f447] text-[#18201c] hover:bg-[#c2dc37]'
+                                ? 'bg-[#d9f447] text-[#18201c] hover:bg-[#c8e434]'
                                 : 'bg-[#18201c] text-[#ffffff] hover:bg-[#2e3b34]'
                             }`}
                           >
@@ -3082,7 +3091,7 @@ export default function CustomerDashboard({
                 </p>
                 <button
                   onClick={() => navigateToTab('explore')}
-                  className="mt-6 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c2dc37] transition"
+                  className="mt-6 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition"
                 >
                   Explore Kitchens
                 </button>
@@ -3449,7 +3458,7 @@ export default function CustomerDashboard({
 
             {verifyingModal.status === 'verified' && (
               <div className="mt-5 rounded-2xl bg-emerald-50 p-4 border border-emerald-200">
-                <p className="text-sm font-bold text-emerald-900">✓ Payment Approved!</p>
+                <p className="text-sm font-bold text-emerald-900">Payment Approved!</p>
                 <p className="text-xs text-emerald-700 mt-1">
                   Your order has been accepted and dispatched to the kitchen. Redirecting to live
                   tracking...
@@ -3460,7 +3469,7 @@ export default function CustomerDashboard({
             {verifyingModal.status === 'rejected' && (
               <div className="mt-5 space-y-3">
                 <div className="rounded-2xl bg-rose-50 p-4 border border-rose-200">
-                  <p className="text-sm font-bold text-rose-900">✕ Payment Verification Failed</p>
+                  <p className="text-sm font-bold text-rose-900">Payment Verification Failed</p>
                   <p className="text-xs text-rose-700 mt-1">
                     The UTR reference entered could not be verified. Please verify your UTR number.
                   </p>
@@ -3748,7 +3757,7 @@ export default function CustomerDashboard({
             <Compass
               className={`size-5 ${
                 activeTab === 'explore'
-                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
                   : 'text-gray-400 dark:text-gray-500'
               }`}
             />
@@ -3767,7 +3776,7 @@ export default function CustomerDashboard({
               <Bike
                 className={`size-5 ${
                   activeTab === 'live-order'
-                    ? 'text-[#859d19] dark:text-[#d9f447]'
+                    ? 'text-[#b5de28] dark:text-[#d9f447]'
                     : 'text-gray-400 dark:text-gray-500'
                 }`}
               />
@@ -3789,7 +3798,7 @@ export default function CustomerDashboard({
             <History
               className={`size-5 ${
                 activeTab === 'orders'
-                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
                   : 'text-gray-400 dark:text-gray-500'
               }`}
             />
@@ -3822,7 +3831,7 @@ export default function CustomerDashboard({
             <User
               className={`size-5 ${
                 activeTab === 'profile'
-                  ? 'text-[#859d19] dark:text-[#d9f447]'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
                   : 'text-gray-400 dark:text-gray-500'
               }`}
             />

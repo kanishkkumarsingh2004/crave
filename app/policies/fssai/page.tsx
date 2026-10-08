@@ -16,7 +16,7 @@ export default function FSSAIPolicyPage() {
       <div className="space-y-10 text-gray-700">
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">1.</span> FSSAI Regulatory Mandate
+            <span className="text-[#b5de28]">1.</span> FSSAI Regulatory Mandate
           </h2>
           <p className="leading-relaxed">
             In compliance with the Food Safety and Standards Act, 2006 and regulations framed
@@ -29,7 +29,7 @@ export default function FSSAIPolicyPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">2.</span> Merchant Onboarding &amp; License Display
+            <span className="text-[#b5de28]">2.</span> Merchant Onboarding &amp; License Display
           </h2>
           <p className="leading-relaxed">
             Every restaurant partner, cloud kitchen, bakery, and beverage outlet onboarding onto the
@@ -74,7 +74,7 @@ export default function FSSAIPolicyPage() {
 
         <section className="space-y-3">
           <h2 className="text-xl font-extrabold text-[#18201c] flex items-center gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[#849e16]">3.</span> Food Safety Grievance Escalation
+            <span className="text-[#b5de28]">3.</span> Food Safety Grievance Escalation
           </h2>
           <p className="leading-relaxed">
             If you receive a food order with quality concerns, spoilage, or foreign objects, please

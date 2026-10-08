@@ -279,7 +279,7 @@ export default function LocationPickerMap({
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute -inset-1 rounded-full bg-[#859d19] animate-ping opacity-75" />
+                    <div className="absolute -inset-1 rounded-full bg-[#b5de28] animate-ping opacity-75" />
                   )}
                   <div
                     className={`size-7 rounded-full border-2 border-white flex items-center justify-center shadow-lg transition ${
@@ -288,7 +288,7 @@ export default function LocationPickerMap({
                         : isRestaurant
                           ? 'bg-amber-500 text-white'
                           : 'bg-purple-600 text-white'
-                    } ${isSelected ? 'ring-4 ring-[#859d19]' : ''}`}
+                    } ${isSelected ? 'ring-4 ring-[#b5de28]' : ''}`}
                   >
                     {isDriver ? (
                       <Bike className="size-3.5" />

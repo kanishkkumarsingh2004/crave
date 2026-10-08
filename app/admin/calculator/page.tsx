@@ -471,7 +471,7 @@ export default function CalculatorPlaygroundPage() {
                       onClick={resetToSystemDefaults}
                       className="px-2.5 py-1 bg-[#1e2722] border border-[#2d3a33] text-gray-300 hover:text-white rounded-lg text-xs font-semibold transition"
                     >
-                      🎯 Standard Meal (₹450)
+                      Standard Meal (₹450)
                     </button>
                     <button
                       type="button"

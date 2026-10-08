@@ -281,7 +281,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] dark:border-[#202923] bg-white/90 dark:bg-[#121815]/90 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#859d19] dark:text-[#d9f447]">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#b5de28] dark:text-[#d9f447]">
                 {t.admin.commandCenter}
               </p>
               <h1 className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white">
@@ -292,7 +292,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c] dark:text-white">
-              <ShieldCheck className="size-4 text-[#859d19] dark:text-[#d9f447]" /> Master Admin
+              <ShieldCheck className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Master Admin
               Access
             </span>
 
