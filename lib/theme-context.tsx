@@ -5,13 +5,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 export type Theme = 'light' | 'dark' | 'system'
 export type ResolvedTheme = 'light' | 'dark'
 
-interface ThemeContextType {
+export type ThemeContextType = {
   theme: Theme
   resolvedTheme: ResolvedTheme
   setTheme: (theme: Theme) => void
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+const ThemeContext = createContext(undefined as any as ThemeContextType | undefined)
 
 const STORAGE_KEY = 'crave_theme_preference'
 

@@ -26,16 +26,10 @@ export default function DriverDashboardPage() {
     completeDelivery,
   } = useDriver()
 
-  const [otpInput, setOtpInput] = useState(activeTask?.otp || '')
+  const [otpInput, setOtpInput] = useState('')
   const [delayModalOpen, setDelayModalOpen] = useState(false)
   const [smsDrawerOpen, setSmsDrawerOpen] = useState(false)
   const [sentSmsMsg, setSentSmsMsg] = useState('')
-
-  useEffect(() => {
-    if (activeTask?.otp) {
-      setOtpInput(activeTask.otp)
-    }
-  }, [activeTask?.otp])
 
   function sendQuickSms(templateText: string) {
     setSentSmsMsg(`SMS Sent to customer: "${templateText}"`)
@@ -151,7 +145,7 @@ export default function DriverDashboardPage() {
                   <p className="text-xs text-[#9eb3a4] mt-0.5">{activeTask.restaurantAddress}</p>
                 </div>
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(activeTask.restaurantAddress)}`}
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
                   target="_blank"
                   rel="noreferrer"
                   className="shrink-0 self-start rounded-full border border-amber-500/50 bg-[#121815] px-3.5 py-1.5 text-xs font-bold text-amber-300 flex items-center gap-1 shadow-sm hover:bg-amber-500/20"
@@ -222,14 +216,8 @@ export default function DriverDashboardPage() {
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value)}
                       className="w-36 rounded-xl border border-sky-500/50 bg-[#1c2620] px-3 py-2 text-center text-base font-extrabold tracking-widest text-white outline-none focus:border-sky-400 font-mono"
-                      placeholder={activeTask.otp || '123456'}
+                      placeholder="xxxxxx"
                     />
-                    <span className="text-xs text-[#9eb3a4] font-medium">
-                      Customer OTP:{' '}
-                      <strong className="font-mono font-bold text-[#d9f447]">
-                        {activeTask.otp || '123456'}
-                      </strong>
-                    </span>
                   </div>
                 </div>
               )}
@@ -237,12 +225,15 @@ export default function DriverDashboardPage() {
 
             {/* Primary Workflow CTA Action Button */}
             {activeTask.step === 'assigned' && (
-              <button
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
+                target="_blank"
+                rel="noreferrer"
                 onClick={advanceStep}
                 className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] shadow-lg transition hover:bg-[#c2dc3a] flex items-center justify-center gap-2"
               >
                 <Navigation className="size-4 text-[#121815]" /> Navigate to Pickup Kitchen
-              </button>
+              </a>
             )}
 
             {activeTask.step === 'at_restaurant' && (
@@ -266,7 +257,7 @@ export default function DriverDashboardPage() {
             {activeTask.step === 'arrived_customer' && (
               <button
                 onClick={() => {
-                  const res = completeDelivery(otpInput || activeTask.otp)
+                  const res = completeDelivery(otpInput)
                   if (!res.success) {
                     alert(res.message)
                   }

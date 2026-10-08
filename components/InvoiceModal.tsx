@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   Coins,
+  Download,
   FileText,
   Loader2,
   MapPin,
@@ -48,6 +49,7 @@ export interface InvoiceOrderData {
   packagingFee?: number
   deliveryFee?: number
   platformFee?: number
+  handlingFee?: number
   gst?: number
   tip?: number
   discountAmount?: number
@@ -70,6 +72,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'tax_invoice' | 'commission_invoice'>('tax_invoice')
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     if (!order?.id) return
@@ -78,7 +81,8 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
     setLoading(true)
     setError('')
 
-    fetch(`/api/orders?orderId=${encodeURIComponent(order.id)}`)
+    const cleanId = order.id.replace('#', '')
+    fetch(`/api/orders?orderId=${encodeURIComponent(cleanId)}`)
       .then((res) => res.json())
       .then((json) => {
         if (!isMounted) return
@@ -110,14 +114,22 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
       : dbData.items
     : order.items || []
 
+  // Extract stored billing breakdown if available
+  const storedBreakdown =
+    Array.isArray(rawItems) && rawItems[0]?.billing_breakdown
+      ? rawItems[0].billing_breakdown
+      : dbData?.billing_breakdown || null
+
   const itemsList = Array.isArray(rawItems)
-    ? rawItems.map((item: any) => ({
-        name: item.name || item.title || 'Food Item',
-        quantity: Number(item.qty || item.quantity || item.count || 1),
-        price: Number(item.price || item.mrp || 0),
-        hsnSacCode: item.hsnSacCode || '996331',
-        priceTaxMode: (item.priceTaxMode as PriceTaxMode) || 'TAX_INCLUSIVE',
-      }))
+    ? rawItems
+        .filter((item: any) => item.name !== 'Order Metadata' && item.price !== 0)
+        .map((item: any) => ({
+          name: item.name || item.title || 'Food Item',
+          quantity: Number(item.qty || item.quantity || item.count || 1),
+          price: Number(item.price || item.mrp || 0),
+          hsnSacCode: item.hsnSacCode || '996331',
+          priceTaxMode: (item.priceTaxMode as PriceTaxMode) || 'TAX_INCLUSIVE',
+        }))
     : []
 
   // Resolve Store & Customer Details
@@ -127,43 +139,59 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
     order.restaurantName ||
     'Crave Kitchen Store'
   const storeAddress =
-    dbData?.restaurant?.address || order.restaurantAddress || 'Bengaluru, Karnataka, India'
+    dbData?.restaurant?.address ||
+    order.restaurantAddress ||
+    'Koramangala 5th Block, Bengaluru, Karnataka'
   const storePhone = dbData?.restaurant?.phone || '+91 80 2345 6789'
   const fssaiLic = dbData?.restaurant?.fssai_license || '11223344556677'
   const supplierGstin = dbData?.restaurant?.gstin || '29AAAAA0000A1Z5'
   const supplierState = 'Karnataka'
 
   const custName =
-    dbData?.customer?.name || dbData?.customer_name || order.customerName || 'Customer'
-  const custPhone = dbData?.customer?.phone || dbData?.customer_phone || order.customerPhone
-  const custEmail = dbData?.customer?.email
+    dbData?.customer?.name || dbData?.customer_name || order.customerName || 'Valued Customer'
+  const custPhone =
+    dbData?.customer?.phone || dbData?.customer_phone || order.customerPhone || '+91 98765 43210'
+  const custEmail = dbData?.customer?.email || 'customer@crave.com'
   const custAddress =
     dbData?.customer_address ||
     dbData?.customer?.address ||
     order.customerAddress ||
-    'Bengaluru, Karnataka'
+    'Indiranagar 100ft Rd, Bengaluru, Karnataka'
   const customerState = 'Karnataka'
 
-  const driverName = dbData?.driver_name || order.driverName
+  const driverName = dbData?.driver_name || order.driverName || 'Verified Rider Partner'
   const driverPhone = dbData?.driver_phone
 
   const orderStatus = dbData?.status || order.status || 'delivered'
-  const paymentStatus = dbData?.payment_status || 'completed'
+  const paymentStatus = dbData?.payment_status || 'verified'
   const paymentMethod = dbData?.payment_method || order.paymentMethod || 'UPI Online'
   const couponCode = dbData?.coupon_code || order.couponCode
-  const orderType = dbData?.order_type || 'restaurant_food'
   const deliveryOtp = dbData?.delivery_otp || order.otp
+  const utrRef =
+    dbData?.payment_review?.utr_number ||
+    dbData?.utr_number ||
+    order.utrRef ||
+    `UTR${String(order.id).slice(0, 8).toUpperCase()}`
 
   const discountAmount =
-    dbData?.discount_amount != null
-      ? Number(dbData.discount_amount)
-      : order.discountAmount != null
-        ? Number(order.discountAmount)
-        : 0
+    storedBreakdown?.discount_amount != null
+      ? Number(storedBreakdown.discount_amount)
+      : dbData?.discount_amount != null
+        ? Number(dbData.discount_amount)
+        : order.discountAmount != null
+          ? Number(order.discountAmount)
+          : 0
 
-  const tip = dbData?.tip != null ? Number(dbData.tip) : order.tip != null ? Number(order.tip) : 0
+  const tip =
+    storedBreakdown?.tip != null
+      ? Number(storedBreakdown.tip)
+      : dbData?.tip != null
+        ? Number(dbData.tip)
+        : order.tip != null
+          ? Number(order.tip)
+          : 0
 
-  // Calculate Commercial Engine Immutable Price Snapshot
+  // Calculate Commercial Engine Immutable Price Snapshot for full tax & commission accuracy
   const priceSnapshot: ImmutablePriceSnapshot = calculateOrderPriceSnapshot({
     orderId: order.id,
     restaurantId: dbData?.restaurant_id || 'rest_01',
@@ -180,6 +208,42 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
     restaurantDiscountContributionPercent: 60,
   })
 
+  // Resolved final financial breakdown
+  const finalSubtotal =
+    storedBreakdown?.subtotal ?? dbData?.subtotal ?? order.subtotal ?? priceSnapshot.subtotal
+  const finalPackagingFee =
+    storedBreakdown?.packaging_fee ??
+    dbData?.packaging_fee ??
+    order.packagingFee ??
+    priceSnapshot.packagingFee
+  const finalDeliveryFee =
+    storedBreakdown?.delivery_fee ??
+    dbData?.delivery_fee ??
+    order.deliveryFee ??
+    priceSnapshot.deliveryFee
+  const finalPlatformFee =
+    storedBreakdown?.platform_fee ??
+    dbData?.platform_fee ??
+    order.platformFee ??
+    priceSnapshot.platformFee
+  const finalHandlingFee =
+    storedBreakdown?.handling_fee ??
+    dbData?.handling_fee ??
+    order.handlingFee ??
+    priceSnapshot.handlingFee
+  const finalGst = storedBreakdown?.gst ?? dbData?.gst ?? order.gst ?? priceSnapshot.foodGstTotal
+  const finalTotal =
+    storedBreakdown?.total_amount ??
+    dbData?.total_amount ??
+    order.total ??
+    priceSnapshot.customerPayable
+
+  const vendorCommissionRate =
+    storedBreakdown?.vendor_commission_rate ?? priceSnapshot.commissionRate
+  const vendorCommissionAmount =
+    storedBreakdown?.vendor_commission_amount ?? priceSnapshot.grossCommission
+  const vendorNetPayout = storedBreakdown?.vendor_net_payout ?? priceSnapshot.restaurantPayableNet
+
   const createdAtFormatted = dbData?.created_at
     ? new Date(dbData.created_at).toLocaleString('en-IN', {
         dateStyle: 'medium',
@@ -187,16 +251,51 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
       })
     : order.timestamp || new Date().toLocaleString('en-IN')
 
-  const deliveredAtFormatted = dbData?.delivered_at
-    ? new Date(dbData.delivered_at).toLocaleString('en-IN', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      })
-    : null
-
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print()
+    }
+  }
+
+  const exportPdfInvoice = async () => {
+    if (typeof window === 'undefined') return
+    setDownloadingPdf(true)
+    try {
+      const element = document.getElementById('printable-invoice-modal-content')
+      if (!element) {
+        window.print()
+        return
+      }
+
+      if (!(window as any).html2pdf) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src =
+            'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+          script.onload = () => resolve()
+          script.onerror = () => reject(new Error('Failed to load html2pdf'))
+          document.head.appendChild(script)
+        })
+      }
+
+      const html2pdf = (window as any).html2pdf
+      if (html2pdf) {
+        const opt = {
+          margin: [8, 8, 8, 8],
+          filename: `Invoice_${order.id.replace('#', '')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        }
+        await html2pdf().set(opt).from(element).save()
+      } else {
+        window.print()
+      }
+    } catch (e) {
+      console.warn('HTML to PDF download failed, falling back to window.print()', e)
+      window.print()
+    } finally {
+      setDownloadingPdf(false)
     }
   }
 
@@ -208,11 +307,11 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
           body * {
             visibility: hidden;
           }
-          #printable-invoice-modal,
-          #printable-invoice-modal * {
+          #printable-invoice-modal-content,
+          #printable-invoice-modal-content * {
             visibility: visible;
           }
-          #printable-invoice-modal {
+          #printable-invoice-modal-content {
             position: absolute;
             left: 0;
             top: 0;
@@ -231,10 +330,7 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
         }
       `}</style>
 
-      <div
-        id="printable-invoice-modal"
-        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-7 shadow-2xl border border-gray-200 dark:border-[#27342d] text-[#18201c] dark:text-white"
-      >
+      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-7 shadow-2xl border border-gray-200 dark:border-[#27342d] text-[#18201c] dark:text-white">
         {/* Top Header & Actions (hidden during print) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4 mb-4 gap-3 no-print">
           <div className="flex items-center gap-2.5">
@@ -248,21 +344,21 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-wider font-bold">
-                  INV-{String(order.id).toUpperCase()}
+                  INV-{String(order.id).replace('#', '').toUpperCase()}
                 </span>
                 <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full uppercase">
                   Contract {priceSnapshot.contractNumber}
                 </span>
                 {loading && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full">
-                    <Loader2 className="size-3 animate-spin" /> Live DB Sync
+                    <Loader2 className="size-3 animate-spin" /> Live Sync
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
+          <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
             {/* View Switcher Tabs */}
             <div className="flex items-center rounded-xl bg-gray-100 dark:bg-[#121815] p-1 text-[11px] font-bold">
               <button
@@ -289,13 +385,30 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
               </button>
             </div>
 
+            {/* HTML to PDF Download Button */}
+            <button
+              type="button"
+              onClick={exportPdfInvoice}
+              disabled={downloadingPdf}
+              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-[#d9f447] px-3.5 py-1.5 text-xs font-extrabold text-[#121815] hover:bg-[#c2dc3a] transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              {downloadingPdf ? (
+                <Loader2 className="size-3.5 animate-spin text-[#121815]" />
+              ) : (
+                <Download className="size-3.5 text-[#121815]" />
+              )}
+              Download PDF
+            </button>
+
+            {/* Browser Print Button */}
             <button
               type="button"
               onClick={handlePrint}
-              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-3.5 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 shadow-xs cursor-pointer"
             >
               <Printer className="size-3.5 text-emerald-600 dark:text-emerald-400" /> Print
             </button>
+
             <button
               type="button"
               onClick={onClose}
@@ -306,308 +419,301 @@ export default function InvoiceModal({ order, onClose }: InvoiceModalProps) {
           </div>
         </div>
 
-        {/* TAB 1: CUSTOMER GST TAX INVOICE */}
-        {activeTab === 'tax_invoice' ? (
-          <div>
-            {/* Status & Payment Bar */}
-            <div className="flex flex-wrap items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-3 mb-4 text-xs font-bold text-emerald-900 dark:text-emerald-200 gap-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <div>
-                  <span className="capitalize text-emerald-950 dark:text-emerald-100 font-black">
-                    {String(orderStatus).replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-300 block font-normal">
-                    Payment: <strong className="uppercase">{paymentStatus}</strong> via{' '}
-                    {paymentMethod}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="font-mono text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md uppercase font-black">
-                  Place of Supply: {priceSnapshot.placeOfSupply} ({priceSnapshot.taxMode})
-                </span>
-                {deliveryOtp && (
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400 block font-mono mt-0.5">
-                    Delivery OTP:{' '}
-                    <strong className="text-emerald-900 dark:text-emerald-300">
-                      {deliveryOtp}
-                    </strong>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Merchant & Customer Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 rounded-2xl bg-gray-50 dark:bg-[#121815] p-4 border border-gray-100 dark:border-[#27342d] text-xs mb-4">
-              {/* Merchant Supplier Details */}
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 flex items-center gap-1 mb-1">
-                  <Store className="size-3 text-gray-400 dark:text-gray-500" /> Supplier / Kitchen
-                  Partner
-                </span>
-                <p className="font-bold text-[#18201c] dark:text-white">{storeName}</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-300 mt-0.5 leading-relaxed">
-                  {storeAddress}
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-300 flex items-center gap-1 mt-1">
-                  <Phone className="size-3 text-gray-400 dark:text-gray-500" /> {storePhone}
-                </p>
-                <div className="mt-2 pt-1 border-t border-gray-200/60 dark:border-[#27342d] space-y-0.5 text-[9px] font-mono text-gray-500 dark:text-gray-400">
-                  <p>
-                    GSTIN:{' '}
-                    <strong className="text-gray-800 dark:text-gray-200">{supplierGstin}</strong> (
-                    {priceSnapshot.gstStatus})
-                  </p>
-                  <p>
-                    FSSAI Lic #:{' '}
-                    <strong className="text-gray-800 dark:text-gray-200">{fssaiLic}</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* Customer Details */}
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 flex items-center gap-1 mb-1">
-                  <User className="size-3 text-gray-400 dark:text-gray-500" /> Billed To Customer
-                </span>
-                <p className="font-bold text-[#18201c] dark:text-white">{custName}</p>
-                {custPhone && (
-                  <p className="text-[10px] text-gray-600 dark:text-gray-300 flex items-center gap-1 mt-0.5">
-                    <Phone className="size-3 text-gray-400 dark:text-gray-500" /> {custPhone}
-                  </p>
-                )}
-                {custEmail && (
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{custEmail}</p>
-                )}
-                <p className="text-[10px] text-gray-500 dark:text-gray-300 mt-1 leading-relaxed flex items-start gap-1">
-                  <MapPin className="size-3 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" />{' '}
-                  {custAddress}
-                </p>
-                <div className="mt-2 pt-1 border-t border-gray-200/60 dark:border-[#27342d] text-[9px] font-mono text-gray-500 dark:text-gray-400">
-                  <p>
-                    State of Supply:{' '}
-                    <strong className="text-gray-800 dark:text-gray-200">
-                      {priceSnapshot.customerState}
-                    </strong>
-                  </p>
-                  <p>
-                    Invoice Date:{' '}
-                    <strong className="text-gray-800 dark:text-gray-200">
-                      {createdAtFormatted}
-                    </strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Itemized Order & Tax Table */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400">
-                  Itemized Tax Invoice Breakdown
-                </p>
-                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                  {priceSnapshot.items.length} items · Price Mode: TAX INCLUSIVE (5% GST)
-                </span>
-              </div>
-              <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] overflow-hidden">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-gray-100 dark:bg-[#121815] text-[#18201c] dark:text-gray-200 font-bold text-[9px] uppercase border-b border-gray-200 dark:border-[#27342d]">
-                    <tr>
-                      <th className="p-2">Item Name &amp; HSN</th>
-                      <th className="p-2 text-center">Qty</th>
-                      <th className="p-2 text-right">Unit Price</th>
-                      <th className="p-2 text-right">Taxable Base</th>
-                      <th className="p-2 text-right">GST (5%)</th>
-                      <th className="p-2 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] text-gray-700 dark:text-gray-300">
-                    {priceSnapshot.items.map((item, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-[#27342d]/40">
-                        <td className="p-2">
-                          <p className="font-bold text-[#18201c] dark:text-white">{item.name}</p>
-                          <span className="text-[9px] text-gray-400 font-mono">
-                            HSN: {item.hsnSacCode}
-                          </span>
-                        </td>
-                        <td className="p-2 text-center font-bold text-[#18201c] dark:text-white">
-                          {item.quantity}
-                        </td>
-                        <td className="p-2 text-right">₹{item.unitPrice}</td>
-                        <td className="p-2 text-right font-mono">₹{item.taxableBase}</td>
-                        <td className="p-2 text-right font-mono text-emerald-700 dark:text-emerald-400">
-                          ₹{item.gstAmount}
-                        </td>
-                        <td className="p-2 text-right font-bold text-[#18201c] dark:text-white">
-                          ₹{item.grossAmount}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Commercial Engine Financial Summary */}
-            <div className="space-y-1.5 border-t border-dashed border-gray-200 dark:border-[#27342d] pt-3.5 text-xs text-gray-600 dark:text-gray-300 mb-5">
-              <div className="flex justify-between">
-                <span>Food Items Gross Subtotal</span>
-                <span className="font-semibold text-[#18201c] dark:text-white">
-                  ₹{priceSnapshot.subtotal}
-                </span>
-              </div>
-
-              {priceSnapshot.grossDiscount > 0 && (
-                <div className="flex justify-between text-rose-600 dark:text-rose-400 font-semibold">
-                  <span className="flex items-center gap-1">
-                    <Tag className="size-3" /> Discount ({couponCode || 'PROMO'})
-                    <span className="text-[9px] bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded text-rose-700 dark:text-rose-300">
-                      Rest: ₹{priceSnapshot.restaurantDiscount} | Plat: ₹
-                      {priceSnapshot.platformDiscount}
+        {/* PRINTABLE CONTAINER TARGET */}
+        <div id="printable-invoice-modal-content">
+          {/* TAB 1: CUSTOMER GST TAX INVOICE */}
+          {activeTab === 'tax_invoice' ? (
+            <div>
+              {/* Status & Payment Bar */}
+              <div className="flex flex-wrap items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-3 mb-4 text-xs font-bold text-emerald-900 dark:text-emerald-200 gap-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="capitalize text-emerald-950 dark:text-emerald-100 font-black">
+                      {String(orderStatus).replace(/_/g, ' ')}
                     </span>
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 block font-normal">
+                      Payment: <strong className="uppercase">{paymentStatus}</strong> via{' '}
+                      {paymentMethod} ({utrRef})
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md uppercase font-black">
+                    Place of Supply: {priceSnapshot.placeOfSupply} ({priceSnapshot.taxMode})
                   </span>
-                  <span>-₹{priceSnapshot.grossDiscount}</span>
+                  {deliveryOtp && (
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 block font-mono mt-0.5">
+                      Delivery OTP:{' '}
+                      <strong className="text-emerald-900 dark:text-emerald-300">
+                        {deliveryOtp}
+                      </strong>
+                    </span>
+                  )}
                 </div>
-              )}
-
-              <div className="flex justify-between">
-                <span>Kitchen Packaging Fee</span>
-                <span>₹{priceSnapshot.packagingFee}</span>
               </div>
 
-              <div className="flex justify-between">
-                <span>Delivery Charges</span>
-                <span>₹{priceSnapshot.deliveryFee}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Platform Service &amp; Handling Charge</span>
-                <span>₹{priceSnapshot.platformFee + priceSnapshot.handlingFee}</span>
-              </div>
-
-              <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
-                <span>
-                  Food GST Breakdown (
-                  {priceSnapshot.taxMode === 'CGST_SGST' ? 'CGST 2.5% + SGST 2.5%' : 'IGST 5%'})
-                </span>
-                <span className="font-mono font-bold">₹{priceSnapshot.foodGstTotal}</span>
-              </div>
-
-              {priceSnapshot.platformServiceGst > 0 && (
-                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 text-[11px]">
-                  <span>Platform Service GST (18%)</span>
-                  <span className="font-mono">₹{priceSnapshot.platformServiceGst}</span>
-                </div>
-              )}
-
-              {priceSnapshot.tip > 0 && (
-                <div className="flex justify-between text-blue-700 dark:text-blue-400 font-semibold">
-                  <span>Rider Tip (100% passed to driver)</span>
-                  <span>₹{priceSnapshot.tip}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between border-t border-gray-200 dark:border-[#27342d] pt-2 text-sm font-black text-[#18201c] dark:text-white">
-                <span>Total Customer Paid</span>
-                <span className="text-emerald-700 dark:text-emerald-400 text-base">
-                  ₹{priceSnapshot.customerPayable}
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* TAB 2: VENDOR COMMERCIAL & COMMISSION TAX INVOICE */
-          <div className="space-y-4 text-xs">
-            <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-4 rounded-2xl">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5 text-xs">
-                  <Building2 className="size-4 text-purple-600 dark:text-purple-400" /> Platform
-                  Commission &amp; Tax Settlement
-                </span>
-                <span className="font-mono text-[10px] bg-purple-100 dark:bg-purple-900/60 text-purple-900 dark:text-purple-300 px-2.5 py-0.5 rounded-md font-bold">
-                  SAC Code: 998311 (Platform Service)
-                </span>
-              </div>
-              <p className="text-[11px] text-purple-800 dark:text-purple-300 mt-1">
-                Official statement of platform commission fee charged to{' '}
-                <strong>{storeName}</strong> for Order #{priceSnapshot.orderId}.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-[#121815] p-4 rounded-2xl border border-gray-200 dark:border-[#27342d]">
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Gross Order Sales
-                </span>
-                <p className="font-extrabold text-base text-[#18201c] dark:text-white">
-                  ₹{priceSnapshot.restaurantGrossSales}
-                </p>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Contract Commission Rate
-                </span>
-                <p className="font-extrabold text-base text-purple-700 dark:text-purple-400">
-                  {priceSnapshot.commissionRate}% ({priceSnapshot.commissionBasis})
-                </p>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Platform Service Commission
-                </span>
-                <p className="font-bold text-[#18201c] dark:text-white">
-                  ₹{priceSnapshot.grossCommission}
-                </p>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  GST on Commission (18%)
-                </span>
-                <p className="font-bold text-emerald-700 dark:text-emerald-400">
-                  ₹{priceSnapshot.commissionGst}
-                </p>
-              </div>
-
-              <div className="col-span-2 pt-2 border-t border-gray-200 dark:border-[#27342d] flex justify-between items-center">
-                <span className="font-bold text-[#18201c] dark:text-white">
-                  Total Vendor Deduction (Commission + GST)
-                </span>
-                <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
-                  -₹{priceSnapshot.totalCommissionDeduction}
-                </span>
-              </div>
-
-              <div className="col-span-2 bg-emerald-100/70 dark:bg-emerald-950/60 p-3 rounded-xl flex justify-between items-center border border-emerald-300 dark:border-emerald-800">
+              {/* Merchant & Customer Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 rounded-2xl bg-gray-50 dark:bg-[#121815] p-4 border border-gray-100 dark:border-[#27342d] text-xs mb-4">
+                {/* Merchant Supplier Details */}
                 <div>
-                  <span className="font-bold text-emerald-950 dark:text-emerald-200 block text-xs">
-                    Net Bank Settlement Payout to Kitchen
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 flex items-center gap-1 mb-1">
+                    <Store className="size-3 text-gray-400 dark:text-gray-500" /> Supplier / Kitchen
+                    Partner
                   </span>
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
-                    After deducting commission &amp; vendor discount share
+                  <p className="font-bold text-[#18201c] dark:text-white">{storeName}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-300 mt-0.5 leading-relaxed">
+                    {storeAddress}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-300 flex items-center gap-1 mt-1">
+                    <Phone className="size-3 text-gray-400 dark:text-gray-500" /> {storePhone}
+                  </p>
+                  <div className="mt-2 pt-1 border-t border-gray-200/60 dark:border-[#27342d] space-y-0.5 text-[9px] font-mono text-gray-500 dark:text-gray-400">
+                    <p>
+                      GSTIN:{' '}
+                      <strong className="text-gray-800 dark:text-gray-200">{supplierGstin}</strong>{' '}
+                      ({priceSnapshot.gstStatus})
+                    </p>
+                    <p>
+                      FSSAI Lic #:{' '}
+                      <strong className="text-gray-800 dark:text-gray-200">{fssaiLic}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Customer Details */}
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 flex items-center gap-1 mb-1">
+                    <User className="size-3 text-gray-400 dark:text-gray-500" /> Billed To Customer
+                  </span>
+                  <p className="font-bold text-[#18201c] dark:text-white">{custName}</p>
+                  {custPhone && (
+                    <p className="text-[10px] text-gray-600 dark:text-gray-300 flex items-center gap-1 mt-0.5">
+                      <Phone className="size-3 text-gray-400 dark:text-gray-500" /> {custPhone}
+                    </p>
+                  )}
+                  {custEmail && (
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">{custEmail}</p>
+                  )}
+                  <p className="text-[10px] text-gray-500 dark:text-gray-300 mt-1 leading-relaxed flex items-start gap-1">
+                    <MapPin className="size-3 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" />{' '}
+                    {custAddress}
+                  </p>
+                  <div className="mt-2 pt-1 border-t border-gray-200/60 dark:border-[#27342d] text-[9px] font-mono text-gray-500 dark:text-gray-400">
+                    <p>
+                      State of Supply:{' '}
+                      <strong className="text-gray-800 dark:text-gray-200">
+                        {priceSnapshot.customerState}
+                      </strong>
+                    </p>
+                    <p>
+                      Invoice Date:{' '}
+                      <strong className="text-gray-800 dark:text-gray-200">
+                        {createdAtFormatted}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Itemized Order & Tax Table */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400">
+                    Itemized Tax Invoice Breakdown
+                  </p>
+                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                    {priceSnapshot.items.length} items · Price Mode: TAX INCLUSIVE (5% GST)
                   </span>
                 </div>
-                <span className="font-black text-emerald-900 dark:text-emerald-300 text-lg">
-                  ₹{priceSnapshot.restaurantPayableNet}
-                </span>
+                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-gray-100 dark:bg-[#121815] text-[#18201c] dark:text-gray-200 font-bold text-[9px] uppercase border-b border-gray-200 dark:border-[#27342d]">
+                      <tr>
+                        <th className="p-2">Item Name &amp; HSN</th>
+                        <th className="p-2 text-center">Qty</th>
+                        <th className="p-2 text-right">Unit Price</th>
+                        <th className="p-2 text-right">Taxable Base</th>
+                        <th className="p-2 text-right">GST (5%)</th>
+                        <th className="p-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] text-gray-700 dark:text-gray-300">
+                      {priceSnapshot.items.map((item, i) => (
+                        <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-[#27342d]/40">
+                          <td className="p-2">
+                            <p className="font-bold text-[#18201c] dark:text-white">{item.name}</p>
+                            <span className="text-[9px] text-gray-400 font-mono">
+                              HSN: {item.hsnSacCode}
+                            </span>
+                          </td>
+                          <td className="p-2 text-center font-bold text-[#18201c] dark:text-white">
+                            {item.quantity}
+                          </td>
+                          <td className="p-2 text-right">₹{item.unitPrice}</td>
+                          <td className="p-2 text-right font-mono">₹{item.taxableBase}</td>
+                          <td className="p-2 text-right font-mono text-emerald-700 dark:text-emerald-400">
+                            ₹{item.gstAmount}
+                          </td>
+                          <td className="p-2 text-right font-bold text-[#18201c] dark:text-white">
+                            ₹{item.grossAmount}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Commercial Engine Financial Summary */}
+              <div className="space-y-1.5 border-t border-dashed border-gray-200 dark:border-[#27342d] pt-3.5 text-xs text-gray-600 dark:text-gray-300 mb-5">
+                <div className="flex justify-between">
+                  <span>Food Items Gross Subtotal</span>
+                  <span className="font-semibold text-[#18201c] dark:text-white">
+                    ₹{finalSubtotal}
+                  </span>
+                </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-rose-600 dark:text-rose-400 font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="size-3" /> Discount ({couponCode || 'PROMO'})
+                    </span>
+                    <span>-₹{discountAmount}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between">
+                  <span>Kitchen Packaging Fee</span>
+                  <span>₹{finalPackagingFee}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Delivery Charges</span>
+                  <span>₹{finalDeliveryFee}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Platform Service &amp; Handling Charge</span>
+                  <span>₹{finalPlatformFee + finalHandlingFee}</span>
+                </div>
+
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                  <span>
+                    Food GST Breakdown (
+                    {priceSnapshot.taxMode === 'CGST_SGST' ? 'CGST 2.5% + SGST 2.5%' : 'IGST 5%'})
+                  </span>
+                  <span className="font-mono font-bold">₹{finalGst}</span>
+                </div>
+
+                {tip > 0 && (
+                  <div className="flex justify-between text-blue-700 dark:text-blue-400 font-semibold">
+                    <span>Rider Tip (100% passed to driver)</span>
+                    <span>₹{tip}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between border-t border-gray-200 dark:border-[#27342d] pt-2 text-sm font-black text-[#18201c] dark:text-white">
+                  <span>Total Customer Paid</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 text-base font-extrabold">
+                    ₹{finalTotal}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            /* TAB 2: VENDOR COMMERCIAL & COMMISSION TAX INVOICE */
+            <div className="space-y-4 text-xs">
+              <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-4 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5 text-xs">
+                    <Building2 className="size-4 text-purple-600 dark:text-purple-400" /> Platform
+                    Commission &amp; Tax Settlement
+                  </span>
+                  <span className="font-mono text-[10px] bg-purple-100 dark:bg-purple-900/60 text-purple-900 dark:text-purple-300 px-2.5 py-0.5 rounded-md font-bold">
+                    SAC Code: 998311 (Platform Service)
+                  </span>
+                </div>
+                <p className="text-[11px] text-purple-800 dark:text-purple-300 mt-1">
+                  Official statement of platform commission fee charged to{' '}
+                  <strong>{storeName}</strong> for Order #{priceSnapshot.orderId}.
+                </p>
+              </div>
 
-        {/* Invoice Footer Note */}
-        <div className="text-center text-[10px] text-gray-400 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-[#27342d] flex flex-col items-center gap-1">
-          <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-            <ShieldCheck className="size-3.5" /> Verified Computer Generated Commercial Tax Invoice
-          </span>
-          <span>
-            Thank you for choosing Crave! Store FSSAI Lic #: {fssaiLic} · Supplier GSTIN:{' '}
-            {supplierGstin}
-          </span>
+              <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-[#121815] p-4 rounded-2xl border border-gray-200 dark:border-[#27342d]">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    Gross Order Sales
+                  </span>
+                  <p className="font-extrabold text-base text-[#18201c] dark:text-white">
+                    ₹{finalSubtotal}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    Contract Commission Rate
+                  </span>
+                  <p className="font-extrabold text-base text-purple-700 dark:text-purple-400">
+                    {vendorCommissionRate}% (ORDER_SUBTOTAL)
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    Platform Service Commission
+                  </span>
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    ₹{vendorCommissionAmount}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    GST on Commission (18%)
+                  </span>
+                  <p className="font-bold text-emerald-700 dark:text-emerald-400">
+                    ₹{Math.round(vendorCommissionAmount * 0.18)}
+                  </p>
+                </div>
+
+                <div className="col-span-2 pt-2 border-t border-gray-200 dark:border-[#27342d] flex justify-between items-center">
+                  <span className="font-bold text-[#18201c] dark:text-white">
+                    Total Vendor Deduction (Commission + GST)
+                  </span>
+                  <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
+                    -₹{Math.round(vendorCommissionAmount * 1.18)}
+                  </span>
+                </div>
+
+                <div className="col-span-2 bg-emerald-100/70 dark:bg-emerald-950/60 p-3 rounded-xl flex justify-between items-center border border-emerald-300 dark:border-emerald-800">
+                  <div>
+                    <span className="font-bold text-emerald-950 dark:text-emerald-200 block text-xs">
+                      Net Bank Settlement Payout to Kitchen
+                    </span>
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                      After deducting commission &amp; vendor discount share
+                    </span>
+                  </div>
+                  <span className="font-black text-emerald-900 dark:text-emerald-300 text-lg">
+                    ₹{vendorNetPayout}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Invoice Footer Note */}
+          <div className="text-center text-[10px] text-gray-400 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-[#27342d] flex flex-col items-center gap-1 mt-4">
+            <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+              <ShieldCheck className="size-3.5" /> Verified Computer Generated Commercial Tax
+              Invoice
+            </span>
+            <span>
+              Thank you for choosing Crave! Store FSSAI Lic #: {fssaiLic} · Supplier GSTIN:{' '}
+              {supplierGstin}
+            </span>
+          </div>
         </div>
       </div>
     </div>

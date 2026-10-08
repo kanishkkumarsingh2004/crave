@@ -413,7 +413,9 @@ export default function VendorMenuPage() {
               <div
                 key={item.id}
                 className={`rounded-3xl border p-4 bg-[#121815] shadow-xl flex flex-col justify-between transition ${
-                  item.in_stock ? 'border-[#233027] hover:border-[#d9f447]/40' : 'border-rose-500/30 bg-rose-500/5'
+                  item.in_stock
+                    ? 'border-[#233027] hover:border-[#d9f447]/40'
+                    : 'border-rose-500/30 bg-rose-500/5'
                 }`}
               >
                 <div>
@@ -440,7 +442,9 @@ export default function VendorMenuPage() {
                   </div>
 
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-extrabold text-base text-white leading-snug">{item.name}</h3>
+                    <h3 className="font-extrabold text-base text-white leading-snug">
+                      {item.name}
+                    </h3>
                     <span className="font-black text-lg text-[#d9f447] shrink-0">
                       ₹{item.price}
                     </span>

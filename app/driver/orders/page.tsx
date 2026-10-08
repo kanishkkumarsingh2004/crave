@@ -75,7 +75,14 @@ export default function DriverAcceptedOrdersPage() {
       if (json.success && Array.isArray(json.orders)) {
         const pending = json.orders.filter(
           (o: any) =>
-            o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled'
+            o.status !== 'delivered' &&
+            o.status !== 'completed' &&
+            o.status !== 'cancelled' &&
+            (o.status === 'ready_for_pickup' ||
+              o.status === 'ready' ||
+              o.status === 'rider_assigned' ||
+              o.status === 'picked_up' ||
+              o.status === 'out_for_delivery')
         )
 
         const mapped: ManagedOrder[] = await Promise.all(
@@ -288,7 +295,7 @@ export default function DriverAcceptedOrdersPage() {
               <h4 className="font-bold text-base text-white">{activeTask.restaurantName}</h4>
               <p className="text-xs text-[#a0ab9f]">{activeTask.restaurantAddress}</p>
               <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(activeTask.restaurantAddress)}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#d9f447] hover:underline pt-1"
@@ -340,7 +347,7 @@ export default function DriverAcceptedOrdersPage() {
                   <input
                     type="text"
                     maxLength={6}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="xxxxxx"
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value)}
                     className="flex-1 rounded-xl border border-[#2d3b32] bg-[#1c2620] p-3 font-mono text-center text-lg font-bold text-white outline-none tracking-widest focus:border-[#d9f447]"
@@ -493,7 +500,7 @@ export default function DriverAcceptedOrdersPage() {
                           restaurantAddress: order.restaurantAddress,
                           customerName: order.customerName,
                           customerAddress: order.customerAddress,
-                          basePayout: order.basePayout,
+                          basePayout: order.basePayout + order.extraDistanceShare,
                           surgeBonus: order.surgeBonus,
                           tip: order.tip,
                           distance: order.distanceStr,
@@ -577,7 +584,7 @@ export default function DriverAcceptedOrdersPage() {
                               restaurantAddress: order.restaurantAddress,
                               customerName: order.customerName,
                               customerAddress: order.customerAddress,
-                              basePayout: order.basePayout,
+                              basePayout: order.basePayout + order.extraDistanceShare,
                               surgeBonus: order.surgeBonus,
                               tip: order.tip,
                               distance: order.distanceStr,

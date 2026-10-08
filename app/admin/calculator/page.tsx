@@ -437,7 +437,8 @@ export default function CalculatorPlaygroundPage() {
                       )}
                       {filteredDbOrders.map((ord) => (
                         <option key={ord.id} value={ord.id}>
-                          #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [{ord.status}]
+                          #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [
+                          {ord.status}]
                         </option>
                       ))}
                     </select>

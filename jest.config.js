@@ -7,7 +7,7 @@ module.exports = {
   testMatch: ['<rootDir>/test/**/*.test.{ts,tsx}'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': ['babel-jest', { configFile: './babel.jest.config.js' }],
   },
   transformIgnorePatterns: ['/node_modules/(?!jose|next)'],
   testTimeout: 15000,

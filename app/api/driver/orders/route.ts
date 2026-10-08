@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { listOrders } from '@/lib/dal/orders'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { calculateFullBreakdown } from '@/lib/calculator'
 
 export async function GET(request: Request) {
   try {
@@ -38,24 +39,34 @@ export async function GET(request: Request) {
         } catch (e) {}
 
         const tip = Number(o.tip || 0)
+        const subtotal = Number(o.subtotal || o.total_amount || 0)
+        const storedBreakdown = itemsArr.length > 0 ? itemsArr[0]?.billing_breakdown : null
+
+        let basePay = 0
+        let surgePay = 0
         let driverPayout = Number(o.driver_payout || 0)
 
-        if (
-          !driverPayout &&
-          itemsArr.length > 0 &&
-          itemsArr[0]?.billing_breakdown?.driver_payout != null
-        ) {
-          driverPayout = Number(itemsArr[0].billing_breakdown.driver_payout)
+        if (storedBreakdown && storedBreakdown.driver_payout != null) {
+          driverPayout = Number(storedBreakdown.driver_payout)
+          basePay = Number(
+            storedBreakdown.driver_base_payout ?? Math.round((driverPayout - tip) * 0.7)
+          )
+          surgePay =
+            Number(storedBreakdown.driver_surge_payout ?? 0) +
+            Number(storedBreakdown.driver_extra_distance_payout ?? 0)
+        } else {
+          const calcResult = calculateFullBreakdown({
+            subtotal,
+            distanceKm: 2.4,
+            tip,
+          })
+          const dEarnings = calcResult.driverEarnings
+          basePay = dEarnings.baseDistanceShare + dEarnings.extraDistanceShare
+          surgePay = dEarnings.surgeRainShare
+          if (!driverPayout) {
+            driverPayout = dEarnings.totalDriverEarnings
+          }
         }
-
-        if (!driverPayout) {
-          const deliveryFee = Number(o.delivery_fee) || 35
-          driverPayout = Math.round(deliveryFee * 0.8) + tip
-          if (driverPayout <= 0) driverPayout = 45
-        }
-
-        const basePay = Math.round(driverPayout * 0.7)
-        const surgePay = Math.max(0, driverPayout - basePay - tip)
 
         return {
           id: o.id,

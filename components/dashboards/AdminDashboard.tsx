@@ -1998,7 +1998,9 @@ export default function AdminDashboard() {
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018]"
                   >
                     <option value="Restaurant Vendor">Restaurant Vendor (Food &amp; Dining)</option>
-                    <option value="CraveXP Store Vendor">CraveXP Store Vendor (Dark Store Grocery)</option>
+                    <option value="CraveXP Store Vendor">
+                      CraveXP Store Vendor (Dark Store Grocery)
+                    </option>
                   </select>
                 </div>
               </div>
@@ -2092,7 +2094,9 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c] dark:text-white">Commercial Model</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Commercial Model
+                  </label>
                   <select
                     value={newVendorForm.commercialModel}
                     onChange={(e) =>
@@ -2111,12 +2115,16 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c] dark:text-white">Banner Image URL</label>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Banner Image URL
+                  </label>
                   <input
                     type="url"
                     placeholder="https://images.unsplash.com/photo-1555396273..."
                     value={newVendorForm.bannerUrl}
-                    onChange={(e) => setNewVendorForm({ ...newVendorForm, bannerUrl: e.target.value })}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, bannerUrl: e.target.value })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
@@ -2162,7 +2170,8 @@ export default function AdminDashboard() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="font-bold text-[#18201c] dark:text-white">
-                    Fixed Commission (₹ per order) {newVendorForm.commercialModel === 'markup' && '(N/A)'}
+                    Fixed Commission (₹ per order){' '}
+                    {newVendorForm.commercialModel === 'markup' && '(N/A)'}
                   </label>
                   <input
                     type="number"
@@ -2171,7 +2180,10 @@ export default function AdminDashboard() {
                     disabled={newVendorForm.commercialModel === 'markup'}
                     value={newVendorForm.fixedCommission}
                     onChange={(e) =>
-                      setNewVendorForm({ ...newVendorForm, fixedCommission: Number(e.target.value) })
+                      setNewVendorForm({
+                        ...newVendorForm,
+                        fixedCommission: Number(e.target.value),
+                      })
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
                   />
@@ -2179,7 +2191,8 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="font-bold text-[#18201c] dark:text-white">
-                    Fixed Markup (₹ per order) {newVendorForm.commercialModel === 'commission' && '(N/A)'}
+                    Fixed Markup (₹ per order){' '}
+                    {newVendorForm.commercialModel === 'commission' && '(N/A)'}
                   </label>
                   <input
                     type="number"

@@ -73,7 +73,13 @@ export default function VendorDashboard() {
         }
       }
 
-      const parsed: KitchenOrder[] = ordersData.map((o: any) => {
+      const approvedOrders = ordersData.filter(
+        (o) =>
+          o.payment_status === 'verified' ||
+          !['payment_pending', 'payment_submitted'].includes(o.status)
+      )
+
+      const parsed: KitchenOrder[] = approvedOrders.map((o: any) => {
         let itemNames = 'Order Items'
         try {
           const arr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
@@ -102,7 +108,7 @@ export default function VendorDashboard() {
           time: formattedTime,
           address: o.customer_address || 'Bengaluru',
           deliveryOtp: o.delivery_otp || undefined,
-          utrRef: o.utr_ref || undefined,
+          utrRef: o.utrRef || o.utr_ref || undefined,
         }
       })
       setKitchenOrders(parsed)
@@ -115,7 +121,7 @@ export default function VendorDashboard() {
     loadLiveKitchenOrders()
   }, [user?.id, user?.restaurantId, user?.restaurantName])
 
-  // Live WebSocket order update listener for instant kitchen popups
+  // Live WebSocket order update listener for instant kitchen popups (triggered only on admin approval)
   useVendorOrderUpdates((data) => {
     const o = data.order || data
     if (!o || !o.id) return
@@ -127,7 +133,11 @@ export default function VendorDashboard() {
       o.vendor_id === vendorId ||
       (user?.restaurantName && o.restaurant_name === user.restaurantName)
 
-    if (isMatch) {
+    const isApproved =
+      o.payment_status === 'verified' ||
+      (o.status && !['payment_pending', 'payment_submitted'].includes(o.status))
+
+    if (isMatch && isApproved) {
       playChimeSound()
       loadLiveKitchenOrders()
       setLiveBanner({
@@ -230,9 +240,7 @@ export default function VendorDashboard() {
               </h2>
               <p className="text-xs text-gray-400 mt-1">
                 Managing kitchen operations for{' '}
-                <strong className="text-white">
-                  {user?.restaurantName || 'The Green Table'}
-                </strong>
+                <strong className="text-white">{user?.restaurantName || 'The Green Table'}</strong>
               </p>
             </div>
             <div className="flex items-center gap-3">

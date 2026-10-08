@@ -139,7 +139,7 @@ describe('Orders API Route - GET', () => {
     })
   })
 
-  it('filters orders by vendorId (restaurantId)', async () => {
+  it('filters orders by vendorId (restaurantId) with onlyApprovedForVendor', async () => {
     listOrders.mockResolvedValue([])
     const { GET } = await import('@/app/api/orders/route')
     const req = makeRequest('http://localhost:3000/api/orders?vendorId=vnd_1')
@@ -151,7 +151,30 @@ describe('Orders API Route - GET', () => {
       customerId: undefined,
       restaurantId: 'vnd_1',
       restaurantName: undefined,
+      driverId: undefined,
+      onlyApprovedForVendor: true,
     })
+  })
+
+  it('hides unapproved order from vendor when fetched by orderId', async () => {
+    const { findOrderById } = require('@/lib/dal')
+    findOrderById.mockResolvedValue({
+      id: 'ord_unapproved',
+      status: 'payment_submitted',
+      payment_status: 'pending',
+    })
+    const { GET } = await import('@/app/api/orders/route')
+    const req = makeRequest(
+      'http://localhost:3000/api/orders?orderId=ord_unapproved&vendorId=vnd_1'
+    )
+
+    const response = await GET(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(data.order).toBeNull()
+    expect(data.orders).toEqual([])
   })
 
   it('returns 500 on database error', async () => {

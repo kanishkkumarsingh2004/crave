@@ -20,6 +20,7 @@ import {
   Filter,
   Flame,
   History,
+  KeyRound,
   LocateFixed,
   LogOut,
   MapPin,
@@ -68,7 +69,7 @@ const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
   ),
 })
 
-interface Restaurant {
+type Restaurant = {
   id: string
   name: string
   cuisine: string
@@ -86,7 +87,7 @@ interface Restaurant {
   longitude?: number | string | null
 }
 
-interface MenuItem {
+type MenuItem = {
   id: string
   name: string
   detail: string
@@ -98,11 +99,11 @@ interface MenuItem {
   vendorId?: string
 }
 
-interface CartItem extends MenuItem {
+type CartItem = MenuItem & {
   qty: number
 }
 
-interface CustomerAddress {
+type CustomerAddress = {
   id: string
   label: string
   address: string
@@ -111,11 +112,35 @@ interface CustomerAddress {
   lng: number | null
 }
 
-interface PastOrder {
+interface LatLngCoords {
+  lat: number
+  lng: number
+}
+
+interface CouponMessageState {
+  type: 'success' | 'error'
+  text: string
+}
+
+interface ConflictModalState {
+  open: boolean
+  currentRest: string
+  newRest: string
+  newItem: MenuItem | null
+}
+
+interface VerifyingModalState {
+  open: boolean
+  timer: number
+  orderId: string
+  status: 'verifying' | 'verified' | 'rejected'
+}
+
+type PastOrder = {
   id: string
   restaurantName: string
   restaurantImage: string
-  items: { name: string; qty: number; price: number }[]
+  items: Array<{ name: string; qty: number; price: number }>
   subtotal: number
   discount: number
   total: number
@@ -130,7 +155,7 @@ interface PastOrder {
   driverPhone?: string
 }
 
-interface CheckoutConfig {
+type CheckoutConfig = {
   merchantVpa: string
   deliveryFee: number
   handlingFee: number
@@ -165,6 +190,8 @@ const categoryList = [
   },
 ]
 
+type CustomerTab = 'explore' | 'live-order' | 'orders' | 'profile'
+
 export default function CustomerDashboard({
   initialTab = 'explore',
   initialOrderId,
@@ -184,9 +211,7 @@ export default function CustomerDashboard({
     return initialTab
   }, [pathname, initialTab])
 
-  const [activeTab, setActiveTab] = useState<'explore' | 'live-order' | 'orders' | 'profile'>(
-    currentTabFromPath
-  )
+  const [activeTab, setActiveTab] = useState(currentTabFromPath)
 
   useEffect(() => {
     setActiveTab(currentTabFromPath)
@@ -201,7 +226,7 @@ export default function CustomerDashboard({
   }
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTag, setSelectedTag] = useState<string>('All')
+  const [selectedTag, setSelectedTag] = useState('All')
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
 
   // Filter Toggles
@@ -213,13 +238,13 @@ export default function CustomerDashboard({
   const [trackingOrder, setTrackingOrder] = useState<PastOrder | null>(null)
 
   // Cart & Menu State
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([])
-  const [restaurantsList, setRestaurantsList] = useState<Restaurant[]>([])
+  const [cart, setCart] = useState<Array<CartItem>>([])
+  const [menuItemsList, setMenuItemsList] = useState<Array<MenuItem>>([])
+  const [restaurantsList, setRestaurantsList] = useState<Array<Restaurant>>([])
   const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-  const [pastOrders, setPastOrders] = useState<PastOrder[]>([])
+  const [pastOrders, setPastOrders] = useState<Array<PastOrder>>([])
 
   useEffect(() => {
     const handleToggleSidebar = () => {
@@ -277,7 +302,7 @@ export default function CustomerDashboard({
   useEffect(() => {
     async function fetchRestaurants() {
       try {
-        let parsed: Restaurant[] = []
+        let parsed: Array<Restaurant> = []
         const res = await fetch('/api/restaurants', { cache: 'no-store' })
         const json = await res.json()
         const restData = json.restaurants || []
@@ -326,7 +351,7 @@ export default function CustomerDashboard({
         const menuData = json.items || []
 
         if (menuData.length > 0) {
-          const parsed: MenuItem[] = menuData.map((item: any) => ({
+          const parsed: Array<MenuItem> = menuData.map((item: any) => ({
             id: item.id,
             name: item.name,
             detail: item.description || '',
@@ -350,7 +375,7 @@ export default function CustomerDashboard({
     fetchLiveMenuItems()
   }, [selectedRestaurant?.id, selectedRestaurant?.name, restaurantsList])
 
-  const [ordersData, setOrdersData] = useState<any[]>([])
+  const [ordersData, setOrdersData] = useState<Array<any>>([])
 
   // WebSocket provides live updates; initial fetch on mount
   useEffect(() => {
@@ -385,7 +410,7 @@ export default function CustomerDashboard({
       out_for_delivery: 'In Progress',
     }
 
-    const parsed: PastOrder[] = ordersData.map((o: any) => {
+    const parsed: Array<PastOrder> = ordersData.map((o: any) => {
       let itemsArr: { name: string; qty: number; price: number }[] = []
       try {
         const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
@@ -429,12 +454,12 @@ export default function CustomerDashboard({
   }, [ordersData])
 
   // Saved Addresses State & GPS Map Picker
-  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([])
+  const [savedAddresses, setSavedAddresses] = useState<Array<CustomerAddress>>([])
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [gpsDetecting, setGpsDetecting] = useState(false)
-  const [selectedMapPin, setSelectedMapPin] = useState<{ lat: number; lng: number } | null>(null)
+  const [selectedMapPin, setSelectedMapPin] = useState<LatLngCoords | null>(null)
   const [newAddressInput, setNewAddressInput] = useState('')
-  const [newAddressLabel, setNewAddressLabel] = useState<'Home' | 'Work' | 'Other'>('Home')
+  const [newAddressLabel, setNewAddressLabel] = useState('Home')
 
   useEffect(() => {
     if (!user?.id) {
@@ -589,14 +614,11 @@ export default function CustomerDashboard({
   }, [user?.address])
 
   // Coupon Engine State
-  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
+  const [availableCoupons, setAvailableCoupons] = useState<Array<Coupon>>([])
   const [couponCodeInput, setCouponCodeInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState<{
-    type: 'success' | 'error'
-    text: string
-  } | null>(null)
+  const [couponMessage, setCouponMessage] = useState<CouponMessageState | null>(null)
 
   // Payment State & Company UPI ID
   const [companyUpiId, setCompanyUpiId] = useState('')
@@ -607,9 +629,9 @@ export default function CustomerDashboard({
   const [upiError, setUpiError] = useState('')
   const [utrError, setUtrError] = useState('')
   const [paymentDone, setPaymentDone] = useState(false)
-  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(initialOrderId)
+  const [selectedOrderId, setSelectedOrderId] = useState(initialOrderId)
   const [activeOrder, setActiveOrder] = useState<any>(null)
-  const [liveDriverPos, setLiveDriverPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [liveDriverPos, setLiveDriverPos] = useState<LatLngCoords | null>(null)
   const [invoiceModalOrder, setInvoiceModalOrder] = useState<InvoiceOrderData | null>(null)
 
   useEffect(() => {
@@ -646,6 +668,9 @@ export default function CustomerDashboard({
     if (selectedOrderId) {
       active = ordersData.find((o: any) => String(o.id) === String(selectedOrderId))
     }
+    if (!active && activeList.length > 0) {
+      active = activeList[0]
+    }
 
     if (active) {
       let statusStep = 1
@@ -654,21 +679,24 @@ export default function CustomerDashboard({
       } else if (
         active.status === 'out_for_delivery' ||
         active.status === 'picked_up' ||
-        active.status === 'arrived_customer' ||
-        active.status === 'ready' ||
-        active.status === 'ready_for_pickup' ||
-        active.status === 'rider_assigned'
+        active.status === 'arrived_customer'
       ) {
         statusStep = 3
       } else if (
+        active.status === 'sent_to_vendor' ||
+        active.status === 'accepted' ||
         active.status === 'preparing' ||
         active.status === 'cooking' ||
         active.status === 'packing' ||
-        active.status === 'accepted' ||
+        active.status === 'ready' ||
+        active.status === 'ready_for_pickup' ||
+        active.status === 'rider_assigned' ||
         active.status === 'at_restaurant' ||
         active.payment_status === 'verified'
       ) {
         statusStep = 2
+      } else {
+        statusStep = 1
       }
 
       const statusTextMap: Record<string, string> = {
@@ -694,7 +722,7 @@ export default function CustomerDashboard({
       const statusText =
         statusTextMap[rawStatusStr] || rawStatusStr.replace(/_/g, ' ') || 'Order Confirmed'
 
-      let itemsArr: CartItem[] = []
+      let itemsArr: Array<CartItem> = []
       try {
         itemsArr = typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
       } catch (e) {}
@@ -821,20 +849,20 @@ export default function CustomerDashboard({
   }, [cartSubtotal, appliedCoupon, cart, selectedRestaurant])
 
   // State for Single-Restaurant Cart Conflict Modal
-  const [conflictModal, setConflictModal] = useState<{
-    open: boolean
-    currentRest: string
-    newRest: string
-    newItem: MenuItem | null
-  }>({ open: false, currentRest: '', newRest: '', newItem: null })
+  const [conflictModal, setConflictModal] = useState<ConflictModalState>({
+    open: false,
+    currentRest: '',
+    newRest: '',
+    newItem: null,
+  })
 
   // State for 3-Minute Payment Verification Window
-  const [verifyingModal, setVerifyingModal] = useState<{
-    open: boolean
-    timer: number
-    orderId: string
-    status: 'verifying' | 'verified' | 'rejected'
-  }>({ open: false, timer: 180, orderId: '', status: 'verifying' })
+  const [verifyingModal, setVerifyingModal] = useState<VerifyingModalState>({
+    open: false,
+    timer: 180,
+    orderId: '',
+    status: 'verifying',
+  })
 
   // Cart Handlers
   function addToCart(item: MenuItem) {
@@ -990,7 +1018,14 @@ export default function CustomerDashboard({
     return () => {
       isMounted = false
     }
-  }, [cartSubtotal, calculatedRoadDistanceKm, selectedRestaurant, cart, appliedCoupon, couponDiscount])
+  }, [
+    cartSubtotal,
+    calculatedRoadDistanceKm,
+    selectedRestaurant,
+    cart,
+    appliedCoupon,
+    couponDiscount,
+  ])
 
   const pricingBreakdown = useMemo(() => {
     const localBreakdown = calculateCheckoutPricing({
@@ -1015,7 +1050,13 @@ export default function CustomerDashboard({
       ...localBreakdown,
       gstAmount: 0,
     }
-  }, [cartSubtotal, calculatedRoadDistanceKm, checkoutConfig, couponDiscount, calculatorApiBreakdown])
+  }, [
+    cartSubtotal,
+    calculatedRoadDistanceKm,
+    checkoutConfig,
+    couponDiscount,
+    calculatorApiBreakdown,
+  ])
 
   const deliveryFee = pricingBreakdown.deliveryFee
   const packagingFee = pricingBreakdown.handlingFee
@@ -1041,7 +1082,7 @@ export default function CustomerDashboard({
   }, [restaurantsList, searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
   // 3-Minute Payment Verification Countdown Effect & Realtime Sync
-  const [approvalStatus, setApprovalStatus] = useState<string>('pending')
+  const [approvalStatus, setApprovalStatus] = useState('pending')
 
   useApprovalUpdates(
     verifyingModal.orderId && verifyingModal.open && verifyingModal.status === 'verifying'
@@ -2352,22 +2393,32 @@ export default function CustomerDashboard({
 
                   {/* Progress Stepper Section */}
                   <div className="p-4 sm:p-8 border-b border-gray-100 dark:border-[#27342d] bg-white dark:bg-[#18201c]">
-                    <div className="flex items-center justify-between mb-4 sm:mb-6">
-                      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
-                        Live Order Status
-                      </p>
-                      <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 sm:mb-8">
+                      <div>
+                        <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-[#d9f447]">
+                          Live Order Progress
+                        </p>
+                        <h3 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white mt-0.5 flex items-center gap-2">
+                          <span>{activeOrder.statusText}</span>
+                          {activeOrder.paymentStatus === 'verified' && (
+                            <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                              ✓ Payment Verified
+                            </span>
+                          )}
+                        </h3>
+                      </div>
+                      <span className="self-start sm:self-center text-[10px] sm:text-xs font-extrabold text-emerald-700 dark:text-[#d9f447] bg-emerald-50 dark:bg-[#d9f447]/10 px-3 py-1 rounded-full border border-emerald-200 dark:border-[#d9f447]/30 flex items-center gap-1.5 shadow-xs">
+                        <span className="size-2 rounded-full bg-emerald-500 dark:bg-[#d9f447] animate-ping" />
                         Step {activeOrder.statusStep} of 4
                       </span>
                     </div>
 
                     {/* Connected Horizontal Timeline */}
-                    <div className="relative max-w-3xl mx-auto px-1 sm:px-2 py-1 sm:py-2">
-                      {/* Connecting Track Line */}
-                      <div className="absolute top-4 sm:top-5 left-6 right-6 sm:left-8 sm:right-8 h-1 bg-gray-100 rounded-full -z-0">
+                    <div className="relative max-w-3xl mx-auto px-2 py-4">
+                      {/* Connecting Track Line (Background & Filled Animated Progress) */}
+                      <div className="absolute top-[26px] sm:top-[30px] left-8 right-8 sm:left-12 sm:right-12 h-1.5 bg-gray-100 dark:bg-[#253229] rounded-full z-0 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-[#d9f447] to-emerald-500 rounded-full transition-all duration-700 ease-in-out"
+                          className="h-full bg-gradient-to-r from-emerald-500 via-[#d9f447] to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(217,244,71,0.5)]"
                           style={{
                             width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
                           }}
@@ -2375,26 +2426,45 @@ export default function CustomerDashboard({
                       </div>
 
                       {/* Step Nodes */}
-                      <div className="grid grid-cols-4 gap-1 text-center relative z-10">
+                      <div className="grid grid-cols-4 gap-2 text-center relative z-10">
                         {[
-                          { num: 1, title: 'Confirmed', desc: 'Order placed' },
-                          { num: 2, title: 'Cooking', desc: 'In kitchen' },
+                          {
+                            num: 1,
+                            title: 'Confirmed',
+                            desc:
+                              activeOrder.paymentStatus === 'verified' ||
+                              activeOrder.rawStatus === 'sent_to_vendor'
+                                ? 'Payment Verified'
+                                : 'Order Placed',
+                          },
+                          {
+                            num: 2,
+                            title: 'Cooking',
+                            desc:
+                              activeOrder.rawStatus === 'sent_to_vendor'
+                                ? 'Sent to Kitchen'
+                                : activeOrder.rawStatus === 'packing'
+                                  ? 'Packing Order'
+                                  : 'Preparing Food',
+                          },
                           {
                             num: 3,
                             title:
                               activeOrder.rawStatus === 'ready' ||
                               activeOrder.rawStatus === 'ready_for_pickup' ||
-                              activeOrder.rawStatus === 'rider_assigned'
-                                ? 'Ready / Pickup'
+                              activeOrder.rawStatus === 'rider_assigned' ||
+                              activeOrder.rawStatus === 'at_restaurant'
+                                ? 'Ready / Assigned'
                                 : 'On the Way',
                             desc:
                               activeOrder.rawStatus === 'ready' ||
                               activeOrder.rawStatus === 'ready_for_pickup' ||
-                              activeOrder.rawStatus === 'rider_assigned'
-                                ? 'Food prepared'
-                                : 'Out for delivery',
+                              activeOrder.rawStatus === 'rider_assigned' ||
+                              activeOrder.rawStatus === 'at_restaurant'
+                                ? 'Food Prepared'
+                                : 'Out for Delivery',
                           },
-                          { num: 4, title: 'Delivered', desc: 'At doorstep' },
+                          { num: 4, title: 'Delivered', desc: 'At Doorstep' },
                         ].map((step) => {
                           const isDone = activeOrder.statusStep > step.num
                           const isCurrent = activeOrder.statusStep === step.num
@@ -2404,31 +2474,41 @@ export default function CustomerDashboard({
                             <div key={step.num} className="flex flex-col items-center group">
                               {/* Circle Indicator */}
                               <div
-                                className={`grid size-8 sm:size-11 place-items-center rounded-full font-black text-[10px] sm:text-xs transition-all duration-300 ${
+                                className={`grid size-9 sm:size-12 place-items-center rounded-full font-black text-xs sm:text-sm transition-all duration-300 shadow-md ${
                                   isDone
-                                    ? 'bg-[#d9f447] text-[#18201c] shadow-md ring-2 sm:ring-4 ring-[#d9f447]/30 scale-105'
+                                    ? 'bg-emerald-500 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/20 dark:ring-[#d9f447]/30 scale-105'
                                     : isCurrent
-                                      ? 'bg-[#18201c] text-[#d9f447] shadow-lg ring-2 sm:ring-4 ring-[#18201c]/20 animate-pulse scale-105 sm:scale-110'
-                                      : 'bg-white border-2 border-gray-200 text-gray-400'
+                                      ? 'bg-emerald-600 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/30 dark:ring-[#d9f447]/40 scale-110 font-black shadow-lg animate-pulse'
+                                      : 'bg-white dark:bg-[#121815] border-2 border-gray-200 dark:border-[#28372e] text-gray-400 dark:text-gray-500'
                                 }`}
                               >
                                 {isDone ? (
-                                  <Check className="size-4 sm:size-5 stroke-[3]" />
+                                  <Check className="size-4 sm:size-6 stroke-[3]" />
                                 ) : (
-                                  step.num
+                                  <span>{step.num}</span>
                                 )}
                               </div>
 
-                              {/* Label */}
-                              <div className="mt-2 sm:mt-3 space-y-0.5">
+                              {/* Step Label & Subtitle */}
+                              <div className="mt-2.5 sm:mt-3.5 space-y-0.5">
                                 <p
-                                  className={`text-[10px] sm:text-xs font-bold transition-colors leading-tight ${
-                                    isPassedOrCurrent ? 'text-[#18201c]' : 'text-gray-400'
+                                  className={`text-xs sm:text-sm font-extrabold transition-colors leading-tight ${
+                                    isPassedOrCurrent
+                                      ? 'text-gray-900 dark:text-white'
+                                      : 'text-gray-400 dark:text-gray-500'
                                   }`}
                                 >
                                   {step.title}
                                 </p>
-                                <p className="text-[10px] text-gray-400 hidden sm:block">
+                                <p
+                                  className={`text-[10px] sm:text-xs leading-tight transition-colors hidden sm:block ${
+                                    isCurrent
+                                      ? 'text-emerald-600 dark:text-[#d9f447] font-semibold'
+                                      : isPassedOrCurrent
+                                        ? 'text-gray-500 dark:text-gray-400 font-medium'
+                                        : 'text-gray-400 dark:text-gray-600'
+                                  }`}
+                                >
                                   {step.desc}
                                 </p>
                               </div>
@@ -2538,6 +2618,28 @@ export default function CustomerDashboard({
                       )}
                     </div>
                   </div>
+
+                  {/* Customer Delivery OTP Card */}
+                  {activeOrder.otp && (
+                    <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-[#27342d] bg-[#f7faef] dark:bg-[#1f2822] flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-b-3xl">
+                      <div className="flex items-center gap-3">
+                        <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shrink-0 shadow-xs">
+                          <KeyRound className="size-5 font-bold" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[#7a9317] dark:text-[#d9f447] tracking-wider">
+                            Delivery Verification OTP
+                          </p>
+                          <p className="text-xs font-bold text-[#18201c] dark:text-gray-200 mt-0.5">
+                            Share this OTP with driver upon arrival
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-mono font-black text-base sm:text-lg text-[#18201c] dark:text-[#d9f447] bg-white dark:bg-[#121815] border border-[#d9f447]/60 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
+                        {activeOrder.otp}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : inProgressOrders.length > 0 ? (
@@ -2919,7 +3021,9 @@ export default function CustomerDashboard({
                   {(pricingBreakdown.gstAmount ?? 0) >= 0 && (
                     <div className="flex items-center justify-between text-[#9eb3a4]">
                       <span>GST &amp; Taxes</span>
-                      <span className="font-bold text-white">₹{pricingBreakdown.gstAmount ?? 0}</span>
+                      <span className="font-bold text-white">
+                        ₹{pricingBreakdown.gstAmount ?? 0}
+                      </span>
                     </div>
                   )}
 

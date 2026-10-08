@@ -96,6 +96,7 @@ async function getActiveConfig(): Promise<PaymentConfig> {
 
 export async function GET(request: Request) {
   try {
+    const actor = await getActor(request)
     const { searchParams } = new URL(request.url)
     const customerId = searchParams.get('customerId')
     const vendorId = searchParams.get('vendorId')
@@ -103,8 +104,26 @@ export async function GET(request: Request) {
     const orderId = searchParams.get('orderId')
     const driverId = searchParams.get('driverId') || searchParams.get('riderId')
 
+    const isVendorActor =
+      actor?.role === 'restaurant_vendor' ||
+      actor?.role === 'cravexp_store_vendor' ||
+      (actor?.role as string) === 'vendor'
+    const isVendorQuery = Boolean(vendorId || vendorName || isVendorActor)
+
     if (orderId) {
       const order = await findOrderById(orderId)
+      if (order && isVendorQuery) {
+        const isApproved =
+          order.payment_status === 'verified' ||
+          !['payment_pending', 'payment_submitted'].includes(order.status)
+        if (!isApproved) {
+          return NextResponse.json({
+            success: true,
+            order: null,
+            orders: [],
+          })
+        }
+      }
       return NextResponse.json({
         success: true,
         order,
@@ -117,6 +136,7 @@ export async function GET(request: Request) {
       restaurantId: vendorId ?? undefined,
       restaurantName: vendorName ?? undefined,
       driverId: driverId ?? undefined,
+      onlyApprovedForVendor: isVendorQuery ? true : undefined,
     })
 
     return NextResponse.json({ success: true, orders })
@@ -323,6 +343,9 @@ export async function POST(request: Request) {
       vendor_commission_amount: commercialSnapshot.grossCommission,
       vendor_net_payout: vendorNetPayout,
       driver_payout: driverPayout,
+      driver_base_payout: calcResult.driverEarnings.baseDistanceShare,
+      driver_extra_distance_payout: calcResult.driverEarnings.extraDistanceShare,
+      driver_surge_payout: calcResult.driverEarnings.surgeRainShare,
       driver_payout_share: paymentConfig.driverPayoutShare,
       platform_net_profit: platformProfit,
     }

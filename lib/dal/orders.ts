@@ -21,6 +21,7 @@ export async function listOrders(filters?: {
   driverId?: string
   riderId?: string
   status?: OrderStatus
+  onlyApprovedForVendor?: boolean
   limit?: number
 }) {
   const where: any = {}
@@ -74,6 +75,38 @@ export async function listOrders(filters?: {
       where.restaurant_id = restIds[0]
     } else if (vendorConditions.length > 0) {
       where.OR = vendorConditions
+    }
+  }
+
+  if (filters?.onlyApprovedForVendor) {
+    const approvedCondition = {
+      OR: [
+        { payment_status: 'verified' },
+        {
+          status: {
+            in: [
+              'sent_to_vendor',
+              'preparing',
+              'packing',
+              'ready_for_pickup',
+              'rider_assigned',
+              'picked_up',
+              'out_for_delivery',
+              'delivered',
+              'completed',
+            ] as OrderStatus[],
+          },
+        },
+      ],
+    }
+
+    if (where.AND) {
+      where.AND.push(approvedCondition)
+    } else if (where.OR) {
+      where.AND = [{ OR: where.OR }, approvedCondition]
+      delete where.OR
+    } else {
+      where.AND = [approvedCondition]
     }
   }
 

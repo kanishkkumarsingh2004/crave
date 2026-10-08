@@ -168,7 +168,7 @@ describe('CustomerDashboard - Order Tracking View', () => {
     render(<CustomerDashboard initialTab="live-order" initialOrderId="ord_new" />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Payment Pending/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Payment Pending/i)[0]).toBeInTheDocument()
     })
   })
 })

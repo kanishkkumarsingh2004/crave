@@ -178,10 +178,7 @@ export default function CartPage() {
     }
     let isMounted = true
     const restId =
-      cart[0]?.restaurantId ||
-      cart[0]?.vendorId ||
-      (cart[0] as any)?.restaurant_id ||
-      undefined
+      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id || undefined
 
     fetch('/api/calculator', {
       method: 'POST',

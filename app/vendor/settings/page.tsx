@@ -281,9 +281,7 @@ export default function VendorSettingsPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-gray-200">
-                  Primary Payout UPI VPA (Optional)
-                </label>
+                <label className="font-bold text-gray-200">Primary Payout UPI VPA (Optional)</label>
                 <input
                   type="text"
                   value={payoutUpi}
@@ -316,9 +314,7 @@ export default function VendorSettingsPage() {
                 <FileText className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
-                  FSSAI License &amp; Store Details
-                </h3>
+                <h3 className="text-lg font-black text-white">FSSAI License &amp; Store Details</h3>
                 <p className="text-xs text-gray-400">Government compliance and pickup address</p>
               </div>
             </div>
