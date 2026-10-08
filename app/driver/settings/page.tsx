@@ -31,16 +31,16 @@ export default function DriverSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 text-white">
       {/* Theme & Display Preference Card */}
-      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-          <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-800 font-bold">
+      <div className="rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-xl space-y-4">
+        <div className="flex items-center gap-3 border-b border-[#2d3b32] pb-4">
+          <div className="grid size-10 place-items-center rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
             <Palette className="size-5" />
           </div>
           <div>
-            <h3 className="font-bold text-base text-[#18201c]">Display &amp; Theme Mode</h3>
-            <p className="text-xs text-gray-500">
+            <h3 className="font-bold text-base text-white">Display &amp; Theme Mode</h3>
+            <p className="text-xs text-[#a0ab9f]">
               Select your preferred mobile cockpit theme (Light, Dark, or System Sync).
             </p>
           </div>
@@ -49,23 +49,23 @@ export default function DriverSettingsPage() {
       </div>
 
       {/* Header Banner */}
-      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#f0f3ec] pb-4">
+      <div className="rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#2d3b32] pb-4">
           <div>
-            <h3 className="text-xl font-bold text-[#18201c] flex items-center gap-2">
-              <QrCode className="size-6 text-emerald-600" /> UPI Payout & Bank Account Setup
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <QrCode className="size-6 text-[#d9f447]" /> UPI Payout &amp; Bank Account Setup
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[#a0ab9f] mt-1">
               Configure NPCI-verified UPI IDs for 1-click instant earnings settlement.
             </p>
           </div>
-          <span className="mt-2 sm:mt-0 text-xs font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-300 flex items-center gap-1 self-start sm:self-auto">
-            <ShieldCheck className="size-4 text-emerald-700" /> NPCI Instant Transfer Active
+          <span className="mt-2 sm:mt-0 text-xs font-extrabold text-[#d9f447] bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1 self-start sm:self-auto">
+            <ShieldCheck className="size-4 text-[#d9f447]" /> NPCI Instant Transfer Active
           </span>
         </div>
 
         {upiSaveSuccess && (
-          <div className="mt-4 rounded-2xl bg-emerald-500 text-[#121815] p-3.5 text-xs font-bold shadow-md border border-emerald-400 animate-in fade-in">
+          <div className="rounded-2xl bg-emerald-500/20 text-[#d9f447] p-3.5 text-xs font-bold shadow-md border border-emerald-500/30 animate-in fade-in">
             {upiSaveSuccess}
           </div>
         )}
@@ -73,15 +73,15 @@ export default function DriverSettingsPage() {
         {/* Add New UPI ID Form */}
         <form
           onSubmit={onSubmitForm}
-          className="mt-6 flex flex-col gap-4 rounded-2xl bg-[#f8f9f7] p-4 border border-[#e5e9e1]"
+          className="flex flex-col gap-4 rounded-2xl bg-[#121815] p-4 border border-[#25332a]"
         >
-          <h4 className="font-bold text-sm text-[#18201c] flex items-center gap-1.5">
-            <Plus className="size-4 text-emerald-600" /> Register New UPI VPA ID
+          <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+            <Plus className="size-4 text-[#d9f447]" /> Register New UPI VPA ID
           </h4>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-[#a0ab9f] mb-1">
                 Enter UPI ID / VPA Handle:
               </label>
               <input
@@ -90,18 +90,18 @@ export default function DriverSettingsPage() {
                 value={newUpiVpa}
                 onChange={(e) => setNewUpiVpa(e.target.value)}
                 placeholder="e.g. drivername@upi or mobile@paytm"
-                className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                className="w-full rounded-xl border border-[#2d3b32] bg-[#1c2620] px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d9f447] shadow-xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-[#a0ab9f] mb-1">
                 UPI Provider / Payment App:
               </label>
               <select
                 value={newUpiProvider}
                 onChange={(e) => setNewUpiProvider(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-[#18201c] outline-none focus:border-emerald-600 shadow-xs"
+                className="w-full rounded-xl border border-[#2d3b32] bg-[#1c2620] px-3.5 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d9f447] shadow-xs"
               >
                 <option value="Google Pay / PhonePe UPI">Google Pay / PhonePe (GPay / YBL)</option>
                 <option value="Paytm Payments Bank">Paytm Payments Bank (@paytm)</option>
@@ -115,17 +115,17 @@ export default function DriverSettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700 transition flex items-center gap-1.5"
+              className="rounded-full bg-[#d9f447] px-6 py-2.5 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition flex items-center gap-1.5 cursor-pointer"
             >
-              <ShieldCheck className="size-4" /> Verify &amp; Save UPI ID
+              <ShieldCheck className="size-4 text-[#121815]" /> Verify &amp; Save UPI ID
             </button>
           </div>
         </form>
       </div>
 
       {/* Saved Registered UPI Accounts */}
-      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-[#18201c] mb-4">Saved UPI Payout Destinations</h3>
+      <div className="rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-xl space-y-4">
+        <h3 className="text-lg font-bold text-white mb-4">Saved UPI Payout Destinations</h3>
 
         {savedUpiList.length > 0 ? (
           <div className="flex flex-col gap-3">
@@ -134,8 +134,8 @@ export default function DriverSettingsPage() {
                 key={upi.id}
                 className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition ${
                   upi.isPrimary
-                    ? 'border-emerald-400 bg-emerald-50/60 shadow-xs'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-emerald-500/50 bg-emerald-500/10 shadow-xs'
+                    : 'border-[#25332a] bg-[#121815]'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -144,23 +144,23 @@ export default function DriverSettingsPage() {
                     name="primaryUpi"
                     checked={upi.isPrimary}
                     onChange={() => setPrimaryUpi(upi.id)}
-                    className="size-4 accent-emerald-600 cursor-pointer"
+                    className="size-4 accent-[#d9f447] cursor-pointer"
                   />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-[#18201c]">{upi.vpa}</span>
+                      <span className="font-extrabold text-sm text-white">{upi.vpa}</span>
                       {upi.isPrimary && (
-                        <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                        <span className="rounded-full bg-[#d9f447] text-[#121815] px-2 py-0.5 text-[9px] font-extrabold uppercase">
                           Default Payout
                         </span>
                       )}
                       {upi.isVerified && (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-300">
+                        <span className="text-[10px] font-bold text-[#d9f447] bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
                           ✓ NPCI Verified
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{upi.bankName}</p>
+                    <p className="text-xs text-[#a0ab9f] mt-0.5">{upi.bankName}</p>
                   </div>
                 </div>
 
@@ -168,7 +168,7 @@ export default function DriverSettingsPage() {
                   {!upi.isPrimary && (
                     <button
                       onClick={() => setPrimaryUpi(upi.id)}
-                      className="text-xs font-bold text-emerald-700 hover:underline"
+                      className="text-xs font-bold text-[#d9f447] hover:underline"
                     >
                       Make Primary
                     </button>
@@ -176,7 +176,7 @@ export default function DriverSettingsPage() {
                   {!upi.isPrimary && (
                     <button
                       onClick={() => deleteUpiId(upi.id)}
-                      className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-100 transition"
+                      className="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/20 transition"
                       title="Delete UPI handle"
                     >
                       <Trash2 className="size-4" />
@@ -187,37 +187,11 @@ export default function DriverSettingsPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-xs text-gray-500">
+          <div className="rounded-2xl border border-dashed border-[#2d3b32] bg-[#121815] p-6 text-center text-xs text-[#a0ab9f]">
             No saved UPI payout handles yet. Register a new UPI VPA ID above for instant 1-click
             cashouts.
           </div>
         )}
-      </div>
-
-      {/* Bank Account Direct Transfer Fallback */}
-      <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-[#18201c] mb-1">
-          Direct Bank Account (Fallback NEFT/IMPS)
-        </h3>
-        <p className="text-xs text-gray-500 mb-4">
-          Secondary destination if UPI network is temporarily unavailable.
-        </p>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 text-xs flex flex-col gap-1.5">
-            <p className="text-gray-500 font-bold uppercase">Account Holder</p>
-            <p className="font-bold text-sm text-[#18201c]">{user?.name || 'Driver Partner'}</p>
-            <p className="text-gray-600">Bank Name: Partner Primary Bank</p>
-          </div>
-
-          <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 text-xs flex flex-col gap-1.5">
-            <p className="text-gray-500 font-bold uppercase">Account &amp; IFSC</p>
-            <p className="font-mono font-bold text-sm text-[#18201c]">
-              •••• •••• {user?.id ? user.id.slice(-4) : '0000'}
-            </p>
-            <p className="text-gray-600 font-mono">IFSC: Verified Bank IFSC</p>
-          </div>
-        </div>
       </div>
     </div>
   )

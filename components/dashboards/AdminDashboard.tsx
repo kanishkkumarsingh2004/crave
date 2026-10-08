@@ -844,10 +844,12 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Navigation Sub-Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#25332a] pb-4">
         <div>
-          <h2 className="text-xl font-extrabold text-[#18201c]">Platform Accounts &amp; Stores</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-black text-[#18201c] dark:text-white tracking-tight">
+            Platform Accounts &amp; Stores
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9eb3a4] mt-1 font-medium">
             Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer
             insights &amp; live Supabase sync.
           </p>
@@ -862,7 +864,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Sub-Tabs: Vendors | Customers | Drivers | Admins | Menu & Price Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-[#18201c] p-3.5 rounded-2xl border border-gray-200 dark:border-[#27342d] shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#1c2620] p-3.5 rounded-2xl border border-[#2d3b32] shadow-xl text-white">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
             onClick={() => {
@@ -871,8 +873,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'vendors'
-                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
             }`}
           >
             <Store className="size-4 text-amber-400" />
@@ -886,8 +888,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'customers'
-                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
             }`}
           >
             <Users className="size-4 text-emerald-400" />
@@ -901,11 +903,11 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'drivers'
-                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
             }`}
           >
-            <Zap className="size-4 text-blue-400" />
+            <Zap className="size-4 text-sky-400" />
             <span>Drivers ({driverAccounts.length})</span>
           </button>
 
@@ -916,8 +918,8 @@ export default function AdminDashboard() {
             }}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'users' && userTab === 'admins'
-                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
             }`}
           >
             <ShieldCheck className="size-4 text-purple-400" />
@@ -928,8 +930,8 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('menu-pricing')}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
               activeTab === 'menu-pricing'
-                ? 'bg-[#18201c] text-white dark:bg-[#86a018] dark:text-[#121815] shadow-xs'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#121815] dark:text-gray-300 dark:hover:bg-[#202923]'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
             }`}
           >
             <Utensils className="size-4 text-[#d9f447]" />
@@ -938,13 +940,13 @@ export default function AdminDashboard() {
         </div>
 
         <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-2.5 size-3.5 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 size-3.5 text-[#9eb3a4]" />
           <input
             type="text"
             placeholder="Search store, owner or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815] py-1.5 pl-8 pr-3 text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018]"
+            className="w-full rounded-xl border border-[#25332a] bg-[#121815] py-1.5 pl-8 pr-3 text-xs font-medium text-white placeholder-[#9eb3a4] outline-none focus:border-[#d9f447]"
           />
         </div>
       </div>
@@ -954,10 +956,8 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
-                Registered Store Vendors
-              </h3>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              <h3 className="text-sm font-bold text-white">Registered Store Vendors</h3>
+              <p className="text-[11px] text-[#9eb3a4]">
                 Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access
                 menus.
               </p>
@@ -965,15 +965,15 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setIsAddVendorOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b51b] transition"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#d9f447] px-3.5 py-1.5 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition"
             >
-              <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Onboard New Store
+              <Plus className="size-3.5 text-[#121815]" /> + Onboard New Store
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
             <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
-              <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
+              <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5 w-[25%]">Store &amp; Owner</th>
                   <th className="px-4 py-3.5 w-[18%]">Vendor Category</th>
@@ -983,10 +983,10 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3.5 w-[10%] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-[#25332a] bg-[#1c2620]">
                 {vendorAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500">
+                    <td colSpan={6} className="p-8 text-center text-xs text-[#9eb3a4]">
                       No vendor stores currently registered in Supabase database. Click &apos;+
                       Onboard New Store&apos; to add one.
                     </td>
@@ -1001,23 +1001,23 @@ export default function AdminDashboard() {
                       account.detail?.toLowerCase().includes('xp')
 
                     return (
-                      <tr key={account.id} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                      <tr key={account.id} className="hover:bg-[#121815]/70 transition-colors">
+                        <td className="px-4 py-3.5 font-bold text-white">
                           <div className="flex items-center gap-3">
                             <div
                               className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
                                 isXPStore
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-amber-100 text-amber-800'
+                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                               }`}
                             >
                               <Store className="size-4" />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-bold text-sm text-[#18201c] truncate">
+                              <p className="font-bold text-sm text-white truncate">
                                 {account.restaurantName || account.detail}
                               </p>
-                              <p className="text-[11px] font-normal text-gray-500 truncate">
+                              <p className="text-[11px] font-normal text-[#9eb3a4] truncate">
                                 {account.name} · <span className="font-mono">{account.email}</span>
                               </p>
                             </div>
@@ -1028,30 +1028,30 @@ export default function AdminDashboard() {
                           <span
                             className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
                               isXPStore
-                                ? 'bg-purple-100 text-purple-900 border border-purple-200'
-                                : 'bg-amber-100 text-amber-900 border border-amber-200'
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                             }`}
                           >
                             {isXPStore ? 'XP Store' : 'Restaurant Vendor'}
                           </span>
                         </td>
 
-                        <td className="px-4 py-3.5 text-gray-600">
-                          <p className="font-medium text-xs text-gray-800">
+                        <td className="px-4 py-3.5 text-[#9eb3a4]">
+                          <p className="font-semibold text-xs text-white">
                             {account.phone || 'Phone N/A'}
                           </p>
-                          <p className="text-[11px] text-gray-500 truncate max-w-[240px]">
+                          <p className="text-[11px] text-[#9eb3a4] truncate max-w-[240px]">
                             {account.address || 'Bengaluru, India'}
                           </p>
                         </td>
 
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium text-xs text-gray-800">
+                        <td className="px-4 py-3.5 whitespace-nowrap font-medium text-xs text-white">
                           {account.paymentModel === 'markup' ? (
-                            <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-800">
+                            <span className="rounded-md bg-sky-500/20 border border-sky-500/40 px-2 py-0.5 text-[11px] font-semibold text-sky-300">
                               Price Markup
                             </span>
                           ) : (
-                            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                            <span className="rounded-md bg-[#d9f447]/20 border border-[#d9f447]/40 px-2 py-0.5 text-[11px] font-semibold text-[#d9f447]">
                               Commission ({account.commissionRate}%)
                             </span>
                           )}
@@ -1059,14 +1059,14 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
                               account.status === 'active'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-rose-100 text-rose-800'
+                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                                : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
                             }`}
                           >
                             <span
-                              className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                              className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`}
                             />
                             {account.status}
                           </span>
@@ -1077,25 +1077,25 @@ export default function AdminDashboard() {
                             {matchedVendor && (
                               <button
                                 onClick={() => openMenuDrawerForVendor(matchedVendor)}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-black transition whitespace-nowrap"
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#d9f447] px-3 py-1.5 text-[11px] font-extrabold text-[#121815] shadow-sm hover:bg-[#c2dc3a] transition whitespace-nowrap"
                               >
-                                <Utensils className="size-3.5 text-[#d9f447]" /> Manage Menu &amp;
+                                <Utensils className="size-3.5 text-[#121815]" /> Manage Menu &amp;
                                 Prices
                               </button>
                             )}
                             <button
                               onClick={() => openEditModal(account)}
-                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-sky-500/40 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 transition whitespace-nowrap flex items-center gap-1"
                               title="Edit Vendor Details"
                             >
-                              <Edit3 className="size-3.5 text-blue-600" /> Edit
+                              <Edit3 className="size-3.5 text-sky-300" /> Edit
                             </button>
                             <button
                               onClick={() => toggleAccountStatus(account.id, account.status)}
                               className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${
                                 account.status === 'active'
-                                  ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                  ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                  : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                               }`}
                             >
                               {account.status === 'active' ? 'Suspend' : 'Activate'}
@@ -1108,7 +1108,7 @@ export default function AdminDashboard() {
                                   email: account.email,
                                 })
                               }
-                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition whitespace-nowrap flex items-center gap-1"
+                              className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition whitespace-nowrap flex items-center gap-1"
                               title="Delete Store & Account"
                             >
                               <Trash2 className="size-3.5" /> Delete
@@ -1129,20 +1129,20 @@ export default function AdminDashboard() {
       {activeTab === 'users' && userTab === 'customers' && (
         <div className="space-y-6">
           {topSpenders.length > 0 && (
-            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-950 to-[#18201c] p-5 text-white shadow-md">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-5 text-white shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#25332a] pb-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
+                  <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#121815]">
                     <Crown className="size-5" />
                   </span>
                   <div>
                     <h4 className="text-base font-extrabold text-white">VIP Spending Customers</h4>
-                    <p className="text-[11px] text-white/70">
+                    <p className="text-[11px] text-[#9eb3a4]">
                       Real customer accounts ordered by lifetime spend
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/40">
                   Active Sync
                 </span>
               </div>
@@ -1151,10 +1151,10 @@ export default function AdminDashboard() {
                 {topSpenders.slice(0, 3).map((cust, idx) => (
                   <div
                     key={cust.id}
-                    className="rounded-xl bg-white/10 p-3.5 backdrop-blur-md border border-white/10"
+                    className="rounded-xl bg-[#121815] p-3.5 border border-[#25332a]"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="rounded-md bg-[#d9f447] px-2 py-0.5 text-[9px] font-black text-[#18201c]">
+                      <span className="rounded-md bg-[#d9f447] px-2 py-0.5 text-[9px] font-black text-[#121815]">
                         #{idx + 1} SPENDER
                       </span>
                       <span className="text-[11px] font-bold text-emerald-300">
@@ -1162,7 +1162,7 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                     <p className="mt-2 font-bold text-sm text-white truncate">{cust.name}</p>
-                    <p className="text-[11px] text-white/70 truncate">{cust.email}</p>
+                    <p className="text-[11px] text-[#9eb3a4] truncate">{cust.email}</p>
                     <p className="mt-1.5 text-lg font-extrabold text-[#d9f447]">
                       ₹{cust.totalSpent?.toLocaleString('en-IN')}
                     </p>
@@ -1173,9 +1173,9 @@ export default function AdminDashboard() {
           )}
 
           {/* Customer Directory Table */}
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
             <table className="w-full text-left text-xs border-collapse min-w-[900px]">
-              <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+              <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5 w-[25%]">Customer Name</th>
                   <th className="px-4 py-3.5 w-[25%]">Email &amp; Contact</th>
@@ -1185,50 +1185,50 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3.5 w-[10%] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-[#25332a] bg-[#1c2620]">
                 {customerAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500">
+                    <td colSpan={6} className="p-8 text-center text-xs text-[#9eb3a4]">
                       No customer accounts currently stored in Supabase users table.
                     </td>
                   </tr>
                 ) : (
                   customerAccounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                    <tr key={account.id} className="hover:bg-[#121815]/70 transition-colors">
+                      <td className="px-4 py-3.5 font-bold text-white">
                         <div className="flex items-center gap-2.5">
-                          <div className="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-800 font-bold shrink-0">
+                          <div className="grid size-8 place-items-center rounded-lg bg-emerald-500/20 text-emerald-300 font-bold shrink-0 border border-emerald-500/40">
                             <Users className="size-4" />
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-[#18201c]">{account.name}</p>
-                            <p className="text-[11px] font-normal text-gray-500">
+                            <p className="font-bold text-sm text-white">{account.name}</p>
+                            <p className="text-[11px] font-normal text-[#9eb3a4]">
                               Joined: {account.joinedDate}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 text-gray-600">
-                        <p className="font-semibold">{account.email}</p>
-                        <p className="text-[11px] text-gray-500">{account.phone || 'Phone N/A'}</p>
+                      <td className="px-4 py-3.5 text-[#9eb3a4]">
+                        <p className="font-semibold text-white">{account.email}</p>
+                        <p className="text-[11px] text-[#9eb3a4]">{account.phone || 'Phone N/A'}</p>
                       </td>
 
-                      <td className="px-4 py-3.5 text-gray-600 truncate max-w-[200px]">
+                      <td className="px-4 py-3.5 text-[#9eb3a4] truncate max-w-[200px]">
                         {account.address || 'Bengaluru, India'}
                       </td>
 
-                      <td className="px-4 py-3.5 font-bold text-[#18201c]">
+                      <td className="px-4 py-3.5 font-bold text-[#d9f447]">
                         ₹{account.totalSpent?.toLocaleString('en-IN')} ({account.totalOrders}{' '}
                         orders)
                       </td>
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
                             account.status === 'active'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
+                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                              : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
                           }`}
                         >
                           {account.status}
@@ -1239,17 +1239,17 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(account)}
-                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-sky-500/40 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 transition whitespace-nowrap flex items-center gap-1"
                             title="Edit Customer Details"
                           >
-                            <Edit3 className="size-3.5 text-blue-600" /> Edit
+                            <Edit3 className="size-3.5 text-sky-300" /> Edit
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(account.id, account.status)}
                             className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
                               account.status === 'active'
-                                ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                ? 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                             }`}
                           >
                             {account.status === 'active' ? 'Suspend' : 'Activate'}
@@ -1270,10 +1270,8 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
-                Registered Delivery Partners
-              </h3>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              <h3 className="text-sm font-bold text-white">Registered Delivery Partners</h3>
+              <p className="text-[11px] text-[#9eb3a4]">
                 Admin onboarding. View fleet accounts, vehicle details, license numbers, and active
                 status.
               </p>
@@ -1281,15 +1279,15 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setIsAddDriverOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b51b] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#d9f447] px-3.5 py-1.5 text-xs font-bold text-[#121815] shadow-xs hover:bg-[#cbe338] transition cursor-pointer"
             >
-              <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Add Driver
+              <Plus className="size-3.5 text-[#121815]" /> + Add Driver
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
-              <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
+              <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5">Driver Name</th>
                   <th className="px-4 py-3.5">Contact Email &amp; Phone</th>
@@ -1298,46 +1296,36 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
+              <tbody className="divide-y divide-[#25332a] bg-[#1c2620]">
                 {driverAccounts.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="p-8 text-center text-xs text-gray-500 dark:text-gray-400"
-                    >
+                    <td colSpan={5} className="p-8 text-center text-xs text-[#9eb3a4]">
                       No driver accounts found in Supabase users table. Click &apos;+ Add
                       Driver&apos; to onboard one.
                     </td>
                   </tr>
                 ) : (
                   driverAccounts.map((driver) => (
-                    <tr
-                      key={driver.id}
-                      className="hover:bg-gray-50/80 dark:hover:bg-[#202923]/60 transition-colors"
-                    >
-                      <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
+                    <tr key={driver.id} className="hover:bg-[#121815]/70 transition-colors">
+                      <td className="px-4 py-3.5 font-bold text-white">
                         <div className="flex items-center gap-2.5">
-                          <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 font-bold shrink-0">
+                          <div className="grid size-8 place-items-center rounded-lg bg-cyan-500/20 text-cyan-300 font-bold shrink-0 border border-cyan-500/40">
                             <Zap className="size-4" />
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-[#18201c] dark:text-white">
-                              {driver.name}
-                            </p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-normal">
+                            <p className="font-bold text-sm text-white">{driver.name}</p>
+                            <p className="text-[11px] text-[#9eb3a4] font-normal">
                               Joined: {driver.joinedDate}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300">
-                        <p className="font-semibold">{driver.email}</p>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                          {driver.phone || 'Phone N/A'}
-                        </p>
+                      <td className="px-4 py-3.5 text-[#9eb3a4]">
+                        <p className="font-semibold text-white">{driver.email}</p>
+                        <p className="text-[11px] text-[#9eb3a4]">{driver.phone || 'Phone N/A'}</p>
                       </td>
-                      <td className="px-4 py-3.5 text-gray-600 dark:text-gray-300 font-semibold">
-                        <span className="inline-block rounded-md bg-gray-100 dark:bg-[#121815] px-2 py-0.5 text-xs text-gray-800 dark:text-gray-200 font-medium border border-gray-200 dark:border-[#27342d]">
+                      <td className="px-4 py-3.5 text-white font-semibold">
+                        <span className="inline-block rounded-md bg-[#121815] px-2 py-0.5 text-xs text-emerald-300 font-medium border border-[#25332a]">
                           {driver.detail}
                         </span>
                       </td>
@@ -1345,13 +1333,13 @@ export default function AdminDashboard() {
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
                             driver.status === 'active'
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                              : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                              : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
                           }`}
                         >
                           <span
                             className={`size-1.5 rounded-full ${
-                              driver.status === 'active' ? 'bg-emerald-600' : 'bg-rose-600'
+                              driver.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'
                             }`}
                           />
                           {driver.status === 'active' ? 'Active Partner' : driver.status}
@@ -1361,17 +1349,17 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(driver)}
-                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition whitespace-nowrap flex items-center gap-1"
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-sky-500/40 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 transition whitespace-nowrap flex items-center gap-1"
                             title="Edit Driver Details"
                           >
-                            <Edit3 className="size-3.5 text-blue-600 dark:text-blue-400" /> Edit
+                            <Edit3 className="size-3.5 text-sky-300" /> Edit
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(driver.id, driver.status)}
                             className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
                               driver.status === 'active'
-                                ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50'
-                                : 'border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                                ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                             }`}
                           >
                             {driver.status === 'active' ? 'Suspend' : 'Activate'}
@@ -1384,7 +1372,7 @@ export default function AdminDashboard() {
                                 email: driver.email,
                               })
                             }
-                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition flex items-center gap-1"
+                            className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition flex items-center gap-1"
                             title="Delete Driver Account"
                           >
                             <Trash2 className="size-3.5" /> Delete
@@ -1402,9 +1390,9 @@ export default function AdminDashboard() {
 
       {/* SUB-TAB 4: ADMINS */}
       {activeTab === 'users' && userTab === 'admins' && (
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-xs">
+        <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl">
           <table className="w-full text-left text-xs border-collapse min-w-[800px]">
-            <thead className="border-b border-gray-200 bg-gray-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-4 py-3.5">Admin Name</th>
                 <th className="px-4 py-3.5">Email</th>
@@ -1413,31 +1401,31 @@ export default function AdminDashboard() {
                 <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-[#25332a] bg-[#1c2620]">
               {adminAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
+                  <td colSpan={5} className="p-8 text-center text-xs text-[#9eb3a4]">
                     No admin records found in Supabase users table.
                   </td>
                 </tr>
               ) : (
                 adminAccounts.map((adm) => (
-                  <tr key={adm.id} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-4 py-3.5 font-bold text-[#18201c]">{adm.name}</td>
-                    <td className="px-4 py-3.5 text-gray-600">{adm.email}</td>
-                    <td className="px-4 py-3.5 font-bold text-purple-800">Super Administrator</td>
+                  <tr key={adm.id} className="hover:bg-[#121815]/70 transition-colors">
+                    <td className="px-4 py-3.5 font-bold text-white">{adm.name}</td>
+                    <td className="px-4 py-3.5 text-[#9eb3a4]">{adm.email}</td>
+                    <td className="px-4 py-3.5 font-bold text-purple-300">Super Administrator</td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-900">
+                      <span className="rounded-full bg-purple-500/20 border border-purple-500/40 px-2.5 py-0.5 text-[10px] font-bold text-purple-300">
                         Active Admin
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
                       <button
                         onClick={() => openEditModal(adm)}
-                        className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition whitespace-nowrap flex items-center gap-1"
+                        className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-sky-500/40 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 transition whitespace-nowrap flex items-center gap-1"
                         title="Edit Admin Details"
                       >
-                        <Edit3 className="size-3.5 text-blue-600" /> Edit
+                        <Edit3 className="size-3.5 text-sky-300" /> Edit
                       </button>
                     </td>
                   </tr>
@@ -1451,16 +1439,16 @@ export default function AdminDashboard() {
       {/* TAB 2.5: ADMIN MENU & PRICING CONTROLS TAB */}
       {activeTab === 'menu-pricing' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
+          <div className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-5 shadow-xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#25332a] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                   Master Catalog &amp; Pricing Controls
                 </span>
-                <h3 className="text-lg font-bold text-[#18201c] mt-0.5">
+                <h3 className="text-lg font-bold text-white mt-0.5">
                   Store Menu &amp; Price Alteration Controls
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-[#9eb3a4] mt-0.5">
                   Admin can access any store menu, alter regular item prices, and set percentage or
                   flat discounts.
                 </p>
@@ -1472,21 +1460,21 @@ export default function AdminDashboard() {
               {vendorsList.map((vendor) => (
                 <div
                   key={vendor.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xs flex flex-col justify-between hover:border-[#86a018] transition"
+                  className="rounded-2xl border border-[#2d3b32] bg-[#121815] p-4 shadow-xl flex flex-col justify-between hover:border-[#d9f447] transition"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-200">
+                      <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/40">
                         {vendor.description?.toLowerCase().includes('xp')
                           ? 'XP Store'
                           : 'Restaurant'}
                       </span>
-                      <span className="text-[11px] font-bold text-emerald-700">
+                      <span className="text-[11px] font-bold text-emerald-300">
                         {vendor.commissionRate}% Cut
                       </span>
                     </div>
-                    <h4 className="font-bold text-base text-[#18201c]">{vendor.storeName}</h4>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    <h4 className="font-bold text-base text-white">{vendor.storeName}</h4>
+                    <p className="text-xs text-[#9eb3a4] mt-0.5 truncate">
                       {vendor.address || 'Bengaluru, India'}
                     </p>
                   </div>
@@ -1494,15 +1482,15 @@ export default function AdminDashboard() {
                   <div className="mt-4 flex items-center gap-2">
                     <button
                       onClick={() => openMenuDrawerForVendor(vendor)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#18201c] px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-black transition"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9f447] px-3 py-2 text-xs font-bold text-[#121815] hover:bg-[#cbe338] transition"
                     >
-                      <Utensils className="size-4 text-[#d9f447]" /> Menu &amp; Prices
+                      <Utensils className="size-4 text-[#121815]" /> Menu &amp; Prices
                     </button>
                     <button
                       onClick={() =>
                         setDeleteConfirmVendor({ id: vendor.id, name: vendor.storeName })
                       }
-                      className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100 transition shrink-0"
+                      className="rounded-xl border border-rose-500/40 bg-rose-500/20 p-2 text-rose-300 hover:bg-rose-500/30 transition shrink-0"
                       title="Delete Store"
                     >
                       <Trash2 className="size-4" />
@@ -1511,7 +1499,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {vendorsList.length === 0 && (
-                <div className="col-span-full p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                <div className="col-span-full p-8 text-center text-xs text-[#9eb3a4] border border-dashed border-[#2d3b32] rounded-2xl bg-[#121815]">
                   No stores in Supabase database. Click &apos;+ Onboard Restaurant Vendor&apos; to
                   add a new Restaurant or XP Store.
                 </div>

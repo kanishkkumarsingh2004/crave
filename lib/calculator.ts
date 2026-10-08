@@ -7,7 +7,12 @@ export interface CalculatorInput {
   tip?: number
   restaurantId?: string
   restaurantName?: string
+  commercialModel?: 'commission' | 'markup' | 'hybrid' | string
   vendorCommissionPercent?: number
+  markupPercent?: number
+  fixedCommission?: number
+  fixedMarkup?: number
+  priceTaxMode?: 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE' | string
   couponCode?: string
   platformFee?: number
   handlingFee?: number
@@ -26,6 +31,8 @@ export interface CalculatorInput {
 
 export interface CustomerBillingBreakdown {
   subtotal: number
+  markupAmount: number
+  customerFoodSubtotal: number
   packagingFee: number
   baseDeliveryFee: number
   extraDistanceFee: number
@@ -46,8 +53,10 @@ export interface CustomerBillingBreakdown {
 export interface VendorSettlementBreakdown {
   restaurantName: string
   grossSales: number
+  commercialModel: string
   commissionRatePercent: number
   commissionDeducted: number
+  markupDeducted: number
   netVendorPayout: number
 }
 
@@ -81,7 +90,7 @@ export interface FullCalculatorResult {
 }
 
 /**
-  Full financial & unit economics calculator function
+ * Commercial Engine Financial & Unit Economics Calculator
  */
 export function calculateFullBreakdown(
   input: CalculatorInput,
@@ -97,7 +106,20 @@ export function calculateFullBreakdown(
   const packagingFee = Math.max(0, input.packagingFee ?? 20)
   const tip = Math.max(0, input.tip || 0)
 
-  // Config parameters with fallbacks
+  // Commercial Model & Restaurant Parameters
+  const commercialModel = (input.commercialModel || 'commission').toLowerCase()
+  const markupPercent = Math.max(0, input.markupPercent || 0)
+  const fixedMarkup = Math.max(0, input.fixedMarkup || 0)
+  const fixedCommission = Math.max(0, input.fixedCommission || 0)
+
+  // Markup Engine Calculation
+  let markupAmount = 0
+  if (commercialModel === 'markup' || commercialModel === 'hybrid') {
+    markupAmount = Math.round((subtotal * markupPercent) / 100 + fixedMarkup)
+  }
+  const customerFoodSubtotal = subtotal + markupAmount
+
+  // System Payment Config parameters with fallbacks
   const baseDeliveryFee = input.baseDeliveryFee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee
   const baseDistanceKm = input.baseDistanceKm ?? DEFAULT_PAYMENT_CONFIG.baseDistanceKm
   const perKmRate = input.perKmRate ?? DEFAULT_PAYMENT_CONFIG.perKmRate
@@ -118,7 +140,7 @@ export function calculateFullBreakdown(
     : 0
   const gstRate = (input.gstRatePercent ?? 18) / 100
 
-  // 1. Delivery Fee Math
+  // 1. Delivery Fee Calculation
   const extraDistanceKm = Math.max(0, distanceKm - baseDistanceKm)
   const extraDistanceFee = Math.round(Math.ceil(extraDistanceKm) * perKmRate)
   const basePlusDistance = baseDeliveryFee + extraDistanceFee
@@ -126,14 +148,14 @@ export function calculateFullBreakdown(
   const surgeFee = Math.round(basePlusDistance * surgeMultiplierAdd)
   const grossDeliveryFee = basePlusDistance + surgeFee + rainFeeValue + nightSurgeFeeValue
 
-  const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold
+  const isFreeDelivery = freeDeliveryThreshold > 0 && customerFoodSubtotal >= freeDeliveryThreshold
   const netDeliveryFee = isFreeDelivery ? 0 : grossDeliveryFee
 
   // 2. Coupon Discount Calculation
   let couponDiscount = 0
-  if (couponDetails && subtotal >= (couponDetails.min_order_amount || 0)) {
+  if (couponDetails && customerFoodSubtotal >= (couponDetails.min_order_amount || 0)) {
     if (couponDetails.discount_type === 'percentage') {
-      const calculated = (subtotal * couponDetails.discount_value) / 100
+      const calculated = (customerFoodSubtotal * couponDetails.discount_value) / 100
       couponDiscount = couponDetails.max_discount
         ? Math.min(calculated, couponDetails.max_discount)
         : calculated
@@ -141,10 +163,10 @@ export function calculateFullBreakdown(
       couponDiscount = couponDetails.discount_value
     }
   }
-  couponDiscount = Math.min(subtotal, Math.round(couponDiscount))
+  couponDiscount = Math.min(customerFoodSubtotal, Math.round(couponDiscount))
 
-  // 3. GST Math
-  const taxableFoodSubtotal = Math.max(0, subtotal - couponDiscount)
+  // 3. GST Calculation
+  const taxableFoodSubtotal = Math.max(0, customerFoodSubtotal - couponDiscount)
   const gstAmount = Math.round((taxableFoodSubtotal + packagingFee) * gstRate)
 
   // 4. Grand Total Collected from Customer
@@ -160,6 +182,8 @@ export function calculateFullBreakdown(
 
   const customerBilling: CustomerBillingBreakdown = {
     subtotal,
+    markupAmount,
+    customerFoodSubtotal,
     packagingFee,
     baseDeliveryFee,
     extraDistanceFee,
@@ -178,14 +202,19 @@ export function calculateFullBreakdown(
   }
 
   // 5. Vendor Settlement Math
-  const commissionDeducted = Math.round((subtotal * vendorCommissionPercent) / 100)
+  let commissionDeducted = 0
+  if (commercialModel === 'commission' || commercialModel === 'hybrid') {
+    commissionDeducted = Math.round((subtotal * vendorCommissionPercent) / 100 + fixedCommission)
+  }
   const netVendorPayout = Math.max(0, subtotal - commissionDeducted)
 
   const vendorSettlement: VendorSettlementBreakdown = {
     restaurantName: input.restaurantName || 'Partner Restaurant',
     grossSales: subtotal,
+    commercialModel,
     commissionRatePercent: vendorCommissionPercent,
     commissionDeducted,
+    markupDeducted: markupAmount,
     netVendorPayout,
   }
 
@@ -218,6 +247,7 @@ export function calculateFullBreakdown(
     platformFee +
       handlingFee +
       commissionDeducted +
+      markupAmount +
       grossDeliveryFee * (1 - deliveryShareMultiplier)
   )
   const platformNetProfit = Math.round(
