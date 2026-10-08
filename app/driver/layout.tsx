@@ -148,11 +148,11 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   const pageTitle = currentItem ? currentItem.label : 'Driver Cockpit'
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9f7] text-[#18201c]">
+    <div className="flex min-h-screen bg-[#121815] text-white">
       {/* Mobile Overlay */}
       <div
         onClick={() => setSidebarOpen(false)}
-        className={`fixed inset-0 z-40 bg-[#121815]/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-0 z-40 bg-[#121815]/80 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
           sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -209,7 +209,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               className={`flex items-center ${
                 sidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
               } rounded-xl text-xs font-bold transition shadow-sm ${
-                isOnline ? 'bg-emerald-500 text-[#121815]' : 'bg-gray-800 text-white'
+                isOnline ? 'bg-[#d9f447] text-[#121815]' : 'bg-gray-800 text-white'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -354,16 +354,16 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#121815]">
         {/* Top Header Bar for Driver */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e3e8de] bg-white/90 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#202923] bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-white">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#18201c] capitalize flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white capitalize flex items-center gap-2">
               Driver Cockpit — {pageTitle}
             </h1>
-            <p className="text-xs text-[#737e77]">
+            <p className="text-xs text-[#a0ab9f]">
               Vehicle:{' '}
-              <span className="font-semibold text-[#18201c]">
+              <span className="font-semibold text-[#d9f447]">
                 {user?.vehicleType || 'Commercial EV Scooter'}
               </span>
             </p>
@@ -373,10 +373,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Background Worker Sync Badge */}
             {isBackgroundWorkerActive && (
               <div
-                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-900 border border-emerald-300"
+                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30"
                 title={`Background Web Worker active in recent apps / background tab (Last sync: ${workerLastSyncTime})`}
               >
-                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Background GPS: Active (3s)</span>
               </div>
             )}
@@ -384,10 +384,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Test Simulation Radar Trigger */}
             <button
               onClick={triggerSimulatedOffer}
-              className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-900 border border-amber-300 hover:bg-amber-200 transition"
+              className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition"
               title="Test Delivery Radar"
             >
-              <Radio className="size-4 text-amber-700 animate-pulse" />
+              <Radio className="size-4 text-amber-400 animate-pulse" />
               <span>Scan Nearby Orders</span>
             </button>
 
@@ -397,22 +397,22 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open mobile navigation drawer"
-              className="grid size-9 place-items-center rounded-xl border border-[#dfe4dc] bg-white shadow-xs lg:hidden hover:bg-gray-50 active:scale-95 transition"
+              className="grid size-9 place-items-center rounded-xl border border-[#2d3b32] bg-[#1c2620] text-white shadow-xs lg:hidden hover:bg-[#25332a] active:scale-95 transition"
             >
-              <Menu className="size-5 text-[#18201c]" />
+              <Menu className="size-5 text-white" />
             </button>
           </div>
         </header>
 
         {/* Dashboard Body Content */}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between bg-[#121815]">
           <div>
             {/* GPS Location Permission Access Banner */}
             {(gpsStatus === 'denied' ||
               gpsPermissionState === 'denied' ||
               gpsStatus === 'error' ||
               gpsPermissionState === 'prompt') && (
-              <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm animate-in fade-in duration-200">
+              <div className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 shadow-sm animate-in fade-in duration-200 text-white">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
@@ -420,16 +420,16 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-extrabold text-sm text-[#18201c]">
+                        <h4 className="font-extrabold text-sm text-white">
                           GPS Location Access Required
                         </h4>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 uppercase">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 uppercase">
                           {gpsStatus === 'denied' || gpsPermissionState === 'denied'
                             ? 'Permission Denied'
                             : 'Access Needed'}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-700 font-medium mt-0.5">
+                      <p className="text-xs text-white/80 font-medium mt-0.5">
                         {gpsStatus === 'denied' || gpsPermissionState === 'denied'
                           ? 'Location permission is currently blocked by your browser. Please tap the lock icon next to the browser URL to allow location permissions.'
                           : 'Real-time GPS access is required to receive nearby delivery orders and update live customer telemetry.'}
@@ -440,9 +440,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={requestMobileGps}
-                    className="flex items-center gap-1.5 rounded-full bg-[#18201c] px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-black transition shrink-0 active:scale-95"
+                    className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition shrink-0 active:scale-95"
                   >
-                    <MapPin className="size-3.5 text-[#d9f447]" />
+                    <MapPin className="size-3.5 text-[#121815]" />
                     <span>Allow GPS Access</span>
                   </button>
                 </div>
@@ -451,43 +451,43 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
             <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
-              <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#859d19] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">
                       Today's Earnings
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-800 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-500/20 text-[#d9f447] border border-emerald-500/30 font-bold shrink-0">
                       <DollarSign className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-emerald-700">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#d9f447]">
                     ₹{totalEarningsToday}
                   </p>
                 </div>
                 <Link
                   href="/driver/wallet"
-                  className="mt-2 text-[11px] sm:text-xs font-bold text-blue-700 hover:underline flex items-center gap-1"
+                  className="mt-2 text-[11px] sm:text-xs font-bold text-[#d9f447] hover:underline flex items-center gap-1"
                 >
                   <Wallet className="size-3 sm:size-3.5" /> Instant Cashout
                 </Link>
               </div>
 
-              <div className="rounded-2xl sm:rounded-3xl border border-[#e2e7dc] bg-white p-3.5 sm:p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#859d19] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#737e77] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">
                       Completed Drops
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold shrink-0">
                       <CheckCircle2 className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c]">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-white">
                     {completedTrips.length}
                   </p>
                 </div>
-                <p className="mt-2 text-[11px] sm:text-xs text-emerald-600 font-semibold truncate">
+                <p className="mt-2 text-[11px] sm:text-xs text-emerald-400 font-semibold truncate">
                   {completedTrips.length > 0 ? '100% On-time score' : '0 deliveries today'}
                 </p>
               </div>

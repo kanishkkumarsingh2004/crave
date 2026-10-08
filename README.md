@@ -1,6 +1,6 @@
 # Crave — Next-Gen Multi-Vendor Food & Dark Store Delivery Platform
 
-> **Production Ready Platform** · **100% Test Coverage Pass Rate (43/43 Test Suites, 246/246 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Server-Driven Real-Time WebSocket Engine**
+> **Production Ready Platform** · **100% Test Coverage Pass Rate (48/48 Test Suites, 263/263 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Server-Driven Real-Time WebSocket Engine**
 
 Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
 
@@ -178,7 +178,7 @@ pnpm dc:ps
 ### 🧪 Testing & Code Quality Scripts
 
 ```bash
-# Run full Jest unit & integration test suite (43 Test Suites, 246 Tests Passing)
+# Run full Jest unit & integration test suite (48 Test Suites, 263 Tests Passing)
 pnpm test
 
 # Run tests in watch mode

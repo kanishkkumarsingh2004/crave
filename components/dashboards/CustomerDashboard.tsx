@@ -2635,23 +2635,21 @@ export default function CustomerDashboard({
 
       {/* Restaurant Menu Modal */}
       {selectedRestaurant && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#18201c]/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="max-h-[90vh] w-full max-w-[600px] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
-            <div className="flex items-start justify-between border-b border-[#f0f3ec] pb-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 backdrop-blur-md sm:items-center sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-[600px] overflow-y-auto rounded-t-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white sm:rounded-3xl">
+            <div className="flex items-start justify-between border-b border-[#25332a] pb-4">
               <div>
-                <span className="rounded-full bg-[#f1f6d9] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#5a6d10]">
+                <span className="rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#d9f447]">
                   {selectedRestaurant.tag}
                 </span>
-                <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
-                  {selectedRestaurant.name}
-                </h2>
-                <p className="text-xs text-[#747f78]">
+                <h2 className="mt-1 text-2xl font-bold text-white">{selectedRestaurant.name}</h2>
+                <p className="text-xs text-[#9eb3a4]">
                   {selectedRestaurant.cuisine} · {selectedRestaurant.address}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedRestaurant(null)}
-                className="grid size-8 place-items-center rounded-full bg-[#f0f3ec] text-[#636e68]"
+                className="grid size-8 place-items-center rounded-full bg-[#121815] border border-[#25332a] text-[#9eb3a4] hover:text-white hover:border-[#2d3b32] transition"
               >
                 <X className="size-4" />
               </button>
@@ -2659,7 +2657,7 @@ export default function CustomerDashboard({
 
             <div className="mt-5 flex flex-col gap-4">
               {menuItemsList.length === 0 ? (
-                <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                <div className="p-8 text-center text-xs text-[#9eb3a4] border border-dashed border-[#25332a] bg-[#121815] rounded-2xl">
                   No dishes currently listed for this restaurant menu.
                 </div>
               ) : (
@@ -2668,21 +2666,31 @@ export default function CustomerDashboard({
                   return (
                     <div
                       key={item.id}
-                      className="flex items-center gap-4 rounded-2xl border border-[#e5e9e1] p-3 transition hover:border-[#a8be2b]"
+                      className="flex items-center gap-4 rounded-2xl border border-[#25332a] bg-[#121815] p-3 text-white transition hover:border-[#d9f447]/50"
                     >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="size-20 rounded-xl object-cover shrink-0"
-                      />
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="size-20 rounded-xl object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="size-20 rounded-xl bg-[#1c2620] border border-[#25332a] shrink-0 flex items-center justify-center text-[10px] text-[#9eb3a4]">
+                          No image
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm text-[#18201c]">{item.name}</h4>
-                        <p className="text-xs text-[#727d76] line-clamp-2 mt-0.5">{item.detail}</p>
-                        <p className="mt-2 text-sm font-bold text-[#18201c]">₹{item.price}</p>
+                        <h4 className="font-bold text-sm text-white">{item.name}</h4>
+                        {item.detail && (
+                          <p className="text-xs text-[#9eb3a4] line-clamp-2 mt-0.5">
+                            {item.detail}
+                          </p>
+                        )}
+                        <p className="mt-2 text-sm font-bold text-[#d9f447]">₹{item.price}</p>
                       </div>
 
                       {inCart ? (
-                        <div className="flex items-center gap-2 rounded-full bg-[#18201c] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
+                        <div className="flex items-center gap-2 rounded-full bg-[#1c2620] border border-[#25332a] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
                           <button
                             onClick={() => updateItemQty(item.id, -1)}
                             className="hover:text-[#d9f447]"
@@ -2700,7 +2708,7 @@ export default function CustomerDashboard({
                       ) : (
                         <button
                           onClick={() => addToCart(item)}
-                          className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-bold text-[#18201c] transition hover:scale-105"
+                          className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 hover:bg-[#c2dc3a]"
                         >
                           <Plus className="size-3.5" />
                           Add
@@ -2713,14 +2721,14 @@ export default function CustomerDashboard({
             </div>
 
             {cart.length > 0 && (
-              <div className="sticky bottom-0 mt-6 rounded-2xl bg-[#18201c] p-4 text-white flex items-center justify-between shadow-xl border border-white/10">
+              <div className="sticky bottom-0 mt-6 rounded-2xl bg-[#121815] p-4 text-white flex items-center justify-between shadow-2xl border border-[#25332a]">
                 <div>
-                  <p className="text-xs text-white/70">{totalCartItemCount} items in cart</p>
+                  <p className="text-xs text-[#9eb3a4]">{totalCartItemCount} items in cart</p>
                   <p className="text-lg font-bold text-[#d9f447]">₹{grandTotal}</p>
                 </div>
                 <button
                   onClick={() => router.push('/user/cart')}
-                  className="flex items-center gap-2 rounded-full bg-[#d9f447] px-5 py-2.5 text-xs font-bold text-[#18201c] shadow-md hover:scale-105 transition"
+                  className="flex items-center gap-2 rounded-full bg-[#d9f447] px-5 py-2.5 text-xs font-extrabold text-[#121815] shadow-md hover:scale-105 transition hover:bg-[#c2dc3a]"
                 >
                   View Cart <ArrowRight className="size-3.5" />
                 </button>
@@ -2732,18 +2740,18 @@ export default function CustomerDashboard({
 
       {/* Checkout & Real UPI Modal */}
       {showCheckoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-[500px] rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="flex items-start justify-between border-b border-[#eff2ec] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-[500px] rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white">
+            <div className="flex items-start justify-between border-b border-[#25332a] pb-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
                   Direct Company UPI Payment
                 </p>
-                <h3 className="text-xl font-bold">Complete Payment</h3>
+                <h3 className="text-xl font-bold text-white">Complete Payment</h3>
               </div>
               <button
                 onClick={() => setShowCheckoutModal(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100"
+                className="grid size-8 place-items-center rounded-full bg-[#121815] border border-[#25332a] text-[#9eb3a4] hover:text-white"
               >
                 <X className="size-4" />
               </button>
@@ -2751,11 +2759,11 @@ export default function CustomerDashboard({
 
             {paymentDone ? (
               <div className="py-8 text-center">
-                <div className="mx-auto grid size-14 place-items-center rounded-full bg-[#d9f447] text-[#18201c]">
+                <div className="mx-auto grid size-14 place-items-center rounded-full bg-[#d9f447] text-[#121815]">
                   <Check className="size-8" />
                 </div>
-                <h4 className="mt-4 text-xl font-bold">Payment Submitted!</h4>
-                <p className="mt-1 text-xs text-[#737e77]">
+                <h4 className="mt-4 text-xl font-bold text-white">Payment Submitted!</h4>
+                <p className="mt-1 text-xs text-[#9eb3a4]">
                   Your 12-digit UTR reference has been logged for verification.
                 </p>
               </div>
@@ -2763,32 +2771,32 @@ export default function CustomerDashboard({
               <form onSubmit={handleCheckoutSubmit} className="mt-4 flex flex-col gap-4">
                 {/* Company UPI Box */}
                 {checkoutConfig && companyUpiId ? (
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs">
+                  <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-xs text-white">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
                           {companyMerchantName || 'Merchant UPI'}
                         </p>
-                        <p className="font-mono text-base font-bold text-emerald-950 mt-0.5">
+                        <p className="font-mono text-base font-bold text-white mt-0.5">
                           {companyUpiId}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleCopyCompanyUpi}
-                        className="flex items-center gap-1 rounded-xl bg-white border border-emerald-300 px-3 py-1.5 font-bold text-emerald-900 shadow-xs hover:bg-emerald-100 transition"
+                        className="flex items-center gap-1 rounded-xl bg-[#121815] border border-emerald-500/40 px-3 py-1.5 font-bold text-emerald-300 shadow-xs hover:bg-emerald-500/20 transition"
                       >
                         <Copy className="size-3.5" /> Copy
                       </button>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center justify-between">
-                      <span className="text-[11px] text-emerald-800">
-                        Amount to pay: <strong>₹{grandTotal}</strong>
+                    <div className="mt-3 pt-3 border-t border-emerald-500/30 flex items-center justify-between">
+                      <span className="text-[11px] text-[#9eb3a4]">
+                        Amount to pay: <strong className="text-[#d9f447]">₹{grandTotal}</strong>
                       </span>
                       <a
                         href={`upi://pay?pa=${encodeURIComponent(companyUpiId)}&pn=${encodeURIComponent(companyMerchantName)}&am=${grandTotal}&cu=INR`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-950 underline hover:text-emerald-700"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300 underline hover:text-emerald-200"
                       >
                         Open UPI App <ExternalLink className="size-3" />
                       </a>
@@ -2797,41 +2805,39 @@ export default function CustomerDashboard({
                 ) : (
                   <p
                     role="alert"
-                    className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900"
+                    className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-300"
                   >
                     Online payment settings are not configured. Contact the platform administrator.
                   </p>
                 )}
 
-                <div className="rounded-2xl bg-[#f8f9f6] p-4 text-xs space-y-2 border border-[#e2e7dd]">
-                  <div className="flex items-center justify-between font-semibold text-[#18201c]">
+                <div className="rounded-2xl bg-[#121815] p-4 text-xs space-y-2 border border-[#25332a]">
+                  <div className="flex items-center justify-between font-semibold text-white">
                     <span className="flex items-center gap-1.5">
-                      <ShoppingBag className="size-3.5 text-gray-500" />
+                      <ShoppingBag className="size-3.5 text-[#9eb3a4]" />
                       Items Subtotal ({totalCartItemCount} items)
                     </span>
                     <span>₹{cartSubtotal}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[#65716a]">
+                  <div className="flex items-center justify-between text-[#9eb3a4]">
                     <span className="flex items-center gap-1.5">
-                      <Bike className="size-3.5 text-gray-500" />
+                      <Bike className="size-3.5 text-[#9eb3a4]" />
                       Delivery Partner Fee
                     </span>
                     {pricingBreakdown.isFreeDelivery ? (
-                      <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="font-bold text-[#d9f447] bg-[#d9f447]/20 border border-[#d9f447]/40 px-2 py-0.5 rounded-full text-[10px]">
                         FREE
                       </span>
                     ) : (
-                      <span className="font-bold text-[#18201c]">
-                        ₹{pricingBreakdown.deliveryFee}
-                      </span>
+                      <span className="font-bold text-white">₹{pricingBreakdown.deliveryFee}</span>
                     )}
                   </div>
 
                   {(pricingBreakdown.surgeFee > 0 ||
                     pricingBreakdown.rainFee > 0 ||
                     pricingBreakdown.nightSurgeFee > 0) && (
-                    <div className="flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                    <div className="flex items-center justify-between text-[11px] text-amber-300 bg-amber-500/10 p-2 rounded-xl border border-amber-500/30">
                       <span>Demand &amp; Weather Surge</span>
                       <span className="font-bold">
                         +₹
@@ -2842,38 +2848,34 @@ export default function CustomerDashboard({
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-[#65716a]">
+                  <div className="flex items-center justify-between text-[#9eb3a4]">
                     <span>Packaging &amp; Handling</span>
-                    <span className="font-bold text-[#18201c]">
-                      ₹{pricingBreakdown.handlingFee}
-                    </span>
+                    <span className="font-bold text-white">₹{pricingBreakdown.handlingFee}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[#65716a]">
+                  <div className="flex items-center justify-between text-[#9eb3a4]">
                     <span>Platform Service Fee</span>
-                    <span className="font-bold text-[#18201c]">
-                      ₹{pricingBreakdown.platformFee}
-                    </span>
+                    <span className="font-bold text-white">₹{pricingBreakdown.platformFee}</span>
                   </div>
 
                   {appliedCoupon && couponDiscount > 0 && (
-                    <div className="flex items-center justify-between font-bold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                    <div className="flex items-center justify-between font-bold text-[#d9f447] bg-[#d9f447]/10 p-2 rounded-xl border border-[#d9f447]/30">
                       <span className="flex items-center gap-1">
-                        <Tag className="size-3.5 text-emerald-600" />
+                        <Tag className="size-3.5 text-[#d9f447]" />
                         Coupon ({appliedCoupon.code})
                       </span>
                       <span>-₹{couponDiscount}</span>
                     </div>
                   )}
 
-                  <div className="flex justify-between pt-2.5 border-t border-[#e2e7dd] font-black text-sm text-[#18201c]">
+                  <div className="flex justify-between pt-2.5 border-t border-[#25332a] font-black text-sm text-white">
                     <span>Final Customer Total</span>
-                    <span className="text-emerald-700 text-base">₹{grandTotal}</span>
+                    <span className="text-[#d9f447] text-base">₹{grandTotal}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-[#18201c]">
+                  <label className="text-xs font-bold text-white">
                     12-Digit UTR Payment Reference Number
                   </label>
                   <input
@@ -2886,18 +2888,18 @@ export default function CustomerDashboard({
                       setUtrRef(e.target.value.replace(/\D/g, ''))
                       setUtrError('')
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2.5 text-xs outline-none focus:border-[#86a018] font-mono font-bold"
+                    className="mt-1.5 w-full rounded-xl border border-[#25332a] bg-[#121815] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#d9f447] font-mono font-bold"
                   />
                   {utrError && (
-                    <p className="mt-1 text-[11px] font-bold text-rose-600">{utrError}</p>
+                    <p className="mt-1 text-[11px] font-bold text-rose-400">{utrError}</p>
                   )}
                   {utrRef.length > 0 && utrRef.length < 10 && (
-                    <p className="mt-1 text-[11px] font-bold text-amber-700">
+                    <p className="mt-1 text-[11px] font-bold text-amber-400">
                       Enter at least 10 digits to enable confirmation ({utrRef.length}/10)
                     </p>
                   )}
                   {utrRef.length >= 10 && (
-                    <p className="mt-1 text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                    <p className="mt-1 text-[11px] font-bold text-[#d9f447] flex items-center gap-1">
                       <CheckCircle2 className="size-3" /> Valid UTR Reference length (
                       {utrRef.length} digits)
                     </p>
@@ -2909,7 +2911,7 @@ export default function CustomerDashboard({
                   disabled={
                     !checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 10
                   }
-                  className="mt-2 w-full rounded-full bg-[#18201c] py-3 text-xs font-bold text-white transition hover:bg-[#323d36] shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-400"
+                  className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] transition hover:bg-[#c2dc3a] shadow-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-gray-600"
                 >
                   Submit Order &amp; Start Verification (₹{grandTotal})
                 </button>
@@ -2921,31 +2923,30 @@ export default function CustomerDashboard({
 
       {/* 3-Minute Payment Verification Modal */}
       {verifyingModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-center">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md animate-pulse">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white text-center animate-in zoom-in-95 duration-200">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-md animate-pulse">
               <Sparkles className="size-7 fill-current" />
             </div>
 
-            <h3 className="mt-4 text-xl font-bold text-[#18201c]">Verifying Payment Details</h3>
-            <p className="mt-1 text-xs text-gray-500">
-              Order ID:{' '}
-              <strong className="font-mono text-[#18201c]">{verifyingModal.orderId}</strong>
+            <h3 className="mt-4 text-xl font-bold text-white">Verifying Payment Details</h3>
+            <p className="mt-1 text-xs text-[#9eb3a4]">
+              Order ID: <strong className="font-mono text-white">{verifyingModal.orderId}</strong>
             </p>
 
             {verifyingModal.status === 'verifying' && (
               <div className="mt-5 space-y-4">
-                <div className="rounded-2xl bg-[#f8f9f6] p-4 border border-[#e2e7dc]">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                <div className="rounded-2xl bg-[#121815] p-4 border border-[#25332a]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#9eb3a4]">
                     Verification Window Remaining
                   </p>
-                  <p className="mt-1 font-mono text-3xl font-black text-[#18201c]">
+                  <p className="mt-1 font-mono text-3xl font-black text-[#d9f447]">
                     {Math.floor(verifyingModal.timer / 60)
                       .toString()
                       .padStart(2, '0')}
                     :{(verifyingModal.timer % 60).toString().padStart(2, '0')}
                   </p>
-                  <p className="mt-2 text-[11px] text-gray-500">
+                  <p className="mt-2 text-[11px] text-[#9eb3a4]">
                     Cross-referencing your 12-digit UTR reference with bank records.
                   </p>
                 </div>
@@ -2971,7 +2972,7 @@ export default function CustomerDashboard({
                     } catch (e) {}
                     setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
                   }}
-                  className="w-full rounded-full bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-1.5"
+                  className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to Kitchen
                 </button>
