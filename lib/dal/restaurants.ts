@@ -134,6 +134,7 @@ export async function createRestaurant(data: {
   supplier_state?: string
   price_tax_mode?: string
   contract_number?: string
+  gst_rate_percent?: number
 }) {
   try {
     return await prisma.restaurant.create({ data: data as any })

@@ -225,18 +225,6 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <div className="rounded-2xl bg-white/10 backdrop-blur px-4 py-2.5 text-center border border-white/10">
-            <p className="text-[10px] text-gray-300 font-bold uppercase">
-              {t.admin.avgPickTime || 'Avg Pick Time'}
-            </p>
-            <p className="text-base font-black text-[#d9f447]">1m 42s</p>
-          </div>
-          <div className="rounded-2xl bg-white/10 backdrop-blur px-4 py-2.5 text-center border border-white/10">
-            <p className="text-[10px] text-gray-300 font-bold uppercase">
-              {t.admin.coldChainTemp || 'Cold-Chain Temp'}
-            </p>
-            <p className="text-base font-black text-emerald-400">3.2°C Nominal</p>
-          </div>
           <Link
             href="/vendor/crave-ep"
             className="rounded-full bg-[#d9f447] px-5 py-3 text-xs font-black text-[#121815] shadow-lg hover:bg-[#c2dc37] transition hover:scale-105 active:scale-95 flex items-center gap-1.5"

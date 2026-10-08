@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       fixedCommission,
       fixedMarkup,
       priceTaxMode,
+      gstRatePercent,
     } = body
 
     // 1. Fetch active Payment Config from DB
@@ -227,6 +228,12 @@ export async function POST(req: Request) {
       nightSurgeFee: cfg.nightSurgeFee,
       isRainModeActive: cfg.isRainModeActive,
       isNightSurgeActive: cfg.isNightSurgeActive,
+      gstRatePercent:
+        gstRatePercent != null
+          ? Number(gstRatePercent)
+          : paymentConfig?.gst_rate_percent != null
+            ? Number(paymentConfig.gst_rate_percent)
+            : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 18),
     }
 
     const breakdown = calculateFullBreakdown(input, couponDetails)
@@ -250,11 +257,15 @@ export async function GET(req: Request) {
     const couponCode = searchParams.get('couponCode') || undefined
     const restaurantId = searchParams.get('restaurantId') || undefined
     const tip = Number(searchParams.get('tip') || 0)
+    const gstRatePercent =
+      searchParams.get('gstRatePercent') != null
+        ? Number(searchParams.get('gstRatePercent'))
+        : undefined
 
     const postReq = new Request(req.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subtotal, distanceKm, couponCode, restaurantId, tip }),
+      body: JSON.stringify({ subtotal, distanceKm, couponCode, restaurantId, tip, gstRatePercent }),
     })
 
     return POST(postReq)

@@ -14,8 +14,10 @@ export interface CheckoutPricingBreakdown {
   nightSurgeFee: number
   deliveryFee: number
   isFreeDelivery: boolean
+  packagingFee: number
   handlingFee: number
   platformFee: number
+  gstAmount: number
   couponDiscount: number
   grandTotal: number
   driverEarnings?: {
@@ -142,6 +144,8 @@ export function calculateCheckoutPricing(params: {
   roadDistanceKm: number
   config?: Partial<PaymentConfig> | Record<string, any> | null
   couponDiscount?: number
+  packagingFee?: number
+  gstRatePercent?: number
 }): CheckoutPricingBreakdown {
   const cfg: any = params.config || DEFAULT_PAYMENT_CONFIG
   const subtotal = Math.max(0, Number(params.cartSubtotal) || 0)
@@ -151,8 +155,8 @@ export function calculateCheckoutPricing(params: {
   const input: CalculatorInput = {
     subtotal,
     distanceKm: distKm,
-    packagingFee: 0,
-    gstRatePercent: 0,
+    packagingFee: params.packagingFee ?? 0,
+    gstRatePercent: params.gstRatePercent ?? 0,
     platformFee: cfg.platformFee ?? cfg.platform_fee,
     handlingFee: cfg.handlingFee ?? cfg.handling_fee,
     vendorCommissionPercent: cfg.vendorCommission ?? cfg.vendor_commission,
@@ -185,8 +189,10 @@ export function calculateCheckoutPricing(params: {
     nightSurgeFee: b.nightSurgeFee,
     deliveryFee: b.netDeliveryFee,
     isFreeDelivery: b.isFreeDelivery,
+    packagingFee: b.packagingFee,
     handlingFee: b.handlingFee,
     platformFee: b.platformFee,
+    gstAmount: b.gstAmount,
     couponDiscount: b.couponDiscount,
     grandTotal: b.grandTotal,
     driverEarnings: {

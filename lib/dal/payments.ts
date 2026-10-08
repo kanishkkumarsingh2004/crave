@@ -96,6 +96,7 @@ export async function upsertPaymentConfig(data: {
   handling_fee?: number
   vendor_commission?: number
   packaging_cap?: number
+  gst_rate_percent?: number
   delivery_fee?: number
   base_distance_km?: number
   per_km_rate?: number

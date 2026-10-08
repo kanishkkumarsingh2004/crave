@@ -321,28 +321,28 @@ export default function VendorMenuPage() {
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="size-8 border-4 border-[#86a018] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#0a0f0d] flex items-center justify-center p-4">
+        <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-16 lg:pl-64">
+    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Menu Catalog Hero */}
-        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
+        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                 Restaurant Menu Management
               </span>
-              <h2 className="mt-1 text-2xl font-bold text-[#18201c]">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white">
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-400 mt-0.5">
                 Add, edit, set pricing, or toggle live dish availability for customer orders.
               </p>
             </div>
@@ -350,9 +350,9 @@ export default function VendorMenuPage() {
             <button
               onClick={openAddModal}
               disabled={!restaurantId}
-              className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-[#323d36] transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition"
             >
-              <Plus className="size-4 text-[#d9f447]" /> Add New Dish
+              <Plus className="size-4 text-[#0d1310]" /> Add New Dish
             </button>
           </div>
         </div>
@@ -366,8 +366,8 @@ export default function VendorMenuPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border ${
                   selectedCategory === cat
-                    ? 'bg-[#18201c] text-white border-[#18201c]'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                    ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447] font-black'
+                    : 'bg-[#141c17] text-gray-300 border-[#233228] hover:bg-[#1c2720] hover:text-white'
                 }`}
               >
                 {cat}
@@ -382,7 +382,7 @@ export default function VendorMenuPage() {
               placeholder="Search dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-4 text-xs font-medium outline-none focus:border-[#86a018] shadow-xs"
+              className="w-full rounded-full border border-[#233228] bg-[#141c17] py-2 pl-9 pr-4 text-xs font-medium text-white placeholder-gray-500 outline-none focus:border-[#d9f447] shadow-xs"
             />
           </div>
         </div>
@@ -390,88 +390,88 @@ export default function VendorMenuPage() {
         {/* Menu Items Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {menuLoading ? (
-            <p className="col-span-full rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+            <p className="col-span-full rounded-2xl border border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
               Loading menu from the database...
             </p>
           ) : menuError ? (
             <p
               role="alert"
-              className="col-span-full rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-800"
+              className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-300"
             >
               {menuError}
             </p>
           ) : !restaurantId ? (
-            <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+            <p className="col-span-full rounded-2xl border border-dashed border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
               No restaurant is linked to this vendor account yet.
             </p>
           ) : filteredItems.length === 0 ? (
-            <p className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+            <p className="col-span-full rounded-2xl border border-dashed border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
               No menu items are stored for this restaurant yet.
             </p>
           ) : (
             filteredItems.map((item) => (
               <div
                 key={item.id}
-                className={`rounded-3xl border p-4 bg-white shadow-xs flex flex-col justify-between transition ${
-                  item.in_stock ? 'border-gray-200' : 'border-rose-200 bg-rose-50/20'
+                className={`rounded-3xl border p-4 bg-[#121815] shadow-xl flex flex-col justify-between transition ${
+                  item.in_stock ? 'border-[#233027] hover:border-[#d9f447]/40' : 'border-rose-500/30 bg-rose-500/5'
                 }`}
               >
                 <div>
-                  <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3">
+                  <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3 bg-[#171f1b]">
                     {item.image ? (
                       <img
                         src={item.image}
                         alt={item.name}
-                        className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-75' : ''}`}
+                        className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-60' : ''}`}
                       />
                     ) : (
-                      <div className="grid size-full place-items-center bg-gray-100 text-gray-400">
+                      <div className="grid size-full place-items-center bg-[#171f1b] text-gray-500">
                         <Utensils className="size-8" aria-hidden="true" />
                       </div>
                     )}
-                    <span className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-[#18201c] backdrop-blur-md shadow-xs">
+                    <span className="absolute top-3 left-3 rounded-full bg-[#18201c]/90 px-3 py-1 text-[10px] font-black uppercase text-[#d9f447] border border-[#27342d] backdrop-blur-md shadow-xs">
                       {item.category}
                     </span>
                     {!item.in_stock && (
-                      <span className="absolute inset-0 grid place-items-center bg-black/60 text-white text-xs font-extrabold uppercase tracking-wider backdrop-blur-xs">
+                      <span className="absolute inset-0 grid place-items-center bg-black/75 text-white text-xs font-extrabold uppercase tracking-wider backdrop-blur-xs">
                         Out of Stock
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-base text-[#18201c] leading-snug">{item.name}</h3>
-                    <span className="font-bold text-base text-[#18201c] shrink-0">
+                    <h3 className="font-extrabold text-base text-white leading-snug">{item.name}</h3>
+                    <span className="font-black text-lg text-[#d9f447] shrink-0">
                       ₹{item.price}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-[#202b24] flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => handleToggleStock(item.id, item.in_stock)}
                     className={`rounded-full px-3 py-1 text-[11px] font-bold transition border ${
                       item.in_stock
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
                     }`}
                   >
                     {item.in_stock ? 'In Stock' : 'Out of Stock'}
                   </button>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => openEditModal(item)}
-                      className="grid size-8 place-items-center rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                      className="grid size-8 place-items-center rounded-xl bg-[#1c2620] text-gray-300 hover:text-white hover:bg-[#25332a] transition border border-[#28372e]"
                       title="Edit Dish"
                     >
                       <Edit className="size-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item.id, item.name)}
-                      className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                      className="grid size-8 place-items-center rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition border border-rose-500/20"
                       title="Delete Dish"
                     >
                       <Trash2 className="size-3.5" />
@@ -483,9 +483,9 @@ export default function VendorMenuPage() {
           )}
 
           {filteredItems.length === 0 && (
-            <div className="col-span-full rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center text-gray-500">
-              <Utensils className="mx-auto size-12 text-gray-300 mb-2" />
-              <p className="font-bold text-base text-[#18201c]">No Dishes Found</p>
+            <div className="col-span-full rounded-3xl border border-dashed border-[#222e27] bg-[#121815] p-12 text-center text-gray-400">
+              <Utensils className="mx-auto size-12 text-gray-600 mb-2" />
+              <p className="font-bold text-base text-white">No Dishes Found</p>
               <p className="text-xs mt-1">
                 Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.
               </p>
@@ -496,20 +496,20 @@ export default function VendorMenuPage() {
 
       {/* Add / Edit Dish Modal */}
       {showItemModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-[#121815] border border-[#233027] p-6 shadow-2xl max-h-[90vh] overflow-y-auto text-white">
+            <div className="flex items-center justify-between border-b border-[#202b24] pb-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                   {editingItem ? 'Edit Dish Details' : 'Create New Menu Item'}
                 </span>
-                <h3 className="text-xl font-bold text-[#18201c] mt-0.5">
+                <h3 className="text-xl font-black text-white mt-0.5">
                   {editingItem ? editingItem.name : 'Add Dish to Menu'}
                 </h3>
               </div>
               <button
                 onClick={() => setShowItemModal(false)}
-                className="grid size-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200"
+                className="grid size-8 place-items-center rounded-full bg-[#1c2620] text-gray-400 hover:text-white hover:bg-[#25332a]"
               >
                 <X className="size-4" />
               </button>
@@ -517,24 +517,24 @@ export default function VendorMenuPage() {
 
             <form onSubmit={handleSaveItem} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-[#18201c]">Dish Name</label>
+                <label className="font-bold text-gray-200">Dish Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Avocado Quinoa Harvest Bowl"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#18201c]">Category</label>
+                  <label className="font-bold text-gray-200">Category</label>
                   <select
                     value={categoryInput}
                     onChange={(e) => setCategoryInput(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018] bg-white"
+                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
                   >
                     <option value="Bowls">Bowls</option>
                     <option value="Wraps">Wraps</option>
@@ -545,7 +545,7 @@ export default function VendorMenuPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Price (₹)</label>
+                  <label className="font-bold text-gray-200">Price (₹)</label>
                   <input
                     type="number"
                     required
@@ -554,52 +554,52 @@ export default function VendorMenuPage() {
                     onChange={(e) =>
                       setPriceInput(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Description / Ingredients</label>
+                <label className="font-bold text-gray-200">Description / Ingredients</label>
                 <textarea
                   rows={2}
                   placeholder="e.g. Organic quinoa topped with wild basil pesto & roasted cherry tomatoes"
                   value={descInput}
                   onChange={(e) => setDescInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-[#18201c]">HSN/SAC Code</label>
+                  <label className="font-bold text-gray-200">HSN/SAC Code</label>
                   <input
                     type="text"
                     value={hsnSacInput}
                     onChange={(e) => setHsnSacInput(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono font-bold outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white outline-none focus:border-[#d9f447]"
                     placeholder="996331"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">MRP (Optional)</label>
+                  <label className="font-bold text-gray-200">MRP (Optional)</label>
                   <input
                     type="number"
                     value={mrpInput}
                     onChange={(e) =>
                       setMrpInput(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018]"
+                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">GST Tax Mode</label>
+                  <label className="font-bold text-gray-200">GST Tax Mode</label>
                   <select
                     value={priceTaxModeInput}
                     onChange={(e) => setPriceTaxModeInput(e.target.value as any)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
                   >
                     <option value="TAX_INCLUSIVE">TAX INCLUSIVE</option>
                     <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE</option>
@@ -608,39 +608,39 @@ export default function VendorMenuPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c]">Dish Image URL</label>
+                <label className="font-bold text-gray-200">Dish Image URL</label>
                 <input
                   type="url"
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono text-[11px] outline-none focus:border-[#86a018]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono text-[11px] text-white outline-none focus:border-[#d9f447]"
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl bg-gray-50 p-4 border border-gray-200">
-                <span className="font-bold text-[#18201c]">In-Stock Availability</span>
+              <div className="flex items-center justify-between rounded-2xl bg-[#171f1b] p-4 border border-[#233027]">
+                <span className="font-bold text-white">In-Stock Availability</span>
                 <button
                   type="button"
                   onClick={() => setInStockInput(!inStockInput)}
                   className={`px-4 py-1.5 rounded-full font-bold transition ${
-                    inStockInput ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                    inStockInput ? 'bg-emerald-500 text-[#0d1310]' : 'bg-rose-500 text-white'
                   }`}
                 >
                   {inStockInput ? 'In Stock' : 'Out of Stock'}
                 </button>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#202b24]">
                 <button
                   type="button"
                   onClick={() => setShowItemModal(false)}
-                  className="rounded-full border border-gray-300 px-5 py-2.5 font-bold text-gray-600 hover:bg-gray-50 transition"
+                  className="rounded-full border border-[#2a382e] bg-[#1a231e] px-5 py-2.5 font-bold text-gray-300 hover:text-white transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#18201c] px-7 py-2.5 font-bold text-white shadow-md hover:bg-[#323d36] transition"
+                  className="rounded-full bg-[#d9f447] px-7 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] transition"
                 >
                   {editingItem ? 'Save Dish Changes' : 'Add Dish to Menu'}
                 </button>

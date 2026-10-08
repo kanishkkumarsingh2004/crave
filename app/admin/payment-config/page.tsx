@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
-import { calculateCheckoutPricing } from '@/lib/distance-pricing'
+import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 
 function handleNumInput(val: string): number | '' {
   if (val === '') return ''
@@ -47,6 +47,7 @@ export default function AdminPaymentConfigPage() {
   const [handlingFee, setHandlingFee] = useState<number | ''>(5) // Flat ₹5 Handling Charge
   const [vendorCommission, setVendorCommission] = useState<number | ''>(15) // 15%
   const [packagingCap, setPackagingCap] = useState<number | ''>(20) // ₹20 max
+  const [gstRatePercent, setGstRatePercent] = useState<number | ''>(18) // Default 18% GST
 
   // 3. Delivery Fee Rules
   const [baseDeliveryFee, setBaseDeliveryFee] = useState<number | ''>(30) // ₹30 for first 3 km
@@ -86,6 +87,7 @@ export default function AdminPaymentConfigPage() {
       setHandlingFee(cfg.handlingFee)
       setVendorCommission(cfg.vendorCommission)
       setPackagingCap(cfg.packagingCap)
+      setGstRatePercent(cfg.gstRatePercent ?? 18)
       setBaseDeliveryFee(cfg.baseDeliveryFee)
       setBaseDistanceKm(cfg.baseDistanceKm)
       setPerKmRate(cfg.perKmRate)
@@ -102,78 +104,62 @@ export default function AdminPaymentConfigPage() {
     })
   }, [])
 
-  // Live Playground Fee Calculation Math
+  // Live Playground Fee Calculation Math powered by central Calculator Engine (lib/calculator.ts)
   const playgroundCalc = useMemo(() => {
-    const activeCfg: PaymentConfig = {
-      upiVpa,
-      merchantName,
-      thankYouMessage,
-      mccCode,
-      ifscCode,
-      accountNumber,
+    const input: CalculatorInput = {
+      subtotal: testOrderValue,
+      distanceKm: testDistanceKm,
+      packagingFee: getNum(packagingCap),
       platformFee: getNum(platformFee),
       handlingFee: getNum(handlingFee),
-      vendorCommission: getNum(vendorCommission),
-      packagingCap: getNum(packagingCap),
+      vendorCommissionPercent: getNum(vendorCommission),
       baseDeliveryFee: getNum(baseDeliveryFee),
       baseDistanceKm: getNum(baseDistanceKm),
       perKmRate: getNum(perKmRate),
       freeDeliveryThreshold: getNum(freeDeliveryThreshold),
-      driverPayoutShare,
+      driverPayoutSharePercent: driverPayoutShare,
       surgeMultiplier,
       rainFee: getNum(rainFee),
       nightSurgeFee: getNum(nightSurgeFee),
       isRainModeActive,
       isNightSurgeActive,
-      enableCashOnDelivery,
-      enableUpiDeepLink,
-      requireUtrNumber,
+      gstRatePercent: gstRatePercent === '' ? 18 : getNum(gstRatePercent),
     }
 
-    const calc = calculateCheckoutPricing({
-      cartSubtotal: testOrderValue,
-      roadDistanceKm: testDistanceKm,
-      config: activeCfg,
-    })
+    const calc = calculateFullBreakdown(input)
+    const b = calc.customerBilling
+    const v = calc.vendorSettlement
+    const d = calc.driverEarnings
+    const p = calc.platformEconomics
 
-    const rawDelivery = calc.baseDeliveryFee + calc.extraKmFee
-    const surgeAddon = calc.surgeFee + calc.rainFee + calc.nightSurgeFee
-    const tripDeliveryFare = rawDelivery + surgeAddon
-    const driverPayout = Math.round(tripDeliveryFare * (driverPayoutShare / 100))
-
-    const ordVal = testOrderValue
-    const vComm = getNum(vendorCommission)
-    const vendorCommissionAmount = (ordVal * vComm) / 100
-    const vendorPayout = ordVal - vendorCommissionAmount
-    const platformNetProfit =
-      Math.round((calc.grandTotal - vendorPayout - driverPayout) * 100) / 100
+    const rawDelivery = b.baseDeliveryFee + b.extraDistanceFee
+    const surgeAddon = b.surgeFee + b.rainFee + b.nightSurgeFee
 
     return {
       rawDelivery,
-      isFreeDelivery: calc.isFreeDelivery,
-      finalDeliveryFee: calc.deliveryFee,
+      extraDistanceFee: b.extraDistanceFee,
+      isFreeDelivery: b.isFreeDelivery,
+      finalDeliveryFee: b.netDeliveryFee,
       surgeAddon,
-      totalDeliveryCharges: calc.deliveryFee,
-      handlingFee: calc.handlingFee,
-      customerTotal: calc.grandTotal,
-      vendorCommissionAmount,
-      vendorPayout,
-      driverPayout,
-      platformNetProfit,
+      totalDeliveryCharges: b.netDeliveryFee,
+      handlingFee: b.handlingFee,
+      platformFee: b.platformFee,
+      packagingFee: b.packagingFee,
+      gstAmount: b.gstAmount,
+      customerTotal: b.grandTotal,
+      vendorCommissionAmount: v.commissionDeducted,
+      vendorPayout: v.netVendorPayout,
+      driverPayout: d.totalDriverEarnings,
+      platformNetProfit: p.platformNetProfit,
     }
   }, [
     testOrderValue,
     testDistanceKm,
-    upiVpa,
-    merchantName,
-    thankYouMessage,
-    mccCode,
-    ifscCode,
-    accountNumber,
     platformFee,
     handlingFee,
     vendorCommission,
     packagingCap,
+    gstRatePercent,
     baseDeliveryFee,
     baseDistanceKm,
     perKmRate,
@@ -184,9 +170,6 @@ export default function AdminPaymentConfigPage() {
     nightSurgeFee,
     isRainModeActive,
     isNightSurgeActive,
-    enableCashOnDelivery,
-    enableUpiDeepLink,
-    requireUtrNumber,
   ])
 
   async function handleSaveConfig(e: React.FormEvent) {
@@ -202,6 +185,7 @@ export default function AdminPaymentConfigPage() {
       handlingFee: getNum(handlingFee),
       vendorCommission: getNum(vendorCommission),
       packagingCap: getNum(packagingCap),
+      gstRatePercent: gstRatePercent === '' ? 18 : getNum(gstRatePercent),
       baseDeliveryFee: getNum(baseDeliveryFee),
       baseDistanceKm: getNum(baseDistanceKm),
       perKmRate: getNum(perKmRate),
@@ -263,7 +247,7 @@ export default function AdminPaymentConfigPage() {
               Set revenue share rates and order handling charges.
             </p>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 text-xs">
               <div>
                 <label className="font-bold text-[#18201c] dark:text-white">
                   Platform Service Fee (₹)
@@ -321,6 +305,21 @@ export default function AdminPaymentConfigPage() {
                 />
                 <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
                   Max kitchen container fee
+                </p>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Default GST Rate (%)
+                </label>
+                <input
+                  type="number"
+                  value={gstRatePercent}
+                  onChange={(e) => setGstRatePercent(handleNumInput(e.target.value))}
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3.5 py-2.5 font-bold outline-none focus:border-[#86a018]"
+                />
+                <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+                  Configurable per vendor profile
                 </p>
               </div>
             </div>
@@ -665,6 +664,13 @@ export default function AdminPaymentConfigPage() {
                 <span>₹{testOrderValue}</span>
               </div>
 
+              {playgroundCalc.packagingFee > 0 && (
+                <div className="flex justify-between text-white/70">
+                  <span>Max Packaging Charge</span>
+                  <span>₹{playgroundCalc.packagingFee}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-white/70">
                 <span>Base Delivery ({getNum(baseDistanceKm)}km)</span>
                 <span>₹{getNum(baseDeliveryFee)}</span>
@@ -676,7 +682,7 @@ export default function AdminPaymentConfigPage() {
                     Extra Distance ({Math.ceil(testDistanceKm - getNum(baseDistanceKm))}km @ ₹
                     {getNum(perKmRate)}/km)
                   </span>
-                  <span>+₹{playgroundCalc.rawDelivery - getNum(baseDeliveryFee)}</span>
+                  <span>+₹{playgroundCalc.extraDistanceFee}</span>
                 </div>
               )}
 
@@ -702,6 +708,11 @@ export default function AdminPaymentConfigPage() {
               <div className="flex justify-between text-white/70">
                 <span>Order Handling Charge</span>
                 <span>₹{getNum(handlingFee)}</span>
+              </div>
+
+              <div className="flex justify-between text-[#d9f447]/90 font-semibold">
+                <span>GST ({getNum(gstRatePercent)}% Tax)</span>
+                <span>₹{playgroundCalc.gstAmount}</span>
               </div>
 
               <div className="pt-3 border-t border-white/15 flex justify-between font-bold text-base text-[#d9f447]">

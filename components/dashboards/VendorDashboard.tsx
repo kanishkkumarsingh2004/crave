@@ -178,20 +178,20 @@ export default function VendorDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] pb-16 text-[#18201c] lg:pl-64">
+    <div className="min-h-screen bg-[#0a0f0d] pb-16 text-white lg:pl-64 custom-scrollbar">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Live Order Arrival Popup Banner */}
         {liveBanner && (
-          <div className="rounded-3xl border-2 border-[#d9f447] bg-[#18201c] p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between">
+          <div className="rounded-3xl border-2 border-[#d9f447] bg-[#141d18] p-5 text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] animate-bounce">
+              <div className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#0d1310] animate-bounce shadow-md">
                 <Bell className="size-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase text-[#18201c]">
+                  <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase text-[#0d1310]">
                     LIVE NEW ORDER
                   </span>
                   <span className="font-mono text-xs font-bold text-gray-400">
@@ -216,24 +216,32 @@ export default function VendorDashboard() {
         )}
 
         {/* Welcome Kitchen Banner */}
-        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl relative overflow-hidden">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between relative z-10">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-block size-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                <span className="inline-block size-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-pulse" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
                   Kitchen Active • Accepting Orders
                 </span>
               </div>
-              <h2 className="mt-1.5 text-2xl font-bold text-[#18201c]">
-                Welcome back, {user?.name || 'Chef'}
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Welcome back, <span className="text-[#d9f447]">{user?.name || 'Chef'}</span>
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-400 mt-1">
                 Managing kitchen operations for{' '}
-                <strong className="text-[#18201c]">
+                <strong className="text-white">
                   {user?.restaurantName || 'The Green Table'}
                 </strong>
               </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/vendor/menu"
+                className="rounded-full bg-[#1e2822] border border-[#2d3d33] px-4 py-2 text-xs font-extrabold text-white hover:border-[#d9f447] transition flex items-center gap-1.5"
+              >
+                Manage Menu
+              </Link>
             </div>
           </div>
         </div>
@@ -243,19 +251,19 @@ export default function VendorDashboard() {
           {orderStats.map((item) => (
             <div
               key={item.label}
-              className="rounded-3xl border border-gray-200 bg-white p-5 shadow-xs"
+              className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all duration-300 group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
                   {item.label}
                 </span>
                 <div
-                  className={`grid size-9 place-items-center rounded-2xl ${
+                  className={`grid size-9 place-items-center rounded-2xl border ${
                     item.tone === 'amber'
-                      ? 'bg-amber-50 text-amber-800'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       : item.tone === 'green'
-                        ? 'bg-emerald-50 text-emerald-800'
-                        : 'bg-blue-50 text-blue-800'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                   }`}
                 >
                   {item.tone === 'amber' ? (
@@ -267,64 +275,65 @@ export default function VendorDashboard() {
                   )}
                 </div>
               </div>
-              <p className="mt-4 text-2xl font-bold text-[#18201c]">{item.value}</p>
+              <p className="mt-4 text-3xl font-black text-white tracking-tight">{item.value}</p>
             </div>
           ))}
         </div>
 
         {/* Orders Queue & Kitchen Performance Grid */}
         <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          {/* Live Kitchen Orders Card */}
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#202b24] pb-4">
               <div>
-                <h3 className="text-lg font-bold text-[#18201c]">Live Kitchen Orders</h3>
-                <p className="text-xs text-gray-500">
+                <h3 className="text-lg font-black text-white">Live Kitchen Orders</h3>
+                <p className="text-xs text-gray-400">
                   Customer orders requiring food preparation &amp; dispatch
                 </p>
               </div>
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+              <span className="rounded-full bg-[#d9f447]/10 px-3 py-1 text-[10px] font-black text-[#d9f447] border border-[#d9f447]/30">
                 Active Orders ({openCount})
               </span>
             </div>
 
             <div className="mt-4 space-y-3">
               {kitchenOrders.length === 0 ? (
-                <div className="p-8 text-center text-xs text-gray-500 border border-dashed border-gray-200 rounded-2xl">
+                <div className="p-8 text-center text-xs text-gray-400 border border-dashed border-[#222e27] rounded-2xl bg-[#0e1311]">
                   No orders currently in kitchen queue.
                 </div>
               ) : (
                 kitchenOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-2xl border border-gray-200 p-4 bg-white shadow-xs space-y-3"
+                    className="rounded-2xl border border-[#25322a] p-4 bg-[#171f1b] shadow-md space-y-3 hover:border-[#34463a] transition-all"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#222e27] pb-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-gray-500">
+                          <span className="font-mono text-xs font-bold text-gray-400">
                             #{order.id.slice(0, 8)}...
                           </span>
                           {order.paymentStatus === 'verified' && (
-                            <span className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                               ✓ Payment Verified
                             </span>
                           )}
                         </div>
-                        <h4 className="font-bold text-base text-[#18201c] mt-1">
+                        <h4 className="font-extrabold text-base text-white mt-1">
                           {order.customerName}
                         </h4>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-400">
                           {order.address} ·{' '}
-                          <span className="font-semibold text-gray-700">{order.time}</span>
+                          <span className="font-semibold text-gray-300">{order.time}</span>
                         </p>
                         {order.utrRef && (
-                          <p className="text-[10px] font-mono text-gray-400 mt-0.5">
+                          <p className="text-[10px] font-mono text-gray-500 mt-0.5">
                             UTR: {order.utrRef}
                           </p>
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="text-base font-black text-emerald-700">
+                        <span className="text-lg font-black text-[#d9f447]">
                           ₹{order.subtotal > 0 ? order.subtotal : order.totalAmount}
                         </span>
                         {order.subtotal > 0 && order.subtotal !== order.totalAmount && (
@@ -342,9 +351,9 @@ export default function VendorDashboard() {
                             <button
                               type="button"
                               onClick={() => updateOrderStatus(order.id, 'preparing')}
-                              className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                              className="rounded-full bg-[#d9f447] px-4 py-1.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e337] active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                             >
-                              <CheckCircle2 className="size-3.5 text-[#d9f447]" />
+                              <CheckCircle2 className="size-3.5 text-[#0d1310]" />
                               <span>Accept Order</span>
                             </button>
                           )}
@@ -355,7 +364,7 @@ export default function VendorDashboard() {
                             <button
                               type="button"
                               onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}
-                              className="rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm hover:bg-amber-600 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                              className="rounded-full bg-amber-400 px-4 py-1.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-amber-300 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                             >
                               <CookingPot className="size-3.5" />
                               <span>Mark Ready</span>
@@ -365,27 +374,27 @@ export default function VendorDashboard() {
                           {(order.status === 'ready' ||
                             order.status === 'ready_for_pickup' ||
                             order.status === 'rider_assigned') && (
-                            <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                              <CheckCircle2 className="size-3 text-emerald-600" /> Ready for Pickup
+                            <span className="rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                              <CheckCircle2 className="size-3 text-emerald-400" /> Ready for Pickup
                             </span>
                           )}
 
                           {(order.status === 'picked_up' ||
                             order.status === 'out_for_delivery' ||
                             order.status === 'arrived_customer') && (
-                            <span className="rounded-full bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                               Out for Delivery
                             </span>
                           )}
 
                           {(order.status === 'delivered' || order.status === 'completed') && (
-                            <span className="rounded-full bg-gray-800 text-white border border-gray-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="rounded-full bg-[#243028] text-emerald-300 border border-[#304036] px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                               <CheckCircle2 className="size-3 text-emerald-400" /> Delivered
                             </span>
                           )}
 
                           {order.status === 'cancelled' && (
-                            <span className="rounded-full bg-rose-100 text-rose-800 border border-rose-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                            <span className="rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
                               Cancelled
                             </span>
                           )}
@@ -393,7 +402,7 @@ export default function VendorDashboard() {
                       </div>
                     </div>
 
-                    <p className="text-xs font-semibold text-gray-800 bg-[#f8f9f7] p-3 rounded-xl border border-gray-200">
+                    <p className="text-xs font-semibold text-gray-200 bg-[#121714] p-3 rounded-xl border border-[#222e27]">
                       🍱 {order.itemsText}
                     </p>
                   </div>
@@ -402,34 +411,35 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xs space-y-4">
-            <h3 className="text-lg font-bold text-[#18201c]">Kitchen Performance</h3>
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#f7f8f3]">
-              <table className="w-full text-left text-xs text-gray-700">
+          {/* Kitchen Performance Card */}
+          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
+            <h3 className="text-lg font-black text-white">Kitchen Performance</h3>
+            <div className="overflow-hidden rounded-2xl border border-[#222e27] bg-[#171f1b]">
+              <table className="w-full text-left text-xs text-gray-300">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-100/80 text-gray-500 uppercase tracking-wider text-[10px] font-bold">
+                  <tr className="border-b border-[#222e27] bg-[#121815] text-gray-400 uppercase tracking-wider text-[10px] font-extrabold">
                     <th className="py-3 px-4">Performance Metric</th>
                     <th className="py-3 px-4 text-right">Value</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200/70 bg-white">
-                  <tr className="hover:bg-gray-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-medium text-gray-800">Gross Orders Revenue</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-emerald-700">
+                <tbody className="divide-y divide-[#222e27] bg-[#171f1b]">
+                  <tr className="hover:bg-[#1c2620] transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-300">Gross Orders Revenue</td>
+                    <td className="py-3.5 px-4 text-right font-black text-[#d9f447]">
                       ₹{totalDailyRevenue}
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-medium text-gray-800">Order Completion Rate</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-gray-900">
+                  <tr className="hover:bg-[#1c2620] transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-300">Order Completion Rate</td>
+                    <td className="py-3.5 px-4 text-right font-black text-white">
                       {completionRate}%
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-medium text-gray-800">
+                  <tr className="hover:bg-[#1c2620] transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-gray-300">
                       Completed Customer Drops
                     </td>
-                    <td className="py-3.5 px-4 text-right font-bold text-gray-900">
+                    <td className="py-3.5 px-4 text-right font-black text-white">
                       {completedDropsCount} orders
                     </td>
                   </tr>
