@@ -150,11 +150,25 @@ export default function AdminDashboard() {
     cuisine: '',
     phone: '',
     address: '',
+    commercialModel: 'commission' as 'commission' | 'markup' | 'hybrid',
     commissionRate: 15,
+    markupRate: 0,
+    fixedCommission: 0,
+    fixedMarkup: 0,
     paymentModel: 'commission' as 'commission' | 'markup',
     bannerUrl: '',
     latitude: 12.679898,
     longitude: 77.469493,
+    fssaiLicense: '',
+    gstin: '',
+    gstStatus: 'REGISTERED',
+    supplierState: 'Karnataka',
+    priceTaxMode: 'TAX_INCLUSIVE',
+    bankAccountName: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankIfsc: '',
+    payoutVpa: '',
   })
 
   // Driver Onboarding Modal State
@@ -430,11 +444,25 @@ export default function AdminDashboard() {
           cuisine: newVendorForm.cuisine,
           phone: newVendorForm.phone,
           address: newVendorForm.address,
+          commercialModel: newVendorForm.commercialModel,
           commissionRate: newVendorForm.commissionRate,
+          markupRate: newVendorForm.markupRate,
+          fixedCommission: newVendorForm.fixedCommission,
+          fixedMarkup: newVendorForm.fixedMarkup,
           paymentModel: newVendorForm.paymentModel,
           bannerUrl: newVendorForm.bannerUrl,
           latitude: newVendorForm.latitude,
           longitude: newVendorForm.longitude,
+          fssaiLicense: newVendorForm.fssaiLicense,
+          gstin: newVendorForm.gstin,
+          gstStatus: newVendorForm.gstStatus,
+          supplierState: newVendorForm.supplierState,
+          priceTaxMode: newVendorForm.priceTaxMode,
+          bankAccountName: newVendorForm.bankAccountName,
+          bankName: newVendorForm.bankName,
+          bankAccountNumber: newVendorForm.bankAccountNumber,
+          bankIfsc: newVendorForm.bankIfsc,
+          payoutVpa: newVendorForm.payoutVpa,
         }),
       })
 
@@ -458,11 +486,25 @@ export default function AdminDashboard() {
         cuisine: '',
         phone: '',
         address: '',
+        commercialModel: 'commission',
         commissionRate: 15,
+        markupRate: 0,
+        fixedCommission: 0,
+        fixedMarkup: 0,
         paymentModel: 'commission',
         bannerUrl: '',
         latitude: 12.679898,
         longitude: 77.469493,
+        fssaiLicense: '',
+        gstin: '',
+        gstStatus: 'REGISTERED',
+        supplierState: 'Karnataka',
+        priceTaxMode: 'TAX_INCLUSIVE',
+        bankAccountName: '',
+        bankName: '',
+        bankAccountNumber: '',
+        bankIfsc: '',
+        payoutVpa: '',
       })
 
       fetchAccountsAndVendors()
@@ -2059,17 +2101,59 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="font-bold text-[#18201c] dark:text-white">
-                    Commission Rate (%)
+                    Commercial Model
+                  </label>
+                  <select
+                    value={newVendorForm.commercialModel}
+                    onChange={(e) =>
+                      setNewVendorForm({
+                        ...newVendorForm,
+                        commercialModel: e.target.value as any,
+                        paymentModel: e.target.value === 'markup' ? 'markup' : 'commission',
+                      })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018]"
+                  >
+                    <option value="commission">Commission (% cut from vendor)</option>
+                    <option value="markup">Markup (% added for customer)</option>
+                    <option value="hybrid">Hybrid (Both Commission &amp; Markup)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Commission Rate (%) {newVendorForm.commercialModel === 'markup' && '(N/A)'}
                   </label>
                   <input
                     type="number"
                     min={0}
                     max={50}
+                    disabled={newVendorForm.commercialModel === 'markup'}
                     value={newVendorForm.commissionRate}
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, commissionRate: Number(e.target.value) })
                     }
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c] dark:text-white">
+                    Platform Markup Rate (%){' '}
+                    {newVendorForm.commercialModel === 'commission' && '(N/A)'}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    disabled={newVendorForm.commercialModel === 'commission'}
+                    value={newVendorForm.markupRate}
+                    onChange={(e) =>
+                      setNewVendorForm({ ...newVendorForm, markupRate: Number(e.target.value) })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -2085,6 +2169,180 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewVendorForm({ ...newVendorForm, address: e.target.value })}
                   className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
                 />
+              </div>
+
+              {/* Commercial Engine & Compliance Section */}
+              <div className="rounded-xl bg-purple-50/60 dark:bg-purple-950/30 p-4 border border-purple-200 dark:border-purple-900/50 space-y-3">
+                <p className="font-bold text-[#18201c] dark:text-purple-200 flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="size-4 text-purple-700 dark:text-purple-400" /> GST Tax
+                  Profile &amp; FSSAI Compliance
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      FSSAI License #
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 11223344556677"
+                      value={newVendorForm.fssaiLicense}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, fssaiLicense: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      GSTIN Registration #
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 29AAAAA0000A1Z5"
+                      value={newVendorForm.gstin}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, gstin: e.target.value.toUpperCase() })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono uppercase outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">GST Status</label>
+                    <select
+                      value={newVendorForm.gstStatus}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, gstStatus: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    >
+                      <option value="REGISTERED">REGISTERED</option>
+                      <option value="UNREGISTERED">UNREGISTERED</option>
+                      <option value="COMPOSITION">COMPOSITION</option>
+                      <option value="EXEMPT">EXEMPT</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Supplier State
+                    </label>
+                    <input
+                      type="text"
+                      value={newVendorForm.supplierState}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, supplierState: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Price Tax Mode
+                    </label>
+                    <select
+                      value={newVendorForm.priceTaxMode}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, priceTaxMode: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none"
+                    >
+                      <option value="TAX_INCLUSIVE">TAX INCLUSIVE</option>
+                      <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bank Payout Account Section */}
+              <div className="rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 p-4 border border-emerald-200 dark:border-emerald-900/50 space-y-3">
+                <p className="font-bold text-[#18201c] dark:text-emerald-200 flex items-center gap-1.5 text-xs">
+                  <Store className="size-4 text-emerald-700 dark:text-emerald-400" /> Payout Bank
+                  Account Details
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Account Holder Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Spice Kitchen Pvt Ltd"
+                      value={newVendorForm.bankAccountName}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, bankAccountName: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">Bank Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. HDFC Bank"
+                      value={newVendorForm.bankName}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, bankName: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="5010023456789"
+                      value={newVendorForm.bankAccountNumber}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, bankAccountNumber: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono font-bold outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">IFSC Code</label>
+                    <input
+                      type="text"
+                      placeholder="HDFC0001234"
+                      value={newVendorForm.bankIfsc}
+                      onChange={(e) =>
+                        setNewVendorForm({
+                          ...newVendorForm,
+                          bankIfsc: e.target.value.toUpperCase(),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono uppercase font-bold outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">
+                      Payout UPI VPA
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="store@upi"
+                      value={newVendorForm.payoutVpa}
+                      onChange={(e) =>
+                        setNewVendorForm({ ...newVendorForm, payoutVpa: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono outline-none focus:border-[#86a018]"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Store Location Map Picker */}

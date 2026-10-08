@@ -18,6 +18,14 @@ export interface CheckoutPricingBreakdown {
   platformFee: number
   couponDiscount: number
   grandTotal: number
+  driverEarnings?: {
+    deliveryFeeCollected: number
+    driverSharePercent: number
+    baseDistanceShare: number
+    extraDistanceShare: number
+    surgeRainShare: number
+    totalDriverEarnings: number
+  }
 }
 
 /**
@@ -101,9 +109,15 @@ export async function fetchOSRMDrivingDistanceKm(
   }
 
   try {
+    if (typeof fetch === 'undefined' && typeof globalThis.fetch === 'undefined') {
+      return calculateRoadTravelDistanceKm(restLat, restLng, destLat, destLng)
+    }
+    const fetchFn = typeof fetch !== 'undefined' ? fetch : globalThis.fetch
     const url = `https://router.project-osrm.org/route/v1/driving/${restLng},${restLat};${destLng},${destLat}?overview=false`
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
-    if (res.ok) {
+    const res = await fetchFn(url, {
+      signal: AbortSignal?.timeout ? AbortSignal.timeout(3000) : undefined,
+    })
+    if (res && res.ok) {
       const data = await res.json()
       if (data?.routes?.[0]?.distance != null) {
         const meters = Number(data.routes[0].distance)
@@ -159,6 +173,7 @@ export function calculateCheckoutPricing(params: {
     discount > 0 ? { discount_type: 'flat', discount_value: discount } : undefined
   )
   const b = result.customerBilling
+  const d = result.driverEarnings
 
   return {
     cartSubtotal: b.subtotal,
@@ -174,5 +189,13 @@ export function calculateCheckoutPricing(params: {
     platformFee: b.platformFee,
     couponDiscount: b.couponDiscount,
     grandTotal: b.grandTotal,
+    driverEarnings: {
+      deliveryFeeCollected: d.deliveryFeeCollected,
+      driverSharePercent: d.driverSharePercent,
+      baseDistanceShare: d.baseDistanceShare,
+      extraDistanceShare: d.extraDistanceShare,
+      surgeRainShare: d.surgeRainShare,
+      totalDriverEarnings: d.totalDriverEarnings,
+    },
   }
 }

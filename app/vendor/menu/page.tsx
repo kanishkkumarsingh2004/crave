@@ -44,6 +44,13 @@ export default function VendorMenuPage() {
   const [isVegInput, setIsVegInput] = useState(true)
   const [inStockInput, setInStockInput] = useState(true)
 
+  // Commercial Engine Item Fields (Section 26)
+  const [hsnSacInput, setHsnSacInput] = useState('996331')
+  const [mrpInput, setMrpInput] = useState<number | ''>('')
+  const [priceTaxModeInput, setPriceTaxModeInput] = useState<'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'>(
+    'TAX_INCLUSIVE'
+  )
+
   useEffect(() => {
     if (isLoading) return
     if (!user) {
@@ -561,6 +568,43 @@ export default function VendorMenuPage() {
                   onChange={(e) => setDescInput(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-medium outline-none focus:border-[#86a018]"
                 />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="font-bold text-[#18201c]">HSN/SAC Code</label>
+                  <input
+                    type="text"
+                    value={hsnSacInput}
+                    onChange={(e) => setHsnSacInput(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-mono font-bold outline-none focus:border-[#86a018]"
+                    placeholder="996331"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">MRP (Optional)</label>
+                  <input
+                    type="number"
+                    value={mrpInput}
+                    onChange={(e) =>
+                      setMrpInput(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#18201c]">GST Tax Mode</label>
+                  <select
+                    value={priceTaxModeInput}
+                    onChange={(e) => setPriceTaxModeInput(e.target.value as any)}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 p-3 font-bold outline-none focus:border-[#86a018] bg-white"
+                  >
+                    <option value="TAX_INCLUSIVE">TAX INCLUSIVE</option>
+                    <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE</option>
+                  </select>
+                </div>
               </div>
 
               <div>

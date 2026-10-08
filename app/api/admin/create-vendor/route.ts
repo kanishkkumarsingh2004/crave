@@ -27,11 +27,26 @@ export async function POST(request: Request) {
       cuisine,
       phone,
       address,
+      commercialModel = 'commission',
       commissionRate = 15,
+      markupRate = 0,
+      fixedCommission = 0,
+      fixedMarkup = 0,
       paymentModel = 'commission',
       bannerUrl,
       latitude,
       longitude,
+      fssaiLicense,
+      gstin,
+      gstStatus = 'REGISTERED',
+      supplierState = 'Karnataka',
+      priceTaxMode = 'TAX_INCLUSIVE',
+      contractNumber,
+      bankAccountName,
+      bankName,
+      bankAccountNumber,
+      bankIfsc,
+      payoutVpa,
     } = body
 
     if (!name || !email || !password || !storeName) {
@@ -56,6 +71,8 @@ export async function POST(request: Request) {
 
     const userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
     const vendorId = `vnd_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    const generatedContractNum =
+      contractNumber || `CRV-CC-2026-${Math.floor(100 + Math.random() * 900)}`
 
     const finalUserId = userId
     const vendorRole =
@@ -98,10 +115,26 @@ export async function POST(request: Request) {
         is_dark_store: isDarkStore,
         address: address || 'Bengaluru',
         owner_id: finalUserId,
+        commercial_model: String(commercialModel),
         commission_rate: Number(commissionRate),
+        markup_rate: Number(markupRate),
+        fixed_commission: Number(fixedCommission),
+        fixed_markup: Number(fixedMarkup),
         payment_model: paymentModel,
+        phone: phone || null,
         latitude: latitude ? Number(latitude) : undefined,
         longitude: longitude ? Number(longitude) : undefined,
+        fssai_license: fssaiLicense || null,
+        gstin: gstin || null,
+        gst_status: gstStatus || 'REGISTERED',
+        supplier_state: supplierState || 'Karnataka',
+        price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
+        contract_number: generatedContractNum,
+        bank_account_name: bankAccountName || null,
+        bank_name: bankName || null,
+        bank_account_number: bankAccountNumber || null,
+        bank_ifsc: bankIfsc || null,
+        payout_vpa: payoutVpa || null,
       })
     } catch (err: any) {
       console.warn('Could not insert restaurant record:', err?.message)

@@ -147,14 +147,9 @@ const pingInterval = setInterval(() => {
 }, 30000)
 
 server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.log('> WebSocket server port ' + PORT + ' is already in use (ws-server active).')
-  } else {
+  if (err.code !== 'EADDRINUSE') {
     console.error('WebSocket server error:', err)
   }
 })
 
-server.listen(PORT, () => {
-  console.log('> WebSocket backend ready at http://localhost:' + PORT + '/api/ws')
-  console.log('> Broadcast endpoint ready at http://localhost:' + PORT + '/__ws/broadcast')
-})
+server.listen(PORT, () => {})

@@ -114,11 +114,26 @@ export async function createRestaurant(data: {
   is_dark_store?: boolean
   address?: string
   owner_id?: string
+  commercial_model?: string
   commission_rate?: number
+  markup_rate?: number
+  fixed_commission?: number
+  fixed_markup?: number
   payment_model?: string
   phone?: string
   latitude?: number
   longitude?: number
+  bank_account_name?: string
+  bank_name?: string
+  bank_account_number?: string
+  bank_ifsc?: string
+  payout_vpa?: string
+  fssai_license?: string
+  gstin?: string
+  gst_status?: string
+  supplier_state?: string
+  price_tax_mode?: string
+  contract_number?: string
 }) {
   try {
     return await prisma.restaurant.create({ data: data as any })

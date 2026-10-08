@@ -70,7 +70,11 @@ export type Database = {
           name: string
           cuisine: string
           rating: number | null
+          commercial_model: string | null
           commission_rate: number | null
+          markup_rate: number | null
+          fixed_commission: number | null
+          fixed_markup: number | null
           payment_model: string | null
           address: string | null
           owner_id: string | null
@@ -98,7 +102,11 @@ export type Database = {
           name: string
           cuisine: string
           rating?: number | null
+          commercial_model?: string | null
           commission_rate?: number | null
+          markup_rate?: number | null
+          fixed_commission?: number | null
+          fixed_markup?: number | null
           payment_model?: string | null
           address?: string | null
           owner_id?: string | null
@@ -126,7 +134,11 @@ export type Database = {
           name?: string
           cuisine?: string
           rating?: number | null
+          commercial_model?: string | null
           commission_rate?: number | null
+          markup_rate?: number | null
+          fixed_commission?: number | null
+          fixed_markup?: number | null
           payment_model?: string | null
           address?: string | null
           owner_id?: string | null
@@ -619,36 +631,7 @@ export type Database = {
         }
         Relationships: []
       }
-      cold_chain_sensors: {
-        Row: {
-          id: string
-          restaurant_id: string
-          name: string
-          temperature_c: number
-          target_temperature_c: number | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          restaurant_id: string
-          name: string
-          temperature_c: number
-          target_temperature_c?: number | null
-          status: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          restaurant_id?: string
-          name?: string
-          temperature_c?: number
-          target_temperature_c?: number | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+
       picker_metrics: {
         Row: {
           id: string

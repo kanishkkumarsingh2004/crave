@@ -9,6 +9,7 @@ import {
 import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown } from '@/lib/calculator'
+import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
@@ -232,9 +233,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Restaurant is required' }, { status: 400 })
     }
 
-    // ─── Live Billing Split Calculation via Central Calculator Engine ───
-    const commissionRate = restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15
+    // ─── Live Commercial Calculation via Central Engine ────────────────
+    const commercialModel = (restaurant?.commercial_model || 'commission') as
+      'commission' | 'markup' | 'hybrid'
+    const isMarkupModel = commercialModel === 'markup'
+    const isHybridModel = commercialModel === 'hybrid'
+    const commissionRate = isMarkupModel
+      ? 0
+      : Number(restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15)
+    const markupRate = isMarkupModel || isHybridModel ? Number(restaurant?.markup_rate ?? 0) : 0
     const foodSubtotal = Number(subtotal) || 0
+
+    const itemsList = Array.isArray(items)
+      ? items
+      : typeof items === 'string'
+        ? JSON.parse(items)
+        : []
+
+    const commercialSnapshot = calculateOrderPriceSnapshot({
+      restaurantId: finalRestaurantId || 'rest_01',
+      restaurantName: finalRestaurantName,
+      supplierState: restaurant?.supplier_state || 'Karnataka',
+      contract: {
+        commercialModel,
+        commissionRate,
+        markupRate,
+        fixedCommissionAmount: Number(restaurant?.fixed_commission ?? 0),
+        fixedMarkupAmount: Number(restaurant?.fixed_markup ?? 0),
+        priceTaxMode: (restaurant?.price_tax_mode as any) || 'TAX_INCLUSIVE',
+      },
+      items: itemsList.map((i: any) => ({
+        name: i.name || 'Food Item',
+        quantity: Number(i.quantity || i.qty || 1),
+        price: Number(i.price || 0),
+        taxRate: Number(i.taxRate ?? 5),
+        priceTaxMode: i.priceTaxMode || restaurant?.price_tax_mode || 'TAX_INCLUSIVE',
+      })),
+      tip: Number(tip) || 0,
+      couponDiscountAmount: Number(discount_amount) || 0,
+    })
 
     const calcResult = calculateFullBreakdown(
       {
@@ -263,12 +300,17 @@ export async function POST(request: Request) {
     )
 
     const capPackaging = calcResult.customerBilling.packagingFee
-    const vendorNetPayout = calcResult.vendorSettlement.netVendorPayout
+    const vendorNetPayout =
+      commercialSnapshot.restaurantPayableNet || calcResult.vendorSettlement.netVendorPayout
     const driverPayout = calcResult.driverEarnings.totalDriverEarnings
-    const platformProfit = calcResult.platformEconomics.platformNetProfit
+    const platformProfit =
+      commercialSnapshot.platformNetRevenue || calcResult.platformEconomics.platformNetProfit
 
     const billingBreakdown = {
       subtotal: foodSubtotal,
+      commercial_model: commercialModel,
+      markup_rate: markupRate,
+      markup_amount: commercialSnapshot.markupAmount,
       packaging_fee: capPackaging,
       delivery_fee: calcResult.customerBilling.netDeliveryFee,
       platform_fee: calcResult.customerBilling.platformFee,
@@ -278,18 +320,12 @@ export async function POST(request: Request) {
       discount_amount: calcResult.customerBilling.couponDiscount,
       total_amount: Number(total_amount) || calcResult.customerBilling.grandTotal,
       vendor_commission_rate: commissionRate,
-      vendor_commission_amount: calcResult.vendorSettlement.commissionDeducted,
+      vendor_commission_amount: commercialSnapshot.grossCommission,
       vendor_net_payout: vendorNetPayout,
       driver_payout: driverPayout,
       driver_payout_share: paymentConfig.driverPayoutShare,
       platform_net_profit: platformProfit,
     }
-
-    const itemsList = Array.isArray(items)
-      ? items
-      : typeof items === 'string'
-        ? JSON.parse(items)
-        : []
 
     if (itemsList.length > 0) {
       itemsList[0].billing_breakdown = billingBreakdown
@@ -315,6 +351,9 @@ export async function POST(request: Request) {
       items: itemsList,
       subtotal: foodSubtotal,
       packaging_fee: capPackaging,
+      delivery_fee: calcResult.customerBilling.netDeliveryFee,
+      platform_fee: calcResult.customerBilling.platformFee,
+      handling_fee: calcResult.customerBilling.handlingFee,
       gst: Number(gst) || 0,
       total_amount: Number(total_amount) || 0,
       status: status as OrderStatus,
@@ -328,6 +367,10 @@ export async function POST(request: Request) {
       tip: Number(tip) || 0,
       discount_amount: Number(discount_amount) || 0,
       coupon_code: coupon_code || undefined,
+      commission_amount: commercialSnapshot.grossCommission,
+      markup_amount: commercialSnapshot.markupAmount,
+      restaurant_payout: vendorNetPayout,
+      platform_revenue: platformProfit,
       utr_ref,
       customer_vpa,
     })

@@ -70,8 +70,12 @@ export async function POST(request: Request) {
         is_open: body.is_open ?? true,
         is_dark_store: body.is_dark_store ?? false,
         rating: 4.8,
-        commission_rate: 15,
-        payment_model: 'commission',
+        commercial_model: body.commercial_model || 'commission',
+        commission_rate: body.commission_rate !== undefined ? Number(body.commission_rate) : 15,
+        markup_rate: body.markup_rate !== undefined ? Number(body.markup_rate) : 0,
+        fixed_commission: body.fixed_commission !== undefined ? Number(body.fixed_commission) : 0,
+        fixed_markup: body.fixed_markup !== undefined ? Number(body.fixed_markup) : 0,
+        payment_model: body.payment_model || 'commission',
       },
     })
 
@@ -109,6 +113,15 @@ export async function PATCH(request: Request) {
     }
     const updateData: any = {}
     if (typeof body.is_open === 'boolean') updateData.is_open = body.is_open
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.cuisine !== undefined) updateData.cuisine = body.cuisine
+    if (body.phone !== undefined) updateData.phone = body.phone
+    if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
+    if (body.commission_rate !== undefined) updateData.commission_rate = body.commission_rate
+    if (body.markup_rate !== undefined) updateData.markup_rate = body.markup_rate
+    if (body.fixed_commission !== undefined) updateData.fixed_commission = body.fixed_commission
+    if (body.fixed_markup !== undefined) updateData.fixed_markup = body.fixed_markup
+    if (body.payment_model !== undefined) updateData.payment_model = body.payment_model
     if (body.bank_account_name !== undefined) updateData.bank_account_name = body.bank_account_name
     if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
     if (body.bank_account_number !== undefined)
@@ -117,6 +130,11 @@ export async function PATCH(request: Request) {
     if (body.payout_vpa !== undefined) updateData.payout_vpa = body.payout_vpa
     if (body.fssai_license !== undefined) updateData.fssai_license = body.fssai_license
     if (body.address !== undefined) updateData.address = body.address
+    if (body.gstin !== undefined) updateData.gstin = body.gstin
+    if (body.gst_status !== undefined) updateData.gst_status = body.gst_status
+    if (body.supplier_state !== undefined) updateData.supplier_state = body.supplier_state
+    if (body.price_tax_mode !== undefined) updateData.price_tax_mode = body.price_tax_mode
+    if (body.contract_number !== undefined) updateData.contract_number = body.contract_number
 
     const restaurant = await prisma.restaurant.update({
       where: { id: body.id },

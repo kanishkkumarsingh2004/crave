@@ -32,25 +32,32 @@ model User {
 }
 
 model Restaurant {
-  id                  String             @id
+  id                  String               @id
   name                String
   cuisine             String
-  rating              Decimal?           @default(4.8) @db.Decimal(2, 1)
-  commission_rate     Int?               @default(15)
-  payment_model       String?            @default("commission")
+  rating              Decimal?             @default(4.8) @db.Decimal(2, 1)
+  
+  // Commercial & Pricing Model Settings (Section 4 & 6 of commercial-engine.md)
+  commercial_model    String?              @default("commission") // "commission" | "markup" | "hybrid"
+  commission_rate     Decimal?             @default(15.00) @db.Decimal(5, 2) // e.g. 15.00% for Restaurant 1
+  markup_rate         Decimal?             @default(0.00) @db.Decimal(5, 2)  // e.g. 10.00% for Restaurant 2
+  fixed_commission    Int?                 @default(0)
+  fixed_markup        Int?                 @default(0)
+  payment_model       String?              @default("commission") // Legacy compatibility
+  
   address             String?
   owner_id            String?
-  created_at          DateTime?          @default(now()) @db.Timestamptz(6)
+  created_at          DateTime?            @default(now()) @db.Timestamptz(6)
   image               String?
-  is_pure_veg         Boolean?
-  is_dark_store       Boolean            @default(false)
-  is_open             Boolean            @default(false)
-  rating_count        Int?
-  cost_for_two        Int?
-  delivery_minutes    Int?
+  is_pure_veg         Boolean?             @default(false)
+  is_dark_store       Boolean              @default(false)
+  is_open             Boolean              @default(true)
+  rating_count        Int?                 @default(50)
+  cost_for_two        Int?                 @default(300)
+  delivery_minutes    Int?                 @default(25)
   offer               String?
-  latitude            Decimal?           @db.Decimal
-  longitude           Decimal?           @db.Decimal
+  latitude            Decimal?             @db.Decimal
+  longitude           Decimal?             @db.Decimal
   phone               String?
   bank_account_name   String?
   bank_name           String?
@@ -58,35 +65,71 @@ model Restaurant {
   bank_ifsc           String?
   payout_vpa          String?
   fssai_license       String?
-  cold_chain_sensors  ColdChainSensor[]
-  coupons             Coupon[]
-  menu_items          MenuItem[]
-  orders              Order[]
-  picker_metrics      PickerMetric[]
-  owner               User?              @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  vendor_settlements  VendorSettlement[]
+  gstin               String?
+  gst_status          String?              @default("REGISTERED")
+  supplier_state      String?              @default("Karnataka")
+  price_tax_mode      String?              @default("TAX_INCLUSIVE")
+  contract_number     String?
 
+  commercial_contracts CommercialContract[]
+  coupons              Coupon[]
+  menu_items           MenuItem[]
+  orders               Order[]
+  picker_metrics       PickerMetric[]
+  owner                User?                @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  vendor_settlements   VendorSettlement[]
+
+  @@index([owner_id])
+  @@index([is_open, is_dark_store])
   @@map("restaurants")
 }
 
-model MenuItem {
-  id            String      @id
-  restaurant_id String?
-  name          String
-  category      String
-  price         Int
-  description   String?
-  in_stock      Boolean?    @default(true)
-  image         String?
-  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
-  is_veg        Boolean?
-  unit          String?
-  mrp           Int?
-  stock_count   Int         @default(0)
-  sku_code      String?
-  expiry_date   DateTime?   @db.Date
-  restaurant    Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+model CommercialContract {
+  id                    String        @id
+  restaurant_id         String
+  contract_number       String        @unique
+  version               Int           @default(1)
+  status                String        @default("ACTIVE") // ACTIVE | PENDING_APPROVAL | SUSPENDED
+  commercial_model      String        @default("commission") // commission | markup | hybrid
+  commission_rate       Decimal       @default(15.00) @db.Decimal(5, 2)
+  markup_rate           Decimal       @default(0.00) @db.Decimal(5, 2)
+  fixed_commission      Int           @default(0)
+  fixed_markup          Int           @default(0)
+  commission_basis      String        @default("ORDER_SUBTOTAL")
+  price_tax_mode        String        @default("TAX_INCLUSIVE")
+  effective_from        DateTime      @default(now()) @db.Timestamptz(6)
+  effective_until       DateTime?     @db.Timestamptz(6)
+  created_at            DateTime      @default(now()) @db.Timestamptz(6)
 
+  restaurant            Restaurant    @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@index([restaurant_id])
+  @@map("commercial_contracts")
+}
+
+model MenuItem {
+  id                    String      @id
+  restaurant_id         String?
+  name                  String
+  category              String
+  price                 Int
+  description           String?
+  in_stock              Boolean?    @default(true)
+  image                 String?
+  created_at            DateTime?   @default(now()) @db.Timestamptz(6)
+  is_veg                Boolean?    @default(true)
+  unit                  String?
+  mrp                   Int?
+  stock_count           Int         @default(0)
+  sku_code              String?
+  hsn_sac_code          String?     @default("996331")
+  price_tax_mode        String?     @default("TAX_INCLUSIVE")
+  custom_commission_rate Decimal?   @db.Decimal(5, 2)
+  custom_markup_rate     Decimal?   @db.Decimal(5, 2)
+  expiry_date           DateTime?   @db.Date
+  restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@index([restaurant_id, category])
   @@map("menu_items")
 }
 
@@ -107,6 +150,9 @@ model Order {
   items                 Json
   subtotal              Int
   packaging_fee         Int?        @default(20)
+  delivery_fee          Int?        @default(30)
+  platform_fee          Int?        @default(6)
+  handling_fee          Int?        @default(5)
   gst                   Int?        @default(18)
   total_amount          Int
   status                OrderStatus
@@ -119,12 +165,22 @@ model Order {
   tip                   Int         @default(0)
   discount_amount       Int         @default(0)
   coupon_code           String?
+  
+  // Financial Breakdowns Stored (Section 30)
+  commission_amount     Int?        @default(0)
+  markup_amount         Int?        @default(0)
+  restaurant_payout     Int?        @default(0)
+  platform_revenue      Int?        @default(0)
+
   delivery_latitude     Decimal?    @db.Decimal
   delivery_longitude    Decimal?    @db.Decimal
   delivered_at          DateTime?   @db.Timestamptz(6)
   customer              User?       @relation(fields: [customer_id], references: [id])
   restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id])
 
+  @@index([customer_id])
+  @@index([restaurant_id])
+  @@index([status])
   @@map("orders")
 }
 
@@ -139,11 +195,14 @@ model Coupon {
   usage_limit      Int?
   used_count       Int?         @default(0)
   is_active        Boolean?     @default(true)
+  funding_source   String?      @default("SHARED") // RESTAURANT | PLATFORM | SHARED | BANK
+  restaurant_share Int?         @default(50)       // % funded by restaurant
   expiry_date      DateTime?    @db.Date
   created_at       DateTime?    @default(now()) @db.Timestamptz(6)
   restaurant_id    String?
   restaurant       Restaurant?  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
+  @@index([code])
   @@map("coupons")
 }
 
@@ -151,8 +210,10 @@ model VendorSettlement {
   id                String      @id
   restaurant_name   String
   gross_sales       Int
+  commercial_model  String?     @default("commission")
   commission_rate   Int
   commission_amount Int
+  markup_amount     Int?        @default(0)
   net_payout        Int
   status            String?     @default("scheduled")
   payout_date       DateTime?   @db.Date
@@ -162,6 +223,7 @@ model VendorSettlement {
   transaction_ref   String?
   restaurant        Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
+  @@index([restaurant_id])
   @@map("vendor_settlements")
 }
 
@@ -174,6 +236,7 @@ model PaymentReview {
   status       String?   @default("pending")
   created_at   DateTime? @default(now()) @db.Timestamptz(6)
 
+  @@index([order_id])
   @@map("payment_reviews")
 }
 
@@ -188,6 +251,7 @@ model CustomerAddress {
   longitude   Decimal? @db.Decimal
   customer    User     @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
+  @@index([customer_id])
   @@map("customer_addresses")
 }
 
@@ -234,6 +298,7 @@ model DriverUpiAccount {
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   driver      User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
+  @@index([driver_id])
   @@map("driver_upi_accounts")
 }
 
@@ -246,6 +311,7 @@ model DriverPayout {
   created_at      DateTime @default(now()) @db.Timestamptz(6)
   driver          User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
+  @@index([driver_id])
   @@map("driver_payouts")
 }
 
@@ -260,21 +326,11 @@ model DriverIncentive {
   is_active     Boolean   @default(true)
   driver        User?     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
+  @@index([driver_id])
   @@map("driver_incentives")
 }
 
-model ColdChainSensor {
-  id                   String     @id
-  restaurant_id        String
-  name                 String
-  temperature_c        Decimal    @db.Decimal
-  target_temperature_c Decimal?   @db.Decimal
-  status               String
-  updated_at           DateTime   @default(now()) @db.Timestamptz(6)
-  restaurant           Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
-  @@map("cold_chain_sensors")
-}
 
 model PickerMetric {
   id                   String     @id
@@ -287,6 +343,7 @@ model PickerMetric {
   updated_at           DateTime   @default(now()) @db.Timestamptz(6)
   restaurant           Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
+  @@index([restaurant_id])
   @@map("picker_metrics")
 }
 

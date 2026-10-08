@@ -117,6 +117,9 @@ export async function createOrder(data: {
   items: any
   subtotal: number
   packaging_fee?: number
+  delivery_fee?: number
+  platform_fee?: number
+  handling_fee?: number
   gst?: number
   total_amount: number
   status: OrderStatus
@@ -125,11 +128,15 @@ export async function createOrder(data: {
   tip?: number
   discount_amount?: number
   coupon_code?: string
+  commission_amount?: number
+  markup_amount?: number
+  restaurant_payout?: number
+  platform_revenue?: number
   utr_ref?: string
   customer_vpa?: string
 }) {
   const { utr_ref, customer_vpa, ...prismaData } = data
-  return prisma.order.create({ data: prismaData })
+  return prisma.order.create({ data: prismaData as any })
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {

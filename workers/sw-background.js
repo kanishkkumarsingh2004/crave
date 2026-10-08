@@ -25,6 +25,4 @@ self.addEventListener('sync', (event) => {
   }
 })
 
-async function syncPendingLocationData() {
-  console.log('[Service Worker] Executing background driver location sync...')
-}
+async function syncPendingLocationData() {}
