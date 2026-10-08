@@ -8,6 +8,7 @@ import {
   Bike,
   ChevronDown,
   Compass,
+  Download,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -377,6 +378,18 @@ export default function Navbar() {
                       <LanguageSwitcher variant="menu" />
                     </div>
 
+                    {/* Install App */}
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false)
+                        window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                    >
+                      <Download className="size-4 text-[#859d19]" />
+                      Install Crave App
+                    </button>
+
                     {/* Sign out */}
                     <button
                       onClick={async () => {
@@ -541,6 +554,19 @@ export default function Navbar() {
               <div className="px-1 py-1">
                 <LanguageSwitcher variant="menu" />
               </div>
+
+              {/* Install App for logged-in user */}
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
+              >
+                <Download className="size-5 text-[#859d19]" />
+                Install Crave App
+              </button>
+
               <button
                 onClick={async () => {
                   await logout()
@@ -565,6 +591,19 @@ export default function Navbar() {
               <div className="px-1 py-1">
                 <LanguageSwitcher variant="menu" />
               </div>
+
+              {/* Install App for guest user */}
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
+              >
+                <Download className="size-5 text-[#859d19]" />
+                Install Crave App
+              </button>
+
               <Link
                 href="/login"
                 onClick={() => setShowMobileMenu(false)}
