@@ -1,14 +1,17 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail } from '@/lib/dal'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { promisify } from 'util'
+
+const scrypt = promisify(crypto.scrypt)
 
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request)
-    const { allowed, resetTime } = checkRateLimit(`signup_${clientIp}`, 10, 60000)
+    const { allowed, resetTime } = await checkRateLimitAsync(`signup_${clientIp}`, 10, 60000)
     if (!allowed) {
       return rateLimitResponse(resetTime)
     }
@@ -49,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const finalUserId = crypto.randomUUID()
-    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
+    const passwordHash = (await scrypt(String(password), cleanEmail, 64) as Buffer).toString('hex')
 
     // Insert user profile via configured database backend.
     try {

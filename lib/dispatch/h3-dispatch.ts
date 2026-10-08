@@ -145,7 +145,7 @@ export function findGeofencedCandidateDrivers(request: DispatchRequest): Dispatc
   // Progressive Dynamic Ring Expansion (Ring 0 -> Ring 1 -> Ring 2 -> Ring N)
   for (let ring = 0; ring < maxRingsToSearch; ring += 1) {
     const ringCells = h3.gridDisk(pickupH3Cell, ring)
-    totalCellsSearched = ringCells.length
+    totalCellsSearched += ringCells.length
 
     // Scan ONLY drivers in these specific H3 cells (Geographically Isolated)
     ringCells.forEach((cell) => {

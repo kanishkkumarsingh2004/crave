@@ -10,6 +10,7 @@ import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown } from '@/lib/calculator'
 import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
@@ -163,12 +164,10 @@ export async function GET(request: Request) {
   }
 }
 
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
-
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request)
-    const { allowed, resetTime } = checkRateLimit(`order_${clientIp}`, 30, 60000)
+    const { allowed, resetTime } = await checkRateLimitAsync(`order_${clientIp}`, 30, 60000)
     if (!allowed) {
       return rateLimitResponse(resetTime)
     }
@@ -206,6 +205,7 @@ export async function POST(request: Request) {
       driver_id,
       driver_name,
       order_type = 'restaurant_food',
+      distance_km,
     } = body
     const finalCustomerId = actor?.id || customer_id
     if (customer_id && actor?.id && customer_id !== actor.id) {
@@ -311,10 +311,15 @@ export async function POST(request: Request) {
       couponDiscountAmount: Number(discount_amount) || 0,
     })
 
+    // Accept real distance from client or default to base distance (avoids incorrect fee calc)
+    const resolvedDistanceKm = typeof distance_km === 'number' && distance_km > 0
+      ? distance_km
+      : paymentConfig.baseDistanceKm || 2.5
+
     const calcResult = calculateFullBreakdown(
       {
         subtotal: foodSubtotal,
-        distanceKm: 2.5,
+        distanceKm: resolvedDistanceKm,
         packagingFee: Number(packaging_fee) || 20,
         tip: Number(tip) || 0,
         restaurantName: finalRestaurantName,

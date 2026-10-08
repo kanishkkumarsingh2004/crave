@@ -20,8 +20,10 @@ if (typeof window === 'undefined') {
   if (cleanup.unref) cleanup.unref()
 }
 
+import { redis, isRedisAvailable } from '@/lib/redis'
+
 /**
- * In-memory sliding window rate limiter to protect endpoints against DDoS / brute force.
+ * In-memory sliding window rate limiter fallback to protect endpoints against DDoS / brute force.
  * @param ip Client IP address or key
  * @param limit Max requests allowed within window (default: 60)
  * @param windowMs Time window in milliseconds (default: 60000 ms)
@@ -45,6 +47,49 @@ export function checkRateLimit(
 
   record.count++
   return { allowed: true, remaining: limit - record.count, resetTime: record.resetTime }
+}
+
+/**
+ * Async distributed rate limiter using Redis atomic counter + PEXPIRE when available,
+ * falling back to in-memory store if Redis is unavailable or unconfigured.
+ */
+export async function checkRateLimitAsync(
+  ip: string,
+  limit: number = 60,
+  windowMs: number = 60000
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  if (isRedisAvailable() && redis) {
+    try {
+      const key = `crave:ratelimit:${ip}`
+      const pipeline = redis.pipeline()
+      pipeline.incr(key)
+      pipeline.pttl(key)
+      const results = await pipeline.exec()
+
+      if (results && results[0] && results[1]) {
+        const count = results[0][1] as number
+        let ttl = results[1][1] as number
+
+        if (ttl === -1 || ttl < 0) {
+          await redis.pexpire(key, windowMs)
+          ttl = windowMs
+        }
+
+        const now = Date.now()
+        const resetTime = now + (ttl > 0 ? ttl : windowMs)
+
+        if (count > limit) {
+          return { allowed: false, remaining: 0, resetTime }
+        }
+
+        return { allowed: true, remaining: Math.max(0, limit - count), resetTime }
+      }
+    } catch {
+      // Redis command failure: safely fall through to in-memory check
+    }
+  }
+
+  return checkRateLimit(ip, limit, windowMs)
 }
 
 export function getClientIp(request: Request): string {

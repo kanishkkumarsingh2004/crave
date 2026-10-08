@@ -32,7 +32,8 @@ export async function listOrders(filters?: {
 
   if (filters?.driverId || filters?.riderId) {
     const driverId = filters.driverId || filters.riderId
-    where.OR = [{ rider_id: driverId }, { customer_id: driverId }]
+    // Only match rider_id — matching customer_id for a driver ID risks leaking other users' orders
+    where.rider_id = driverId
   }
 
   if (filters?.status) {
@@ -183,6 +184,7 @@ export async function updateOrder(
   id: string,
   data: {
     status?: OrderStatus
+    rider_id?: string
     driver_name?: string
     driver_phone?: string
     delivery_latitude?: number

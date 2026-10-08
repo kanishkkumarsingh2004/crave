@@ -1,3 +1,5 @@
+import { redis, isRedisAvailable } from '@/lib/redis'
+
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
 export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000
 export const WS_BROADCAST_HOST = process.env.WS_BROADCAST_HOST || 'localhost'
@@ -13,9 +15,20 @@ export const broadcast = async (
     return false
   }
 
+  const payload = JSON.stringify({ channel, data, ts: Date.now() })
+
+  // High-performance Redis Pub/Sub broadcast across cluster nodes
+  if (isRedisAvailable() && redis) {
+    try {
+      await redis.publish('crave:ws:events', payload)
+      return true
+    } catch {
+      // Fall through to HTTP broadcast on Redis error
+    }
+  }
+
   try {
     const http = require('http')
-    const payload = JSON.stringify({ channel, data, ts: Date.now() })
 
     return new Promise<boolean>((resolve) => {
       const req = http.request(

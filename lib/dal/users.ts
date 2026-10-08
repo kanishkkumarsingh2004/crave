@@ -1,102 +1,49 @@
 /**
  * Database Access Layer — Users
- * Requires Prisma or Supabase to be available; no silent file-store fallback.
+ * Single source of truth: Prisma/PostgreSQL.
+ * Supabase is fully disabled — all legacy fallback branches removed.
  */
 import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 import type { User, UserRole } from '@prisma/client'
 
 // ─── Queries ─────────────────────────────────────────────
 
-export async function findUserById(id: string) {
+export async function findUserById(id: string): Promise<User | null> {
   try {
-    const user = await prisma.user.findUnique({ where: { id } })
-    if (user) return user
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+    return await prisma.user.findUnique({ where: { id } })
+  } catch {
+    return null
   }
-
-  try {
-    const { data } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
-    if (data) return data
-  } catch (e) {
-    // Supabase unavailable.
-  }
-
-  return null
 }
 
-export async function findUserByEmail(email: string) {
+export async function findUserByEmail(email: string): Promise<User | null> {
   const cleanEmail = email.trim().toLowerCase()
-
   try {
-    const user = await prisma.user.findFirst({
+    return await prisma.user.findFirst({
       where: { email: { equals: cleanEmail, mode: 'insensitive' } },
     })
-    if (user) return user
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+  } catch {
+    return null
   }
-
-  try {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .ilike('email', cleanEmail)
-      .maybeSingle()
-    if (data) return data
-  } catch (e) {
-    // Supabase unavailable.
-  }
-
-  return null
 }
 
-export async function listUsersByRole(role: UserRole) {
+export async function listUsersByRole(role: UserRole): Promise<User[]> {
   try {
-    const users = await prisma.user.findMany({
+    return await prisma.user.findMany({
       where: { role },
       orderBy: { created_at: 'desc' },
     })
-    // Return whatever Prisma gives — even an empty array is valid.
-    return users
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+  } catch {
+    return []
   }
-
-  try {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', role)
-      .order('created_at', { ascending: false })
-    if (data) return data
-  } catch (e) {
-    // Supabase unavailable.
-  }
-
-  return []
 }
 
-export async function listAllUsers() {
+export async function listAllUsers(): Promise<User[]> {
   try {
-    const users = await prisma.user.findMany({ orderBy: { created_at: 'desc' } })
-    return users
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+    return await prisma.user.findMany({ orderBy: { created_at: 'desc' } })
+  } catch {
+    return []
   }
-
-  try {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) return data
-  } catch (e) {
-    // Supabase unavailable.
-  }
-
-  return []
 }
 
 // ─── Mutations ───────────────────────────────────────────
@@ -114,7 +61,7 @@ export async function createUser(data: {
   vehicle_type?: string | null
   license_plate?: string | null
   password_hash?: string | null
-}) {
+}): Promise<User> {
   try {
     return await prisma.user.create({ data })
   } catch (error) {
@@ -123,46 +70,26 @@ export async function createUser(data: {
   }
 }
 
-export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>) {
+export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>): Promise<User> {
   try {
     return await prisma.user.update({ where: { id }, data: data as any })
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'Unknown database error'
+    throw new Error(`Unable to update user ${id}: ${detail}`)
   }
-
-  try {
-    const { data: updated } = await supabase
-      .from('users')
-      .update(data as any)
-      .eq('id', id)
-      .select()
-      .single()
-    if (updated) return updated
-  } catch (e) {
-    // Supabase unavailable; fail loudly instead of mutating local files.
-  }
-
-  throw new Error(`Unable to update user: ${id}`)
 }
 
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string): Promise<{ id: string }> {
   try {
-    return await prisma.user.delete({ where: { id } })
-  } catch (e) {
-    // Prisma unavailable; continue to Supabase.
-  }
-
-  try {
-    await supabase.from('users').delete().eq('id', id)
+    await prisma.user.delete({ where: { id } })
     return { id }
-  } catch (e) {
-    // Supabase unavailable; fail loudly instead of silently reporting success.
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'Unknown database error'
+    throw new Error(`Unable to delete user ${id}: ${detail}`)
   }
-
-  throw new Error(`Unable to delete user: ${id}`)
 }
 
-export async function deleteUserByEmail(email: string) {
+export async function deleteUserByEmail(email: string): Promise<{ id: string } | null> {
   const user = await findUserByEmail(email)
   if (!user) return null
   return deleteUser(user.id)
