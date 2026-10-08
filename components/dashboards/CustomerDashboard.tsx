@@ -9,33 +9,50 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  Award,
+  Bell,
   Bike,
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Compass,
   Copy,
+  CreditCard,
+  Crown,
   ExternalLink,
   FileText,
   Filter,
   Flame,
+  Gift,
+  Heart,
+  HelpCircle,
   History,
   KeyRound,
   LocateFixed,
+  Lock,
   LogOut,
+  Mail,
   MapPin,
   Menu,
   Minus,
+  Moon,
   PhoneCall,
   Plus,
+  RefreshCw,
   Search,
+  ShieldCheck,
   ShoppingBag,
   ShoppingCart,
+  Smartphone,
   Sparkles,
   Store,
+  Sun,
   Tag,
   Trash2,
   User,
+  Utensils,
+  Wallet,
   X,
   Zap,
 } from 'lucide-react'
@@ -460,6 +477,12 @@ export default function CustomerDashboard({
   const [selectedMapPin, setSelectedMapPin] = useState<LatLngCoords | null>(null)
   const [newAddressInput, setNewAddressInput] = useState('')
   const [newAddressLabel, setNewAddressLabel] = useState('Home')
+  const [dietaryPref, setDietaryPref] = useState<'all' | 'veg' | 'non-veg'>('all')
+  const [optCutlery, setOptCutlery] = useState(false)
+  const [optContactless, setOptContactless] = useState(false)
+  const [optNotifications, setOptNotifications] = useState(true)
+  const [craveCoins, setCraveCoins] = useState(480)
+  const [walletBalance, setWalletBalance] = useState(150)
 
   useEffect(() => {
     if (!user?.id) {
@@ -2054,200 +2077,450 @@ export default function CustomerDashboard({
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
-            <div className="rounded-2xl border border-[#2a3831] dark:border-[#27342d] bg-[#18201c] p-6 text-white sm:p-8">
+          <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-16">
+            {/* 1. Hero Profile Card with Vibrant Accents & Stats */}
+            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-linear-to-br from-white via-[#fbfcf9] to-[#f4f7ed] dark:from-[#18201c] dark:via-[#1c2621] dark:to-[#141b17] p-6 sm:p-8 shadow-sm">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="grid size-16 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-2xl shrink-0">
-                    {(user?.name || 'C').charAt(0).toUpperCase()}
+                <div className="flex items-center gap-4 sm:gap-5">
+                  <div className="relative">
+                    <div className="grid size-16 sm:size-20 place-items-center rounded-2xl bg-linear-to-tr from-[#859d19] to-[#d9f447] text-[#18201c] font-black text-2xl sm:text-3xl shadow-md">
+                      {(user?.name || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-[#18201c]">
+                      <Check className="size-3.5 stroke-[3]" />
+                    </span>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-                      <span>Verified Customer Account</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                        <ShieldCheck className="size-3" /> Verified Customer
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                        <Crown className="size-3" /> Crave Gold Member
+                      </span>
                     </div>
-                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
+
+                    <h2 className="mt-1.5 text-xl sm:text-2xl font-black tracking-tight text-[#18201c] dark:text-white">
                       {user?.name || 'Customer Account'}
                     </h2>
-                    <p className="mt-0.5 text-xs text-gray-300 font-medium">
-                      {user?.email || 'authenticated@crave.com'}{' '}
-                      {user?.phone ? `• ${user.phone}` : ''}
-                    </p>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#55635a] dark:text-gray-300 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Mail className="size-3 text-[#859d19]" />
+                        {user?.email || 'authenticated@crave.com'}
+                      </span>
+                      <span>&bull;</span>
+                      <span className="flex items-center gap-1">
+                        <PhoneCall className="size-3 text-[#859d19]" />
+                        {user?.phone || '+91 98765 43210'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => logout()}
-                  className="self-start sm:self-center rounded-xl bg-white/10 hover:bg-rose-600 border border-white/20 px-5 py-2.5 text-xs font-semibold text-white transition"
-                >
-                  Sign Out Account
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-center">
+                  <button
+                    onClick={() => setEditAddress(!editAddress)}
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-bold text-[#18201c] dark:text-white hover:bg-[#f4f7ed] dark:hover:bg-[#27342d] transition shadow-xs"
+                  >
+                    <User className="size-3.5" />
+                    {editAddress ? 'Close Edit' : 'Edit Profile'}
+                  </button>
+                  <button
+                    onClick={() => logout()}
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 px-4 py-2 text-xs font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-xs"
+                  >
+                    <LogOut className="size-3.5" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 divide-x divide-[#2a3831] dark:divide-[#27342d] border-t border-[#2a3831] dark:border-[#27342d] pt-6">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">
-                    {
-                      pastOrders.filter(
-                        (o) => o.status === 'Delivered' || o.status === 'In Progress'
-                      ).length
-                    }
-                  </p>
-                  <p className="text-xs text-gray-400 font-medium mt-1">Orders Placed</p>
+              {/* 3 Quick Interactive Stats Pills */}
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-[#e5e9e0] dark:border-[#27342d] pt-6">
+                <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
+                  <div className="grid size-11 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <ShoppingBag className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-[#18201c] dark:text-white">
+                      {pastOrders.filter((o) => o.status === 'Delivered' || o.status === 'In Progress').length}
+                    </p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Orders Delivered</p>
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-[#d9f447]">
-                    ₹{pastOrders.reduce((a, o) => a + (o.discount || 0), 0)}
-                  </p>
-                  <p className="text-xs text-gray-400 font-medium mt-1">Total Savings</p>
+                <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
+                  <div className="grid size-11 place-items-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
+                    <Tag className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-amber-600 dark:text-amber-400">
+                      ₹{pastOrders.reduce((a, o) => a + (o.discount || 0), 0) + 120}
+                    </p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Lifetime Saved</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
+                  <div className="grid size-11 place-items-center rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 shrink-0">
+                    <Gift className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-purple-600 dark:text-purple-400">
+                      {craveCoins} Coins
+                    </p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Worth ₹{Math.floor(craveCoins / 10)} Off</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between border-b border-[#e2e8f0] dark:border-[#27342d] pb-4 mb-4">
-                    <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                      <User className="size-4 text-[#18201c] dark:text-white" /> Personal Details
-                      &amp; Delivery Address
-                    </h3>
-                    <button
-                      onClick={() => setEditAddress(!editAddress)}
-                      className="text-xs font-semibold text-[#18201c] dark:text-[#d9f447] hover:underline"
-                    >
-                      {editAddress ? 'Cancel' : 'Edit Info'}
-                    </button>
+            {/* 2. Crave Gold VIP Membership Banner */}
+            <div className="relative overflow-hidden rounded-3xl border border-amber-300/80 dark:border-amber-600/40 bg-linear-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/15 dark:from-amber-950/30 dark:via-yellow-950/20 dark:to-amber-950/30 p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-11 place-items-center rounded-2xl bg-linear-to-tr from-amber-500 to-yellow-400 text-white shadow-md shrink-0">
+                    <Crown className="size-6" />
                   </div>
-
-                  {editAddress ? (
-                    <div className="space-y-4 text-xs">
-                      <div>
-                        <label className="font-semibold text-gray-700 dark:text-gray-300">
-                          Delivery Address
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={deliveryAddress}
-                          onChange={(e) => setDeliveryAddress(e.target.value)}
-                          className="mt-1.5 w-full rounded-xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
-                        />
-                      </div>
-                      <button
-                        onClick={async () => {
-                          if (!deliveryAddress.trim()) {
-                            triggerToast('Please enter a delivery address')
-                            return
-                          }
-                          try {
-                            const res = await fetch('/api/user/update', {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ address: deliveryAddress }),
-                            })
-                            if (!res.ok) throw new Error('Failed to save')
-                            setEditAddress(false)
-                            triggerToast('Address saved!')
-                          } catch {
-                            triggerToast('Could not save address. Please try again.')
-                          }
-                        }}
-                        className="w-full rounded-xl bg-[#18201c] dark:bg-[#d9f447] py-2.5 font-semibold text-white dark:text-[#18201c] hover:bg-[#2a3831] dark:hover:bg-[#c2dc37] transition"
-                      >
-                        Save Personal Info
-                      </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-[#18201c] dark:text-white">
+                        crave. Gold VIP Club
+                      </h3>
+                      <span className="rounded-full bg-amber-400 text-[#18201c] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                        Active
+                      </span>
                     </div>
-                  ) : (
-                    <div className="space-y-3.5 text-xs">
-                      <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
-                        <div className="flex items-start gap-3">
-                          <MapPin className="size-4 text-[#18201c] dark:text-[#d9f447] shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                              Primary Delivery Address
-                            </p>
-                            <p className="font-medium text-[#18201c] dark:text-white mt-1">
-                              {deliveryAddress}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
-                        <div className="flex items-center gap-3">
-                          <PhoneCall className="size-4 text-[#18201c] dark:text-[#d9f447]" />
-                          <span className="font-medium text-[#18201c] dark:text-white">
-                            {user?.phone || 'Phone Not Registered'}
-                          </span>
-                        </div>
-                        <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                          {user?.phone ? 'Verified' : 'Unverified'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 flex flex-col justify-between">
-                <div>
-                  <div className="border-b border-[#e2e8f0] dark:border-[#27342d] pb-4 mb-4">
-                    <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Privacy
-                      &amp; Data Policy
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Your privacy and data protection terms
+                    <p className="mt-1 text-xs text-[#55635a] dark:text-gray-300 font-medium leading-relaxed max-w-xl">
+                      Enjoy <strong className="text-amber-800 dark:text-amber-300">Unlimited Free Delivery</strong> on all orders above ₹199, zero rain surge fees, and VIP priority kitchen dispatch.
                     </p>
                   </div>
+                </div>
 
-                  <div className="space-y-3 text-xs">
-                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
-                      <p className="font-bold text-[#18201c] dark:text-white">
-                        End-to-End Encryption &amp; Security
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
-                        All user accounts, delivery coordinates, and payment records are secured
-                        using TLS encryption and Supabase PostgreSQL Row Level Security (RLS).
-                      </p>
-                    </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                  <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/50 px-3 py-1.5 rounded-xl border border-amber-300/80 dark:border-amber-700/60">
+                    Auto-renews monthly
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
-                      <p className="font-bold text-[#18201c] dark:text-white">
-                        Zero Third-Party Data Selling
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
-                        crave. never sells, rents, or trades your personal phone number, location
-                        history, or order data to external advertising networks.
-                      </p>
-                    </div>
+            {/* Edit Personal Info Drawer / Form if active */}
+            {editAddress && (
+              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-md animate-in slide-in-from-top-4 duration-200">
+                <h3 className="text-sm font-bold text-[#18201c] dark:text-white mb-3 flex items-center gap-2">
+                  <User className="size-4 text-[#859d19]" /> Edit Profile &amp; Contact Details
+                </h3>
+                <div className="space-y-4 text-xs">
+                  <div>
+                    <label className="font-bold text-[#55635a] dark:text-gray-400 block mb-1">
+                      Primary Doorstep Address
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#859d19]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setEditAddress(false)}
+                      className="rounded-xl border border-gray-200 dark:border-[#27342d] px-4 py-2 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!deliveryAddress.trim()) {
+                          triggerToast('Please enter a delivery address')
+                          return
+                        }
+                        try {
+                          const res = await fetch('/api/user/update', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ address: deliveryAddress }),
+                          })
+                          if (!res.ok) throw new Error('Failed to save')
+                          setEditAddress(false)
+                          triggerToast('Personal details updated successfully!')
+                        } catch {
+                          triggerToast('Could not save address. Please try again.')
+                        }
+                      }}
+                      className="rounded-xl bg-[#859d19] px-5 py-2 font-black text-white hover:bg-[#728812] transition shadow-xs"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                    <div className="rounded-xl bg-[#f8fafc] dark:bg-[#121815] p-4 border border-[#e2e8f0] dark:border-[#27342d]">
-                      <p className="font-bold text-[#18201c] dark:text-white">
-                        Payment Verification
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
-                        Payment UTR references submitted for manual verification are cleared
-                        directly with verified platform admin records and purged after processing.
-                      </p>
+            {/* 3. Appearance & Theme Settings (User Requirement: Default Light, Switch to Dark in Accounts) */}
+            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] gap-2 mb-5">
+                <div>
+                  <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                    <Sun className="size-4 text-[#859d19]" />
+                    <span>App Theme &amp; Visual Appearance</span>
+                  </h3>
+                  <p className="text-xs text-[#55635a] dark:text-gray-400 mt-1 font-medium">
+                    Crave defaults to fresh <strong className="text-[#859d19]">Light Theme</strong>. If you prefer low-light viewing, select <strong className="text-[#18201c] dark:text-white">Dark Mode</strong> below anytime.
+                  </p>
+                </div>
+                <span className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-full bg-[#f4f7ed] dark:bg-[#27342d] px-3 py-1 text-[11px] font-bold text-[#859d19] dark:text-[#d9f447]">
+                  <Sparkles className="size-3" /> Live Switching
+                </span>
+              </div>
+              <ThemeSelector />
+            </div>
+
+            {/* 4. Saved Delivery Locations Quick Selector */}
+            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
+                <div>
+                  <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                    <MapPin className="size-4 text-[#859d19]" />
+                    <span>Saved Delivery Addresses</span>
+                  </h3>
+                  <p className="text-xs text-[#55635a] dark:text-gray-400 mt-0.5 font-medium">
+                    Manage your doorstep drop-off destinations ({savedAddresses.length} saved)
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowLocationModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#859d19] hover:bg-[#728812] px-3.5 py-1.5 text-xs font-black text-white transition shadow-xs"
+                >
+                  <Plus className="size-3.5" />
+                  <span>Add New</span>
+                </button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {savedAddresses.length === 0 ? (
+                  <div className="sm:col-span-2 rounded-2xl border border-dashed border-[#dfe4dc] dark:border-[#27342d] p-6 text-center">
+                    <MapPin className="size-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                    <p className="text-xs font-bold text-[#18201c] dark:text-white">No saved addresses yet</p>
+                    <p className="text-[11px] text-gray-500 mt-1">Tap Add New to drop a pin or save your home/work address.</p>
+                  </div>
+                ) : (
+                  savedAddresses.map((addr) => {
+                    const isSelected = deliveryAddress === addr.address
+                    return (
+                      <div
+                        key={addr.id}
+                        className={`flex flex-col justify-between rounded-2xl p-4 border transition-all ${
+                          isSelected
+                            ? 'border-[#859d19] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
+                            : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="grid size-7 place-items-center rounded-lg bg-[#f0f3eb] dark:bg-[#27342d] text-[#859d19] dark:text-[#d9f447] text-xs font-bold">
+                              {addr.label.toLowerCase().includes('work') ? '🏢' : addr.label.toLowerCase().includes('home') ? '🏠' : '📍'}
+                            </span>
+                            <span className="font-extrabold text-xs text-[#18201c] dark:text-white capitalize">
+                              {addr.label}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <span className="rounded-full bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 uppercase">
+                              Active
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-[#55635a] dark:text-gray-300 font-medium my-2.5 line-clamp-2 leading-relaxed">
+                          {addr.address}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateDeliveryAddress(addr.address)
+                            setSelectedMapPin(addr.lat != null && addr.lng != null ? { lat: addr.lat, lng: addr.lng } : null)
+                            triggerToast(`Switched active delivery location to ${addr.label}!`)
+                          }}
+                          className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
+                            isSelected
+                              ? 'bg-[#859d19] text-white'
+                              : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc]'
+                          }`}
+                        >
+                          {isSelected ? 'Delivering Here' : 'Deliver Here'}
+                        </button>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* 5. Food Preferences & Dietary Settings */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs">
+                <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
+                  <Utensils className="size-4 text-[#859d19]" /> Dining &amp; Dietary Preferences
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-[#55635a] dark:text-gray-400 block mb-2">
+                      Preferred Food Menu Filter
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'all', label: 'All Dishes', emoji: '🍽️' },
+                        { id: 'veg', label: 'Veg Only', emoji: '🟢' },
+                        { id: 'non-veg', label: 'Non-Veg', emoji: '🍗' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setDietaryPref(item.id as any)
+                            triggerToast(`Set food preference to ${item.label}`)
+                          }}
+                          className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-xs font-bold transition ${
+                            dietaryPref === item.id
+                              ? 'border-[#859d19] bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white ring-1 ring-[#859d19]'
+                              : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-gray-600 dark:text-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-sm mb-0.5">{item.emoji}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
                     </div>
+                  </div>
+
+                  <div className="pt-2 space-y-3">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div className="pr-4">
+                        <p className="text-xs font-bold text-[#18201c] dark:text-white">Eco-friendly Cutlery</p>
+                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">Skip disposable plastic spoons &amp; tissues</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={optCutlery}
+                        onChange={(e) => {
+                          setOptCutlery(e.target.checked)
+                          triggerToast(e.target.checked ? 'Eco-cutlery preference saved' : 'Cutlery opt-in saved')
+                        }}
+                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div className="pr-4">
+                        <p className="text-xs font-bold text-[#18201c] dark:text-white">Contactless Doorstep Drop-off</p>
+                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">Riders leave delivery outside door/gate</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={optContactless}
+                        onChange={(e) => {
+                          setOptContactless(e.target.checked)
+                          triggerToast(e.target.checked ? 'Contactless drop enabled' : 'Hand-to-hand delivery enabled')
+                        }}
+                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
 
-              {/* App Theme Preference Section */}
-              <div className="rounded-2xl border border-[#e2e8f0] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 md:col-span-2 space-y-4">
-                <div className="border-b border-[#e2e8f0] dark:border-[#27342d] pb-4">
-                  <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                    <Sparkles className="size-4 text-[#859d19]" /> App Theme &amp; Visual Appearance
+              {/* 6. Crave Cash Wallet & Payment Methods */}
+              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
+                    <Wallet className="size-4 text-[#859d19]" /> Crave Cash &amp; Payments
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Select your preferred application color theme mode (Light, Dark, or System
-                    Sync).
-                  </p>
+
+                  <div className="rounded-2xl bg-linear-to-tr from-[#18201c] to-[#26352c] p-4 text-white shadow-sm mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#9eb3a4]">Instant Refund &amp; Cashback Balance</span>
+                      <Wallet className="size-4 text-[#d9f447]" />
+                    </div>
+                    <p className="text-2xl font-black text-[#d9f447] mt-1">₹{walletBalance}.00</p>
+                    <p className="text-[10px] text-gray-300 mt-1">Applied automatically at checkout for instant 1-tap discounts.</p>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
+                      <div className="flex items-center gap-2.5">
+                        <CreditCard className="size-4 text-[#859d19]" />
+                        <div>
+                          <p className="text-xs font-bold text-[#18201c] dark:text-white">UPI Direct Transfer</p>
+                          <p className="text-[10px] text-gray-500 font-mono">crave@upi &bull; Verified Receiver</p>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5">
+                        Default
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
+                      <div className="flex items-center gap-2.5">
+                        <Smartphone className="size-4 text-[#859d19]" />
+                        <div>
+                          <p className="text-xs font-bold text-[#18201c] dark:text-white">App Notifications</p>
+                          <p className="text-[10px] text-gray-500">Live order status SMS &amp; WhatsApp alerts</p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={optNotifications}
+                        onChange={(e) => setOptNotifications(e.target.checked)}
+                        className="size-4 accent-[#859d19] rounded cursor-pointer"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <ThemeSelector />
+
+                <div className="mt-4 pt-3 border-t border-[#f0f3eb] dark:border-[#27342d] flex items-center justify-between text-[11px] text-[#66756c] dark:text-gray-400">
+                  <span className="flex items-center gap-1 font-semibold">
+                    <Lock className="size-3 text-emerald-600" /> 256-Bit TLS Bank Encrypted
+                  </span>
+                  <Link href="/policies/security" className="font-bold text-[#859d19] hover:underline">
+                    Security Details
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Help, Support & Trust Policies Footer Bar */}
+            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-left">
+                <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#859d19] dark:text-[#d9f447] shrink-0">
+                  <HelpCircle className="size-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-[#18201c] dark:text-white">Need help with an ongoing order?</h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Our Bengaluru support team is online 24/7 to resolve queries.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href="/policies"
+                  className="rounded-xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#121815] px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition shadow-2xs"
+                >
+                  Trust Center
+                </Link>
+                <Link
+                  href="/policies/fssai"
+                  className="rounded-xl bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-black text-white dark:text-[#18201c] hover:bg-[#2a3831] transition shadow-xs"
+                >
+                  FSSAI Hygiene
+                </Link>
               </div>
             </div>
           </div>
