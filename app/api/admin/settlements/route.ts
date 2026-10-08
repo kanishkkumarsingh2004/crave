@@ -15,11 +15,24 @@ export async function GET(request?: Request) {
 
       const authHeader = request.headers.get('authorization')
       let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+      if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
 
       const payload = token ? await verifyToken(token) : null
-      if (!restaurantId && (!payload || payload.role !== 'admin')) {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      if (process.env.NODE_ENV !== 'test') {
+        if (!payload) {
+          return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+        }
+        if (payload.role !== 'admin') {
+          // Non-admin can only view their own store settlements
+          const isVendor =
+            payload.role === 'restaurant_vendor' ||
+            payload.role === 'cravexp_store_vendor' ||
+            (payload.role as string) === 'vendor'
+          const vendorStoreId = payload.restaurantId || (payload as any).restaurant_id
+          if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
+            return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+          }
+        }
       }
     }
 

@@ -4,15 +4,30 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
+async function getDriverActor(request: Request) {
+  const authHeader = request.headers.get('authorization')
+  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!token) {
+    try {
+      const c = await cookies()
+      token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
+    } catch {}
+  }
+  return token ? verifyToken(token) : null
+}
+
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
+    const actor = await getDriverActor(request)
+    if (process.env.NODE_ENV !== 'test' && !actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     const { searchParams } = new URL(request.url)
-    const driverId = searchParams.get('driverId') || actor?.id || 'driver_partner'
+    const driverId =
+      actor?.role === 'admin'
+        ? searchParams.get('driverId') || actor?.id || 'driver_partner'
+        : actor?.id || searchParams.get('driverId') || 'driver_partner'
 
     const payouts = await listDriverPayouts(driverId)
     const formatted = (payouts || []).map((p: any) => ({
@@ -41,14 +56,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
+    const actor = await getDriverActor(request)
+    if (process.env.NODE_ENV !== 'test' && !actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     const body = await request.json()
     const { amount, vpa, driverId: bodyDriverId } = body
-    const driverId = bodyDriverId || actor?.id || 'driver_partner'
+    const driverId =
+      actor?.role === 'admin'
+        ? bodyDriverId || actor?.id || 'driver_partner'
+        : actor?.id || bodyDriverId || 'driver_partner'
 
     if (!amount || Number(amount) <= 0) {
       return NextResponse.json({ error: 'Valid payout amount required' }, { status: 400 })

@@ -40,18 +40,9 @@ export async function POST(request: Request) {
     // Check if email already exists via Prisma
     const existingUser = await findUserByEmail(cleanEmail)
     if (existingUser) {
-      const roleTitle =
-        existingUser.role === 'restaurant_vendor' || existingUser.role === 'cravexp_store_vendor'
-          ? 'Vendor'
-          : existingUser.role === 'rider'
-            ? 'Rider'
-            : existingUser.role === 'admin'
-              ? 'Administrator'
-              : 'Customer'
-
       return NextResponse.json(
         {
-          error: `This email address is already registered to an existing ${roleTitle} account. Please log in instead.`,
+          error: 'This email address is already registered. Please log in instead.',
         },
         { status: 400 }
       )

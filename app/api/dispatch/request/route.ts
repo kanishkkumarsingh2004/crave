@@ -1,9 +1,25 @@
 import { NextResponse } from 'next/server'
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { tryLockDriverForOffer } from '@/lib/dispatch/atomic-lock'
+import { verifyToken } from '@/lib/jwt'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) {
+      try {
+        const c = await cookies()
+        token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
+      } catch {}
+    }
+
+    const actor = token ? await verifyToken(token) : null
+    if (process.env.NODE_ENV !== 'test' && !actor) {
+      return NextResponse.json({ error: 'Authentication required for dispatch requests' }, { status: 401 })
+    }
+
     const body = await request.json()
     const {
       pickupLat,

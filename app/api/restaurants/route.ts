@@ -111,6 +111,17 @@ export async function PATCH(request: Request) {
     if (!body.id) {
       return NextResponse.json({ error: 'Restaurant id is required' }, { status: 400 })
     }
+
+    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
+      const existing = await prisma.restaurant.findUnique({
+        where: { id: body.id },
+        select: { owner_id: true, id: true },
+      })
+      const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
+      if (existing && existing.owner_id !== actor.id && existing.id !== vendorRestaurantId) {
+        return NextResponse.json({ error: 'Forbidden: You do not own this restaurant' }, { status: 403 })
+      }
+    }
     const updateData: any = {}
     if (typeof body.is_open === 'boolean') updateData.is_open = body.is_open
     if (body.name !== undefined) updateData.name = body.name

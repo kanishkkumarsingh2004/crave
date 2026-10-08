@@ -6,12 +6,48 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0f1412] text-gray-400 text-xs py-16 border-t border-gray-800/80 font-sans">
+    <footer className="bg-[#0f1412] text-gray-400 text-xs py-6 md:py-16 border-t border-gray-800/80 font-sans">
       <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
         {/* =========================================================================
-            TOP BAR: LOGO & COUNTRY / LANGUAGE SELECTOR
+            MOBILE VIEW: SLEEK, COMPACT & MINIMAL FOOTER
            ========================================================================= */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-10 border-b border-gray-800/80">
+        <div className="md:hidden py-4 text-center space-y-3.5">
+          <div className="flex items-center justify-center gap-2">
+            <CraveLogo variant="full" size="md" theme="light" />
+          </div>
+          <p className="text-[11px] text-gray-400 max-w-xs mx-auto leading-relaxed">
+            Fresh hyper-local culinary &amp; essentials delivery across Kanakapura Road Corridor.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 text-[11px] font-semibold text-gray-300">
+            <Link href="/policies/terms-of-service" className="hover:text-white transition">
+              Terms
+            </Link>
+            <span className="text-gray-600">&bull;</span>
+            <Link href="/policies/privacy" className="hover:text-white transition">
+              Privacy
+            </Link>
+            <span className="text-gray-600">&bull;</span>
+            <Link href="/policies/fssai" className="hover:text-white transition">
+              FSSAI
+            </Link>
+            <span className="text-gray-600">&bull;</span>
+            <Link href="/policies" className="hover:text-white transition">
+              Help &amp; Support
+            </Link>
+          </div>
+          <p className="text-[10px] text-gray-500 font-medium">
+            2026 &copy; crave.&trade; Ltd. All rights reserved.
+          </p>
+        </div>
+
+        {/* =========================================================================
+            DESKTOP VIEW: DETAILED 5-COLUMN COMPREHENSIVE FOOTER
+           ========================================================================= */}
+        <div className="hidden md:block">
+          {/* =========================================================================
+              TOP BAR: LOGO & COUNTRY / LANGUAGE SELECTOR
+             ========================================================================= */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-10 border-b border-gray-800/80">
           <Link href="/" className="inline-flex items-center gap-2">
             <CraveLogo variant="full" size="xl" theme="light" />
           </Link>
@@ -248,6 +284,7 @@ export default function Footer() {
             <span>Kanakapura Road Corridor, Bengaluru</span>
           </div>
         </div>
+      </div>
       </div>
     </footer>
   )

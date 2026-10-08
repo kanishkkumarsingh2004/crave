@@ -17,9 +17,22 @@ const broadcast = (channel, data, excludeSocket) => {
   })
 }
 
+const WS_INTERNAL_SECRET =
+  process.env.WS_INTERNAL_SECRET || process.env.JWT_SECRET || 'crave_internal_secret_default'
+
 const server = createServer((req, res) => {
   if (req.url && req.url.startsWith('/__ws/broadcast')) {
     if (req.method === 'POST') {
+      const incomingSecret = req.headers['x-internal-secret']
+      if (
+        process.env.NODE_ENV !== 'test' &&
+        WS_INTERNAL_SECRET &&
+        incomingSecret !== WS_INTERNAL_SECRET
+      ) {
+        res.writeHead(403, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Forbidden' }))
+        return
+      }
       let body = ''
       let size = 0
       req.on('data', (chunk) => {

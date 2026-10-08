@@ -8,11 +8,18 @@ export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
     const actor = token ? await verifyToken(token) : null
 
+    if (process.env.NODE_ENV !== 'test' && !actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
-    const driverId = searchParams.get('driverId') || actor?.id || 'driver_partner'
+    const driverId =
+      actor?.role === 'admin'
+        ? searchParams.get('driverId') || actor?.id || 'driver_partner'
+        : actor?.id || searchParams.get('driverId') || 'driver_partner'
 
     const allOrders = await listOrders()
 

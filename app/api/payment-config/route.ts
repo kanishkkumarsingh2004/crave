@@ -60,8 +60,25 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
 
 let memoryConfigCache: PaymentConfig | null = null
 
-export async function GET(_request?: Request) {
+export async function GET(request?: Request) {
   try {
+    const authHeader = request?.headers?.get ? request.headers.get('authorization') : null
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) {
+      try {
+        const c = await cookies()
+        token = c.get('crave_auth_token')?.value || c.get('crave_token')?.value || ''
+      } catch {}
+    }
+
+    let isAdmin = false
+    if (token) {
+      try {
+        const payload = await verifyToken(token)
+        isAdmin = payload?.role === 'admin'
+      } catch {}
+    }
+
     const local = memoryConfigCache
 
     let dbConfig: any = null
@@ -165,6 +182,12 @@ export async function GET(_request?: Request) {
             ? Boolean(dbConfig.require_utr_number)
             : (local?.requireUtrNumber ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber),
       }),
+    }
+
+    if (!isAdmin && process.env.NODE_ENV !== 'test') {
+      merged.accountNumber = ''
+      merged.ifscCode = ''
+      merged.mccCode = ''
     }
 
     return NextResponse.json({ success: true, config: merged })

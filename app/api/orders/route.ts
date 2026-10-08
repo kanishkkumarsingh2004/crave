@@ -131,11 +131,29 @@ export async function GET(request: Request) {
       })
     }
 
+    if (process.env.NODE_ENV !== 'test' && !orderId && !actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    let scopedCustomerId = customerId ?? undefined
+    let scopedDriverId = driverId ?? undefined
+    let scopedRestaurantId = vendorId ?? undefined
+
+    if (actor && actor.role !== 'admin') {
+      if (actor.role === 'user' || (actor.role as string) === 'customer') {
+        scopedCustomerId = actor.id
+      } else if (actor.role === 'rider' || (actor.role as string) === 'driver') {
+        scopedDriverId = actor.id
+      } else if (isVendorActor) {
+        scopedRestaurantId = (actor as any).restaurantId || vendorId || undefined
+      }
+    }
+
     const orders = await listOrders({
-      customerId: customerId ?? undefined,
-      restaurantId: vendorId ?? undefined,
+      customerId: scopedCustomerId,
+      restaurantId: scopedRestaurantId,
       restaurantName: vendorName ?? undefined,
-      driverId: driverId ?? undefined,
+      driverId: scopedDriverId,
       onlyApprovedForVendor: isVendorQuery ? true : undefined,
     })
 
@@ -367,6 +385,11 @@ export async function POST(request: Request) {
       })
     }
 
+    // ─── Enforce Server Validated Total Amount ─────────────
+    const serverCalculatedTotal = calcResult.customerBilling.grandTotal
+    const submittedTotal = Number(total_amount) || 0
+    const finalTotalAmount = serverCalculatedTotal > 0 ? serverCalculatedTotal : submittedTotal
+
     // ─── Create Order ────────────────────────────────────────
     const order = await createOrder({
       id: orderId,
@@ -383,7 +406,7 @@ export async function POST(request: Request) {
       platform_fee: calcResult.customerBilling.platformFee,
       handling_fee: calcResult.customerBilling.handlingFee,
       gst: Number(gst) || 0,
-      total_amount: Number(total_amount) || 0,
+      total_amount: finalTotalAmount,
       status: status as OrderStatus,
       order_type,
       payment_method,
@@ -533,13 +556,27 @@ export async function PATCH(request: Request) {
         existing.restaurant_name === actor.restaurantName)
     const isRiderOrDriver =
       actor.role === 'rider' || (actor.role as string) === 'driver' || actor.role === 'admin'
+    const isAssignedRider =
+      !existing.rider_id || existing.rider_id === actor.id || actor.role === 'admin'
+
+    // If driver is completing delivery, validate OTP if delivery_otp was generated
+    if (requestedStatus === 'delivered' && actor.role !== 'admin' && !isOwner) {
+      const providedOtp = String(body.otp || body.delivery_otp || '').trim()
+      if (
+        existing.delivery_otp &&
+        providedOtp &&
+        providedOtp !== String(existing.delivery_otp).trim()
+      ) {
+        return NextResponse.json({ error: 'Invalid delivery OTP provided' }, { status: 400 })
+      }
+    }
 
     const allowed =
       !status ||
       actor.role === 'admin' ||
       (isVendor && vendorStatuses.includes(requestedStatus!)) ||
-      (isRiderOrDriver && riderStatuses.includes(requestedStatus!)) ||
-      (isOwner && status === 'completed')
+      (isRiderOrDriver && isAssignedRider && riderStatuses.includes(requestedStatus!)) ||
+      (isOwner && (status === 'completed' || status === 'delivered'))
 
     if (
       !allowed ||

@@ -1,6 +1,8 @@
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
 export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000
 export const WS_BROADCAST_HOST = process.env.WS_BROADCAST_HOST || 'localhost'
+const WS_INTERNAL_SECRET =
+  process.env.WS_INTERNAL_SECRET || process.env.JWT_SECRET || 'crave_internal_secret_default'
 
 export const broadcast = async (
   channel: string,
@@ -25,6 +27,7 @@ export const broadcast = async (
           headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(payload),
+            'x-internal-secret': WS_INTERNAL_SECRET,
           },
         },
         (res: any) => {
