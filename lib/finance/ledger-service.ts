@@ -443,7 +443,12 @@ export async function persistJournalTransaction(transaction: JournalTransaction)
   // Check if already persisted (idempotency)
   try {
     const existingCount = await (prisma as any).ledgerEntry.count({
-      where: { idempotency_key: transaction.idempotencyKey },
+      where: {
+        OR: [
+          { idempotency_key: transaction.idempotencyKey },
+          { idempotency_key: { startsWith: `${transaction.idempotencyKey}_line_` } },
+        ],
+      },
     })
 
     if (existingCount > 0) {

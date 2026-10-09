@@ -170,8 +170,20 @@ export function useOrderUpdates(customerId: string | undefined, onOrders: (order
     onMessage: (msg) => {
       if (msg.channel === 'order_update') {
         const data = msg.data as any
+        // Verify customer ownership if customerId is provided
+        if (
+          customerId &&
+          data.order &&
+          data.order.customer_id &&
+          data.order.customer_id !== customerId
+        ) {
+          return
+        }
         if (data.orders) {
-          onOrders(data.orders)
+          const filtered = customerId
+            ? data.orders.filter((o: any) => !o.customer_id || o.customer_id === customerId)
+            : data.orders
+          if (filtered.length > 0) onOrders(filtered)
         } else if (data.order) {
           const o = data.order
           const statusMap: Record<string, string> = {
@@ -222,6 +234,10 @@ export function useApprovalUpdates(
     onMessage: (msg) => {
       if (msg.channel === 'approval_update') {
         const data = msg.data as any
+        // Check matching orderId if provided
+        if (orderId && data.orderId && data.orderId !== orderId && data.targetOrderId !== orderId) {
+          return
+        }
         onStatus(data.status || 'pending')
       }
     },
@@ -260,6 +276,9 @@ export function playChimeSound() {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext
     if (!AudioContext) return
     const ctx = new AudioContext()
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = 'sine'

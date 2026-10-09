@@ -95,7 +95,9 @@ export async function listRestaurants(options?: {
 
   // Check vendors table fallback
   try {
-    const { data: vendors } = await (supabase as any).from('vendors').select('*')
+    let vQuery = (supabase as any).from('vendors').select('*')
+    if (options?.ownerId) vQuery = vQuery.eq('id', options.ownerId)
+    const { data: vendors } = await vQuery
     if (vendors && vendors.length > 0) {
       const mapped = vendors.map((v: any) => ({
         id: v.id,
