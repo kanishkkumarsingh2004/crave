@@ -3,11 +3,12 @@ import {
   listVendorSettlements,
   updateVendorSettlementStatus,
 } from '@/lib/dal/payments'
-import { verifyToken } from '@/lib/jwt'
+import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { VendorSettlementStatus } from '@prisma/client'
 
 export async function GET(request?: Request) {
   try {
@@ -36,7 +37,7 @@ export async function GET(request?: Request) {
             payload.role === 'restaurant_vendor' ||
             payload.role === 'cravexp_store_vendor' ||
             (payload.role as string) === 'vendor'
-          const vendorStoreId = payload.restaurantId || (payload as any).restaurant_id
+          const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
           if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
           }
@@ -50,21 +51,21 @@ export async function GET(request?: Request) {
       include: { restaurant: true },
     })
 
-    const totalGrossSales = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.gross_sales || 0),
+const totalGrossSales = settlements.reduce(
+      (acc: number, s: any) => acc + Number(s.gross_sales ?? 0),
       0
     )
     const totalCommission = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.commission_amount || 0),
+      (acc: number, s: any) => acc + Number(s.commission_amount ?? 0),
       0
     )
     const totalNetPayable = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.net_payout || 0),
+      (acc: number, s: any) => acc + Number(s.net_payout ?? 0),
       0
     )
     const totalSettledAmount = settlements
       .filter((s: any) => s.status === 'paid' || s.status === 'settled')
-      .reduce((acc: number, s: any) => acc + Number(s.net_payout || 0), 0)
+      .reduce((acc: number, s: any) => acc + Number(s.net_payout ?? 0), 0)
     const remainingBalance = Math.max(0, totalNetPayable - totalSettledAmount)
 
     return NextResponse.json({
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
         commission_rate: Number(commission_rate || 15),
         commission_amount: Number(commission_amount || 0),
         net_payout: Number(net_payout),
-        status: settleStatus as any,
+        status: settleStatus as VendorSettlementStatus,
         transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
         period_start: new Date(),
         period_end: new Date(),

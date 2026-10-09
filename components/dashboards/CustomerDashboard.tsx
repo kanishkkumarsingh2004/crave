@@ -2399,7 +2399,7 @@ export default function CustomerDashboard({
             </div>
 
             {/* 5. Food Preferences & Dietary Settings */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div>
               <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs">
                 <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
                   <Utensils className="size-4 text-[#d9f447]" /> Dining &amp; Dietary Preferences
@@ -2488,78 +2488,6 @@ export default function CustomerDashboard({
                 </div>
               </div>
 
-              {/* 6. Crave Cash Wallet & Payment Methods */}
-              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs flex flex-col justify-between">
-                <div>
-                  <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2 pb-3 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
-                    <Wallet className="size-4 text-[#b5de28]" /> Crave Cash &amp; Payments
-                  </h3>
-
-                  <div className="rounded-2xl bg-linear-to-tr from-[#18201c] to-[#26352c] p-4 text-white shadow-sm mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#9eb3a4]">
-                        Instant Refund &amp; Cashback Balance
-                      </span>
-                      <Wallet className="size-4 text-[#d9f447]" />
-                    </div>
-                    <p className="text-2xl font-black text-[#d9f447] mt-1">₹{walletBalance}.00</p>
-                    <p className="text-[10px] text-gray-300 mt-1">
-                      Applied automatically at checkout for instant 1-tap discounts.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
-                      <div className="flex items-center gap-2.5">
-                        <CreditCard className="size-4 text-[#b5de28]" />
-                        <div>
-                          <p className="text-xs font-bold text-[#18201c] dark:text-white">
-                            UPI Direct Transfer
-                          </p>
-                          <p className="text-[10px] text-gray-500 font-mono">
-                            crave@upi &bull; Verified Receiver
-                          </p>
-                        </div>
-                      </div>
-                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5">
-                        Default
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fbfcf9] dark:bg-[#121815] p-3">
-                      <div className="flex items-center gap-2.5">
-                        <Smartphone className="size-4 text-[#b5de28]" />
-                        <div>
-                          <p className="text-xs font-bold text-[#18201c] dark:text-white">
-                            App Notifications
-                          </p>
-                          <p className="text-[10px] text-gray-500">
-                            Live order status SMS &amp; WhatsApp alerts
-                          </p>
-                        </div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={optNotifications}
-                        onChange={(e) => setOptNotifications(e.target.checked)}
-                        className="size-4 accent-[#b5de28] rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-[#f0f3eb] dark:border-[#27342d] flex items-center justify-between text-[11px] text-[#66756c] dark:text-gray-400">
-                  <span className="flex items-center gap-1 font-semibold">
-                    <Lock className="size-3 text-emerald-600" /> 256-Bit TLS Bank Encrypted
-                  </span>
-                  <Link
-                    href="/policies/security"
-                    className="font-bold text-[#b5de28] hover:underline"
-                  >
-                    Security Details
-                  </Link>
-                </div>
-              </div>
             </div>
 
             {/* 7. Help, Support & Trust Policies Footer Bar */}

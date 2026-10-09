@@ -325,6 +325,80 @@ select,
   min-width: 44px;
 }
 
+/* Base Select Styling — Theme-Aware */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  padding: 0.625rem 2.5rem 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  min-height: 44px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--muted);
+}
+
+.dark select {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.dark select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.dark select:disabled {
+  background-color: var(--muted);
+}
+
+/* Select option styling */
+select option {
+  background-color: var(--popover) !important;
+  color: var(--foreground) !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+}
+
+/* Autofill fixes for select */
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--popover) inset !important;
+  caret-color: var(--primary) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark select:-webkit-autofill,
+.dark select:-webkit-autofill:hover,
+.dark select:-webkit-autofill:focus,
+.dark select:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--popover) inset !important;
+}
+
 /* Exceptions for inline links and small controls */
 a:not([role='button']),
 label,
@@ -723,7 +797,7 @@ input[type='submit'],
 }
 
 .dark .badge-success {
-  background-color: var(--emerald-900/30);
+  background-color: color-mix(in srgb, var(--emerald-900) 30%, transparent);
   color: var(--emerald-300);
 }
 
@@ -733,7 +807,7 @@ input[type='submit'],
 }
 
 .dark .badge-warning {
-  background-color: var(--amber-900/30);
+  background-color: color-mix(in srgb, var(--amber-900) 30%, transparent);
   color: var(--amber-300);
 }
 
@@ -743,7 +817,7 @@ input[type='submit'],
 }
 
 .dark .badge-error {
-  background-color: var(--red-900/30);
+  background-color: color-mix(in srgb, var(--red-900) 30%, transparent);
   color: var(--red-300);
 }
 
@@ -753,7 +827,7 @@ input[type='submit'],
 }
 
 .dark .badge-info {
-  background-color: var(--blue-900/30);
+  background-color: color-mix(in srgb, var(--blue-900) 30%, transparent);
   color: var(--blue-300);
 }
 
@@ -763,7 +837,7 @@ input[type='submit'],
 }
 
 .dark .badge-neutral {
-  background-color: var(--gray-800);
+  background-color: color-mix(in srgb, var(--gray-900) 30%, transparent);
   color: var(--gray-300);
 }
 
@@ -1240,69 +1314,59 @@ input,
 select,
 textarea,
 option {
-  color-scheme: dark;
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
-  caret-color: var(--primary) !important;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  caret-color: var(--primary);
 }
 
-/* In dark mode or inside dark input containers, ALWAYS force crisp white text */
-.dark input,
-.dark select,
-.dark textarea,
-.dark option,
-[class*='dark:bg-'],
-[class*='bg-[#'],
-[class*='bg-black'],
-[class*='bg-gray-800'],
-[class*='bg-gray-900'],
-[class*='bg-slate-800'],
-[class*='bg-slate-900'],
-[class*='bg-zinc-800'],
-[class*='bg-zinc-900'] {
-  color-scheme: dark !important;
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
-  caret-color: var(--primary) !important;
-}
-
-/* Light mode specific input fields — ONLY apply when html/body is NOT in dark mode AND inside a light wrapper */
-html:not(.dark) body:not(.dark) input.bg-white:not(.dark *),
-html:not(.dark) body:not(.dark) select.bg-white:not(.dark *),
-html:not(.dark) body:not(.dark) textarea.bg-white:not(.dark *),
+/* Light mode specific input fields */
 .light input,
 .light select,
-.light textarea {
+.light textarea,
+:root:not(.dark) input,
+:root:not(.dark) select,
+:root:not(.dark) textarea {
   color-scheme: light;
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
-  caret-color: var(--primary) !important;
+  color: #18201c;
+  -webkit-text-fill-color: #18201c;
+  caret-color: var(--primary);
 }
 
-/* In dark mode, NEVER allow light classes to force dark text */
 .dark input,
 .dark select,
-.dark textarea,
-.dark option {
-  color-scheme: dark !important;
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
-  caret-color: var(--primary) !important;
+.dark textarea {
+  color-scheme: dark;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: var(--primary);
 }
 
 input::placeholder,
-textarea::placeholder,
+textarea::placeholder {
+  color: #717c76 !important;
+  -webkit-text-fill-color: #717c76 !important;
+  opacity: 1 !important;
+}
+
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: var(--muted-foreground) !important;
-  -webkit-text-fill-color: var(--muted-foreground) !important;
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
   opacity: 1 !important;
 }
 
 select option {
-  background-color: var(--popover) !important;
-  color: var(--foreground) !important;
-  -webkit-text-fill-color: var(--foreground) !important;
+  background-color: #ffffff !important;
+  color: #18201c !important;
+  -webkit-text-fill-color: #18201c !important;
+}
+
+.dark select option,
+.dark select option:hover,
+.dark select option:focus {
+  background-color: #121815 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* Text Selection inside inputs and textareas */
@@ -1315,7 +1379,7 @@ textarea::selection,
   -webkit-text-fill-color: var(--primary-foreground) !important;
 }
 
-/* Autofill fixes for dark inputs */
+/* Autofill fixes for inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -1328,11 +1392,8 @@ select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus,
 select:-webkit-autofill:active {
-  -webkit-text-fill-color: var(--foreground) !important;
-  -webkit-box-shadow: 0 0 0px 1000px var(--popover) inset !important;
-  caret-color: var(--primary) !important;
+  -webkit-text-fill-color: inherit !important;
   transition: background-color 5000s ease-in-out 0s;
-  color: var(--foreground) !important;
 }
 
 input:disabled,
