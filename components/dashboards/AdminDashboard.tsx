@@ -256,19 +256,19 @@ export default function AdminDashboard() {
 
       const realVendorsList: VendorStore[] = vendorsData
         ? (vendorsData as any[]).map((r: any) => ({
-          id: r.id,
-          userId: r.owner_id,
-          storeName: r.name || 'Unnamed Store',
-          description: r.cuisine,
-          address: r.address,
-          status: r.is_open ? 'ACTIVE' : 'INACTIVE',
-          isOpen: r.is_open ?? true,
-          commissionRate: r.commission_rate ?? 15,
-          commissionType: r.payment_model || 'COMMISSION',
-          bannerUrl: r.image,
-          latitude: r.latitude ? Number(r.latitude) : undefined,
-          longitude: r.longitude ? Number(r.longitude) : undefined,
-        }))
+            id: r.id,
+            userId: r.owner_id,
+            storeName: r.name || 'Unnamed Store',
+            description: r.cuisine,
+            address: r.address,
+            status: r.is_open ? 'ACTIVE' : 'INACTIVE',
+            isOpen: r.is_open ?? true,
+            commissionRate: r.commission_rate ?? 15,
+            commissionType: r.payment_model || 'COMMISSION',
+            bannerUrl: r.image,
+            latitude: r.latitude ? Number(r.latitude) : undefined,
+            longitude: r.longitude ? Number(r.longitude) : undefined,
+          }))
         : []
 
       setVendorsList(realVendorsList)
@@ -288,8 +288,8 @@ export default function AdminDashboard() {
               : u.role === 'rider' || u.role === 'driver'
                 ? 'driver'
                 : u.role === 'restaurant_vendor' ||
-                  u.role === 'cravexp_store_vendor' ||
-                  u.role === 'vendor'
+                    u.role === 'cravexp_store_vendor' ||
+                    u.role === 'vendor'
                   ? 'vendor'
                   : (u.role as UserRole) || 'customer'
 
@@ -394,9 +394,9 @@ export default function AdminDashboard() {
             amount: p.amount,
             submittedAt: p.created_at
               ? new Date(p.created_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
               : 'Just now',
             status: (p.status as 'pending' | 'verified' | 'rejected') || 'pending',
           }))
@@ -617,22 +617,22 @@ export default function AdminDashboard() {
           address: editForm.address,
           ...(editForm.password && { password: editForm.password }),
           ...(editingAccount.role === 'vendor' ||
-            editingAccount.role === 'restaurant_vendor' ||
-            editingAccount.role === 'cravexp_store_vendor'
+          editingAccount.role === 'restaurant_vendor' ||
+          editingAccount.role === 'cravexp_store_vendor'
             ? {
-              storeName: editForm.storeName,
-              cuisine: editForm.cuisine,
-              commissionRate: editForm.commissionRate,
-              paymentModel: editForm.paymentModel,
-              latitude: editForm.latitude,
-              longitude: editForm.longitude,
-            }
+                storeName: editForm.storeName,
+                cuisine: editForm.cuisine,
+                commissionRate: editForm.commissionRate,
+                paymentModel: editForm.paymentModel,
+                latitude: editForm.latitude,
+                longitude: editForm.longitude,
+              }
             : {}),
           ...(editingAccount.role === 'driver' || editingAccount.role === 'rider'
             ? {
-              vehicleType: editForm.vehicleType,
-              licensePlate: editForm.licensePlate,
-            }
+                vehicleType: editForm.vehicleType,
+                licensePlate: editForm.licensePlate,
+              }
             : {}),
         }),
       })
@@ -874,10 +874,11 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('vendors')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'vendors'
-              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-              }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
+              activeTab === 'users' && userTab === 'vendors'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+            }`}
           >
             <Store className="size-4 text-amber-400 shrink-0" />
             <span>Vendors ({vendorAccounts.length})</span>
@@ -888,10 +889,11 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('customers')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'customers'
-              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-              }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
+              activeTab === 'users' && userTab === 'customers'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+            }`}
           >
             <Users className="size-4 text-emerald-400 shrink-0" />
             <span>Customers ({customerAccounts.length})</span>
@@ -902,10 +904,11 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('drivers')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'drivers'
-              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-              }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
+              activeTab === 'users' && userTab === 'drivers'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+            }`}
           >
             <Zap className="size-4 text-sky-400 shrink-0" />
             <span>Drivers ({driverAccounts.length})</span>
@@ -916,10 +919,11 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('admins')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'admins'
-              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-              }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
+              activeTab === 'users' && userTab === 'admins'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+            }`}
           >
             <ShieldCheck className="size-4 text-purple-400 shrink-0" />
             <span>Admins ({adminAccounts.length})</span>
@@ -927,10 +931,11 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab('menu-pricing')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'menu-pricing'
-              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-              }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
+              activeTab === 'menu-pricing'
+                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+            }`}
           >
             <Utensils className="size-4 text-[#d9f447] shrink-0" />
             <span>Menu &amp; Price Controls</span>
@@ -1125,10 +1130,11 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3.5 font-bold text-white">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${isXPStore
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                }`}
+                              className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
+                                isXPStore
+                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              }`}
                             >
                               <Store className="size-4" />
                             </div>
@@ -1145,10 +1151,11 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${isXPStore
-                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              }`}
+                            className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                              isXPStore
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            }`}
                           >
                             {isXPStore ? 'XP Store' : 'Restaurant Vendor'}
                           </span>
@@ -1177,10 +1184,11 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${account.status === 'active'
-                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                              : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                              }`}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                              account.status === 'active'
+                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                                : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                            }`}
                           >
                             <span
                               className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`}
@@ -1209,10 +1217,11 @@ export default function AdminDashboard() {
                             </button>
                             <button
                               onClick={() => toggleAccountStatus(account.id, account.status)}
-                              className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${account.status === 'active'
-                                ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                                }`}
+                              className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${
+                                account.status === 'active'
+                                  ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                  : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                              }`}
                             >
                               {account.status === 'active' ? 'Suspend' : 'Activate'}
                             </button>
@@ -1341,10 +1350,11 @@ export default function AdminDashboard() {
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${account.status === 'active'
-                            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                            : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                            }`}
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            account.status === 'active'
+                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                              : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                          }`}
                         >
                           {account.status}
                         </span>
@@ -1361,10 +1371,11 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(account.id, account.status)}
-                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${account.status === 'active'
-                              ? 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                              : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                              }`}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
+                              account.status === 'active'
+                                ? 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                            }`}
                           >
                             {account.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>
@@ -1520,14 +1531,16 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${driver.status === 'active'
-                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                            : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
-                            }`}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            driver.status === 'active'
+                              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                              : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
+                          }`}
                         >
                           <span
-                            className={`size-1.5 rounded-full ${driver.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'
-                              }`}
+                            className={`size-1.5 rounded-full ${
+                              driver.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'
+                            }`}
                           />
                           {driver.status === 'active' ? 'Active Partner' : driver.status}
                         </span>
@@ -1543,10 +1556,11 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(driver.id, driver.status)}
-                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${driver.status === 'active'
-                              ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                              : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                              }`}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
+                              driver.status === 'active'
+                                ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                            }`}
                           >
                             {driver.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>
@@ -1707,8 +1721,8 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
                   Edit{' '}
                   {editingAccount.role === 'vendor' ||
-                    editingAccount.role === 'restaurant_vendor' ||
-                    editingAccount.role === 'cravexp_store_vendor'
+                  editingAccount.role === 'restaurant_vendor' ||
+                  editingAccount.role === 'cravexp_store_vendor'
                     ? 'Store & Vendor'
                     : editingAccount.role === 'rider' || editingAccount.role === 'driver'
                       ? 'Driver Partner'
@@ -1773,53 +1787,53 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                  <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
-                    <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
-                      <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
-                      Commission Parameters
-                    </p>
+                <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
+                  <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
+                    <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
+                    Commission Parameters
+                  </p>
 
+                  <div>
+                    <label className="font-bold text-gray-700 dark:text-gray-300">Store Name</label>
+                    <input
+                      type="text"
+                      value={editForm.storeName}
+                      onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="font-bold text-gray-700 dark:text-gray-300">Store Name</label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        Cuisine / Category
+                      </label>
                       <input
                         type="text"
-                        value={editForm.storeName}
-                        onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
-                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                        value={editForm.cuisine}
+                        onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                       />
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="font-bold text-gray-700 dark:text-gray-300">
-                          Cuisine / Category
-                        </label>
-                        <input
-                          type="text"
-                          value={editForm.cuisine}
-                          onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
-                          className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-gray-700 dark:text-gray-300">
-                          Commission Rate (%)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={50}
-                          value={editForm.commissionRate}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
-                          }
-                          className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
-                        />
-                      </div>
+                    <div>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">
+                        Commission Rate (%)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={50}
+                        value={editForm.commissionRate}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                      />
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Driver Specific Fields */}
               {(editingAccount.role === 'rider' || editingAccount.role === 'driver') && (
@@ -1879,34 +1893,34 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                  <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
-                        <span>Store Location Pin</span>
-                      </h4>
-                      <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
-                        {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      Click or drag the map pin to adjust the store's exact coordinates.
-                    </p>
-                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
-                      <LocationPickerMap
-                        initialLat={editForm.latitude}
-                        initialLng={editForm.longitude}
-                        onLocationSelect={(lat, lng, address) => {
-                          setEditForm((prev) => ({
-                            ...prev,
-                            latitude: lat,
-                            longitude: lng,
-                            ...(address ? { address } : {}),
-                          }))
-                        }}
-                      />
-                    </div>
+                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
+                      <span>Store Location Pin</span>
+                    </h4>
+                    <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
+                      {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
+                    </span>
                   </div>
-                )}
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    Click or drag the map pin to adjust the store's exact coordinates.
+                  </p>
+                  <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
+                    <LocationPickerMap
+                      initialLat={editForm.latitude}
+                      initialLng={editForm.longitude}
+                      onLocationSelect={(lat, lng, address) => {
+                        setEditForm((prev) => ({
+                          ...prev,
+                          latitude: lat,
+                          longitude: lng,
+                          ...(address ? { address } : {}),
+                        }))
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="font-bold text-[#18201c] dark:text-white">
@@ -2853,9 +2867,9 @@ export default function AdminDashboard() {
                             product.comparePrice && product.comparePrice > product.price
                           const discountPct = hasDiscount
                             ? Math.round(
-                              ((product.comparePrice! - product.price) / product.comparePrice!) *
-                              100
-                            )
+                                ((product.comparePrice! - product.price) / product.comparePrice!) *
+                                  100
+                              )
                             : 0
 
                           return (
@@ -2913,10 +2927,11 @@ export default function AdminDashboard() {
 
                               <td className="px-4 py-3 whitespace-nowrap">
                                 <span
-                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${product.status === 'ACTIVE'
-                                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
-                                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
-                                    }`}
+                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                    product.status === 'ACTIVE'
+                                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
+                                      : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
+                                  }`}
                                 >
                                   {product.status}
                                 </span>

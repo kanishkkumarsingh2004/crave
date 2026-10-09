@@ -31,10 +31,10 @@ payment_pending ➔ payment_submitted ➔ payment_verified ➔ sent_to_vendor �
 
 ## 3. Cancellation & Refund Matrix
 
-| Cancellation Trigger | Stage | Customer Refund | Vendor Payout | Rider Compensation |
-| :--- | :--- | :--- | :--- | :--- |
-| **Customer Cancels** | Before Payment Verification | **100% Refund** | ₹0 | ₹0 |
-| **Customer Cancels** | After Vendor Acceptance | **50% Cancellation Fee** | 50% Food Subtotal | ₹0 |
-| **Vendor Rejection** | Kitchen Busy / Out of Stock | **100% Refund** | ₹0 | ₹0 |
-| **Rider Unavailable** | Dispatch Timeout (>15 min) | **100% Refund** | 100% Food Subtotal | ₹0 |
-| **Delivery Failure** | Customer Unreachable at Address | **0% Refund** | 100% Food Subtotal | 100% Rider Payout |
+| Cancellation Trigger  | Stage                           | Customer Refund          | Vendor Payout      | Rider Compensation |
+| :-------------------- | :------------------------------ | :----------------------- | :----------------- | :----------------- |
+| **Customer Cancels**  | Before Payment Verification     | **100% Refund**          | ₹0                 | ₹0                 |
+| **Customer Cancels**  | After Vendor Acceptance         | **50% Cancellation Fee** | 50% Food Subtotal  | ₹0                 |
+| **Vendor Rejection**  | Kitchen Busy / Out of Stock     | **100% Refund**          | ₹0                 | ₹0                 |
+| **Rider Unavailable** | Dispatch Timeout (>15 min)      | **100% Refund**          | 100% Food Subtotal | ₹0                 |
+| **Delivery Failure**  | Customer Unreachable at Address | **0% Refund**            | 100% Food Subtotal | 100% Rider Payout  |

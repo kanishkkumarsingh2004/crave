@@ -366,9 +366,7 @@ export default function CalculatorPlaygroundPage() {
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1.5">
-                      DB Restaurant:
-                    </label>
+                    <label className="block text-gray-300 font-bold mb-1.5">DB Restaurant:</label>
                     <select
                       value={selectedRestaurantId}
                       onChange={(e) => handleSelectDbRestaurant(e.target.value)}
@@ -406,9 +404,7 @@ export default function CalculatorPlaygroundPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-gray-300 font-bold">
-                      Select DB Recent Order:
-                    </label>
+                    <label className="block text-gray-300 font-bold">Select DB Recent Order:</label>
                     {!selectedRestaurantId && (
                       <span className="text-[10px] text-amber-400 font-bold">
                         Select restaurant first
@@ -436,7 +432,8 @@ export default function CalculatorPlaygroundPage() {
                     )}
                     {filteredDbOrders.map((ord) => (
                       <option key={ord.id} value={ord.id}>
-                        #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [{ord.status}]
+                        #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [
+                        {ord.status}]
                       </option>
                     ))}
                   </select>
@@ -525,7 +522,9 @@ export default function CalculatorPlaygroundPage() {
                 <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
                   <div className="flex justify-between font-bold">
                     <span className="text-gray-300">Delivery Distance (KM)</span>
-                    <span className="text-[#d9f447] font-mono text-sm font-black">{distanceKm} km</span>
+                    <span className="text-[#d9f447] font-mono text-sm font-black">
+                      {distanceKm} km
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -571,9 +570,7 @@ export default function CalculatorPlaygroundPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">
-                      Platform Fee (₹)
-                    </label>
+                    <label className="block text-gray-300 font-bold mb-1">Platform Fee (₹)</label>
                     <input
                       type="number"
                       value={platformFee}
@@ -593,9 +590,7 @@ export default function CalculatorPlaygroundPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">
-                      Customer Tip (₹)
-                    </label>
+                    <label className="block text-gray-300 font-bold mb-1">Customer Tip (₹)</label>
                     <input
                       type="number"
                       value={tip}
@@ -640,7 +635,9 @@ export default function CalculatorPlaygroundPage() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Moon className={`size-4 ${isNightSurgeActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                      <Moon
+                        className={`size-4 ${isNightSurgeActive ? 'text-purple-400' : 'text-gray-500'}`}
+                      />
                       <div>
                         <p className="font-extrabold text-xs">Night Surge</p>
                         <p className="text-[10px] text-gray-400">+₹{nightSurgeFee}</p>
@@ -775,9 +772,7 @@ export default function CalculatorPlaygroundPage() {
                   )}
                   <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
                     <span>Total Driver Payout</span>
-                    <span className="text-emerald-400">
-                      ₹{driverEarnings.totalDriverEarnings}
-                    </span>
+                    <span className="text-emerald-400">₹{driverEarnings.totalDriverEarnings}</span>
                   </div>
                 </div>
               </div>
@@ -795,7 +790,8 @@ export default function CalculatorPlaygroundPage() {
                         : 'text-rose-400 bg-rose-400/10 border-rose-400/20'
                     }`}
                   >
-                    ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}%)
+                    ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}
+                    %)
                   </span>
                 </div>
 
@@ -886,9 +882,7 @@ export default function CalculatorPlaygroundPage() {
                         ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
                       </td>
                       <td className="py-3 px-3 text-gray-400">
-                        ₹
-                        {platformEconomics.totalPaidToDriver +
-                          platformEconomics.totalPaidToVendor}{' '}
+                        ₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor}{' '}
                         (Payouts)
                       </td>
                       <td className="py-3 px-3 font-black text-yellow-400 text-sm">
@@ -904,113 +898,113 @@ export default function CalculatorPlaygroundPage() {
         </div>
       )}
 
-        {/* Tab Content: DB Payment Config */}
-        {activeTab === 'db_config' && (
-          <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-[#d9f447] flex items-center gap-2">
-              <Zap className="size-4" /> Active Database Payment Configuration
-            </h3>
-            <pre className="bg-[#0b0e0d] p-4 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto border border-[#232e27]">
-              {JSON.stringify(dbData?.paymentConfig || {}, null, 2)}
-            </pre>
-          </div>
-        )}
+      {/* Tab Content: DB Payment Config */}
+      {activeTab === 'db_config' && (
+        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-[#d9f447] flex items-center gap-2">
+            <Zap className="size-4" /> Active Database Payment Configuration
+          </h3>
+          <pre className="bg-[#0b0e0d] p-4 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto border border-[#232e27]">
+            {JSON.stringify(dbData?.paymentConfig || {}, null, 2)}
+          </pre>
+        </div>
+      )}
 
-        {/* Tab Content: DB Restaurants */}
-        {activeTab === 'db_restaurants' && (
-          <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Store className="size-4 text-orange-400" /> Loaded DB Restaurants (
-              {dbData?.restaurants?.length || 0})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {dbData?.restaurants?.map((rest) => (
-                <div
-                  key={rest.id}
-                  className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
-                >
-                  <p className="font-bold text-white text-sm">{rest.name}</p>
-                  <p className="text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
-                  <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
-                    <span>Commission Rate:</span>
-                    <span className="text-[#d9f447] font-bold">{rest.commission_rate ?? 15}%</span>
-                  </div>
+      {/* Tab Content: DB Restaurants */}
+      {activeTab === 'db_restaurants' && (
+        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Store className="size-4 text-orange-400" /> Loaded DB Restaurants (
+            {dbData?.restaurants?.length || 0})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {dbData?.restaurants?.map((rest) => (
+              <div
+                key={rest.id}
+                className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+              >
+                <p className="font-bold text-white text-sm">{rest.name}</p>
+                <p className="text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
+                <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
+                  <span>Commission Rate:</span>
+                  <span className="text-[#d9f447] font-bold">{rest.commission_rate ?? 15}%</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Tab Content: DB Coupons */}
-        {activeTab === 'db_coupons' && (
-          <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Tag className="size-4 text-[#d9f447]" /> Loaded DB Active Coupons (
-              {dbData?.coupons?.length || 0})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {dbData?.coupons?.map((coup) => (
-                <div
-                  key={coup.id}
-                  className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
-                >
-                  <span className="font-mono font-extrabold text-[#d9f447] bg-[#d9f447]/10 px-2 py-0.5 rounded">
-                    {coup.code}
+      {/* Tab Content: DB Coupons */}
+      {activeTab === 'db_coupons' && (
+        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Tag className="size-4 text-[#d9f447]" /> Loaded DB Active Coupons (
+            {dbData?.coupons?.length || 0})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {dbData?.coupons?.map((coup) => (
+              <div
+                key={coup.id}
+                className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+              >
+                <span className="font-mono font-extrabold text-[#d9f447] bg-[#d9f447]/10 px-2 py-0.5 rounded">
+                  {coup.code}
+                </span>
+                <p className="text-gray-300 pt-1">{coup.description}</p>
+                <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
+                  <span>Discount Value:</span>
+                  <span className="text-emerald-400 font-bold">
+                    {coup.discount_type === 'percentage'
+                      ? `${coup.discount_value}%`
+                      : `₹${coup.discount_value}`}
                   </span>
-                  <p className="text-gray-300 pt-1">{coup.description}</p>
-                  <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
-                    <span>Discount Value:</span>
-                    <span className="text-emerald-400 font-bold">
-                      {coup.discount_type === 'percentage'
-                        ? `${coup.discount_value}%`
-                        : `₹${coup.discount_value}`}
-                    </span>
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Tab Content: DB Orders */}
-        {activeTab === 'db_orders' && (
-          <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Layers className="size-4 text-purple-400" /> Recent Database Orders (
-              {dbData?.orders?.length || 0})
-            </h3>
-            <div className="overflow-x-auto text-xs font-mono">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#28352e] text-gray-400 uppercase text-[10px]">
-                    <th className="py-2 px-3">Order ID</th>
-                    <th className="py-2 px-3">Customer</th>
-                    <th className="py-2 px-3">Restaurant</th>
-                    <th className="py-2 px-3">Subtotal</th>
-                    <th className="py-2 px-3">Total Amount</th>
-                    <th className="py-2 px-3">Status</th>
+      {/* Tab Content: DB Orders */}
+      {activeTab === 'db_orders' && (
+        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Layers className="size-4 text-purple-400" /> Recent Database Orders (
+            {dbData?.orders?.length || 0})
+          </h3>
+          <div className="overflow-x-auto text-xs font-mono">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#28352e] text-gray-400 uppercase text-[10px]">
+                  <th className="py-2 px-3">Order ID</th>
+                  <th className="py-2 px-3">Customer</th>
+                  <th className="py-2 px-3">Restaurant</th>
+                  <th className="py-2 px-3">Subtotal</th>
+                  <th className="py-2 px-3">Total Amount</th>
+                  <th className="py-2 px-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e2722] text-gray-300">
+                {dbData?.orders?.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-[#1b241f] transition">
+                    <td className="py-2.5 px-3 text-gray-400">{ord.id.slice(0, 10)}...</td>
+                    <td className="py-2.5 px-3 font-semibold text-white">{ord.customer_name}</td>
+                    <td className="py-2.5 px-3 text-gray-300">{ord.restaurant_name}</td>
+                    <td className="py-2.5 px-3">₹{ord.subtotal}</td>
+                    <td className="py-2.5 px-3 text-[#d9f447] font-bold">₹{ord.total_amount}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="bg-[#242f29] px-2 py-0.5 rounded text-gray-300 text-[10px]">
+                        {ord.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e2722] text-gray-300">
-                  {dbData?.orders?.map((ord) => (
-                    <tr key={ord.id} className="hover:bg-[#1b241f] transition">
-                      <td className="py-2.5 px-3 text-gray-400">{ord.id.slice(0, 10)}...</td>
-                      <td className="py-2.5 px-3 font-semibold text-white">{ord.customer_name}</td>
-                      <td className="py-2.5 px-3 text-gray-300">{ord.restaurant_name}</td>
-                      <td className="py-2.5 px-3">₹{ord.subtotal}</td>
-                      <td className="py-2.5 px-3 text-[#d9f447] font-bold">₹{ord.total_amount}</td>
-                      <td className="py-2.5 px-3">
-                        <span className="bg-[#242f29] px-2 py-0.5 rounded text-gray-300 text-[10px]">
-                          {ord.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }

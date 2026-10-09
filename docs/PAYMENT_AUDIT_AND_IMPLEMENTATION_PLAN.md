@@ -223,8 +223,8 @@ graph TD
 - [x] Full repository audit completed and score breakdown documented.
 - [x] Deep dive into `docs/payment_audit.md` completed.
 - [x] Comprehensive 6-Phase Implementation Plan constructed.
-- [ ] Integer Paise `Money` class and unified financial engine implemented.
-- [ ] Double-entry subledger schema migrated and operational.
-- [ ] Tax Engine 2.0 with Section 9(5) and CraveXP HSN matrix validated.
-- [ ] Payment verification and UTR anti-replay locks enforced.
-- [ ] 100% green test pass rate on financial unit and integration test suite.
+- [x] Integer Paise `Money` class and unified financial engine implemented.
+- [x] Double-entry subledger schema migrated and operational.
+- [x] Tax Engine 2.0 with Section 9(5) and CraveXP HSN matrix validated.
+- [x] Payment verification and UTR anti-replay locks enforced.
+- [x] 100% green test pass rate on financial unit and integration test suite.

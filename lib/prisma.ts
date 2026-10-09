@@ -19,7 +19,9 @@ function createPrismaClient(): PrismaClientType {
     return null as any
   }
   try {
-    const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/crave?schema=public'
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:postgres@localhost:5432/crave?schema=public'
     const { PrismaPg } = require('@prisma/adapter-pg')
     const adapter = new PrismaPg({ connectionString: dbUrl })
     return new PrismaClient({ adapter, log: [] })

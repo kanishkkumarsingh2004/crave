@@ -291,7 +291,7 @@ export default function CustomerDashboard({
             if (Array.isArray(parsed) && parsed.length > 0) {
               setCart(parsed)
             }
-          } catch { }
+          } catch {}
         }
         setIsCartInitialized(true)
       }
@@ -407,7 +407,7 @@ export default function CustomerDashboard({
         if (json.success && Array.isArray(json.orders)) {
           setOrdersData(json.orders)
         }
-      } catch (e) { }
+      } catch (e) {}
     }
     fetchInitialOrders()
   }, [user?.id])
@@ -440,7 +440,7 @@ export default function CustomerDashboard({
             qty: i.qty ?? 1,
             price: i.price ?? 0,
           }))
-      } catch { }
+      } catch {}
 
       const rawDate = o.createdAt || o.created_at
       return {
@@ -453,16 +453,16 @@ export default function CustomerDashboard({
         total: Number(o.total_amount ?? 0),
         date: rawDate
           ? new Date(rawDate).toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          })
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })
           : '',
         time: rawDate
           ? new Date(rawDate).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+              hour: '2-digit',
+              minute: '2-digit',
+            })
           : '',
         status: statusMap[o.status] ?? 'In Progress',
         deliveryTime: '',
@@ -523,7 +523,7 @@ export default function CustomerDashboard({
             return
           }
         }
-      } catch (err) { }
+      } catch (err) {}
 
       if (user.address) {
         setSavedAddresses([
@@ -623,7 +623,7 @@ export default function CustomerDashboard({
     if (typeof window !== 'undefined' && trimmed) {
       try {
         localStorage.setItem('crave_selected_address', trimmed)
-      } catch { }
+      } catch {}
     }
   }
 
@@ -750,7 +750,7 @@ export default function CustomerDashboard({
       let itemsArr: Array<CartItem> = []
       try {
         itemsArr = typeof active.items === 'string' ? JSON.parse(active.items) : active.items || []
-      } catch (e) { }
+      } catch (e) {}
 
       const rawDateVal =
         active.created_at || active.createdAt || active.timestamp || active.created_time
@@ -1237,10 +1237,10 @@ export default function CustomerDashboard({
       const nowTime =
         rawDateVal && !isNaN(new Date(rawDateVal).getTime())
           ? new Date(rawDateVal).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          })
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })
           : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
 
       setActiveOrder({
@@ -1344,10 +1344,11 @@ export default function CustomerDashboard({
           <div className="hidden lg:flex items-center gap-1.5 text-sm font-bold justify-center">
             <button
               onClick={() => navigateToTab('explore')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${activeTab === 'explore'
-                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
-                }`}
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+                activeTab === 'explore'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+              }`}
             >
               <Compass
                 className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447] dark:text-[#18201c]' : 'text-[#b5de28]'}`}
@@ -1357,10 +1358,11 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => navigateToTab('live-order')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${activeTab === 'live-order'
-                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
-                }`}
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+                activeTab === 'live-order'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+              }`}
             >
               <Bike className="size-4" />
               <span>Track Drop</span>
@@ -1371,10 +1373,11 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => navigateToTab('orders')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${activeTab === 'orders'
-                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
-                }`}
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+                activeTab === 'orders'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+              }`}
             >
               <History className="size-4" />
               <span>Orders</span>
@@ -1382,10 +1385,11 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => navigateToTab('profile')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${activeTab === 'profile'
-                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
-                }`}
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+                activeTab === 'profile'
+                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
+                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+              }`}
             >
               <User className="size-4" />
               <span>Profile</span>
@@ -1436,15 +1440,17 @@ export default function CustomerDashboard({
       {/* Mobile Side Menu Bar Drawer Backdrop & Aside */}
       <div
         onClick={() => setShowMobileSideMenu(false)}
-        className={`fixed inset-0 z-[80] bg-black/50 backdrop-blur-xs transition-opacity duration-300 lg:hidden ${showMobileSideMenu ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+        className={`fixed inset-0 z-[80] bg-black/50 backdrop-blur-xs transition-opacity duration-300 lg:hidden ${
+          showMobileSideMenu ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         aria-hidden="true"
       />
 
       <aside
         aria-label="Side menu options"
-        className={`fixed inset-y-0 right-0 z-[90] flex w-80 max-w-[85vw] flex-col bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${showMobileSideMenu ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed inset-y-0 right-0 z-[90] flex w-80 max-w-[85vw] flex-col bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+          showMobileSideMenu ? 'translate-x-0' : 'translate-x-full'
+        }`}
       >
         {/* Side Drawer Header */}
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] px-5 py-4 bg-[#f9faf7] dark:bg-[#121815]">
@@ -1489,17 +1495,19 @@ export default function CustomerDashboard({
               navigateToTab('explore')
               setShowMobileSideMenu(false)
             }}
-            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${activeTab === 'explore'
-              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
-              : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
-              }`}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'explore'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
+            }`}
           >
             <span className="flex items-center gap-3">
               <Compass
-                className={`size-5 ${activeTab === 'explore'
-                  ? 'text-[#d9f447] dark:text-[#18201c]'
-                  : 'text-[#b5de28] dark:text-[#d9f447]'
-                  }`}
+                className={`size-5 ${
+                  activeTab === 'explore'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
+                }`}
               />
               Explore Kitchens
             </span>
@@ -1510,17 +1518,19 @@ export default function CustomerDashboard({
               navigateToTab('live-order')
               setShowMobileSideMenu(false)
             }}
-            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${activeTab === 'live-order'
-              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
-              : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
-              }`}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'live-order'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
+            }`}
           >
             <span className="flex items-center gap-3">
               <Bike
-                className={`size-5 ${activeTab === 'live-order'
-                  ? 'text-[#d9f447] dark:text-[#18201c]'
-                  : 'text-[#b5de28] dark:text-[#d9f447]'
-                  }`}
+                className={`size-5 ${
+                  activeTab === 'live-order'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
+                }`}
               />
               Track Drop
             </span>
@@ -1537,17 +1547,19 @@ export default function CustomerDashboard({
               navigateToTab('orders')
               setShowMobileSideMenu(false)
             }}
-            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${activeTab === 'orders'
-              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
-              : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
-              }`}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'orders'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
+            }`}
           >
             <span className="flex items-center gap-3">
               <History
-                className={`size-5 ${activeTab === 'orders'
-                  ? 'text-[#d9f447] dark:text-[#18201c]'
-                  : 'text-[#b5de28] dark:text-[#d9f447]'
-                  }`}
+                className={`size-5 ${
+                  activeTab === 'orders'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
+                }`}
               />
               Orders History
             </span>
@@ -1563,17 +1575,19 @@ export default function CustomerDashboard({
               navigateToTab('profile')
               setShowMobileSideMenu(false)
             }}
-            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${activeTab === 'profile'
-              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
-              : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
-              }`}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              activeTab === 'profile'
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
+            }`}
           >
             <span className="flex items-center gap-3">
               <User
-                className={`size-5 ${activeTab === 'profile'
-                  ? 'text-[#d9f447] dark:text-[#18201c]'
-                  : 'text-[#b5de28] dark:text-[#d9f447]'
-                  }`}
+                className={`size-5 ${
+                  activeTab === 'profile'
+                    ? 'text-[#d9f447] dark:text-[#18201c]'
+                    : 'text-[#b5de28] dark:text-[#d9f447]'
+                }`}
               />
               Profile &amp; Account
             </span>
@@ -1690,10 +1704,11 @@ export default function CustomerDashboard({
                         className="flex flex-col items-center gap-1.5 group shrink-0 transition"
                       >
                         <div
-                          className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition ${isSelected
-                            ? 'border-[#18201c] dark:border-[#d9f447] ring-2 ring-[#18201c]/20 dark:ring-[#d9f447]/30 scale-105'
-                            : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
+                          className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition ${
+                            isSelected
+                              ? 'border-[#18201c] dark:border-[#d9f447] ring-2 ring-[#18201c]/20 dark:ring-[#d9f447]/30 scale-105'
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
                         >
                           <img
                             src={cat.image}
@@ -1702,10 +1717,11 @@ export default function CustomerDashboard({
                           />
                         </div>
                         <span
-                          className={`text-xs tracking-tight ${isSelected
-                            ? 'text-[#18201c] dark:text-white font-bold'
-                            : 'text-gray-600 dark:text-gray-400 font-medium'
-                            }`}
+                          className={`text-xs tracking-tight ${
+                            isSelected
+                              ? 'text-[#18201c] dark:text-white font-bold'
+                              : 'text-gray-600 dark:text-gray-400 font-medium'
+                          }`}
                         >
                           {cat.label}
                         </span>
@@ -1929,12 +1945,13 @@ export default function CustomerDashboard({
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${order.status === 'Delivered'
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                              : order.status === 'In Progress'
-                                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 animate-pulse'
-                                : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
-                              }`}
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              order.status === 'Delivered'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                                : order.status === 'In Progress'
+                                  ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 animate-pulse'
+                                  : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                            }`}
                           >
                             {order.status === 'Delivered' ? (
                               <span className="flex items-center gap-1">
@@ -1977,25 +1994,25 @@ export default function CustomerDashboard({
                         )}
                         {(order.status === 'Delivered' ||
                           (order.status as string) === 'completed') && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setInvoiceModalOrder({
-                                  id: order.id,
-                                  restaurantName: order.restaurantName,
-                                  customerName: user?.name || 'Customer',
-                                  customerAddress: user?.address || 'Bengaluru',
-                                  timestamp: `${order.date}, ${order.time}`,
-                                  items: order.items,
-                                  total: order.total,
-                                  status: order.status,
-                                })
-                              }
-                              className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-black dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
-                            >
-                              <FileText className="size-3" /> View Invoice
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setInvoiceModalOrder({
+                                id: order.id,
+                                restaurantName: order.restaurantName,
+                                customerName: user?.name || 'Customer',
+                                customerAddress: user?.address || 'Bengaluru',
+                                timestamp: `${order.date}, ${order.time}`,
+                                items: order.items,
+                                total: order.total,
+                                status: order.status,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-black dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                          >
+                            <FileText className="size-3" /> View Invoice
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -2232,10 +2249,11 @@ export default function CustomerDashboard({
                     return (
                       <div
                         key={addr.id}
-                        className={`flex flex-col justify-between rounded-2xl p-4 border transition-all ${isSelected
-                          ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
-                          : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300'
-                          }`}
+                        className={`flex flex-col justify-between rounded-2xl p-4 border transition-all ${
+                          isSelected
+                            ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
+                            : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2">
@@ -2274,10 +2292,11 @@ export default function CustomerDashboard({
                             )
                             triggerToast(`Switched active delivery location to ${addr.label}!`)
                           }}
-                          className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${isSelected
-                            ? 'bg-[#d9f447] text-[#18201c]'
-                            : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc]'
-                            }`}
+                          className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
+                            isSelected
+                              ? 'bg-[#d9f447] text-[#18201c]'
+                              : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc]'
+                          }`}
                         >
                           {isSelected ? 'Delivering Here' : 'Deliver Here'}
                         </button>
@@ -2383,31 +2402,31 @@ export default function CustomerDashboard({
                           {(activeOrder.statusStep === 4 ||
                             activeOrder.rawStatus === 'delivered' ||
                             activeOrder.rawStatus === 'completed') && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setInvoiceModalOrder({
-                                    id: activeOrder.id,
-                                    restaurantName: activeOrder.restaurantName,
-                                    customerName: user?.name || 'Customer',
-                                    customerAddress: deliveryAddress,
-                                    customerPhone: user?.phone,
-                                    timestamp: activeOrder.timestamp,
-                                    items: activeOrder.items,
-                                    subtotal: activeOrder.subtotal,
-                                    total: activeOrder.total,
-                                    paymentMethod:
-                                      activeOrder.paymentStatus === 'verified' ? 'UPI Online' : 'UPI',
-                                    otp: activeOrder.otp,
-                                    status: activeOrder.statusText,
-                                  })
-                                }
-                                className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] hover:bg-[#b8d629] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black text-[#18201c] shadow-md transition cursor-pointer shrink-0"
-                              >
-                                <FileText className="size-3 sm:size-3.5 text-[#18201c]" /> View Tax
-                                Invoice
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setInvoiceModalOrder({
+                                  id: activeOrder.id,
+                                  restaurantName: activeOrder.restaurantName,
+                                  customerName: user?.name || 'Customer',
+                                  customerAddress: deliveryAddress,
+                                  customerPhone: user?.phone,
+                                  timestamp: activeOrder.timestamp,
+                                  items: activeOrder.items,
+                                  subtotal: activeOrder.subtotal,
+                                  total: activeOrder.total,
+                                  paymentMethod:
+                                    activeOrder.paymentStatus === 'verified' ? 'UPI Online' : 'UPI',
+                                  otp: activeOrder.otp,
+                                  status: activeOrder.statusText,
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] hover:bg-[#b8d629] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black text-[#18201c] shadow-md transition cursor-pointer shrink-0"
+                            >
+                              <FileText className="size-3 sm:size-3.5 text-[#18201c]" /> View Tax
+                              Invoice
+                            </button>
+                          )}
                         </div>
 
                         <div>
@@ -2441,46 +2460,46 @@ export default function CustomerDashboard({
                           {activeOrder.statusStep === 4
                             ? 'Delivered'
                             : `${Math.max(
-                              10,
-                              Math.round(
-                                calculateRoadTravelDistanceKm(
-                                  activeOrder.restaurantLat
-                                    ? Number(activeOrder.restaurantLat)
-                                    : 12.6817,
-                                  activeOrder.restaurantLng
-                                    ? Number(activeOrder.restaurantLng)
-                                    : 77.4729,
-                                  activeOrder.customerLat
-                                    ? Number(activeOrder.customerLat)
-                                    : (selectedMapPin?.lat ?? 12.679898),
-                                  activeOrder.customerLng
-                                    ? Number(activeOrder.customerLng)
-                                    : (selectedMapPin?.lng ?? 77.469493)
-                                ) *
-                                3 +
-                                10
-                              )
-                            )} - ${Math.max(
-                              15,
-                              Math.round(
-                                calculateRoadTravelDistanceKm(
-                                  activeOrder.restaurantLat
-                                    ? Number(activeOrder.restaurantLat)
-                                    : 12.6817,
-                                  activeOrder.restaurantLng
-                                    ? Number(activeOrder.restaurantLng)
-                                    : 77.4729,
-                                  activeOrder.customerLat
-                                    ? Number(activeOrder.customerLat)
-                                    : (selectedMapPin?.lat ?? 12.679898),
-                                  activeOrder.customerLng
-                                    ? Number(activeOrder.customerLng)
-                                    : (selectedMapPin?.lng ?? 77.469493)
-                                ) *
-                                3 +
-                                15
-                              )
-                            )} mins`}
+                                10,
+                                Math.round(
+                                  calculateRoadTravelDistanceKm(
+                                    activeOrder.restaurantLat
+                                      ? Number(activeOrder.restaurantLat)
+                                      : 12.6817,
+                                    activeOrder.restaurantLng
+                                      ? Number(activeOrder.restaurantLng)
+                                      : 77.4729,
+                                    activeOrder.customerLat
+                                      ? Number(activeOrder.customerLat)
+                                      : (selectedMapPin?.lat ?? 12.679898),
+                                    activeOrder.customerLng
+                                      ? Number(activeOrder.customerLng)
+                                      : (selectedMapPin?.lng ?? 77.469493)
+                                  ) *
+                                    3 +
+                                    10
+                                )
+                              )} - ${Math.max(
+                                15,
+                                Math.round(
+                                  calculateRoadTravelDistanceKm(
+                                    activeOrder.restaurantLat
+                                      ? Number(activeOrder.restaurantLat)
+                                      : 12.6817,
+                                    activeOrder.restaurantLng
+                                      ? Number(activeOrder.restaurantLng)
+                                      : 77.4729,
+                                    activeOrder.customerLat
+                                      ? Number(activeOrder.customerLat)
+                                      : (selectedMapPin?.lat ?? 12.679898),
+                                    activeOrder.customerLng
+                                      ? Number(activeOrder.customerLng)
+                                      : (selectedMapPin?.lng ?? 77.469493)
+                                  ) *
+                                    3 +
+                                    15
+                                )
+                              )} mins`}
                         </p>
                       </div>
                     </div>
@@ -2528,7 +2547,7 @@ export default function CustomerDashboard({
                             title: 'Confirmed',
                             desc:
                               activeOrder.paymentStatus === 'verified' ||
-                                activeOrder.rawStatus === 'sent_to_vendor'
+                              activeOrder.rawStatus === 'sent_to_vendor'
                                 ? 'Payment Verified'
                                 : 'Order Placed',
                           },
@@ -2546,16 +2565,16 @@ export default function CustomerDashboard({
                             num: 3,
                             title:
                               activeOrder.rawStatus === 'ready' ||
-                                activeOrder.rawStatus === 'ready_for_pickup' ||
-                                activeOrder.rawStatus === 'rider_assigned' ||
-                                activeOrder.rawStatus === 'at_restaurant'
+                              activeOrder.rawStatus === 'ready_for_pickup' ||
+                              activeOrder.rawStatus === 'rider_assigned' ||
+                              activeOrder.rawStatus === 'at_restaurant'
                                 ? 'Ready / Assigned'
                                 : 'On the Way',
                             desc:
                               activeOrder.rawStatus === 'ready' ||
-                                activeOrder.rawStatus === 'ready_for_pickup' ||
-                                activeOrder.rawStatus === 'rider_assigned' ||
-                                activeOrder.rawStatus === 'at_restaurant'
+                              activeOrder.rawStatus === 'ready_for_pickup' ||
+                              activeOrder.rawStatus === 'rider_assigned' ||
+                              activeOrder.rawStatus === 'at_restaurant'
                                 ? 'Food Prepared'
                                 : 'Out for Delivery',
                           },
@@ -2569,12 +2588,13 @@ export default function CustomerDashboard({
                             <div key={step.num} className="flex flex-col items-center group">
                               {/* Circle Indicator */}
                               <div
-                                className={`grid size-9 sm:size-12 place-items-center rounded-full font-black text-xs sm:text-sm transition-all duration-300 shadow-md ${isDone
-                                  ? 'bg-emerald-500 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/20 dark:ring-[#d9f447]/30 scale-105'
-                                  : isCurrent
-                                    ? 'bg-emerald-600 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/30 dark:ring-[#d9f447]/40 scale-110 font-black shadow-lg animate-pulse'
-                                    : 'bg-white dark:bg-[#121815] border-2 border-gray-200 dark:border-[#28372e] text-gray-400 dark:text-gray-500'
-                                  }`}
+                                className={`grid size-9 sm:size-12 place-items-center rounded-full font-black text-xs sm:text-sm transition-all duration-300 shadow-md ${
+                                  isDone
+                                    ? 'bg-emerald-500 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/20 dark:ring-[#d9f447]/30 scale-105'
+                                    : isCurrent
+                                      ? 'bg-emerald-600 dark:bg-[#d9f447] text-white dark:text-[#0d1310] ring-4 ring-emerald-500/30 dark:ring-[#d9f447]/40 scale-110 font-black shadow-lg animate-pulse'
+                                      : 'bg-white dark:bg-[#121815] border-2 border-gray-200 dark:border-[#28372e] text-gray-400 dark:text-gray-500'
+                                }`}
                               >
                                 {isDone ? (
                                   <Check className="size-4 sm:size-6 stroke-[3]" />
@@ -2586,20 +2606,22 @@ export default function CustomerDashboard({
                               {/* Step Label & Subtitle */}
                               <div className="mt-2.5 sm:mt-3.5 space-y-0.5">
                                 <p
-                                  className={`text-xs sm:text-sm font-extrabold transition-colors leading-tight ${isPassedOrCurrent
-                                    ? 'text-gray-900 dark:text-white'
-                                    : 'text-gray-400 dark:text-gray-500'
-                                    }`}
+                                  className={`text-xs sm:text-sm font-extrabold transition-colors leading-tight ${
+                                    isPassedOrCurrent
+                                      ? 'text-gray-900 dark:text-white'
+                                      : 'text-gray-400 dark:text-gray-500'
+                                  }`}
                                 >
                                   {step.title}
                                 </p>
                                 <p
-                                  className={`text-[10px] sm:text-xs leading-tight transition-colors hidden sm:block ${isCurrent
-                                    ? 'text-emerald-600 dark:text-[#d9f447] font-semibold'
-                                    : isPassedOrCurrent
-                                      ? 'text-gray-500 dark:text-gray-400 font-medium'
-                                      : 'text-gray-400 dark:text-gray-600'
-                                    }`}
+                                  className={`text-[10px] sm:text-xs leading-tight transition-colors hidden sm:block ${
+                                    isCurrent
+                                      ? 'text-emerald-600 dark:text-[#d9f447] font-semibold'
+                                      : isPassedOrCurrent
+                                        ? 'text-gray-500 dark:text-gray-400 font-medium'
+                                        : 'text-gray-400 dark:text-gray-600'
+                                  }`}
                                 >
                                   {step.desc}
                                 </p>
@@ -2759,7 +2781,7 @@ export default function CustomerDashboard({
                         typeof ord.items === 'string'
                           ? JSON.parse(ord.items || '[]')
                           : ord.items || []
-                    } catch (e) { }
+                    } catch (e) {}
 
                     const statusTextMap: Record<string, string> = {
                       payment_submitted: 'Order Confirmed',
@@ -2782,10 +2804,10 @@ export default function CustomerDashboard({
                     const timeStr =
                       rawDateVal && !isNaN(new Date(rawDateVal).getTime())
                         ? new Date(rawDateVal).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true,
-                        })
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
                         : ''
 
                     return (
@@ -2795,10 +2817,11 @@ export default function CustomerDashboard({
                           setSelectedOrderId(String(ord.id))
                           router.push(`/user/track/${ord.id}`)
                         }}
-                        className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 ${isCurrentSelected
-                          ? 'bg-[#18201c] text-white border-[#18201c] shadow-lg ring-2 ring-[#d9f447]'
-                          : 'bg-[#f8f9f6] text-[#18201c] border-[#e1e6df] hover:border-gray-300 hover:shadow-md'
-                          }`}
+                        className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 ${
+                          isCurrentSelected
+                            ? 'bg-[#18201c] text-white border-[#18201c] shadow-lg ring-2 ring-[#d9f447]'
+                            : 'bg-[#f8f9f6] text-[#18201c] border-[#e1e6df] hover:border-gray-300 hover:shadow-md'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2 min-w-0">
                           <div className="min-w-0">
@@ -2812,10 +2835,11 @@ export default function CustomerDashboard({
                             </h4>
                           </div>
                           <span
-                            className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${isCurrentSelected
-                              ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
-                              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                              }`}
+                            className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                              isCurrentSelected
+                                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            }`}
                           >
                             {ordStatusText}
                           </span>
@@ -2843,10 +2867,11 @@ export default function CustomerDashboard({
                               setSelectedOrderId(String(ord.id))
                               router.push(`/user/track/${ord.id}`)
                             }}
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 ${isCurrentSelected
-                              ? 'bg-[#d9f447] text-[#18201c] hover:bg-[#c8e434]'
-                              : 'bg-[#18201c] text-[#ffffff] hover:bg-[#2e3b34]'
-                              }`}
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 ${
+                              isCurrentSelected
+                                ? 'bg-[#d9f447] text-[#18201c] hover:bg-[#c8e434]'
+                                : 'bg-[#18201c] text-[#ffffff] hover:bg-[#2e3b34]'
+                            }`}
                           >
                             <Bike className="size-3" />
                             <span>{isCurrentSelected ? 'Live' : 'Track Order'}</span>
@@ -3086,16 +3111,16 @@ export default function CustomerDashboard({
                   {(pricingBreakdown.surgeFee > 0 ||
                     pricingBreakdown.rainFee > 0 ||
                     pricingBreakdown.nightSurgeFee > 0) && (
-                      <div className="flex items-center justify-between text-[11px] text-amber-300 bg-amber-500/10 p-2 rounded-xl border border-amber-500/30">
-                        <span>Demand &amp; Weather Surge</span>
-                        <span className="font-bold">
-                          +₹
-                          {pricingBreakdown.surgeFee +
-                            pricingBreakdown.rainFee +
-                            pricingBreakdown.nightSurgeFee}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between text-[11px] text-amber-300 bg-amber-500/10 p-2 rounded-xl border border-amber-500/30">
+                      <span>Demand &amp; Weather Surge</span>
+                      <span className="font-bold">
+                        +₹
+                        {pricingBreakdown.surgeFee +
+                          pricingBreakdown.rainFee +
+                          pricingBreakdown.nightSurgeFee}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between text-[#9eb3a4]">
                     <span>Packaging &amp; Handling</span>
@@ -3227,7 +3252,7 @@ export default function CustomerDashboard({
                         .from('payment_reviews')
                         .update({ status: 'verified' })
                         .eq('order_id', verifyingModal.orderId)
-                    } catch (e) { }
+                    } catch (e) {}
                     setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
                   }}
                   className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5"
@@ -3358,15 +3383,17 @@ export default function CustomerDashboard({
                             setShowLocationModal(false)
                             triggerToast(`Switched delivery address to ${addr.label}!`)
                           }}
-                          className={`flex items-start justify-between rounded-2xl p-4 border cursor-pointer transition ${isSelected
-                            ? 'border-[#18201c] bg-[#18201c]/5 shadow-xs'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                            }`}
+                          className={`flex items-start justify-between rounded-2xl p-4 border cursor-pointer transition ${
+                            isSelected
+                              ? 'border-[#18201c] bg-[#18201c]/5 shadow-xs'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                          }`}
                         >
                           <div className="flex items-start gap-3">
                             <div
-                              className={`grid size-9 place-items-center rounded-xl shrink-0 mt-0.5 ${isSelected ? 'bg-[#18201c] text-white' : 'bg-gray-100 text-gray-700'
-                                }`}
+                              className={`grid size-9 place-items-center rounded-xl shrink-0 mt-0.5 ${
+                                isSelected ? 'bg-[#18201c] text-white' : 'bg-gray-100 text-gray-700'
+                              }`}
                             >
                               <MapPin className="size-4" />
                             </div>
@@ -3436,10 +3463,11 @@ export default function CustomerDashboard({
                       key={lbl}
                       type="button"
                       onClick={() => setNewAddressLabel(lbl)}
-                      className={`px-3 py-1 rounded-full font-bold border transition ${newAddressLabel === lbl
-                        ? 'bg-[#18201c] text-white border-[#18201c]'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }`}
+                      className={`px-3 py-1 rounded-full font-bold border transition ${
+                        newAddressLabel === lbl
+                          ? 'bg-[#18201c] text-white border-[#18201c]'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                      }`}
                     >
                       {lbl}
                     </button>
@@ -3526,33 +3554,37 @@ export default function CustomerDashboard({
         <div className="flex items-center justify-around max-w-md mx-auto">
           <button
             onClick={() => navigateToTab('explore')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${activeTab === 'explore'
-              ? 'text-[#18201c] dark:text-white font-black'
-              : 'text-gray-400 dark:text-gray-500 font-bold'
-              }`}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'explore'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
+            }`}
           >
             <Compass
-              className={`size-5 ${activeTab === 'explore'
-                ? 'text-[#b5de28] dark:text-[#d9f447]'
-                : 'text-gray-400 dark:text-gray-500'
-                }`}
+              className={`size-5 ${
+                activeTab === 'explore'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Explore</span>
           </button>
 
           <button
             onClick={() => navigateToTab('live-order')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative ${activeTab === 'live-order'
-              ? 'text-[#18201c] dark:text-white font-black'
-              : 'text-gray-400 dark:text-gray-500 font-bold'
-              }`}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative ${
+              activeTab === 'live-order'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
+            }`}
           >
             <div className="relative">
               <Bike
-                className={`size-5 ${activeTab === 'live-order'
-                  ? 'text-[#b5de28] dark:text-[#d9f447]'
-                  : 'text-gray-400 dark:text-gray-500'
-                  }`}
+                className={`size-5 ${
+                  activeTab === 'live-order'
+                    ? 'text-[#b5de28] dark:text-[#d9f447]'
+                    : 'text-gray-400 dark:text-gray-500'
+                }`}
               />
               {activeOrder && activeOrder.statusStep < 4 && (
                 <span className="absolute -top-1 -right-1 size-2 rounded-full bg-[#d9f447] animate-ping" />
@@ -3563,16 +3595,18 @@ export default function CustomerDashboard({
 
           <button
             onClick={() => navigateToTab('orders')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${activeTab === 'orders'
-              ? 'text-[#18201c] dark:text-white font-black'
-              : 'text-gray-400 dark:text-gray-500 font-bold'
-              }`}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'orders'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
+            }`}
           >
             <History
-              className={`size-5 ${activeTab === 'orders'
-                ? 'text-[#b5de28] dark:text-[#d9f447]'
-                : 'text-gray-400 dark:text-gray-500'
-                }`}
+              className={`size-5 ${
+                activeTab === 'orders'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Orders</span>
           </button>
@@ -3594,16 +3628,18 @@ export default function CustomerDashboard({
 
           <button
             onClick={() => navigateToTab('profile')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${activeTab === 'profile'
-              ? 'text-[#18201c] dark:text-white font-black'
-              : 'text-gray-400 dark:text-gray-500 font-bold'
-              }`}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+              activeTab === 'profile'
+                ? 'text-[#18201c] dark:text-white font-black'
+                : 'text-gray-400 dark:text-gray-500 font-bold'
+            }`}
           >
             <User
-              className={`size-5 ${activeTab === 'profile'
-                ? 'text-[#b5de28] dark:text-[#d9f447]'
-                : 'text-gray-400 dark:text-gray-500'
-                }`}
+              className={`size-5 ${
+                activeTab === 'profile'
+                  ? 'text-[#b5de28] dark:text-[#d9f447]'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             />
             <span className="text-[10px]">Profile</span>
           </button>

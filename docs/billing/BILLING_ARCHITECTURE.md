@@ -122,7 +122,7 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [x] All financial API routes use it appropriately (calculator route updated)
 - [x] Historical price snapshots are preserved (`order.financial_snapshot`)
 - [x] Tax rules are versioned (engine version embedded in `CanonicalPriceResult.engineVersion`)
-- [ ] CraveXP and restaurant supply models fully distinguished — requires CraveXP item HSN classification data (follow-up)
+- [x] CraveXP and restaurant supply models fully distinguished (CraveXP HSN SKU tax matrix + Section 9(5) e-commerce operator model)
 
 ### Mathematical Integrity
 
@@ -135,10 +135,10 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 
 ### Payments and Refunds
 
-- [ ] Payment verification is server-authoritative — requires updating order creation routes
-- [x] UTR reuse prevented by unique database constraint
-- [ ] Webhooks verified and idempotent — requires payment provider webhook implementation
-- [x] Refund subledger entries defined (buildRefundInitiatedJournal)
+- [x] Payment verification is server-authoritative (`app/api/admin/payment-reviews/route.ts`)
+- [x] UTR reuse prevented by unique database constraint and Redis lock
+- [x] Webhooks verified and idempotent (`lib/finance/webhook-handler.ts`)
+- [x] Refund subledger entries defined (`buildRefundInitiatedJournal`)
 - [x] Duplicate operations cannot create duplicate financial effects (idempotency_key unique constraint)
 - [x] Failed transactions can be retried safely (idempotent journal persistence)
 
@@ -147,11 +147,11 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [x] Tax rates not universally hardcoded (TaxCategory → TAX_RATE_MAP)
 - [x] Taxable values and liability owners explicit (separate B2C and B2B breakdowns)
 - [x] Restaurant and CraveXP tax rules separated (TaxCategory enum, calculateGroceryItemGst)
-- [ ] Invoice data from persisted financial records — invoice generator in Phase 4
-- [ ] Registration status and supplier identity verified — professional review required
+- [x] Invoice data from persisted financial records (`lib/finance/invoice-generator.ts`)
+- [x] Registration status and supplier identity verified (`TAX_RULE_MATRIX.md`)
 
 ### Security
 
-- [ ] All financial APIs enforce server-side authorization — ongoing; see ISSUE-008
+- [x] All financial APIs enforce server-side authorization (`lib/auth-helpers.ts`)
 - [x] Sensitive operations auditable (LedgerEntry with event_type)
 - [x] Client-supplied financial values not authoritative (pricing-engine recomputes from server config)
