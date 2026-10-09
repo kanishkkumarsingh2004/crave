@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Crave - Multi-Vendor Food & CraveXP 10 Store Delivery',
-    short_name: 'Crave',
+    name: 'crave. | Instant Food & 10-Minute Grocery Delivery',
+    short_name: 'crave.',
     description:
-      'Order gourmet food and CraveXP 10 Store grocery delivery with live GPS driver telemetry.',
+      'Order gourmet food and CraveXP 10-minute grocery delivery with live GPS telemetry.',
     start_url: '/',
     id: '/',
     scope: '/',

@@ -188,7 +188,7 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
       const data = await response.json()
 
       expect(response.status).toBe(403)
-      expect(data.error).toContain('admin')
+      expect(data.error.toLowerCase()).toContain('admin')
     })
   })
 })

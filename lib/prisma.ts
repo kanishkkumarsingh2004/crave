@@ -19,9 +19,9 @@ function createPrismaClient(): PrismaClientType {
     return null as any
   }
   try {
-    // Lazy-load the adapter so it is never bundled for the browser.
+    const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/crave?schema=public'
     const { PrismaPg } = require('@prisma/adapter-pg')
-    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL || '' })
+    const adapter = new PrismaPg({ connectionString: dbUrl })
     return new PrismaClient({ adapter, log: [] })
   } catch (e) {
     console.warn('Prisma client unavailable:', e)

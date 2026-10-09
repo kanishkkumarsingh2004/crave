@@ -250,662 +250,659 @@ export default function CalculatorPlaygroundPage() {
   const { customerBilling, vendorSettlement, driverEarnings, platformEconomics } = calculatorResult
 
   return (
-    <div className="min-h-screen bg-[#0f1412] text-white p-4 md:p-8 font-sans">
+    <div className="space-y-6">
       {/* Top Header */}
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#242f29] pb-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#d9f447]/10 text-[#d9f447] rounded-lg border border-[#d9f447]/20">
-                <Calculator className="size-6" />
-              </div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-                Calculator & Unit Economics Playground
-              </h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#202923] pb-5">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 bg-[#d9f447]/10 text-[#d9f447] rounded-xl border border-[#d9f447]/20 shadow-[0_0_15px_rgba(217,244,71,0.15)]">
+              <Calculator className="size-6" />
             </div>
-            <p className="text-sm text-gray-400">
-              Real-time database integration: Fetch live parameters from PostgreSQL and simulate
-              customer bills, vendor payouts, driver earnings, and platform margin.
-            </p>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+              Unit Economics Calculator &amp; Financial Simulator
+            </h1>
+          </div>
+          <p className="text-xs text-gray-400">
+            Real-time database integration: Fetch live parameters from PostgreSQL and simulate
+            customer bills, vendor payouts, driver earnings, and platform margin.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#121815] border border-[#202923] text-xs shadow-inner">
+            <Database className="size-3.5 text-[#d9f447]" />
+            {loadingDb ? (
+              <span className="text-yellow-400 font-bold animate-pulse">Syncing DB...</span>
+            ) : dbError ? (
+              <span className="text-red-400 font-bold">DB Error</span>
+            ) : (
+              <span className="text-emerald-400 flex items-center gap-1.5 font-bold">
+                <CheckCircle2 className="size-3.5" /> DB Connected
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#18201c] border border-[#2d3a33] text-xs">
-              <Database className="size-3.5 text-[#d9f447]" />
-              {loadingDb ? (
-                <span className="text-yellow-400 animate-pulse">Syncing DB...</span>
-              ) : dbError ? (
-                <span className="text-red-400">DB Error</span>
-              ) : (
-                <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 className="size-3" /> DB Connected
+          <button
+            onClick={fetchDbData}
+            disabled={loadingDb}
+            className="flex items-center gap-2 px-4 py-2 bg-[#d9f447] text-[#121815] font-extrabold rounded-xl hover:bg-[#c8e434] transition duration-200 text-xs shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`size-3.5 ${loadingDb ? 'animate-spin' : ''}`} />
+            Fetch Live DB Values
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-[#202923] pb-3 text-xs">
+        <button
+          onClick={() => setActiveTab('calculator')}
+          className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
+            activeTab === 'calculator'
+              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+          }`}
+        >
+          <Sliders className="size-3.5" /> Interactive Playground
+        </button>
+        <button
+          onClick={() => setActiveTab('db_config')}
+          className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
+            activeTab === 'db_config'
+              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+          }`}
+        >
+          <Zap className="size-3.5" /> DB Config
+        </button>
+        <button
+          onClick={() => setActiveTab('db_restaurants')}
+          className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
+            activeTab === 'db_restaurants'
+              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+          }`}
+        >
+          <Store className="size-3.5" /> DB Restaurants ({dbData?.restaurants?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('db_coupons')}
+          className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
+            activeTab === 'db_coupons'
+              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+          }`}
+        >
+          <Tag className="size-3.5" /> DB Coupons ({dbData?.coupons?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('db_orders')}
+          className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
+            activeTab === 'db_orders'
+              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+          }`}
+        >
+          <Layers className="size-3.5" /> DB Recent Orders ({dbData?.orders?.length || 0})
+        </button>
+      </div>
+
+      {/* Tab Content: Calculator Playground */}
+      {activeTab === 'calculator' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Controls Column (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Presets from DB Card */}
+            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#202923] pb-3">
+                <h3 className="text-xs font-extrabold text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
+                  <Database className="size-4" /> Load Real Data from Database
+                </h3>
+                <span className="text-[10px] bg-[#1e2722] px-2.5 py-1 rounded-full font-bold text-gray-400 border border-white/5">
+                  Preset Loader
                 </span>
-              )}
-            </div>
+              </div>
 
-            <button
-              onClick={fetchDbData}
-              disabled={loadingDb}
-              className="flex items-center gap-2 px-4 py-2 bg-[#d9f447] text-[#0f1412] font-bold rounded-lg hover:bg-[#c8e336] transition duration-200 text-xs shadow-md disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3.5 ${loadingDb ? 'animate-spin' : ''}`} />
-              Fetch Live DB Values
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-[#242f29] pb-3">
-          <button
-            onClick={() => setActiveTab('calculator')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
-              activeTab === 'calculator'
-                ? 'bg-[#d9f447] text-[#0f1412]'
-                : 'bg-[#18201c] text-gray-400 hover:text-white border border-[#28352e]'
-            }`}
-          >
-            <Sliders className="size-3.5" /> Interactive Playground
-          </button>
-          <button
-            onClick={() => setActiveTab('db_config')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
-              activeTab === 'db_config'
-                ? 'bg-[#d9f447] text-[#0f1412]'
-                : 'bg-[#18201c] text-gray-400 hover:text-white border border-[#28352e]'
-            }`}
-          >
-            <Zap className="size-3.5" /> DB Config
-          </button>
-          <button
-            onClick={() => setActiveTab('db_restaurants')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
-              activeTab === 'db_restaurants'
-                ? 'bg-[#d9f447] text-[#0f1412]'
-                : 'bg-[#18201c] text-gray-400 hover:text-white border border-[#28352e]'
-            }`}
-          >
-            <Store className="size-3.5" /> DB Restaurants ({dbData?.restaurants?.length || 0})
-          </button>
-          <button
-            onClick={() => setActiveTab('db_coupons')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
-              activeTab === 'db_coupons'
-                ? 'bg-[#d9f447] text-[#0f1412]'
-                : 'bg-[#18201c] text-gray-400 hover:text-white border border-[#28352e]'
-            }`}
-          >
-            <Tag className="size-3.5" /> DB Coupons ({dbData?.coupons?.length || 0})
-          </button>
-          <button
-            onClick={() => setActiveTab('db_orders')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
-              activeTab === 'db_orders'
-                ? 'bg-[#d9f447] text-[#0f1412]'
-                : 'bg-[#18201c] text-gray-400 hover:text-white border border-[#28352e]'
-            }`}
-          >
-            <Layers className="size-3.5" /> DB Recent Orders ({dbData?.orders?.length || 0})
-          </button>
-        </div>
-
-        {/* Tab Content: Calculator Playground */}
-        {activeTab === 'calculator' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Controls Column (5 cols) */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Presets from DB Card */}
-              <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-[#242f29] pb-3">
-                  <h3 className="text-sm font-bold text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
-                    <Database className="size-4" /> Load Real Data from DB
-                  </h3>
-                  <span className="text-[10px] bg-[#1e2722] px-2 py-0.5 rounded text-gray-400">
-                    Preset Loader
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">
-                        DB Restaurant:
-                      </label>
-                      <select
-                        value={selectedRestaurantId}
-                        onChange={(e) => handleSelectDbRestaurant(e.target.value)}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded-lg px-2.5 py-2 text-white focus:border-[#d9f447] outline-none truncate"
-                      >
-                        <option value="">-- Choose Restaurant --</option>
-                        {dbData?.restaurants?.map((rest) => (
-                          <option key={rest.id} value={rest.id}>
-                            {rest.name} ({rest.commission_rate ?? 15}%)
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">DB Coupon:</label>
-                      <select
-                        value={selectedCouponCode}
-                        onChange={(e) => setSelectedCouponCode(e.target.value)}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded-lg px-2.5 py-2 text-white focus:border-[#d9f447] outline-none truncate"
-                      >
-                        <option value="">None (No Discount)</option>
-                        {dbData?.coupons?.map((coup) => (
-                          <option key={coup.id} value={coup.code}>
-                            {coup.code} (
-                            {coup.discount_type === 'percentage'
-                              ? `${coup.discount_value}%`
-                              : `₹${coup.discount_value}`}
-                            )
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+              <div className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-300 font-bold mb-1.5">
+                      DB Restaurant:
+                    </label>
+                    <select
+                      value={selectedRestaurantId}
+                      onChange={(e) => handleSelectDbRestaurant(e.target.value)}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-medium focus:border-[#d9f447] outline-none truncate transition"
+                    >
+                      <option value="">-- Choose Restaurant --</option>
+                      {dbData?.restaurants?.map((rest) => (
+                        <option key={rest.id} value={rest.id}>
+                          {rest.name} ({rest.commission_rate ?? 15}%)
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-gray-300 font-semibold">
-                        Select DB Recent Order:
-                      </label>
-                      {!selectedRestaurantId && (
-                        <span className="text-[10px] text-amber-400 font-medium">
-                          Select restaurant first
-                        </span>
-                      )}
-                    </div>
+                    <label className="block text-gray-300 font-bold mb-1.5">DB Coupon:</label>
                     <select
-                      value={selectedOrderId}
-                      disabled={!selectedRestaurantId}
-                      onChange={(e) => handleSelectDbOrder(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 outline-none transition ${
-                        !selectedRestaurantId
-                          ? 'bg-[#121614] border-[#1f2923] text-gray-500 cursor-not-allowed'
-                          : 'bg-[#0d1210] border-[#2d3a33] text-white focus:border-[#d9f447]'
-                      }`}
+                      value={selectedCouponCode}
+                      onChange={(e) => setSelectedCouponCode(e.target.value)}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-medium focus:border-[#d9f447] outline-none truncate transition"
                     >
-                      {!selectedRestaurantId ? (
-                        <option value="">-- Select a Restaurant First --</option>
-                      ) : filteredDbOrders.length === 0 ? (
-                        <option value="">-- No Recent Orders Found for this Restaurant --</option>
-                      ) : (
-                        <option value="">
-                          -- Choose Order from Database ({filteredDbOrders.length} available) --
-                        </option>
-                      )}
-                      {filteredDbOrders.map((ord) => (
-                        <option key={ord.id} value={ord.id}>
-                          #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [
-                          {ord.status}]
+                      <option value="">None (No Discount)</option>
+                      {dbData?.coupons?.map((coup) => (
+                        <option key={coup.id} value={coup.code}>
+                          {coup.code} (
+                          {coup.discount_type === 'percentage'
+                            ? `${coup.discount_value}%`
+                            : `₹${coup.discount_value}`}
+                          )
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-              </div>
 
-              {/* Playground Inputs & Controls */}
-              <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-5 shadow-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#242f29] pb-3 gap-2">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                    <Sliders className="size-4 text-[#d9f447]" /> Financial Parameters
-                  </h3>
-                  <button
-                    onClick={resetToSystemDefaults}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-[#1e2722] hover:bg-[#28352e] border border-[#2d3a33] rounded-lg text-xs font-bold text-[#d9f447] transition"
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-gray-300 font-bold">
+                      Select DB Recent Order:
+                    </label>
+                    {!selectedRestaurantId && (
+                      <span className="text-[10px] text-amber-400 font-bold">
+                        Select restaurant first
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={selectedOrderId}
+                    disabled={!selectedRestaurantId}
+                    onChange={(e) => handleSelectDbOrder(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 text-xs font-medium outline-none transition ${
+                      !selectedRestaurantId
+                        ? 'bg-[#0b0f0d]/50 border-[#1a221d] text-gray-500 cursor-not-allowed'
+                        : 'bg-[#0b0f0d] border-[#202923] text-white focus:border-[#d9f447]'
+                    }`}
                   >
-                    <RefreshCw className="size-3" /> Reset System Defaults
-                  </button>
-                </div>
-
-                {/* Quick Simulation Presets */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    Quick Simulation Presets:
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={resetToSystemDefaults}
-                      className="px-2.5 py-1 bg-[#1e2722] border border-[#2d3a33] text-gray-300 hover:text-white rounded-lg text-xs font-semibold transition"
-                    >
-                      Standard Meal (₹450)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={applyRainSurgePreset}
-                      className="px-2.5 py-1 bg-blue-950/60 border border-blue-500/40 text-blue-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                    >
-                      <CloudRain className="size-3" /> Heavy Rain (+₹25)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={applyNightSurgePreset}
-                      className="px-2.5 py-1 bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                    >
-                      <Moon className="size-3" /> Late Night Surge (+₹20)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={applyHighValueOrderPreset}
-                      className="px-2.5 py-1 bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                    >
-                      <Sparkles className="size-3" /> High Value (Free Delivery)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4 text-xs">
-                  {/* Cart Subtotal */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-gray-300">Food Subtotal (₹)</span>
-                      <span className="text-[#d9f447] font-bold">₹{subtotal}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={50}
-                      max={3000}
-                      step={25}
-                      value={subtotal}
-                      onChange={(e) => setSubtotal(Number(e.target.value))}
-                      className="w-full accent-[#d9f447] bg-[#242f29] h-1.5 rounded-lg cursor-pointer"
-                    />
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="number"
-                        value={subtotal}
-                        onChange={(e) => setSubtotal(Number(e.target.value))}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded px-3 py-1.5 text-white font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Road Distance */}
-                  <div className="space-y-1 pt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-gray-300">Delivery Road Distance (KM)</span>
-                      <span className="text-[#d9f447] font-bold">{distanceKm} km</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0.5}
-                      max={25}
-                      step={0.5}
-                      value={distanceKm}
-                      onChange={(e) => setDistanceKm(Number(e.target.value))}
-                      className="w-full accent-[#d9f447] bg-[#242f29] h-1.5 rounded-lg cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Driver Share % */}
-                  <div className="space-y-1 pt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-gray-300">Driver Payout Share (%)</span>
-                      <span className="text-emerald-400 font-bold">
-                        {driverPayoutSharePercent}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={50}
-                      max={100}
-                      step={5}
-                      value={driverPayoutSharePercent}
-                      onChange={(e) => setDriverPayoutSharePercent(Number(e.target.value))}
-                      className="w-full accent-emerald-400 bg-[#242f29] h-1.5 rounded-lg cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Multi-column Inputs */}
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">
-                        Vendor Commission %
-                      </label>
-                      <input
-                        type="number"
-                        value={vendorCommissionPercent}
-                        onChange={(e) => setVendorCommissionPercent(Number(e.target.value))}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded px-3 py-1.5 text-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">
-                        Platform Fee (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={platformFee}
-                        onChange={(e) => setPlatformFee(Number(e.target.value))}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded px-3 py-1.5 text-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">
-                        Handling Charge (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={handlingFee}
-                        onChange={(e) => setHandlingFee(Number(e.target.value))}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded px-3 py-1.5 text-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-300 font-semibold mb-1">
-                        Customer Tip (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={tip}
-                        onChange={(e) => setTip(Number(e.target.value))}
-                        className="w-full bg-[#0d1210] border border-[#2d3a33] rounded px-3 py-1.5 text-white font-mono text-emerald-400 font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Rain & Night Surge Toggles */}
-                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#242f29]">
-                    <button
-                      onClick={() => setIsRainModeActive(!isRainModeActive)}
-                      className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition ${
-                        isRainModeActive
-                          ? 'bg-blue-950/40 border-blue-500/50 text-blue-300'
-                          : 'bg-[#0d1210] border-[#253229] text-gray-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CloudRain
-                          className={`size-4 ${isRainModeActive ? 'text-blue-400' : ''}`}
-                        />
-                        <div>
-                          <p className="font-bold text-xs">Rain Surge</p>
-                          <p className="text-[10px] text-gray-400">+₹{rainFee}</p>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isRainModeActive ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-400'}`}
-                      >
-                        {isRainModeActive ? 'ON' : 'OFF'}
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => setIsNightSurgeActive(!isNightSurgeActive)}
-                      className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition ${
-                        isNightSurgeActive
-                          ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
-                          : 'bg-[#0d1210] border-[#253229] text-gray-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Moon className={`size-4 ${isNightSurgeActive ? 'text-purple-400' : ''}`} />
-                        <div>
-                          <p className="font-bold text-xs">Night Surge</p>
-                          <p className="text-[10px] text-gray-400">+₹{nightSurgeFee}</p>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${isNightSurgeActive ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'}`}
-                      >
-                        {isNightSurgeActive ? 'ON' : 'OFF'}
-                      </span>
-                    </button>
-                  </div>
+                    {!selectedRestaurantId ? (
+                      <option value="">-- Select a Restaurant First --</option>
+                    ) : filteredDbOrders.length === 0 ? (
+                      <option value="">-- No Recent Orders Found for this Restaurant --</option>
+                    ) : (
+                      <option value="">
+                        -- Choose Order from Database ({filteredDbOrders.length} available) --
+                      </option>
+                    )}
+                    {filteredDbOrders.map((ord) => (
+                      <option key={ord.id} value={ord.id}>
+                        #{ord.id.slice(0, 8)} - {ord.customer_name} - ₹{ord.total_amount} [{ord.status}]
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Right Output Breakdown Column (7 cols) */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Unit Economics 4-Grid Dashboard */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 1. Customer Bill Card */}
-                <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-3 relative overflow-hidden shadow-lg">
-                  <div className="flex items-center justify-between border-b border-[#242f29] pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                      <DollarSign className="size-3.5 text-[#d9f447]" /> Customer Bill
-                    </span>
-                    <span className="text-xs font-mono font-extrabold text-[#d9f447] bg-[#d9f447]/10 px-2 py-0.5 rounded">
-                      ₹{customerBilling.grandTotal}
-                    </span>
-                  </div>
+            {/* Playground Inputs & Controls */}
+            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-5 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#202923] pb-3 gap-2">
+                <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Sliders className="size-4 text-[#d9f447]" /> Financial Simulation Parameters
+                </h3>
+                <button
+                  onClick={resetToSystemDefaults}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-extrabold text-[#d9f447] transition"
+                >
+                  <RefreshCw className="size-3" /> Reset Defaults
+                </button>
+              </div>
 
-                  <div className="space-y-1.5 text-xs text-gray-300 font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Food Subtotal</span>
-                      <span>₹{customerBilling.subtotal}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Packaging Charge</span>
-                      <span>₹{customerBilling.packagingFee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Delivery Fee ({distanceKm}km)</span>
-                      <span>₹{customerBilling.netDeliveryFee}</span>
-                    </div>
-                    {customerBilling.couponDiscount > 0 && (
-                      <div className="flex justify-between text-emerald-400 font-semibold">
-                        <span>Coupon ({selectedCouponCode})</span>
-                        <span>-₹{customerBilling.couponDiscount}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Platform & Handling</span>
-                      <span>₹{customerBilling.platformFee + customerBilling.handlingFee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">GST (18%)</span>
-                      <span>₹{customerBilling.gstAmount}</span>
-                    </div>
-                    {customerBilling.tip > 0 && (
-                      <div className="flex justify-between text-emerald-400">
-                        <span>Driver Tip</span>
-                        <span>+₹{customerBilling.tip}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
-                      <span>Total Paid</span>
-                      <span className="text-[#d9f447]">₹{customerBilling.grandTotal}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Vendor Net Payout Card */}
-                <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-3 relative overflow-hidden shadow-lg">
-                  <div className="flex items-center justify-between border-b border-[#242f29] pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                      <Store className="size-3.5 text-orange-400" /> Vendor Payout
-                    </span>
-                    <span className="text-xs font-mono font-extrabold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded">
-                      ₹{vendorSettlement.netVendorPayout}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-gray-300 font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Gross Food Sales</span>
-                      <span>₹{vendorSettlement.grossSales}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Commission Rate</span>
-                      <span>{vendorSettlement.commissionRatePercent}%</span>
-                    </div>
-                    <div className="flex justify-between text-red-400">
-                      <span>Commission Deducted</span>
-                      <span>-₹{vendorSettlement.commissionDeducted}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
-                      <span>Net Vendor Payout</span>
-                      <span className="text-orange-400">₹{vendorSettlement.netVendorPayout}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Driver Earnings Card */}
-                <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-3 relative overflow-hidden shadow-lg">
-                  <div className="flex items-center justify-between border-b border-[#242f29] pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                      <Truck className="size-3.5 text-emerald-400" /> Driver Earnings
-                    </span>
-                    <span className="text-xs font-mono font-extrabold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">
-                      ₹{driverEarnings.totalDriverEarnings}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-gray-300 font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Base Distance Share</span>
-                      <span>₹{driverEarnings.baseDistanceShare}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Extra KM Share</span>
-                      <span>₹{driverEarnings.extraDistanceShare}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Surge/Rain Share</span>
-                      <span>₹{driverEarnings.surgeRainShare}</span>
-                    </div>
-                    {driverEarnings.tip > 0 && (
-                      <div className="flex justify-between text-emerald-400">
-                        <span>100% Customer Tip</span>
-                        <span>+₹{driverEarnings.tip}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
-                      <span>Total Driver Payout</span>
-                      <span className="text-emerald-400">
-                        ₹{driverEarnings.totalDriverEarnings}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Platform Net Profit Card */}
-                <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-3 relative overflow-hidden shadow-lg">
-                  <div className="flex items-center justify-between border-b border-[#242f29] pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                      <Coins className="size-3.5 text-yellow-400" /> Platform Margin
-                    </span>
-                    <span
-                      className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded ${
-                        platformEconomics.platformNetProfit >= 0
-                          ? 'text-yellow-400 bg-yellow-400/10'
-                          : 'text-red-400 bg-red-400/10'
-                      }`}
-                    >
-                      ₹{platformEconomics.platformNetProfit} (
-                      {platformEconomics.profitMarginPercent}%)
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-gray-300 font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Total Customer Paid</span>
-                      <span>₹{platformEconomics.totalCollectedFromCustomer}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-400">
-                      <span>Less: Vendor Payout</span>
-                      <span>-₹{platformEconomics.totalPaidToVendor}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-400">
-                      <span>Less: Driver Earnings</span>
-                      <span>-₹{platformEconomics.totalPaidToDriver}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-400">
-                      <span>Less: GST Payable</span>
-                      <span>-₹{platformEconomics.totalGstCollected}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-white pt-2 border-t border-[#242f29] text-sm">
-                      <span>Platform Profit Margin</span>
-                      <span
-                        className={
-                          platformEconomics.platformNetProfit >= 0
-                            ? 'text-yellow-400'
-                            : 'text-red-400'
-                        }
-                      >
-                        ₹{platformEconomics.platformNetProfit}
-                      </span>
-                    </div>
-                  </div>
+              {/* Quick Simulation Presets */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                  Quick Simulation Presets:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={resetToSystemDefaults}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 hover:text-white rounded-xl text-xs font-bold transition active:scale-95"
+                  >
+                    Standard Meal (₹450)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyRainSurgePreset}
+                    className="px-3 py-1.5 bg-blue-950/60 border border-blue-500/40 text-blue-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                  >
+                    <CloudRain className="size-3.5" /> Heavy Rain (+₹25)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyNightSurgePreset}
+                    className="px-3 py-1.5 bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Moon className="size-3.5" /> Late Night Surge (+₹20)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyHighValueOrderPreset}
+                    className="px-3 py-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Sparkles className="size-3.5" /> High Value (Free Delivery)
+                  </button>
                 </div>
               </div>
 
-              {/* Comprehensive Output Breakdown Table */}
-              <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-5 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-[#242f29] pb-3">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                    <Sparkles className="size-4 text-[#d9f447]" /> Unit Economics Breakdown Summary
-                  </h3>
-                  <span className="text-[10px] text-gray-400 font-mono">Real-time Calculation</span>
+              <div className="space-y-4 text-xs">
+                {/* Cart Subtotal */}
+                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                  <div className="flex justify-between font-bold">
+                    <span className="text-gray-300">Food Subtotal (₹)</span>
+                    <span className="text-[#d9f447] font-mono text-sm font-black">₹{subtotal}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={50}
+                    max={3000}
+                    step={25}
+                    value={subtotal}
+                    onChange={(e) => setSubtotal(Number(e.target.value))}
+                    className="w-full accent-[#d9f447] bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                  />
+                  <div className="pt-1">
+                    <input
+                      type="number"
+                      value={subtotal}
+                      onChange={(e) => setSubtotal(Number(e.target.value))}
+                      className="w-full bg-[#121815] border border-[#202923] rounded-lg px-3 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-[#d9f447]"
+                    />
+                  </div>
                 </div>
 
-                <div className="overflow-x-auto text-xs font-mono">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#28352e] text-gray-400 uppercase text-[10px]">
-                        <th className="py-2 px-3">Entity</th>
-                        <th className="py-2 px-3">Revenue / Amount</th>
-                        <th className="py-2 px-3">Outflow / Cost</th>
-                        <th className="py-2 px-3">Net Profit / Share</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1e2722] text-gray-300">
-                      <tr>
-                        <td className="py-2.5 px-3 font-semibold text-white">Customer</td>
-                        <td className="py-2.5 px-3 text-[#d9f447] font-bold">
-                          ₹{customerBilling.grandTotal}
-                        </td>
-                        <td className="py-2.5 px-3 text-gray-400">-</td>
-                        <td className="py-2.5 px-3 text-gray-400">Order Fulfilled</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 px-3 font-semibold text-white">Restaurant Vendor</td>
-                        <td className="py-2.5 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
-                        <td className="py-2.5 px-3 text-red-400">
-                          -₹{vendorSettlement.commissionDeducted} (Commission)
-                        </td>
-                        <td className="py-2.5 px-3 text-orange-400 font-bold">
-                          ₹{vendorSettlement.netVendorPayout}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 px-3 font-semibold text-white">Delivery Driver</td>
-                        <td className="py-2.5 px-3">
-                          ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
-                        </td>
-                        <td className="py-2.5 px-3 text-gray-400">-</td>
-                        <td className="py-2.5 px-3 text-emerald-400 font-bold">
-                          ₹{driverEarnings.totalDriverEarnings}
-                        </td>
-                      </tr>
-                      <tr className="bg-[#1b241f]">
-                        <td className="py-2.5 px-3 font-bold text-[#d9f447]">Platform (Crave)</td>
-                        <td className="py-2.5 px-3 text-yellow-400 font-bold">
-                          ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
-                        </td>
-                        <td className="py-2.5 px-3 text-gray-400">
-                          ₹
-                          {platformEconomics.totalPaidToDriver +
-                            platformEconomics.totalPaidToVendor}{' '}
-                          (Payouts)
-                        </td>
-                        <td className="py-2.5 px-3 font-extrabold text-yellow-400">
-                          ₹{platformEconomics.platformNetProfit} (
-                          {platformEconomics.profitMarginPercent}%)
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                {/* Road Distance */}
+                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                  <div className="flex justify-between font-bold">
+                    <span className="text-gray-300">Delivery Distance (KM)</span>
+                    <span className="text-[#d9f447] font-mono text-sm font-black">{distanceKm} km</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={25}
+                    step={0.5}
+                    value={distanceKm}
+                    onChange={(e) => setDistanceKm(Number(e.target.value))}
+                    className="w-full accent-[#d9f447] bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Driver Share % */}
+                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                  <div className="flex justify-between font-bold">
+                    <span className="text-gray-300">Driver Payout Share (%)</span>
+                    <span className="text-emerald-400 font-mono text-sm font-black">
+                      {driverPayoutSharePercent}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={50}
+                    max={100}
+                    step={5}
+                    value={driverPayoutSharePercent}
+                    onChange={(e) => setDriverPayoutSharePercent(Number(e.target.value))}
+                    className="w-full accent-emerald-400 bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Multi-column Inputs */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-gray-300 font-bold mb-1">
+                      Vendor Commission %
+                    </label>
+                    <input
+                      type="number"
+                      value={vendorCommissionPercent}
+                      onChange={(e) => setVendorCommissionPercent(Number(e.target.value))}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 font-bold mb-1">
+                      Platform Fee (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={platformFee}
+                      onChange={(e) => setPlatformFee(Number(e.target.value))}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 font-bold mb-1">
+                      Handling Charge (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={handlingFee}
+                      onChange={(e) => setHandlingFee(Number(e.target.value))}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 font-bold mb-1">
+                      Customer Tip (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={tip}
+                      onChange={(e) => setTip(Number(e.target.value))}
+                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-emerald-400 font-mono font-black outline-none focus:border-emerald-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Rain & Night Surge Toggles */}
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#202923]">
+                  <button
+                    onClick={() => setIsRainModeActive(!isRainModeActive)}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
+                      isRainModeActive
+                        ? 'bg-blue-950/50 border-blue-500/60 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                        : 'bg-[#0b0f0d] border-[#202923] text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CloudRain
+                        className={`size-4 ${isRainModeActive ? 'text-blue-400' : 'text-gray-500'}`}
+                      />
+                      <div>
+                        <p className="font-extrabold text-xs">Rain Surge</p>
+                        <p className="text-[10px] text-gray-400">+₹{rainFee}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isRainModeActive ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}
+                    >
+                      {isRainModeActive ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsNightSurgeActive(!isNightSurgeActive)}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
+                      isNightSurgeActive
+                        ? 'bg-purple-950/50 border-purple-500/60 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                        : 'bg-[#0b0f0d] border-[#202923] text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Moon className={`size-4 ${isNightSurgeActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                      <div>
+                        <p className="font-extrabold text-xs">Night Surge</p>
+                        <p className="text-[10px] text-gray-400">+₹{nightSurgeFee}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isNightSurgeActive ? 'bg-purple-500 text-white' : 'bg-white/10 text-gray-400'}`}
+                    >
+                      {isNightSurgeActive ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
+
+          {/* Right Output Breakdown Column (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Unit Economics 4-Grid Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 1. Customer Bill Card */}
+              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <DollarSign className="size-4 text-[#d9f447]" /> Customer Bill
+                  </span>
+                  <span className="text-xs font-mono font-black text-[#d9f447] bg-[#d9f447]/10 border border-[#d9f447]/20 px-2.5 py-1 rounded-lg">
+                    ₹{customerBilling.grandTotal}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs font-mono text-gray-300">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Food Subtotal</span>
+                    <span>₹{customerBilling.subtotal}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Packaging Charge</span>
+                    <span>₹{customerBilling.packagingFee}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Delivery Fee ({distanceKm}km)</span>
+                    <span>₹{customerBilling.netDeliveryFee}</span>
+                  </div>
+                  {customerBilling.couponDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-400 font-bold">
+                      <span>Coupon ({selectedCouponCode})</span>
+                      <span>-₹{customerBilling.couponDiscount}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Platform &amp; Handling</span>
+                    <span>₹{customerBilling.platformFee + customerBilling.handlingFee}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">GST (18%)</span>
+                    <span>₹{customerBilling.gstAmount}</span>
+                  </div>
+                  {customerBilling.tip > 0 && (
+                    <div className="flex justify-between text-emerald-400 font-bold">
+                      <span>Driver Tip</span>
+                      <span>+₹{customerBilling.tip}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                    <span>Total Paid</span>
+                    <span className="text-[#d9f447]">₹{customerBilling.grandTotal}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Vendor Net Payout Card */}
+              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <Store className="size-4 text-orange-400" /> Vendor Payout
+                  </span>
+                  <span className="text-xs font-mono font-black text-orange-400 bg-orange-400/10 border border-orange-400/20 px-2.5 py-1 rounded-lg">
+                    ₹{vendorSettlement.netVendorPayout}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs font-mono text-gray-300">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Gross Food Sales</span>
+                    <span>₹{vendorSettlement.grossSales}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Commission Rate</span>
+                    <span>{vendorSettlement.commissionRatePercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-rose-400 font-bold">
+                    <span>Commission Deducted</span>
+                    <span>-₹{vendorSettlement.commissionDeducted}</span>
+                  </div>
+                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                    <span>Net Vendor Payout</span>
+                    <span className="text-orange-400">₹{vendorSettlement.netVendorPayout}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Driver Earnings Card */}
+              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <Truck className="size-4 text-emerald-400" /> Driver Earnings
+                  </span>
+                  <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                    ₹{driverEarnings.totalDriverEarnings}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs font-mono text-gray-300">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Base Distance Share</span>
+                    <span>₹{driverEarnings.baseDistanceShare}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Extra KM Share</span>
+                    <span>₹{driverEarnings.extraDistanceShare}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Surge/Rain Share</span>
+                    <span>₹{driverEarnings.surgeRainShare}</span>
+                  </div>
+                  {driverEarnings.tip > 0 && (
+                    <div className="flex justify-between text-emerald-400 font-bold">
+                      <span>100% Customer Tip</span>
+                      <span>+₹{driverEarnings.tip}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                    <span>Total Driver Payout</span>
+                    <span className="text-emerald-400">
+                      ₹{driverEarnings.totalDriverEarnings}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Platform Net Profit Card */}
+              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <Coins className="size-4 text-yellow-400" /> Platform Margin
+                  </span>
+                  <span
+                    className={`text-xs font-mono font-black px-2.5 py-1 rounded-lg border ${
+                      platformEconomics.platformNetProfit >= 0
+                        ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20'
+                        : 'text-rose-400 bg-rose-400/10 border-rose-400/20'
+                    }`}
+                  >
+                    ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}%)
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs font-mono text-gray-300">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Customer Paid</span>
+                    <span>₹{platformEconomics.totalCollectedFromCustomer}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Less: Vendor Payout</span>
+                    <span>-₹{platformEconomics.totalPaidToVendor}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Less: Driver Earnings</span>
+                    <span>-₹{platformEconomics.totalPaidToDriver}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Less: GST Payable</span>
+                    <span>-₹{platformEconomics.totalGstCollected}</span>
+                  </div>
+                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                    <span>Platform Profit Margin</span>
+                    <span
+                      className={
+                        platformEconomics.platformNetProfit >= 0
+                          ? 'text-yellow-400'
+                          : 'text-rose-400'
+                      }
+                    >
+                      ₹{platformEconomics.platformNetProfit}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Comprehensive Output Breakdown Table */}
+            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#202923] pb-3">
+                <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Sparkles className="size-4 text-[#d9f447]" /> Unit Economics Summary Table
+                </h3>
+                <span className="text-[10px] text-gray-400 font-mono">Real-time Computation</span>
+              </div>
+
+              <div className="overflow-x-auto text-xs font-mono">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#202923] text-gray-400 uppercase text-[10px] bg-[#0b0f0d]">
+                      <th className="py-2.5 px-3">Entity</th>
+                      <th className="py-2.5 px-3">Revenue / Amount</th>
+                      <th className="py-2.5 px-3">Outflow / Cost</th>
+                      <th className="py-2.5 px-3">Net Profit / Share</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1c241f] text-gray-300">
+                    <tr className="hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-white">Customer</td>
+                      <td className="py-3 px-3 text-[#d9f447] font-bold">
+                        ₹{customerBilling.grandTotal}
+                      </td>
+                      <td className="py-3 px-3 text-gray-400">-</td>
+                      <td className="py-3 px-3 text-gray-400">Order Fulfilled</td>
+                    </tr>
+                    <tr className="hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-white">Restaurant Vendor</td>
+                      <td className="py-3 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
+                      <td className="py-3 px-3 text-rose-400 font-bold">
+                        -₹{vendorSettlement.commissionDeducted} (Commission)
+                      </td>
+                      <td className="py-3 px-3 text-orange-400 font-extrabold">
+                        ₹{vendorSettlement.netVendorPayout}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-white">Delivery Driver</td>
+                      <td className="py-3 px-3">
+                        ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
+                      </td>
+                      <td className="py-3 px-3 text-gray-400">-</td>
+                      <td className="py-3 px-3 text-emerald-400 font-extrabold">
+                        ₹{driverEarnings.totalDriverEarnings}
+                      </td>
+                    </tr>
+                    <tr className="bg-[#17211b] border-t-2 border-[#202923]">
+                      <td className="py-3 px-3 font-black text-[#d9f447]">Platform (Crave)</td>
+                      <td className="py-3 px-3 text-yellow-400 font-bold">
+                        ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
+                      </td>
+                      <td className="py-3 px-3 text-gray-400">
+                        ₹
+                        {platformEconomics.totalPaidToDriver +
+                          platformEconomics.totalPaidToVendor}{' '}
+                        (Payouts)
+                      </td>
+                      <td className="py-3 px-3 font-black text-yellow-400 text-sm">
+                        ₹{platformEconomics.platformNetProfit} (
+                        {platformEconomics.profitMarginPercent}%)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Tab Content: DB Payment Config */}
         {activeTab === 'db_config' && (
@@ -1014,7 +1011,6 @@ export default function CalculatorPlaygroundPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }

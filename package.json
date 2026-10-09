@@ -25,6 +25,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:admin": "tsx scripts/create-admin.ts",
+    "db:seed": "tsx scripts/seed-local-db.ts",
     "test": "turbo run test:jest",
     "test:jest": "jest",
     "test:watch": "jest --watch",
