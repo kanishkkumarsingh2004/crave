@@ -10,14 +10,14 @@ $$\text{CustomerPayable} = \text{NetMerchandiseValue} + \text{PackagingFee} + \t
 
 ### Line Item Definitions
 
-| Fee Component | Formula / Source | Tax Category | Beneficiary |
-| :--- | :--- | :--- | :--- |
-| **Net Merchandise Value** | $\sum (\text{UnitPricePaise} \times \text{Quantity}) - \text{Discounts}$ | 5% Restaurant Service GST / HSN Goods | Restaurant / Dark Store |
-| **Packaging Fee** | Server-controlled cap ($\text{Max } ₹20$) | Included in item GST | Restaurant |
-| **Delivery Fee** | $\text{BaseFee} + \max(0, \text{Distance} - \text{BaseKm}) \times \text{PerKmRate}$ | 5% / 18% GST | Rider / Platform |
-| **Platform Fee** | Server-configured convenience charge ($₹6$) | 18% Platform GST | CRAVE Platform |
-| **Handling Fee** | Server-configured operational charge ($₹5$) | 18% Platform GST | CRAVE Platform |
-| **Rider Tip** | 100% Customer voluntary pass-through | Exempt from GST & Commission | Rider (100% Pass-through) |
+| Fee Component             | Formula / Source                                                                    | Tax Category                          | Beneficiary               |
+| :------------------------ | :---------------------------------------------------------------------------------- | :------------------------------------ | :------------------------ |
+| **Net Merchandise Value** | $\sum (\text{UnitPricePaise} \times \text{Quantity}) - \text{Discounts}$            | 5% Restaurant Service GST / HSN Goods | Restaurant / Dark Store   |
+| **Packaging Fee**         | Server-controlled cap ($\text{Max } ₹20$)                                           | Included in item GST                  | Restaurant                |
+| **Delivery Fee**          | $\text{BaseFee} + \max(0, \text{Distance} - \text{BaseKm}) \times \text{PerKmRate}$ | 5% / 18% GST                          | Rider / Platform          |
+| **Platform Fee**          | Server-configured convenience charge ($₹6$)                                         | 18% Platform GST                      | CRAVE Platform            |
+| **Handling Fee**          | Server-configured operational charge ($₹5$)                                         | 18% Platform GST                      | CRAVE Platform            |
+| **Rider Tip**             | 100% Customer voluntary pass-through                                                | Exempt from GST & Commission          | Rider (100% Pass-through) |
 
 ---
 

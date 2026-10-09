@@ -129,9 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Admin Full-Height Left Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex flex-col justify-between bg-[#111714] text-white transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:z-30 border-r border-[#1e2722] ${
-          sidebarOpen
-            ? 'translate-x-0 shadow-2xl w-72'
-            : '-translate-x-full lg:translate-x-0'
+          sidebarOpen ? 'translate-x-0 shadow-2xl w-72' : '-translate-x-full lg:translate-x-0'
         } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
         <div
@@ -284,9 +282,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                 {t.admin.commandCenter}
               </p>
-              <h1 className="text-lg font-bold tracking-tight text-white">
-                {pageTitle}
-              </h1>
+              <h1 className="text-lg font-bold tracking-tight text-white">{pageTitle}</h1>
             </div>
           </div>
 

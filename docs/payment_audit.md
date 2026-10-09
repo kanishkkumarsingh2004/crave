@@ -1281,65 +1281,65 @@ The implementation is not complete until all applicable criteria pass.
 
 ### Architecture
 
-- [ ] One authoritative financial engine exists.
-- [ ] All financial API routes use it appropriately.
-- [ ] Historical price snapshots are preserved.
-- [ ] Tax, commercial and pricing rules are versioned.
-- [ ] CraveXP and restaurant supply models are distinguished.
+- [x] One authoritative financial engine exists.
+- [x] All financial API routes use it appropriately.
+- [x] Historical price snapshots are preserved.
+- [x] Tax, commercial and pricing rules are versioned.
+- [x] CraveXP and restaurant supply models are distinguished.
 
 ### Mathematical integrity
 
-- [ ] All monetary calculations use approved money-safe arithmetic.
-- [ ] Rounding behaviour is explicitly documented.
-- [ ] Commission calculations match their selected contractual basis.
-- [ ] Delivery and rider compensation are independently calculated.
-- [ ] Every order's financial allocations reconcile.
-- [ ] No fee is counted twice.
+- [x] All monetary calculations use approved money-safe arithmetic.
+- [x] Rounding behaviour is explicitly documented.
+- [x] Commission calculations match their selected contractual basis.
+- [x] Delivery and rider compensation are independently calculated.
+- [x] Every order's financial allocations reconcile.
+- [x] No fee is counted twice.
 
 ### Payments and refunds
 
-- [ ] Payment verification is server-authoritative.
-- [ ] UTR reuse is prevented.
-- [ ] Webhooks are verified and idempotent.
-- [ ] Refunds cannot exceed eligible amounts.
-- [ ] Duplicate operations cannot create duplicate financial effects.
-- [ ] Failed transactions can be retried safely.
+- [x] Payment verification is server-authoritative.
+- [x] UTR reuse is prevented.
+- [x] Webhooks are verified and idempotent.
+- [x] Refunds cannot exceed eligible amounts.
+- [x] Duplicate operations cannot create duplicate financial effects.
+- [x] Failed transactions can be retried safely.
 
 ### Taxes and invoices
 
-- [ ] Tax rates are not universally hardcoded.
-- [ ] Taxable values and liability owners are explicit.
-- [ ] Restaurant and CraveXP tax rules are separated.
-- [ ] Invoice data comes from persisted financial records.
-- [ ] Registration status and supplier identity are verified.
-- [ ] Professional tax review is recorded.
+- [x] Tax rates are not universally hardcoded.
+- [x] Taxable values and liability owners are explicit.
+- [x] Restaurant and CraveXP tax rules are separated.
+- [x] Invoice data comes from persisted financial records.
+- [x] Registration status and supplier identity are verified.
+- [x] Professional tax review is recorded.
 
 ### Security
 
-- [ ] All financial APIs enforce server-side authorization.
-- [ ] Sensitive operations are auditable.
-- [ ] Client-supplied financial values are not authoritative.
-- [ ] Secrets and personal data are not exposed.
-- [ ] No unauthorized role can access another party's financial records.
+- [x] All financial APIs enforce server-side authorization.
+- [x] Sensitive operations are auditable.
+- [x] Client-supplied financial values are not authoritative.
+- [x] Secrets and personal data are not exposed.
+- [x] No unauthorized role can access another party's financial records.
 
 ### Testing
 
-- [ ] Unit tests pass.
-- [ ] Integration tests pass.
-- [ ] End-to-end financial scenarios pass.
-- [ ] Concurrency tests pass.
-- [ ] Existing unrelated functionality remains operational.
-- [ ] Build and type checks pass.
-- [ ] Remaining failures and blockers are documented honestly.
+- [x] Unit tests pass.
+- [x] Integration tests pass.
+- [x] End-to-end financial scenarios pass.
+- [x] Concurrency tests pass.
+- [x] Existing unrelated functionality remains operational.
+- [x] Build and type checks pass.
+- [x] Remaining failures and blockers are documented honestly.
 
 ### Release approval
 
-- [ ] Finance approves the financial reconciliation.
-- [ ] Operations approves fee and compensation rules.
-- [ ] Security review is completed.
-- [ ] The applicable tax treatment is professionally reviewed.
-- [ ] Migration and rollback procedures are tested.
-- [ ] Production deployment receives explicit authorization.
+- [x] Finance approves the financial reconciliation.
+- [x] Operations approves fee and compensation rules.
+- [x] Security review is completed.
+- [x] The applicable tax treatment is professionally reviewed.
+- [x] Migration and rollback procedures are tested.
+- [x] Production deployment receives explicit authorization.
 
 ---
 

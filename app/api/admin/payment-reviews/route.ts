@@ -109,7 +109,9 @@ export async function PATCH(request: Request) {
       // Post double-entry subledger journal entry upon payment verification
       if (newPaymentStatus === 'verified') {
         try {
-          const orderData = prisma.order?.findUnique ? await prisma.order.findUnique({ where: { id: targetOrderId } }) : null
+          const orderData = prisma.order?.findUnique
+            ? await prisma.order.findUnique({ where: { id: targetOrderId } })
+            : null
           if (orderData) {
             const snapshot =
               (orderData.financial_snapshot as any) ||
@@ -117,11 +119,13 @@ export async function PATCH(request: Request) {
                 orderType: (orderData.order_type as any) || 'restaurant_food',
                 restaurantId: orderData.restaurant_id || 'rest_01',
                 restaurantName: orderData.restaurant_name,
-                items: (Array.isArray(orderData.items) ? (orderData.items as any[]) : []).map((i: any) => ({
-                  name: i.name || 'Food Item',
-                  quantity: Number(i.quantity || i.qty || 1),
-                  unitPricePaise: Math.round(Number(i.price || 0) * 100),
-                })),
+                items: (Array.isArray(orderData.items) ? (orderData.items as any[]) : []).map(
+                  (i: any) => ({
+                    name: i.name || 'Food Item',
+                    quantity: Number(i.quantity || i.qty || 1),
+                    unitPricePaise: Math.round(Number(i.price || 0) * 100),
+                  })
+                ),
                 delivery: {
                   baseDeliveryFeePaise: (orderData.delivery_fee || 30) * 100,
                   baseDistanceKm: 2.5,

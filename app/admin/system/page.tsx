@@ -74,20 +74,21 @@ export default function AdminSystemPage() {
             System Health &amp; Live Monitoring
           </h2>
           <p className="text-xs text-[#737e77] dark:text-gray-400 mt-0.5">
-            Real-time API gateway status, JWT token verifications, database connection pool, and security audit logs.
+            Real-time API gateway status, JWT token verifications, database connection pool, and
+            security audit logs.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-gray-500 font-mono">
-            Synced: {lastRefreshed}
-          </span>
+          <span className="text-[11px] text-gray-500 font-mono">Synced: {lastRefreshed}</span>
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#121815] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c6e336] transition active:scale-95 shrink-0"
           >
-            <RefreshCw className={`size-3.5 text-[#d9f447] dark:text-[#121815] ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`size-3.5 text-[#d9f447] dark:text-[#121815] ${isRefreshing ? 'animate-spin' : ''}`}
+            />
             Refresh Telemetry
           </button>
         </div>
@@ -132,9 +133,7 @@ export default function AdminSystemPage() {
             </span>
             <Database className="size-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <p className="mt-2 text-2xl font-extrabold text-purple-700 dark:text-purple-400">
-            12 ms
-          </p>
+          <p className="mt-2 text-2xl font-extrabold text-purple-700 dark:text-purple-400">12 ms</p>
           <span className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 block">
             Connection pool: 18/50 active
           </span>
@@ -160,11 +159,10 @@ export default function AdminSystemPage() {
       <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs text-xs space-y-4">
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
           <h3 className="font-bold text-[#18201c] dark:text-white flex items-center gap-2 text-sm">
-            <Activity className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> System Security &amp; Operations Audit Trail
+            <Activity className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> System Security &amp;
+            Operations Audit Trail
           </h3>
-          <span className="text-[10px] font-mono text-gray-400">
-            Real-time Immutable Log
-          </span>
+          <span className="text-[10px] font-mono text-gray-400">Real-time Immutable Log</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -182,8 +180,12 @@ export default function AdminSystemPage() {
             <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] text-gray-700 dark:text-gray-300">
               {logs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-[#202923] transition">
-                  <td className="py-3 px-3 font-bold text-purple-600 dark:text-purple-400">{log.id}</td>
-                  <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">{log.event}</td>
+                  <td className="py-3 px-3 font-bold text-purple-600 dark:text-purple-400">
+                    {log.id}
+                  </td>
+                  <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
+                    {log.event}
+                  </td>
                   <td className="py-3 px-3">{log.actor}</td>
                   <td className="py-3 px-3 text-gray-400">{log.ip}</td>
                   <td className="py-3 px-3">
@@ -201,4 +203,3 @@ export default function AdminSystemPage() {
     </div>
   )
 }
-

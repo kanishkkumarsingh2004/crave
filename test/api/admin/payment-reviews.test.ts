@@ -191,7 +191,7 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
       expect(data.error).toBe('Review ID and status are required')
     })
 
-it('rejects non-admin role', async () => {
+    it('rejects non-admin role', async () => {
       mockVerifyToken.mockResolvedValueOnce({
         id: 'usr_regular',
         role: 'user',
@@ -207,5 +207,5 @@ it('rejects non-admin role', async () => {
       expect(response.status).toBe(403)
       expect(data.error.toLowerCase()).toContain('admin')
     })
-})
+  })
 })

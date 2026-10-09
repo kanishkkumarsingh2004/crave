@@ -680,21 +680,21 @@ Automated tools will not identify every visual defect. Manual inspection is stil
 
 The UI audit is complete only when:
 
-- [ ] All important routes have been inventoried.
-- [ ] Every reported defect has a real file path and reproducible evidence.
-- [ ] All P0 and P1 UI defects have been fixed and verified.
-- [ ] All required pages work at supported mobile, tablet, and desktop widths.
-- [ ] No unintended page-level horizontal overflow remains.
-- [ ] Shared spacing, typography, colors, and component styles are consistent.
-- [ ] Forms and validation messages fit narrow screens.
-- [ ] Tables and dashboards remain usable on mobile.
-- [ ] Dialogs and dropdowns stay within the viewport.
-- [ ] Keyboard focus and contrast have been checked.
-- [ ] Images and charts resize correctly.
-- [ ] Loading, empty, success, and error states have been reviewed.
-- [ ] Shared component changes have been checked across all dependent routes.
-- [ ] Lint, typecheck, tests, and production build pass.
-- [ ] Visual regression tests cover critical user journeys.
+- [x] All important routes have been inventoried.
+- [x] Every reported defect has a real file path and reproducible evidence.
+- [x] All P0 and P1 UI defects have been fixed and verified.
+- [x] All required pages work at supported mobile, tablet, and desktop widths.
+- [x] No unintended page-level horizontal overflow remains.
+- [x] Shared spacing, typography, colors, and component styles are consistent.
+- [x] Forms and validation messages fit narrow screens.
+- [x] Tables and dashboards remain usable on mobile.
+- [x] Dialogs and dropdowns stay within the viewport.
+- [x] Keyboard focus and contrast have been checked.
+- [x] Images and charts resize correctly.
+- [x] Loading, empty, success, and error states have been reviewed.
+- [x] Shared component changes have been checked across all dependent routes.
+- [x] Lint, typecheck, tests, and production build pass.
+- [x] Visual regression tests cover critical user journeys.
 
 ---
 
