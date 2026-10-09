@@ -1,4 +1,5 @@
 # MASTER IMPLEMENTATION PROMPT — CRAVE BILLING ENGINE 2.0
+
 ## Complete Financial Logic, Dynamic Pricing, Tax Compliance, Payments, Settlements & End-to-End System Audit
 
 **Repository:** https://github.com/kanishkkumarsingh2004/crave  
@@ -121,20 +122,20 @@ Create:
 
 Use this format:
 
-| Field | Required information |
-|---|---|
-| Finding ID | Unique ID, such as BILL-001 |
-| Severity | Critical, High, Medium, Low |
-| File and lines | Exact location |
-| Current behaviour | What the code actually does |
-| Expected behaviour | Approved rule |
-| Reproduction | Input and steps |
-| Financial impact | Who could be overcharged, underpaid or misreported |
-| Root cause | Technical cause |
-| Required correction | Specific change |
-| Regression test | Test proving the fix |
-| Status | Open, In Progress, Fixed, Verified |
-| Reviewer | Person responsible for review |
+| Field               | Required information                               |
+| ------------------- | -------------------------------------------------- |
+| Finding ID          | Unique ID, such as BILL-001                        |
+| Severity            | Critical, High, Medium, Low                        |
+| File and lines      | Exact location                                     |
+| Current behaviour   | What the code actually does                        |
+| Expected behaviour  | Approved rule                                      |
+| Reproduction        | Input and steps                                    |
+| Financial impact    | Who could be overcharged, underpaid or misreported |
+| Root cause          | Technical cause                                    |
+| Required correction | Specific change                                    |
+| Regression test     | Test proving the fix                               |
+| Status              | Open, In Progress, Fixed, Verified                 |
+| Reviewer            | Person responsible for review                      |
 
 Distinguish confirmed defects from potential vulnerabilities, missing evidence and recommended improvements.
 

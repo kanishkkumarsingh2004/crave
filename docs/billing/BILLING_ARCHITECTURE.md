@@ -2,7 +2,7 @@
 
 **Version:** 2.0.0  
 **Date:** 2026-10-09  
-**Status:** Phase 1 + 2 Implemented  
+**Status:** Phase 1 + 2 Implemented
 
 ---
 
@@ -43,6 +43,7 @@ All financial amounts in `lib/finance/` are stored and computed as **integer pai
 ```
 
 **Rules:**
+
 - Never use JavaScript binary floating-point (`number`) for authoritative monetary storage.
 - All inputs convert to paise before computation.
 - Rounding is explicit and documented at each boundary:
@@ -86,36 +87,37 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 
 ## 4. Tax Separation
 
-| Supply | GST Rate | Who Bears It | Invoice |
-|:---|:---:|:---|:---|
-| Restaurant food (Section 9(5)) | 5% | Platform is deemed supplier; customer pays | Customer B2C receipt |
-| Platform convenience/handling fee | 18% | Customer pays | Customer B2C receipt |
-| Platform commission to platform from restaurant | 18% | Restaurant pays | B2B commission invoice |
-| CraveXP grocery (varies by HSN) | 0–18% | Customer pays | Customer B2C receipt |
+| Supply                                          | GST Rate | Who Bears It                               | Invoice                |
+| :---------------------------------------------- | :------: | :----------------------------------------- | :--------------------- |
+| Restaurant food (Section 9(5))                  |    5%    | Platform is deemed supplier; customer pays | Customer B2C receipt   |
+| Platform convenience/handling fee               |   18%    | Customer pays                              | Customer B2C receipt   |
+| Platform commission to platform from restaurant |   18%    | Restaurant pays                            | B2B commission invoice |
+| CraveXP grocery (varies by HSN)                 |  0–18%   | Customer pays                              | Customer B2C receipt   |
 
 ---
 
 ## 5. Double-Entry Chart of Accounts
 
-| Account Code | Type | Normal Balance | Purpose |
-|:---|:---:|:---:|:---|
-| PAYMENT_CLEARING | Asset | Debit | Customer payments received, pending settlement |
-| CUSTOMER_REFUND_PAYABLE | Liability | Credit | Approved refunds pending disbursement |
-| VENDOR_PAYABLE | Liability | Credit | Amounts owed to restaurants |
-| RIDER_PAYABLE | Liability | Credit | Rider delivery compensation owed |
-| RIDER_TIP_CLEARING | Liability | Credit | Tip in transit (100% pass-through) |
-| PLATFORM_COMMISSION_REV | Revenue | Credit | Commission earned from restaurants |
-| PLATFORM_FEE_REV | Revenue | Credit | Platform + handling + delivery revenue |
-| GST_OUTPUT_PAYABLE | Liability | Credit | GST collected payable to government |
-| DISCOUNT_EXPENSE | Expense | Debit | Platform-funded discount cost |
-| DELIVERY_REVENUE | Revenue | Credit | Net delivery revenue after rider share |
-| BANK_SETTLEMENT | Asset | Debit | Confirmed bank transfers completed |
+| Account Code            |   Type    | Normal Balance | Purpose                                        |
+| :---------------------- | :-------: | :------------: | :--------------------------------------------- |
+| PAYMENT_CLEARING        |   Asset   |     Debit      | Customer payments received, pending settlement |
+| CUSTOMER_REFUND_PAYABLE | Liability |     Credit     | Approved refunds pending disbursement          |
+| VENDOR_PAYABLE          | Liability |     Credit     | Amounts owed to restaurants                    |
+| RIDER_PAYABLE           | Liability |     Credit     | Rider delivery compensation owed               |
+| RIDER_TIP_CLEARING      | Liability |     Credit     | Tip in transit (100% pass-through)             |
+| PLATFORM_COMMISSION_REV |  Revenue  |     Credit     | Commission earned from restaurants             |
+| PLATFORM_FEE_REV        |  Revenue  |     Credit     | Platform + handling + delivery revenue         |
+| GST_OUTPUT_PAYABLE      | Liability |     Credit     | GST collected payable to government            |
+| DISCOUNT_EXPENSE        |  Expense  |     Debit      | Platform-funded discount cost                  |
+| DELIVERY_REVENUE        |  Revenue  |     Credit     | Net delivery revenue after rider share         |
+| BANK_SETTLEMENT         |   Asset   |     Debit      | Confirmed bank transfers completed             |
 
 ---
 
 ## 6. Acceptance Criteria Status (docs/payment_audit.md §20)
 
 ### Architecture
+
 - [x] One authoritative financial engine exists (`lib/finance/pricing-engine.ts`)
 - [x] All financial API routes use it appropriately (calculator route updated)
 - [x] Historical price snapshots are preserved (`order.financial_snapshot`)
@@ -123,6 +125,7 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [ ] CraveXP and restaurant supply models fully distinguished — requires CraveXP item HSN classification data (follow-up)
 
 ### Mathematical Integrity
+
 - [x] All monetary calculations use integer paise (`lib/finance/money.ts`)
 - [x] Rounding behaviour explicitly documented (CEIL for customer fees, ROUND for tax base)
 - [x] Commission calculations match contractual basis (ITEM_SUBTOTAL, ORDER_SUBTOTAL, TAXABLE_VALUE, CUSTOMER_PAYABLE)
@@ -131,6 +134,7 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [x] No fee counted twice (stacking rules implemented)
 
 ### Payments and Refunds
+
 - [ ] Payment verification is server-authoritative — requires updating order creation routes
 - [x] UTR reuse prevented by unique database constraint
 - [ ] Webhooks verified and idempotent — requires payment provider webhook implementation
@@ -139,6 +143,7 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [x] Failed transactions can be retried safely (idempotent journal persistence)
 
 ### Taxes and Invoices
+
 - [x] Tax rates not universally hardcoded (TaxCategory → TAX_RATE_MAP)
 - [x] Taxable values and liability owners explicit (separate B2C and B2B breakdowns)
 - [x] Restaurant and CraveXP tax rules separated (TaxCategory enum, calculateGroceryItemGst)
@@ -146,6 +151,7 @@ buildOrderConfirmedJournal(orderId, snapshot) ──► persistJournalTransactio
 - [ ] Registration status and supplier identity verified — professional review required
 
 ### Security
+
 - [ ] All financial APIs enforce server-side authorization — ongoing; see ISSUE-008
 - [x] Sensitive operations auditable (LedgerEntry with event_type)
 - [x] Client-supplied financial values not authoritative (pricing-engine recomputes from server config)

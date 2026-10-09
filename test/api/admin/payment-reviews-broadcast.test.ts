@@ -10,6 +10,10 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     paymentReview: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    order: {
       update: jest.fn(),
     },
   },
@@ -51,11 +55,17 @@ describe('Payment Reviews PATCH - Broadcast Integration', () => {
   }
 
   it('broadcasts approval_update to admin channel on verification', async () => {
+    mockPrisma.paymentReview.findUnique.mockResolvedValue({
+      id: 'pr_1',
+      order_id: 'ord_1',
+      status: 'verified',
+    })
     mockPrisma.paymentReview.update.mockResolvedValue({
       id: 'pr_1',
       order_id: 'ord_1',
       status: 'verified',
     })
+    mockPrisma.order.update.mockResolvedValue({})
 
     const { PATCH } = await import('@/app/api/admin/payment-reviews/route')
     const req = makeRequest({ id: 'pr_1', status: 'verified' })
@@ -75,11 +85,17 @@ describe('Payment Reviews PATCH - Broadcast Integration', () => {
   })
 
   it('broadcasts approval_update to admin channel on rejection', async () => {
+    mockPrisma.paymentReview.findUnique.mockResolvedValue({
+      id: 'pr_2',
+      order_id: 'ord_2',
+      status: 'rejected',
+    })
     mockPrisma.paymentReview.update.mockResolvedValue({
       id: 'pr_2',
       order_id: 'ord_2',
       status: 'rejected',
     })
+    mockPrisma.order.update.mockResolvedValue({})
 
     const { PATCH } = await import('@/app/api/admin/payment-reviews/route')
     const req = makeRequest({ id: 'pr_2', status: 'rejected' })
@@ -96,11 +112,17 @@ describe('Payment Reviews PATCH - Broadcast Integration', () => {
   })
 
   it('broadcasts approval_update to admin channel on pending', async () => {
+    mockPrisma.paymentReview.findUnique.mockResolvedValue({
+      id: 'pr_3',
+      order_id: 'ord_3',
+      status: 'pending',
+    })
     mockPrisma.paymentReview.update.mockResolvedValue({
       id: 'pr_3',
       order_id: 'ord_3',
       status: 'pending',
     })
+    mockPrisma.order.update.mockResolvedValue({})
 
     const { PATCH } = await import('@/app/api/admin/payment-reviews/route')
     const req = makeRequest({ id: 'pr_3', status: 'pending' })

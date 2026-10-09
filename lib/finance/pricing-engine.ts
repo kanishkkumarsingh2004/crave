@@ -31,7 +31,8 @@ import {
 // ─── Enums & Types ─────────────────────────────────────────────────────────────
 
 export type CommercialModel = 'commission' | 'markup' | 'hybrid'
-export type CommissionBasis = 'ITEM_SUBTOTAL' | 'ORDER_SUBTOTAL' | 'TAXABLE_VALUE' | 'CUSTOMER_PAYABLE'
+export type CommissionBasis =
+  'ITEM_SUBTOTAL' | 'ORDER_SUBTOTAL' | 'TAXABLE_VALUE' | 'CUSTOMER_PAYABLE'
 export type GstStatus = 'REGISTERED' | 'UNREGISTERED' | 'COMPOSITION' | 'EXEMPT'
 export type OrderType = 'restaurant_food' | 'cravexp_grocery'
 export type FundingSource = 'RESTAURANT' | 'PLATFORM' | 'SHARED' | 'BANK'
@@ -41,14 +42,14 @@ export type FundingSource = 'RESTAURANT' | 'PLATFORM' | 'SHARED' | 'BANK'
 export interface PricingItem {
   id?: string
   name: string
-  hsnSacCode?: string               // e.g. '996331' for restaurant
+  hsnSacCode?: string // e.g. '996331' for restaurant
   category?: string
   quantity: number
-  unitPricePaise: number            // Selling price per unit in PAISE (integer)
+  unitPricePaise: number // Selling price per unit in PAISE (integer)
   mrpPaise?: number
-  priceTaxMode?: PriceTaxMode       // defaults to contract
-  taxCategory?: TaxCategory         // required for CraveXP items
-  taxRatePercent?: number           // explicit override; otherwise derived from taxCategory
+  priceTaxMode?: PriceTaxMode // defaults to contract
+  taxCategory?: TaxCategory // required for CraveXP items
+  taxRatePercent?: number // explicit override; otherwise derived from taxCategory
   customCommissionRatePercent?: number
   customMarkupRatePercent?: number
 }
@@ -57,31 +58,31 @@ export interface CommercialContractInput {
   contractNumber?: string
   version?: number
   commercialModel?: CommercialModel
-  commissionRatePercent?: number    // e.g. 15.0
-  markupRatePercent?: number        // e.g. 10.0
+  commissionRatePercent?: number // e.g. 15.0
+  markupRatePercent?: number // e.g. 10.0
   fixedCommissionPaise?: number
   fixedMarkupPaise?: number
   commissionBasis?: CommissionBasis
-  priceTaxMode?: PriceTaxMode       // default for all items
+  priceTaxMode?: PriceTaxMode // default for all items
   gstStatus?: GstStatus
   supplierState?: string
   restaurantGstin?: string
 }
 
 export interface SurchargeConfig {
-  surgeMultiplier?: number          // 1.0 = no surge; 1.5 = 50% surge
-  rainFeePaise?: number             // 0 if not raining
-  nightSurgeFeePaise?: number       // 0 if not night hours
+  surgeMultiplier?: number // 1.0 = no surge; 1.5 = 50% surge
+  rainFeePaise?: number // 0 if not raining
+  nightSurgeFeePaise?: number // 0 if not night hours
   isRainActive?: boolean
   isNightSurgeActive?: boolean
 }
 
 export interface DeliveryConfig {
-  baseDeliveryFeePaise: number      // Base fee e.g. 3000 (₹30)
-  baseDistanceKm: number            // Included km e.g. 3
-  perKmRatePaise: number            // Per extra km rate e.g. 1000 (₹10/km)
+  baseDeliveryFeePaise: number // Base fee e.g. 3000 (₹30)
+  baseDistanceKm: number // Included km e.g. 3
+  perKmRatePaise: number // Per extra km rate e.g. 1000 (₹10/km)
   freeDeliveryThresholdPaise?: number // Cart value above which delivery is free
-  roadDistanceKm: number            // Actual routing distance
+  roadDistanceKm: number // Actual routing distance
 }
 
 export interface OrderPriceInput {
@@ -91,8 +92,8 @@ export interface OrderPriceInput {
   // Restaurant/supplier context
   restaurantId?: string
   restaurantName: string
-  supplierState?: string           // defaults to 'Karnataka'
-  customerState?: string           // defaults to supplierState
+  supplierState?: string // defaults to 'Karnataka'
+  customerState?: string // defaults to supplierState
 
   // Items
   items: PricingItem[]
@@ -104,18 +105,18 @@ export interface OrderPriceInput {
   surcharges?: SurchargeConfig
 
   // Fees (in paise; from active PaymentConfig)
-  platformFeePaise?: number        // e.g. 600 (₹6)
-  handlingFeePaise?: number        // e.g. 500 (₹5)
-  packagingFeePaise?: number       // e.g. 2000 (₹20)
+  platformFeePaise?: number // e.g. 600 (₹6)
+  handlingFeePaise?: number // e.g. 500 (₹5)
+  packagingFeePaise?: number // e.g. 2000 (₹20)
 
   // Small-cart fee
-  smallCartFeePaise?: number        // Applied if net merchandise < threshold
+  smallCartFeePaise?: number // Applied if net merchandise < threshold
   smallCartThresholdPaise?: number
 
   // Discount
   couponDiscountPaise?: number
   couponFundingSource?: FundingSource
-  restaurantDiscountSharePercent?: number  // % of discount funded by restaurant
+  restaurantDiscountSharePercent?: number // % of discount funded by restaurant
 
   // Tip
   tipPaise?: number
@@ -166,26 +167,26 @@ export interface CanonicalPriceResult {
   items: ItemPriceResult[]
 
   // Merchandise
-  grossSubtotalPaise: number         // sum of all item.quantity × unitPrice
-  couponDiscountPaise: number        // validated coupon discount
+  grossSubtotalPaise: number // sum of all item.quantity × unitPrice
+  couponDiscountPaise: number // validated coupon discount
   restaurantFundedDiscountPaise: number
   platformFundedDiscountPaise: number
-  netMerchandisePaise: number        // grossSubtotal - couponDiscount
+  netMerchandisePaise: number // grossSubtotal - couponDiscount
 
   // Commercial model
   commercialModel: CommercialModel
   commissionBasis: CommissionBasis
   commissionRatePercent: number
-  grossCommissionPaise: number       // on the eligible commission base
-  commissionGstPaise: number         // 18% GST on commission (B2B platform invoice)
+  grossCommissionPaise: number // on the eligible commission base
+  commissionGstPaise: number // 18% GST on commission (B2B platform invoice)
   totalCommissionDeductionPaise: number // grossCommission + commissionGst (deducted from vendor)
   markupRatePercent: number
-  markupAmountPaise: number          // added to customer price (markup/hybrid only)
+  markupAmountPaise: number // added to customer price (markup/hybrid only)
 
   // Fees (all in paise)
   packagingFeePaise: number
-  deliveryFeePaise: number           // net delivery fee after free-delivery check
-  grossDeliveryFeePaise: number      // before free-delivery waiver
+  deliveryFeePaise: number // net delivery fee after free-delivery check
+  grossDeliveryFeePaise: number // before free-delivery waiver
   surgeFeePaise: number
   rainFeePaise: number
   nightSurgeFeePaise: number
@@ -207,10 +208,10 @@ export interface CanonicalPriceResult {
 
   // Vendor settlement
   vendorGrossSalesPaise: number
-  vendorNetSalesPaise: number        // after restaurant-funded discount
+  vendorNetSalesPaise: number // after restaurant-funded discount
   vendorPackagingSharePaise: number
   vendorPayableGrossPaise: number
-  vendorPayableNetPaise: number      // final bank transfer to vendor
+  vendorPayableNetPaise: number // final bank transfer to vendor
 
   // Rider compensation
   riderBasePayPaise: number
@@ -265,13 +266,14 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   const supplierState = input.supplierState || contract.supplierState || 'Karnataka'
   const customerState = input.customerState || supplierState
 
-  const isCommission = contract.commercialModel === 'commission' || contract.commercialModel === 'hybrid'
+  const isCommission =
+    contract.commercialModel === 'commission' || contract.commercialModel === 'hybrid'
   const isMarkup = contract.commercialModel === 'markup' || contract.commercialModel === 'hybrid'
 
   // ─── 1. Items ────────────────────────────────────────────────────────────────
 
   let grossSubtotalPaise = 0
-  const processedItems: ItemPriceResult[] = input.items.map(item => {
+  const processedItems: ItemPriceResult[] = input.items.map((item) => {
     const qty = Math.max(1, item.quantity || 1)
     const unitPricePaise = Math.max(0, item.unitPricePaise || 0)
     const grossAmountPaise = unitPricePaise * qty
@@ -282,15 +284,30 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
     // Tax calculation per item
     let taxBreakdown: TaxBreakdown
     if (input.orderType === 'cravexp_grocery' && item.taxCategory) {
-      taxBreakdown = calculateGroceryItemGst(grossAmountPaise, item.taxCategory, priceTaxMode, supplierState, customerState)
+      taxBreakdown = calculateGroceryItemGst(
+        grossAmountPaise,
+        item.taxCategory,
+        priceTaxMode,
+        supplierState,
+        customerState
+      )
     } else {
-      taxBreakdown = calculateRestaurantServiceGst(grossAmountPaise, priceTaxMode, supplierState, customerState)
+      taxBreakdown = calculateRestaurantServiceGst(
+        grossAmountPaise,
+        priceTaxMode,
+        supplierState,
+        customerState
+      )
     }
 
-    const commissionRatePercent = isCommission ? (item.customCommissionRatePercent ?? contract.commissionRatePercent) : 0
+    const commissionRatePercent = isCommission
+      ? (item.customCommissionRatePercent ?? contract.commissionRatePercent)
+      : 0
     const commissionAmountPaise = Math.ceil((grossAmountPaise * commissionRatePercent) / 100)
 
-    const markupRatePercent = isMarkup ? (item.customMarkupRatePercent ?? contract.markupRatePercent) : 0
+    const markupRatePercent = isMarkup
+      ? (item.customMarkupRatePercent ?? contract.markupRatePercent)
+      : 0
     const markupAmountPaise = Math.ceil((grossAmountPaise * markupRatePercent) / 100)
 
     return {
@@ -327,10 +344,15 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   )
 
   const restaurantSharePercent = input.restaurantDiscountSharePercent ?? 50
-  const restaurantFundedDiscountPaise = Math.ceil((couponDiscountPaise * restaurantSharePercent) / 100)
+  const restaurantFundedDiscountPaise = Math.ceil(
+    (couponDiscountPaise * restaurantSharePercent) / 100
+  )
   const platformFundedDiscountPaise = couponDiscountPaise - restaurantFundedDiscountPaise
 
-  const netMerchandisePaise = Math.max(0, grossSubtotalPaise + markupAmountPaise - couponDiscountPaise)
+  const netMerchandisePaise = Math.max(
+    0,
+    grossSubtotalPaise + markupAmountPaise - couponDiscountPaise
+  )
 
   // ─── 4. Fees ─────────────────────────────────────────────────────────────────
 
@@ -347,7 +369,13 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
 
   // ─── 5. Delivery Fee ─────────────────────────────────────────────────────────
 
-  const { baseDeliveryFeePaise, baseDistanceKm, perKmRatePaise, roadDistanceKm, freeDeliveryThresholdPaise } = input.delivery
+  const {
+    baseDeliveryFeePaise,
+    baseDistanceKm,
+    perKmRatePaise,
+    roadDistanceKm,
+    freeDeliveryThresholdPaise,
+  } = input.delivery
   const extraDistanceKm = Math.max(0, roadDistanceKm - baseDistanceKm)
   const extraDistanceFeePaise = Math.ceil(extraDistanceKm * perKmRatePaise)
   const basePlusDistancePaise = baseDeliveryFeePaise + extraDistanceFeePaise
@@ -358,12 +386,16 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   const surgeFeePaise = Math.ceil(basePlusDistancePaise * surgeMultiplierAdd)
 
   const rainFeePaise = surgeConfig.isRainActive ? Math.max(0, surgeConfig.rainFeePaise ?? 0) : 0
-  const nightSurgeFeePaise = surgeConfig.isNightSurgeActive ? Math.max(0, surgeConfig.nightSurgeFeePaise ?? 0) : 0
+  const nightSurgeFeePaise = surgeConfig.isNightSurgeActive
+    ? Math.max(0, surgeConfig.nightSurgeFeePaise ?? 0)
+    : 0
 
-  const grossDeliveryFeePaise = basePlusDistancePaise + surgeFeePaise + rainFeePaise + nightSurgeFeePaise
+  const grossDeliveryFeePaise =
+    basePlusDistancePaise + surgeFeePaise + rainFeePaise + nightSurgeFeePaise
 
   const isFreeDelivery =
-    (freeDeliveryThresholdPaise ?? 0) > 0 && netMerchandisePaise >= (freeDeliveryThresholdPaise ?? 0)
+    (freeDeliveryThresholdPaise ?? 0) > 0 &&
+    netMerchandisePaise >= (freeDeliveryThresholdPaise ?? 0)
   const deliveryFeePaise = isFreeDelivery ? 0 : grossDeliveryFeePaise
 
   // ─── 6. Tax ──────────────────────────────────────────────────────────────────
@@ -424,22 +456,23 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
       commissionBasePaise = restaurantServiceTaxBreakdown.taxableBasePaise
       break
     case 'CUSTOMER_PAYABLE':
-      commissionBasePaise = customerPayablePaise - tipPaise  // exclude tip
+      commissionBasePaise = customerPayablePaise - tipPaise // exclude tip
       break
     case 'ORDER_SUBTOTAL':
     default:
-      commissionBasePaise = grossSubtotalPaise  // standard: pre-discount subtotal
+      commissionBasePaise = grossSubtotalPaise // standard: pre-discount subtotal
   }
 
   // Commission amount (NEVER on tips, delivery fees, taxes unless contract explicitly requires it)
   const grossCommissionPaise = isCommission
-    ? Math.ceil((commissionBasePaise * contract.commissionRatePercent) / 100) + contract.fixedCommissionPaise
+    ? Math.ceil((commissionBasePaise * contract.commissionRatePercent) / 100) +
+      contract.fixedCommissionPaise
     : 0
 
   const commissionGstBreakdown = calculateCommissionGst(
     grossCommissionPaise,
-    supplierState,  // platform state = supplier state for B2B invoice
-    supplierState   // restaurant is in same state for this calc; adjust if needed
+    supplierState, // platform state = supplier state for B2B invoice
+    supplierState // restaurant is in same state for this calc; adjust if needed
   )
   const commissionGstPaise = commissionGstBreakdown.totalGstPaise
   const totalCommissionDeductionPaise = grossCommissionPaise + commissionGstPaise
@@ -456,12 +489,12 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   // Rider earns a percentage of gross delivery fee (NOT the customer's delivery fee post-waiver)
   // This ensures riders are compensated even when customers get free delivery.
   const riderSharePercent = DEFAULT_RIDER_SHARE_PERCENT
-  const riderBasePayPaise = Math.ceil(baseDeliveryFeePaise * riderSharePercent / 100)
-  const riderDistancePayPaise = Math.ceil(extraDistanceFeePaise * riderSharePercent / 100)
-  const riderSurgeIncentivePaise = Math.ceil(surgeFeePaise * riderSharePercent / 100)
-  const riderRainIncentivePaise = Math.ceil(rainFeePaise * riderSharePercent / 100)
-  const riderNightIncentivePaise = Math.ceil(nightSurgeFeePaise * riderSharePercent / 100)
-  const riderTipPaise = tipPaise  // 100% tip pass-through — never retained by platform
+  const riderBasePayPaise = Math.ceil((baseDeliveryFeePaise * riderSharePercent) / 100)
+  const riderDistancePayPaise = Math.ceil((extraDistanceFeePaise * riderSharePercent) / 100)
+  const riderSurgeIncentivePaise = Math.ceil((surgeFeePaise * riderSharePercent) / 100)
+  const riderRainIncentivePaise = Math.ceil((rainFeePaise * riderSharePercent) / 100)
+  const riderNightIncentivePaise = Math.ceil((nightSurgeFeePaise * riderSharePercent) / 100)
+  const riderTipPaise = tipPaise // 100% tip pass-through — never retained by platform
 
   const riderPayablePaise =
     riderBasePayPaise +
@@ -562,14 +595,16 @@ export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculato
   return {
     input: {
       subtotal: toRupees(r.grossSubtotalPaise),
-      distanceKm: 0,  // not stored in canonical result; use delivery config
+      distanceKm: 0, // not stored in canonical result; use delivery config
     },
     customerBilling: {
       subtotal: toRupees(r.grossSubtotalPaise),
       markupAmount: toRupees(r.markupAmountPaise),
       customerFoodSubtotal: toRupees(r.grossSubtotalPaise + r.markupAmountPaise),
       packagingFee: toRupees(r.packagingFeePaise),
-      baseDeliveryFee: toRupees(r.grossDeliveryFeePaise - r.surgeFeePaise - r.rainFeePaise - r.nightSurgeFeePaise),
+      baseDeliveryFee: toRupees(
+        r.grossDeliveryFeePaise - r.surgeFeePaise - r.rainFeePaise - r.nightSurgeFeePaise
+      ),
       extraDistanceFee: 0,
       surgeFee: toRupees(r.surgeFeePaise),
       rainFee: toRupees(r.rainFeePaise),
@@ -580,8 +615,13 @@ export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculato
       platformFee: toRupees(r.platformFeePaise),
       handlingFee: toRupees(r.handlingFeePaise),
       couponDiscount: toRupees(r.couponDiscountPaise),
-      gstAmount: toRupees(r.restaurantServiceTaxBreakdown.totalGstPaise + r.platformServiceTaxBreakdown.totalGstPaise),
-      exactGst: (r.restaurantServiceTaxBreakdown.totalGstPaise + r.platformServiceTaxBreakdown.totalGstPaise) / 100,
+      gstAmount: toRupees(
+        r.restaurantServiceTaxBreakdown.totalGstPaise + r.platformServiceTaxBreakdown.totalGstPaise
+      ),
+      exactGst:
+        (r.restaurantServiceTaxBreakdown.totalGstPaise +
+          r.platformServiceTaxBreakdown.totalGstPaise) /
+        100,
       roundingAdjustment: 0,
       tip: toRupees(r.tipPaise),
       grandTotal: toRupees(r.customerPayablePaise),
@@ -600,7 +640,9 @@ export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculato
       driverSharePercent: DEFAULT_RIDER_SHARE_PERCENT,
       baseDistanceShare: toRupees(r.riderBasePayPaise),
       extraDistanceShare: toRupees(r.riderDistancePayPaise),
-      surgeRainShare: toRupees(r.riderSurgeIncentivePaise + r.riderRainIncentivePaise + r.riderNightIncentivePaise),
+      surgeRainShare: toRupees(
+        r.riderSurgeIncentivePaise + r.riderRainIncentivePaise + r.riderNightIncentivePaise
+      ),
       tip: toRupees(r.riderTipPaise),
       totalDriverEarnings: toRupees(r.riderPayablePaise),
     },

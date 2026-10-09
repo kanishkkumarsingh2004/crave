@@ -45,34 +45,81 @@ export type AccountCode =
 export type NormalBalance = 'DEBIT' | 'CREDIT'
 export type AccountType = 'ASSET' | 'LIABILITY' | 'REVENUE' | 'EXPENSE' | 'EQUITY'
 
-export const CHART_OF_ACCOUNTS: Record<AccountCode, { type: AccountType; normalBalance: NormalBalance; description: string }> = {
-  PAYMENT_CLEARING:        { type: 'ASSET',     normalBalance: 'DEBIT',  description: 'Customer payment received, pending settlement' },
-  CUSTOMER_REFUND_PAYABLE: { type: 'LIABILITY', normalBalance: 'CREDIT', description: 'Refunds approved but not yet disbursed' },
-  VENDOR_PAYABLE:          { type: 'LIABILITY', normalBalance: 'CREDIT', description: 'Amounts owed to restaurant partners' },
-  RIDER_PAYABLE:           { type: 'LIABILITY', normalBalance: 'CREDIT', description: 'Amounts owed to delivery riders' },
-  RIDER_TIP_CLEARING:      { type: 'LIABILITY', normalBalance: 'CREDIT', description: 'Customer tip in transit to rider (100% pass-through)' },
-  PLATFORM_COMMISSION_REV: { type: 'REVENUE',   normalBalance: 'CREDIT', description: 'Commission earned from restaurants' },
-  PLATFORM_FEE_REV:        { type: 'REVENUE',   normalBalance: 'CREDIT', description: 'Platform convenience and handling fee revenue' },
-  GST_OUTPUT_PAYABLE:      { type: 'LIABILITY', normalBalance: 'CREDIT', description: 'GST collected from customers, payable to government' },
-  DISCOUNT_EXPENSE:        { type: 'EXPENSE',   normalBalance: 'DEBIT',  description: 'Platform-funded discount cost' },
-  DELIVERY_REVENUE:        { type: 'REVENUE',   normalBalance: 'CREDIT', description: 'Net delivery revenue retained after rider share' },
-  BANK_SETTLEMENT:         { type: 'ASSET',     normalBalance: 'DEBIT',  description: 'Confirmed bank settlement / payout completion' },
+export const CHART_OF_ACCOUNTS: Record<
+  AccountCode,
+  { type: AccountType; normalBalance: NormalBalance; description: string }
+> = {
+  PAYMENT_CLEARING: {
+    type: 'ASSET',
+    normalBalance: 'DEBIT',
+    description: 'Customer payment received, pending settlement',
+  },
+  CUSTOMER_REFUND_PAYABLE: {
+    type: 'LIABILITY',
+    normalBalance: 'CREDIT',
+    description: 'Refunds approved but not yet disbursed',
+  },
+  VENDOR_PAYABLE: {
+    type: 'LIABILITY',
+    normalBalance: 'CREDIT',
+    description: 'Amounts owed to restaurant partners',
+  },
+  RIDER_PAYABLE: {
+    type: 'LIABILITY',
+    normalBalance: 'CREDIT',
+    description: 'Amounts owed to delivery riders',
+  },
+  RIDER_TIP_CLEARING: {
+    type: 'LIABILITY',
+    normalBalance: 'CREDIT',
+    description: 'Customer tip in transit to rider (100% pass-through)',
+  },
+  PLATFORM_COMMISSION_REV: {
+    type: 'REVENUE',
+    normalBalance: 'CREDIT',
+    description: 'Commission earned from restaurants',
+  },
+  PLATFORM_FEE_REV: {
+    type: 'REVENUE',
+    normalBalance: 'CREDIT',
+    description: 'Platform convenience and handling fee revenue',
+  },
+  GST_OUTPUT_PAYABLE: {
+    type: 'LIABILITY',
+    normalBalance: 'CREDIT',
+    description: 'GST collected from customers, payable to government',
+  },
+  DISCOUNT_EXPENSE: {
+    type: 'EXPENSE',
+    normalBalance: 'DEBIT',
+    description: 'Platform-funded discount cost',
+  },
+  DELIVERY_REVENUE: {
+    type: 'REVENUE',
+    normalBalance: 'CREDIT',
+    description: 'Net delivery revenue retained after rider share',
+  },
+  BANK_SETTLEMENT: {
+    type: 'ASSET',
+    normalBalance: 'DEBIT',
+    description: 'Confirmed bank settlement / payout completion',
+  },
 }
 
 // ─── Journal Entry Types ───────────────────────────────────────────────────────
 
 export type JournalEventType =
-  | 'ORDER_CONFIRMED'        // Customer payment captured — initial ledger posting
-  | 'VENDOR_SETTLEMENT'      // Restaurant payout processed
-  | 'RIDER_SETTLEMENT'       // Rider payout processed
-  | 'REFUND_INITIATED'       // Refund approved
-  | 'REFUND_COMPLETED'       // Refund confirmed by bank
-  | 'REVERSAL'               // Correction/reversal of a prior entry
+  | 'ORDER_CONFIRMED' // Customer payment captured — initial ledger posting
+  | 'VENDOR_SETTLEMENT' // Restaurant payout processed
+  | 'RIDER_SETTLEMENT' // Rider payout processed
+  | 'REFUND_INITIATED' // Refund approved
+  | 'REFUND_COMPLETED' // Refund confirmed by bank
+  | 'REVERSAL' // Correction/reversal of a prior entry
 
 export interface JournalLine {
   accountCode: AccountCode
-  debitPaise: number   // 0 if credit entry
-  creditPaise: number  // 0 if debit entry
+  debitPaise: number // 0 if credit entry
+  creditPaise: number // 0 if debit entry
   description: string
 }
 
@@ -80,7 +127,7 @@ export interface JournalTransaction {
   idempotencyKey: string
   eventType: JournalEventType
   orderId: string
-  referenceId?: string       // e.g. settlement ID, payout ID, UTR
+  referenceId?: string // e.g. settlement ID, payout ID, UTR
   lines: JournalLine[]
   notes?: string
 }
@@ -98,8 +145,8 @@ export function validateJournalBalance(transaction: JournalTransaction): void {
   if (totalDebit !== totalCredit) {
     throw new Error(
       `Unbalanced journal transaction [${transaction.idempotencyKey}]: ` +
-      `debit=${totalDebit} paise, credit=${totalCredit} paise. ` +
-      `Difference=${totalDebit - totalCredit} paise. This is a programming error.`
+        `debit=${totalDebit} paise, credit=${totalCredit} paise. ` +
+        `Difference=${totalDebit - totalCredit} paise. This is a programming error.`
     )
   }
 
@@ -108,7 +155,9 @@ export function validateJournalBalance(transaction: JournalTransaction): void {
       throw new Error(`Journal line has negative amount in [${transaction.idempotencyKey}]`)
     }
     if (line.debitPaise > 0 && line.creditPaise > 0) {
-      throw new Error(`Journal line cannot have both debit and credit in [${transaction.idempotencyKey}]`)
+      throw new Error(
+        `Journal line cannot have both debit and credit in [${transaction.idempotencyKey}]`
+      )
     }
   }
 }
@@ -173,61 +222,80 @@ export function buildOrderConfirmedJournal(
     },
 
     // Liabilities / credits — rider (excluding tip)
-    ...(riderPayableExTipPaise > 0 ? [{
-      accountCode: 'RIDER_PAYABLE' as AccountCode,
-      debitPaise: 0,
-      creditPaise: riderPayableExTipPaise,
-      description: `Rider delivery compensation for order ${orderId}`,
-    }] : []),
+    ...(riderPayableExTipPaise > 0
+      ? [
+          {
+            accountCode: 'RIDER_PAYABLE' as AccountCode,
+            debitPaise: 0,
+            creditPaise: riderPayableExTipPaise,
+            description: `Rider delivery compensation for order ${orderId}`,
+          },
+        ]
+      : []),
 
     // Liabilities / credits — tip clearing (100% pass-through)
-    ...(snapshot.riderTipPaise > 0 ? [{
-      accountCode: 'RIDER_TIP_CLEARING' as AccountCode,
-      debitPaise: 0,
-      creditPaise: snapshot.riderTipPaise,
-      description: `Customer tip in transit to rider for order ${orderId}`,
-    }] : []),
+    ...(snapshot.riderTipPaise > 0
+      ? [
+          {
+            accountCode: 'RIDER_TIP_CLEARING' as AccountCode,
+            debitPaise: 0,
+            creditPaise: snapshot.riderTipPaise,
+            description: `Customer tip in transit to rider for order ${orderId}`,
+          },
+        ]
+      : []),
 
     // Revenue — commission
-    ...(snapshot.grossCommissionPaise > 0 ? [{
-      accountCode: 'PLATFORM_COMMISSION_REV' as AccountCode,
-      debitPaise: 0,
-      creditPaise: snapshot.grossCommissionPaise,
-      description: `Platform commission (${snapshot.commissionRatePercent}%) on order ${orderId}`,
-    }] : []),
+    ...(snapshot.grossCommissionPaise > 0
+      ? [
+          {
+            accountCode: 'PLATFORM_COMMISSION_REV' as AccountCode,
+            debitPaise: 0,
+            creditPaise: snapshot.grossCommissionPaise,
+            description: `Platform commission (${snapshot.commissionRatePercent}%) on order ${orderId}`,
+          },
+        ]
+      : []),
 
     // Revenue — platform fees
     {
       accountCode: 'PLATFORM_FEE_REV',
       debitPaise: 0,
-      creditPaise: snapshot.platformFeePaise + snapshot.handlingFeePaise + platformDeliveryRevenuePaise,
+      creditPaise:
+        snapshot.platformFeePaise + snapshot.handlingFeePaise + platformDeliveryRevenuePaise,
       description: `Platform fee + handling + delivery revenue for order ${orderId}`,
     },
 
     // Liability — GST collected
-    ...(totalGstPaise > 0 ? [{
-      accountCode: 'GST_OUTPUT_PAYABLE' as AccountCode,
-      debitPaise: 0,
-      creditPaise: totalGstPaise,
-      description: `GST collected for order ${orderId}`,
-    }] : []),
+    ...(totalGstPaise > 0
+      ? [
+          {
+            accountCode: 'GST_OUTPUT_PAYABLE' as AccountCode,
+            debitPaise: 0,
+            creditPaise: totalGstPaise,
+            description: `GST collected for order ${orderId}`,
+          },
+        ]
+      : []),
 
     // Expense — platform-funded discount (debit)
-    ...(snapshot.platformFundedDiscountPaise > 0 ? [
-      {
-        accountCode: 'DISCOUNT_EXPENSE' as AccountCode,
-        debitPaise: snapshot.platformFundedDiscountPaise,
-        creditPaise: 0,
-        description: `Platform-funded discount for order ${orderId}`,
-      },
-      {
-        // offset against payment clearing (reduces what we actually received)
-        accountCode: 'PAYMENT_CLEARING' as AccountCode,
-        debitPaise: 0,
-        creditPaise: snapshot.platformFundedDiscountPaise,
-        description: `Discount offset on payment clearing for order ${orderId}`,
-      },
-    ] : []),
+    ...(snapshot.platformFundedDiscountPaise > 0
+      ? [
+          {
+            accountCode: 'DISCOUNT_EXPENSE' as AccountCode,
+            debitPaise: snapshot.platformFundedDiscountPaise,
+            creditPaise: 0,
+            description: `Platform-funded discount for order ${orderId}`,
+          },
+          {
+            // offset against payment clearing (reduces what we actually received)
+            accountCode: 'PAYMENT_CLEARING' as AccountCode,
+            debitPaise: 0,
+            creditPaise: snapshot.platformFundedDiscountPaise,
+            description: `Discount offset on payment clearing for order ${orderId}`,
+          },
+        ]
+      : []),
   ]
 
   const transaction: JournalTransaction = {
@@ -259,8 +327,18 @@ export function buildVendorSettlementJournal(
     orderId,
     referenceId: settlementId,
     lines: [
-      { accountCode: 'VENDOR_PAYABLE', debitPaise: amountPaise, creditPaise: 0, description: `Restaurant ${restaurantId} settlement ${settlementId}` },
-      { accountCode: 'BANK_SETTLEMENT', debitPaise: 0, creditPaise: amountPaise, description: `Bank transfer for restaurant ${restaurantId}` },
+      {
+        accountCode: 'VENDOR_PAYABLE',
+        debitPaise: amountPaise,
+        creditPaise: 0,
+        description: `Restaurant ${restaurantId} settlement ${settlementId}`,
+      },
+      {
+        accountCode: 'BANK_SETTLEMENT',
+        debitPaise: 0,
+        creditPaise: amountPaise,
+        description: `Bank transfer for restaurant ${restaurantId}`,
+      },
     ],
   }
   validateJournalBalance(transaction)
@@ -282,9 +360,28 @@ export function buildRiderSettlementJournal(
 ): JournalTransaction {
   const totalPaise = deliveryEarningsPaise + tipPaise
   const lines: JournalLine[] = [
-    { accountCode: 'RIDER_PAYABLE', debitPaise: deliveryEarningsPaise, creditPaise: 0, description: `Rider ${riderId} delivery earnings` },
-    ...(tipPaise > 0 ? [{ accountCode: 'RIDER_TIP_CLEARING' as AccountCode, debitPaise: tipPaise, creditPaise: 0, description: `Rider ${riderId} tip` }] : []),
-    { accountCode: 'BANK_SETTLEMENT', debitPaise: 0, creditPaise: totalPaise, description: `Bank payout to rider ${riderId}` },
+    {
+      accountCode: 'RIDER_PAYABLE',
+      debitPaise: deliveryEarningsPaise,
+      creditPaise: 0,
+      description: `Rider ${riderId} delivery earnings`,
+    },
+    ...(tipPaise > 0
+      ? [
+          {
+            accountCode: 'RIDER_TIP_CLEARING' as AccountCode,
+            debitPaise: tipPaise,
+            creditPaise: 0,
+            description: `Rider ${riderId} tip`,
+          },
+        ]
+      : []),
+    {
+      accountCode: 'BANK_SETTLEMENT',
+      debitPaise: 0,
+      creditPaise: totalPaise,
+      description: `Bank payout to rider ${riderId}`,
+    },
   ]
   const transaction: JournalTransaction = {
     idempotencyKey: `rider_payout_${payoutId}`,
@@ -313,8 +410,18 @@ export function buildRefundInitiatedJournal(
     orderId,
     referenceId: refundId,
     lines: [
-      { accountCode: 'CUSTOMER_REFUND_PAYABLE', debitPaise: refundAmountPaise, creditPaise: 0, description: `Refund approved for order ${orderId}` },
-      { accountCode: 'PAYMENT_CLEARING', debitPaise: 0, creditPaise: refundAmountPaise, description: `Refund reserve on clearing for order ${orderId}` },
+      {
+        accountCode: 'CUSTOMER_REFUND_PAYABLE',
+        debitPaise: refundAmountPaise,
+        creditPaise: 0,
+        description: `Refund approved for order ${orderId}`,
+      },
+      {
+        accountCode: 'PAYMENT_CLEARING',
+        debitPaise: 0,
+        creditPaise: refundAmountPaise,
+        description: `Refund reserve on clearing for order ${orderId}`,
+      },
     ],
   }
   validateJournalBalance(transaction)
@@ -332,9 +439,7 @@ export function buildRefundInitiatedJournal(
  * If schema has not yet been migrated, this will throw a Prisma error.
  * During migration period, catch and log the error rather than blocking the order.
  */
-export async function persistJournalTransaction(
-  transaction: JournalTransaction
-): Promise<void> {
+export async function persistJournalTransaction(transaction: JournalTransaction): Promise<void> {
   // Check if already persisted (idempotency)
   try {
     const existingCount = await (prisma as any).ledgerEntry.count({
@@ -342,7 +447,9 @@ export async function persistJournalTransaction(
     })
 
     if (existingCount > 0) {
-      console.log(`[Ledger] Idempotent replay — skipping already-persisted transaction: ${transaction.idempotencyKey}`)
+      console.log(
+        `[Ledger] Idempotent replay — skipping already-persisted transaction: ${transaction.idempotencyKey}`
+      )
       return
     }
 
@@ -365,13 +472,15 @@ export async function persistJournalTransaction(
       )
     )
 
-    console.log(`[Ledger] Posted ${transaction.lines.length}-line journal: ${transaction.idempotencyKey}`)
+    console.log(
+      `[Ledger] Posted ${transaction.lines.length}-line journal: ${transaction.idempotencyKey}`
+    )
   } catch (err) {
     // During schema migration period: LedgerEntry table may not exist yet
     // Log prominently but do not block the business flow
     console.error(
       `[Ledger] WARNING: Could not persist ledger entry ${transaction.idempotencyKey}. ` +
-      `Run Prisma migration to add LedgerEntry model. Error: ${(err as Error).message}`
+        `Run Prisma migration to add LedgerEntry model. Error: ${(err as Error).message}`
     )
   }
 }

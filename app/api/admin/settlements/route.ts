@@ -51,7 +51,7 @@ export async function GET(request?: Request) {
       include: { restaurant: true },
     })
 
-const totalGrossSales = settlements.reduce(
+    const totalGrossSales = settlements.reduce(
       (acc: number, s: any) => acc + Number(s.gross_sales ?? 0),
       0
     )

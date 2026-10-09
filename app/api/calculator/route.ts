@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       priceTaxMode,
       gstRatePercent,
       // New v2 fields (optional — gracefully fall back to legacy calculation)
-      items,          // PricingItem[] — for canonical paise calculation
+      items, // PricingItem[] — for canonical paise calculation
       orderType = 'restaurant_food',
     } = body
 
@@ -234,7 +234,7 @@ export async function POST(req: Request) {
           const subtotalNum = Math.max(0, Number(subtotal))
           if (subtotalNum >= (foundCoupon.min_order_amount || 0)) {
             if (foundCoupon.discount_type === 'percentage') {
-              const calc = subtotalNum * foundCoupon.discount_value * 100  // paise
+              const calc = subtotalNum * foundCoupon.discount_value * 100 // paise
               resolvedCouponDiscountPaise = foundCoupon.max_discount
                 ? Math.min(calc, foundCoupon.max_discount * 100)
                 : calc
@@ -290,7 +290,9 @@ export async function POST(req: Request) {
     let canonical = null
     try {
       const subtotalPaise = Math.round(Math.max(0, Number(subtotal)) * 100)
-      const packagingFeePaise = Math.round((packagingFee != null ? Number(packagingFee) : cfg.packagingCap ?? 20) * 100)
+      const packagingFeePaise = Math.round(
+        (packagingFee != null ? Number(packagingFee) : (cfg.packagingCap ?? 20)) * 100
+      )
       const platformFeePaise = Math.round(cfg.platformFee * 100)
       const handlingFeePaise = Math.round(cfg.handlingFee * 100)
       const tipPaise = Math.round(Math.max(0, Number(tip)) * 100)
@@ -309,17 +311,28 @@ export async function POST(req: Request) {
       }
 
       // If item-level data provided (v2 callers), use it; otherwise synthesise a single item
-      const pricingItems = Array.isArray(items) && items.length > 0
-        ? items.map((it: any) => ({
-            name: it.name || 'Item',
-            quantity: Math.max(1, Number(it.quantity) || 1),
-            unitPricePaise: Math.round(Number(it.price || it.unitPricePaise || 0) * (it.unitPricePaise ? 1 : 100)),
-            hsnSacCode: it.hsnSacCode || '996331',
-            priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
-            customCommissionRatePercent: it.customCommissionRatePercent,
-            customMarkupRatePercent: it.customMarkupRatePercent,
-          }))
-        : [{ name: 'Order Items', quantity: 1, unitPricePaise: subtotalPaise, hsnSacCode: '996331', priceTaxMode: contractInput.priceTaxMode as any }]
+      const pricingItems =
+        Array.isArray(items) && items.length > 0
+          ? items.map((it: any) => ({
+              name: it.name || 'Item',
+              quantity: Math.max(1, Number(it.quantity) || 1),
+              unitPricePaise: Math.round(
+                Number(it.price || it.unitPricePaise || 0) * (it.unitPricePaise ? 1 : 100)
+              ),
+              hsnSacCode: it.hsnSacCode || '996331',
+              priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
+              customCommissionRatePercent: it.customCommissionRatePercent,
+              customMarkupRatePercent: it.customMarkupRatePercent,
+            }))
+          : [
+              {
+                name: 'Order Items',
+                quantity: 1,
+                unitPricePaise: subtotalPaise,
+                hsnSacCode: '996331',
+                priceTaxMode: contractInput.priceTaxMode as any,
+              },
+            ]
 
       const priceInput: OrderPriceInput = {
         orderType: orderType === 'cravexp_grocery' ? 'cravexp_grocery' : 'restaurant_food',
@@ -351,13 +364,16 @@ export async function POST(req: Request) {
 
       canonical = calculateOrderPrice(priceInput)
     } catch (canonicalErr) {
-      console.error('[Calculator] Canonical engine error (non-fatal, legacy result returned):', canonicalErr)
+      console.error(
+        '[Calculator] Canonical engine error (non-fatal, legacy result returned):',
+        canonicalErr
+      )
     }
 
     return NextResponse.json({
       success: true,
-      breakdown,           // legacy shape — all existing UI continues to work
-      canonical,           // new paise-based canonical result (null if error)
+      breakdown, // legacy shape — all existing UI continues to work
+      canonical, // new paise-based canonical result (null if error)
       config: cfg,
     })
   } catch (error) {

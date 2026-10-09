@@ -21,18 +21,9 @@ export {
   getTaxRate,
   verifyTaxInclusiveExample,
 } from './tax-engine'
-export type {
-  TaxBreakdown,
-  TaxMode,
-  PriceTaxMode,
-  TaxCategory,
-  ItemTaxResult,
-} from './tax-engine'
+export type { TaxBreakdown, TaxMode, PriceTaxMode, TaxCategory, ItemTaxResult } from './tax-engine'
 
-export {
-  calculateOrderPrice,
-  tolegacyCalculatorResult,
-} from './pricing-engine'
+export { calculateOrderPrice, tolegacyCalculatorResult } from './pricing-engine'
 export type {
   CanonicalPriceResult,
   OrderPriceInput,

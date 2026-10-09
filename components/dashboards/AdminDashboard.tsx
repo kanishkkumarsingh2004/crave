@@ -256,19 +256,19 @@ export default function AdminDashboard() {
 
       const realVendorsList: VendorStore[] = vendorsData
         ? (vendorsData as any[]).map((r: any) => ({
-            id: r.id,
-            userId: r.owner_id,
-            storeName: r.name || 'Unnamed Store',
-            description: r.cuisine,
-            address: r.address,
-            status: r.is_open ? 'ACTIVE' : 'INACTIVE',
-            isOpen: r.is_open ?? true,
-            commissionRate: r.commission_rate ?? 15,
-            commissionType: r.payment_model || 'COMMISSION',
-            bannerUrl: r.image,
-            latitude: r.latitude ? Number(r.latitude) : undefined,
-            longitude: r.longitude ? Number(r.longitude) : undefined,
-          }))
+          id: r.id,
+          userId: r.owner_id,
+          storeName: r.name || 'Unnamed Store',
+          description: r.cuisine,
+          address: r.address,
+          status: r.is_open ? 'ACTIVE' : 'INACTIVE',
+          isOpen: r.is_open ?? true,
+          commissionRate: r.commission_rate ?? 15,
+          commissionType: r.payment_model || 'COMMISSION',
+          bannerUrl: r.image,
+          latitude: r.latitude ? Number(r.latitude) : undefined,
+          longitude: r.longitude ? Number(r.longitude) : undefined,
+        }))
         : []
 
       setVendorsList(realVendorsList)
@@ -288,8 +288,8 @@ export default function AdminDashboard() {
               : u.role === 'rider' || u.role === 'driver'
                 ? 'driver'
                 : u.role === 'restaurant_vendor' ||
-                    u.role === 'cravexp_store_vendor' ||
-                    u.role === 'vendor'
+                  u.role === 'cravexp_store_vendor' ||
+                  u.role === 'vendor'
                   ? 'vendor'
                   : (u.role as UserRole) || 'customer'
 
@@ -394,9 +394,9 @@ export default function AdminDashboard() {
             amount: p.amount,
             submittedAt: p.created_at
               ? new Date(p.created_at).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
+                hour: '2-digit',
+                minute: '2-digit',
+              })
               : 'Just now',
             status: (p.status as 'pending' | 'verified' | 'rejected') || 'pending',
           }))
@@ -617,22 +617,22 @@ export default function AdminDashboard() {
           address: editForm.address,
           ...(editForm.password && { password: editForm.password }),
           ...(editingAccount.role === 'vendor' ||
-          editingAccount.role === 'restaurant_vendor' ||
-          editingAccount.role === 'cravexp_store_vendor'
+            editingAccount.role === 'restaurant_vendor' ||
+            editingAccount.role === 'cravexp_store_vendor'
             ? {
-                storeName: editForm.storeName,
-                cuisine: editForm.cuisine,
-                commissionRate: editForm.commissionRate,
-                paymentModel: editForm.paymentModel,
-                latitude: editForm.latitude,
-                longitude: editForm.longitude,
-              }
+              storeName: editForm.storeName,
+              cuisine: editForm.cuisine,
+              commissionRate: editForm.commissionRate,
+              paymentModel: editForm.paymentModel,
+              latitude: editForm.latitude,
+              longitude: editForm.longitude,
+            }
             : {}),
           ...(editingAccount.role === 'driver' || editingAccount.role === 'rider'
             ? {
-                vehicleType: editForm.vehicleType,
-                licensePlate: editForm.licensePlate,
-              }
+              vehicleType: editForm.vehicleType,
+              licensePlate: editForm.licensePlate,
+            }
             : {}),
         }),
       })
@@ -874,11 +874,10 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('vendors')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
-              activeTab === 'users' && userTab === 'vendors'
-                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-            }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'vendors'
+              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+              }`}
           >
             <Store className="size-4 text-amber-400 shrink-0" />
             <span>Vendors ({vendorAccounts.length})</span>
@@ -889,11 +888,10 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('customers')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
-              activeTab === 'users' && userTab === 'customers'
-                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-            }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'customers'
+              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+              }`}
           >
             <Users className="size-4 text-emerald-400 shrink-0" />
             <span>Customers ({customerAccounts.length})</span>
@@ -904,11 +902,10 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('drivers')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
-              activeTab === 'users' && userTab === 'drivers'
-                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-            }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'drivers'
+              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+              }`}
           >
             <Zap className="size-4 text-sky-400 shrink-0" />
             <span>Drivers ({driverAccounts.length})</span>
@@ -919,11 +916,10 @@ export default function AdminDashboard() {
               setActiveTab('users')
               setUserTab('admins')
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
-              activeTab === 'users' && userTab === 'admins'
-                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-            }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'users' && userTab === 'admins'
+              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+              }`}
           >
             <ShieldCheck className="size-4 text-purple-400 shrink-0" />
             <span>Admins ({adminAccounts.length})</span>
@@ -931,11 +927,10 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab('menu-pricing')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${
-              activeTab === 'menu-pricing'
-                ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
-                : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
-            }`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap shrink-0 ${activeTab === 'menu-pricing'
+              ? 'bg-[#d9f447] text-[#121815] font-extrabold shadow-md'
+              : 'bg-[#121815] text-[#9eb3a4] hover:bg-[#25332a] border border-[#25332a]'
+              }`}
           >
             <Utensils className="size-4 text-[#d9f447] shrink-0" />
             <span>Menu &amp; Price Controls</span>
@@ -959,7 +954,9 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">Registered Store Vendors</h3>
+              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                Registered Store Vendors
+              </h3>
               <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
                 Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access
                 menus.
@@ -978,7 +975,8 @@ export default function AdminDashboard() {
           <div className="space-y-3 sm:hidden">
             {vendorAccounts.length === 0 ? (
               <div className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-6 text-center text-xs text-[#9eb3a4]">
-                No vendor stores currently registered in Supabase database. Click &apos;+ Onboard New Store&apos; to add one.
+                No vendor stores currently registered in Supabase database. Click &apos;+ Onboard
+                New Store&apos; to add one.
               </div>
             ) : (
               vendorAccounts.map((account) => {
@@ -986,46 +984,70 @@ export default function AdminDashboard() {
                   (v) => v.id === account.id || v.userId === account.id
                 )
                 const isXPStore =
-                  account.vendorType === 'XP Store' ||
-                  account.detail?.toLowerCase().includes('xp')
+                  account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
 
                 return (
-                  <div key={account.id} className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-4 text-white space-y-3 shadow-lg">
+                  <div
+                    key={account.id}
+                    className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-4 text-white space-y-3 shadow-lg"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${isXPStore ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+                        <div
+                          className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${isXPStore ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}
+                        >
                           <Store className="size-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-sm text-white truncate">{account.restaurantName || account.detail}</p>
-                          <p className="text-[11px] text-[#9eb3a4] truncate">{account.name} · <span className="font-mono">{account.email}</span></p>
+                          <p className="font-bold text-sm text-white truncate">
+                            {account.restaurantName || account.detail}
+                          </p>
+                          <p className="text-[11px] text-[#9eb3a4] truncate">
+                            {account.name} · <span className="font-mono">{account.email}</span>
+                          </p>
                         </div>
                       </div>
-                      <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isXPStore ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+                      <span
+                        className={`shrink-0 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isXPStore ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}
+                      >
                         {isXPStore ? 'XP Store' : 'Restaurant'}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#25332a]">
                       <div>
-                        <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">Pricing Model</span>
+                        <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">
+                          Pricing Model
+                        </span>
                         {account.paymentModel === 'markup' ? (
-                          <span className="text-sky-300 font-semibold text-[11px]">Price Markup</span>
+                          <span className="text-sky-300 font-semibold text-[11px]">
+                            Price Markup
+                          </span>
                         ) : (
-                          <span className="text-[#d9f447] font-semibold text-[11px]">Commission ({account.commissionRate}%)</span>
+                          <span className="text-[#d9f447] font-semibold text-[11px]">
+                            Commission ({account.commissionRate}%)
+                          </span>
                         )}
                       </div>
                       <div>
-                        <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">Status</span>
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase ${account.status === 'active' ? 'text-emerald-300' : 'text-rose-300'}`}>
-                          <span className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                        <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">
+                          Status
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase ${account.status === 'active' ? 'text-emerald-300' : 'text-rose-300'}`}
+                        >
+                          <span
+                            className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`}
+                          />
                           {account.status}
                         </span>
                       </div>
                     </div>
 
                     <div className="text-xs">
-                      <p className="text-[#9eb3a4] text-[11px] truncate">{account.phone || 'Phone N/A'} · {account.address || 'Bengaluru, India'}</p>
+                      <p className="text-[#9eb3a4] text-[11px] truncate">
+                        {account.phone || 'Phone N/A'} · {account.address || 'Bengaluru, India'}
+                      </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#25332a]">
@@ -1050,7 +1072,13 @@ export default function AdminDashboard() {
                         {account.status === 'active' ? 'Suspend' : 'Activate'}
                       </button>
                       <button
-                        onClick={() => setDeleteConfirmVendor({ id: account.id, name: account.restaurantName || account.detail || account.name, email: account.email })}
+                        onClick={() =>
+                          setDeleteConfirmVendor({
+                            id: account.id,
+                            name: account.restaurantName || account.detail || account.name,
+                            email: account.email,
+                          })
+                        }
                         className="rounded-xl px-2.5 py-1.5 text-[11px] font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition flex items-center gap-1"
                       >
                         <Trash2 className="size-3" />
@@ -1097,11 +1125,10 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3.5 font-bold text-white">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${
-                                isXPStore
-                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              }`}
+                              className={`grid size-9 place-items-center rounded-xl shrink-0 font-bold ${isXPStore
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                }`}
                             >
                               <Store className="size-4" />
                             </div>
@@ -1118,11 +1145,10 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                              isXPStore
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            }`}
+                            className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${isXPStore
+                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              }`}
                           >
                             {isXPStore ? 'XP Store' : 'Restaurant Vendor'}
                           </span>
@@ -1151,11 +1177,10 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                              account.status === 'active'
-                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                                : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                            }`}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${account.status === 'active'
+                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                              : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                              }`}
                           >
                             <span
                               className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`}
@@ -1184,11 +1209,10 @@ export default function AdminDashboard() {
                             </button>
                             <button
                               onClick={() => toggleAccountStatus(account.id, account.status)}
-                              className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${
-                                account.status === 'active'
-                                  ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                                  : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                              }`}
+                              className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition whitespace-nowrap ${account.status === 'active'
+                                ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                                }`}
                             >
                               {account.status === 'active' ? 'Suspend' : 'Activate'}
                             </button>
@@ -1317,11 +1341,10 @@ export default function AdminDashboard() {
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                            account.status === 'active'
-                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                              : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                          }`}
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${account.status === 'active'
+                            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                            : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                            }`}
                         >
                           {account.status}
                         </span>
@@ -1338,11 +1361,10 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(account.id, account.status)}
-                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
-                              account.status === 'active'
-                                ? 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                            }`}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${account.status === 'active'
+                              ? 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                              : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                              }`}
                           >
                             {account.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>
@@ -1362,7 +1384,9 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">Registered Delivery Partners</h3>
+              <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                Registered Delivery Partners
+              </h3>
               <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
                 Admin onboarding. View fleet accounts, vehicle details, license numbers, and active
                 status.
@@ -1381,11 +1405,15 @@ export default function AdminDashboard() {
           <div className="space-y-3 sm:hidden">
             {driverAccounts.length === 0 ? (
               <div className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-6 text-center text-xs text-[#9eb3a4]">
-                No driver accounts found in Supabase users table. Click &apos;+ Add Driver&apos; to onboard one.
+                No driver accounts found in Supabase users table. Click &apos;+ Add Driver&apos; to
+                onboard one.
               </div>
             ) : (
               driverAccounts.map((driver) => (
-                <div key={driver.id} className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-4 text-white space-y-3 shadow-lg">
+                <div
+                  key={driver.id}
+                  className="rounded-2xl border border-[#2d3b32] bg-[#1c2620] p-4 text-white space-y-3 shadow-lg"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="grid size-9 place-items-center rounded-xl bg-cyan-500/20 text-cyan-300 font-bold shrink-0 border border-cyan-500/40">
@@ -1393,16 +1421,22 @@ export default function AdminDashboard() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-sm text-white truncate">{driver.name}</p>
-                        <p className="text-[11px] text-[#9eb3a4] truncate">{driver.email} · {driver.phone || 'Phone N/A'}</p>
+                        <p className="text-[11px] text-[#9eb3a4] truncate">
+                          {driver.email} · {driver.phone || 'Phone N/A'}
+                        </p>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shrink-0 ${driver.status === 'active' ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shrink-0 ${driver.status === 'active' ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'}`}
+                    >
                       {driver.status === 'active' ? 'Active' : driver.status}
                     </span>
                   </div>
 
                   <div className="text-xs pt-2 border-t border-[#25332a]">
-                    <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">Vehicle Details</span>
+                    <span className="text-[10px] text-[#9eb3a4] block uppercase tracking-wider font-semibold">
+                      Vehicle Details
+                    </span>
                     <span className="inline-block rounded-md bg-[#121815] px-2 py-0.5 text-xs text-emerald-300 font-medium border border-[#25332a] mt-1">
                       {driver.detail}
                     </span>
@@ -1422,7 +1456,13 @@ export default function AdminDashboard() {
                       {driver.status === 'active' ? 'Suspend' : 'Activate'}
                     </button>
                     <button
-                      onClick={() => setDeleteConfirmVendor({ id: driver.id, name: driver.name, email: driver.email })}
+                      onClick={() =>
+                        setDeleteConfirmVendor({
+                          id: driver.id,
+                          name: driver.name,
+                          email: driver.email,
+                        })
+                      }
                       className="rounded-xl px-2.5 py-1.5 text-[11px] font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition flex items-center gap-1"
                     >
                       <Trash2 className="size-3" />
@@ -1480,16 +1520,14 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                            driver.status === 'active'
-                              ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                              : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
-                          }`}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${driver.status === 'active'
+                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                            : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
+                            }`}
                         >
                           <span
-                            className={`size-1.5 rounded-full ${
-                              driver.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'
-                            }`}
+                            className={`size-1.5 rounded-full ${driver.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'
+                              }`}
                           />
                           {driver.status === 'active' ? 'Active Partner' : driver.status}
                         </span>
@@ -1505,11 +1543,10 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => toggleAccountStatus(driver.id, driver.status)}
-                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${
-                              driver.status === 'active'
-                                ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                                : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                            }`}
+                            className={`rounded-xl px-3 py-1.5 text-[11px] font-bold border transition ${driver.status === 'active'
+                              ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                              : 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                              }`}
                           >
                             {driver.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>
@@ -1670,8 +1707,8 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
                   Edit{' '}
                   {editingAccount.role === 'vendor' ||
-                  editingAccount.role === 'restaurant_vendor' ||
-                  editingAccount.role === 'cravexp_store_vendor'
+                    editingAccount.role === 'restaurant_vendor' ||
+                    editingAccount.role === 'cravexp_store_vendor'
                     ? 'Store & Vendor'
                     : editingAccount.role === 'rider' || editingAccount.role === 'driver'
                       ? 'Driver Partner'
@@ -1736,53 +1773,53 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
-                  <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
-                    <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
-                    Commission Parameters
-                  </p>
+                  <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
+                    <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
+                      <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
+                      Commission Parameters
+                    </p>
 
-                  <div>
-                    <label className="font-bold text-gray-700 dark:text-gray-300">Store Name</label>
-                    <input
-                      type="text"
-                      value={editForm.storeName}
-                      onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="font-bold text-gray-700 dark:text-gray-300">
-                        Cuisine / Category
-                      </label>
+                      <label className="font-bold text-gray-700 dark:text-gray-300">Store Name</label>
                       <input
                         type="text"
-                        value={editForm.cuisine}
-                        onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
-                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-gray-700 dark:text-gray-300">
-                        Commission Rate (%)
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={50}
-                        value={editForm.commissionRate}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
-                        }
+                        value={editForm.storeName}
+                        onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
                         className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                       />
                     </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="font-bold text-gray-700 dark:text-gray-300">
+                          Cuisine / Category
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.cuisine}
+                          onChange={(e) => setEditForm({ ...editForm, cuisine: e.target.value })}
+                          className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-gray-700 dark:text-gray-300">
+                          Commission Rate (%)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={editForm.commissionRate}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
+                          }
+                          className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Driver Specific Fields */}
               {(editingAccount.role === 'rider' || editingAccount.role === 'driver') && (
@@ -1842,34 +1879,34 @@ export default function AdminDashboard() {
               {(editingAccount.role === 'vendor' ||
                 editingAccount.role === 'restaurant_vendor' ||
                 editingAccount.role === 'cravexp_store_vendor') && (
-                <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
-                      <span>Store Location Pin</span>
-                    </h4>
-                    <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
-                      {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
-                    </span>
+                  <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-3 bg-gray-50/50 dark:bg-[#121815] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
+                        <span>Store Location Pin</span>
+                      </h4>
+                      <span className="text-[11px] font-mono font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#18201c] px-2.5 py-0.5 rounded-full border border-transparent dark:border-[#27342d]">
+                        {editForm.latitude.toFixed(4)}°, {editForm.longitude.toFixed(4)}°
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Click or drag the map pin to adjust the store's exact coordinates.
+                    </p>
+                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
+                      <LocationPickerMap
+                        initialLat={editForm.latitude}
+                        initialLng={editForm.longitude}
+                        onLocationSelect={(lat, lng, address) => {
+                          setEditForm((prev) => ({
+                            ...prev,
+                            latitude: lat,
+                            longitude: lng,
+                            ...(address ? { address } : {}),
+                          }))
+                        }}
+                      />
+                    </div>
                   </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                    Click or drag the map pin to adjust the store's exact coordinates.
-                  </p>
-                  <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#27342d]">
-                    <LocationPickerMap
-                      initialLat={editForm.latitude}
-                      initialLng={editForm.longitude}
-                      onLocationSelect={(lat, lng, address) => {
-                        setEditForm((prev) => ({
-                          ...prev,
-                          latitude: lat,
-                          longitude: lng,
-                          ...(address ? { address } : {}),
-                        }))
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
               <div>
                 <label className="font-bold text-[#18201c] dark:text-white">
@@ -2016,11 +2053,36 @@ export default function AdminDashboard() {
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] cursor-pointer"
                   >
-                    <option value="Electric Scooter" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Electric Scooter (EV)</option>
-                    <option value="Electric Bike" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Electric Bike (EV)</option>
-                    <option value="Motorcycle" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Motorcycle / Petrol Bike</option>
-                    <option value="Bicycle" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Bicycle</option>
-                    <option value="Car" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Delivery Car / Van</option>
+                    <option
+                      value="Electric Scooter"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Electric Scooter (EV)
+                    </option>
+                    <option
+                      value="Electric Bike"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Electric Bike (EV)
+                    </option>
+                    <option
+                      value="Motorcycle"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Motorcycle / Petrol Bike
+                    </option>
+                    <option
+                      value="Bicycle"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Bicycle
+                    </option>
+                    <option
+                      value="Car"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Delivery Car / Van
+                    </option>
                   </select>
                 </div>
               </div>
@@ -2143,8 +2205,16 @@ export default function AdminDashboard() {
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] cursor-pointer"
                   >
-                    <option value="Restaurant Vendor" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Restaurant Vendor (Food &amp; Dining)</option>
-                    <option value="CraveXP Store Vendor" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">
+                    <option
+                      value="Restaurant Vendor"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Restaurant Vendor (Food &amp; Dining)
+                    </option>
+                    <option
+                      value="CraveXP Store Vendor"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
                       CraveXP Store Vendor (Dark Store Grocery)
                     </option>
                   </select>
@@ -2254,9 +2324,24 @@ export default function AdminDashboard() {
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-[#86a018] cursor-pointer"
                   >
-                    <option value="commission" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Commission (% cut from vendor)</option>
-                    <option value="markup" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Markup (% added for customer)</option>
-                    <option value="hybrid" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">Hybrid (Both Commission &amp; Markup)</option>
+                    <option
+                      value="commission"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Commission (% cut from vendor)
+                    </option>
+                    <option
+                      value="markup"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Markup (% added for customer)
+                    </option>
+                    <option
+                      value="hybrid"
+                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                    >
+                      Hybrid (Both Commission &amp; Markup)
+                    </option>
                   </select>
                 </div>
 
@@ -2416,10 +2501,30 @@ export default function AdminDashboard() {
                       }
                       className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none cursor-pointer"
                     >
-                      <option value="REGISTERED" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">REGISTERED</option>
-                      <option value="UNREGISTERED" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">UNREGISTERED</option>
-                      <option value="COMPOSITION" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">COMPOSITION</option>
-                      <option value="EXEMPT" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">EXEMPT</option>
+                      <option
+                        value="REGISTERED"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        REGISTERED
+                      </option>
+                      <option
+                        value="UNREGISTERED"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        UNREGISTERED
+                      </option>
+                      <option
+                        value="COMPOSITION"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        COMPOSITION
+                      </option>
+                      <option
+                        value="EXEMPT"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        EXEMPT
+                      </option>
                     </select>
                   </div>
 
@@ -2437,11 +2542,36 @@ export default function AdminDashboard() {
                       }
                       className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none cursor-pointer"
                     >
-                      <option value={0} className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">0% (Exempt / Zero Tax)</option>
-                      <option value={5} className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">5% (Standard Prepared Food / Restaurant)</option>
-                      <option value={12} className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">12% (12% Rate)</option>
-                      <option value={18} className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">18% (18% Service / Standard Rate)</option>
-                      <option value={28} className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">28% (28% Rate)</option>
+                      <option
+                        value={0}
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        0% (Exempt / Zero Tax)
+                      </option>
+                      <option
+                        value={5}
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        5% (Standard Prepared Food / Restaurant)
+                      </option>
+                      <option
+                        value={12}
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        12% (12% Rate)
+                      </option>
+                      <option
+                        value={18}
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        18% (18% Service / Standard Rate)
+                      </option>
+                      <option
+                        value={28}
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        28% (28% Rate)
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -2472,8 +2602,18 @@ export default function AdminDashboard() {
                       }
                       className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 font-bold outline-none cursor-pointer"
                     >
-                      <option value="TAX_INCLUSIVE" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">TAX INCLUSIVE</option>
-                      <option value="TAX_EXCLUSIVE" className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white">TAX EXCLUSIVE</option>
+                      <option
+                        value="TAX_INCLUSIVE"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        TAX INCLUSIVE
+                      </option>
+                      <option
+                        value="TAX_EXCLUSIVE"
+                        className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
+                      >
+                        TAX EXCLUSIVE
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -2713,9 +2853,9 @@ export default function AdminDashboard() {
                             product.comparePrice && product.comparePrice > product.price
                           const discountPct = hasDiscount
                             ? Math.round(
-                                ((product.comparePrice! - product.price) / product.comparePrice!) *
-                                  100
-                              )
+                              ((product.comparePrice! - product.price) / product.comparePrice!) *
+                              100
+                            )
                             : 0
 
                           return (
@@ -2773,11 +2913,10 @@ export default function AdminDashboard() {
 
                               <td className="px-4 py-3 whitespace-nowrap">
                                 <span
-                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                                    product.status === 'ACTIVE'
-                                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
-                                      : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
-                                  }`}
+                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${product.status === 'ACTIVE'
+                                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
+                                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
+                                    }`}
                                 >
                                   {product.status}
                                 </span>

@@ -24,9 +24,9 @@ export interface TaxBreakdown {
   taxableBasePaise: number
   taxRatePercent: number
   totalGstPaise: number
-  cgstPaise: number   // 0 if IGST
-  sgstPaise: number   // 0 if IGST
-  igstPaise: number   // 0 if CGST_SGST
+  cgstPaise: number // 0 if IGST
+  sgstPaise: number // 0 if IGST
+  igstPaise: number // 0 if CGST_SGST
   taxMode: TaxMode
 }
 
@@ -46,15 +46,15 @@ export type PriceTaxMode = 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
 // ─── Tax Categories ────────────────────────────────────────────────────────────
 
 export type TaxCategory =
-  | 'RESTAURANT_SERVICE'   // 5% under Section 9(5) CGST
-  | 'PLATFORM_SERVICE'     // 18% — platform convenience/handling fees
-  | 'PLATFORM_COMMISSION'  // 18% — on restaurant commission invoice
-  | 'GROCERY_EXEMPT'       // 0% — unprocessed food grains, fresh produce
-  | 'GROCERY_5PCT'         // 5% — packaged food items HSN 19xx, 21xx
-  | 'GROCERY_12PCT'        // 12% — processed/semi-processed food
-  | 'GROCERY_18PCT'        // 18% — beverages, some processed goods
-  | 'GROCERY_28PCT'        // 28% — luxury FMCG (rare)
-  | 'DELIVERY_SERVICE'     // 5% — if platform charges delivery as separate supply
+  | 'RESTAURANT_SERVICE' // 5% under Section 9(5) CGST
+  | 'PLATFORM_SERVICE' // 18% — platform convenience/handling fees
+  | 'PLATFORM_COMMISSION' // 18% — on restaurant commission invoice
+  | 'GROCERY_EXEMPT' // 0% — unprocessed food grains, fresh produce
+  | 'GROCERY_5PCT' // 5% — packaged food items HSN 19xx, 21xx
+  | 'GROCERY_12PCT' // 12% — processed/semi-processed food
+  | 'GROCERY_18PCT' // 18% — beverages, some processed goods
+  | 'GROCERY_28PCT' // 28% — luxury FMCG (rare)
+  | 'DELIVERY_SERVICE' // 5% — if platform charges delivery as separate supply
 
 const TAX_RATE_MAP: Record<TaxCategory, number> = {
   RESTAURANT_SERVICE: 5,
@@ -213,7 +213,9 @@ export function calculateGroceryItemGst(
   customerState: string
 ): TaxBreakdown {
   if (!TAX_RATE_MAP.hasOwnProperty(taxCategory)) {
-    throw new Error(`calculateGroceryItemGst: Unknown tax category "${taxCategory}". Classify the SKU before proceeding.`)
+    throw new Error(
+      `calculateGroceryItemGst: Unknown tax category "${taxCategory}". Classify the SKU before proceeding.`
+    )
   }
   const rate = TAX_RATE_MAP[taxCategory]
   return calculateTaxBreakdown(grossAmountPaise, rate, priceTaxMode, supplierState, customerState)

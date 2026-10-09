@@ -30,7 +30,9 @@ export class Money {
       throw new RangeError(`Money: paise must be finite, got ${paise}`)
     }
     if (!Number.isInteger(paise)) {
-      throw new TypeError(`Money: paise must be integer, got ${paise}. Use Money.fromRupees() or Money.fromPaise() to round at the boundary.`)
+      throw new TypeError(
+        `Money: paise must be integer, got ${paise}. Use Money.fromRupees() or Money.fromPaise() to round at the boundary.`
+      )
     }
     this.paise = paise
   }
@@ -49,7 +51,8 @@ export class Money {
    *      Money.fromRupees(149.505, 'CEIL') => 14951 paise
    */
   static fromRupees(rupees: number, mode: RoundingMode = 'ROUND'): Money {
-    if (!Number.isFinite(rupees)) throw new RangeError(`Money.fromRupees: non-finite value ${rupees}`)
+    if (!Number.isFinite(rupees))
+      throw new RangeError(`Money.fromRupees: non-finite value ${rupees}`)
     const rawPaise = rupees * PAISE_PER_RUPEE
     return new Money(applyRounding(rawPaise, mode))
   }
@@ -83,7 +86,8 @@ export class Money {
 
   /** Multiply by a scalar (e.g. quantity), rounding result. */
   multiply(scalar: number, mode: RoundingMode = 'ROUND'): Money {
-    if (!Number.isFinite(scalar)) throw new RangeError(`Money.multiply: non-finite scalar ${scalar}`)
+    if (!Number.isFinite(scalar))
+      throw new RangeError(`Money.multiply: non-finite scalar ${scalar}`)
     return new Money(applyRounding(this.paise * scalar, mode))
   }
 
@@ -92,15 +96,15 @@ export class Money {
    * percentCeil(5) => ceiling of (paise * 0.05)
    */
   percentCeil(ratePercent: number): Money {
-    return new Money(Math.ceil(this.paise * ratePercent / 100))
+    return new Money(Math.ceil((this.paise * ratePercent) / 100))
   }
 
   percentFloor(ratePercent: number): Money {
-    return new Money(Math.floor(this.paise * ratePercent / 100))
+    return new Money(Math.floor((this.paise * ratePercent) / 100))
   }
 
   percentRound(ratePercent: number): Money {
-    return new Money(Math.round(this.paise * ratePercent / 100))
+    return new Money(Math.round((this.paise * ratePercent) / 100))
   }
 
   /**
@@ -112,23 +116,39 @@ export class Money {
     const total = ratios.reduce((a, b) => a + b, 0)
     if (total <= 0) throw new Error('Money.allocate: ratios must sum to > 0')
 
-    const parts: number[] = ratios.map(r => Math.floor(this.paise * r / total))
+    const parts: number[] = ratios.map((r) => Math.floor((this.paise * r) / total))
     const distributed = parts.reduce((a, b) => a + b, 0)
     parts[0] += this.paise - distributed // remainder to first bucket
 
-    return parts.map(p => new Money(p))
+    return parts.map((p) => new Money(p))
   }
 
   // ─── Comparators ──────────────────────────────────────────────────────────
 
-  equals(other: Money): boolean { return this.paise === other.paise }
-  greaterThan(other: Money): boolean { return this.paise > other.paise }
-  greaterThanOrEqual(other: Money): boolean { return this.paise >= other.paise }
-  lessThan(other: Money): boolean { return this.paise < other.paise }
-  lessThanOrEqual(other: Money): boolean { return this.paise <= other.paise }
-  isZero(): boolean { return this.paise === 0 }
-  isPositive(): boolean { return this.paise > 0 }
-  isNegative(): boolean { return this.paise < 0 }
+  equals(other: Money): boolean {
+    return this.paise === other.paise
+  }
+  greaterThan(other: Money): boolean {
+    return this.paise > other.paise
+  }
+  greaterThanOrEqual(other: Money): boolean {
+    return this.paise >= other.paise
+  }
+  lessThan(other: Money): boolean {
+    return this.paise < other.paise
+  }
+  lessThanOrEqual(other: Money): boolean {
+    return this.paise <= other.paise
+  }
+  isZero(): boolean {
+    return this.paise === 0
+  }
+  isPositive(): boolean {
+    return this.paise > 0
+  }
+  isNegative(): boolean {
+    return this.paise < 0
+  }
 
   // ─── Clamp helpers ────────────────────────────────────────────────────────
 
@@ -178,9 +198,12 @@ export class Money {
 
 function applyRounding(value: number, mode: RoundingMode): number {
   switch (mode) {
-    case 'CEIL':  return Math.ceil(value)
-    case 'FLOOR': return Math.floor(value)
-    case 'ROUND': return Math.round(value)
+    case 'CEIL':
+      return Math.ceil(value)
+    case 'FLOOR':
+      return Math.floor(value)
+    case 'ROUND':
+      return Math.round(value)
   }
 }
 
