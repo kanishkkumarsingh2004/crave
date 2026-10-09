@@ -480,7 +480,13 @@ export async function persistJournalTransaction(transaction: JournalTransaction)
     console.log(
       `[Ledger] Posted ${transaction.lines.length}-line journal: ${transaction.idempotencyKey}`
     )
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.code === 'P2002' || err?.message?.includes('Unique constraint')) {
+      console.log(
+        `[Ledger] Idempotent replay detected via DB constraint — skipping duplicate: ${transaction.idempotencyKey}`
+      )
+      return
+    }
     // During schema migration period: LedgerEntry table may not exist yet
     // Log prominently but do not block the business flow
     console.error(
