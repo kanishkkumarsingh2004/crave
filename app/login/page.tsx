@@ -121,7 +121,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
+                className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#f8f9f6] dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-[#717c76] dark:placeholder-gray-400 px-4 py-2.5 text-xs font-semibold outline-none focus:border-[#18201c] dark:focus:border-[#d9f447] focus:ring-2 focus:ring-[#18201c]/10 dark:focus:ring-[#d9f447]/30 transition-all"
               />
             </div>
 
@@ -136,13 +136,13 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5 pr-10 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
+                  className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#f8f9f6] dark:bg-[#121815] text-[#18201c] dark:text-white placeholder-[#717c76] dark:placeholder-gray-400 px-4 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-[#18201c] dark:focus:border-[#d9f447] focus:ring-2 focus:ring-[#18201c]/10 dark:focus:ring-[#d9f447]/30 transition-all"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white hover:bg-[#f0f3eb] dark:hover:bg-[#202923] rounded-r-xl"
+                  className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white hover:bg-[#e8ece3] dark:hover:bg-[#202923] rounded-r-xl"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}

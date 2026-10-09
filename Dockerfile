@@ -9,6 +9,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
 RUN pnpm install --frozen-lockfile
 COPY . .
+# Prisma generate needs a database URL - use a dummy one for build time only
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/crave?schema=public"
 RUN npx prisma generate
 RUN pnpm run build

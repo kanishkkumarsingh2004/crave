@@ -118,7 +118,7 @@ export default function SignupPage() {
                   placeholder="e.g. Maya Lin"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] placeholder-[#717c76] px-4 py-2.5 text-xs font-semibold outline-none focus:border-[#18201c] focus:ring-2 focus:ring-[#18201c]/10 transition-all"
                 />
               </div>
 
@@ -132,7 +132,7 @@ export default function SignupPage() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] placeholder-[#717c76] px-4 py-2.5 text-xs font-semibold outline-none focus:border-[#18201c] focus:ring-2 focus:ring-[#18201c]/10 transition-all"
                 />
               </div>
 
@@ -146,7 +146,7 @@ export default function SignupPage() {
                   placeholder="+91 98765 43210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] px-3.5 py-2 text-xs outline-none focus:border-[#8fa71c]"
+                  className="mt-1.5 w-full rounded-xl border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] placeholder-[#717c76] px-4 py-2.5 text-xs font-semibold outline-none focus:border-[#18201c] focus:ring-2 focus:ring-[#18201c]/10 transition-all"
                 />
               </div>
 
@@ -161,13 +161,13 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-[#dfe4dc] bg-[#fcfdfe] px-4 py-2.5 pr-10 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
+                    className="w-full rounded-xl border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] placeholder-[#717c76] px-4 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-[#18201c] focus:ring-2 focus:ring-[#18201c]/10 transition-all"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] hover:text-[#18201c] hover:bg-[#f0f3eb] rounded-r-xl"
+                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] hover:text-[#18201c] hover:bg-[#e8ece3] rounded-r-xl"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -186,13 +186,13 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl border border-[#dfe4dc] bg-[#fcfdfe] px-4 py-2.5 pr-10 text-xs outline-none focus:border-[#8fa71c] focus:ring-2 focus:ring-[#d9f447]/50"
+                    className="w-full rounded-xl border border-[#dfe4dc] bg-[#f8f9f6] text-[#18201c] placeholder-[#717c76] px-4 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-[#18201c] focus:ring-2 focus:ring-[#18201c]/10 transition-all"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowConfirmPassword((v) => !v)}
-                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] hover:text-[#18201c] hover:bg-[#f0f3eb] rounded-r-xl"
+                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-[#717c76] hover:text-[#18201c] hover:bg-[#e8ece3] rounded-r-xl"
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? (

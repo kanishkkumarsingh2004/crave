@@ -1,92 +1,64 @@
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { supabase } from '@/lib/supabase'
-import { verifyToken } from '@/lib/jwt'
+import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { PaymentStatus } from '@prisma/client'
 
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('crave_token')?.value || ''
     const payload = token ? await verifyToken(token) : null
+
     if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'admin access required' }, { status: 403 })
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     const url = new URL(request.url)
     const statusParam = url.searchParams.get('status')
-    const status =
-      statusParam === 'pending' || statusParam === 'verified' || statusParam === 'rejected'
-        ? statusParam
-        : undefined
     const reviews = await prisma.paymentReview.findMany({
-      where: status ? { status } : undefined,
+      where: statusParam ? { status: statusParam as PaymentStatus } : undefined,
       orderBy: { created_at: 'desc' },
     })
     return NextResponse.json({ success: true, reviews })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to load reviews' }, { status: 500 })
+    return NextResponse.json({ error: error?.message || 'Failed to load payment reviews' }, { status: 500 })
   }
 }
 
 export async function PATCH(request: Request) {
   try {
-    const clientIp = getClientIp(request)
-    const result = await checkRateLimit(`payment_verify_${clientIp}`, 'PAYMENT_VERIFY')
-    if (!result.allowed) {
-      return rateLimitResponse(result.resetTime, result.retryAfter)
-    }
-
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('crave_token')?.value || ''
     const payload = token ? await verifyToken(token) : null
+
     if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'admin access required' }, { status: 403 })
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { id, orderId, status } = body
-    const targetId = id || orderId
+    const { id, status } = body
 
-    if (!targetId || !status) {
-      return NextResponse.json({ error: 'Review ID and status are required' }, { status: 400 })
+    if (!id || !status) {
+      return NextResponse.json({ error: 'Missing id or status' }, { status: 400 })
     }
 
-    let targetOrderId = orderId || id
-    let review: any = null
+    const review = await prisma.paymentReview.findUnique({ where: { id } })
+    if (!review) {
+      return NextResponse.json({ error: 'Payment review not found' }, { status: 404 })
+    }
 
-    // 1. Update Payment Review in DB (Prisma & Supabase)
-    try {
-      if (id) {
-        review = await prisma.paymentReview.update({
-          where: { id },
-          data: { status },
-        })
-        if (review?.order_id) targetOrderId = review.order_id
-      }
-    } catch {}
-
-    if (!review && targetOrderId) {
-      try {
-        await prisma.paymentReview.updateMany({
-          where: { order_id: targetOrderId },
-          data: { status },
-        })
-      } catch {}
-      try {
-        await supabase.from('payment_reviews').update({ status }).eq('order_id', targetOrderId)
-      } catch {}
+    const targetOrderId = review.order_id
+    if (!targetOrderId) {
+      return NextResponse.json({ error: 'Order ID not found in review' }, { status: 400 })
     }
 
     // 2. Update the corresponding Order record in database (Prisma & Supabase)
-    const newPaymentStatus =
-      status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
+    const newPaymentStatus = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
     const newOrderStatus = status === 'verified' ? 'sent_to_vendor' : undefined
 
     let updatedOrder: any = null
@@ -96,12 +68,12 @@ export async function PATCH(request: Request) {
           where: { id: targetOrderId },
           data: {
             payment_status: newPaymentStatus,
-            ...(newOrderStatus ? { status: newOrderStatus as any } : {}),
+            ...(newOrderStatus ? { status: newOrderStatus } : {}),
           },
         })
       } catch (e) {
         try {
-          const updatePayload: any = { payment_status: newPaymentStatus }
+          const updatePayload: { payment_status: string; status?: string } = { payment_status: newPaymentStatus }
           if (newOrderStatus) updatePayload.status = newOrderStatus
           const { data } = await supabase
             .from('orders')
@@ -110,7 +82,7 @@ export async function PATCH(request: Request) {
             .select()
             .single()
           updatedOrder = data
-        } catch (err) {}
+        } catch (e) {}
       }
     }
 

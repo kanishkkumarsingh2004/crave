@@ -1,4 +1,4 @@
-import { verifyToken } from '@/lib/jwt'
+import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const role = searchParams.get('role')
 
     const users = await prisma.user.findMany({
-      where: role ? { role: role as any } : {},
+      where: role ? { role: role as JWTPayload['role'] } : {},
       include: {
         orders: {
           select: {

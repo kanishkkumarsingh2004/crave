@@ -9,7 +9,8 @@ function getJwtSecretKey(): Uint8Array {
         'FATAL: JWT_SECRET environment variable is missing in production environment.'
       )
     }
-    return new TextEncoder().encode('REDACTED_JWT_SECRET')
+    // Development fallback - should never be used in production
+    return new TextEncoder().encode('dev-secret-change-in-production')
   }
   return new TextEncoder().encode(secret)
 }

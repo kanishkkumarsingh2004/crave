@@ -73,57 +73,60 @@ export default function HomePage() {
 
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
-            {/* Location Eyebrow (Plain Text, Zero Background Pill) */}
-            <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
-              <MapPin className="size-3.5 text-[#b5de28]" />
+            {/* Location Eyebrow */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#18201c] px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-[#d9f447] mb-5 shadow-sm">
+              <MapPin className="size-3.5 text-[#d9f447]" />
               <span>Live on Kanakapura Road, Bengaluru</span>
             </div>
 
-            <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-extrabold leading-[1.05] tracking-tight text-[#18201c]">
+            <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-black leading-[1.08] tracking-tight text-[#18201c]">
               Order food &amp; groceries. <br />
-              Discover best kitchens. <span className="text-[#b5de28]">Crave it!</span>
+              Discover best kitchens.{' '}
+              <span className="inline-block rounded-2xl bg-[#18201c] px-3.5 py-1 text-[#d9f447] shadow-md mt-2 sm:mt-0">
+                Crave it!
+              </span>
             </h1>
 
-            <p className="mt-4 text-base sm:text-lg text-[#55635a] font-medium leading-relaxed max-w-xl mx-auto">
+            <p className="mt-5 text-base sm:text-lg text-[#2c3831] font-semibold leading-relaxed max-w-xl mx-auto">
               Hyper-local food delivery, 15-minute dark store groceries, and gourmet dining deals
               curated exclusively for{' '}
-              <span className="font-bold text-[#18201c] underline decoration-[#d9f447] decoration-2">
+              <span className="font-bold text-[#18201c] underline decoration-[#18201c] decoration-2">
                 Kanakapura Road
               </span>
               .
             </p>
 
             {/* Location + Search Bar */}
-            <div className="mt-8 rounded-3xl border-2 border-[#18201c]/10 bg-white p-2.5 shadow-2xl backdrop-blur-md max-w-2xl mx-auto">
+            <div className="mt-8 rounded-3xl border-2 border-[#18201c]/15 bg-white p-3 shadow-2xl backdrop-blur-md max-w-2xl mx-auto">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* Location Selector */}
-                <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1] sm:max-w-[220px] shrink-0">
-                  <MapPin className="size-4 text-[#b5de28] shrink-0" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[#f0f4eb] px-3.5 py-3 border border-[#d5ded0] sm:max-w-[220px] shrink-0">
+                  <MapPin className="size-4 text-[#18201c] shrink-0" />
                   <input
                     type="text"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
                     placeholder="Kanakapura Road"
-                    className="w-full bg-transparent text-xs font-bold text-[#18201c] focus:outline-none truncate"
+                    className="w-full bg-transparent text-xs font-extrabold text-[#18201c] focus:outline-none truncate"
                   />
                 </div>
 
                 {/* Dish / Kitchen Search Input */}
-                <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f8f9f6] px-3.5 py-3 border border-[#e5e9e1]">
-                  <Search className="size-4 text-[#75827b] shrink-0" />
+                <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f0f4eb] px-3.5 py-3 border border-[#d5ded0]">
+                  <Search className="size-4 text-[#18201c] shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search biryani, pizza, groceries, or snacks..."
-                    className="w-full bg-transparent text-xs font-medium text-[#18201c] placeholder:text-[#83918a] focus:outline-none"
+                    className="w-full bg-transparent text-xs font-semibold text-[#18201c] placeholder:text-[#52635a] focus:outline-none"
                   />
                 </div>
 
                 {/* Primary Find Food Button */}
                 <button
                   onClick={() => handleNavigateCustomer('/user/explore')}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#18201c] px-6 py-3.5 text-xs font-extrabold text-white shadow-lg transition hover:bg-[#323f37] hover:scale-105 active:scale-95 shrink-0"
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#18201c] px-6 py-3.5 text-xs font-extrabold text-[#d9f447] shadow-xl transition hover:bg-[#2c3831] hover:scale-105 active:scale-95 shrink-0"
                 >
                   Find Food
                   <ArrowRight className="size-4 text-[#d9f447]" />
@@ -139,37 +142,37 @@ export default function HomePage() {
             {/* ENTRY CARD 1: FOOD DELIVERY */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
+                  <span className="rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-extrabold tracking-wider text-[#d9f447]">
                     UP TO 60% OFF
                   </span>
-                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#b5de28] group-hover:scale-110 transition-transform">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] group-hover:scale-110 transition-transform">
                     <UtensilsCrossed className="size-6" />
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
                     FOOD DELIVERY
                   </h3>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
                     FROM TOP LOCAL RESTAURANTS
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
                     Order hot biryani, pizzas, burgers &amp; authentic South Indian meals from
                     handpicked kitchens.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
                   Order Food Now
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#b5de28] group-hover:text-white transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>
@@ -178,11 +181,11 @@ export default function HomePage() {
             {/* ENTRY CARD 2: CRAVE XP (INSTAMART / DARK STORE) */}
             <div
               onClick={() => handleNavigateCustomer('/user/cravexp')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
+                  <span className="rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-extrabold tracking-wider text-[#d9f447]">
                     15 MIN EXPRESS DROPS
                   </span>
                   <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] group-hover:scale-110 transition-transform">
@@ -191,24 +194,24 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
                     INSTANT GROCERY
                   </h3>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
                     CRAVE XP STORE
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
                     Fresh dairy, snacks, beverages, ice creams &amp; daily essentials delivered in
                     under 15 minutes.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
                   Explore Crave XP Store
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#b5de28] text-white group-hover:bg-[#18201c] group-hover:text-[#d9f447] transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>
@@ -217,37 +220,37 @@ export default function HomePage() {
             {/* ENTRY CARD 3: DINEOUT & OFFERS */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#e2e7dc] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#b5de28] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-[#b5de28]">
+                  <span className="rounded-full bg-[#18201c] px-3 py-1 text-[11px] font-extrabold tracking-wider text-[#d9f447]">
                     UP TO 50% SAVINGS
                   </span>
-                  <div className="grid size-12 place-items-center rounded-2xl bg-[#f4f8ea] text-[#b5de28] group-hover:scale-110 transition-transform">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-[#18201c] text-[#d9f447] group-hover:scale-110 transition-transform">
                     <Star className="size-6" />
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#b5de28] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
                     TOP OFFERS &amp; DEALS
                   </h3>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#616d66]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
                     CURATED DINING &amp; SPECIALS
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed text-[#55635a]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
                     Discover flat discounts, promo codes, and special restaurant combos near
                     Kanakapura Road.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#f0f4eb]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#b5de28] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
+                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
                   View Today&apos;s Offers
                 </span>
-                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#b5de28] group-hover:text-white transition-colors">
+                <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
                   <ArrowRight className="size-4" />
                 </span>
               </div>

@@ -12,6 +12,10 @@ export type UserRole = JWTPayload['role']
 export async function getApiActor(request: Request): Promise<JWTPayload | null> {
   // Check for test mode first (uses headers, no JWT required)
   if (isTestRequest(request)) {
+    // SECURITY: Test auth headers must NEVER work in production
+    if (process.env.NODE_ENV === 'production' && !process.env.CI) {
+      throw new Error('Test authentication headers are not allowed in production')
+    }
     const testUser = getTestUser(request)
     return testUser || MOCK_TEST_USER
   }

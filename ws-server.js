@@ -3,6 +3,7 @@ require('dotenv/config')
 const { createServer } = require('http')
 const { WebSocketServer } = require('ws')
 const { v4: uuidv4 } = require('uuid')
+const { TextEncoder } = require('util')
 
 const WS_OPEN = 1
 const PORT = process.env.WS_PORT || 8000
@@ -188,15 +189,19 @@ if (!WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
   process.exit(1)
 }
 
-// JWT verification for WebSocket authentication
-const jwt = require('jsonwebtoken')
+// JWT verification for WebSocket authentication using jose
+const { jwtVerify } = require('jose')
 
 function verifyWSToken(token) {
   if (!token) return null
   const secret = process.env.JWT_SECRET
   if (!secret) return null
   try {
-    return jwt.verify(token, secret)
+    const secretKey = new TextEncoder().encode(secret)
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+    })
+    return payload
   } catch {
     return null
   }
