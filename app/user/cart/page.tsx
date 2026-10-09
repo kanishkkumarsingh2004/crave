@@ -446,7 +446,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] text-[#18201c] dark:text-white flex flex-col justify-between selection:bg-[#d9f447] selection:text-[#18201c]">
       <Navbar />
 
-      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 flex-1 pb-28 lg:pb-8">
+      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 flex-1 pb-44 sm:pb-48 lg:pb-12">
         {/* Top Header & Breadcrumb */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dc] dark:border-[#27342d] pb-4 gap-3">
           <div className="flex items-center gap-3">
@@ -1091,7 +1091,7 @@ export default function CartPage() {
 
       {/* Floating Sticky Mobile Checkout Pill */}
       {cart.length > 0 && !orderSuccess && (
-        <div className="fixed bottom-[4.2rem] left-4 right-4 z-30 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex items-center justify-between rounded-2xl bg-[#18201c] dark:bg-[#d9f447] p-3.5 shadow-2xl border border-gray-700/60 dark:border-black/10 backdrop-blur-md">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#9eb3a4] dark:text-[#18201c]/80">
@@ -1430,7 +1430,7 @@ export default function CartPage() {
       {/* Mobile Customer Bottom Navigation Bar */}
       <nav
         aria-label="Mobile bottom navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe-nav"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
           <Link

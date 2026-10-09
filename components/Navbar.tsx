@@ -2,6 +2,7 @@
 
 import CraveLogo from '@/components/CraveLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import {
@@ -285,7 +286,9 @@ export default function Navbar() {
           </div>
 
           {/* Right side — auth & profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+
             {user && (
               <Link
                 href="/user/cart"
@@ -599,8 +602,9 @@ export default function Navbar() {
               </Link>
 
               {/* Language switcher in mobile drawer */}
-              <div className="px-1 py-1">
+              <div className="px-1 py-1 flex flex-col gap-2">
                 <LanguageSwitcher variant="menu" />
+                <ThemeToggle variant="pill" className="w-full justify-between" />
               </div>
 
               {/* Install App for logged-in user */}
@@ -636,8 +640,9 @@ export default function Navbar() {
                 Explore
               </Link>
               {/* Language switcher for guests too */}
-              <div className="px-1 py-1">
+              <div className="px-1 py-1 flex flex-col gap-2">
                 <LanguageSwitcher variant="menu" />
+                <ThemeToggle variant="pill" className="w-full justify-between" />
               </div>
 
               {/* Install App for guest user */}

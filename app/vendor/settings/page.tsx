@@ -158,7 +158,7 @@ export default function VendorSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar">
+    <div className="min-h-screen bg-[#0a0f0d] text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar">
       <VendorSidebar />
 
       <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 space-y-6">

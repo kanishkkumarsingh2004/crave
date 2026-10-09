@@ -3,7 +3,7 @@
 @import 'shadcn/tailwind.css';
 @import 'leaflet/dist/leaflet.css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark, .dark *));
 
 /* =============================================================================
    DESIGN TOKENS — Spacing, Typography, Colors, Z-Index, Breakpoints
@@ -103,7 +103,9 @@
   --font-sans: var(--font-sans);
 }
 
-:root {
+:root,
+:root.light,
+[data-theme='light'] {
   color-scheme: light;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -139,7 +141,9 @@
   --foreground: oklch(0.145 0 0);
 }
 
-.dark {
+:root.dark,
+.dark,
+[data-theme='dark'] {
   color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -175,7 +179,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) {
+  :root:not(.light):not(.dark) {
     color-scheme: dark;
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -216,7 +220,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-200;
   }
   .maplibregl-popup-content {
     @apply bg-transparent! shadow-none! p-0! rounded-none!;
@@ -1435,11 +1439,45 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-@supports (padding: env(safe-area-inset-bottom)) {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .pt-safe {
-    padding-top: env(safe-area-inset-top, 0px);
+/* =============================================================================
+   MOBILE SAFE AREA INSETS & HARDWARE ADAPTATION (iOS Notch, Dynamic Island, Home Indicator, Android Gestures)
+   ============================================================================= */
+
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+.pb-safe {
+  padding-bottom: max(1.25rem, calc(0.75rem + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+.pb-safe-nav {
+  padding-bottom: max(0.75rem, calc(0.375rem + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, calc(0.5rem + env(safe-area-inset-top, 0px))) !important;
+}
+
+.pt-safe-header {
+  padding-top: max(1rem, calc(0.75rem + env(safe-area-inset-top, 0px))) !important;
+}
+
+.bottom-safe {
+  bottom: max(1rem, calc(0.75rem + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+/* Ensure modern dynamic viewport height on mobile browsers */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
   }
 }
+

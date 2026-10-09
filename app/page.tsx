@@ -61,13 +61,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] selection:bg-[#d9f447] selection:text-[#18201c]">
+    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#0c120e] text-[#18201c] dark:text-[#f0f4f1] selection:bg-[#d9f447] selection:text-[#18201c] transition-colors duration-200">
       <Navbar />
 
       {/* =========================================================================
           HERO & SEARCH SECTION
          ========================================================================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#f4f7ed] to-[#f8f9f7] pb-16 pt-8 sm:pt-12 lg:pb-20 lg:pt-14">
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#f4f7ed] to-[#f8f9f7] dark:from-[#111814] dark:via-[#0e1410] dark:to-[#0c120e] pb-16 pt-8 sm:pt-12 lg:pb-20 lg:pt-14">
         {/* Background Glow */}
         <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-[520px] w-[780px] -translate-x-1/2 rounded-full bg-[#d9f447]/25 blur-[130px]" />
 
@@ -79,7 +79,7 @@ export default function HomePage() {
               <span>Live on Kanakapura Road, Bengaluru</span>
             </div>
 
-            <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-black leading-[1.08] tracking-tight text-[#18201c]">
+            <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-black leading-[1.08] tracking-tight text-[#18201c] dark:text-white">
               Order food &amp; groceries. <br />
               Discover best kitchens.{' '}
               <span className="inline-block rounded-2xl bg-[#18201c] px-3.5 py-1 text-[#d9f447] shadow-md mt-2 sm:mt-0">
@@ -87,39 +87,39 @@ export default function HomePage() {
               </span>
             </h1>
 
-            <p className="mt-5 text-base sm:text-lg text-[#2c3831] font-semibold leading-relaxed max-w-xl mx-auto">
+            <p className="mt-5 text-base sm:text-lg text-[#2c3831] dark:text-gray-300 font-semibold leading-relaxed max-w-xl mx-auto">
               Hyper-local food delivery, 15-minute dark store groceries, and gourmet dining deals
               curated exclusively for{' '}
-              <span className="font-bold text-[#18201c] underline decoration-[#18201c] decoration-2">
+              <span className="font-bold text-[#18201c] dark:text-[#d9f447] underline decoration-[#18201c] dark:decoration-[#d9f447] decoration-2">
                 Kanakapura Road
               </span>
               .
             </p>
 
             {/* Location + Search Bar */}
-            <div className="mt-8 rounded-3xl border-2 border-[#18201c]/15 bg-white p-3 shadow-2xl backdrop-blur-md max-w-2xl mx-auto">
+            <div className="mt-8 rounded-3xl border-2 border-[#18201c]/15 dark:border-[#27342d] bg-white dark:bg-[#141d18] p-3 shadow-2xl backdrop-blur-md max-w-2xl mx-auto">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* Location Selector */}
-                <div className="flex items-center gap-2 rounded-2xl bg-[#f0f4eb] px-3.5 py-3 border border-[#d5ded0] sm:max-w-[220px] shrink-0">
-                  <MapPin className="size-4 text-[#18201c] shrink-0" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[#f0f4eb] dark:bg-[#1b2620] px-3.5 py-3 border border-[#d5ded0] dark:border-[#2b3a32] sm:max-w-[220px] shrink-0">
+                  <MapPin className="size-4 text-[#18201c] dark:text-[#d9f447] shrink-0" />
                   <input
                     type="text"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
                     placeholder="Kanakapura Road"
-                    className="w-full bg-transparent text-xs font-extrabold text-[#18201c] focus:outline-none truncate"
+                    className="w-full bg-transparent text-xs font-extrabold text-[#18201c] dark:text-white focus:outline-none truncate"
                   />
                 </div>
 
                 {/* Dish / Kitchen Search Input */}
-                <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f0f4eb] px-3.5 py-3 border border-[#d5ded0]">
-                  <Search className="size-4 text-[#18201c] shrink-0" />
+                <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#f0f4eb] dark:bg-[#1b2620] px-3.5 py-3 border border-[#d5ded0] dark:border-[#2b3a32]">
+                  <Search className="size-4 text-[#18201c] dark:text-[#d9f447] shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search biryani, pizza, groceries, or snacks..."
-                    className="w-full bg-transparent text-xs font-semibold text-[#18201c] placeholder:text-[#52635a] focus:outline-none"
+                    className="w-full bg-transparent text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-[#52635a] dark:placeholder:text-gray-400 focus:outline-none"
                   />
                 </div>
 
@@ -142,7 +142,7 @@ export default function HomePage() {
             {/* ENTRY CARD 1: FOOD DELIVERY */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] dark:border-[#27342d] bg-white dark:bg-[#141d18] p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] dark:hover:border-[#d9f447] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
@@ -155,21 +155,21 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] dark:text-white uppercase tracking-tight group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                     FOOD DELIVERY
                   </h3>
-                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740] dark:text-gray-400">
                     FROM TOP LOCAL RESTAURANTS
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831] dark:text-gray-300">
                     Order hot biryani, pizzas, burgers &amp; authentic South Indian meals from
                     handpicked kitchens.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc] dark:border-[#27342d]">
+                <span className="text-xs font-extrabold text-[#18201c] dark:text-white group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                   Order Food Now
                 </span>
                 <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
@@ -181,7 +181,7 @@ export default function HomePage() {
             {/* ENTRY CARD 2: CRAVE XP (INSTAMART / DARK STORE) */}
             <div
               onClick={() => handleNavigateCustomer('/user/cravexp')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] dark:border-[#27342d] bg-white dark:bg-[#141d18] p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] dark:hover:border-[#d9f447] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
@@ -194,21 +194,21 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] dark:text-white uppercase tracking-tight group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                     INSTANT GROCERY
                   </h3>
-                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740] dark:text-gray-400">
                     CRAVE XP STORE
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831] dark:text-gray-300">
                     Fresh dairy, snacks, beverages, ice creams &amp; daily essentials delivered in
                     under 15 minutes.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc] dark:border-[#27342d]">
+                <span className="text-xs font-extrabold text-[#18201c] dark:text-white group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                   Explore Crave XP Store
                 </span>
                 <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
@@ -220,7 +220,7 @@ export default function HomePage() {
             {/* ENTRY CARD 3: DINEOUT & OFFERS */}
             <div
               onClick={() => handleNavigateCustomer('/user/explore')}
-              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] bg-white p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
+              className="group cursor-pointer rounded-[36px] border-2 border-[#d5ded0] dark:border-[#27342d] bg-white dark:bg-[#141d18] p-7 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-[#18201c] dark:hover:border-[#d9f447] hover:shadow-2xl relative overflow-hidden flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
@@ -233,21 +233,21 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-2xl font-black text-[#18201c] uppercase tracking-tight group-hover:text-[#2d681b] transition-colors">
+                  <h3 className="text-2xl font-black text-[#18201c] dark:text-white uppercase tracking-tight group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                     TOP OFFERS &amp; DEALS
                   </h3>
-                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740]">
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#3a4740] dark:text-gray-400">
                     CURATED DINING &amp; SPECIALS
                   </p>
-                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831]">
+                  <p className="mt-3 text-xs leading-relaxed font-semibold text-[#2c3831] dark:text-gray-300">
                     Discover flat discounts, promo codes, and special restaurant combos near
                     Kanakapura Road.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc]">
-                <span className="text-xs font-extrabold text-[#18201c] group-hover:text-[#2d681b] transition-colors">
+              <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#e2e7dc] dark:border-[#27342d]">
+                <span className="text-xs font-extrabold text-[#18201c] dark:text-white group-hover:text-[#2d681b] dark:group-hover:text-[#d9f447] transition-colors">
                   View Today&apos;s Offers
                 </span>
                 <span className="grid size-9 place-items-center rounded-full bg-[#18201c] text-[#d9f447] group-hover:bg-[#d9f447] group-hover:text-[#18201c] transition-colors">
@@ -262,22 +262,22 @@ export default function HomePage() {
       {/* =========================================================================
           CRAVE XP INSTAMART DEEP DIVE FEATURE SECTION
          ========================================================================= */}
-      <section className="py-20 lg:py-24 bg-white border-t border-b border-[#e5e9e1]">
+      <section className="py-20 lg:py-24 bg-white dark:bg-[#101713] border-t border-b border-[#e5e9e1] dark:border-[#27342d]">
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             {/* Left Content */}
             <div className="lg:col-span-6">
               {/* Eyebrow (Plain Text, Zero Background Pill) */}
-              <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] mb-4">
-                <Zap className="size-3.5 text-[#b5de28] fill-current" />
+              <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#70880e] dark:text-[#d9f447] mb-4">
+                <Zap className="size-3.5 text-[#b5de28] dark:text-[#d9f447] fill-current" />
                 <span>Introducing Crave XP Store</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] tracking-tight leading-tight">
-                Instant Grocery Delivery in <span className="text-[#b5de28]">15 Minutes.</span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] dark:text-white tracking-tight leading-tight">
+                Instant Grocery Delivery in <span className="text-[#b5de28] dark:text-[#d9f447]">15 Minutes.</span>
               </h2>
 
-              <p className="mt-4 text-sm sm:text-base text-[#55635a] font-medium leading-relaxed">
+              <p className="mt-4 text-sm sm:text-base text-[#55635a] dark:text-gray-300 font-medium leading-relaxed">
                 Need fresh milk, snacks, beverages, or emergency kitchen ingredients? Our local
                 Kanakapura Road store packs and dispatches your order in under 2 minutes.
               </p>
@@ -285,40 +285,40 @@ export default function HomePage() {
               {/* Feature Points */}
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] dark:bg-[#18231c] text-[#b5de28] dark:text-[#d9f447] shrink-0 mt-0.5 font-bold">
                     1
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c]">
+                    <h4 className="text-sm font-extrabold text-[#18201c] dark:text-white">
                       Sub-15 Minute Dispatch
                     </h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">
+                    <p className="text-xs text-[#616d66] dark:text-gray-400 mt-0.5">
                       Dedicated pickers pack items instantly from cold storage bays.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] dark:bg-[#18231c] text-[#b5de28] dark:text-[#d9f447] shrink-0 mt-0.5 font-bold">
                     2
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c]">
+                    <h4 className="text-sm font-extrabold text-[#18201c] dark:text-white">
                       100% Temperature Sealed
                     </h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">
+                    <p className="text-xs text-[#616d66] dark:text-gray-400 mt-0.5">
                       IoT sensors monitor dairy and ice cream bags at optimal temperatures.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] text-[#b5de28] shrink-0 mt-0.5 font-bold">
+                  <div className="grid size-7 place-items-center rounded-xl bg-[#f4f8ea] dark:bg-[#18231c] text-[#b5de28] dark:text-[#d9f447] shrink-0 mt-0.5 font-bold">
                     3
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c]">Live Map Tracking</h4>
-                    <p className="text-xs text-[#616d66] mt-0.5">
+                    <h4 className="text-sm font-extrabold text-[#18201c] dark:text-white">Live Map Tracking</h4>
+                    <p className="text-xs text-[#616d66] dark:text-gray-400 mt-0.5">
                       Watch your express rider navigate straight to your apartment doorstep.
                     </p>
                   </div>
@@ -329,18 +329,18 @@ export default function HomePage() {
               <div className="mt-8">
                 <button
                   onClick={() => handleNavigateCustomer('/user/cravexp')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-[#18201c] px-6 sm:px-8 py-4 text-xs font-extrabold text-white shadow-xl hover:bg-[#323f37] transition hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 sm:px-8 py-4 text-xs font-extrabold text-white dark:text-[#18201c] shadow-xl hover:bg-[#323f37] dark:hover:bg-[#c2dc3a] transition hover:scale-105 active:scale-95"
                 >
-                  <ShoppingBag className="size-4 text-[#d9f447]" />
+                  <ShoppingBag className="size-4 text-[#d9f447] dark:text-[#18201c]" />
                   Enter Crave XP Instamart Store
-                  <ArrowRight className="size-4 text-[#d9f447]" />
+                  <ArrowRight className="size-4 text-[#d9f447] dark:text-[#18201c]" />
                 </button>
               </div>
             </div>
 
             {/* Right Graphic Preview */}
             <div className="lg:col-span-6">
-              <div className="rounded-[28px] sm:rounded-[36px] border-4 border-white bg-gradient-to-br from-[#121815] to-[#1a231f] p-4 sm:p-7 text-white shadow-2xl relative overflow-hidden">
+              <div className="rounded-[28px] sm:rounded-[36px] border-4 border-white dark:border-[#27342d] bg-gradient-to-br from-[#121815] to-[#1a231f] p-4 sm:p-7 text-white shadow-2xl relative overflow-hidden">
                 <div className="flex flex-wrap sm:flex-nowrap items-center justify-between border-b border-white/10 pb-4 gap-2">
                   <div className="flex items-center gap-2">
                     <span className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-black text-xs shrink-0">
@@ -399,7 +399,7 @@ export default function HomePage() {
       {/* =========================================================================
           CUSTOMER MOBILE APP CTA BANNER
          ========================================================================= */}
-      <section className="py-16 bg-[#f8f9f7]">
+      <section className="py-16 bg-[#f8f9f7] dark:bg-[#0c120e]">
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-[36px] bg-[#121815] p-8 sm:p-14 text-white shadow-2xl border-2 border-[#d9f447]/30">
             <div className="relative z-10 max-w-xl">

@@ -1,6 +1,7 @@
 'use client'
 
 import ThemeSelector from '@/components/ThemeSelector'
+import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/lib/toast-context'
@@ -265,6 +266,17 @@ export default function CustomerDashboard({
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<Array<PastOrder>>([])
+
+  useEffect(() => {
+    if (showMobileSideMenu) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showMobileSideMenu])
 
   useEffect(() => {
     const handleToggleSidebar = () => {
@@ -1299,7 +1311,7 @@ export default function CustomerDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] pb-24 text-[#18201c] dark:text-white">
+    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] pb-32 sm:pb-36 lg:pb-12 text-[#18201c] dark:text-white transition-colors duration-200">
       {/* Top Header Navigation Banner */}
       <div className="sticky top-0 z-30 border-b border-[#eaefe5] dark:border-[#27342d] bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-xs">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-2 sm:gap-4">
@@ -1396,8 +1408,10 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Right Block: Cart (Desktop only) + Mobile 3-Line Hamburger Button */}
+          {/* Right Block: Cart (Desktop only) + ThemeToggle + Mobile 3-Line Hamburger Button */}
           <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
+
             <button
               onClick={() => router.push('/user/cart')}
               className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-sm font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#2a3831] dark:hover:bg-[#c8e434] transition active:scale-95 shrink-0"
@@ -1486,6 +1500,10 @@ export default function CustomerDashboard({
 
         {/* Side Drawer Navigation Options */}
         <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+          <div className="px-1 pb-2">
+            <ThemeToggle variant="pill" className="w-full justify-between" />
+          </div>
+
           <p className="px-3 pt-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
             Navigation
           </p>
@@ -2995,7 +3013,7 @@ export default function CustomerDashboard({
             </div>
 
             {cart.length > 0 && (
-              <div className="sticky bottom-0 mt-6 rounded-2xl bg-[#121815] p-4 text-white flex items-center justify-between shadow-2xl border border-[#25332a]">
+              <div className="sticky bottom-0 mb-safe mt-6 rounded-2xl bg-[#121815] p-4 text-white flex items-center justify-between shadow-2xl border border-[#25332a]">
                 <div>
                   <p className="text-xs text-[#9eb3a4]">{totalCartItemCount} items in cart</p>
                   <p className="text-lg font-bold text-[#d9f447]">₹{grandTotal}</p>
@@ -3549,7 +3567,7 @@ export default function CustomerDashboard({
       {/* Mobile Bottom Tab Bar */}
       <nav
         aria-label="Mobile bottom navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe-nav"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
           <button
