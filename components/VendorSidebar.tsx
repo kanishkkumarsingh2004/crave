@@ -15,13 +15,24 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function VendorSidebar() {
   const { user, logout } = useAuth()
   const { t } = useLanguage()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
 
   const navItems = [
     {
@@ -125,7 +136,7 @@ export default function VendorSidebar() {
 
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="sm:hidden grid size-9 place-items-center rounded-xl bg-[#18201c] text-white hover:bg-[#222e27] transition border border-[#27342d]"
+              className="lg:hidden grid size-9 place-items-center rounded-xl bg-[#18201c] text-white hover:bg-[#222e27] transition border border-[#27342d]"
               aria-label="Open menu"
             >
               <Menu className="size-5" />
@@ -164,7 +175,7 @@ export default function VendorSidebar() {
 
       {/* Mobile Slide-Out Menu */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-[#202923] bg-[#121815] text-white shadow-2xl transition-transform duration-300 ease-in-out sm:hidden ${
+        className={`fixed inset-y-0 right-0 z-50 w-64 transform border-l border-[#202923] bg-[#121815] text-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -219,7 +230,7 @@ export default function VendorSidebar() {
 
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
           aria-hidden="true"
         />
@@ -227,7 +238,7 @@ export default function VendorSidebar() {
 
       {/* Mobile Fixed Bottom Navigation Bar (< lg) */}
       <nav
-        className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-around border-t border-[#202923] bg-[#0f1512]/95 backdrop-blur-xl px-2 py-2 lg:hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-safe"
+        className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-around border-t border-[#202923] bg-[#0f1512]/95 backdrop-blur-xl px-2 py-1.5 pb-safe-nav lg:hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
         aria-label="Vendor bottom navigation"
       >
         {navItems.map(({ href, label, icon: Icon }) => {

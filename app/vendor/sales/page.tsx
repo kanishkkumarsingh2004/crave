@@ -204,7 +204,7 @@ export default function VendorSalesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#0a0f0d] text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] w-full px-3.5 pt-6 sm:px-6 lg:px-8 space-y-6 min-w-0 overflow-hidden">

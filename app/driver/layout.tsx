@@ -147,6 +147,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   )
   const pageTitle = currentItem ? currentItem.label : 'Driver Cockpit'
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
+
   return (
     <div className="flex min-h-screen bg-[#121815] text-white">
       {/* Mobile Overlay */}
@@ -157,9 +168,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         }`}
       />
 
-      {/* DESKTOP DARK FULL-HEIGHT STICKY SIDEBAR (EXACTLY MATCHING ADMIN SIDEBAR LAYOUT) */}
+      {/* DESKTOP DARK FULL-HEIGHT FIXED SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:sticky lg:top-0 lg:h-screen lg:left-0 lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 overflow-hidden ${
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 lg:z-40 overflow-hidden ${
           sidebarOpen
             ? 'translate-x-0 shadow-2xl w-64 border-l border-[#202923]'
             : 'translate-x-full lg:shadow-none'
@@ -354,7 +365,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#121815]">
+      <div className={`flex-1 flex flex-col min-w-0 bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Header Bar for Driver */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#202923] bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-white">
           <div>
@@ -405,7 +416,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Dashboard Body Content */}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-between bg-[#121815]">
+        <main className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 flex-1 flex flex-col justify-between bg-[#121815]">
           <div>
             {/* GPS Location Permission Access Banner */}
             {(gpsStatus === 'denied' ||
@@ -499,7 +510,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* MOBILE BOTTOM NAVIGATION BAR (lg:hidden) */}
-        <nav className="lg:hidden sticky bottom-0 z-30 flex items-center justify-around border-t border-[#24302a] bg-[#121815] p-2 text-white shadow-2xl">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-[#24302a] bg-[#121815]/95 backdrop-blur-md px-2 py-1.5 pb-safe-nav text-white shadow-2xl">
           <Link
             href="/driver/dashboard"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${

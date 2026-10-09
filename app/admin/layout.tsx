@@ -116,6 +116,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
   const pageTitle = currentItem ? currentItem.label : 'Admin Console'
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
+
   return (
     <div className="min-h-screen bg-[#0b0f0d] dark:bg-[#090d0b] text-[#f0f4f1] flex flex-col lg:flex-row">
       {/* Mobile Overlay with Smooth Fade Transition */}
@@ -128,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Admin Full-Height Left Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col justify-between bg-[#111714] text-white transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:z-30 border-r border-[#1e2722] ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col justify-between bg-[#111714] text-white transition-all duration-300 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen lg:z-40 border-r border-[#1e2722] ${
           sidebarOpen ? 'translate-x-0 shadow-2xl w-72' : '-translate-x-full lg:translate-x-0'
         } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
@@ -274,7 +285,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Body */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#0b0f0d]">
+      <div className={`flex-1 flex flex-col min-w-0 bg-[#0b0f0d] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Header Bar for Admin */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#1e2722] bg-[#111714]/90 px-4 py-3.5 backdrop-blur-xl sm:px-6 lg:px-8 shadow-sm">
           <div className="flex items-center gap-3">
@@ -305,7 +316,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content Body */}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 bg-[#0b0f0d] text-[#f0f4f1] transition-colors duration-200">
+        <main className="p-4 sm:p-6 lg:p-8 pb-safe flex-1 bg-[#0b0f0d] text-[#f0f4f1] transition-colors duration-200">
           {children}
         </main>
       </div>

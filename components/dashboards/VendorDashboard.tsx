@@ -188,7 +188,7 @@ export default function VendorDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] pb-12 text-white lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#0a0f0d] pb-28 lg:pb-12 text-white lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] w-full px-3.5 pt-4 sm:px-4 lg:px-6 space-y-4 overflow-hidden min-w-0">

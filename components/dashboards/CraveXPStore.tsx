@@ -124,7 +124,7 @@ export default function CraveXPStore() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8f5] text-[#18201c] pb-28">
+    <div className="min-h-screen bg-[#f7f8f5] dark:bg-[#121815] text-[#18201c] dark:text-white pb-32 sm:pb-36 transition-colors duration-200">
       {/* RESTORED CRAVEXP HERO BANNER CARD (Zero Duplicate Navbar) */}
       <section className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#18201c] via-[#24302a] to-[#18201c] p-6 sm:p-8 text-white shadow-xl border-2 border-emerald-500/30">
@@ -336,7 +336,7 @@ export default function CraveXPStore() {
 
       {/* CRAVEXP FLOATING CART BAR (Bottom of Screen) */}
       {cartTotalItems > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-xl">
+        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 mx-auto max-w-xl">
           <div className="flex items-center justify-between rounded-2xl bg-[#18201c] p-3 text-white shadow-2xl border-2 border-[#d9f447]/40 animate-slide-up">
             <div className="flex items-center gap-3">
               <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
