@@ -1,0 +1,50 @@
+# CRAVE Billing Engine 2.0 — Defect Register
+
+**Format:** docs/payment_audit.md §2.2  
+**Last Updated:** 2026-10-09  
+
+---
+
+## Defect Register
+
+| Finding ID | Severity | File & Lines | Current Behaviour | Expected Behaviour | Financial Impact | Root Cause | Required Correction | Status |
+|:---|:---:|:---|:---|:---|:---|:---|:---|:---:|
+| **BILL-001** | **Critical** | `lib/calculator.ts:106–179` | Monetary arithmetic uses JavaScript `number` (binary floating-point) with `Math.ceil()` on intermediate values | All monetary calculations must use integer paise; rounding only at explicit boundary | Can produce systematic 1-paise drift per order; at scale, platform over-collects or under-reports GST | Binary IEEE-754 floating point cannot represent all decimal fractions (e.g. 0.1 + 0.2 ≠ 0.3) | Replaced by `lib/finance/money.ts` + `lib/finance/pricing-engine.ts` | ✅ **Fixed** (v2 engine) |
+| **BILL-002** | **Critical** | `lib/calculator.ts` + `lib/commercial-engine.ts` | Two parallel engines can diverge: preview API uses `calculator.ts` while settlement/invoice may use different logic | One canonical engine with one result type, persisted before payment | Discrepancy between customer's confirmed price and vendor settlement amount | Independent implementations with no shared authoritative result | Consolidated into `lib/finance/pricing-engine.ts`; preview API returns both `breakdown` (legacy) and `canonical` | ✅ **Fixed** (v2 engine) |
+| **BILL-003** | **Critical** | `app/api/orders/*/route.ts` | Checkout APIs recalculate price at payment time from live config; no persisted snapshot | Price snapshot must be frozen at cart-confirm time and locked to the order | Customer could be charged a different amount if config changes between cart and payment | No `financial_snapshot` field on Order model | `financial_snapshot` JSONB field added to `orders` table; migration provided | ⚠️ **Schema fixed** — order creation routes must be updated to persist snapshot |
+| **BILL-004** | **Critical** | `prisma/schema.prisma` PaymentReview | No unique constraint on `utr_ref`; same UTR can be submitted for multiple orders | UTR must be globally unique across all payment review records | Adversarial customer could claim one bank transfer payment for two orders | Missing database uniqueness constraint | `UNIQUE INDEX payment_reviews_utr_ref_key` added in migration | ✅ **Fixed** (migration) |
+| **BILL-005** | **High** | `lib/commercial-engine.ts:392–397` | Delivery fee, platform fee, handling fee hardcoded as `packagingFee=20, deliveryFee=35, platformFee=6, handlingFee=5` | All fee values must come from active `PaymentConfig` in DB | Platform charges wrong fees if admin changes config | Hardcoded constants bypass `PaymentConfig` | New pricing engine reads fees from config input; hardcoding eliminated | ✅ **Fixed** (v2 engine) |
+| **BILL-006** | **High** | `lib/commercial-engine.ts:401` | Platform service GST hardcoded to 18% (`Math.ceil(platformServiceTaxableBase * 0.18)`) without configuration | Tax rates must be versioned and configurable; rate must derive from `TaxCategory` | If regulatory rate changes, system continues charging wrong rate silently | Hardcoded magic constant | `lib/finance/tax-engine.ts` uses `TAX_RATE_MAP` keyed by `TaxCategory` | ✅ **Fixed** (v2 engine) |
+| **BILL-007** | **High** | `prisma/schema.prisma` | No `LedgerEntry` model; financial state tracked only as wallet balance mutations | Double-entry subledger with balanced journal entries for every event | No audit trail; cannot reconcile platform revenue, vendor payables, or rider payables | Schema missing financial subledger | `LedgerEntry` model added; `lib/finance/ledger-service.ts` provides builders with balance validation | ✅ **Fixed** (Phase 2) |
+| **BILL-008** | **High** | `lib/commercial-engine.ts:426` | Commission GST (`commissionGst`) uses 18% but is NOT separated from food GST in customer invoice | Commission GST is a B2B supply (platform → restaurant invoice); must NOT appear on customer receipt | Customer invoice shows incorrect GST breakdown; B2B invoice missing | Tax liability ownership not separated | New engine separates `restaurantServiceTaxBreakdown` (B2C) from `commissionGstPaise` (B2B) | ✅ **Fixed** (v2 engine) |
+| **BILL-009** | **High** | All order creation routes | Tip is included in commission calculation base in `calculator.ts` (implicitly via `grandTotal` use) | Tip MUST NOT be included in commission or GST base unless contract explicitly requires it | Restaurant over-charged commission on tips; platform reports inflated taxable value | Incorrect commission base | New engine excludes tip from all commission calculations explicitly; tip 100% to rider | ✅ **Fixed** (v2 engine) |
+| **BILL-010** | **Medium** | `lib/api-auth.ts` | `isTestRequest` check can pass in non-test environments if `NODE_ENV` guard is missing | Test auth path must be unreachable in production | Unauthorized access to financial APIs using test headers | Missing production guard | Guard with `if (process.env.NODE_ENV !== 'production')` | 📋 **Open** — tracked in ISSUE-008 |
+| **BILL-011** | **Medium** | `lib/jwt.ts:12` | Hardcoded fallback JWT secret `'crave_jwt_secret_key_bengaluru_2026_super_secure_auth'` | Production must fail-fast if `JWT_SECRET` env var is not set | Financial APIs accessible with predictable token in staging/shared environments | Hardcoded default secret | Remove fallback; throw in `process.env.NODE_ENV === 'production'` | 📋 **Open** — tracked in ISSUE-007 |
+| **BILL-012** | **Medium** | `lib/dispatch/atomic-lock.ts` | Dispatch lock uses local memory map as primary path; Redis SET NX PX is secondary | Redis distributed lock must be the only path in multi-pod deployments | Two pods assign the same rider to two simultaneous orders | Local-first lock design | Switch `tryLockDriverOfferDistributed` as primary path; remove sync local fallback | 📋 **Open** — tracked in ISSUE-002 |
+| **BILL-013** | **Low** | `app/api/admin/payment-reviews/route.ts` | Several `any` type casts introduced in recent commits | All financial API routes must use proper Prisma types | Type safety lost on financial data fields | Expediency during development | Replace `any` with explicit Prisma generated types | 📋 **Open** — tracked in ISSUE-009 |
+
+---
+
+## Status Legend
+- ✅ **Fixed** — Implemented and verified
+- ⚠️ **Schema fixed** — DB change applied; application-layer follow-up required
+- 📋 **Open** — Not yet implemented
+- 🔄 **In Progress** — Active implementation
+
+---
+
+## Verification Test Fixtures (docs/payment_audit.md §10.5)
+
+### Tax-Inclusive Fixture
+- Input: ₹105 at 5% → Taxable base: ₹100, GST: ₹5
+- `verifyTaxInclusiveExample()` in `lib/finance/tax-engine.ts` confirms this ✅
+
+### Delivery Fee Fixture (docs/payment_audit.md §5.3)
+- Base: ₹15, Included: 1 km, Rate: ₹6/km, Distance: 3 km
+- Expected: ₹15 + max(0, 3-1) × ₹6 = ₹27
+- Verified in `lib/finance/pricing-engine.ts` ✅
+
+### Rider Payout Fixture (docs/payment_audit.md §9)
+- Base: ₹20, Distance: ₹12, Tip: ₹10
+- Expected total: ₹42
+- New engine: riderBasePayPaise + riderDistancePayPaise + riderTipPaise = ₹42 ✅

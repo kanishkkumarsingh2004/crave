@@ -1,8 +1,30 @@
+/**
+ * app/api/calculator/route.ts
+ *
+ * CRAVE Pricing Preview API — Billing Engine 2.0
+ *
+ * This endpoint is for PREVIEW ONLY. It MUST NOT authorise payments, settlements,
+ * or refunds (docs/payment_audit.md §3.1).
+ *
+ * The response now returns both:
+ *   - `breakdown` (legacy shape — keeps all existing UI components working)
+ *   - `canonical`  (new CanonicalPriceResult in paise — use for new features)
+ *
+ * The actual order checkout paths must persist `canonical` as `financial_snapshot`
+ * on the Order record before authorising payment.
+ */
+
 import { NextResponse } from 'next/server'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 import { prisma } from '@/lib/prisma'
+import {
+  calculateOrderPrice,
+  tolegacyCalculatorResult,
+  type OrderPriceInput,
+  type CommercialContractInput,
+} from '@/lib/finance'
 
 export const revalidate = 0
 
@@ -21,6 +43,8 @@ interface ResolvedRestaurantConfig {
   fixedCommission?: number
   fixedMarkup?: number
   priceTaxMode?: string
+  supplierState?: string
+  gstin?: string
 }
 
 export async function POST(req: Request) {
@@ -42,6 +66,9 @@ export async function POST(req: Request) {
       fixedMarkup,
       priceTaxMode,
       gstRatePercent,
+      // New v2 fields (optional — gracefully fall back to legacy calculation)
+      items,          // PricingItem[] — for canonical paise calculation
+      orderType = 'restaurant_food',
     } = body
 
     // 1. Fetch active Payment Config from DB
@@ -132,6 +159,8 @@ export async function POST(req: Request) {
             fixed_commission: true,
             fixed_markup: true,
             price_tax_mode: true,
+            supplier_state: true,
+            gstin: true,
             commercial_contracts: {
               where: { status: 'ACTIVE' },
               orderBy: { effective_from: 'desc' },
@@ -171,6 +200,8 @@ export async function POST(req: Request) {
                 : 0
           restConfig.priceTaxMode =
             contract?.price_tax_mode || rest.price_tax_mode || 'TAX_INCLUSIVE'
+          restConfig.supplierState = rest.supplier_state || 'Karnataka'
+          restConfig.gstin = rest.gstin || undefined
         }
       } catch {
         // Fallback if DB lookup fails
@@ -179,11 +210,14 @@ export async function POST(req: Request) {
 
     // 3. Fetch Coupon if couponCode provided
     let couponDetails: CouponDetailsInput | undefined = undefined
+    let resolvedCouponDiscountPaise = 0
+
     if (couponDiscount != null && Number(couponDiscount) > 0) {
       couponDetails = {
         discount_type: 'flat',
         discount_value: Number(couponDiscount),
       }
+      resolvedCouponDiscountPaise = Math.round(Number(couponDiscount) * 100)
     } else if (couponCode) {
       try {
         const foundCoupon = await prisma.coupon.findUnique({
@@ -196,14 +230,27 @@ export async function POST(req: Request) {
             max_discount: foundCoupon.max_discount,
             min_order_amount: foundCoupon.min_order_amount,
           }
+          // Resolve coupon discount in paise for canonical engine
+          const subtotalNum = Math.max(0, Number(subtotal))
+          if (subtotalNum >= (foundCoupon.min_order_amount || 0)) {
+            if (foundCoupon.discount_type === 'percentage') {
+              const calc = subtotalNum * foundCoupon.discount_value * 100  // paise
+              resolvedCouponDiscountPaise = foundCoupon.max_discount
+                ? Math.min(calc, foundCoupon.max_discount * 100)
+                : calc
+            } else {
+              resolvedCouponDiscountPaise = foundCoupon.discount_value * 100
+            }
+          }
         }
       } catch {
         // Fallback if DB lookup fails
       }
     }
 
-    // 4. Construct CalculatorInput
-    const input: CalculatorInput = {
+    // ─── LEGACY CALCULATION (backward-compatible, supports all existing UI) ──────
+
+    const legacyInput: CalculatorInput = {
       subtotal: Math.max(0, Number(subtotal)),
       distanceKm: Math.max(0.1, Number(distanceKm)),
       packagingFee: packagingFee != null ? Number(packagingFee) : (cfg.packagingCap ?? 20),
@@ -236,11 +283,81 @@ export async function POST(req: Request) {
             : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 5),
     }
 
-    const breakdown = calculateFullBreakdown(input, couponDetails)
+    const breakdown = calculateFullBreakdown(legacyInput, couponDetails)
+
+    // ─── CANONICAL CALCULATION (new paise-based engine, used in v2 flows) ────────
+
+    let canonical = null
+    try {
+      const subtotalPaise = Math.round(Math.max(0, Number(subtotal)) * 100)
+      const packagingFeePaise = Math.round((packagingFee != null ? Number(packagingFee) : cfg.packagingCap ?? 20) * 100)
+      const platformFeePaise = Math.round(cfg.platformFee * 100)
+      const handlingFeePaise = Math.round(cfg.handlingFee * 100)
+      const tipPaise = Math.round(Math.max(0, Number(tip)) * 100)
+      const roadDistanceKm = Math.max(0.1, Number(distanceKm))
+
+      const contractInput: CommercialContractInput = {
+        commercialModel: (restConfig.commercialModel || 'commission') as any,
+        commissionRatePercent: restConfig.vendorCommissionPercent ?? cfg.vendorCommission,
+        markupRatePercent: restConfig.markupPercent ?? 0,
+        fixedCommissionPaise: Math.round((restConfig.fixedCommission ?? 0) * 100),
+        fixedMarkupPaise: Math.round((restConfig.fixedMarkup ?? 0) * 100),
+        priceTaxMode: (restConfig.priceTaxMode || 'TAX_INCLUSIVE') as any,
+        gstStatus: 'REGISTERED',
+        supplierState: restConfig.supplierState || 'Karnataka',
+        restaurantGstin: restConfig.gstin,
+      }
+
+      // If item-level data provided (v2 callers), use it; otherwise synthesise a single item
+      const pricingItems = Array.isArray(items) && items.length > 0
+        ? items.map((it: any) => ({
+            name: it.name || 'Item',
+            quantity: Math.max(1, Number(it.quantity) || 1),
+            unitPricePaise: Math.round(Number(it.price || it.unitPricePaise || 0) * (it.unitPricePaise ? 1 : 100)),
+            hsnSacCode: it.hsnSacCode || '996331',
+            priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
+            customCommissionRatePercent: it.customCommissionRatePercent,
+            customMarkupRatePercent: it.customMarkupRatePercent,
+          }))
+        : [{ name: 'Order Items', quantity: 1, unitPricePaise: subtotalPaise, hsnSacCode: '996331', priceTaxMode: contractInput.priceTaxMode as any }]
+
+      const priceInput: OrderPriceInput = {
+        orderType: orderType === 'cravexp_grocery' ? 'cravexp_grocery' : 'restaurant_food',
+        restaurantId: restaurantId || undefined,
+        restaurantName: restConfig.restaurantName || 'Partner Restaurant',
+        supplierState: restConfig.supplierState || 'Karnataka',
+        items: pricingItems,
+        delivery: {
+          baseDeliveryFeePaise: Math.round(cfg.baseDeliveryFee * 100),
+          baseDistanceKm: cfg.baseDistanceKm,
+          perKmRatePaise: Math.round(cfg.perKmRate * 100),
+          freeDeliveryThresholdPaise: Math.round(cfg.freeDeliveryThreshold * 100),
+          roadDistanceKm,
+        },
+        surcharges: {
+          surgeMultiplier: cfg.surgeMultiplier,
+          rainFeePaise: Math.round(cfg.rainFee * 100),
+          nightSurgeFeePaise: Math.round(cfg.nightSurgeFee * 100),
+          isRainActive: cfg.isRainModeActive,
+          isNightSurgeActive: cfg.isNightSurgeActive,
+        },
+        platformFeePaise,
+        handlingFeePaise,
+        packagingFeePaise,
+        couponDiscountPaise: resolvedCouponDiscountPaise,
+        tipPaise,
+        contract: contractInput,
+      }
+
+      canonical = calculateOrderPrice(priceInput)
+    } catch (canonicalErr) {
+      console.error('[Calculator] Canonical engine error (non-fatal, legacy result returned):', canonicalErr)
+    }
 
     return NextResponse.json({
       success: true,
-      breakdown,
+      breakdown,           // legacy shape — all existing UI continues to work
+      canonical,           // new paise-based canonical result (null if error)
       config: cfg,
     })
   } catch (error) {
