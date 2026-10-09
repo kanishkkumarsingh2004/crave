@@ -175,6 +175,15 @@ model Order {
   restaurant_payout     Int?        @default(0)
   platform_revenue      Int?        @default(0)
 
+  // Immutable canonical price snapshot — persisted at order creation, never recalculated
+  // Contains the full CanonicalPriceResult in paise; source of truth for settlement & invoices
+  financial_snapshot    Json?
+
+  // UTR reference from customer payment submission
+  utr_ref               String?
+
+  ledger_entries        LedgerEntry[]
+
   delivery_latitude     Decimal?    @db.Decimal
   delivery_longitude    Decimal?    @db.Decimal
   delivered_at          DateTime?   @db.Timestamptz(6)
@@ -244,6 +253,7 @@ model PaymentReview {
   created_at   DateTime?     @default(now()) @db.Timestamptz(6)
 
   @@index([order_id])
+  @@unique([utr_ref])  // Prevents duplicate UTR claim — anti-replay protection
   @@map("payment_reviews")
 }
 
@@ -291,6 +301,7 @@ model PaymentConfig {
   is_active               Boolean  @default(false)
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
   gst_rate                Decimal? @db.Decimal(5, 2)
+  gst_rate_percent        Decimal? @db.Decimal(5, 2)  // Alias; use this field in new code
 
   @@map("payment_configs")
 }
@@ -353,6 +364,31 @@ model PickerMetric {
 
   @@index([restaurant_id])
   @@map("picker_metrics")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING ENGINE 2.0: Double-Entry Financial Subledger (docs/payment_audit.md §14)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LedgerEntry {
+  id               String   @id @default(cuid())
+  idempotency_key  String   @unique   // Prevents duplicate journal postings
+  event_type       String             // ORDER_CONFIRMED | VENDOR_SETTLEMENT | RIDER_SETTLEMENT | REFUND_INITIATED | REVERSAL
+  order_id         String             // Reference to the originating order
+  reference_id     String?            // Settlement ID / Payout ID / UTR
+  account_code     String             // AccountCode enum value
+  debit_paise      Int                // Debit amount in paise (0 if credit entry)
+  credit_paise     Int                // Credit amount in paise (0 if debit entry)
+  description      String
+  notes            String?
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  order            Order    @relation(fields: [order_id], references: [id])
+
+  @@index([order_id])
+  @@index([event_type, created_at])
+  @@index([account_code, created_at])
+  @@map("ledger_entries")
 }
 
 model DriverLocationHistory {
