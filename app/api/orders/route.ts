@@ -449,8 +449,8 @@ export async function POST(request: Request) {
     try {
       await createVendorSettlement({
         id: `set_${orderId}`,
-        restaurant_name: restaurant_name || restaurant?.name || 'Crave Kitchen Store',
-        restaurant_id,
+        restaurant_name: finalRestaurantName,
+        restaurant_id: finalRestaurantId,
         gross_sales: foodSubtotal,
         commission_rate: commissionRate,
         commission_amount: calcResult.vendorSettlement.commissionDeducted,
@@ -618,22 +618,26 @@ export async function PATCH(request: Request) {
     // If order completed, record driver payout.
     if (status === 'completed') {
       try {
-        const paymentConfig = await getActiveConfig()
-        const deliveryFee = paymentConfig.baseDeliveryFee
-        const driverPayoutAmount =
-          Math.round(deliveryFee * (paymentConfig.driverPayoutShare / 100)) +
-          (Number((existing as any).tip) || 0)
+        const targetDriverId = driver_id || (existing as any).rider_id
+        if (targetDriverId) {
+          const breakdown = (existing.items as any[])?.[0]?.billing_breakdown
+          const driverPayoutAmount =
+            breakdown?.driver_payout != null
+              ? Number(breakdown.driver_payout)
+              : Math.round((Number(existing.delivery_fee) || 30) * 0.8) +
+                (Number((existing as any).tip) || 0)
 
-        if (driver_id || driver_name) {
           await createDriverPayout({
             id: `payout_${orderId}`,
-            driver_id: driver_id || 'drv_default',
+            driver_id: targetDriverId,
             amount: driverPayoutAmount,
             status: 'paid',
             transaction_ref: orderId,
           })
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Driver payout creation notice:', e)
+      }
     }
 
     return NextResponse.json({ success: true, order: updated })

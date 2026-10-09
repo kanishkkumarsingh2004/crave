@@ -256,20 +256,54 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
     if (limit != null && currentUsage > limit) {
       return { allowed: false, currentUsage: coupon?.used_count || 0, limit }
     }
+
+    // Persist usage count increment in DB
+    try {
+      await prisma.coupon.update({
+        where: { id: couponId },
+        data: { used_count: { increment: 1 } },
+      })
+    } catch (e) {}
+
+    try {
+      await supabase
+        .from('coupons')
+        .update({ used_count: currentUsage })
+        .eq('id', couponId)
+    } catch (e) {}
+
     return { allowed: true, currentUsage, limit }
   }
 
   const key = `crave:coupon:usage:${couponId}`
-  const currentUsage = await redis.incr(key)
 
-  if (currentUsage === 1) {
-    await redis.expire(key, 30 * 24 * 60 * 60) // 30 days
+  // Seed Redis from DB if key does not exist yet
+  const exists = await redis.exists(key)
+  if (!exists && coupon) {
+    await redis.set(key, coupon.used_count || 0, 'EX', 30 * 24 * 60 * 60)
   }
+
+  const currentUsage = await redis.incr(key)
 
   if (limit != null && currentUsage > limit) {
     await redis.decr(key).catch(() => {})
     return { allowed: false, currentUsage: currentUsage - 1, limit }
   }
+
+  // Asynchronously sync usage increment to DB
+  prisma.coupon
+    .update({
+      where: { id: couponId },
+      data: { used_count: { increment: 1 } },
+    })
+    .catch(() => {})
+
+  try {
+    await supabase
+      .from('coupons')
+      .update({ used_count: currentUsage })
+      .eq('id', couponId)
+  } catch (e) {}
 
   return { allowed: true, currentUsage, limit }
 }

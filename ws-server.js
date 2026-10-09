@@ -355,12 +355,12 @@ function validateBroadcastPayload(channel, data) {
 
 const wss = new WebSocketServer({ noServer: true })
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', async (ws, req) => {
   const clientId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
   // Authenticate the connection using JWT
   const token = extractTokenFromRequest(req)
-  const payload = verifyWSToken(token)
+  const payload = await verifyWSToken(token)
 
   let authenticatedRole = 'anonymous'
   let authenticatedUserId = null
@@ -525,7 +525,7 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-server.on('upgrade', (req, socket, head) => {
+server.on('upgrade', async (req, socket, head) => {
   if (!req.headers || !req.url) {
     socket.destroy()
     return
@@ -533,7 +533,7 @@ server.on('upgrade', (req, socket, head) => {
   if (req.url.startsWith('/api/ws')) {
     // Authenticate during WebSocket handshake
     const token = extractTokenFromRequest(req)
-    const payload = verifyWSToken(token)
+    const payload = await verifyWSToken(token)
 
     if (!payload) {
       // Allow unauthenticated connections for development, but require auth in production

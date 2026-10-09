@@ -103,7 +103,7 @@ export async function tryLockDriverForOffer(
 }
 
 /**
- * Check if a driver is currently locked by any dispatch offer
+ * Check if a driver is currently locked by any dispatch offer (synchronous in-memory check)
  */
 export function isDriverLocked(driverId: string): boolean {
   const now = Date.now()
@@ -114,6 +114,29 @@ export function isDriverLocked(driverId: string): boolean {
     return false
   }
   return true
+}
+
+/**
+ * Check if a driver is currently locked (distributed async check including Redis)
+ */
+export async function isDriverLockedAsync(driverId: string): Promise<boolean> {
+  const now = Date.now()
+  const lock = offerLocks.get(driverId)
+  if (lock && lock.expiresAt > now) {
+    return true
+  }
+
+  if (isRedisAvailable() && redis) {
+    try {
+      const redisLock = await redis.get(`crave:lock:driver:${driverId}`)
+      if (redisLock) return true
+    } catch (e) {}
+  }
+
+  if (lock && lock.expiresAt <= now) {
+    offerLocks.delete(driverId)
+  }
+  return false
 }
 
 /**
