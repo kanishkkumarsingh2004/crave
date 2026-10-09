@@ -37,6 +37,11 @@ jest.mock('@/lib/cart-context', () => ({
   CartProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
+jest.mock('@/lib/theme-context', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: jest.fn(), setTheme: jest.fn() }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
+
 jest.mock('lucide-react', () => {
   const React = require('react')
   return {
