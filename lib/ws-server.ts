@@ -21,7 +21,17 @@ export const broadcast = async (
   }
   ensureInternalSecret()
 
-  const payload = JSON.stringify({ channel, data, ts: Date.now() })
+  const msgId =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  const payload = JSON.stringify({
+    channel,
+    data,
+    origin: 'crave_app',
+    msgId,
+    ts: Date.now(),
+  })
 
   // High-performance Redis Pub/Sub broadcast across cluster nodes
   if (isRedisAvailable() && redis) {

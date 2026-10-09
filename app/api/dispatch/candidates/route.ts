@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const searchResult = findGeofencedCandidateDrivers({
+    const searchResult = await findGeofencedCandidateDrivers({
       requestId,
       pickupLat: lat,
       pickupLng: lng,

@@ -12,6 +12,76 @@ const INSTANCE_ID = `ws_inst_${process.pid}_${Math.random().toString(36).substri
 const PING_INTERVAL_MS = 30000 // 30 seconds
 const PONG_TIMEOUT_MS = 60000 // 60 seconds
 const SLOW_CONSUMER_BUFFER_THRESHOLD = 1024 * 1024 // 1 MB (1048576 bytes)
+const MAX_MESSAGE_SIZE = 64 * 1024 // 64 KB (65536 bytes)
+
+// Server metrics tracking
+const metrics = {
+  activeConnections: 0,
+  totalMessagesReceived: 0,
+  totalMessagesSent: 0,
+  totalBytesReceived: 0,
+  totalBytesSent: 0,
+  slowConsumerDisconnects: 0,
+  droppedMessages: 0,
+  gpsUpdatesCoalesced: 0,
+  startTime: Date.now(),
+}
+
+const recordMetric = (name, val = 1) => {
+  if (metrics[name] !== undefined) {
+    metrics[name] += val
+  }
+}
+
+// GPS Coalescing Buffer to avoid flooding clients with high-frequency driver coordinates
+const GPS_COALESCE_INTERVAL_MS = 1000 // 1 second
+const gpsCoalesceBuffer = new Map()
+
+function coalesceGpsUpdate(driverId, lat, lng, orderId, now) {
+  if (!driverId) return
+  const existing = gpsCoalesceBuffer.get(driverId)
+  if (existing) {
+    existing.lat = lat
+    existing.lng = lng
+    existing.orderId = orderId
+    existing.lastUpdated = now
+    metrics.gpsUpdatesCoalesced++
+    return
+  }
+
+  // Broadcast initial location immediately
+  broadcast('driver_location', {
+    driverId,
+    orderId,
+    lat,
+    lng,
+    ts: now,
+  })
+
+  // Buffer subsequent rapid updates within the coalesce window
+  const timer = setTimeout(() => {
+    const buffered = gpsCoalesceBuffer.get(driverId)
+    if (buffered && (buffered.lat !== lat || buffered.lng !== lng)) {
+      broadcast('driver_location', {
+        driverId,
+        orderId: buffered.orderId,
+        lat: buffered.lat,
+        lng: buffered.lng,
+        ts: buffered.lastUpdated,
+      })
+    }
+    gpsCoalesceBuffer.delete(driverId)
+  }, GPS_COALESCE_INTERVAL_MS)
+
+  gpsCoalesceBuffer.set(driverId, {
+    driverId,
+    orderId,
+    lat,
+    lng,
+    lastUpdated: now,
+    timer,
+  })
+}
 
 // Primary Client Directory: ws -> client metadata
 const connectedClients = new Map()

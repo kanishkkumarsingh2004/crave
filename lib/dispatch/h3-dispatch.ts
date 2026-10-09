@@ -6,7 +6,7 @@ import {
   DEFAULT_MAX_LOCATION_AGE_MS,
   type DriverLocationState,
 } from './driver-tracker'
-import { isDriverLocked } from './atomic-lock'
+import { isDriverLocked, isDriverLockedAsync } from './atomic-lock'
 import { calculateHaversineDistanceKm, calculateEstimatedEtaMinutes } from '../utils'
 
 export interface DispatchRequest {
@@ -114,31 +114,36 @@ export async function findGeofencedCandidateDrivers(
   const maxRingsToSearch = Math.min(10, Math.max(3, Math.ceil(maxSearchRadiusKm / ringStepKm)))
   let stageFound = 0
   let totalCellsSearched = 0
+  const searchedCells = new Set<string>()
 
   // Progressive Dynamic Ring Expansion (Ring 0 -> Ring 1 -> Ring 2 -> Ring N)
   for (let ring = 0; ring < maxRingsToSearch; ring += 1) {
-    const ringCells = h3.gridDisk(pickupH3Cell, ring)
-    totalCellsSearched += ringCells.length
+    const ringDisk = h3.gridDisk(pickupH3Cell, ring)
+    const newCellsInRing = ringDisk.filter((cell) => !searchedCells.has(cell))
+    newCellsInRing.forEach((cell) => searchedCells.add(cell))
+
+    if (newCellsInRing.length === 0) continue
+    totalCellsSearched += newCellsInRing.length
 
     // Scan ONLY drivers in these specific H3 cells (Geographically Isolated)
     // Use distributed version for multi-pod support
-    const driversInCellPromises = ringCells.map(async (cell) => {
+    const driversInCellPromises = newCellsInRing.map(async (cell) => {
       const driversInCell = await getDriversInH3CellDistributed(cell, DEFAULT_MAX_LOCATION_AGE_MS)
       return { cell, drivers: driversInCell }
     })
 
     const cellsDrivers = await Promise.all(driversInCellPromises)
 
-    cellsDrivers.forEach(({ cell, drivers: driversInCell }) => {
-      driversInCell.forEach((driver) => {
-        // Exclude if already evaluated or currently locked by another offer
-        if (candidateMap.has(driver.driverId) || isDriverLocked(driver.driverId)) {
-          return
+    for (const { drivers: driversInCell } of cellsDrivers) {
+      for (const driver of driversInCell) {
+        // Exclude if already evaluated
+        if (candidateMap.has(driver.driverId)) {
+          continue
         }
 
         // Eligibility Check 1: Online & Available
         if (driver.status !== 'ONLINE' || !driver.available) {
-          return
+          continue
         }
 
         // Eligibility Check 2: Vehicle Type Match (if specified)
@@ -146,10 +151,15 @@ export async function findGeofencedCandidateDrivers(
           requiredVehicleType &&
           driver.vehicleType.toLowerCase() !== requiredVehicleType.toLowerCase()
         ) {
-          return
+          continue
         }
 
-        // Eligibility Check 3: Exact Distance Boundary
+        // Eligibility Check 3: Distributed Lock Check
+        if (await isDriverLockedAsync(driver.driverId)) {
+          continue
+        }
+
+        // Eligibility Check 4: Exact Distance Boundary
         const { distanceKm, etaMinutes, score } = rankCandidateDriver(
           driver,
           pickupLat,
@@ -158,7 +168,7 @@ export async function findGeofencedCandidateDrivers(
         )
 
         if (distanceKm > maxSearchRadiusKm) {
-          return
+          continue
         }
 
         const ageSeconds = Math.floor((Date.now() - driver.lastUpdated) / 1000)
@@ -176,8 +186,8 @@ export async function findGeofencedCandidateDrivers(
           score,
           ringStageFound: ring,
         })
-      })
-    })
+      }
+    }
 
     // If we reached required minimum candidates, stop ring expansion
     if (candidateMap.size >= minCandidatesRequired) {
