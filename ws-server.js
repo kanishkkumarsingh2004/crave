@@ -8,6 +8,10 @@ const WS_OPEN = 1
 const PORT = process.env.WS_PORT || 8000
 const INSTANCE_ID = `ws_inst_${process.pid}_${Math.random().toString(36).substring(2, 7)}`
 
+const PING_INTERVAL_MS = 30000 // 30 seconds
+const PONG_TIMEOUT_MS = 60000 // 60 seconds
+const SLOW_CONSUMER_BUFFER_THRESHOLD = 1024 * 1024 // 1 MB (1048576 bytes)
+
 // Primary Client Directory: ws -> client metadata
 const connectedClients = new Map()
 

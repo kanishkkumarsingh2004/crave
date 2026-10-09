@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
-import { tryLockDriverForOffer } from '@/lib/dispatch/atomic-lock'
+import { acquireDriverOfferLock } from '@/lib/dispatch/atomic-lock'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const requestId = `dsp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
     // 1. Perform H3 Geofenced Candidate Selection
-    const searchResult = findGeofencedCandidateDrivers({
+    const searchResult = await findGeofencedCandidateDrivers({
       requestId,
       pickupLat,
       pickupLng,
@@ -68,7 +68,11 @@ export async function POST(request: Request) {
     const topCandidates = searchResult.eligibleCandidates.slice(0, batchSize)
 
     for (const candidate of topCandidates) {
-      const locked = tryLockDriverForOffer(candidate.driverId, requestId, offerTtlSeconds * 1000)
+      const locked = await acquireDriverOfferLock(
+        candidate.driverId,
+        requestId,
+        offerTtlSeconds * 1000
+      )
       if (locked) {
         alertedCandidates.push({
           ...candidate,

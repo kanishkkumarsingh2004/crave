@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import {
   isDriverLocked,
   releaseDriverLock,
-  tryLockDriverForOffer,
-  tryLockDriverOfferDistributed,
+  acquireDriverOfferLock,
 } from '@/lib/dispatch/atomic-lock'
 import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { updateOrder, findOrderById } from '@/lib/dal'
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
 
     // CR-018: Atomic distributed lock for offer acceptance
     // Use distributed lock to prevent race conditions across instances
-    const lockAcquired = await tryLockDriverOfferDistributed(driverId, requestId)
+    const lockAcquired = await acquireDriverOfferLock(driverId, requestId)
     if (!lockAcquired) {
       return NextResponse.json(
         { error: 'Offer no longer available or already accepted by another driver' },
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
 
     try {
       // Release offer lock and mark driver ON_TRIP
-      releaseDriverLock(driverId, requestId)
+      await releaseDriverLock(driverId, requestId)
 
       const currentLocation = getDriverLocation(driverId)
       const lat = typeof body.lat === 'number' ? body.lat : currentLocation?.lat
@@ -121,7 +120,7 @@ export async function POST(request: Request) {
       })
     } finally {
       // Ensure lock is released even if an error occurs
-      releaseDriverLock(driverId, requestId)
+      await releaseDriverLock(driverId, requestId)
     }
   } catch (err: any) {
     console.error('[POST /api/driver/accept]', err)

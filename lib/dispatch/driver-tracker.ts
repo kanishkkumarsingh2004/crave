@@ -159,9 +159,15 @@ export async function updateDriverLocation(params: {
 
   // Replicate to Redis distributed cache with TTL if available
   if (isRedisAvailable() && redis) {
-    redis
-      .set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120)
-      .catch(() => {})
+    const pipe = redis.pipeline()
+    pipe.set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120)
+
+    if (cellChanged && previousCell) {
+      pipe.srem(`crave:h3:cell:${previousCell}`, driverId)
+    }
+    pipe.sadd(`crave:h3:cell:${newH3Cell}`, driverId)
+    pipe.expire(`crave:h3:cell:${newH3Cell}`, 180) // slightly longer than location TTL
+    await pipe.exec().catch(() => {})
   }
 
   // Ensure history flush timer is running
@@ -373,7 +379,7 @@ export function getAllDriverLocations(
 }
 
 /**
- * Retrieve all drivers currently indexed in a specific H3 cell
+ * Retrieve all drivers currently indexed in a specific H3 cell (local only)
  */
 export function getDriversInH3Cell(
   h3Cell: string,
@@ -393,6 +399,39 @@ export function getDriversInH3Cell(
   })
 
   return result
+}
+
+/**
+ * Retrieve all drivers in an H3 cell with Redis fallback for distributed deployments
+ * First checks local memory, then falls back to Redis for distributed deployments
+ */
+export async function getDriversInH3CellDistributed(
+  h3Cell: string,
+  maxAgeMs: number = DEFAULT_MAX_LOCATION_AGE_MS
+): Promise<DriverLocationState[]> {
+  // 1. Prefer local memory (fast path)
+  const local = getDriversInH3Cell(h3Cell, maxAgeMs)
+  if (local.length > 0 || !isRedisAvailable() || !redis) return local
+
+  // 2. Fallback / merge from Redis
+  const ids = await redis.smembers(`crave:h3:cell:${h3Cell}`)
+  if (!ids.length) return local
+
+  const pipe = redis.pipeline()
+  ids.forEach((id) => pipe.get(`crave:driver:loc:${id}`))
+  const results = await pipe.exec()
+
+  const remote: DriverLocationState[] = []
+  results?.forEach(([, val]) => {
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val) as DriverLocationState
+        if (Date.now() - parsed.lastUpdated <= maxAgeMs) remote.push(parsed)
+      } catch {}
+    }
+  })
+
+  return remote
 }
 
 /**

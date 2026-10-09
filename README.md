@@ -1,6 +1,6 @@
 # Crave — Next-Gen Multi-Vendor Food & Dark Store Delivery Platform
 
-> **Production Ready Platform** · **100% Test Coverage Pass Rate (50/50 Test Suites, 275/275 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Real-Time WebSocket Engine** · **Dual Commercial Tax Invoice PDF Generator**
+> **Production Ready Platform** · **100% Test Coverage Pass Rate (50/50 Test Suites, 275/275 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Real-Time WebSocket Engine** · **Dual Commercial Tax Invoice PDF Generator** · **Redis-Powered Distributed Architecture**
 
 [![CI Pipeline](https://github.com/kanishkkumarsingh2004/crave/actions/workflows/ci.yml/badge.svg)](https://github.com/kanishkkumarsingh2004/crave/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -8,6 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Redis](https://img.shields.io/badge/Redis-7-red?logo=redis)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-Private-red)](LICENSE)
 
 Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router (SWC Compiler)**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, **HTML2PDF**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.

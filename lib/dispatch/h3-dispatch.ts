@@ -1,6 +1,7 @@
 import * as h3 from 'h3-js'
 import {
   getDriversInH3Cell,
+  getDriversInH3CellDistributed,
   DEFAULT_H3_RESOLUTION,
   DEFAULT_MAX_LOCATION_AGE_MS,
   type DriverLocationState,
@@ -91,7 +92,9 @@ export function rankCandidateDriver(
  * 5. Calculate exact Haversine distance & ETA
  * 6. Rank candidates by multi-factor score
  */
-export function findGeofencedCandidateDrivers(request: DispatchRequest): DispatchSearchResult {
+export async function findGeofencedCandidateDrivers(
+  request: DispatchRequest
+): Promise<DispatchSearchResult> {
   const {
     requestId,
     pickupLat,
@@ -118,9 +121,15 @@ export function findGeofencedCandidateDrivers(request: DispatchRequest): Dispatc
     totalCellsSearched += ringCells.length
 
     // Scan ONLY drivers in these specific H3 cells (Geographically Isolated)
-    ringCells.forEach((cell) => {
-      const driversInCell = getDriversInH3Cell(cell, DEFAULT_MAX_LOCATION_AGE_MS)
+    // Use distributed version for multi-pod support
+    const driversInCellPromises = ringCells.map(async (cell) => {
+      const driversInCell = await getDriversInH3CellDistributed(cell, DEFAULT_MAX_LOCATION_AGE_MS)
+      return { cell, drivers: driversInCell }
+    })
 
+    const cellsDrivers = await Promise.all(driversInCellPromises)
+
+    cellsDrivers.forEach(({ cell, drivers: driversInCell }) => {
       driversInCell.forEach((driver) => {
         // Exclude if already evaluated or currently locked by another offer
         if (candidateMap.has(driver.driverId) || isDriverLocked(driver.driverId)) {

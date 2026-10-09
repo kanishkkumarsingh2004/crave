@@ -26,21 +26,21 @@ describe('Redis Subsystem & Distributed Resiliency', () => {
       releaseDriverLock('drv_redis_test_1')
     })
 
-    it('acquires lock in memory when Redis is offline', () => {
-      const locked = tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
+    it('acquires lock in memory when Redis is offline', async () => {
+      const locked = await tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
       expect(locked).toBe(true)
       expect(isDriverLocked('drv_redis_test_1')).toBe(true)
     })
 
-    it('rejects duplicate lock acquisition for different request', () => {
-      tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
-      const duplicateLocked = tryLockDriverForOffer('drv_redis_test_1', 'req_456', 5000)
+    it('rejects duplicate lock acquisition for different request', async () => {
+      await tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
+      const duplicateLocked = await tryLockDriverForOffer('drv_redis_test_1', 'req_456', 5000)
       expect(duplicateLocked).toBe(false)
     })
 
-    it('releases lock cleanly', () => {
-      tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
-      const released = releaseDriverLock('drv_redis_test_1', 'req_123')
+    it('releases lock cleanly', async () => {
+      await tryLockDriverForOffer('drv_redis_test_1', 'req_123', 5000)
+      const released = await releaseDriverLock('drv_redis_test_1', 'req_123')
       expect(released).toBe(true)
       expect(isDriverLocked('drv_redis_test_1')).toBe(false)
     })

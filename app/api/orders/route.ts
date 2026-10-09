@@ -7,6 +7,7 @@ import {
   getActivePaymentConfig,
 } from '@/lib/dal/payments'
 import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
+import { findCouponByCode, validateAndApplyCoupon } from '@/lib/dal/coupons'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown } from '@/lib/calculator'
 import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
@@ -265,6 +266,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Restaurant is required' }, { status: 400 })
     }
 
+    // ─── Validate Coupon (if provided) ─────────────────────────────────
+    let couponDiscountAmount = 0
+    if (coupon_code) {
+      const couponResult = await validateAndApplyCoupon(
+        coupon_code,
+        foodSubtotal,
+        finalRestaurantId
+      )
+      if (!couponResult.valid) {
+        return NextResponse.json({ error: couponResult.error || 'Invalid coupon' }, { status: 400 })
+      }
+      couponDiscountAmount = couponResult.discount
+    }
+
     // ─── Live Commercial Calculation via Central Engine ────────────────
     const commercialModel = (restaurant?.commercial_model || 'commission') as
       'commission' | 'markup' | 'hybrid'
@@ -295,7 +310,7 @@ export async function POST(request: Request) {
         priceTaxMode: i.priceTaxMode || restaurant?.price_tax_mode || 'TAX_INCLUSIVE',
       })),
       tip: Number(tip) || 0,
-      couponDiscountAmount: Number(discount_amount) || 0,
+      couponDiscountAmount: couponDiscountAmount,
     })
 
     // Accept real distance from client or default to base distance (avoids incorrect fee calc)
@@ -325,8 +340,8 @@ export async function POST(request: Request) {
         isRainModeActive: paymentConfig.isRainModeActive,
         isNightSurgeActive: paymentConfig.isNightSurgeActive,
       },
-      discount_amount > 0
-        ? { discount_type: 'flat', discount_value: Number(discount_amount) }
+      couponDiscountAmount > 0
+        ? { discount_type: 'flat', discount_value: couponDiscountAmount }
         : undefined
     )
 

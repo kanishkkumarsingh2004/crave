@@ -50,15 +50,21 @@ export async function GET(request?: Request) {
       include: { restaurant: true },
     })
 
-    const totalGrossSales = settlements.reduce((acc, s) => acc + Number(s.gross_sales || 0), 0)
-    const totalCommission = settlements.reduce(
-      (acc, s) => acc + Number(s.commission_amount || 0),
+    const totalGrossSales = settlements.reduce(
+      (acc: number, s: any) => acc + Number(s.gross_sales || 0),
       0
     )
-    const totalNetPayable = settlements.reduce((acc, s) => acc + Number(s.net_payout || 0), 0)
+    const totalCommission = settlements.reduce(
+      (acc: number, s: any) => acc + Number(s.commission_amount || 0),
+      0
+    )
+    const totalNetPayable = settlements.reduce(
+      (acc: number, s: any) => acc + Number(s.net_payout || 0),
+      0
+    )
     const totalSettledAmount = settlements
-      .filter((s) => s.status === 'paid' || (s.status as string) === 'settled')
-      .reduce((acc, s) => acc + Number(s.net_payout || 0), 0)
+      .filter((s: any) => s.status === 'paid' || s.status === 'settled')
+      .reduce((acc: number, s: any) => acc + Number(s.net_payout || 0), 0)
     const remainingBalance = Math.max(0, totalNetPayable - totalSettledAmount)
 
     return NextResponse.json({

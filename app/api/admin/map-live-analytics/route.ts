@@ -200,7 +200,7 @@ export async function GET(request: Request) {
     }
 
     // Process Saved Customer Addresses
-    customerAddresses.forEach((addr) => {
+    customerAddresses.forEach((addr: any) => {
       if (addr.latitude != null && addr.longitude != null) {
         const key = getAddressKey(addr.address, Number(addr.latitude), Number(addr.longitude))
         const pinObj: (typeof pins)[0] = {
@@ -224,13 +224,13 @@ export async function GET(request: Request) {
 
     // Process Orders - if delivery address matches a saved address, merge order status instead of creating duplicate pin
     const inTransitOrders = orders.filter(
-      (o) =>
+      (o: any) =>
         o.status !== OrderStatus.delivered &&
         o.status !== OrderStatus.cancelled &&
         o.status !== OrderStatus.completed
     )
 
-    orders.forEach((o) => {
+    orders.forEach((o: any) => {
       const lat = o.delivery_latitude != null ? Number(o.delivery_latitude) : 12.679898
       const lng = o.delivery_longitude != null ? Number(o.delivery_longitude) : 77.469493
       const key = getAddressKey(o.customer_address, lat, lng)
@@ -263,7 +263,7 @@ export async function GET(request: Request) {
     // Append deduplicated address pins
     pins.push(...Array.from(addressPinMap.values()))
 
-    const openKitchensCount = restaurants.filter((r) => r.is_open).length
+    const openKitchensCount = restaurants.filter((r: any) => r.is_open).length
     const activeRidersCount = drivers.length
     const activeOrdersCount = inTransitOrders.length
 

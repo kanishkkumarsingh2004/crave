@@ -1,19 +1,28 @@
 import { NextResponse } from 'next/server'
-import { blacklistToken, blacklistAllUserTokens } from '@/lib/jwt'
+import { blacklistAllUserTokens, decodeToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const cookieStore = await cookies()
     const token =
       cookieStore.get('crave_auth_token')?.value || cookieStore.get('drop_auth_token')?.value || ''
 
-    // Blacklist the current token
-    if (token) {
-      await blacklistToken(token)
+    // Get user ID from token if possible
+    let userId: string | null = null
+    try {
+      const decoded = await decodeToken(token)
+      if (decoded?.id) {
+        await blacklistAllUserTokens(decoded.id)
+      }
+    } catch (e) {
+      console.warn('Failed to blacklist all user tokens:', e)
     }
 
-    const response = NextResponse.json({ success: true, message: 'Logged out successfully' })
+    const response = NextResponse.json({
+      success: true,
+      message: 'Logged out from all devices successfully',
+    })
 
     const cookieOptions = {
       path: '/',
@@ -30,7 +39,7 @@ export async function POST(request: Request) {
 
     return response
   } catch (error: any) {
-    console.error('[POST /api/auth/logout]', error)
-    return NextResponse.json({ error: 'Logout failed' }, { status: 500 })
+    console.error('[POST /api/auth/logout-all]', error)
+    return NextResponse.json({ error: 'Logout from all devices failed' }, { status: 500 })
   }
 }
