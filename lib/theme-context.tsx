@@ -82,6 +82,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, newTheme)
     } catch (e) {}
+    const active: ResolvedTheme = newTheme === 'system' ? getSystemTheme() : newTheme
+    setResolvedTheme(active)
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement
+      if (active === 'dark') {
+        root.classList.add('dark')
+        root.classList.remove('light')
+        root.setAttribute('data-theme', 'dark')
+        root.style.colorScheme = 'dark'
+      } else {
+        root.classList.add('light')
+        root.classList.remove('dark')
+        root.setAttribute('data-theme', 'light')
+        root.style.colorScheme = 'light'
+      }
+    }
   }
 
   return (

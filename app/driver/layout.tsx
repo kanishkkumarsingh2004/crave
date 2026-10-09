@@ -1,6 +1,7 @@
 'use client'
 
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/auth-context'
 import { DriverProvider, useDriver } from '@/lib/driver-context'
 import {
@@ -76,6 +77,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [user, role, isLoading, router])
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
@@ -147,32 +159,21 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   )
   const pageTitle = currentItem ? currentItem.label : 'Driver Cockpit'
 
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [sidebarOpen])
-
   return (
-    <div className="flex min-h-screen bg-[#121815] text-white">
+    <div className="flex min-h-screen bg-[#f8f9f7] dark:bg-[#121815] text-[#18201c] dark:text-white transition-colors duration-200">
       {/* Mobile Overlay */}
       <div
         onClick={() => setSidebarOpen(false)}
-        className={`fixed inset-0 z-40 bg-[#121815]/80 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-0 z-40 bg-black/60 dark:bg-[#121815]/80 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
           sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
 
-      {/* DESKTOP DARK FULL-HEIGHT FIXED SIDEBAR */}
+      {/* DESKTOP FULL-HEIGHT FIXED SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-[#121815] text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen lg:right-auto lg:border-r lg:border-[#202923] lg:translate-x-0 lg:z-40 overflow-hidden ${
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col justify-between bg-white dark:bg-[#121815] text-[#18201c] dark:text-white transition-all duration-300 ease-in-out will-change-[width,transform] lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen lg:right-auto lg:border-r lg:border-[#e2e8e3] dark:lg:border-[#202923] lg:translate-x-0 lg:z-40 overflow-hidden shadow-xs ${
           sidebarOpen
-            ? 'translate-x-0 shadow-2xl w-64 border-l border-[#202923]'
+            ? 'translate-x-0 shadow-2xl w-64 border-l border-[#e2e8e3] dark:border-[#202923]'
             : 'translate-x-full lg:shadow-none'
         } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
@@ -180,8 +181,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
           <div
             className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto no-scrollbar transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}
           >
-            {/* Sidebar Top Header (Matching Admin Brand Logo) */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 pt-1">
+            {/* Sidebar Top Header */}
+            <div className="flex items-center justify-between border-b border-[#e2e8e3] dark:border-white/10 pb-4 pt-1">
               <Link
                 href="/driver/dashboard"
                 className="flex items-center gap-2.5 group min-w-0"
@@ -197,17 +198,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                       : 'opacity-100 max-w-[160px]'
                   }`}
                 >
-                  <span className="text-lg font-bold tracking-tight text-white leading-none">
-                    crave<span className="text-[#d9f447]">.</span>
+                  <span className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white leading-none">
+                    crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
                   </span>
-                  <span className="rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30">
+                  <span className="rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 px-1.5 py-0.5 text-[9px] font-extrabold uppercase border border-emerald-200 dark:border-emerald-500/30">
                     Driver
                   </span>
                 </div>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="grid size-7 place-items-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 transition"
+                className="grid size-7 place-items-center rounded-lg bg-black/5 dark:bg-white/10 text-gray-700 dark:text-white lg:hidden hover:bg-black/10 dark:hover:bg-white/20 transition"
               >
                 <X className="size-4" />
               </button>
@@ -245,7 +246,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Nav Links with Real Next.js Routing */}
             <nav className="flex flex-col gap-1">
               <p
-                className={`px-3 text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
+                className={`px-3 text-[10px] font-bold uppercase tracking-wider text-[#607367] dark:text-white/40 mb-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
                   sidebarCollapsed ? 'opacity-0 max-h-0 mb-0 hidden' : 'opacity-100 max-h-6'
                 }`}
               >
@@ -269,12 +270,12 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
                       isActive
                         ? 'bg-[#d9f447] text-[#121815] font-bold shadow-md'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                        : 'text-[#44554b] dark:text-white/70 hover:bg-[#ebf0ec] dark:hover:bg-white/10 hover:text-[#121815] dark:hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon
-                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#d9f447]'}`}
+                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#5e8210] dark:text-[#d9f447]'}`}
                       />
                       <span
                         className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
@@ -289,7 +290,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.badge && !sidebarCollapsed && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[9px] font-bold shrink-0 ${
-                          isActive ? 'bg-[#121815] text-white' : 'bg-white/15 text-[#d9f447]'
+                          isActive ? 'bg-[#121815] text-white' : 'bg-[#eef2ee] dark:bg-white/15 text-[#5e8210] dark:text-[#d9f447]'
                         }`}
                       >
                         {item.badge}
@@ -302,13 +303,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Sidebar Footer & Single Minimize Toggle Arrow Button */}
-          <div className="border-t border-white/10 p-3.5 flex flex-col gap-2 shrink-0 bg-[#121815]">
+          <div className="border-t border-[#e2e8e3] dark:border-white/10 p-3.5 flex flex-col gap-2 shrink-0 bg-[#f4f7f4] dark:bg-[#121815]">
             <div
-              className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white/5 transition-all duration-300 ease-in-out`}
+              className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white dark:bg-white/5 border border-[#e2e8e3] dark:border-transparent transition-all duration-300 ease-in-out`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span
-                  className="grid size-8 place-items-center rounded-lg bg-blue-950 text-blue-300 font-bold border border-blue-800 text-xs shrink-0"
+                  className="grid size-8 place-items-center rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800 text-xs shrink-0"
                   title={user?.name || 'Driver Partner'}
                 >
                   {driverInitials}
@@ -318,10 +319,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
                   }`}
                 >
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-bold text-[#18201c] dark:text-white truncate">
                     {user?.name || 'Driver Partner'}
                   </p>
-                  <p className="text-[10px] text-white/50 truncate">
+                  <p className="text-[10px] text-[#607367] dark:text-white/50 truncate">
                     {user?.vehicleNo || 'EV Fleet Vehicle'}
                   </p>
                 </div>
@@ -329,7 +330,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => logout()}
                 title="Sign Out"
-                className={`grid size-7 place-items-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
+                className={`grid size-7 place-items-center rounded-lg bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
                   sidebarCollapsed ? 'hidden' : 'block'
                 }`}
               >
@@ -343,7 +344,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
               className={`hidden lg:flex items-center ${
                 sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
-              } rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 ease-in-out shrink-0`}
+              } rounded-xl border border-[#e2e8e3] dark:border-white/10 bg-white dark:bg-white/5 text-xs font-semibold text-[#44554b] dark:text-white/70 hover:bg-[#eef2ee] dark:hover:bg-white/10 hover:text-[#121815] dark:hover:text-white transition-all duration-300 ease-in-out shrink-0`}
             >
               <span
                 className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
@@ -354,9 +355,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               </span>
               <span className="transition-transform duration-300 ease-in-out">
                 {sidebarCollapsed ? (
-                  <ChevronRight className="size-4 text-[#d9f447]" />
+                  <ChevronRight className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
                 ) : (
-                  <ChevronLeft className="size-4 text-[#d9f447]" />
+                  <ChevronLeft className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
                 )}
               </span>
             </button>
@@ -365,16 +366,16 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Header Bar for Driver */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#202923] bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-white">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e2e8e3] dark:border-[#202923] bg-white/90 dark:bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-[#18201c] dark:text-white">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white capitalize flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#18201c] dark:text-white capitalize flex items-center gap-2">
               Driver Cockpit — {pageTitle}
             </h1>
-            <p className="text-xs text-[#a0ab9f]">
+            <p className="text-xs text-[#607367] dark:text-[#a0ab9f]">
               Vehicle:{' '}
-              <span className="font-semibold text-[#d9f447]">
+              <span className="font-semibold text-[#5e8210] dark:text-[#d9f447]">
                 {user?.vehicleType || 'Commercial EV Scooter'}
               </span>
             </p>
@@ -384,10 +385,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Background Worker Sync Badge */}
             {isBackgroundWorkerActive && (
               <div
-                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30"
+                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-3 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30"
                 title={`Background Web Worker active in recent apps / background tab (Last sync: ${workerLastSyncTime})`}
               >
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                 <span>Background GPS: Active (3s)</span>
               </div>
             )}
@@ -395,12 +396,14 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Test Simulation Radar Trigger */}
             <button
               onClick={triggerSimulatedOffer}
-              className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition"
+              className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 hover:bg-amber-200 dark:hover:bg-amber-500/30 transition"
               title="Test Delivery Radar"
             >
-              <Radio className="size-4 text-amber-400 animate-pulse" />
+              <Radio className="size-4 text-amber-600 dark:text-amber-400 animate-pulse" />
               <span>Scan Nearby Orders</span>
             </button>
+
+            <ThemeToggle />
 
             <LanguageSwitcher variant="pill" />
 
@@ -408,15 +411,15 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open mobile navigation drawer"
-              className="grid size-9 place-items-center rounded-xl border border-[#2d3b32] bg-[#1c2620] text-white shadow-xs lg:hidden hover:bg-[#25332a] active:scale-95 transition"
+              className="grid size-9 place-items-center rounded-xl border border-[#e2e8e3] dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white shadow-xs lg:hidden hover:bg-[#f0f4f1] dark:hover:bg-[#25332a] active:scale-95 transition"
             >
-              <Menu className="size-5 text-white" />
+              <Menu className="size-5" />
             </button>
           </div>
         </header>
 
         {/* Dashboard Body Content */}
-        <main className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 flex-1 flex flex-col justify-between bg-[#121815]">
+        <main className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 flex-1 flex flex-col justify-between bg-[#f8f9f7] dark:bg-[#121815] text-[#18201c] dark:text-white transition-colors duration-200">
           <div>
             {/* GPS Location Permission Access Banner */}
             {(gpsStatus === 'denied' ||
@@ -462,43 +465,43 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
             <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
-              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#b5de28] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-3.5 sm:p-5 shadow-xs dark:shadow-lg flex flex-col justify-between hover:border-[#86a018] dark:hover:border-[#b5de28] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-[#a0ab9f] truncate">
                       Today's Earnings
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-500/20 text-[#d9f447] border border-emerald-500/30 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-[#d9f447] border border-emerald-200 dark:border-emerald-500/30 font-bold shrink-0">
                       <DollarSign className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#d9f447]">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c] dark:text-[#d9f447]">
                     ₹{totalEarningsToday}
                   </p>
                 </div>
                 <Link
                   href="/driver/wallet"
-                  className="mt-2 text-[11px] sm:text-xs font-bold text-[#d9f447] hover:underline flex items-center gap-1"
+                  className="mt-2 text-[11px] sm:text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline flex items-center gap-1"
                 >
                   <Wallet className="size-3 sm:size-3.5" /> Instant Cashout
                 </Link>
               </div>
 
-              <div className="rounded-2xl sm:rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-3.5 sm:p-5 shadow-lg flex flex-col justify-between hover:border-[#b5de28] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-3.5 sm:p-5 shadow-xs dark:shadow-lg flex flex-col justify-between hover:border-[#86a018] dark:hover:border-[#b5de28] transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#a0ab9f] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-[#a0ab9f] truncate">
                       Completed Drops
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shrink-0">
                       <CheckCircle2 className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-white">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c] dark:text-white">
                     {completedTrips.length}
                   </p>
                 </div>
-                <p className="mt-2 text-[11px] sm:text-xs text-emerald-400 font-semibold truncate">
+                <p className="mt-2 text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">
                   {completedTrips.length > 0 ? '100% On-time score' : '0 deliveries today'}
                 </p>
               </div>
@@ -510,13 +513,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* MOBILE BOTTOM NAVIGATION BAR (lg:hidden) */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-[#24302a] bg-[#121815]/95 backdrop-blur-md px-2 py-1.5 pb-safe-nav text-white shadow-2xl">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-[#e2e8e3] dark:border-[#24302a] bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md px-2 py-1.5 pb-safe-nav text-[#18201c] dark:text-white shadow-2xl">
           <Link
             href="/driver/dashboard"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
               pathname === '/driver/dashboard' || pathname === '/driver'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <Navigation className="size-4" />
@@ -527,8 +530,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             href="/driver/orders"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
               pathname === '/driver/orders'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <PackageCheck className="size-4" />
@@ -539,8 +542,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             href="/driver/history"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
               pathname === '/driver/history'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <History className="size-4" />
@@ -551,8 +554,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             href="/driver/wallet"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
               pathname === '/driver/wallet'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <Wallet className="size-4" />
@@ -563,8 +566,8 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             href="/driver/settings"
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
               pathname === '/driver/settings'
-                ? 'text-[#d9f447] font-bold'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
+                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <Settings className="size-4" />

@@ -62,35 +62,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="Crave" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function() {
-              try {
-                var stored = localStorage.getItem('crave_theme_preference');
-                var active = 'light';
-                if (stored === 'dark') {
-                  active = 'dark';
-                } else if (stored === 'light') {
-                  active = 'light';
-                } else if (stored === 'system' || !stored) {
-                  active = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                }
-                var root = document.documentElement;
-                if (active === 'dark') {
-                  root.classList.add('dark');
-                  root.classList.remove('light');
-                  root.setAttribute('data-theme', 'dark');
-                  root.style.colorScheme = 'dark';
-                } else {
-                  root.classList.add('light');
-                  root.classList.remove('dark');
-                  root.setAttribute('data-theme', 'light');
-                  root.style.colorScheme = 'light';
-                }
-              } catch (e) {}
-            })()`,
-          }}
-        />
       </head>
       <body className="antialiased bg-background text-foreground transition-colors duration-200" suppressHydrationWarning>
         <AuthProvider>
