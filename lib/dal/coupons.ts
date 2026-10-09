@@ -239,24 +239,39 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
   currentUsage: number
   limit: number | null
 }> {
+  let coupon: any = null
+  try {
+    coupon = await prisma.coupon.findUnique({ where: { id: couponId } })
+  } catch (e) {
+    try {
+      const { data } = await supabase.from('coupons').select('*').eq('id', couponId).maybeSingle()
+      coupon = data
+    } catch (err) {}
+  }
+
+  const limit = coupon?.usage_limit ?? null
+
   if (!isRedisAvailable() || !redis) {
-    // Fallback to DB check (not atomic, but safe)
-    const coupon = await findCouponByCode('') // We need to fetch by ID, but findCouponByCode only searches by code
-    // Fallback to DB check for now
-    return { allowed: true, currentUsage: 0, limit: null }
+    const currentUsage = (coupon?.used_count || 0) + 1
+    if (limit != null && currentUsage > limit) {
+      return { allowed: false, currentUsage: coupon?.used_count || 0, limit }
+    }
+    return { allowed: true, currentUsage, limit }
   }
 
   const key = `crave:coupon:usage:${couponId}`
   const currentUsage = await redis.incr(key)
 
-  // Set TTL on first increment (30 days default)
   if (currentUsage === 1) {
     await redis.expire(key, 30 * 24 * 60 * 60) // 30 days
   }
 
-  // Check if we have a usage limit - we need to fetch the coupon from DB
-  // This is a simplified version - in production you'd want to cache the limit
-  return { allowed: true, currentUsage, limit: null }
+  if (limit != null && currentUsage > limit) {
+    await redis.decr(key).catch(() => {})
+    return { allowed: false, currentUsage: currentUsage - 1, limit }
+  }
+
+  return { allowed: true, currentUsage, limit }
 }
 
 export async function deleteCoupon(id: string) {
