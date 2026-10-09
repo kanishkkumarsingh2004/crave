@@ -114,7 +114,7 @@ export default function AdminSettingsPage() {
       {/* Top Title Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e7dd] dark:border-[#27342d] pb-5 gap-4">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#b5de28] dark:text-[#d9f447]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#5e8210] dark:text-[#d9f447]">
             System Administration
           </span>
           <h2 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
