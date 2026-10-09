@@ -189,15 +189,18 @@ if (!WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
   process.exit(1)
 }
 
-// JWT verification for WebSocket authentication using jsonwebtoken
-const jwt = require('jsonwebtoken')
+// JWT verification for WebSocket authentication using jose
+const { jwtVerify } = require('jose')
 
-function verifyWSToken(token) {
+async function verifyWSToken(token) {
   if (!token) return null
   const secret = process.env.JWT_SECRET
   if (!secret) return null
   try {
-    const payload = jwt.verify(token, secret)
+    const secretKey = new TextEncoder().encode(secret)
+    const { payload } = await jwtVerify(token, secretKey, {
+      algorithms: ['HS256'],
+    })
     return payload
   } catch {
     return null
