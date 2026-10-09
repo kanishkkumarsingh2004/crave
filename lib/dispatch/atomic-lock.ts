@@ -144,17 +144,30 @@ export async function isDriverLockedAsync(driverId: string): Promise<boolean> {
  */
 export async function releaseDriverLock(driverId: string, requestId?: string): Promise<boolean> {
   const lock = offerLocks.get(driverId)
-  if (!lock) return false
-  if (requestId && lock.requestId !== requestId) {
-    return false // Lock owned by another request
+  if (lock) {
+    if (requestId && lock.requestId !== requestId) {
+      return false // Lock owned by another request
+    }
+    offerLocks.delete(driverId)
   }
-  offerLocks.delete(driverId)
 
   if (isRedisAvailable() && redis) {
-    await redis.del(`crave:lock:driver:${driverId}`).catch(() => {})
+    try {
+      const key = `crave:lock:driver:${driverId}`
+      if (requestId) {
+        const currentVal = await redis.get(key)
+        if (currentVal && currentVal !== requestId) {
+          return false // Lock owned by another request in Redis
+        }
+      }
+      await redis.del(key)
+      return true
+    } catch {
+      // Fall through
+    }
   }
 
-  return true
+  return lock !== undefined
 }
 
 /**

@@ -396,8 +396,8 @@ export function buildRiderSettlementJournal(
 
 /**
  * Build the REFUND_INITIATED journal transaction.
- * Dr CUSTOMER_REFUND_PAYABLE  = refundAmount
- * Cr PAYMENT_CLEARING         = refundAmount
+ * Dr PAYMENT_CLEARING         = refundAmount
+ * Cr CUSTOMER_REFUND_PAYABLE  = refundAmount
  */
 export function buildRefundInitiatedJournal(
   orderId: string,
@@ -411,16 +411,16 @@ export function buildRefundInitiatedJournal(
     referenceId: refundId,
     lines: [
       {
-        accountCode: 'CUSTOMER_REFUND_PAYABLE',
+        accountCode: 'PAYMENT_CLEARING',
         debitPaise: refundAmountPaise,
         creditPaise: 0,
-        description: `Refund approved for order ${orderId}`,
+        description: `Refund reserve on clearing for order ${orderId}`,
       },
       {
-        accountCode: 'PAYMENT_CLEARING',
+        accountCode: 'CUSTOMER_REFUND_PAYABLE',
         debitPaise: 0,
         creditPaise: refundAmountPaise,
-        description: `Refund reserve on clearing for order ${orderId}`,
+        description: `Refund liability recognized for order ${orderId}`,
       },
     ],
   }

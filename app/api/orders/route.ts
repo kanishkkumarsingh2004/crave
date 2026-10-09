@@ -7,7 +7,11 @@ import {
   getActivePaymentConfig,
 } from '@/lib/dal/payments'
 import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
-import { findCouponByCode, validateAndApplyCoupon } from '@/lib/dal/coupons'
+import {
+  findCouponByCode,
+  validateAndApplyCoupon,
+  checkAndIncrementCouponUsage,
+} from '@/lib/dal/coupons'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown } from '@/lib/calculator'
 import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
@@ -116,7 +120,36 @@ export async function GET(request: Request) {
 
     if (orderId) {
       const order = await findOrderById(orderId)
-      if (order && isVendorQuery) {
+      if (!order) {
+        return NextResponse.json({
+          success: true,
+          order: null,
+          orders: [],
+        })
+      }
+
+      // Authorization check for single order access
+      if (actor && actor.role !== 'admin') {
+        const isCustomer = actor.role === 'user' || (actor.role as string) === 'customer'
+        const isRider = actor.role === 'rider' || (actor.role as string) === 'driver'
+
+        if (isCustomer && order.customer_id && order.customer_id !== actor.id) {
+          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
+        }
+        if (isRider && order.rider_id && order.rider_id !== actor.id) {
+          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
+        }
+        if (
+          isVendorActor &&
+          actor.restaurantId &&
+          order.restaurant_id &&
+          order.restaurant_id !== actor.restaurantId
+        ) {
+          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
+        }
+      }
+
+      if (isVendorQuery) {
         const isApproved =
           order.payment_status === 'verified' ||
           !['payment_pending', 'payment_submitted'].includes(order.status)
@@ -131,7 +164,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         order,
-        orders: order ? [order] : [],
+        orders: [order],
       })
     }
 
@@ -268,8 +301,9 @@ export async function POST(request: Request) {
 
     // ─── Validate Coupon (if provided) ─────────────────────────────────
     let couponDiscountAmount = 0
+    let couponResult: any = null
     if (coupon_code) {
-      const couponResult = await validateAndApplyCoupon(
+      couponResult = await validateAndApplyCoupon(
         coupon_code,
         foodSubtotal,
         finalRestaurantId
@@ -428,6 +462,13 @@ export async function POST(request: Request) {
       customer_vpa,
     })
 
+    // Increment coupon usage count once order is safely created
+    if (coupon_code && couponResult?.coupon?.id) {
+      await checkAndIncrementCouponUsage(couponResult.coupon.id).catch((err) => {
+        console.warn('Coupon usage increment notice:', err)
+      })
+    }
+
     // ─── Best Effort Payment Review Sync ─────────────────────
     // CR-008: UTR format is not proof of payment - keep as pending until verified
     if (utr_ref && customer_vpa) {
@@ -548,12 +589,10 @@ export async function PATCH(request: Request) {
     // If driver is completing delivery, validate OTP if delivery_otp was generated
     if (requestedStatus === 'delivered' && actor.role !== 'admin' && !isOwner) {
       const providedOtp = String(body.otp || body.delivery_otp || '').trim()
-      if (
-        existing.delivery_otp &&
-        providedOtp &&
-        providedOtp !== String(existing.delivery_otp).trim()
-      ) {
-        return NextResponse.json({ error: 'Invalid delivery OTP provided' }, { status: 400 })
+      if (existing.delivery_otp) {
+        if (!providedOtp || providedOtp !== String(existing.delivery_otp).trim()) {
+          return NextResponse.json({ error: 'Valid delivery OTP is required' }, { status: 400 })
+        }
       }
     }
 
@@ -575,12 +614,19 @@ export async function PATCH(request: Request) {
       )
     }
 
+    // Determine rider_id update safely (never overwrite rider_id with vendor/customer actor ID)
+    const assignedRiderId = driver_id
+      ? driver_id
+      : actor.role === 'rider' || (actor.role as string) === 'driver'
+      ? actor.id
+      : undefined
+
     // Only pass fields that exist on the Order model to updateOrder.
     const updated = await updateOrder(orderId, {
       ...(status && { status: status as OrderStatus }),
       ...(driver_name && { driver_name }),
       ...(driver_phone && { driver_phone }),
-      ...((driver_id || (actor as any)?.id) && { rider_id: driver_id || (actor as any)?.id }),
+      ...(assignedRiderId && { rider_id: assignedRiderId }),
       ...(driver_lat != null && { delivery_latitude: driver_lat }),
       ...(driver_lng != null && { delivery_longitude: driver_lng }),
       ...(items && { items }),

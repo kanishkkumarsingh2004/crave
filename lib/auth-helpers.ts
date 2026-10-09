@@ -17,8 +17,8 @@ export interface AuthContext {
  * Supports both production JWT and test mode via headers
  */
 export async function getAuthActor(request: Request): Promise<JWTPayload | null> {
-  // Check for test mode first (uses headers, no JWT required)
-  if (isTestRequest(request)) {
+  // Check for test mode first (only allowed outside production)
+  if (process.env.NODE_ENV !== 'production' && isTestRequest(request)) {
     return getTestUser(request) || MOCK_TEST_USER
   }
 

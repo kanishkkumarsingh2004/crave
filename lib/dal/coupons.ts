@@ -86,20 +86,24 @@ export async function validateAndApplyCoupon(
     return { valid: false, discount: 0, error: `Minimum order amount of ₹${minOrder} required` }
   }
 
-  // Check usage limit
-  if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
+  // Check usage limit against Redis / DB count
+  let currentUsage = coupon.used_count || 0
+  if (isRedisAvailable() && redis) {
+    try {
+      const redisUsage = await redis.get(`crave:coupon:usage:${coupon.id}`)
+      if (redisUsage !== null) {
+        currentUsage = parseInt(redisUsage, 10) || currentUsage
+      }
+    } catch {}
+  }
+
+  if (coupon.usage_limit && currentUsage >= coupon.usage_limit) {
     return { valid: false, discount: 0, error: 'Coupon usage limit exceeded' }
   }
 
   // Restaurant restriction
   if (restaurantId && coupon.restaurant_id && coupon.restaurant_id !== restaurantId) {
     return { valid: false, discount: 0, error: 'Coupon not valid for this restaurant' }
-  }
-
-  // Atomic check and increment usage
-  const usageCheck = await checkAndIncrementCouponUsage(coupon.id)
-  if (!usageCheck.allowed) {
-    return { valid: false, discount: 0, error: 'Coupon usage limit exceeded' }
   }
 
   // Calculate discount

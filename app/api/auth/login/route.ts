@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       email === 'darkstore@crave.com' ||
       email === 'rider@crave.com'
 
-    if (!profile && isDemoEmail && password === '1234567890') {
+    if (process.env.NODE_ENV !== 'production' && !profile && isDemoEmail && password === '1234567890') {
       if (email.startsWith('admin')) {
         profile = {
           id: 'usr_admin_01',
