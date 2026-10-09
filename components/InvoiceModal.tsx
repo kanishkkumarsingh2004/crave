@@ -319,7 +319,12 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 backdrop-blur-sm animate-fadeIn">
+    <div
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 p-3 sm:p-5 backdrop-blur-sm animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="invoice-modal-title"
+    >
       {/* Print Styles Sheet */}
       <style jsx global>{`
         @media print {
@@ -395,7 +400,11 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
         }
       `}</style>
 
-      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] p-5 sm:p-7 shadow-2xl border border-gray-200 dark:border-[#27342d] text-[#18201c] dark:text-white">
+      <div
+        className="modal-content modal-content-lg"
+        id="printable-invoice-modal-content"
+        role="document"
+      >
         {/* Top Header & Actions (hidden during print) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4 mb-4 gap-3.5 no-print">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -456,7 +465,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
             <button
               type="button"
               onClick={handlePrint}
-              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0"
+              className="rounded-full border border-gray-200 dark:border-[#27342d] bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0 min-h-[44px] min-w-[44px] touch-manipulation"
             >
               <Printer className="size-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Print</span>
@@ -465,12 +474,19 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
             <button
               type="button"
               onClick={onClose}
-              className="grid size-8 place-items-center rounded-full bg-gray-100 dark:bg-[#27342d] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#324239] transition cursor-pointer shrink-0"
+              className="grid size-10 place-items-center rounded-full bg-gray-100 dark:bg-[#27342d] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#324239] transition cursor-pointer shrink-0 min-h-[44px] min-w-[44px] touch-manipulation"
             >
               <X className="size-4" />
             </button>
           </div>
         </div>
+
+        {/* Focus trap for modal accessibility */}
+        <div
+          tabIndex={0}
+          className="sr-only"
+          onFocus={() => document.getElementById('printable-invoice-modal-content')?.focus()}
+        />
 
         {/* PRINTABLE CONTAINER TARGET */}
         <div id="printable-invoice-modal-content">
@@ -741,12 +757,16 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
           {/* Invoice Footer Note */}
           <div className="text-center text-[10px] text-gray-400 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-[#27342d] flex flex-col items-center gap-1 mt-4">
             <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-              <ShieldCheck className="size-3.5" /> Verified Computer Generated Commercial Tax
-              Invoice
+              <ShieldCheck className="size-3.5" /> Computer Generated Commercial Tax Invoice
             </span>
             <span>
               Thank you for choosing Crave! Store FSSAI Lic #: {fssaiLic} · Supplier GSTIN:{' '}
               {supplierGstin}
+            </span>
+            <span className="text-[9px] text-gray-500 dark:text-gray-400">
+              This is a computer-generated invoice for transaction record purposes. FSSAI license
+              and GSTIN displayed are as provided by the supplier. For official compliance
+              verification, please refer to FSSAI and GST portals.
             </span>
           </div>
         </div>

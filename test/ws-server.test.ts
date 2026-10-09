@@ -15,7 +15,12 @@ describe('WebSocket Server Broadcast', () => {
     const originalEnv = process.env
 
     beforeEach(() => {
-      process.env = { ...originalEnv, WS_BROADCAST_HOST: 'localhost' }
+      process.env = {
+        ...originalEnv,
+        WS_BROADCAST_HOST: 'localhost',
+        WS_INTERNAL_SECRET: 'test-secret-key-for-testing',
+        NODE_ENV: 'test',
+      }
       jest.resetModules()
     })
 

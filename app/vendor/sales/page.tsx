@@ -2,7 +2,17 @@
 
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { ArrowUpRight, Clock3, DollarSign, Percent, Search, TrendingUp } from 'lucide-react'
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  Landmark,
+  Percent,
+  Search,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -29,12 +39,21 @@ interface SettlementRecord {
   transactionRef: string
 }
 
+interface SettlementSummary {
+  total_gross_sales: number
+  total_commission: number
+  total_net_payable: number
+  total_settled_amount: number
+  remaining_balance: number
+}
+
 export default function VendorSalesPage() {
   const { user, role, isLoading, logout } = useAuth()
   const router = useRouter()
 
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [settlementsHistory, setSettlementsHistory] = useState<SettlementRecord[]>([])
+  const [summaryData, setSummaryData] = useState<SettlementSummary | null>(null)
   const [restaurantId, setRestaurantId] = useState<string | null>(null)
   const [commissionRate, setCommissionRate] = useState(0)
   const [salesError, setSalesError] = useState('')
@@ -68,6 +87,7 @@ export default function VendorSalesPage() {
           setRestaurantId(null)
           setOrders([])
           setSettlementsHistory([])
+          setSummaryData(null)
           return
         }
 
@@ -84,6 +104,10 @@ export default function VendorSalesPage() {
 
         const ordersList = orderData.orders ?? []
         setOrders(ordersList)
+
+        if (settlementData.summary) {
+          setSummaryData(settlementData.summary)
+        }
 
         const rawSettlements = settlementData.settlements ?? []
         setSettlementsHistory(
@@ -115,6 +139,7 @@ export default function VendorSalesPage() {
         setSalesError('Sales records could not be loaded from the database.')
         setOrders([])
         setSettlementsHistory([])
+        setSummaryData(null)
       }
     }
     loadSalesOrders()
@@ -128,9 +153,49 @@ export default function VendorSalesPage() {
     )
   }
 
-  const totalGrossSales = orders.reduce((sum, o) => sum + Number(o.subtotal || 0), 0)
-  const totalCommission = Math.round((totalGrossSales * commissionRate) / 100)
-  const totalNetEarnings = totalGrossSales - totalCommission
+  // Aggregate financial metrics from orders or settlements
+  const ordersGross = orders.reduce((sum, o) => sum + Number(o.subtotal || o.total_amount || 0), 0)
+  const settlementsGross = settlementsHistory.reduce((sum, s) => sum + Number(s.grossSales || 0), 0)
+  const totalGrossSales = ordersGross > 0 ? ordersGross : settlementsGross
+
+  const settlementsCommission = settlementsHistory.reduce(
+    (sum, s) => sum + Number(s.commissionAmount || 0),
+    0
+  )
+  const ordersCommission = orders.reduce(
+    (sum, o) =>
+      sum + Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100),
+    0
+  )
+  const calculatedCommission = Math.round((totalGrossSales * commissionRate) / 100)
+  const totalCommission =
+    ordersGross > 0
+      ? ordersCommission > 0
+        ? ordersCommission
+        : calculatedCommission
+      : settlementsCommission > 0
+        ? settlementsCommission
+        : calculatedCommission
+
+  const settlementsNet = settlementsHistory.reduce((sum, s) => sum + Number(s.netPayout || 0), 0)
+  const ordersNet = ordersGross - totalCommission
+  const totalNetEarnings =
+    ordersGross > 0
+      ? ordersNet
+      : settlementsNet > 0
+        ? settlementsNet
+        : totalGrossSales - totalCommission
+
+  // Calculate Settled Price (Disbursed Amount) & Remaining Settlement Price (Pending Balance)
+  const totalSettledAmount =
+    summaryData?.total_settled_amount ??
+    settlementsHistory
+      .filter((s) => s.status === 'paid' || s.status === 'settled')
+      .reduce((sum, s) => sum + Number(s.netPayout || 0), 0)
+
+  const remainingSettlementBalance = Math.max(0, totalNetEarnings - totalSettledAmount)
+
+  const totalRecordCount = orders.length > 0 ? orders.length : settlementsHistory.length
 
   const filteredOrders = orders.filter(
     (o) =>
@@ -139,242 +204,118 @@ export default function VendorSalesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar">
+    <div className="min-h-screen bg-[#0a0f0d] text-white pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
       <VendorSidebar />
 
-      <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
+      <div className="mx-auto max-w-[1240px] w-full px-3.5 pt-6 sm:px-6 lg:px-8 space-y-6 min-w-0 overflow-hidden">
         {/* Sales Overview Banner */}
-        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-4 sm:p-6 shadow-xl w-full min-w-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+            <div className="min-w-0">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
                 Restaurant Financial Analytics
               </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white truncate">
                 Sales Revenue &amp; Settlements
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-400 mt-0.5 truncate">
                 Financial performance for{' '}
                 <strong className="text-white">{user?.restaurantName || 'Your restaurant'}</strong>
               </p>
             </div>
             <Link
               href="/vendor/settings"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d9f447] px-5 py-2.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition shrink-0 self-start sm:self-auto"
             >
               Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#0d1310]" />
             </Link>
           </div>
         </div>
 
-        {/* 4 Financial KPI Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+        {/* 5 Financial Summary KPI Cards */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5 w-full min-w-0">
+          {/* Card 1: Gross Sales */}
+          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
                 Gross Sales
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <DollarSign className="size-4" />
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+                <DollarSign className="size-3.5" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-white">₹{totalGrossSales}</p>
-            <p className="text-[11px] text-gray-400 mt-1">
-              Total revenue across {orders.length} orders
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-white truncate">
+              ₹{totalGrossSales.toLocaleString()}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-1 truncate">
+              Across {totalRecordCount} {orders.length > 0 ? 'orders' : 'records'}
             </p>
           </div>
 
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
-                Platform Commission ({commissionRate}%)
+          {/* Card 2: Platform Cut */}
+          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
+                Platform Cut ({commissionRate}%)
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <Percent className="size-4" />
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <Percent className="size-3.5" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-amber-400">
-              -₹{totalCommission}
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-400 truncate">
+              -₹{totalCommission.toLocaleString()}
             </p>
-            <p className="text-[11px] text-gray-400 mt-1">
-              Rate loaded from the restaurant profile
-            </p>
+            <p className="text-[10px] text-gray-400 mt-1 truncate">Commission cut</p>
           </div>
 
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+          {/* Card 3: Net Vendor Payout */}
+          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
                 Net Vendor Payout
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <TrendingUp className="size-4" />
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+                <TrendingUp className="size-3.5" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-[#d9f447]">
-              ₹{totalNetEarnings}
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-400 truncate">
+              ₹{totalNetEarnings.toLocaleString()}
             </p>
-            <p className="text-[11px] text-emerald-400 font-semibold mt-1">
-              Transferrable to bank account
-            </p>
+            <p className="text-[10px] text-gray-400 mt-1 truncate">Total net earnings</p>
           </div>
 
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-5 shadow-lg hover:border-[#d9f447]/40 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
-                Settlement Schedule
+          {/* NEW Card 4: Settled Price (Disbursed Payout) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-emerald-500/30 bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-emerald-400/60 transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 truncate">
+                Settled Price
               </span>
-              <div className="grid size-9 place-items-center rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <Clock3 className="size-4" />
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                <CheckCircle2 className="size-3.5" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black tracking-tight text-white">
-              {
-                orders.filter(
-                  (order) => order.status === 'completed' || order.status === 'delivered'
-                ).length
-              }
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#d9f447] truncate">
+              ₹{totalSettledAmount.toLocaleString()}
             </p>
-            <p className="text-[11px] text-gray-400 mt-1">Completed orders in database</p>
-          </div>
-        </div>
-
-        {/* Weekly Settlement Transfers Table */}
-        <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-[#202b24] pb-4">
-            <div>
-              <h3 className="text-lg font-black text-white">Weekly Bank Settlements History</h3>
-              <p className="text-xs text-gray-400">
-                Payout records transferred to your registered bank account
-              </p>
-            </div>
-            <span className="rounded-full bg-[#1c2620] border border-[#28372e] px-3 py-1 text-[10px] font-bold text-gray-300">
-              {settlementsHistory.length} records
-            </span>
+            <p className="text-[10px] text-emerald-400 font-semibold mt-1 truncate">
+              Transferred to bank
+            </p>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar rounded-2xl border border-[#222e27]">
-            <table className="w-full text-left text-xs text-gray-300">
-              <thead className="border-b border-[#222e27] text-[10px] uppercase tracking-wider text-gray-400 font-extrabold bg-[#18201c]">
-                <tr>
-                  <th className="py-3 px-4">Period</th>
-                  <th className="py-3 px-4">Gross Sales</th>
-                  <th className="py-3 px-4">Commission</th>
-                  <th className="py-3 px-4">Net Payout</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Bank Ref UTR</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#222e27] bg-[#171f1b]">
-                {settlementsHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-gray-400 bg-[#121815]">
-                      No settlement records are stored for this restaurant.
-                    </td>
-                  </tr>
-                ) : (
-                  settlementsHistory.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#1c2620] transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-white">{s.period || '—'}</td>
-                      <td className="py-3.5 px-4 font-semibold text-gray-300">₹{s.grossSales}</td>
-                      <td className="py-3.5 px-4 text-rose-400 font-semibold">
-                        -₹{s.commissionAmount}
-                      </td>
-                      <td className="py-3.5 px-4 font-black text-[#d9f447]">₹{s.netPayout}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#1c2620] border border-[#28372e] px-2.5 py-0.5 text-[10px] font-bold text-gray-300">
-                          {s.status || 'Status unavailable'}
-                          {s.payoutDate ? ` · ${s.payoutDate}` : ''}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
-                        {s.transactionRef || '—'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Individual Order Transactions Table */}
-        <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#202b24] pb-4">
-            <div>
-              <h3 className="text-lg font-black text-white">Individual Customer Orders</h3>
-              <p className="text-xs text-gray-400">Breakdown of orders and earnings</p>
-            </div>
-
-            <div className="relative max-w-xs w-full">
-              <Search className="absolute left-3.5 top-2.5 size-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search order ID or customer..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-full border border-[#233228] bg-[#141c17] py-2 pl-9 pr-3 text-xs text-white placeholder-gray-500 outline-none focus:border-[#d9f447]"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto no-scrollbar rounded-2xl border border-[#222e27]">
-            {filteredOrders.length === 0 ? (
-              <div className="p-8 text-center text-xs text-gray-400 bg-[#121815]">
-                No orders match your search query.
+          {/* NEW Card 5: Remaining Settlement Price (Pending Balance) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-amber-400/60 transition-all min-w-0 overflow-hidden col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between gap-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">
+                Remaining Settlement Price
+              </span>
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <Clock3 className="size-3.5" />
               </div>
-            ) : (
-              <table className="w-full text-left text-xs text-gray-300">
-                <thead className="border-b border-[#222e27] text-[10px] uppercase tracking-wider text-gray-400 font-extrabold bg-[#18201c]">
-                  <tr>
-                    <th className="py-3 px-4">Order ID</th>
-                    <th className="py-3 px-4">Customer Name</th>
-                    <th className="py-3 px-4">Date &amp; Time</th>
-                    <th className="py-3 px-4">Order Amount</th>
-                    <th className="py-3 px-4">Net Share</th>
-                    <th className="py-3 px-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#222e27] bg-[#171f1b]">
-                  {filteredOrders.map((o) => {
-                    const gross = Number(o.subtotal || 0)
-                    const net = Math.round(gross * (1 - commissionRate / 100))
-                    return (
-                      <tr key={o.id} className="hover:bg-[#1c2620] transition-colors">
-                        <td className="py-3.5 px-4 font-mono font-bold text-gray-300">#{o.id}</td>
-                        <td className="py-3.5 px-4 font-extrabold text-white">
-                          {o.customer_name || '—'}
-                        </td>
-                        <td className="py-3.5 px-4 text-gray-400">
-                          {o.created_at
-                            ? new Date(o.created_at).toLocaleString([], {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-white">₹{gross}</td>
-                        <td className="py-3.5 px-4 font-black text-[#d9f447]">₹{net}</td>
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                              o.status === 'completed' ||
-                              o.status === 'delivered' ||
-                              o.status === 'ready'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                            }`}
-                          >
-                            {o.status}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
+            </div>
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-400 truncate">
+              ₹{remainingSettlementBalance.toLocaleString()}
+            </p>
+            <p className="text-[10px] text-amber-300/80 mt-1 truncate">Awaiting payout release</p>
           </div>
         </div>
       </div>

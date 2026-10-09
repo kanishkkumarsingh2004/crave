@@ -1,6 +1,14 @@
 # Crave — Next-Gen Multi-Vendor Food & Dark Store Delivery Platform
 
-> **Production Ready Platform** · **100% Test Coverage Pass Rate (48/48 Test Suites, 265/265 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Real-Time WebSocket Engine** · **Dual Commercial Tax Invoice PDF Generator**
+> **Production Ready Platform** · **100% Test Coverage Pass Rate (50/50 Test Suites, 275/275 Green Tests)** · **Uber H3 Geospatial Hex Dispatch** · **100% Real-Time WebSocket Engine** · **Dual Commercial Tax Invoice PDF Generator**
+
+[![CI Pipeline](https://github.com/kanishkkumarsingh2004/crave/actions/workflows/ci.yml/badge.svg)](https://github.com/kanishkkumarsingh2004/crave/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-12.3.4-orange?logo=pnpm)](https://pnpm.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748?logo=prisma)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/License-Private-red)](LICENSE)
 
 Crave is an enterprise-grade multi-vendor food delivery and **CraveXP 10-Minute Dark Store Grocery** platform built with **Next.js 16 App Router (SWC Compiler)**, **TypeScript**, **Tailwind CSS**, **PostgreSQL 16**, **Prisma ORM**, **Uber H3 Geospatial Indexing (`h3-js`)**, **MapLibre GL**, **HTML2PDF**, and a dedicated **Native Standalone WebSocket Server (`ws-server.js`)**.
 
@@ -108,6 +116,28 @@ Crave features an **Uber H3 Hierarchical Hexagonal Geospatial Indexing** system 
 | **WebSocket Engine** | `crave-backend`  | `8000`        | `8000`        | `node ws-server.js`          |
 | **Database Init**    | `crave-db-init`  | N/A           | N/A           | `prisma generate && db push` |
 | **PostgreSQL 16**    | `crave-postgres` | `5432`        | `5433`        | `postgres:16-alpine`         |
+
+---
+
+## 🔄 CI/CD Pipeline
+
+The project uses a comprehensive CI pipeline that runs on every PR:
+
+```bash
+# Local validation (run before pushing)
+pnpm format:check      # Prettier formatting check
+pnpm typecheck         # TypeScript type checking (tsc --noEmit)
+pnpm test              # Jest unit & integration tests (275 tests)
+pnpm build             # Next.js production build (SWC compiler)
+```
+
+**CI Stages:**
+
+1. **Lint/Format** - Prettier formatting check
+2. **TypeCheck** - TypeScript strict mode validation
+3. **Test** - Jest unit & integration tests (275 tests, 50 suites)
+4. **Build** - Next.js production build with SWC compiler
+5. **Security Scan** - Dependency vulnerability scan (audit)
 
 ---
 
@@ -243,7 +273,7 @@ Access services:
 ### Prerequisites
 
 - **Node.js**: v20.0.0 or higher
-- **pnpm**: v9.0.0 or higher
+- **pnpm**: v12.3.4 (pinned via `packageManager` in `package.json`)
 - **PostgreSQL 16**: Running on port `5432`
 
 ### Setup Steps
@@ -274,6 +304,8 @@ pnpm dev:ws
 - **Role-Based Access Control**: Strict access controls for `user`, `restaurant_vendor`, `cravexp_store_vendor`, `rider`, and `admin`.
 - **Prepared Statements**: Prisma ORM parameterized queries protecting against SQL injection.
 - **Compilation Performance**: Native SWC compiler builds for Next.js with zero Babel overhead.
+- **Rate Limiting**: Tiered rate limits (public, user, auth, order, payment, dispatch, admin) with Redis-backed distributed enforcement.
+- **Input Validation**: Strict DTOs/schemas, server-owned financial calculations, secure OTP generation.
 
 ---
 

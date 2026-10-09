@@ -111,6 +111,7 @@ describe('Restaurants DAL', () => {
         where: { is_dark_store: true },
         include: { menu_items: true },
         orderBy: { created_at: 'desc' },
+        take: 50,
       })
     })
 

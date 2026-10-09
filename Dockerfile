@@ -7,16 +7,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 COPY . .
-ARG DATABASE_URL
-ARG DIRECT_URL
-ARG JWT_SECRET
-ARG REDIS_URL
-ENV DATABASE_URL=${DATABASE_URL}
-ENV DIRECT_URL=${DIRECT_URL}
-ENV JWT_SECRET=${JWT_SECRET}
-ENV REDIS_URL=${REDIS_URL}
 RUN npx prisma generate
 RUN pnpm run build
 
@@ -38,7 +30,9 @@ COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
-EXPOSE 3000 8000
+# CR-015: Only expose public HTTP port (3000)
+# WebSocket port (8000) kept internal via Docker network
+EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:3000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"

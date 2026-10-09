@@ -16,17 +16,49 @@ export interface DriverLocationState {
   lastUpdated: number // Unix timestamp (ms)
 }
 
+// GPS Capacity Configuration
+export const GPS_CONFIG = {
+  // Update interval - drivers should send updates at most this frequently
+  UPDATE_INTERVAL_MS: 5000, // 5 seconds minimum between updates
+
+  // Position coalescing - if driver moves less than this distance, ignore update
+  MIN_MOVE_DISTANCE_M: 20, // 20 meters minimum movement
+
+  // Retention policies
+  CURRENT_LOCATION_TTL_MS: 120 * 1000, // 2 minutes for current location
+  HISTORY_RETENTION_DAYS: 7, // Keep history for 7 days
+  HISTORY_BATCH_SIZE: 100, // Batch size for history writes
+
+  // Capacity limits
+  MAX_DRIVERS_PER_CELL: 100, // Max drivers per H3 cell
+  MAX_HISTORY_POINTS_PER_DRIVER: 1000, // Max history points per driver
+
+  // Load test targets
+  TARGET_DRIVERS: 1000, // Target concurrent drivers
+  TARGET_UPDATES_PER_SEC: 200, // Target GPS updates per second
+} as const
+
 // In-memory Spatial Index Cache (High-Performance Layer, fallback for Redis)
 const driverSpatialIndex = new Map<string, DriverLocationState>()
 
 // Secondary H3 Cell Inverted Index: h3Cell -> Set of driverIds
 const cellToDriverMap = new Map<string, Set<string>>()
 
+// Position history buffer (driverId -> position history array)
+const positionHistoryBuffer = new Map<
+  string,
+  Array<{ lat: number; lng: number; ts: number; h3Cell: string }>
+>()
+
+// History flush timer
+let historyFlushTimer: NodeJS.Timeout | null = null
+
 export const DEFAULT_H3_RESOLUTION = 8 // ~0.737 km² per cell, ~461m edge length
 export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold
 
 /**
  * Update a driver's GPS location and re-index into H3 Spatial Cell
+ * Includes position coalescing, update interval enforcement, and history buffering
  */
 export async function updateDriverLocation(params: {
   driverId: string
@@ -40,6 +72,8 @@ export async function updateDriverLocation(params: {
   state: DriverLocationState
   cellChanged: boolean
   previousCell?: string
+  coalesced: boolean
+  reason?: string
 }> {
   const {
     driverId,
@@ -57,6 +91,36 @@ export async function updateDriverLocation(params: {
   const existingState = driverSpatialIndex.get(driverId)
   const previousCell = existingState?.h3Cell
   const cellChanged = previousCell !== newH3Cell
+
+  // POSITION COALESCING: Check if driver moved enough to warrant an update
+  let coalesced = false
+  let reason: string | undefined
+
+  if (existingState) {
+    const timeSinceLastUpdate = now - existingState.lastUpdated
+    const distanceMoved = calculateDistanceMeters(existingState.lat, existingState.lng, lat, lng)
+
+    // Enforce minimum update interval
+    if (timeSinceLastUpdate < GPS_CONFIG.UPDATE_INTERVAL_MS) {
+      coalesced = true
+      reason = `Update interval too short (${timeSinceLastUpdate}ms < ${GPS_CONFIG.UPDATE_INTERVAL_MS}ms)`
+    }
+    // Enforce minimum movement distance
+    else if (distanceMoved < GPS_CONFIG.MIN_MOVE_DISTANCE_M) {
+      coalesced = true
+      reason = `Movement too small (${distanceMoved.toFixed(1)}m < ${GPS_CONFIG.MIN_MOVE_DISTANCE_M}m)`
+    }
+
+    if (coalesced) {
+      return {
+        state: existingState,
+        cellChanged: false,
+        previousCell,
+        coalesced: true,
+        reason,
+      }
+    }
+  }
 
   // Update Inverted Cell Index if cell changed
   if (cellChanged && previousCell) {
@@ -90,15 +154,164 @@ export async function updateDriverLocation(params: {
   // Update primary spatial cache
   driverSpatialIndex.set(driverId, updatedState)
 
-  // Replicate to Redis distributed cache with 120s TTL if available
+  // Buffer position for history (async, non-blocking)
+  bufferPositionHistory(driverId, { lat, lng, ts: now, h3Cell: newH3Cell })
+
+  // Replicate to Redis distributed cache with TTL if available
   if (isRedisAvailable() && redis) {
-    redis.set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120).catch(() => {})
+    redis
+      .set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120)
+      .catch(() => {})
+  }
+
+  // Ensure history flush timer is running
+  if (!historyFlushTimer) {
+    startHistoryFlushTimer()
   }
 
   return {
     state: updatedState,
     cellChanged,
     previousCell,
+    coalesced: false,
+  }
+}
+
+/**
+ * Calculate distance between two lat/lng points in meters (Haversine)
+ */
+function calculateDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000 // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+/**
+ * Buffer position history for batch writes
+ */
+function bufferPositionHistory(
+  driverId: string,
+  position: { lat: number; lng: number; ts: number; h3Cell: string }
+): void {
+  const buffer = positionHistoryBuffer.get(driverId) || []
+  buffer.push(position)
+
+  // Trim buffer if too large
+  if (buffer.length > GPS_CONFIG.MAX_HISTORY_POINTS_PER_DRIVER) {
+    buffer.shift()
+  }
+
+  positionHistoryBuffer.set(driverId, buffer)
+}
+
+/**
+ * Start periodic history flush to database
+ */
+function startHistoryFlushTimer(): void {
+  if (historyFlushTimer) return
+
+  historyFlushTimer = setInterval(async () => {
+    await flushPositionHistory()
+  }, 30000) // Flush every 30 seconds
+
+  // Don't prevent process exit
+  if (historyFlushTimer.unref) historyFlushTimer.unref()
+}
+
+/**
+ * Flush position history to database (batch write)
+ */
+async function flushPositionHistory(): Promise<void> {
+  if (positionHistoryBuffer.size === 0) return
+
+  const entries: Array<{
+    driverId: string
+    positions: typeof positionHistoryBuffer extends Map<string, infer V> ? V : never
+  }> = []
+
+  positionHistoryBuffer.forEach((positions, driverId) => {
+    if (positions.length > 0) {
+      entries.push({ driverId, positions: [...positions] })
+      positions.length = 0 // Clear buffer
+    }
+  })
+
+  if (entries.length === 0) return
+
+  // Batch write to database
+  try {
+    await prisma.$transaction(
+      entries.map(({ driverId, positions }) =>
+        prisma.driverLocationHistory.createMany({
+          data: positions.map((p) => ({
+            driver_id: driverId,
+            latitude: p.lat,
+            longitude: p.lng,
+            h3_cell: p.h3Cell,
+            timestamp: new Date(p.ts),
+          })),
+          skipDuplicates: true,
+        })
+      )
+    )
+  } catch (error) {
+    // Silently fail - position history is non-critical
+    console.warn('[driver-tracker] History flush failed:', error)
+  }
+}
+
+/**
+ * Cleanup old history data (run periodically via cron)
+ */
+export async function cleanupOldHistory(): Promise<number> {
+  const cutoff = new Date(Date.now() - GPS_CONFIG.HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+  try {
+    const result = await prisma.driverLocationHistory.deleteMany({
+      where: { timestamp: { lt: cutoff } },
+    })
+    return result.count
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Get capacity metrics for monitoring
+ */
+export function getCapacityMetrics(): {
+  activeDrivers: number
+  historyBufferSize: number
+  cellsActive: number
+  maxDriversPerCell: number
+  avgDriversPerCell: number
+} {
+  let maxPerCell = 0
+  let totalDrivers = 0
+
+  cellToDriverMap.forEach((drivers) => {
+    totalDrivers += drivers.size
+    maxPerCell = Math.max(maxPerCell, drivers.size)
+  })
+
+  let bufferTotal = 0
+  positionHistoryBuffer.forEach((buf) => {
+    bufferTotal += buf.length
+  })
+
+  return {
+    activeDrivers: driverSpatialIndex.size,
+    historyBufferSize: bufferTotal,
+    cellsActive: cellToDriverMap.size,
+    maxDriversPerCell: maxPerCell,
+    avgDriversPerCell: cellToDriverMap.size > 0 ? totalDrivers / cellToDriverMap.size : 0,
   }
 }
 

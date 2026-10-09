@@ -3,8 +3,13 @@ import { redis, isRedisAvailable } from '@/lib/redis'
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
 export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000
 export const WS_BROADCAST_HOST = process.env.WS_BROADCAST_HOST || 'localhost'
-const WS_INTERNAL_SECRET =
-  process.env.WS_INTERNAL_SECRET || process.env.JWT_SECRET || 'crave_internal_secret_default'
+const WS_INTERNAL_SECRET = process.env.WS_INTERNAL_SECRET || 'crave_internal_ws_secret_default_key'
+
+function ensureInternalSecret() {
+  if (!process.env.WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
+    console.warn('Notice: WS_INTERNAL_SECRET not set in env, using default broadcast secret.')
+  }
+}
 
 export const broadcast = async (
   channel: string,
@@ -14,6 +19,7 @@ export const broadcast = async (
   if (typeof window !== 'undefined') {
     return false
   }
+  ensureInternalSecret()
 
   const payload = JSON.stringify({ channel, data, ts: Date.now() })
 

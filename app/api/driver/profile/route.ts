@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server'
 import { findUserById, updateUser } from '@/lib/dal/users'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { requireAuthApi } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
-
-    if (process.env.NODE_ENV !== 'test' && !actor) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    const actor = await requireAuthApi(request)
 
     const { searchParams } = new URL(request.url)
-    const driverId = actor?.role === 'admin' ? (searchParams.get('driverId') || actor?.id) : actor?.id
+    const driverId = searchParams.get('driverId') || actor.id
 
     if (!driverId) {
       return NextResponse.json({ error: 'Driver ID is required' }, { status: 400 })
@@ -53,17 +45,10 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
-
-    if (process.env.NODE_ENV !== 'test' && !actor) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    const actor = await requireAuthApi(request)
 
     const body = await request.json()
-    const driverId = actor?.role === 'admin' ? (body.driverId || actor?.id) : actor?.id
+    const driverId = body.driverId || actor.id
 
     if (!driverId) {
       return NextResponse.json({ error: 'Driver ID required' }, { status: 400 })

@@ -1,24 +1,10 @@
 import { listUsersByRole } from '@/lib/dal/users'
 import { NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      try {
-        const c = await cookies()
-        token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
-      } catch {}
-    }
-
-    const actor = token ? await verifyToken(token) : null
-    if (process.env.NODE_ENV !== 'test' && (!actor || actor.role !== 'admin')) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
-
+    await requireAdmin(request)
     const drivers = await listUsersByRole('rider')
     const formatted = (drivers || []).map((d: any) => ({
       id: d.id,
@@ -31,12 +17,14 @@ export async function GET(request: Request) {
       created_at: d.created_at,
       status: 'active',
     }))
-
     return NextResponse.json({ success: true, drivers: formatted })
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, drivers: [], error: error?.message || 'Failed to load drivers' },
-      { status: 500 }
-    )
+    if (error.message === 'Admin access required') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+    if (error.message === 'Authentication required') {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

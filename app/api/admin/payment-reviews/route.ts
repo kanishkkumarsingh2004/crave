@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +18,11 @@ export async function GET(request: Request) {
     }
 
     const url = new URL(request.url)
-    const status = url.searchParams.get('status') || undefined
+    const statusParam = url.searchParams.get('status')
+    const status =
+      statusParam === 'pending' || statusParam === 'verified' || statusParam === 'rejected'
+        ? statusParam
+        : undefined
     const reviews = await prisma.paymentReview.findMany({
       where: status ? { status } : undefined,
       orderBy: { created_at: 'desc' },
@@ -30,6 +35,12 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const clientIp = getClientIp(request)
+    const result = await checkRateLimit(`payment_verify_${clientIp}`, 'PAYMENT_VERIFY')
+    if (!result.allowed) {
+      return rateLimitResponse(result.resetTime, result.retryAfter)
+    }
+
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
     if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''

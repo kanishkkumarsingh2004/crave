@@ -21,7 +21,9 @@ describe('Progressive Web App (PWA) Configuration', () => {
     expect(Array.isArray(manifest.icons)).toBe(true)
     const icon192 = manifest.icons.find((i: any) => i.sizes === '192x192' && i.purpose === 'any')
     const icon512 = manifest.icons.find((i: any) => i.sizes === '512x512' && i.purpose === 'any')
-    const maskable512 = manifest.icons.find((i: any) => i.sizes === '512x512' && i.purpose === 'maskable')
+    const maskable512 = manifest.icons.find(
+      (i: any) => i.sizes === '512x512' && i.purpose === 'maskable'
+    )
 
     expect(icon192).toBeDefined()
     expect(icon512).toBeDefined()

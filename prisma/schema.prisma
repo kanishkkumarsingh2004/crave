@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -29,6 +28,7 @@ model User {
   orders             Order[]
   owned_restaurants  Restaurant[]
 
+  @@index([role, created_at])
   @@map("users")
 }
 
@@ -39,12 +39,12 @@ model Restaurant {
   rating              Decimal?             @default(4.8) @db.Decimal(2, 1)
   
   // Commercial & Pricing Model Settings (Section 4 & 6 of commercial-engine.md)
-  commercial_model    String?              @default("commission") // "commission" | "markup" | "hybrid"
-  commission_rate     Decimal?             @default(15.00) @db.Decimal(5, 2) // e.g. 15.00% for Restaurant 1
-  markup_rate         Decimal?             @default(0.00) @db.Decimal(5, 2)  // e.g. 10.00% for Restaurant 2
+  commercial_model    CommercialModel      @default(commission)
+  commission_rate     Decimal?             @default(15.00) @db.Decimal(5, 2)
+  markup_rate         Decimal?             @default(0.00) @db.Decimal(5, 2)
   fixed_commission    Int?                 @default(0)
   fixed_markup        Int?                 @default(0)
-  payment_model       String?              @default("commission") // Legacy compatibility
+  payment_model       CommissionModel      @default(commission)
   
   address             String?
   owner_id            String?
@@ -67,9 +67,9 @@ model Restaurant {
   payout_vpa          String?
   fssai_license       String?
   gstin               String?
-  gst_status          String?              @default("REGISTERED")
+  gst_status          GstStatus            @default(REGISTERED)
   supplier_state      String?              @default("Karnataka")
-  price_tax_mode      String?              @default("TAX_INCLUSIVE")
+  price_tax_mode      PriceTaxMode         @default(TAX_INCLUSIVE)
   contract_number     String?
 
   commercial_contracts CommercialContract[]
@@ -82,6 +82,7 @@ model Restaurant {
 
   @@index([owner_id])
   @@index([is_open, is_dark_store])
+  @@index([is_open, is_dark_store, created_at])
   @@map("restaurants")
 }
 
@@ -90,14 +91,14 @@ model CommercialContract {
   restaurant_id         String
   contract_number       String        @unique
   version               Int           @default(1)
-  status                String        @default("ACTIVE") // ACTIVE | PENDING_APPROVAL | SUSPENDED
-  commercial_model      String        @default("commission") // commission | markup | hybrid
+  status                ContractStatus @default(ACTIVE)
+  commercial_model      CommercialModel @default(commission)
   commission_rate       Decimal       @default(15.00) @db.Decimal(5, 2)
   markup_rate           Decimal       @default(0.00) @db.Decimal(5, 2)
   fixed_commission      Int           @default(0)
   fixed_markup          Int           @default(0)
   commission_basis      String        @default("ORDER_SUBTOTAL")
-  price_tax_mode        String        @default("TAX_INCLUSIVE")
+  price_tax_mode        PriceTaxMode  @default(TAX_INCLUSIVE)
   effective_from        DateTime      @default(now()) @db.Timestamptz(6)
   effective_until       DateTime?     @db.Timestamptz(6)
   created_at            DateTime      @default(now()) @db.Timestamptz(6)
@@ -124,13 +125,14 @@ model MenuItem {
   stock_count           Int         @default(0)
   sku_code              String?
   hsn_sac_code          String?     @default("996331")
-  price_tax_mode        String?     @default("TAX_INCLUSIVE")
+  price_tax_mode        PriceTaxMode @default(TAX_INCLUSIVE)
   custom_commission_rate Decimal?   @db.Decimal(5, 2)
   custom_markup_rate     Decimal?   @db.Decimal(5, 2)
   expiry_date           DateTime?   @db.Date
   restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([restaurant_id, category])
+  @@index([restaurant_id, in_stock, category])
   @@map("menu_items")
 }
 
@@ -144,7 +146,7 @@ model Order {
   restaurant_name       String
   order_type            String      @default("restaurant_food")
   destination_vendor_id String?
-  payment_status        String      @default("pending")
+  payment_status        PaymentStatus @default(pending)
   payment_reviewed_by   String?
   payment_reviewed_at   DateTime?   @db.Timestamptz(6)
   rider_id              String?
@@ -182,6 +184,9 @@ model Order {
   @@index([customer_id])
   @@index([restaurant_id])
   @@index([status])
+  @@index([customer_id, status, created_at])
+  @@index([restaurant_id, status, created_at])
+  @@index([rider_id, status])
   @@map("orders")
 }
 
@@ -208,34 +213,35 @@ model Coupon {
 }
 
 model VendorSettlement {
-  id                String      @id
+  id                String                @id
   restaurant_name   String
   gross_sales       Int
-  commercial_model  String?     @default("commission")
+  commercial_model  CommercialModel       @default(commission)
   commission_rate   Int
   commission_amount Int
-  markup_amount     Int?        @default(0)
+  markup_amount     Int?                  @default(0)
   net_payout        Int
-  status            String?     @default("scheduled")
-  payout_date       DateTime?   @db.Date
+  status            VendorSettlementStatus @default(scheduled)
+  payout_date       DateTime?             @db.Date
   restaurant_id     String?
-  period_start      DateTime?   @db.Date
-  period_end        DateTime?   @db.Date
+  period_start      DateTime?             @db.Date
+  period_end        DateTime?             @db.Date
   transaction_ref   String?
-  restaurant        Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  restaurant        Restaurant?           @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([restaurant_id])
+  @@index([restaurant_id, status, period_start])
   @@map("vendor_settlements")
 }
 
 model PaymentReview {
-  id           String    @id
+  id           String        @id
   order_id     String
   utr_ref      String
   customer_vpa String
   amount       Int
-  status       String?   @default("pending")
-  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  status       PaymentStatus @default(pending)
+  created_at   DateTime?     @default(now()) @db.Timestamptz(6)
 
   @@index([order_id])
   @@map("payment_reviews")
@@ -284,7 +290,7 @@ model PaymentConfig {
   require_utr_number      Boolean? @default(true)
   is_active               Boolean  @default(false)
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
-  gst_rate                Decimal? @db.Decimal
+  gst_rate                Decimal? @db.Decimal(5, 2)
 
   @@map("payment_configs")
 }
@@ -304,15 +310,16 @@ model DriverUpiAccount {
 }
 
 model DriverPayout {
-  id              String   @id
+  id              String              @id
   driver_id       String
   amount          Int
-  status          String   @default("pending")
+  status          DriverPayoutStatus  @default(pending)
   transaction_ref String?
-  created_at      DateTime @default(now()) @db.Timestamptz(6)
-  driver          User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+  created_at      DateTime            @default(now()) @db.Timestamptz(6)
+  driver          User                @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
   @@index([driver_id])
+  @@index([driver_id, status, created_at])
   @@map("driver_payouts")
 }
 
@@ -348,6 +355,19 @@ model PickerMetric {
   @@map("picker_metrics")
 }
 
+model DriverLocationHistory {
+  id         String   @id @default(cuid())
+  driver_id  String
+  latitude   Decimal  @db.Decimal(10, 8)
+  longitude  Decimal  @db.Decimal(11, 8)
+  h3_cell    String
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([driver_id, timestamp])
+  @@index([h3_cell])
+  @@map("driver_location_history")
+}
+
 enum UserRole {
   user
   restaurant_vendor
@@ -375,4 +395,57 @@ enum OrderStatus {
 enum DiscountType {
   percentage
   flat
+}
+
+enum CommercialModel {
+  commission
+  markup
+  hybrid
+}
+
+enum CommissionModel {
+  commission
+  markup
+  fixed
+}
+
+enum GstStatus {
+  REGISTERED
+  UNREGISTERED
+  COMPOSITION
+}
+
+enum PriceTaxMode {
+  TAX_INCLUSIVE
+  TAX_EXCLUSIVE
+}
+
+enum TaxMode {
+  CGST_SGST
+  IGST
+}
+
+enum PaymentStatus {
+  pending
+  verified
+  rejected
+}
+
+enum ContractStatus {
+  ACTIVE
+  PENDING_APPROVAL
+  SUSPENDED
+}
+
+enum VendorSettlementStatus {
+  scheduled
+  paid
+  failed
+  cancelled
+}
+
+enum DriverPayoutStatus {
+  pending
+  paid
+  failed
 }

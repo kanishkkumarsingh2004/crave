@@ -599,16 +599,14 @@ export default function CartPage() {
 
                     <div className="space-y-3">
                       <div>
-                        <label className="text-[11px] font-bold text-[#55635a] dark:text-gray-400 uppercase tracking-wider block mb-1">
-                          Delivery Doorstep Address
-                        </label>
+                        <label className="label-base">Delivery Doorstep Address</label>
                         <div className="relative">
                           <input
                             type="text"
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
                             placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
-                            className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#b5de28] focus:outline-hidden pr-20"
+                            className="input-base pr-20"
                           />
                           {selectedAddressId && (
                             <span className="absolute right-3 top-2.5 bg-[#b5de28] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
@@ -620,7 +618,7 @@ export default function CartPage() {
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-[#55635a] dark:text-gray-400 uppercase tracking-wider block mb-1">
+                        <label className="label-base">
                           Customer Phone Number (For Rider OTP Delivery)
                         </label>
                         <input
@@ -628,7 +626,7 @@ export default function CartPage() {
                           value={customerPhone}
                           onChange={(e) => setCustomerPhone(e.target.value)}
                           placeholder="+91 98765 43210"
-                          className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 focus:border-[#b5de28] focus:outline-hidden"
+                          className="input-base"
                         />
                       </div>
                     </div>
@@ -1036,7 +1034,7 @@ export default function CartPage() {
 
                       {/* 12-Digit UTR Reference Input */}
                       <div>
-                        <label className="font-bold text-[#18201c] dark:text-white block mb-1">
+                        <label className="label-base">
                           12-Digit UTR Reference Number <span className="text-rose-600">*</span>
                         </label>
                         <input
@@ -1047,7 +1045,7 @@ export default function CartPage() {
                           onChange={(e) =>
                             setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
                           }
-                          className="w-full rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#121815] px-3 py-2.5 text-xs font-mono font-bold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-hidden focus:border-emerald-500 dark:focus:border-emerald-400"
+                          className="input-base font-mono font-bold"
                         />
                         {utrRef.trim().length < 10 ? (
                           <p className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold mt-1">
@@ -1069,7 +1067,7 @@ export default function CartPage() {
                     <button
                       type="submit"
                       disabled={isSubmittingOrder || utrRef.trim().length < 10}
-                      className="w-full rounded-2xl bg-[#18201c] dark:bg-[#d9f447] py-3.5 sm:py-4 px-4 text-xs sm:text-sm font-extrabold text-white dark:text-[#18201c] shadow-xl hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-500 active:scale-[0.98]"
+                      className="btn-primary btn-full btn-lg"
                     >
                       {isSubmittingOrder ? (
                         <>
@@ -1109,7 +1107,7 @@ export default function CartPage() {
                   target.scrollIntoView({ behavior: 'smooth' })
                 }
               }}
-              className="flex items-center gap-1.5 rounded-xl bg-[#d9f447] dark:bg-[#18201c] px-4 py-2 text-xs font-black text-[#18201c] dark:text-[#d9f447] shadow-sm active:scale-95 transition"
+              className="btn-primary btn-sm flex items-center gap-1.5"
             >
               <span>Proceed to Pay</span>
               <ArrowRight className="size-3.5" />
@@ -1375,9 +1373,7 @@ export default function CartPage() {
 
                 <form onSubmit={handleSaveNewAddress} className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-bold text-[#55635a] dark:text-gray-400 uppercase block mb-1">
-                      Address Label
-                    </label>
+                    <label className="label-base">Address Label</label>
                     <div className="flex items-center gap-2">
                       {['Home', 'Work', 'Other'].map((lbl) => (
                         <button
@@ -1397,24 +1393,18 @@ export default function CartPage() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-[#55635a] dark:text-gray-400 uppercase block mb-1">
-                      Doorstep Address Details
-                    </label>
+                    <label className="label-base">Doorstep Address Details</label>
                     <textarea
                       rows={2}
                       required
                       value={newAddressText}
                       onChange={(e) => setNewAddressText(e.target.value)}
                       placeholder="House/Flat No, Building, Road / Landmark, Area, Bengaluru"
-                      className="w-full rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#1c2420] px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#b5de28] dark:focus:border-[#d9f447] focus:outline-hidden"
+                      className="input-base min-h-[80px] resize-y"
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSavingAddress}
-                    className="w-full rounded-xl bg-[#b5de28] py-2.5 text-xs font-extrabold text-white hover:bg-[#728812] transition shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={isSavingAddress} className="btn-primary btn-full">
                     {isSavingAddress ? 'Saving Address...' : 'Save & Deliver Here'}
                   </button>
                 </form>

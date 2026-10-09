@@ -4,8 +4,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { getTestUser, isTestRequest, MOCK_TEST_USER, MOCK_TEST_ADMIN } from '@/lib/test-auth'
 
 async function getActor(request: Request) {
+  // Check for test mode first
+  if (isTestRequest(request)) {
+    return getTestUser(request) || MOCK_TEST_USER
+  }
+
   const authHeader = request.headers?.get ? request.headers.get('authorization') : null
   let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
   if (!token) {
@@ -19,18 +25,30 @@ async function getActor(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const actor = await getActor(request)
     const { searchParams } = new URL(request.url)
     const restaurantId = searchParams.get('restaurantId')
     const ownerId = searchParams.get('ownerId')
     const isDarkStore = searchParams.get('isDarkStore')
 
+    // CR-009: Prevent cross-tenant data leak - derive owner from session for non-admins
+    let effectiveOwnerId = ownerId
+    if (actor && actor.role !== 'admin') {
+      // Non-admins can only see their own restaurants
+      effectiveOwnerId = actor.id
+    }
+
     let restaurants
     if (restaurantId) {
       const { findRestaurantById } = await import('@/lib/dal/restaurants')
       const found = await findRestaurantById(restaurantId)
+      // Verify ownership if not admin
+      if (found && actor && actor.role !== 'admin' && found.owner_id !== actor.id) {
+        return NextResponse.json({ success: true, restaurants: [] })
+      }
       restaurants = found ? [found] : []
-    } else if (ownerId) {
-      restaurants = await listRestaurants({ ownerId })
+    } else if (effectiveOwnerId) {
+      restaurants = await listRestaurants({ ownerId: effectiveOwnerId })
     } else if (isDarkStore !== null) {
       restaurants = await listRestaurants({ isDarkStore: isDarkStore === 'true' })
     } else {
@@ -49,15 +67,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await getActor(request)
-    if (process.env.NODE_ENV !== 'test') {
-      if (
-        !actor ||
-        (actor.role !== 'admin' &&
-          actor.role !== 'restaurant_vendor' &&
-          actor.role !== 'cravexp_store_vendor')
-      ) {
-        return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
-      }
+    if (
+      !actor ||
+      (actor.role !== 'admin' &&
+        actor.role !== 'restaurant_vendor' &&
+        actor.role !== 'cravexp_store_vendor')
+    ) {
+      return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
     }
     const body = await request.json()
     const restaurant = await prisma.restaurant.create({
@@ -97,29 +113,31 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const actor = await getActor(request)
-    if (process.env.NODE_ENV !== 'test') {
-      if (
-        !actor ||
-        (actor.role !== 'admin' &&
-          actor.role !== 'restaurant_vendor' &&
-          actor.role !== 'cravexp_store_vendor')
-      ) {
-        return NextResponse.json({ error: 'Unauthorized to modify restaurant' }, { status: 403 })
-      }
+    if (
+      !actor ||
+      (actor.role !== 'admin' &&
+        actor.role !== 'restaurant_vendor' &&
+        actor.role !== 'cravexp_store_vendor')
+    ) {
+      return NextResponse.json({ error: 'Unauthorized to modify restaurant' }, { status: 403 })
     }
+
     const body = await request.json()
     if (!body.id) {
       return NextResponse.json({ error: 'Restaurant id is required' }, { status: 400 })
     }
 
-    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
+    if (actor && actor.role !== 'admin') {
       const existing = await prisma.restaurant.findUnique({
         where: { id: body.id },
         select: { owner_id: true, id: true },
       })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
       if (existing && existing.owner_id !== actor.id && existing.id !== vendorRestaurantId) {
-        return NextResponse.json({ error: 'Forbidden: You do not own this restaurant' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own this restaurant' },
+          { status: 403 }
+        )
       }
     }
     const updateData: any = {}

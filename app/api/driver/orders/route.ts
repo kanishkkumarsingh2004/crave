@@ -8,7 +8,11 @@ export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
+    if (!token)
+      token =
+        (await cookies()).get('crave_auth_token')?.value ||
+        (await cookies()).get('drop_auth_token')?.value ||
+        ''
     const actor = token ? await verifyToken(token) : null
 
     if (process.env.NODE_ENV !== 'test' && !actor) {

@@ -17,7 +17,10 @@ export async function POST(request: Request) {
 
     const actor = token ? await verifyToken(token) : null
     if (process.env.NODE_ENV !== 'test' && !actor) {
-      return NextResponse.json({ error: 'Authentication required for dispatch requests' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required for dispatch requests' },
+        { status: 401 }
+      )
     }
 
     const body = await request.json()

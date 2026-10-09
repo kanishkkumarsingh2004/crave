@@ -54,14 +54,14 @@ describe('Payments DAL', () => {
   beforeEach(() => jest.clearAllMocks())
 
   describe('createPaymentReview', () => {
-    it('creates a payment review in Prisma', async () => {
+    it('creates a payment review record', async () => {
       const reviewData = {
         id: 'pr_1',
         order_id: 'ord_1',
         utr_ref: '123456789012',
         customer_vpa: 'test@upi',
         amount: 500,
-        status: 'pending',
+        status: 'pending' as const,
       }
       mockPrisma.paymentReview.create = jest.fn().mockResolvedValue(reviewData)
 
@@ -184,7 +184,7 @@ describe('Payments DAL', () => {
         id: 'payout_1',
         driver_id: 'rider_1',
         amount: 50,
-        status: 'pending',
+        status: 'pending' as const,
       }
       mockPrisma.driverPayout.create = jest.fn().mockResolvedValue(payoutData)
 

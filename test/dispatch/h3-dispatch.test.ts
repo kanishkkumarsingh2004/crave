@@ -1,13 +1,11 @@
 import { updateDriverLocation, clearDriverSpatialIndex } from '@/lib/dispatch/driver-tracker'
-import {
-  findGeofencedCandidateDrivers,
-  calculateHaversineDistanceKm,
-} from '@/lib/dispatch/h3-dispatch'
+import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import {
   tryLockDriverForOffer,
   isDriverLocked,
   clearAllOfferLocks,
 } from '@/lib/dispatch/atomic-lock'
+import { calculateHaversineDistanceKm } from '@/lib/utils'
 
 describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
   beforeEach(() => {

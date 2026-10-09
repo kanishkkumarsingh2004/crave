@@ -49,7 +49,9 @@ export async function listRestaurants(options?: {
   isDarkStore?: boolean
   isOpen?: boolean
   ownerId?: string
+  limit?: number
 }) {
+  const take = Math.min(options?.limit ?? 50, 100) // Max 100, default 50
   try {
     const list = await prisma.restaurant.findMany({
       where: {
@@ -59,6 +61,7 @@ export async function listRestaurants(options?: {
       },
       include: { menu_items: true },
       orderBy: { created_at: 'desc' },
+      take,
     })
     if (list && list.length > 0) return list
   } catch (e) {}
@@ -68,6 +71,8 @@ export async function listRestaurants(options?: {
     if (options?.isDarkStore !== undefined) query = query.eq('is_dark_store', options.isDarkStore)
     if (options?.isOpen !== undefined) query = query.eq('is_open', options.isOpen)
     if (options?.ownerId) query = query.eq('owner_id', options.ownerId)
+    const take = Math.min(options?.limit ?? 50, 100)
+    query = query.limit(take)
     const { data, error } = await query
     if (!error && data && data.length > 0) return data
   } catch (e) {}

@@ -1,6 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb } from '@/lib/dal'
-import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { promisify } from 'util'
@@ -23,9 +23,9 @@ function setCookies(response: ReturnType<typeof NextResponse.json>, token: strin
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request)
-    const { allowed, resetTime } = await checkRateLimitAsync(`login_${clientIp}`, 15, 60000)
-    if (!allowed) {
-      return rateLimitResponse(resetTime)
+    const result = await checkRateLimit(`login_${clientIp}`, 'AUTH_LOGIN')
+    if (!result.allowed) {
+      return rateLimitResponse(result.resetTime, result.retryAfter)
     }
 
     const body = await request.json().catch(() => ({}))
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    const passwordHash = (await scrypt(password, email, 64) as Buffer).toString('hex')
+    const passwordHash = ((await scrypt(password, email, 64)) as Buffer).toString('hex')
     if (
       passwordHash.length !== profile.password_hash.length ||
       !crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))

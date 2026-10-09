@@ -974,7 +974,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
+          <div className="table-wrapper rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1176,7 +1176,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Customer Directory Table */}
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
+          <div className="table-wrapper rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[900px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1288,7 +1288,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
+          <div className="table-wrapper rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[850px]">
               <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -1393,7 +1393,7 @@ export default function AdminDashboard() {
 
       {/* SUB-TAB 4: ADMINS */}
       {activeTab === 'users' && userTab === 'admins' && (
-        <div className="overflow-x-auto rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
+        <div className="table-wrapper rounded-2xl border border-[#2d3b32] bg-[#1c2620] shadow-xl custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[800px]">
             <thead className="border-b border-[#25332a] bg-[#121815] text-[#9eb3a4] font-semibold uppercase text-[10px] tracking-wider">
               <tr>
@@ -1496,7 +1496,7 @@ export default function AdminDashboard() {
                       className="rounded-xl border border-rose-500/40 bg-rose-500/20 p-2 text-rose-300 hover:bg-rose-500/30 transition shrink-0"
                       title="Delete Store"
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-4 flex-1 inline-flex items-center" />
                     </button>
                   </div>
                 </div>
@@ -2549,7 +2549,7 @@ export default function AdminDashboard() {
                     to create one.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#27342d]">
+                  <div className="table-wrapper rounded-xl border border-gray-200 dark:border-[#27342d]">
                     <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                       <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 uppercase font-bold text-[10px] tracking-wider">
                         <tr>

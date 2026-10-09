@@ -10,19 +10,21 @@ import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown } from '@/lib/calculator'
 import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
-import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import type { OrderStatus } from '@prisma/client'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { cookies } from 'next/headers'
-
-async function getActor(request: Request): Promise<JWTPayload | null> {
-  const header = request.headers.get('authorization')
-  let token = header?.startsWith('Bearer ') ? header.slice(7) : ''
-  if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-  return token ? verifyToken(token) : null
-}
+import crypto from 'crypto'
+import {
+  requireAuth,
+  requireRole,
+  requireOwnership,
+  AuthError,
+  handleAuthError,
+  getAuthActor,
+} from '@/lib/auth-helpers'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   try {
@@ -97,7 +99,7 @@ async function getActiveConfig(): Promise<PaymentConfig> {
 
 export async function GET(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     const { searchParams } = new URL(request.url)
     const customerId = searchParams.get('customerId')
     const vendorId = searchParams.get('vendorId')
@@ -132,10 +134,6 @@ export async function GET(request: Request) {
       })
     }
 
-    if (process.env.NODE_ENV !== 'test' && !orderId && !actor) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
-
     let scopedCustomerId = customerId ?? undefined
     let scopedDriverId = driverId ?? undefined
     let scopedRestaurantId = vendorId ?? undefined
@@ -150,6 +148,11 @@ export async function GET(request: Request) {
       }
     }
 
+    // For non-admin users, require authentication for list operations
+    if (!actor && !orderId && !isVendorActor) {
+      return handleAuthError(new AuthError('Authentication required', 401))
+    }
+
     const orders = await listOrders({
       customerId: scopedCustomerId,
       restaurantId: scopedRestaurantId,
@@ -159,65 +162,56 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json({ success: true, orders })
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to fetch orders' }, { status: 500 })
+  } catch (error) {
+    return handleAuthError(error)
   }
 }
 
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request)
-    const { allowed, resetTime } = await checkRateLimitAsync(`order_${clientIp}`, 30, 60000)
-    if (!allowed) {
-      return rateLimitResponse(resetTime)
+    const result = await checkRateLimit(`order_${clientIp}`, 'ORDER_CREATE')
+    if (!result.allowed) {
+      return rateLimitResponse(result.resetTime, result.retryAfter)
     }
 
-    const actor = await getActor(request)
-    if (!actor || actor.role !== 'user') {
-      return NextResponse.json(
-        { error: 'Only authenticated users can place orders' },
-        { status: 401 }
-      )
-    }
+    // CR-005/CR-019: Use centralized auth - only users can place orders
+    const actor = await requireRole(request, 'user')
+
     const body = await request.json()
+    // CR-005/CR-006: Only accept safe, non-financial fields from client
+    // Financial fields are computed server-side from trusted DB prices/config
     const {
       id,
-      customer_id,
       customer_name,
       customer_phone,
       customer_address,
       restaurant_id,
       restaurant_name,
       items,
-      subtotal,
-      packaging_fee,
-      gst,
-      total_amount,
-      status = 'payment_submitted',
       payment_method = 'UPI Online',
-      delivery_otp,
       utr_ref,
       customer_vpa,
       tip = 0,
       discount_amount = 0,
       coupon_code,
-      delivery_fee,
-      driver_id,
-      driver_name,
       order_type = 'restaurant_food',
       distance_km,
     } = body
-    const finalCustomerId = actor?.id || customer_id
-    if (customer_id && actor?.id && customer_id !== actor.id) {
-      return NextResponse.json(
-        { error: 'Customer, restaurant, and order total amount are required' },
-        { status: 400 }
-      )
-    }
 
-    if (!finalCustomerId || !total_amount) {
-      return NextResponse.json({ error: 'Customer and total amount are required' }, { status: 400 })
-    }
+    // CR-005: Derive customer_id from authenticated session only
+    const finalCustomerId = actor.id
+
+    // CR-006: Recompute subtotal from items (not client-submitted)
+    const itemsList: any[] = Array.isArray(items)
+      ? items
+      : typeof items === 'string'
+        ? JSON.parse(items)
+        : []
+    const foodSubtotal = itemsList.reduce(
+      (sum, i: any) => sum + Number(i.price || 0) * Number(i.quantity || i.qty || 1),
+      0
+    )
 
     const rawRestaurantId =
       restaurant_id ||
@@ -280,13 +274,6 @@ export async function POST(request: Request) {
       ? 0
       : Number(restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15)
     const markupRate = isMarkupModel || isHybridModel ? Number(restaurant?.markup_rate ?? 0) : 0
-    const foodSubtotal = Number(subtotal) || 0
-
-    const itemsList = Array.isArray(items)
-      ? items
-      : typeof items === 'string'
-        ? JSON.parse(items)
-        : []
 
     const commercialSnapshot = calculateOrderPriceSnapshot({
       restaurantId: finalRestaurantId || 'rest_01',
@@ -312,15 +299,16 @@ export async function POST(request: Request) {
     })
 
     // Accept real distance from client or default to base distance (avoids incorrect fee calc)
-    const resolvedDistanceKm = typeof distance_km === 'number' && distance_km > 0
-      ? distance_km
-      : paymentConfig.baseDistanceKm || 2.5
+    const resolvedDistanceKm =
+      typeof distance_km === 'number' && distance_km > 0
+        ? distance_km
+        : paymentConfig.baseDistanceKm || 2.5
 
     const calcResult = calculateFullBreakdown(
       {
         subtotal: foodSubtotal,
         distanceKm: resolvedDistanceKm,
-        packagingFee: Number(packaging_fee) || 20,
+        packagingFee: paymentConfig.packagingCap || 20, // CR-006: Server-controlled packaging fee
         tip: Number(tip) || 0,
         restaurantName: finalRestaurantName,
         vendorCommissionPercent: commissionRate,
@@ -366,7 +354,7 @@ export async function POST(request: Request) {
       })(),
       tip: calcResult.customerBilling.tip,
       discount_amount: calcResult.customerBilling.couponDiscount,
-      total_amount: Number(total_amount) || calcResult.customerBilling.grandTotal,
+      total_amount: calcResult.customerBilling.grandTotal,
       vendor_commission_rate: commissionRate,
       vendor_commission_amount: commercialSnapshot.grossCommission,
       vendor_net_payout: vendorNetPayout,
@@ -390,12 +378,10 @@ export async function POST(request: Request) {
       })
     }
 
-    // ─── Enforce Server Validated Total Amount ─────────────
-    const serverCalculatedTotal = calcResult.customerBilling.grandTotal
-    const submittedTotal = Number(total_amount) || 0
-    const finalTotalAmount = serverCalculatedTotal > 0 ? serverCalculatedTotal : submittedTotal
-
     // ─── Create Order ────────────────────────────────────────
+    // CR-007: Generate OTP server-side using crypto.randomInt (not Math.random)
+    const deliveryOtp = String(crypto.randomInt(100000, 999999))
+
     const order = await createOrder({
       id: orderId,
       customer_id: finalCustomerId,
@@ -410,18 +396,14 @@ export async function POST(request: Request) {
       delivery_fee: calcResult.customerBilling.netDeliveryFee,
       platform_fee: calcResult.customerBilling.platformFee,
       handling_fee: calcResult.customerBilling.handlingFee,
-      gst: Number(gst) || 0,
-      total_amount: finalTotalAmount,
-      status: status as OrderStatus,
+      gst: calcResult.customerBilling.gstAmount,
+      total_amount: calcResult.customerBilling.grandTotal,
+      status: 'payment_submitted' as OrderStatus, // CR-005: Server controls status
       order_type,
       payment_method,
-      delivery_otp: String(
-        delivery_otp && String(delivery_otp).trim().length >= 4
-          ? delivery_otp
-          : Math.floor(100000 + Math.random() * 900000)
-      ),
+      delivery_otp: deliveryOtp, // CR-007: Server-generated OTP
       tip: Number(tip) || 0,
-      discount_amount: Number(discount_amount) || 0,
+      discount_amount: calcResult.customerBilling.couponDiscount, // Server-calculated
       coupon_code: coupon_code || undefined,
       commission_amount: commercialSnapshot.grossCommission,
       markup_amount: commercialSnapshot.markupAmount,
@@ -432,6 +414,7 @@ export async function POST(request: Request) {
     })
 
     // ─── Best Effort Payment Review Sync ─────────────────────
+    // CR-008: UTR format is not proof of payment - keep as pending until verified
     if (utr_ref && customer_vpa) {
       try {
         await createPaymentReview({
@@ -439,7 +422,7 @@ export async function POST(request: Request) {
           order_id: orderId,
           utr_ref,
           customer_vpa,
-          amount: Number(total_amount),
+          amount: calcResult.customerBilling.grandTotal, // Server-calculated total
           status: 'pending',
         })
       } catch (err) {
@@ -466,20 +449,8 @@ export async function POST(request: Request) {
       console.warn('Vendor settlement creation notice:', settleErr)
     }
 
-    // ─── Record Driver Payout ────────────────────────────────
-    if (driver_id || driver_name) {
-      try {
-        await createDriverPayout({
-          id: `payout_${orderId}`,
-          driver_id: driver_id || 'drv_default',
-          amount: driverPayout,
-          status: 'pending',
-          transaction_ref: orderId,
-        })
-      } catch (payoutErr) {
-        console.warn('Driver payout creation notice:', payoutErr)
-      }
-    }
+    // CR-005: Driver assignment is handled by dispatch workflow, not at order creation
+    // Driver payout will be created when driver is assigned via PATCH /api/orders
 
     // Broadcast real-time order creation to Admin WebSocket channels
     await broadcast('admin_stats', {
@@ -504,19 +475,14 @@ export async function POST(request: Request) {
       order,
       billing: billingBreakdown,
     })
-  } catch (error: any) {
-    console.error('Order creation error:', error)
-    return NextResponse.json(
-      { error: error?.message || 'Failed to process order' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleAuthError(error)
   }
 }
 
 export async function PATCH(request: Request) {
   try {
-    const actor = await getActor(request)
-    if (!actor) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    const actor = await requireAuth(request)
     const body = await request.json()
     const {
       orderId,
@@ -648,7 +614,7 @@ export async function PATCH(request: Request) {
             id: `payout_${orderId}`,
             driver_id: driver_id || 'drv_default',
             amount: driverPayoutAmount,
-            status: 'completed',
+            status: 'paid',
             transaction_ref: orderId,
           })
         }
@@ -656,7 +622,7 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ success: true, order: updated })
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to update order' }, { status: 500 })
+  } catch (error) {
+    return handleAuthError(error)
   }
 }

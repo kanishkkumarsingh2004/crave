@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 export const roleDetails: Partial<
   Record<
@@ -95,12 +95,52 @@ export default function Navbar() {
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const mobileMenuRef = useRef<HTMLElement>(null)
+  const lastFocusedRef = useRef<HTMLElement | null>(null)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Focus trap for mobile menu
+  useEffect(() => {
+    if (showMobileMenu && mobileMenuRef.current) {
+      lastFocusedRef.current = document.activeElement as HTMLElement
+      const focusableElements = mobileMenuRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      firstElement?.focus()
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === firstElement) {
+            e.preventDefault()
+            lastElement?.focus()
+          } else if (!e.shiftKey && document.activeElement === lastElement) {
+            e.preventDefault()
+            firstElement?.focus()
+          }
+        }
+        if (e.key === 'Escape') {
+          setShowMobileMenu(false)
+        }
+      }
+
+      document.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+        document.body.style.overflow = ''
+        lastFocusedRef.current?.focus()
+      }
+    }
+  }, [showMobileMenu])
 
   const currentDashboardLink =
     role === 'customer' || role === 'user'
@@ -143,10 +183,16 @@ export default function Navbar() {
               </div>
               <button
                 onClick={() => setShowMobileMenu((v) => !v)}
-                className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] lg:hidden"
-                aria-label="Toggle menu"
+                className="grid size-10 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] lg:hidden"
+                aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+                aria-expanded={showMobileMenu}
+                aria-controls="mobile-menu-drawer"
               >
-                <Menu className="size-4 text-[#18201c] dark:text-white" />
+                {showMobileMenu ? (
+                  <X className="size-5 text-[#18201c] dark:text-white" />
+                ) : (
+                  <Menu className="size-5 text-[#18201c] dark:text-white" />
+                )}
               </button>
             </div>
           </nav>
@@ -454,9 +500,11 @@ export default function Navbar() {
 
       {/* Mobile slide-in drawer */}
       <aside
+        ref={mobileMenuRef}
+        id="mobile-menu-drawer"
         aria-label="Mobile navigation"
         aria-hidden={!showMobileMenu}
-        className={`fixed inset-y-0 right-0 z-[70] flex w-[min(20rem,85vw)] flex-col border-l border-[#e2e6de] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 right-0 z-[70] flex w-[min(20rem,85vw)] flex-col border-l border-l border-[#e2e6de] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
           showMobileMenu ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -466,7 +514,7 @@ export default function Navbar() {
             onClick={() => setShowMobileMenu(false)}
             className="flex items-center gap-2.5"
           >
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
+            <span className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
               <UtensilsCrossed className="size-5 fill-current" />
             </span>
             <span className="text-xl font-bold text-[#18201c] dark:text-white">
@@ -475,10 +523,10 @@ export default function Navbar() {
           </Link>
           <button
             onClick={() => setShowMobileMenu(false)}
-            className="grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] text-gray-600 dark:text-gray-300"
+            className="grid size-10 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] text-gray-600 dark:text-gray-300"
             aria-label="Close menu"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
 
@@ -488,7 +536,7 @@ export default function Navbar() {
               <Link
                 href={currentDashboardLink}
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <span>Dashboard</span>
                 <span className="rounded-full bg-[#f0f5db] dark:bg-[#27342d] px-2 py-0.5 text-[10px] text-[#b5de28] dark:text-[#d9f447] capitalize">
@@ -501,7 +549,7 @@ export default function Navbar() {
               <Link
                 href="/user/explore"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <Compass className="size-5 text-[#b5de28]" />
                 Explore
@@ -510,7 +558,7 @@ export default function Navbar() {
               <Link
                 href="/user/track"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <Bike className="size-5 text-[#b5de28]" />
                 Track Drop
@@ -519,7 +567,7 @@ export default function Navbar() {
               <Link
                 href="/user/orders"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <ShoppingBag className="size-5 text-[#b5de28]" />
                 Orders
@@ -528,7 +576,7 @@ export default function Navbar() {
               <Link
                 href="/user/profile"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <User className="size-5 text-[#b5de28]" />
                 Profile
@@ -537,7 +585,7 @@ export default function Navbar() {
               <Link
                 href="/user/dashboard"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <span className="flex items-center gap-3">
                   <ShoppingCart className="size-5 text-[#b5de28]" />
@@ -561,7 +609,7 @@ export default function Navbar() {
                   setShowMobileMenu(false)
                   window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
                 }}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold min-h-[44px]"
               >
                 <Download className="size-5 text-[#b5de28]" />
                 Install Crave App
@@ -573,7 +621,7 @@ export default function Navbar() {
                   setShowMobileMenu(false)
                   router.push('/login')
                 }}
-                className="rounded-xl px-3 py-3 text-left font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                className="rounded-xl px-4 py-4 text-left font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[44px]"
               >
                 Sign Out
               </button>
@@ -583,7 +631,7 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-xl px-3 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 Explore
               </Link>
@@ -598,7 +646,7 @@ export default function Navbar() {
                   setShowMobileMenu(false)
                   window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
                 }}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] text-left w-full font-semibold min-h-[44px]"
               >
                 <Download className="size-5 text-[#b5de28]" />
                 Install Crave App
@@ -607,14 +655,14 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setShowMobileMenu(false)}
-                className="mt-2 rounded-full border border-[#dfe4dc] dark:border-[#27342d] px-4 py-3 text-center text-sm font-bold text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="mt-2 rounded-full border border-[#dfe4dc] dark:border-[#27342d] px-4 py-4 text-center text-sm font-bold text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 Log in
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-3 text-center text-sm font-bold text-white dark:text-[#18201c] hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
+                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-4 text-center text-sm font-bold text-white dark:text-[#18201c] hover:bg-[#323c36] dark:hover:bg-[#c8e434] min-h-[44px]"
               >
                 Sign up
               </Link>
