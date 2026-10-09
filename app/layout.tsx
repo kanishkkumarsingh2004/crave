@@ -13,14 +13,14 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
-  title: 'crave. | Next-Gen Multi-Role Food Delivery Platform',
+  title: 'crave. | Crave What You Love • Instant Food & Grocery Delivery',
   description:
-    'Instant food delivery platform connecting Customers, Kitchen Vendors, Delivery Drivers, and System Admins in real-time.',
+    'Order gourmet food, top local kitchen dishes, and 10-minute instant groceries delivered straight to your door.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Crave',
+    title: 'crave.',
   },
   icons: {
     icon: [

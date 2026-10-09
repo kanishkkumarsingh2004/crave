@@ -44,18 +44,20 @@ export async function PATCH(request: Request) {
     const { id, status } = body
 
     if (!id || !status) {
-      return NextResponse.json({ error: 'Missing id or status' }, { status: 400 })
+      return NextResponse.json({ error: 'Review ID and status are required' }, { status: 400 })
     }
 
-    const review = await prisma.paymentReview.findUnique({ where: { id } })
-    if (!review) {
-      return NextResponse.json({ error: 'Payment review not found' }, { status: 404 })
+    let review: any = null
+    try {
+      review = await prisma.paymentReview.update({
+        where: { id },
+        data: { status: status as PaymentStatus },
+      })
+    } catch (e) {
+      review = await prisma.paymentReview.findUnique({ where: { id } })
     }
 
-    const targetOrderId = review.order_id
-    if (!targetOrderId) {
-      return NextResponse.json({ error: 'Order ID not found in review' }, { status: 400 })
-    }
+    const targetOrderId = review?.order_id || id
 
     // 2. Update the corresponding Order record in database (Prisma & Supabase)
     const newPaymentStatus = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
@@ -82,7 +84,7 @@ export async function PATCH(request: Request) {
             .select()
             .single()
           updatedOrder = data
-        } catch (e) {}
+        } catch (err) {}
       }
     }
 
