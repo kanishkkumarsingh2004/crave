@@ -38,7 +38,9 @@ function createRedisInstance(options: RedisOptions = {}): Redis | null {
       // Gracefully log single notice without crashing or spamming
       if ((process.env.NODE_ENV as string) !== 'test' && !warnLogged) {
         warnLogged = true
-        console.log(`ℹ️ [Redis] Local Redis not detected (${err.message}). Using in-memory fallback.`)
+        console.log(
+          `ℹ️ [Redis] Local Redis not detected (${err.message}). Using in-memory fallback.`
+        )
       }
       g.__redisAvailable = false
     })

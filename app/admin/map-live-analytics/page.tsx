@@ -249,9 +249,7 @@ export default function MapLiveAnalyticsPage() {
                 {autoSyncInterval > 0 && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {autoSyncInterval === 1
-                      ? 'Real-Time Live (1s)'
-                      : `Auto ${autoSyncInterval}s`}
+                    {autoSyncInterval === 1 ? 'Real-Time Live (1s)' : `Auto ${autoSyncInterval}s`}
                   </span>
                 )}
               </div>

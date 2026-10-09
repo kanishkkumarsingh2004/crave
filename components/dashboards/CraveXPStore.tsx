@@ -140,8 +140,8 @@ export default function CraveXPStore() {
                 Ultra-fast Grocery & Daily Essentials
               </h1>
               <p className="mt-1 text-xs text-gray-300 max-w-xl font-medium">
-                Sourced directly from our CraveXP 10 Store hub. Delivered to your doorstep
-                in 10 minutes.
+                Sourced directly from our CraveXP 10 Store hub. Delivered to your doorstep in 10
+                minutes.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#d9f447]">
                 <MapPin className="size-4" />

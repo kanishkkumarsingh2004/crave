@@ -21,10 +21,22 @@ describe('Restaurants API Route - GET', () => {
 
   beforeEach(() => jest.clearAllMocks())
 
-  function makeRequest(url: string): NextRequest {
+  function makeRequest(
+    url: string,
+    options: { role?: string; userId?: string; includeAuth?: boolean } = {}
+  ): NextRequest {
+    const { role = 'user', userId = 'usr_test_user', includeAuth = true } = options
     return {
       url,
-      headers: { get: () => null },
+      headers: {
+        get: (name: string) => {
+          if (!includeAuth) return null
+          if (name === 'x-test-auth') return 'true'
+          if (name === 'x-test-role') return role
+          if (name === 'x-test-user-id') return userId
+          return null
+        },
+      },
     } as unknown as NextRequest
   }
 
@@ -33,7 +45,7 @@ describe('Restaurants API Route - GET', () => {
     listRestaurants.mockResolvedValue(mockRestaurants)
 
     const { GET } = await import('@/app/api/restaurants/route')
-    const req = makeRequest('http://localhost:3000/api/restaurants')
+    const req = makeRequest('http://localhost:3000/api/restaurants', { includeAuth: false })
 
     const response = await GET(req)
     const data = await response.json()
@@ -49,7 +61,9 @@ describe('Restaurants API Route - GET', () => {
     findRestaurantById.mockResolvedValue(mockRestaurant)
 
     const { GET } = await import('@/app/api/restaurants/route')
-    const req = makeRequest('http://localhost:3000/api/restaurants?restaurantId=vnd_1')
+    const req = makeRequest('http://localhost:3000/api/restaurants?restaurantId=vnd_1', {
+      includeAuth: false,
+    })
 
     const response = await GET(req)
     const data = await response.json()
@@ -65,7 +79,9 @@ describe('Restaurants API Route - GET', () => {
     listRestaurants.mockResolvedValue([])
 
     const { GET } = await import('@/app/api/restaurants/route')
-    const req = makeRequest('http://localhost:3000/api/restaurants?ownerId=usr_1')
+    const req = makeRequest('http://localhost:3000/api/restaurants?ownerId=usr_1', {
+      includeAuth: false,
+    })
 
     const response = await GET(req)
     await response.json()
@@ -77,7 +93,9 @@ describe('Restaurants API Route - GET', () => {
     listRestaurants.mockResolvedValue([])
 
     const { GET } = await import('@/app/api/restaurants/route')
-    const req = makeRequest('http://localhost:3000/api/restaurants?isDarkStore=true')
+    const req = makeRequest('http://localhost:3000/api/restaurants?isDarkStore=true', {
+      includeAuth: false,
+    })
 
     const response = await GET(req)
     await response.json()
@@ -89,7 +107,9 @@ describe('Restaurants API Route - GET', () => {
     listRestaurants.mockResolvedValue([])
 
     const { GET } = await import('@/app/api/restaurants/route')
-    const req = makeRequest('http://localhost:3000/api/restaurants?isDarkStore=false')
+    const req = makeRequest('http://localhost:3000/api/restaurants?isDarkStore=false', {
+      includeAuth: false,
+    })
 
     const response = await GET(req)
     await response.json()
@@ -116,10 +136,21 @@ describe('Restaurants API Route - POST', () => {
 
   beforeEach(() => jest.clearAllMocks())
 
-  function makePostRequest(body: any): NextRequest {
+  function makePostRequest(
+    body: any,
+    role: string = 'admin',
+    userId: string = 'usr_test_user'
+  ): NextRequest {
     return {
       json: async () => body,
-      headers: { get: () => null },
+      headers: {
+        get: (name: string) => {
+          if (name === 'x-test-auth') return 'true'
+          if (name === 'x-test-role') return role
+          if (name === 'x-test-user-id') return userId
+          return null
+        },
+      },
       url: 'http://localhost:3000/api/restaurants',
     } as unknown as NextRequest
   }
@@ -176,10 +207,21 @@ describe('Restaurants API Route - PATCH', () => {
 
   beforeEach(() => jest.clearAllMocks())
 
-  function makePatchRequest(body: any): NextRequest {
+  function makePatchRequest(
+    body: any,
+    role: string = 'admin',
+    userId: string = 'usr_test_user'
+  ): NextRequest {
     return {
       json: async () => body,
-      headers: { get: () => null },
+      headers: {
+        get: (name: string) => {
+          if (name === 'x-test-auth') return 'true'
+          if (name === 'x-test-role') return role
+          if (name === 'x-test-user-id') return userId
+          return null
+        },
+      },
       url: 'http://localhost:3000/api/restaurants',
     } as unknown as NextRequest
   }

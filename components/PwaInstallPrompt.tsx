@@ -164,7 +164,9 @@ export default function PwaInstallPrompt() {
               </span>
             </h4>
             <p className="text-xs text-white/70 truncate mt-0.5">
-              {isIos ? 'Add to Home Screen for 1-tap food delivery' : 'Get instant CraveXP 10 Store delivery'}
+              {isIos
+                ? 'Add to Home Screen for 1-tap food delivery'
+                : 'Get instant CraveXP 10 Store delivery'}
             </p>
           </div>
 
@@ -213,7 +215,8 @@ export default function PwaInstallPrompt() {
             </div>
 
             <p className="text-xs text-white/80 mb-4">
-              Apple Safari does not allow automatic 1-tap installation, but you can install Crave in seconds:
+              Apple Safari does not allow automatic 1-tap installation, but you can install Crave in
+              seconds:
             </p>
 
             <div className="space-y-3 mb-6 text-sm">
@@ -223,7 +226,9 @@ export default function PwaInstallPrompt() {
                 </div>
                 <div className="text-xs">
                   <strong className="block text-white font-medium">1. Tap the Share button</strong>
-                  <span className="text-white/60">Located at the bottom of Safari navigation bar</span>
+                  <span className="text-white/60">
+                    Located at the bottom of Safari navigation bar
+                  </span>
                 </div>
               </div>
 
@@ -232,8 +237,12 @@ export default function PwaInstallPrompt() {
                   <PlusSquare className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
-                  <strong className="block text-white font-medium">2. Choose &quot;Add to Home Screen&quot;</strong>
-                  <span className="text-white/60">Scroll down in the share sheet and tap the plus icon</span>
+                  <strong className="block text-white font-medium">
+                    2. Choose &quot;Add to Home Screen&quot;
+                  </strong>
+                  <span className="text-white/60">
+                    Scroll down in the share sheet and tap the plus icon
+                  </span>
                 </div>
               </div>
 

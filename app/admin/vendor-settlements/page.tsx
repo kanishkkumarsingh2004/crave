@@ -4,6 +4,7 @@ import { getLocalPaymentConfig } from '@/lib/payment-config'
 import {
   CheckCircle2,
   Clock3,
+  CreditCard,
   DollarSign,
   Percent,
   Search,
@@ -34,6 +35,9 @@ interface VendorFinancialRecord {
   kitchenStatus: 'open' | 'closed'
   activeOrdersCount: number
   completedDropsCount: number
+  settlementIds?: string[]
+  disbursedAmount?: number
+  transactionRef?: string
 }
 
 export default function VendorSettlementsPage() {
@@ -41,6 +45,14 @@ export default function VendorSettlementsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'settled'>('all')
   const [selectedVendor, setSelectedVendor] = useState<VendorFinancialRecord | null>(null)
   const [settlementProcessedSuccess, setSettlementProcessedSuccess] = useState(false)
+  const [payoutSuccessMsg, setPayoutSuccessMsg] = useState('')
+
+  // Custom Settlement Modal State
+  const [disburseModalVendor, setDisburseModalVendor] = useState<VendorFinancialRecord | null>(null)
+  const [customPayoutAmount, setCustomPayoutAmount] = useState('')
+  const [customUtrRef, setCustomUtrRef] = useState('')
+  const [customNotes, setCustomNotes] = useState('')
+  const [isSubmittingPayout, setIsSubmittingPayout] = useState(false)
 
   // Restaurants list with financial data
   const [vendors, setVendors] = useState<VendorFinancialRecord[]>([])
@@ -49,111 +61,171 @@ export default function VendorSettlementsPage() {
     async function loadLiveSettlements() {
       const activeCfg = getLocalPaymentConfig()
       try {
-        const settsResp = await fetch('/api/admin/settlements')
-        const settsJson = await settsResp.json()
-        const setts = settsJson.settlements
-        if (setts && setts.length > 0) {
-          const loaded: VendorFinancialRecord[] = setts.map((s: any) => ({
-            id: s.id,
-            name: s.restaurant_name,
-            ownerName: 'Verified Partner Store',
-            email: 'partner@crave.com',
-            phone: '+91 98765 43212',
-            cuisine: 'Multi-Cuisine & Fast Food',
-            address: 'Bengaluru, India',
-            fssaiLicense: '#11223344556677',
-            bankAccount: 'HDFC •••• 9821',
-            ifscCode: 'HDFC0001234',
-            weeklyGrossSales: Number(s.gross_sales || 0),
-            commissionRate: Number(s.commission_rate || activeCfg.vendorCommission),
-            packagingCapFee: activeCfg.packagingCap,
-            promoSubsidyPct: 0,
-            settlementStatus: s.status === 'settled' ? 'settled' : 'pending',
-            kitchenStatus: 'open',
-            activeOrdersCount: 1,
-            completedDropsCount: 12,
-          }))
-          setVendors(loaded)
-          return
-        }
+        const [restResp, settsResp, ordersResp] = await Promise.all([
+          fetch('/api/restaurants').catch(() => null),
+          fetch('/api/admin/settlements').catch(() => null),
+          fetch('/api/orders').catch(() => null),
+        ])
 
-        // Fallback: Compute live settlements directly from /api/orders
-        const res = await fetch('/api/orders')
-        const json = await res.json()
-        if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
-          const restaurantMap: Record<string, { name: string; gross: number; count: number }> = {}
-          json.orders.forEach((o: any) => {
-            const rName = o.restaurant_name || 'Crave Kitchen Store'
-            if (!restaurantMap[rName]) {
-              restaurantMap[rName] = { name: rName, gross: 0, count: 0 }
-            }
-            restaurantMap[rName].gross += Number(o.subtotal || o.total_amount || 0)
-            restaurantMap[rName].count += 1
-          })
+        const restJson = restResp ? await restResp.json().catch(() => null) : null
+        const settsJson = settsResp ? await settsResp.json().catch(() => null) : null
+        const ordersJson = ordersResp ? await ordersResp.json().catch(() => null) : null
 
-          const computed: VendorFinancialRecord[] = Object.values(restaurantMap).map(
-            (item, idx) => ({
-              id: `v_settle_${idx + 1}`,
-              name: item.name,
-              ownerName: 'Verified Partner Store',
-              email: 'partner@crave.com',
-              phone: '+91 98765 43212',
-              cuisine: 'Multi-Cuisine & Fast Food',
-              address: 'Bengaluru, India',
-              fssaiLicense: `#112233445${idx + 10}`,
-              bankAccount: `HDFC •••• ${4000 + idx * 111}`,
-              ifscCode: 'HDFC0001234',
-              weeklyGrossSales: item.gross,
-              commissionRate: activeCfg.vendorCommission,
-              packagingCapFee: activeCfg.packagingCap,
-              promoSubsidyPct: 0,
-              settlementStatus: 'pending',
-              kitchenStatus: 'open',
-              activeOrdersCount: 0,
-              completedDropsCount: item.count,
-            })
-          )
-          setVendors(computed)
-          return
-        }
-      } catch (err) {
-        console.error('Failed to load settlements:', err)
-      }
+        const restaurants: any[] = restJson?.restaurants ?? []
+        const settlements: any[] = settsJson?.settlements ?? []
+        const orders: any[] = ordersJson?.orders ?? []
 
-      try {
-        const restRes = await fetch('/api/restaurants')
-        const restJson = await restRes.json()
-        if (
-          restJson.success &&
-          Array.isArray(restJson.restaurants) &&
-          restJson.restaurants.length > 0
-        ) {
-          const loaded: VendorFinancialRecord[] = restJson.restaurants.map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            ownerName: r.owner?.name || 'Verified Partner Store',
+        const restaurantMap: Record<
+          string,
+          {
+            id: string
+            name: string
+            ownerName: string
+            email: string
+            phone: string
+            cuisine: string
+            address: string
+            fssaiLicense: string
+            bankAccount: string
+            ifscCode: string
+            weeklyGrossSales: number
+            commissionRate: number
+            kitchenStatus: 'open' | 'closed'
+            completedDropsCount: number
+            settlementIds: string[]
+            hasPendingSettlement: boolean
+            disbursedAmount: number
+            transactionRef: string
+          }
+        > = {}
+
+        // Step 1: Initialize entries for all registered restaurants
+        restaurants.forEach((r: any) => {
+          const key = (r.id || r.name || 'rest_01').toLowerCase()
+          restaurantMap[key] = {
+            id: r.id || key,
+            name: r.name || 'Crave Kitchen Store',
+            ownerName: r.bank_account_name || r.owner?.name || 'Verified Partner Store',
             email: r.owner?.email || 'partner@crave.com',
-            phone: r.phone || '+91 98765 43212',
-            cuisine: r.cuisine || 'Multi-Cuisine',
+            phone: r.phone || r.owner?.phone || '+91 98765 43212',
+            cuisine: r.cuisine || 'Multi-Cuisine & Fast Food',
             address: r.address || 'Bengaluru, India',
             fssaiLicense: r.fssai_license || '#11223344556677',
-            bankAccount: r.bank_account_number || 'Pending Bank Sync',
-            ifscCode: r.bank_ifsc || 'N/A',
+            bankAccount: r.bank_account_number
+              ? `HDFC •••• ${r.bank_account_number.slice(-4)}`
+              : 'HDFC •••• 9821',
+            ifscCode: r.bank_ifsc || 'HDFC0001234',
             weeklyGrossSales: 0,
-            commissionRate: Number(r.commission_rate || activeCfg.vendorCommission || 15),
-            packagingCapFee: activeCfg.packagingCap,
-            promoSubsidyPct: 0,
-            settlementStatus: 'pending',
+            commissionRate: Number(r.commission_rate ?? activeCfg.vendorCommission ?? 15),
             kitchenStatus: r.is_open ? 'open' : 'closed',
-            activeOrdersCount: 0,
             completedDropsCount: 0,
-          }))
-          setVendors(loaded)
-          return
-        }
-      } catch (e) {}
+            settlementIds: [],
+            hasPendingSettlement: false,
+            disbursedAmount: 0,
+            transactionRef: '',
+          }
+        })
 
-      setVendors([])
+        // Step 2: Aggregate settlement records into the restaurant map
+        settlements.forEach((s: any) => {
+          const rId = (s.restaurant_id || s.restaurant?.id || '').toLowerCase()
+          const rName = (s.restaurant_name || s.restaurant?.name || '').toLowerCase()
+
+          const foundKey = Object.keys(restaurantMap).find(
+            (k) => (rId && k === rId) || (rName && restaurantMap[k].name.toLowerCase() === rName)
+          )
+          const targetKey = foundKey || rId || rName || `settle_${s.id}`
+
+          if (!restaurantMap[targetKey]) {
+            const rObj = s.restaurant || {}
+            restaurantMap[targetKey] = {
+              id: rObj.id || rId || targetKey,
+              name: s.restaurant_name || rObj.name || 'Crave Kitchen Store',
+              ownerName: rObj.bank_account_name || 'Verified Partner Store',
+              email: 'partner@crave.com',
+              phone: rObj.phone || '+91 98765 43212',
+              cuisine: rObj.cuisine || 'Multi-Cuisine & Fast Food',
+              address: rObj.address || 'Bengaluru, India',
+              fssaiLicense: rObj.fssai_license || '#11223344556677',
+              bankAccount: rObj.bank_account_number
+                ? `HDFC •••• ${rObj.bank_account_number.slice(-4)}`
+                : 'HDFC •••• 9821',
+              ifscCode: rObj.bank_ifsc || 'HDFC0001234',
+              weeklyGrossSales: 0,
+              commissionRate: Number(
+                s.commission_rate ?? rObj.commission_rate ?? activeCfg.vendorCommission ?? 15
+              ),
+              kitchenStatus: rObj.is_open ? 'open' : 'closed',
+              completedDropsCount: 0,
+              settlementIds: [],
+              hasPendingSettlement: false,
+              disbursedAmount: 0,
+              transactionRef: '',
+            }
+          }
+
+          restaurantMap[targetKey].weeklyGrossSales += Number(s.gross_sales || 0)
+          restaurantMap[targetKey].completedDropsCount += 1
+          restaurantMap[targetKey].settlementIds.push(s.id)
+          if (s.status !== 'settled' && s.status !== 'paid') {
+            restaurantMap[targetKey].hasPendingSettlement = true
+          } else {
+            restaurantMap[targetKey].disbursedAmount =
+              (restaurantMap[targetKey].disbursedAmount || 0) + Number(s.net_payout || 0)
+            if (s.transaction_ref) {
+              restaurantMap[targetKey].transactionRef = s.transaction_ref
+            }
+          }
+        })
+
+        // Step 3: Fallback to orders if kitchen has no settlements recorded yet
+        orders.forEach((o: any) => {
+          const rId = (o.restaurant_id || o.vendor_id || '').toLowerCase()
+          const rName = (o.restaurant_name || '').toLowerCase()
+
+          const targetKey = Object.keys(restaurantMap).find(
+            (k) => (rId && k === rId) || (rName && restaurantMap[k].name.toLowerCase() === rName)
+          )
+
+          if (targetKey && restaurantMap[targetKey].settlementIds.length === 0) {
+            restaurantMap[targetKey].weeklyGrossSales += Number(o.subtotal || o.total_amount || 0)
+            restaurantMap[targetKey].completedDropsCount += 1
+          }
+        })
+
+        const loaded: VendorFinancialRecord[] = Object.values(restaurantMap).map((r) => ({
+          id: r.id,
+          name: r.name,
+          ownerName: r.ownerName,
+          email: r.email,
+          phone: r.phone,
+          cuisine: r.cuisine,
+          address: r.address,
+          fssaiLicense: r.fssaiLicense,
+          bankAccount: r.bankAccount,
+          ifscCode: r.ifscCode,
+          weeklyGrossSales: r.weeklyGrossSales,
+          commissionRate: r.commissionRate,
+          packagingCapFee: activeCfg.packagingCap,
+          promoSubsidyPct: 0,
+          settlementStatus: r.hasPendingSettlement
+            ? 'pending'
+            : r.completedDropsCount > 0
+              ? 'settled'
+              : 'pending',
+          kitchenStatus: r.kitchenStatus,
+          activeOrdersCount: 0,
+          completedDropsCount: r.completedDropsCount,
+          settlementIds: r.settlementIds,
+          disbursedAmount: r.disbursedAmount || 0,
+          transactionRef: r.transactionRef || '',
+        }))
+
+        setVendors(loaded)
+      } catch (err) {
+        console.error('Failed to load settlements:', err)
+        setVendors([])
+      }
     }
     loadLiveSettlements()
   }, [])
@@ -195,7 +267,9 @@ export default function VendorSettlementsPage() {
     const commissionCut = (gross * commRate) / 100
     const promoCut = (gross * promoPct) / 100
     const netPayable = gross - commissionCut + promoCut
-    return { commissionCut, promoCut, netPayable }
+    const finalPayout =
+      v.disbursedAmount != null && v.disbursedAmount > 0 ? v.disbursedAmount : netPayable
+    return { commissionCut, promoCut, netPayable, finalPayout }
   }
 
   // Update Vendor Pricing & Commission in Playground
@@ -221,13 +295,97 @@ export default function VendorSettlementsPage() {
     }
   }
 
-  // Process Settlement Action
-  async function markVendorSettled(id: string) {
-    await updateVendorPricing(id, 'settlementStatus', 'settled')
-    setSettlementProcessedSuccess(true)
-    setTimeout(() => {
-      setSettlementProcessedSuccess(false)
-    }, 3000)
+  // Open Custom Disburse Settlement Payout Modal
+  function openDisburseModal(v: VendorFinancialRecord) {
+    const fin = getVendorFinancials(v)
+    setDisburseModalVendor(v)
+    setCustomPayoutAmount(fin.netPayable.toString())
+    setCustomUtrRef(v.transactionRef || `UTR${Date.now().toString().slice(-8)}`)
+    setCustomNotes('')
+  }
+
+  // Handle Custom Disbursed Settlement Submission
+  async function handleConfirmCustomDisbursement() {
+    if (!disburseModalVendor) return
+    setIsSubmittingPayout(true)
+
+    const payoutVal = parseFloat(customPayoutAmount) || 0
+    const fin = getVendorFinancials(disburseModalVendor)
+
+    try {
+      const res = await fetch('/api/admin/settlements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurant_id: disburseModalVendor.id,
+          restaurant_name: disburseModalVendor.name,
+          gross_sales: disburseModalVendor.weeklyGrossSales,
+          commission_rate: disburseModalVendor.commissionRate,
+          commission_amount: fin.commissionCut,
+          net_payout: payoutVal,
+          status: 'settled',
+          transaction_ref: customUtrRef,
+          notes: customNotes,
+        }),
+      })
+
+      if (disburseModalVendor.settlementIds && disburseModalVendor.settlementIds.length > 0) {
+        await Promise.all(
+          disburseModalVendor.settlementIds.map((settId) =>
+            fetch('/api/admin/settlements', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: settId,
+                status: 'settled',
+                net_payout: payoutVal,
+                transaction_ref: customUtrRef,
+              }),
+            }).catch(() => null)
+          )
+        )
+      }
+
+      setVendors((prev) =>
+        prev.map((v) =>
+          v.id === disburseModalVendor.id
+            ? {
+                ...v,
+                settlementStatus: 'settled',
+                disbursedAmount: payoutVal,
+                transactionRef: customUtrRef,
+              }
+            : v
+        )
+      )
+
+      if (selectedVendor && selectedVendor.id === disburseModalVendor.id) {
+        setSelectedVendor((prev) =>
+          prev
+            ? {
+                ...prev,
+                settlementStatus: 'settled',
+                disbursedAmount: payoutVal,
+                transactionRef: customUtrRef,
+              }
+            : null
+        )
+      }
+
+      setPayoutSuccessMsg(
+        `Custom settlement payout of ₹${payoutVal.toLocaleString()} disbursed to ${disburseModalVendor.name}!`
+      )
+      setDisburseModalVendor(null)
+      setSettlementProcessedSuccess(true)
+      setTimeout(() => {
+        setSettlementProcessedSuccess(false)
+        setPayoutSuccessMsg('')
+      }, 5000)
+    } catch (err) {
+      console.error('Failed to disburse custom settlement:', err)
+    } finally {
+      setIsSubmittingPayout(false)
+    }
   }
 
   return (
@@ -243,14 +401,14 @@ export default function VendorSettlementsPage() {
           </h2>
           <p className="mt-0.5 text-xs text-[#717c76] dark:text-gray-400">
             Inspect restaurant sales, calculate commission cuts, alter vendor pricing parameters,
-            and process weekly payouts.
+            and process custom weekly payouts.
           </p>
         </div>
 
         {settlementProcessedSuccess && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 px-4 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50">
-            <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" /> Settlement
-            Payout Processed Successfully!
+            <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" />{' '}
+            {payoutSuccessMsg || 'Settlement Payout Processed Successfully!'}
           </div>
         )}
       </div>
@@ -334,7 +492,7 @@ export default function VendorSettlementsPage() {
               Kitchen Vendor Financial Breakdown
             </h3>
             <p className="text-xs text-[#737e77] dark:text-gray-400">
-              Select any restaurant to alter custom commission, set pricing, or disburse
+              Select any restaurant to alter custom commission, set pricing, or disburse custom
               settlements.
             </p>
           </div>
@@ -415,24 +573,31 @@ export default function VendorSettlementsPage() {
                   </div>
                   <div className="col-span-2 pt-1 border-t border-dashed border-gray-100 dark:border-[#27342d] flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-gray-400">
-                      Net Payable
+                      {v.settlementStatus === 'settled' && v.disbursedAmount
+                        ? 'Disbursed Payout'
+                        : 'Net Payable'}
                     </span>
                     <span className="font-extrabold text-blue-700 dark:text-blue-400 text-sm">
-                      ₹{fin.netPayable.toLocaleString()}
+                      ₹
+                      {v.settlementStatus === 'settled' && v.disbursedAmount
+                        ? v.disbursedAmount.toLocaleString()
+                        : fin.netPayable.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                    {v.cuisine}
-                  </span>
+                <div className="flex items-center justify-between pt-1 gap-2">
+                  <button
+                    onClick={() => openDisburseModal(v)}
+                    className="rounded-full bg-[#d9f447] text-[#121815] px-3.5 py-1.5 text-xs font-black transition hover:bg-[#c8e434] flex items-center gap-1"
+                  >
+                    <CreditCard className="size-3.5" /> Disburse Payout
+                  </button>
                   <button
                     onClick={() => setSelectedVendor(v)}
-                    className="rounded-full bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] transition hover:bg-[#323d36] dark:hover:bg-[#97b51b] flex items-center gap-1.5"
+                    className="rounded-full bg-[#18201c] dark:bg-[#202b24] border border-[#27342d] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1.5"
                   >
-                    <Sliders className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> Alter &
-                    Inspect
+                    <Sliders className="size-3.5 text-[#d9f447]" /> Alter &amp; Inspect
                   </button>
                 </div>
               </div>
@@ -484,8 +649,20 @@ export default function VendorSettlementsPage() {
                     <td className="px-4 py-4 font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                       ₹{fin.commissionCut.toLocaleString()}
                     </td>
-                    <td className="px-4 py-4 font-bold text-blue-700 dark:text-blue-400 text-sm whitespace-nowrap">
-                      ₹{fin.netPayable.toLocaleString()}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <p className="font-extrabold text-blue-700 dark:text-blue-400 text-sm">
+                        ₹
+                        {v.settlementStatus === 'settled' && v.disbursedAmount
+                          ? v.disbursedAmount.toLocaleString()
+                          : fin.netPayable.toLocaleString()}
+                      </p>
+                      {v.settlementStatus === 'settled' &&
+                        v.disbursedAmount &&
+                        v.disbursedAmount !== fin.netPayable && (
+                          <p className="text-[10px] text-amber-500 font-semibold">
+                            Custom Disbursed
+                          </p>
+                        )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span
@@ -499,13 +676,20 @@ export default function VendorSettlementsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => setSelectedVendor(v)}
-                        className="rounded-full bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-[11px] font-bold text-white dark:text-[#121815] transition hover:bg-[#323d36] dark:hover:bg-[#97b51b] flex items-center gap-1.5 ml-auto"
-                      >
-                        <Sliders className="size-3 text-[#d9f447] dark:text-[#121815]" /> Alter &
-                        Inspect
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openDisburseModal(v)}
+                          className="rounded-full bg-[#d9f447] text-[#121815] px-3 py-1.5 text-[11px] font-black transition hover:bg-[#c8e434] flex items-center gap-1 shadow-xs"
+                        >
+                          <CreditCard className="size-3" /> Disburse Payout
+                        </button>
+                        <button
+                          onClick={() => setSelectedVendor(v)}
+                          className="rounded-full bg-[#18201c] dark:bg-[#202b24] border border-[#27342d] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#323d36] flex items-center gap-1"
+                        >
+                          <Sliders className="size-3 text-[#d9f447]" /> Alter &amp; Inspect
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -517,81 +701,89 @@ export default function VendorSettlementsPage() {
 
       {/* Interactive Vendor Pricing & Financial Playground Modal / Drawer */}
       {selectedVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#18201c]/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#18201c] text-gray-900 dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d]">
-            <div className="flex items-start justify-between border-b border-gray-200 dark:border-[#27342d] pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0f0d]/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-[#121815] text-white p-6 shadow-2xl border border-[#233027] space-y-6 custom-scrollbar">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-[#202b24] pb-4">
               <div>
-                <span className="rounded-full bg-amber-100 dark:bg-amber-950/60 px-3 py-1 text-[10px] font-bold text-amber-900 dark:text-amber-300 uppercase">
-                  Vendor Pricing Playground & Monitor
+                <span className="rounded-full bg-[#d9f447]/10 px-3 py-1 text-[10px] font-extrabold text-[#d9f447] border border-[#d9f447]/30 uppercase tracking-wider">
+                  Vendor Pricing Playground &amp; Monitor
                 </span>
-                <h3 className="mt-2 text-2xl font-bold text-[#18201c] dark:text-white">
-                  {selectedVendor.name}
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <h3 className="mt-2 text-2xl font-black text-white">{selectedVendor.name}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
                   {selectedVendor.cuisine} · {selectedVendor.address}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedVendor(null)}
-                className="grid size-9 place-items-center rounded-full bg-gray-100 dark:bg-[#121815] hover:bg-gray-200 dark:hover:bg-[#202923]"
+                className="grid size-9 place-items-center rounded-full bg-[#1a221d] hover:bg-[#233027] text-gray-400 hover:text-white transition"
               >
-                <X className="size-5 text-gray-600 dark:text-gray-300" />
+                <X className="size-5" />
               </button>
             </div>
 
-            {/* Financial Overview Cards for this Vendor */}
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-gray-200 bg-[#f8f9f6] p-4">
-                <p className="text-[10px] font-bold uppercase text-gray-500">Weekly Gross Sales</p>
-                <p className="text-2xl font-bold text-[#18201c] mt-1">
+            {/* Financial Overview Cards */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-[#233027] bg-[#171f1b] p-4 shadow-md">
+                <p className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider">
+                  Weekly Gross Sales
+                </p>
+                <p className="text-2xl font-black text-white mt-1.5">
                   ₹{selectedVendor.weeklyGrossSales.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-gray-500 mt-0.5">
+                <p className="text-[11px] text-gray-400 mt-1">
                   {selectedVendor.completedDropsCount} drops completed
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
-                <p className="text-[10px] font-bold uppercase text-amber-800">
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 shadow-md">
+                <p className="text-[10px] font-extrabold uppercase text-amber-400 tracking-wider">
                   Our Platform Cut ({selectedVendor.commissionRate}%)
                 </p>
-                <p className="text-2xl font-bold text-amber-700 mt-1">
-                  ₹{getVendorFinancials(selectedVendor).commissionCut.toLocaleString()}
+                <p className="text-2xl font-black text-amber-400 mt-1.5">
+                  -₹{getVendorFinancials(selectedVendor).commissionCut.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-amber-800 mt-0.5">Retained platform commission</p>
+                <p className="text-[11px] text-amber-300/80 mt-1">Retained platform commission</p>
               </div>
 
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-                <p className="text-[10px] font-bold uppercase text-emerald-800">
+              <div className="rounded-2xl border border-[#d9f447]/30 bg-[#d9f447]/10 p-4 shadow-md">
+                <p className="text-[10px] font-extrabold uppercase text-[#d9f447] tracking-wider">
                   Net Vendor Settlement
                 </p>
-                <p className="text-2xl font-bold text-emerald-700 mt-1">
-                  ₹{getVendorFinancials(selectedVendor).netPayable.toLocaleString()}
+                <p className="text-2xl font-black text-[#d9f447] mt-1.5">
+                  ₹
+                  {selectedVendor.settlementStatus === 'settled' && selectedVendor.disbursedAmount
+                    ? selectedVendor.disbursedAmount.toLocaleString()
+                    : getVendorFinancials(selectedVendor).netPayable.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-emerald-800 mt-0.5">
+                <p className="text-[11px] text-emerald-400 font-semibold mt-1">
                   Payable to {selectedVendor.ownerName}
                 </p>
               </div>
             </div>
 
             {/* Section 2: Alter & Custom Set Pricing Playground */}
-            <div className="mt-6 rounded-3xl border border-purple-200 bg-purple-50/30 p-5">
-              <h4 className="font-bold text-sm text-purple-950 flex items-center gap-2">
-                <Sparkles className="size-4 text-purple-600" /> Alter & Custom Set Vendor Pricing
-              </h4>
-              <p className="text-xs text-purple-900/70 mt-0.5">
-                Override custom commission rate, packaging cap, or promo subsidy specifically for{' '}
-                {selectedVendor.name}.
-              </p>
+            <div className="rounded-2xl border border-[#27342d] bg-[#171f1b] p-5 shadow-lg space-y-4">
+              <div>
+                <h4 className="font-black text-sm text-white flex items-center gap-2">
+                  <Sparkles className="size-4 text-[#d9f447]" /> Alter &amp; Custom Set Vendor
+                  Pricing
+                </h4>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Override custom commission rate, packaging cap, or promo subsidy specifically for{' '}
+                  <strong className="text-white">{selectedVendor.name}</strong>.
+                </p>
+              </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-3 text-xs">
+              <div className="grid gap-4 sm:grid-cols-3 text-xs">
                 <div>
-                  <label className="font-bold text-[#18201c]">Commission Rate (%)</label>
+                  <label className="font-bold text-gray-300">Commission Rate (%)</label>
                   <div className="mt-1.5 flex items-center gap-2">
                     <input
                       type="number"
                       min="0"
-                      max="40"
+                      max="50"
                       value={selectedVendor.commissionRate}
                       onChange={(e) => {
                         const val = e.target.value
@@ -601,14 +793,14 @@ export default function VendorSettlementsPage() {
                           val === '' ? '' : parseFloat(val)
                         )
                       }}
-                      className="w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
+                      className="w-full rounded-xl border border-[#27342d] bg-[#0d1210] px-3.5 py-2.5 font-bold text-white outline-none focus:border-[#d9f447] transition-colors"
                     />
-                    <span className="font-bold text-purple-900">%</span>
+                    <span className="font-bold text-gray-400">%</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Packaging Cap Fee (₹)</label>
+                  <label className="font-bold text-gray-300">Packaging Cap Fee (₹)</label>
                   <input
                     type="number"
                     value={selectedVendor.packagingCapFee}
@@ -620,12 +812,12 @@ export default function VendorSettlementsPage() {
                         val === '' ? '' : parseFloat(val)
                       )
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#27342d] bg-[#0d1210] px-3.5 py-2.5 font-bold text-white outline-none focus:border-[#d9f447] transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#18201c]">Platform Promo Subsidy (%)</label>
+                  <label className="font-bold text-gray-300">Platform Promo Subsidy (%)</label>
                   <input
                     type="number"
                     value={selectedVendor.promoSubsidyPct}
@@ -637,84 +829,272 @@ export default function VendorSettlementsPage() {
                         val === '' ? '' : parseFloat(val)
                       )
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 font-bold outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#27342d] bg-[#0d1210] px-3.5 py-2.5 font-bold text-white outline-none focus:border-[#d9f447] transition-colors"
                   />
                 </div>
               </div>
             </div>
 
             {/* Section 3: Live Kitchen Monitor & Bank Details */}
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 text-xs">
-              <div className="rounded-2xl border border-gray-200 p-4">
-                <h5 className="font-bold text-[#18201c]">Live Kitchen Monitor</h5>
-                <div className="mt-3 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Kitchen Status:</span>
+            <div className="grid gap-4 sm:grid-cols-2 text-xs">
+              <div className="rounded-2xl border border-[#233027] bg-[#171f1b] p-4 shadow-md">
+                <h5 className="font-extrabold text-sm text-white border-b border-[#202b24] pb-2.5 mb-3">
+                  Live Kitchen Monitor
+                </h5>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Kitchen Status:</span>
                     <span
-                      className={`font-bold capitalize ${selectedVendor.kitchenStatus === 'open' ? 'text-emerald-600' : 'text-rose-600'}`}
+                      className={`font-black text-xs uppercase px-2.5 py-0.5 rounded-full ${
+                        selectedVendor.kitchenStatus === 'open'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      }`}
                     >
                       ● {selectedVendor.kitchenStatus}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Active Cooking Orders:</span>
-                    <span className="font-bold text-[#18201c]">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Active Cooking Orders:</span>
+                    <span className="font-bold text-white">
                       {selectedVendor.activeOrdersCount} orders
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">FSSAI License:</span>
-                    <span className="font-mono text-gray-700 font-semibold">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">FSSAI License:</span>
+                    <span className="font-mono text-gray-300 font-bold">
                       {selectedVendor.fssaiLicense}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-4">
-                <h5 className="font-bold text-[#18201c]">Settlement Bank Payout Details</h5>
-                <div className="mt-3 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Payee Account:</span>
-                    <span className="font-mono font-bold text-[#18201c]">
+              <div className="rounded-2xl border border-[#233027] bg-[#171f1b] p-4 shadow-md">
+                <h5 className="font-extrabold text-sm text-white border-b border-[#202b24] pb-2.5 mb-3">
+                  Settlement Bank Payout Details
+                </h5>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Payee Account:</span>
+                    <span className="font-mono font-bold text-white">
                       {selectedVendor.bankAccount}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Bank IFSC:</span>
-                    <span className="font-mono text-gray-700 font-semibold">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Bank IFSC:</span>
+                    <span className="font-mono text-gray-300 font-bold">
                       {selectedVendor.ifscCode}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Phone / Contact:</span>
-                    <span className="font-semibold text-gray-700">{selectedVendor.phone}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 font-medium">Phone / Contact:</span>
+                    <span className="font-bold text-white">{selectedVendor.phone}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Disburse Payout */}
-            <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
+            {/* Action Disburse Payout Footer */}
+            <div className="pt-4 border-t border-[#202b24] flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400">Net Payable Amount</p>
-                <p className="text-xl font-bold text-emerald-700">
-                  ₹{getVendorFinancials(selectedVendor).netPayable.toLocaleString()}
+                <p className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider">
+                  Net Payable Amount
+                </p>
+                <p className="text-2xl font-black text-[#d9f447] mt-0.5">
+                  ₹
+                  {selectedVendor.settlementStatus === 'settled' && selectedVendor.disbursedAmount
+                    ? selectedVendor.disbursedAmount.toLocaleString()
+                    : getVendorFinancials(selectedVendor).netPayable.toLocaleString()}
                 </p>
               </div>
 
-              {selectedVendor.settlementStatus === 'pending' ? (
-                <button
-                  onClick={() => markVendorSettled(selectedVendor.id)}
-                  className="flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-emerald-700"
-                >
-                  <CheckCircle2 className="size-4" /> Disburse Settlement Payout
-                </button>
-              ) : (
-                <span className="rounded-full bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 border border-emerald-300">
-                  Settlement Disbursed & Completed
+              <button
+                type="button"
+                onClick={() => openDisburseModal(selectedVendor)}
+                className="flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/10 hover:bg-[#c8e434] active:scale-95 transition"
+              >
+                <CheckCircle2 className="size-4 text-[#0d1310]" /> Disburse Settlement Payout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Settlement Payout Modal Popup */}
+      {disburseModalVendor && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#000000]/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-[#121815] text-white p-6 shadow-2xl border border-[#233027] space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-[#202b24] pb-3.5">
+              <div>
+                <span className="rounded-full bg-[#d9f447]/10 px-3 py-1 text-[10px] font-extrabold text-[#d9f447] border border-[#d9f447]/30 uppercase tracking-wider">
+                  Custom Settlement Disbursement
                 </span>
-              )}
+                <h3 className="mt-2 text-xl font-black text-white">{disburseModalVendor.name}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Owner:{' '}
+                  <span className="text-white font-semibold">{disburseModalVendor.ownerName}</span>{' '}
+                  · {disburseModalVendor.phone}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDisburseModalVendor(null)}
+                className="grid size-8 place-items-center rounded-full bg-[#1a221d] hover:bg-[#233027] text-gray-400 hover:text-white transition"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Calculated Net Payable Context */}
+            <div className="rounded-2xl border border-[#233027] bg-[#171f1b] p-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Calculated Net Payable (Full)
+                </p>
+                <p className="text-xl font-extrabold text-emerald-400 mt-0.5">
+                  ₹{getVendorFinancials(disburseModalVendor).netPayable.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Gross Sales: ₹{disburseModalVendor.weeklyGrossSales.toLocaleString()}
+                </p>
+                <p className="text-xs text-amber-400 font-semibold mt-0.5">
+                  Platform Cut ({disburseModalVendor.commissionRate}%): -₹
+                  {getVendorFinancials(disburseModalVendor).commissionCut.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Custom Settlement Amount Field */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-200">
+                Disbursement Settlement Amount (₹) <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 font-bold text-gray-400 text-sm">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={customPayoutAmount}
+                  onChange={(e) => setCustomPayoutAmount(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className="w-full rounded-xl border border-[#27342d] bg-[#0d1210] pl-8 pr-4 py-2.5 text-lg font-black text-[#d9f447] outline-none focus:border-[#d9f447] transition"
+                />
+              </div>
+
+              {/* Quick percentage / preset buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Quick Set:</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomPayoutAmount(
+                      getVendorFinancials(disburseModalVendor).netPayable.toString()
+                    )
+                  }
+                  className="rounded-lg bg-[#202b24] hover:bg-[#2c3b31] px-2.5 py-1 text-[11px] font-bold text-[#d9f447] transition border border-[#2c3b31]"
+                >
+                  Full (100%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomPayoutAmount(
+                      (
+                        Math.round(
+                          getVendorFinancials(disburseModalVendor).netPayable * 0.75 * 100
+                        ) / 100
+                      ).toString()
+                    )
+                  }
+                  className="rounded-lg bg-[#202b24] hover:bg-[#2c3b31] px-2.5 py-1 text-[11px] font-bold text-gray-300 transition border border-[#2c3b31]"
+                >
+                  75%
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCustomPayoutAmount(
+                      (
+                        Math.round(
+                          getVendorFinancials(disburseModalVendor).netPayable * 0.5 * 100
+                        ) / 100
+                      ).toString()
+                    )
+                  }
+                  className="rounded-lg bg-[#202b24] hover:bg-[#2c3b31] px-2.5 py-1 text-[11px] font-bold text-gray-300 transition border border-[#2c3b31]"
+                >
+                  50%
+                </button>
+              </div>
+            </div>
+
+            {/* Bank UTR Reference */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-200">
+                Bank UTR / Transaction Reference
+              </label>
+              <input
+                type="text"
+                value={customUtrRef}
+                onChange={(e) => setCustomUtrRef(e.target.value)}
+                placeholder="e.g. UTR84920194"
+                className="w-full rounded-xl border border-[#27342d] bg-[#0d1210] px-3.5 py-2 text-xs font-mono text-white outline-none focus:border-[#d9f447] transition"
+              />
+            </div>
+
+            {/* Settlement Remarks / Notes */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-200">
+                Disbursement Notes / Remarks (Optional)
+              </label>
+              <input
+                type="text"
+                value={customNotes}
+                onChange={(e) => setCustomNotes(e.target.value)}
+                placeholder="e.g. Partial custom settlement of ₹1,500 released as agreed"
+                className="w-full rounded-xl border border-[#27342d] bg-[#0d1210] px-3.5 py-2 text-xs text-white outline-none focus:border-[#d9f447] transition"
+              />
+            </div>
+
+            {/* Payee Bank Account Warning / info */}
+            <div className="rounded-xl bg-[#171f1b] border border-[#233027] p-3 text-[11px] text-gray-400 flex items-center justify-between">
+              <span>
+                Payee: <strong className="text-white">{disburseModalVendor.bankAccount}</strong> (
+                {disburseModalVendor.ifscCode})
+              </span>
+              <span className="text-emerald-400 font-semibold">Verified Bank</span>
+            </div>
+
+            {/* Footer buttons */}
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#202b24]">
+              <button
+                type="button"
+                onClick={() => setDisburseModalVendor(null)}
+                className="rounded-full bg-[#1e2722] hover:bg-[#28352e] px-5 py-2.5 text-xs font-bold text-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  isSubmittingPayout || !customPayoutAmount || parseFloat(customPayoutAmount) < 0
+                }
+                onClick={handleConfirmCustomDisbursement}
+                className="flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-2.5 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/20 hover:bg-[#c8e434] active:scale-95 transition disabled:opacity-50"
+              >
+                {isSubmittingPayout ? (
+                  <>Processing Settlement...</>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4 text-[#0d1310]" /> Confirm &amp; Disburse ₹
+                    {parseFloat(customPayoutAmount || '0').toLocaleString()}
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

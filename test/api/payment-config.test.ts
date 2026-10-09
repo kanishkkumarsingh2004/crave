@@ -21,10 +21,21 @@ describe('Payment Config API', () => {
     } as unknown as NextRequest
   }
 
-  function makePostRequest(body: any): NextRequest {
+  function makePostRequest(
+    body: any,
+    role: string = 'admin',
+    userId: string = 'usr_test_user'
+  ): NextRequest {
     return {
       json: async () => body,
-      headers: { get: () => null },
+      headers: {
+        get: (name: string) => {
+          if (name === 'x-test-auth') return 'true'
+          if (name === 'x-test-role') return role
+          if (name === 'x-test-user-id') return userId
+          return null
+        },
+      },
       url: 'http://localhost:3000/api/payment-config',
     } as unknown as NextRequest
   }

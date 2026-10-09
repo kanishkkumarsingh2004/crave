@@ -1,9 +1,10 @@
-/**
- * @jest-environment node
- */
 import { isRedisAvailable, createRedisSubscriber } from '@/lib/redis'
-import { tryLockDriverForOffer, isDriverLocked, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
-import { checkRateLimit, checkRateLimitAsync } from '@/lib/rate-limit'
+import {
+  tryLockDriverForOffer,
+  isDriverLocked,
+  releaseDriverLock,
+} from '@/lib/dispatch/atomic-lock'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 describe('Redis Subsystem & Distributed Resiliency', () => {
   describe('Redis Client Availability & Fallback', () => {
@@ -46,16 +47,17 @@ describe('Redis Subsystem & Distributed Resiliency', () => {
   })
 
   describe('Distributed Rate Limiting with Fallback', () => {
-    it('checkRateLimit enforces window limit synchronously', () => {
+    it('checkRateLimit enforces window limit', async () => {
       const ip = '192.168.1.100'
-      const first = checkRateLimit(ip, 5, 10000)
+      const first = await checkRateLimit(`test_${ip}`, 'PUBLIC')
       expect(first.allowed).toBe(true)
-      expect(first.remaining).toBe(4)
+      expect(first.remaining).toBe(99)
     })
 
-    it('checkRateLimitAsync resolves correctly with in-memory fallback', async () => {
+    it('checkRateLimit enforces tier limits', async () => {
       const ip = '192.168.1.101'
-      const result = await checkRateLimitAsync(ip, 5, 10000)
+      // Use AUTH_LOGIN tier (5 req/5min)
+      const result = await checkRateLimit(`test_${ip}`, 'AUTH_LOGIN')
       expect(result.allowed).toBe(true)
       expect(result.remaining).toBe(4)
     })

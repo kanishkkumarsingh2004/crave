@@ -1,4 +1,8 @@
-import { listVendorSettlements, updateVendorSettlementStatus } from '@/lib/dal/payments'
+import {
+  createVendorSettlement,
+  listVendorSettlements,
+  updateVendorSettlementStatus,
+} from '@/lib/dal/payments'
 import { verifyToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
@@ -15,7 +19,11 @@ export async function GET(request?: Request) {
 
       const authHeader = request.headers.get('authorization')
       let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('drop_auth_token')?.value || ''
+      if (!token)
+        token =
+          (await cookies()).get('crave_auth_token')?.value ||
+          (await cookies()).get('drop_auth_token')?.value ||
+          ''
 
       const payload = token ? await verifyToken(token) : null
       if (process.env.NODE_ENV !== 'test') {
@@ -41,7 +49,29 @@ export async function GET(request?: Request) {
       orderBy: { payout_date: 'desc' },
       include: { restaurant: true },
     })
-    return NextResponse.json({ success: true, settlements })
+
+    const totalGrossSales = settlements.reduce((acc, s) => acc + Number(s.gross_sales || 0), 0)
+    const totalCommission = settlements.reduce(
+      (acc, s) => acc + Number(s.commission_amount || 0),
+      0
+    )
+    const totalNetPayable = settlements.reduce((acc, s) => acc + Number(s.net_payout || 0), 0)
+    const totalSettledAmount = settlements
+      .filter((s) => s.status === 'paid' || (s.status as string) === 'settled')
+      .reduce((acc, s) => acc + Number(s.net_payout || 0), 0)
+    const remainingBalance = Math.max(0, totalNetPayable - totalSettledAmount)
+
+    return NextResponse.json({
+      success: true,
+      settlements,
+      summary: {
+        total_gross_sales: totalGrossSales,
+        total_commission: totalCommission,
+        total_net_payable: totalNetPayable,
+        total_settled_amount: totalSettledAmount,
+        remaining_balance: remainingBalance,
+      },
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to load settlements' },
@@ -62,16 +92,47 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { id, status, commission_rate, restaurant_id } = body
+    const {
+      id,
+      status,
+      commission_rate,
+      restaurant_id,
+      restaurant_name,
+      gross_sales,
+      commission_amount,
+      net_payout,
+      transaction_ref,
+    } = body
 
-    if (id && status) {
+    if (id && status && net_payout == null) {
       await updateVendorSettlementStatus(id, status)
     }
 
     if (restaurant_id && commission_rate != null) {
-      await prisma.restaurant.update({
-        where: { id: restaurant_id },
-        data: { commission_rate: Number(commission_rate) },
+      try {
+        await prisma.restaurant.update({
+          where: { id: restaurant_id },
+          data: { commission_rate: Number(commission_rate) },
+        })
+      } catch (e) {}
+    }
+
+    let settlementRecord: any = null
+    if (restaurant_id && net_payout != null) {
+      const settleStatus =
+        status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
+      settlementRecord = await createVendorSettlement({
+        id: id && !id.startsWith('rest_') ? id : `set_${Date.now()}`,
+        restaurant_id,
+        restaurant_name: restaurant_name || 'Restaurant Store',
+        gross_sales: Number(gross_sales || net_payout),
+        commission_rate: Number(commission_rate || 15),
+        commission_amount: Number(commission_amount || 0),
+        net_payout: Number(net_payout),
+        status: settleStatus as any,
+        transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
+        period_start: new Date(),
+        period_end: new Date(),
       })
     }
 
@@ -81,10 +142,15 @@ export async function POST(request: Request) {
       status,
       commission_rate,
       restaurant_id,
+      settlement: settlementRecord,
       timestamp: new Date().toISOString(),
     })
 
-    return NextResponse.json({ success: true, message: 'Settlement updated successfully' })
+    return NextResponse.json({
+      success: true,
+      message: 'Settlement processed successfully',
+      settlement: settlementRecord,
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to update settlement' },

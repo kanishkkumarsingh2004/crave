@@ -114,7 +114,7 @@ export async function listOrders(filters?: {
   return prisma.order.findMany({
     where,
     orderBy: { created_at: 'desc' },
-    take: filters?.limit,
+    take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
 }
 

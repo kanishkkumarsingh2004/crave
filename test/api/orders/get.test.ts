@@ -84,10 +84,21 @@ describe('Orders API Route - GET', () => {
 
   beforeEach(() => jest.clearAllMocks())
 
-  function makeRequest(url: string): NextRequest {
+  function makeRequest(
+    url: string,
+    role: string = 'user',
+    userId: string = 'usr_test_user'
+  ): NextRequest {
     return {
       url,
-      headers: { get: () => null },
+      headers: {
+        get: (name: string) => {
+          if (name === 'x-test-auth') return 'true'
+          if (name === 'x-test-role') return role
+          if (name === 'x-test-user-id') return userId
+          return null
+        },
+      },
     } as unknown as NextRequest
   }
 
@@ -103,7 +114,7 @@ describe('Orders API Route - GET', () => {
     expect(data.success).toBe(true)
     expect(data.orders).toHaveLength(1)
     expect(listOrders).toHaveBeenCalledWith({
-      customerId: undefined,
+      customerId: 'usr_test_user',
       restaurantId: undefined,
       restaurantName: undefined,
     })
@@ -133,7 +144,7 @@ describe('Orders API Route - GET', () => {
     await response.json()
 
     expect(listOrders).toHaveBeenCalledWith({
-      customerId: 'usr_1',
+      customerId: 'usr_test_user',
       restaurantId: undefined,
       restaurantName: undefined,
     })
@@ -142,7 +153,7 @@ describe('Orders API Route - GET', () => {
   it('filters orders by vendorId (restaurantId) with onlyApprovedForVendor', async () => {
     listOrders.mockResolvedValue([])
     const { GET } = await import('@/app/api/orders/route')
-    const req = makeRequest('http://localhost:3000/api/orders?vendorId=vnd_1')
+    const req = makeRequest('http://localhost:3000/api/orders?vendorId=vnd_1', 'restaurant_vendor')
 
     const response = await GET(req)
     await response.json()

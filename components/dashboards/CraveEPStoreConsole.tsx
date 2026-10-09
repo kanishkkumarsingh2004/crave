@@ -1322,9 +1322,7 @@ export default function CraveXPStoreConsole() {
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-[#18201c]"
-              >
-                
-              </button>
+              ></button>
             </div>
 
             <form onSubmit={handleAddItem} className="flex flex-col gap-3">
@@ -1635,9 +1633,7 @@ function CameraBarcodeScannerModal({
               onClose()
             }}
             className="text-gray-400 hover:text-[#18201c] text-lg font-bold"
-          >
-            
-          </button>
+          ></button>
         </div>
 
         <p className="text-xs text-gray-500 mb-3">

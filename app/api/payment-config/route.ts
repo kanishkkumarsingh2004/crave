@@ -1,7 +1,6 @@
 import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getApiActor, requireAdmin } from '@/lib/api-auth'
 
 export interface PaymentConfig {
   upiVpa: string
@@ -62,22 +61,8 @@ let memoryConfigCache: PaymentConfig | null = null
 
 export async function GET(request?: Request) {
   try {
-    const authHeader = request?.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      try {
-        const c = await cookies()
-        token = c.get('crave_auth_token')?.value || c.get('crave_token')?.value || ''
-      } catch {}
-    }
-
-    let isAdmin = false
-    if (token) {
-      try {
-        const payload = await verifyToken(token)
-        isAdmin = payload?.role === 'admin'
-      } catch {}
-    }
+    const actor = await getApiActor(request || new Request('http://localhost'))
+    const isAdmin = actor?.role === 'admin'
 
     const local = memoryConfigCache
 
@@ -184,7 +169,7 @@ export async function GET(request?: Request) {
       }),
     }
 
-    if (!isAdmin && process.env.NODE_ENV !== 'test') {
+    if (!isAdmin) {
       merged.accountNumber = ''
       merged.ifscCode = ''
       merged.mccCode = ''
@@ -198,21 +183,7 @@ export async function GET(request?: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      try {
-        const c = await cookies()
-        token = c.get('crave_auth_token')?.value || c.get('crave_token')?.value || ''
-      } catch {}
-    }
-
-    if (process.env.NODE_ENV !== 'test') {
-      const payload = token ? await verifyToken(token) : null
-      if (!payload || payload.role !== 'admin') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-      }
-    }
+    await requireAdmin(request)
 
     const body: PaymentConfig = await request.json()
     const fullConfig: PaymentConfig = {

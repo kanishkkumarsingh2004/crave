@@ -31,7 +31,7 @@ export default function VendorSidebar() {
     },
     {
       href: '/vendor/menu',
-      label: t?.vendor?.menuManagement || 'Menu Management',
+      label: t?.vendor?.menuManagement || 'Menu Catalog',
       icon: UtensilsCrossed,
     },
     {
@@ -100,8 +100,8 @@ export default function VendorSidebar() {
       </aside>
 
       {/* Top Header Navigation Bar */}
-      <div className="sticky top-0 z-30 border-b border-[#202d25] bg-[#0f1512]/90 backdrop-blur-xl px-4 py-3.5 sm:px-8 shadow-lg">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-0 z-30 border-b border-[#202d25] bg-[#0f1512]/90 backdrop-blur-xl px-4 py-3.5 sm:px-8 shadow-lg w-full max-w-full overflow-hidden">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full min-w-0">
           {/* Brand Logo & Kitchen Name */}
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
             <Link
@@ -224,6 +224,37 @@ export default function VendorSidebar() {
           aria-hidden="true"
         />
       )}
+
+      {/* Mobile Fixed Bottom Navigation Bar (< lg) */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-around border-t border-[#202923] bg-[#0f1512]/95 backdrop-blur-xl px-2 py-2 lg:hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-safe"
+        aria-label="Vendor bottom navigation"
+      >
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-1.5 transition-all text-[10px] font-bold min-w-[64px] ${
+                isActive ? 'text-[#d9f447] font-black scale-105' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <div
+                className={`grid size-7 place-items-center rounded-xl transition-all ${
+                  isActive
+                    ? 'bg-[#d9f447] text-[#0d1310] shadow-md shadow-[#d9f447]/20 ring-2 ring-[#d9f447]/30'
+                    : 'bg-transparent text-gray-400'
+                }`}
+              >
+                <Icon className="size-4 shrink-0" />
+              </div>
+              <span className="truncate max-w-[75px] text-center leading-tight">{label}</span>
+            </Link>
+          )
+        })}
+      </nav>
     </>
   )
 }

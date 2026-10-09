@@ -2148,9 +2148,15 @@ export default function CustomerDashboard({
                   </div>
                   <div>
                     <p className="text-lg font-black text-[#18201c] dark:text-white">
-                      {pastOrders.filter((o) => o.status === 'Delivered' || o.status === 'In Progress').length}
+                      {
+                        pastOrders.filter(
+                          (o) => o.status === 'Delivered' || o.status === 'In Progress'
+                        ).length
+                      }
                     </p>
-                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Orders Delivered</p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
+                      Orders Delivered
+                    </p>
                   </div>
                 </div>
 
@@ -2162,7 +2168,9 @@ export default function CustomerDashboard({
                     <p className="text-lg font-black text-amber-600 dark:text-amber-400">
                       ₹{pastOrders.reduce((a, o) => a + (o.discount || 0), 0) + 120}
                     </p>
-                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Lifetime Saved</p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
+                      Lifetime Saved
+                    </p>
                   </div>
                 </div>
 
@@ -2174,7 +2182,9 @@ export default function CustomerDashboard({
                     <p className="text-lg font-black text-purple-600 dark:text-purple-400">
                       {craveCoins} Coins
                     </p>
-                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">Worth ₹{Math.floor(craveCoins / 10)} Off</p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
+                      Worth ₹{Math.floor(craveCoins / 10)} Off
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2197,7 +2207,12 @@ export default function CustomerDashboard({
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-[#55635a] dark:text-gray-300 font-medium leading-relaxed max-w-xl">
-                      Enjoy <strong className="text-amber-800 dark:text-amber-300">Unlimited Free Delivery</strong> on all orders above ₹199, zero rain surge fees, and VIP priority kitchen dispatch.
+                      Enjoy{' '}
+                      <strong className="text-amber-800 dark:text-amber-300">
+                        Unlimited Free Delivery
+                      </strong>{' '}
+                      on all orders above ₹199, zero rain surge fees, and VIP priority kitchen
+                      dispatch.
                     </p>
                   </div>
                 </div>
@@ -2272,7 +2287,10 @@ export default function CustomerDashboard({
                     <span>App Theme &amp; Visual Appearance</span>
                   </h3>
                   <p className="text-xs text-[#55635a] dark:text-gray-400 mt-1 font-medium">
-                    Crave defaults to fresh <strong className="text-[#b5de28]">Light Theme</strong>. If you prefer low-light viewing, select <strong className="text-[#18201c] dark:text-white">Dark Mode</strong> below anytime.
+                    Crave defaults to fresh <strong className="text-[#b5de28]">Light Theme</strong>.
+                    If you prefer low-light viewing, select{' '}
+                    <strong className="text-[#18201c] dark:text-white">Dark Mode</strong> below
+                    anytime.
                   </p>
                 </div>
                 <span className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-full bg-[#f4f7ed] dark:bg-[#27342d] px-3 py-1 text-[11px] font-bold text-[#b5de28] dark:text-[#d9f447]">
@@ -2309,8 +2327,12 @@ export default function CustomerDashboard({
                 {savedAddresses.length === 0 ? (
                   <div className="sm:col-span-2 rounded-2xl border border-dashed border-[#dfe4dc] dark:border-[#27342d] p-6 text-center">
                     <MapPin className="size-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                    <p className="text-xs font-bold text-[#18201c] dark:text-white">No saved addresses yet</p>
-                    <p className="text-[11px] text-gray-500 mt-1">Tap Add New to drop a pin or save your home/work address.</p>
+                    <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                      No saved addresses yet
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Tap Add New to drop a pin or save your home/work address.
+                    </p>
                   </div>
                 ) : (
                   savedAddresses.map((addr) => {
@@ -2354,7 +2376,11 @@ export default function CustomerDashboard({
                           type="button"
                           onClick={() => {
                             updateDeliveryAddress(addr.address)
-                            setSelectedMapPin(addr.lat != null && addr.lng != null ? { lat: addr.lat, lng: addr.lng } : null)
+                            setSelectedMapPin(
+                              addr.lat != null && addr.lng != null
+                                ? { lat: addr.lat, lng: addr.lng }
+                                : null
+                            )
                             triggerToast(`Switched active delivery location to ${addr.label}!`)
                           }}
                           className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
@@ -2413,15 +2439,23 @@ export default function CustomerDashboard({
                   <div className="pt-2 space-y-3">
                     <label className="flex items-center justify-between cursor-pointer">
                       <div className="pr-4">
-                        <p className="text-xs font-bold text-[#18201c] dark:text-white">Eco-friendly Cutlery</p>
-                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">Skip disposable plastic spoons &amp; tissues</p>
+                        <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                          Eco-friendly Cutlery
+                        </p>
+                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">
+                          Skip disposable plastic spoons &amp; tissues
+                        </p>
                       </div>
                       <input
                         type="checkbox"
                         checked={optCutlery}
                         onChange={(e) => {
                           setOptCutlery(e.target.checked)
-                          triggerToast(e.target.checked ? 'Eco-cutlery preference saved' : 'Cutlery opt-in saved')
+                          triggerToast(
+                            e.target.checked
+                              ? 'Eco-cutlery preference saved'
+                              : 'Cutlery opt-in saved'
+                          )
                         }}
                         className="size-4 accent-[#b5de28] rounded cursor-pointer"
                       />
@@ -2429,15 +2463,23 @@ export default function CustomerDashboard({
 
                     <label className="flex items-center justify-between cursor-pointer">
                       <div className="pr-4">
-                        <p className="text-xs font-bold text-[#18201c] dark:text-white">Contactless Doorstep Drop-off</p>
-                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">Riders leave delivery outside door/gate</p>
+                        <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                          Contactless Doorstep Drop-off
+                        </p>
+                        <p className="text-[11px] text-[#66756c] dark:text-gray-400">
+                          Riders leave delivery outside door/gate
+                        </p>
                       </div>
                       <input
                         type="checkbox"
                         checked={optContactless}
                         onChange={(e) => {
                           setOptContactless(e.target.checked)
-                          triggerToast(e.target.checked ? 'Contactless drop enabled' : 'Hand-to-hand delivery enabled')
+                          triggerToast(
+                            e.target.checked
+                              ? 'Contactless drop enabled'
+                              : 'Hand-to-hand delivery enabled'
+                          )
                         }}
                         className="size-4 accent-[#b5de28] rounded cursor-pointer"
                       />
@@ -2455,11 +2497,15 @@ export default function CustomerDashboard({
 
                   <div className="rounded-2xl bg-linear-to-tr from-[#18201c] to-[#26352c] p-4 text-white shadow-sm mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#9eb3a4]">Instant Refund &amp; Cashback Balance</span>
+                      <span className="text-xs font-bold text-[#9eb3a4]">
+                        Instant Refund &amp; Cashback Balance
+                      </span>
                       <Wallet className="size-4 text-[#d9f447]" />
                     </div>
                     <p className="text-2xl font-black text-[#d9f447] mt-1">₹{walletBalance}.00</p>
-                    <p className="text-[10px] text-gray-300 mt-1">Applied automatically at checkout for instant 1-tap discounts.</p>
+                    <p className="text-[10px] text-gray-300 mt-1">
+                      Applied automatically at checkout for instant 1-tap discounts.
+                    </p>
                   </div>
 
                   <div className="space-y-2.5">
@@ -2467,8 +2513,12 @@ export default function CustomerDashboard({
                       <div className="flex items-center gap-2.5">
                         <CreditCard className="size-4 text-[#b5de28]" />
                         <div>
-                          <p className="text-xs font-bold text-[#18201c] dark:text-white">UPI Direct Transfer</p>
-                          <p className="text-[10px] text-gray-500 font-mono">crave@upi &bull; Verified Receiver</p>
+                          <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                            UPI Direct Transfer
+                          </p>
+                          <p className="text-[10px] text-gray-500 font-mono">
+                            crave@upi &bull; Verified Receiver
+                          </p>
                         </div>
                       </div>
                       <span className="rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5">
@@ -2480,8 +2530,12 @@ export default function CustomerDashboard({
                       <div className="flex items-center gap-2.5">
                         <Smartphone className="size-4 text-[#b5de28]" />
                         <div>
-                          <p className="text-xs font-bold text-[#18201c] dark:text-white">App Notifications</p>
-                          <p className="text-[10px] text-gray-500">Live order status SMS &amp; WhatsApp alerts</p>
+                          <p className="text-xs font-bold text-[#18201c] dark:text-white">
+                            App Notifications
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            Live order status SMS &amp; WhatsApp alerts
+                          </p>
                         </div>
                       </div>
                       <input
@@ -2498,7 +2552,10 @@ export default function CustomerDashboard({
                   <span className="flex items-center gap-1 font-semibold">
                     <Lock className="size-3 text-emerald-600" /> 256-Bit TLS Bank Encrypted
                   </span>
-                  <Link href="/policies/security" className="font-bold text-[#b5de28] hover:underline">
+                  <Link
+                    href="/policies/security"
+                    className="font-bold text-[#b5de28] hover:underline"
+                  >
                     Security Details
                   </Link>
                 </div>
@@ -2512,8 +2569,12 @@ export default function CustomerDashboard({
                   <HelpCircle className="size-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-[#18201c] dark:text-white">Need help with an ongoing order?</h4>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Our Bengaluru support team is online 24/7 to resolve queries.</p>
+                  <h4 className="font-bold text-xs sm:text-sm text-[#18201c] dark:text-white">
+                    Need help with an ongoing order?
+                  </h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                    Our Bengaluru support team is online 24/7 to resolve queries.
+                  </p>
                 </div>
               </div>
 

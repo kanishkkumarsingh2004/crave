@@ -4,8 +4,70 @@ import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import { calculateCheckoutPricing } from '@/lib/distance-pricing'
+import { calculateHaversineDistanceKm } from '@/lib/utils'
 import CustomAlertModal from '@/components/CustomAlertModal'
 import React, { createContext, useContext, useEffect, useState } from 'react'
+
+// Default coordinates for fallback (Koramangala, Bengaluru)
+const DEFAULT_DRIVER_LAT = 12.679898
+const DEFAULT_DRIVER_LNG = 77.469493
+const DEFAULT_RESTAURANT_LAT = 12.9352
+const DEFAULT_RESTAURANT_LNG = 77.6245
+
+/**
+ * Creates a broadcast order offer from an order target
+ * Shared utility to eliminate duplicate code between WebSocket listener and polling
+ */
+function createBroadcastOfferFromOrder(
+  target: any,
+  driverGpsCoords?: number[] | null
+): BroadcastOrderOffer | null {
+  if (!target || !target.id) return null
+  if (
+    !target.id ||
+    (target.status !== 'ready_for_pickup' && target.status !== 'ready') ||
+    (target.driver_name &&
+      target.driver_name !== 'Unassigned' &&
+      target.driver_name !== 'Unassigned Driver')
+  ) {
+    return null
+  }
+
+  const driverLat = driverGpsCoords ? driverGpsCoords[0] : DEFAULT_DRIVER_LAT
+  const driverLng = driverGpsCoords ? driverGpsCoords[1] : DEFAULT_DRIVER_LNG
+  const distKm = calculateHaversineDistanceKm(
+    driverLat,
+    driverLng,
+    DEFAULT_RESTAURANT_LAT,
+    DEFAULT_RESTAURANT_LNG
+  )
+
+  let itemsArr: any[] = []
+  try {
+    itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
+  } catch (e) {}
+
+  const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
+  const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
+
+  return {
+    id: target.id,
+    orderNumber: `#${target.id.slice(0, 8)}`,
+    restaurantName: target.restaurant_name || 'Crave Kitchen Store',
+    restaurantAddress: target.customer_address
+      ? `Kitchen near ${target.customer_address}`
+      : 'Koramangala 5th Block, Bengaluru',
+    customerName: target.customer_name || 'Customer',
+    customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
+    basePayout,
+    surgeBonus,
+    tip: tipVal,
+    distance: `${distKm || 1.8} km`,
+    itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
+    customerPhone: target.customer_phone || undefined,
+    otp: String(realOtp),
+  }
+}
 
 export interface CustomAlertOptions {
   title?: string
@@ -82,25 +144,6 @@ export interface PayoutLogItem {
   amount: number
   date: string
   status: string
-}
-
-export function calculateHaversineDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLon = ((lon2 - lon1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return Math.round(R * c * 10) / 10
 }
 
 interface DriverContextType {
@@ -360,46 +403,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (msg.channel === 'order_update' || msg.channel === 'admin_orders') {
         const data = msg.data as any
         const target = data.order || data
-        if (
-          target &&
-          target.id &&
-          (target.status === 'ready_for_pickup' || target.status === 'ready') &&
-          (!target.driver_name ||
-            target.driver_name === 'Unassigned' ||
-            target.driver_name === 'Unassigned Driver')
-        ) {
+        const offer = createBroadcastOfferFromOrder(target, driverGpsCoords)
+        if (offer) {
           playChimeSound()
-          const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
-          const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
-          const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
-
-          let itemsArr: any[] = []
-          try {
-            itemsArr =
-              typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
-          } catch (e) {}
-
-          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
-
           setOfferTimer(25)
-          setBroadcastOffer({
-            id: target.id,
-            orderNumber: `#${target.id.slice(0, 8)}`,
-            restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-            restaurantAddress: target.customer_address
-              ? `Kitchen near ${target.customer_address}`
-              : 'Koramangala 5th Block, Bengaluru',
-            customerName: target.customer_name || 'Customer',
-            customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-            basePayout,
-            surgeBonus,
-            tip: tipVal,
-            distance: `${distKm || 1.8} km`,
-            itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
-            customerPhone: target.customer_phone || undefined,
-            otp: String(realOtp),
-          })
+          setBroadcastOffer(offer)
         }
       }
     },
@@ -426,43 +434,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
           if (availableOrders.length > 0) {
             const target = availableOrders[availableOrders.length - 1]
-            const driverLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
-            const driverLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
-
-            const distKm = calculateHaversineDistance(driverLat, driverLng, 12.9352, 77.6245)
-
-            let itemsArr: any[] = []
-            try {
-              itemsArr =
-                typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
-            } catch (e) {}
-
-            const realOtp =
-              target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-            const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
-
-            setOfferTimer(25)
-            setBroadcastOffer({
-              id: target.id,
-              orderNumber: `#${target.id.slice(0, 8)}`,
-              restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-              restaurantAddress: target.customer_address
-                ? `Kitchen near ${target.customer_address}`
-                : 'Koramangala 5th Block, Bengaluru',
-              customerName: target.customer_name || 'Customer',
-              customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-              basePayout,
-              surgeBonus,
-              tip: tipVal,
-              distance: `${distKm || 1.8} km`,
-              itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
-              customerPhone: target.customer_phone || undefined,
-              otp: String(realOtp),
-              restaurantLat: target.restaurant_lat ? Number(target.restaurant_lat) : 12.6817,
-              restaurantLng: target.restaurant_lng ? Number(target.restaurant_lng) : 77.4729,
-              customerLat: target.customer_lat ? Number(target.customer_lat) : 12.679898,
-              customerLng: target.customer_lng ? Number(target.customer_lng) : 77.469493,
-            })
+            const offer = createBroadcastOfferFromOrder(target, driverGpsCoords)
+            if (offer) {
+              setOfferTimer(25)
+              setBroadcastOffer(offer)
+            }
           }
         }
       } catch (err) {
@@ -771,37 +747,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         )
         if (availableOrders.length > 0) {
           const target = availableOrders[availableOrders.length - 1]
-          let itemsArr: any[] = []
-          try {
-            itemsArr =
-              typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
-          } catch (e) {}
-
-          const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
-          const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
-
-          setOfferTimer(25)
-          setBroadcastOffer({
-            id: target.id,
-            orderNumber: `#${target.id.slice(0, 8)}`,
-            restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-            restaurantAddress: target.customer_address
-              ? `Kitchen near ${target.customer_address}`
-              : 'Koramangala, Bengaluru',
-            customerName: target.customer_name || 'Customer',
-            customerAddress: target.customer_address || 'Indiranagar',
-            basePayout,
-            surgeBonus,
-            tip: tipVal,
-            distance: '1.8 km',
-            itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
-            otp: String(realOtp),
-            restaurantLat: target.restaurant_lat ? Number(target.restaurant_lat) : 12.6817,
-            restaurantLng: target.restaurant_lng ? Number(target.restaurant_lng) : 77.4729,
-            customerLat: target.customer_lat ? Number(target.customer_lat) : 12.679898,
-            customerLng: target.customer_lng ? Number(target.customer_lng) : 77.469493,
-          })
-          return
+          const offer = createBroadcastOfferFromOrder(target, driverGpsCoords)
+          if (offer) {
+            setOfferTimer(25)
+            setBroadcastOffer(offer)
+            return
+          }
         }
       }
     } catch (e) {}

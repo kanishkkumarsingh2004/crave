@@ -126,13 +126,10 @@ export default function VendorSettingsPage() {
           gst_status: gstStatus || 'REGISTERED',
           supplier_state: supplierState || 'Karnataka',
           price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
-          commercial_model: commercialModel,
-          commission_rate: commissionRate,
-          markup_rate: markupRate,
         }),
       })
       if (!res.ok) throw new Error('Save failed')
-      setToastMsg('Bank account details, GST profile & commercial settings saved to DB!')
+      setToastMsg('Bank account details & store settings saved successfully!')
     } catch (err) {
       setToastMsg('Could not save settings to the database.')
     } finally {
@@ -241,9 +238,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. Krishna Sagar Pvt Ltd"
                   value={accountHolder}
                   onChange={(e) => setAccountHolder(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -252,9 +250,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. HDFC Bank"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -263,9 +262,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. 5010023456789"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -274,9 +274,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. HDFC0001234"
                   value={ifscCode}
                   onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -286,7 +287,7 @@ export default function VendorSettingsPage() {
                   type="text"
                   value={payoutUpi}
                   onChange={(e) => setPayoutUpi(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                   placeholder="e.g. restaurant@bank"
                 />
               </div>
@@ -325,9 +326,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. 11223344556677"
                   value={fssaiLicense}
                   onChange={(e) => setFssaiLicense(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -336,9 +338,10 @@ export default function VendorSettingsPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. 9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -347,9 +350,10 @@ export default function VendorSettingsPage() {
                 <textarea
                   rows={2}
                   required
+                  placeholder="Enter full pickup address for riders..."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
             </div>
@@ -379,7 +383,7 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 29AAAAA0000A1Z5"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -390,10 +394,18 @@ export default function VendorSettingsPage() {
                   onChange={(e) => setGstStatus(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
                 >
-                  <option value="REGISTERED">REGISTERED (Regular Taxable)</option>
-                  <option value="UNREGISTERED">UNREGISTERED</option>
-                  <option value="COMPOSITION">COMPOSITION SCHEME</option>
-                  <option value="EXEMPT">EXEMPT</option>
+                  <option value="REGISTERED" className="bg-[#121815] text-white">
+                    REGISTERED (Regular Taxable)
+                  </option>
+                  <option value="UNREGISTERED" className="bg-[#121815] text-white">
+                    UNREGISTERED
+                  </option>
+                  <option value="COMPOSITION" className="bg-[#121815] text-white">
+                    COMPOSITION SCHEME
+                  </option>
+                  <option value="EXEMPT" className="bg-[#121815] text-white">
+                    EXEMPT
+                  </option>
                 </select>
               </div>
 
@@ -401,9 +413,10 @@ export default function VendorSettingsPage() {
                 <label className="font-bold text-gray-200">Supplier Registration State</label>
                 <input
                   type="text"
+                  placeholder="e.g. Karnataka"
                   value={supplierState}
                   onChange={(e) => setSupplierState(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
                 />
               </div>
 
@@ -414,83 +427,15 @@ export default function VendorSettingsPage() {
                   onChange={(e) => setPriceTaxMode(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
                 >
-                  <option value="TAX_INCLUSIVE">
+                  <option value="TAX_INCLUSIVE" className="bg-[#121815] text-white">
                     TAX INCLUSIVE (Displayed price includes 5% GST)
                   </option>
-                  <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE (5% GST added at checkout)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Commercial Model & Commission / Markup Settings */}
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
-                <Sparkles className="size-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-white">
-                  Commercial Settlement &amp; Pricing Model
-                </h3>
-                <p className="text-xs text-gray-400">
-                  Configure separate commission cut (%) and platform customer markup (%)
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3 text-xs">
-              <div>
-                <label className="font-bold text-gray-200">Commercial Model</label>
-                <select
-                  value={commercialModel}
-                  onChange={(e) => setCommercialModel(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
-                >
-                  <option value="commission">COMMISSION (Vendor pays % cut on order)</option>
-                  <option value="markup">MARKUP (Platform adds % markup for customer)</option>
-                  <option value="hybrid">
-                    HYBRID (Both Commission cut &amp; Customer Markup apply)
+                  <option value="TAX_EXCLUSIVE" className="bg-[#121815] text-white">
+                    TAX EXCLUSIVE (5% GST added at checkout)
                   </option>
                 </select>
               </div>
-
-              <div>
-                <label className="font-bold text-gray-200">
-                  Commission Rate (%) {commercialModel === 'markup' && '(Disabled)'}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  disabled={commercialModel === 'markup'}
-                  value={commissionRate}
-                  onChange={(e) => setCommissionRate(Number(e.target.value))}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447] disabled:bg-[#18201c] disabled:text-gray-500"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-gray-200">
-                  Platform Markup Rate (%) {commercialModel === 'commission' && '(Disabled)'}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  disabled={commercialModel === 'commission'}
-                  value={markupRate}
-                  onChange={(e) => setMarkupRate(Number(e.target.value))}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447] disabled:bg-[#18201c] disabled:text-gray-500"
-                />
-              </div>
             </div>
-
-            <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 p-3 rounded-2xl">
-              <strong>Example:</strong> Under <strong>Commission (e.g., 15%)</strong>, the vendor
-              pays 15% to the platform. Under <strong>Markup (e.g., 10%)</strong>, the platform adds
-              10% on top of the vendor's base menu price for customers.
-            </p>
           </div>
 
           {/* Submit Save Button */}
@@ -499,8 +444,7 @@ export default function VendorSettingsPage() {
               type="submit"
               className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/10 hover:bg-[#c8e434] active:scale-95 transition"
             >
-              <Save className="size-4 text-[#0d1310]" /> Save Bank, Profile &amp; Commercial
-              Settings
+              <Save className="size-4 text-[#0d1310]" /> Save Bank &amp; Store Settings
             </button>
           </div>
         </form>

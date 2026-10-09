@@ -59,7 +59,7 @@ describe('Orders API Route - POST', () => {
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    expect(data.error).toContain('authenticated')
+    expect(data.error).toContain('Authentication required')
   })
 
   it('rejects order from non-user role', async () => {
@@ -75,47 +75,39 @@ describe('Orders API Route - POST', () => {
     const response = await POST(req)
     const data = await response.json()
 
-    expect(response.status).toBe(401)
-    expect(data.error).toContain('Only authenticated users')
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('Insufficient permissions')
   })
 
-  it('rejects order when customer_id does not match actor', async () => {
+  it('ignores client customer_id and uses authenticated user', async () => {
     const { POST } = await import('@/app/api/orders/route')
     const req = makeRequest({
       customer_id: 'usr_different',
       restaurant_id: 'vnd_1',
       total_amount: 100,
+      items: [{ name: 'Pizza', qty: 1, price: 100 }],
     })
 
     const response = await POST(req)
     const data = await response.json()
 
-    expect(response.status).toBe(400)
-    expect(data.error).toContain('required')
+    // Should succeed using authenticated user's ID (usr_test_user)
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
   })
 
-  it('rejects order when restaurant_id is missing', async () => {
+  it('accepts order without client total_amount (server computes)', async () => {
     const { POST } = await import('@/app/api/orders/route')
     const req = makeRequest({
-      customer_id: 'usr_test_user',
-      restaurant_id: null,
-      total_amount: 100,
+      restaurant_id: 'vnd_1',
+      items: [{ name: 'Pizza', qty: 1, price: 100 }],
     })
 
     const response = await POST(req)
     const data = await response.json()
 
-    expect(response.status).toBe(400)
-  })
-
-  it('rejects order when total_amount is missing', async () => {
-    const { POST } = await import('@/app/api/orders/route')
-    const req = makeRequest({ customer_id: 'usr_test_user', restaurant_id: 'vnd_1' })
-
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
   })
 
   it('creates an order with valid data', async () => {

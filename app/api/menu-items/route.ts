@@ -61,7 +61,10 @@ export async function POST(request: Request) {
       })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
       if (rest && rest.owner_id !== actor.id && rest.id !== vendorRestaurantId) {
-        return NextResponse.json({ error: 'Forbidden: You do not own this restaurant' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own this restaurant' },
+          { status: 403 }
+        )
       }
     }
 
@@ -125,7 +128,10 @@ export async function PATCH(request: Request) {
         existingItem.restaurant.owner_id !== actor.id &&
         existingItem.restaurant.id !== vendorRestaurantId
       ) {
-        return NextResponse.json({ error: 'Forbidden: You do not own this menu item' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own this menu item' },
+          { status: 403 }
+        )
       }
     }
 
@@ -178,7 +184,10 @@ export async function DELETE(request: Request) {
         existingItem.restaurant.owner_id !== actor.id &&
         existingItem.restaurant.id !== vendorRestaurantId
       ) {
-        return NextResponse.json({ error: 'Forbidden: You do not own this menu item' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own this menu item' },
+          { status: 403 }
+        )
       }
     }
 

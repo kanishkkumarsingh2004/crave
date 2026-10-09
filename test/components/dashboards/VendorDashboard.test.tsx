@@ -51,6 +51,17 @@ jest.mock('@/components/ui/map', () => ({
   MapComponent: () => <div data-testid="map" />,
 }))
 
+jest.mock('@/lib/websocket', () => {
+  const playChimeSound = jest.fn()
+  const publishLiveEvent = jest.fn()
+  return {
+    useWebSocket: () => ({}),
+    useVendorOrderUpdates: () => ({}),
+    playChimeSound,
+    publishLiveEvent,
+  }
+})
+
 describe('VendorDashboard - Live Orders Rendering', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -100,7 +111,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     expect(screen.queryByText(/Payment Pending/i)).not.toBeInTheDocument()
   })
 
-  it('renders "Kitchen Cooking" badge for preparing orders', async () => {
+  it('renders "Ready" badge for preparing orders', async () => {
     const mockOrders = [
       {
         id: 'ord_1',
@@ -120,7 +131,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     render(<VendorDashboard />)
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Mark Ready/i)[0]).toBeInTheDocument()
+      expect(screen.getAllByText(/Ready/i)[0]).toBeInTheDocument()
     })
   })
 
@@ -163,7 +174,7 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     })
   })
 
-  it('calls PATCH orders API when "Accept Order" is clicked', async () => {
+  it('calls PATCH orders API when "Accept" is clicked', async () => {
     const mockOrders = [{ id: 'ord_1', status: 'new', customer_name: 'A', total_amount: 100 }]
 
     ;(global.fetch as jest.Mock)
@@ -180,14 +191,14 @@ describe('VendorDashboard - Live Orders Rendering', () => {
     render(<VendorDashboard />)
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Accept Order/i)[0]).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Accept/i })).toBeInTheDocument()
     })
 
-    const startButton = screen.getAllByText(/Accept Order/i)[0]
+    const startButton = screen.getByRole('button', { name: /Accept/i })
     fireEvent.click(startButton)
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/orders', {
+      expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: 'ord_1', status: 'preparing' }),

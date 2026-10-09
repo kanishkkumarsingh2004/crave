@@ -20,11 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
-        JWT_SECRET: ${JWT_SECRET}
-        REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # CR-012: No secrets in build args - injected at runtime via env_file
     container_name: crave-backend
     restart: unless-stopped
     depends_on:
@@ -35,13 +31,11 @@ services:
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      DATABASE_URL: ${DATABASE_URL}
-      DIRECT_URL: ${DIRECT_URL}
-      JWT_SECRET: ${JWT_SECRET}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     command: ['node', 'ws-server.js']
-    ports:
-      - '8000:8000'
+    # CR-015: WebSocket port kept internal (not published to host)
+    expose:
+      - '8000'
     healthcheck:
       test:
         [
@@ -58,11 +52,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
-        JWT_SECRET: ${JWT_SECRET}
-        REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # CR-012: No secrets in build args - injected at runtime via env_file
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
@@ -80,13 +70,11 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      DATABASE_URL: ${DATABASE_URL}
-      DIRECT_URL: ${DIRECT_URL}
-      JWT_SECRET: ${JWT_SECRET}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       NEXT_PUBLIC_WS_PORT: 8000
-      NEXT_PUBLIC_WS_HOST: localhost
+      NEXT_PUBLIC_WS_HOST: backend
     command: ['node', 'server.js']
+    # CR-015: Only expose public HTTP port
     ports:
       - '3000:3000'
     healthcheck:

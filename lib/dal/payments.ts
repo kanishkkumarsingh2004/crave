@@ -13,10 +13,10 @@ export async function createPaymentReview(data: {
   utr_ref: string
   customer_vpa: string
   amount: number
-  status?: string
+  status?: 'pending' | 'verified' | 'rejected'
 }) {
   try {
-    return await prisma.paymentReview.create({ data })
+    return await prisma.paymentReview.create({ data: data as any })
   } catch {
     try {
       const { data: created, error } = await supabase
@@ -30,11 +30,14 @@ export async function createPaymentReview(data: {
   }
 }
 
-export async function updatePaymentReviewStatus(orderId: string, status: string) {
+export async function updatePaymentReviewStatus(
+  orderId: string,
+  status: 'pending' | 'verified' | 'rejected'
+) {
   try {
     return await prisma.paymentReview.updateMany({
       where: { order_id: orderId },
-      data: { status },
+      data: { status: status as any },
     })
   } catch {
     try {
@@ -44,10 +47,10 @@ export async function updatePaymentReviewStatus(orderId: string, status: string)
   }
 }
 
-export async function listPaymentReviews(status?: string) {
+export async function listPaymentReviews(status?: 'pending' | 'verified' | 'rejected') {
   try {
     return await prisma.paymentReview.findMany({
-      where: status ? { status } : undefined,
+      where: status ? { status: status as any } : undefined,
       orderBy: { created_at: 'desc' },
     })
   } catch {
@@ -205,11 +208,11 @@ export async function createVendorSettlement(data: {
   restaurant_id?: string
   period_start?: Date
   period_end?: Date
-  status?: string
+  status?: 'scheduled' | 'paid' | 'failed' | 'cancelled'
   transaction_ref?: string
 }) {
   try {
-    return await prisma.vendorSettlement.create({ data })
+    return await prisma.vendorSettlement.create({ data: data as any })
   } catch {
     try {
       const { data: created, error } = await supabase
@@ -243,7 +246,10 @@ export async function listVendorSettlements(restaurantId?: string) {
   }
 }
 
-export async function updateVendorSettlementStatus(id: string, status: string) {
+export async function updateVendorSettlementStatus(
+  id: string,
+  status: 'scheduled' | 'paid' | 'failed' | 'cancelled'
+) {
   try {
     return await prisma.vendorSettlement.update({
       where: { id },
@@ -311,11 +317,11 @@ export async function createDriverPayout(data: {
   id: string
   driver_id: string
   amount: number
-  status?: string
+  status?: 'pending' | 'paid' | 'failed'
   transaction_ref?: string
 }) {
   try {
-    return await prisma.driverPayout.create({ data })
+    return await prisma.driverPayout.create({ data: data as any })
   } catch {
     try {
       const { data: created } = await supabase
