@@ -10,7 +10,11 @@ export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('crave_token')?.value || ''
+    if (!token)
+      token =
+        (await cookies()).get('crave_auth_token')?.value ||
+        (await cookies()).get('crave_token')?.value ||
+        ''
     const payload = token ? await verifyToken(token) : null
 
     if (!payload || payload.role !== 'admin') {
@@ -25,7 +29,10 @@ export async function GET(request: Request) {
     })
     return NextResponse.json({ success: true, reviews })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to load payment reviews' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to load payment reviews' },
+      { status: 500 }
+    )
   }
 }
 
@@ -33,7 +40,11 @@ export async function PATCH(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || (await cookies()).get('crave_token')?.value || ''
+    if (!token)
+      token =
+        (await cookies()).get('crave_auth_token')?.value ||
+        (await cookies()).get('crave_token')?.value ||
+        ''
     const payload = token ? await verifyToken(token) : null
 
     if (!payload || payload.role !== 'admin') {
@@ -60,7 +71,8 @@ export async function PATCH(request: Request) {
     const targetOrderId = review?.order_id || id
 
     // 2. Update the corresponding Order record in database (Prisma & Supabase)
-    const newPaymentStatus = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
+    const newPaymentStatus =
+      status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
     const newOrderStatus = status === 'verified' ? 'sent_to_vendor' : undefined
 
     let updatedOrder: any = null
@@ -75,7 +87,9 @@ export async function PATCH(request: Request) {
         })
       } catch (e) {
         try {
-          const updatePayload: { payment_status: string; status?: string } = { payment_status: newPaymentStatus }
+          const updatePayload: { payment_status: string; status?: string } = {
+            payment_status: newPaymentStatus,
+          }
           if (newOrderStatus) updatePayload.status = newOrderStatus
           const { data } = await supabase
             .from('orders')

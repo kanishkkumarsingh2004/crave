@@ -10,7 +10,11 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     paymentReview: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       updateMany: jest.fn(),
+      update: jest.fn(),
+    },
+    order: {
       update: jest.fn(),
     },
   },
@@ -112,11 +116,17 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
 
   describe('PATCH - approval_update broadcast', () => {
     it('broadcasts approval_update when payment status changes to verified', async () => {
+      mockPrisma.paymentReview.findUnique.mockResolvedValue({
+        id: 'pr_1',
+        order_id: 'ord_1',
+        status: 'verified',
+      })
       mockPrisma.paymentReview.update.mockResolvedValue({
         id: 'pr_1',
         order_id: 'ord_1',
         status: 'verified',
       })
+      mockPrisma.order.update.mockResolvedValue({})
 
       const { PATCH } = await import('@/app/api/admin/payment-reviews/route')
       const req = makePatchRequest({ id: 'pr_1', status: 'verified' })
@@ -133,11 +143,17 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
     })
 
     it('broadcasts approval_update when payment status changes to rejected', async () => {
+      mockPrisma.paymentReview.findUnique.mockResolvedValue({
+        id: 'pr_2',
+        order_id: 'ord_2',
+        status: 'rejected',
+      })
       mockPrisma.paymentReview.update.mockResolvedValue({
         id: 'pr_2',
         order_id: 'ord_2',
         status: 'rejected',
       })
+      mockPrisma.order.update.mockResolvedValue({})
 
       const { PATCH } = await import('@/app/api/admin/payment-reviews/route')
       const req = makePatchRequest({ id: 'pr_2', status: 'rejected' })
@@ -146,6 +162,7 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
       expect(broadcast).toHaveBeenCalledWith(
         'approval_update',
         expect.objectContaining({ status: 'rejected' })
@@ -174,7 +191,7 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
       expect(data.error).toBe('Review ID and status are required')
     })
 
-    it('rejects non-admin role', async () => {
+it('rejects non-admin role', async () => {
       mockVerifyToken.mockResolvedValueOnce({
         id: 'usr_regular',
         role: 'user',
@@ -190,5 +207,5 @@ describe('Admin Payment Reviews API - approval_update broadcast', () => {
       expect(response.status).toBe(403)
       expect(data.error.toLowerCase()).toContain('admin')
     })
-  })
+})
 })

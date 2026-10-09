@@ -3,13 +3,14 @@
 **Repository:** `https://github.com/kanishkkumarsingh2004/crave`  
 **Branch:** `main`  
 **Date:** October 9, 2026  
-**Auditor:** Senior Principal Software Architect & Financial Systems Lead  
+**Auditor:** Senior Principal Software Architect & Financial Systems Lead
 
 ---
 
 ## 1. Executive Summary & Codebase Audit
 
 CRAVE is a multi-vendor restaurant ordering and 10-minute dark-store (CraveXP) quick-commerce platform engineered with:
+
 - **Next.js 16 App Router** (React 19, SWC compiler)
 - **TypeScript** (Strict mode)
 - **PostgreSQL 16 + Prisma ORM 7**
@@ -20,44 +21,47 @@ CRAVE is a multi-vendor restaurant ordering and 10-minute dark-store (CraveXP) q
 
 ### 1.1 Platform Evaluation Matrix
 
-| Category | Score / 100 | Assessment & Status |
-| :--- | :---: | :--- |
-| **Financial Integrity & Math** | **72** | ⚠️ Split calculation engines (`calculator.ts` vs `commercial-engine.ts`). Uses JavaScript `number` (floats) with `Math.ceil()` rounding instead of integer paise. |
-| **Security & RBAC** | **82** | ✅ JWT blacklist & role guards implemented. ⚠️ Test-mode auth bypass risks in `lib/api-auth.ts`, fallback JWT secret. |
-| **Realtime & Dispatch System** | **85** | ✅ Standalone WS with Redis Pub/Sub, H3 k-ring radial search. ⚠️ In-memory fallback dispatch lock and tracker need total Redis priority across pods. |
-| **Tax & Indian Regulatory** | **68** | ⚠️ Standard 5% GST assumed. CraveXP HSN/SAC matrix, Section 9(5) E-Commerce Operator rules, CGST/SGST/IGST inter-state split & TDS/TCS rules require explicit isolation. |
-| **Double-Entry Financial Subledger** | **45** | ❌ Missing explicit double-entry subledger. Wallet balance mutations occur directly on model fields rather than auditable balanced journal entries. |
-| **UTR & Payment Verification** | **74** | ✅ Basic UTR queue in admin portal. ⚠️ Lacks transactional UTR deduplication lock, anti-replay constraints, and multi-step bank reconciliation workflow. |
-| **Code Quality & Architecture** | **84** | ✅ Clean module boundaries, strong type safety. ⚠️ Some `any` casts in admin routes. |
-| **OVERALL PLATFORM SCORE** | **74 / 100** | **Solid foundation; requires financial domain unification, integer paise math, double-entry ledger, and strict tax compliance before production scaling.** |
+| Category                             | Score / 100  | Assessment & Status                                                                                                                                                      |
+| :----------------------------------- | :----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Financial Integrity & Math**       |    **72**    | ⚠️ Split calculation engines (`calculator.ts` vs `commercial-engine.ts`). Uses JavaScript `number` (floats) with `Math.ceil()` rounding instead of integer paise.        |
+| **Security & RBAC**                  |    **82**    | ✅ JWT blacklist & role guards implemented. ⚠️ Test-mode auth bypass risks in `lib/api-auth.ts`, fallback JWT secret.                                                    |
+| **Realtime & Dispatch System**       |    **85**    | ✅ Standalone WS with Redis Pub/Sub, H3 k-ring radial search. ⚠️ In-memory fallback dispatch lock and tracker need total Redis priority across pods.                     |
+| **Tax & Indian Regulatory**          |    **68**    | ⚠️ Standard 5% GST assumed. CraveXP HSN/SAC matrix, Section 9(5) E-Commerce Operator rules, CGST/SGST/IGST inter-state split & TDS/TCS rules require explicit isolation. |
+| **Double-Entry Financial Subledger** |    **45**    | ❌ Missing explicit double-entry subledger. Wallet balance mutations occur directly on model fields rather than auditable balanced journal entries.                      |
+| **UTR & Payment Verification**       |    **74**    | ✅ Basic UTR queue in admin portal. ⚠️ Lacks transactional UTR deduplication lock, anti-replay constraints, and multi-step bank reconciliation workflow.                 |
+| **Code Quality & Architecture**      |    **84**    | ✅ Clean module boundaries, strong type safety. ⚠️ Some `any` casts in admin routes.                                                                                     |
+| **OVERALL PLATFORM SCORE**           | **74 / 100** | **Solid foundation; requires financial domain unification, integer paise math, double-entry ledger, and strict tax compliance before production scaling.**               |
 
 ---
 
 ## 2. Inventory & Analysis of Core Files
 
 ### 2.1 Billing & Commercial Math Modules
+
 1. **`lib/calculator.ts`**
-   - *Current State:* Pure calculation function handling subtotal, delivery fee, surge multiplier, rain fee, night fee, platform fee, handling fee, coupon discounts, GST, vendor settlement, driver earnings, and platform profit.
-   - *Flaws:* Operates on floating-point `number` type. Applies `Math.ceil()` at individual step levels causing intermediate rounding drift. Does not emit immutable audit snapshots or ledger entries.
+   - _Current State:_ Pure calculation function handling subtotal, delivery fee, surge multiplier, rain fee, night fee, platform fee, handling fee, coupon discounts, GST, vendor settlement, driver earnings, and platform profit.
+   - _Flaws:_ Operates on floating-point `number` type. Applies `Math.ceil()` at individual step levels causing intermediate rounding drift. Does not emit immutable audit snapshots or ledger entries.
 2. **`lib/commercial-engine.ts`**
-   - *Current State:* Secondary commercial pricing engine model containing `CommercialContract`, `calculateTaxBase`, `resolveTaxSplit`, and `calculateOrderPriceSnapshot`.
-   - *Flaws:* Exists in parallel with `calculator.ts`, leading to potential drift between preview endpoints (`app/api/calculator/route.ts`) and order checkout execution paths (`app/api/orders/create/route.ts`).
+   - _Current State:_ Secondary commercial pricing engine model containing `CommercialContract`, `calculateTaxBase`, `resolveTaxSplit`, and `calculateOrderPriceSnapshot`.
+   - _Flaws:_ Exists in parallel with `calculator.ts`, leading to potential drift between preview endpoints (`app/api/calculator/route.ts`) and order checkout execution paths (`app/api/orders/create/route.ts`).
 3. **`app/api/calculator/route.ts`**
-   - *Current State:* REST endpoint wrapping `calculateFullBreakdown` with dynamic DB lookups for `PaymentConfig`, `CommercialContract`, and `Coupon`.
-   - *Flaws:* Returns breakdown for UI preview, but checkout APIs recalculate pricing ad-hoc instead of binding to a signed, persisted snapshot.
+   - _Current State:_ REST endpoint wrapping `calculateFullBreakdown` with dynamic DB lookups for `PaymentConfig`, `CommercialContract`, and `Coupon`.
+   - _Flaws:_ Returns breakdown for UI preview, but checkout APIs recalculate pricing ad-hoc instead of binding to a signed, persisted snapshot.
 
 ### 2.2 Security & Authentication
+
 1. **`lib/jwt.ts`**
-   - *Current State:* Uses `jose` for JWT sign/verify with Redis JTI blacklisting.
-   - *Flaws:* Hardcoded fallback secret string present in non-production branch; needs strict fail-fast check in production environments.
+   - _Current State:_ Uses `jose` for JWT sign/verify with Redis JTI blacklisting.
+   - _Flaws:_ Hardcoded fallback secret string present in non-production branch; needs strict fail-fast check in production environments.
 2. **`lib/api-auth.ts`**
-   - *Current State:* Handles bearer token verification and role-based access control (`CUSTOMER`, `VENDOR`, `DRIVER`, `ADMIN`).
-   - *Flaws:* `isTestRequest` helper allows headers to inject mock users if `NODE_ENV` is not strictly guarded against production.
+   - _Current State:_ Handles bearer token verification and role-based access control (`CUSTOMER`, `VENDOR`, `DRIVER`, `ADMIN`).
+   - _Flaws:_ `isTestRequest` helper allows headers to inject mock users if `NODE_ENV` is not strictly guarded against production.
 
 ### 2.3 Dispatch & Geospatial Engine
+
 1. **`lib/dispatch/driver-tracker.ts` & `lib/dispatch/atomic-lock.ts`**
-   - *Current State:* Maps H3 cells to drivers and handles driver dispatch offer locking.
-   - *Flaws:* Local memory maps (`cellToDriverMap`, local offer locks) are prioritized over Redis sets (`crave:h3:cell:{h3Index}`), creating race conditions in multi-pod deployments.
+   - _Current State:_ Maps H3 cells to drivers and handles driver dispatch offer locking.
+   - _Flaws:_ Local memory maps (`cellToDriverMap`, local offer locks) are prioritized over Redis sets (`crave:h3:cell:{h3Index}`), creating race conditions in multi-pod deployments.
 
 ---
 
@@ -107,9 +111,11 @@ graph TD
 ---
 
 ### PHASE 1: Financial Domain Engine Consolidation & Integer Paise Math
+
 **Goal:** Replace floating-point arithmetic with an integer paise `Money` representation and combine `lib/calculator.ts` and `lib/commercial-engine.ts` into a unified `FinancialEngine`.
 
 #### Key Tasks:
+
 1. **Implement `lib/finance/money.ts`:**
    - Define immutable `Money` value object encapsulating integer `paise: bigint` or `number`.
    - Methods: `add()`, `subtract()`, `multiply()`, `allocate()`, `toRupees()`, `toFormattedString()`.
@@ -122,9 +128,11 @@ graph TD
 ---
 
 ### PHASE 2: Double-Entry Financial Subledger & Prisma Schema Extension
+
 **Goal:** Implement a compliant double-entry subledger system where every financial state change creates balanced debit/credit journal entries.
 
 #### Key Tasks:
+
 1. **Extend `prisma/schema.prisma`:**
    - Add models: `LedgerAccount`, `JournalEntry`, `LedgerTransaction`, `FinancialSnapshot`.
    - Accounts: `PAYMENT_CLEARING`, `CUSTOMER_REFUND_PAYABLE`, `VENDOR_PAYABLE`, `RIDER_PAYABLE`, `PLATFORM_COMMISSION_REVENUE`, `PLATFORM_FEE_REVENUE`, `GST_OUTPUT_PAYABLE`, `RIDER_TIP_CLEARING`.
@@ -135,9 +143,11 @@ graph TD
 ---
 
 ### PHASE 3: Dynamic Pricing, Operational Surcharges & Delivery Engine
+
 **Goal:** Standardize delivery fee, peak surge, rain surcharge, night fee, small-cart fee, and packaging fee calculations with strict H3 geospatial resolution and configuration versioning.
 
 #### Key Tasks:
+
 1. **Implement `lib/finance/delivery-pricing.ts`:**
    - Formula: `DeliveryBase = BaseFee + max(0, distanceKm - IncludedKm) * PerKmRate + ZoneAdjustment`
    - Incorporate routing fallback if road distance API is unreachable.
@@ -150,9 +160,11 @@ graph TD
 ---
 
 ### PHASE 4: Indian GST Tax Engine 2.0 & Legal Entity Invoice Engine
+
 **Goal:** Implement full compliance with Indian GST laws, Section 9(5) E-Commerce Operator notifications, CraveXP grocery tax mapping, and automated dual invoicing.
 
 #### Key Tasks:
+
 1. **Implement `lib/finance/tax-engine.ts`:**
    - Calculate Taxable Base for Tax-Inclusive: `TaxableBase = Math.round((AmountPaise * 100) / (100 + RatePercent))`
    - Calculate CGST/SGST (intra-state) vs IGST (inter-state) based on Supplier State vs Customer State.
@@ -164,9 +176,11 @@ graph TD
 ---
 
 ### PHASE 5: Payment Processing, Idempotent UTR Verification & Settlement Engine
+
 **Goal:** Secure customer payment flows, eliminate duplicate UTR claims, and automate vendor/rider wallet settlements.
 
 #### Key Tasks:
+
 1. **Implement `lib/finance/utr-verifier.ts`:**
    - Enforce Redis atomic lock on UTR code (`crave:utr:{utr_number}`).
    - Verify submitted UTR against unique database constraint in `PaymentReview`.
@@ -179,9 +193,11 @@ graph TD
 ---
 
 ### PHASE 6: Automated Test Suite & Audit Deliverables
+
 **Goal:** Create comprehensive automated test coverage for financial math, edge cases, and security vulnerabilities; produce all mandatory documentation deliverables in `docs/billing/`.
 
 #### Key Deliverables & Test Coverage:
+
 1. **Automated Unit & Integration Test Suite (`test/finance/`):**
    - `math-precision.test.ts`: Verify 0 paise rounding drift across 10,000 randomized inputs.
    - `tax-split.test.ts`: Test Section 9(5) CGST/SGST/IGST tax splits.
