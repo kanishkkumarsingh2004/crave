@@ -47,7 +47,7 @@
     "dc:ps": "docker compose ps"
   },
   "dependencies": {
-    "@base-ui/react": "^1.8.0",
+    "@base-ui/react": "^1.9.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@types/leaflet": "^1.9.22",
@@ -60,8 +60,9 @@
     "html5-qrcode": "^2.3.8",
     "ioredis": "^6.0.0",
     "jose": "^6.2.12",
+    "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",
-    "lucide-react": "^1.53.0",
+    "lucide-react": "^1.54.0",
     "maplibre-gl": "^6.13.0",
     "next": "16.4.0",
     "pg": "^8.23.1",
@@ -86,6 +87,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/ioredis": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/maplibre-gl": "^1.14.0",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",

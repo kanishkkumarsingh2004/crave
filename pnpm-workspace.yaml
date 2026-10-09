@@ -3,8 +3,10 @@ pmOnFail: ignore
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
-  - lucide-react@1.51.0 || 1.52.0 || 1.53.0
+  - lucide-react@1.51.0 || 1.52.0 || 1.53.0 || 1.54.0
   - maplibre-gl@6.12.0
+  - '@base-ui/react@1.9.0'
+  - '@base-ui/utils@0.5.0'
 
 allowBuilds:
   '@parcel/watcher': true

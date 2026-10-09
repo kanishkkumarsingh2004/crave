@@ -4,6 +4,7 @@
  */
 import { prisma } from '@/lib/prisma'
 import { supabase } from '@/lib/supabase'
+import { cacheGet, cacheSet, cacheDel, CacheKeys, CacheTTL } from '@/lib/cache'
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -43,12 +44,23 @@ export async function findMenuItemById(id: string) {
 }
 
 export async function listMenuItems(restaurantId: string) {
+  const cacheKey = CacheKeys.menus.byRestaurant(restaurantId)
+
+  // Try cache first
+  const cached = await cacheGet<any[]>(cacheKey)
+  if (cached) return cached
+
   try {
     const items = await prisma.menuItem.findMany({
       where: { restaurant_id: restaurantId },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     })
-    if (items && items.length > 0) return items
+    if (items && items.length > 0) {
+      await cacheSet(CacheKeys.menus.byRestaurant(restaurantId), items, {
+        ttlSeconds: CacheTTL.MENU_ITEMS,
+      })
+      return items
+    }
   } catch (e) {}
 
   try {
@@ -57,7 +69,12 @@ export async function listMenuItems(restaurantId: string) {
       .select('*')
       .eq('restaurant_id', restaurantId)
       .order('name')
-    if (data && data.length > 0) return data
+    if (data && data.length > 0) {
+      await cacheSet(CacheKeys.menus.byRestaurant(restaurantId), data, {
+        ttlSeconds: CacheTTL.MENU_ITEMS,
+      })
+      return data
+    }
   } catch (e) {}
 
   // Fallback to products table
@@ -67,7 +84,7 @@ export async function listMenuItems(restaurantId: string) {
       .select('*')
       .eq('vendorId', restaurantId)
     if (prods && prods.length > 0) {
-      return prods.map((p: any) => ({
+      const mapped = prods.map((p: any) => ({
         id: p.id,
         restaurant_id: p.vendorId,
         name: p.name,
@@ -78,6 +95,10 @@ export async function listMenuItems(restaurantId: string) {
         image: p.imageUrl,
         sku_code: p.sku,
       }))
+      await cacheSet(CacheKeys.menus.byRestaurant(restaurantId), mapped, {
+        ttlSeconds: CacheTTL.MENU_ITEMS,
+      })
+      return mapped
     }
   } catch (e) {}
 
@@ -102,6 +123,10 @@ export async function searchMenuItems(restaurantId: string, query: string) {
 
 // ─── Mutations ───────────────────────────────────────────
 
+async function invalidateMenuCache(restaurantId: string): Promise<void> {
+  await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
+}
+
 export async function createMenuItem(data: {
   id: string
   restaurant_id: string
@@ -118,7 +143,9 @@ export async function createMenuItem(data: {
   sku_code?: string
 }) {
   try {
-    return await prisma.menuItem.create({ data: data as any })
+    const created = await prisma.menuItem.create({ data: data as any })
+    await cacheDel(CacheKeys.menus.byRestaurant(data.restaurant_id))
+    return created
   } catch (e) {}
 
   try {
@@ -127,7 +154,10 @@ export async function createMenuItem(data: {
       .insert([data as any])
       .select()
       .single()
-    if (created) return created
+    if (created) {
+      await cacheDel(CacheKeys.menus.byRestaurant(data.restaurant_id))
+      return created
+    }
   } catch (e) {}
 
   // Also try products table
@@ -144,14 +174,24 @@ export async function createMenuItem(data: {
         status: data.in_stock ? 'ACTIVE' : 'INACTIVE',
       },
     ])
+    await cacheDel(CacheKeys.menus.byRestaurant(data.restaurant_id))
   } catch (e) {}
 
   return { ...data, created_at: new Date() }
 }
 
 export async function updateMenuItem(id: string, data: any) {
+  // We need to get the restaurant_id first to invalidate cache
+  let restaurantId: string | null = null
   try {
-    return await prisma.menuItem.update({ where: { id }, data })
+    const item = await prisma.menuItem.findUnique({ where: { id } })
+    if (item) restaurantId = item.restaurant_id
+  } catch (e) {}
+
+  try {
+    const updated = await prisma.menuItem.update({ where: { id }, data })
+    if (restaurantId) await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
+    return updated
   } catch (e) {}
 
   try {
@@ -161,19 +201,31 @@ export async function updateMenuItem(id: string, data: any) {
       .eq('id', id)
       .select()
       .single()
-    if (updated) return updated
+    if (updated) {
+      if (restaurantId) await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
+      return updated
+    }
   } catch (e) {}
 
   return { id, ...data }
 }
 
 export async function deleteMenuItem(id: string) {
+  let restaurantId: string | null = null
   try {
-    return await prisma.menuItem.delete({ where: { id } })
+    const item = await prisma.menuItem.findUnique({ where: { id } })
+    if (item) restaurantId = item.restaurant_id
+  } catch (e) {}
+
+  try {
+    await prisma.menuItem.delete({ where: { id } })
+    if (restaurantId) await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
+    return { id }
   } catch (e) {}
 
   try {
     await supabase.from('menu_items').delete().eq('id', id)
+    if (restaurantId) await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
   } catch (e) {}
 
   return { id }
@@ -181,11 +233,13 @@ export async function deleteMenuItem(id: string) {
 
 export async function deleteMenuItemsByRestaurant(restaurantId: string) {
   try {
-    return await prisma.menuItem.deleteMany({ where: { restaurant_id: restaurantId } })
+    await prisma.menuItem.deleteMany({ where: { restaurant_id: restaurantId } })
+    await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
   } catch (e) {}
 
   try {
     await supabase.from('menu_items').delete().eq('restaurant_id', restaurantId)
+    await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
   } catch (e) {}
 
   return { count: 0 }

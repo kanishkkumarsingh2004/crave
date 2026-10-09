@@ -12,19 +12,39 @@ const offerLocks = new Map<string, OfferLock>()
 const DEFAULT_OFFER_TTL_MS = 15 * 1000 // 15 seconds offer timeout window
 
 /**
- * Attempt to acquire an atomic offer lock for a candidate driver.
- * Stores in local memory and synchronously syncs to Redis when available.
+ * PRIMARY API: Acquire a distributed atomic offer lock for a candidate driver.
+ * Uses Redis SET NX PX for cross-pod atomicity, falls back to local memory if Redis unavailable.
  * Returns true if lock was successfully acquired, false if driver is already locked.
  */
-export function tryLockDriverForOffer(
+export async function acquireDriverOfferLock(
   driverId: string,
   requestId: string,
   ttlMs: number = DEFAULT_OFFER_TTL_MS
-): boolean {
+): Promise<boolean> {
   const now = Date.now()
-  const existingLock = offerLocks.get(driverId)
 
-  // Check if existing lock is still active
+  // Try Redis first for distributed atomicity
+  if (isRedisAvailable() && redis) {
+    try {
+      const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
+      if (result === 'OK') {
+        // Also update local cache for fast isDriverLocked checks
+        offerLocks.set(driverId, {
+          driverId,
+          requestId,
+          lockedAt: now,
+          expiresAt: now + ttlMs,
+        })
+        return true
+      }
+      return false // Locked by another request
+    } catch (e) {
+      console.warn('[atomic-lock] Redis unavailable, falling back to local lock:', e)
+    }
+  }
+
+  // Fallback: Local memory lock (single-instance only)
+  const existingLock = offerLocks.get(driverId)
   if (existingLock && existingLock.expiresAt > now) {
     if (existingLock.requestId === requestId) {
       return true // Already locked for this request
@@ -39,44 +59,47 @@ export function tryLockDriverForOffer(
     lockedAt: now,
     expiresAt: now + ttlMs,
   })
-
-  // Replicate asynchronously to Redis if active
-  if (isRedisAvailable() && redis) {
-    redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX').catch(() => {})
-  }
-
   return true
 }
 
 /**
- * Distributed async Redis lock acquisition.
- * Guarantees cross-pod and cross-instance exclusion across horizontal cluster containers.
+ * DEPRECATED: Use acquireDriverOfferLock instead.
+ * Kept for backward compatibility with existing call sites.
  */
-export async function tryLockDriverOfferDistributed(
+export async function tryLockDriverForOffer(
   driverId: string,
   requestId: string,
   ttlMs: number = DEFAULT_OFFER_TTL_MS
 ): Promise<boolean> {
+  // Try distributed lock first
   if (isRedisAvailable() && redis) {
-    try {
-      const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
-      if (result === 'OK') {
-        // Also update local cache
-        offerLocks.set(driverId, {
-          driverId,
-          requestId,
-          lockedAt: Date.now(),
-          expiresAt: Date.now() + ttlMs,
-        })
-        return true
-      }
-      return false
-    } catch {
-      // Redis error fallback
+    const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
+    if (result === 'OK') {
+      offerLocks.set(driverId, {
+        driverId,
+        requestId,
+        lockedAt: Date.now(),
+        expiresAt: Date.now() + ttlMs,
+      })
+      return true
     }
+    return false
   }
 
-  return tryLockDriverForOffer(driverId, requestId, ttlMs)
+  // Fallback to local
+  const now = Date.now()
+  const existingLock = offerLocks.get(driverId)
+  if (existingLock && existingLock.expiresAt > now) {
+    if (existingLock.requestId === requestId) return true
+    return false
+  }
+  offerLocks.set(driverId, {
+    driverId,
+    requestId,
+    lockedAt: now,
+    expiresAt: now + ttlMs,
+  })
+  return true
 }
 
 /**
@@ -96,7 +119,7 @@ export function isDriverLocked(driverId: string): boolean {
 /**
  * Release an offer lock manually (e.g. driver rejected offer or offer completed)
  */
-export function releaseDriverLock(driverId: string, requestId?: string): boolean {
+export async function releaseDriverLock(driverId: string, requestId?: string): Promise<boolean> {
   const lock = offerLocks.get(driverId)
   if (!lock) return false
   if (requestId && lock.requestId !== requestId) {
@@ -105,7 +128,7 @@ export function releaseDriverLock(driverId: string, requestId?: string): boolean
   offerLocks.delete(driverId)
 
   if (isRedisAvailable() && redis) {
-    redis.del(`crave:lock:driver:${driverId}`).catch(() => {})
+    await redis.del(`crave:lock:driver:${driverId}`).catch(() => {})
   }
 
   return true

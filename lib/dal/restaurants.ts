@@ -1,10 +1,7 @@
-/**
- * Database Access Layer — Restaurants
- * Resilient dual-engine: Prisma ORM with Supabase REST fallback
- */
 import { prisma } from '@/lib/prisma'
 import { supabase } from '@/lib/supabase'
 import type { Restaurant } from '@prisma/client'
+import { cacheGet, cacheSet, cacheDel, CacheKeys, CacheTTL } from '@/lib/cache'
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -51,6 +48,19 @@ export async function listRestaurants(options?: {
   ownerId?: string
   limit?: number
 }) {
+  // Try cache first for common queries (no owner filter, no limit override)
+  const isCommonQuery = !options?.ownerId && !options?.limit
+  const cacheKey = options?.isDarkStore
+    ? CacheKeys.restaurants.darkStores()
+    : options?.isOpen === false
+      ? 'restaurants:closed'
+      : CacheKeys.restaurants.all()
+
+  if (isCommonQuery) {
+    const cached = await cacheGet<any[]>(cacheKey)
+    if (cached) return cached
+  }
+
   const take = Math.min(options?.limit ?? 50, 100) // Max 100, default 50
   try {
     const list = await prisma.restaurant.findMany({
@@ -63,7 +73,10 @@ export async function listRestaurants(options?: {
       orderBy: { created_at: 'desc' },
       take,
     })
-    if (list && list.length > 0) return list
+    if (list && list.length > 0) {
+      if (isCommonQuery) await cacheSet(cacheKey, list, { ttlSeconds: CacheTTL.RESTAURANTS })
+      return list
+    }
   } catch (e) {}
 
   try {
@@ -74,14 +87,17 @@ export async function listRestaurants(options?: {
     const take = Math.min(options?.limit ?? 50, 100)
     query = query.limit(take)
     const { data, error } = await query
-    if (!error && data && data.length > 0) return data
+    if (!error && data && data.length > 0) {
+      if (isCommonQuery) await cacheSet(cacheKey, data, { ttlSeconds: CacheTTL.RESTAURANTS })
+      return data
+    }
   } catch (e) {}
 
   // Check vendors table fallback
   try {
     const { data: vendors } = await (supabase as any).from('vendors').select('*')
     if (vendors && vendors.length > 0) {
-      return vendors.map((v: any) => ({
+      const mapped = vendors.map((v: any) => ({
         id: v.id,
         name: v.storeName,
         cuisine: v.description || 'Quick Commerce & Food',
@@ -92,6 +108,8 @@ export async function listRestaurants(options?: {
         address: v.address || 'Bengaluru',
         menu_items: [],
       }))
+      if (isCommonQuery) await cacheSet(cacheKey, mapped, { ttlSeconds: CacheTTL.RESTAURANTS })
+      return mapped
     }
   } catch (e) {}
 
@@ -142,7 +160,9 @@ export async function createRestaurant(data: {
   gst_rate_percent?: number
 }) {
   try {
-    return await prisma.restaurant.create({ data: data as any })
+    const created = await prisma.restaurant.create({ data: data as any })
+    await invalidateRestaurantCache()
+    return created
   } catch (e) {}
 
   try {
@@ -151,15 +171,29 @@ export async function createRestaurant(data: {
       .insert([data as any])
       .select()
       .single()
-    if (created) return created
+    if (created) {
+      await invalidateRestaurantCache()
+      return created
+    }
   } catch (e) {}
 
   return { ...data, created_at: new Date() }
 }
 
+async function invalidateRestaurantCache(): Promise<void> {
+  await Promise.all([
+    cacheDel(CacheKeys.restaurants.all()),
+    cacheDel(CacheKeys.restaurants.open()),
+    cacheDel(CacheKeys.restaurants.darkStores()),
+    cacheDel('restaurants:closed'),
+  ])
+}
+
 export async function updateRestaurant(id: string, data: Partial<Omit<Restaurant, 'id'>>) {
   try {
-    return await prisma.restaurant.update({ where: { id }, data: data as any })
+    const updated = await prisma.restaurant.update({ where: { id }, data: data as any })
+    await invalidateRestaurantCache()
+    return updated
   } catch (e) {}
 
   try {
@@ -169,7 +203,10 @@ export async function updateRestaurant(id: string, data: Partial<Omit<Restaurant
       .eq('id', id)
       .select()
       .single()
-    if (updated) return updated
+    if (updated) {
+      await invalidateRestaurantCache()
+      return updated
+    }
   } catch (e) {}
 
   return { id, ...data }
@@ -177,11 +214,13 @@ export async function updateRestaurant(id: string, data: Partial<Omit<Restaurant
 
 export async function deleteRestaurant(id: string) {
   try {
-    return await prisma.restaurant.delete({ where: { id } })
+    await prisma.restaurant.delete({ where: { id } })
+    await invalidateRestaurantCache()
   } catch (e) {}
 
   try {
     await supabase.from('restaurants').delete().eq('id', id)
+    await invalidateRestaurantCache()
   } catch (e) {}
 
   return { id }

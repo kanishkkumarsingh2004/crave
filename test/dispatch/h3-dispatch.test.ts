@@ -46,7 +46,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     })
 
     // 2. Perform Dispatch Search for Bengaluru Pickup
-    const result = findGeofencedCandidateDrivers({
+    const result = await findGeofencedCandidateDrivers({
       requestId: 'req_blru_1',
       pickupLat: 12.9716,
       pickupLng: 77.4695,
@@ -93,7 +93,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     })
 
     // Request min 3 candidates -> requires Ring 1 expansion
-    const result = findGeofencedCandidateDrivers({
+    const result = await findGeofencedCandidateDrivers({
       requestId: 'req_expand_1',
       pickupLat,
       pickupLng,
@@ -127,7 +127,7 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     // Manually backdate timestamp by 180 seconds
     staleState.state.lastUpdated = now - 180 * 1000
 
-    const result = findGeofencedCandidateDrivers({
+    const result = await findGeofencedCandidateDrivers({
       requestId: 'req_fresh_1',
       pickupLat: 12.9716,
       pickupLng: 77.4695,
@@ -156,16 +156,16 @@ describe('H3 Geospatial Driver-Dispatch & Candidate Selection System', () => {
     })
 
     // Lock driver for Request A
-    const lockedA = tryLockDriverForOffer('drv_lock_1', 'req_A', 15000)
+    const lockedA = await tryLockDriverForOffer('drv_lock_1', 'req_A', 15000)
     expect(lockedA).toBe(true)
     expect(isDriverLocked('drv_lock_1')).toBe(true)
 
     // Request B attempts to lock same driver -> rejected
-    const lockedB = tryLockDriverForOffer('drv_lock_1', 'req_B', 15000)
+    const lockedB = await tryLockDriverForOffer('drv_lock_1', 'req_B', 15000)
     expect(lockedB).toBe(false)
 
     // Subsequent search for Request B excludes locked driver
-    const searchB = findGeofencedCandidateDrivers({
+    const searchB = await findGeofencedCandidateDrivers({
       requestId: 'req_B',
       pickupLat: 12.9716,
       pickupLng: 77.4695,

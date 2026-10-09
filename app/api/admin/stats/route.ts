@@ -5,6 +5,7 @@ import { countOrders, listOrders } from '@/lib/dal/orders'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { AdminStatsCache } from '@/lib/cache'
 
 export async function GET(request?: Request) {
   try {
@@ -18,6 +19,14 @@ export async function GET(request?: Request) {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
       }
     }
+
+    // Try to get cached stats first
+    const today = new Date().toISOString().split('T')[0]
+    const cachedStats = await AdminStatsCache.getDailyStats(today)
+    if (cachedStats) {
+      return NextResponse.json({ success: true, ...cachedStats })
+    }
+
     const [settlements, restaurants, customers, vendors, drivers, orders, totalCount] =
       await Promise.all([
         listVendorSettlements(),
@@ -45,6 +54,41 @@ export async function GET(request?: Request) {
       (sum: number, row: any) => sum + Number(row.total_amount ?? 0),
       0
     )
+
+    const stats = {
+      weeklyGross,
+      weeklyRevenue: weeklyOrderRevenue,
+      orderCount: totalCount,
+      totalCommission,
+      netVendorPay,
+      customerCount: customers.length,
+      vendorCount: vendors.length,
+      driverCount: drivers.length,
+      totalUsers: customers.length + vendors.length + drivers.length,
+      restaurantCount: restaurants.length,
+      liveDevices: Math.max(1, customers.length + vendors.length + drivers.length),
+    }
+
+    // Cache the stats for the day
+    await AdminStatsCache.setDailyStats(new Date().toISOString().split('T')[0], {
+      success: true,
+      settlements,
+      restaurants,
+      orders,
+      stats: {
+        weeklyGross,
+        weeklyRevenue: weeklyOrderRevenue,
+        orderCount: totalCount,
+        totalCommission,
+        netVendorPay,
+        customerCount: customers.length,
+        vendorCount: vendors.length,
+        driverCount: drivers.length,
+        totalUsers: customers.length + vendors.length + drivers.length,
+        restaurantCount: restaurants.length,
+        liveDevices: Math.max(1, customers.length + vendors.length + drivers.length),
+      },
+    })
 
     return NextResponse.json({
       success: true,
