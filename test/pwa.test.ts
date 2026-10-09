@@ -1,15 +1,12 @@
 import fs from 'fs'
 import path from 'path'
+import manifestRoute from '@/app/manifest'
 
 describe('Progressive Web App (PWA) Configuration', () => {
   const rootDir = path.resolve(__dirname, '..')
 
-  test('public/manifest.json is valid and meets Chrome install criteria', () => {
-    const manifestPath = path.join(rootDir, 'public', 'manifest.json')
-    expect(fs.existsSync(manifestPath)).toBe(true)
-
-    const raw = fs.readFileSync(manifestPath, 'utf8')
-    const manifest = JSON.parse(raw)
+  test('app/manifest.ts is valid and meets Chrome install criteria', () => {
+    const manifest = manifestRoute()
 
     expect(manifest.name).toBe('crave. | Instant Food & 10-Minute Grocery Delivery')
     expect(manifest.short_name).toBe('crave.')
@@ -19,9 +16,9 @@ describe('Progressive Web App (PWA) Configuration', () => {
     expect(manifest.theme_color).toBe('#18201c')
 
     expect(Array.isArray(manifest.icons)).toBe(true)
-    const icon192 = manifest.icons.find((i: any) => i.sizes === '192x192' && i.purpose === 'any')
-    const icon512 = manifest.icons.find((i: any) => i.sizes === '512x512' && i.purpose === 'any')
-    const maskable512 = manifest.icons.find(
+    const icon192 = manifest.icons?.find((i: any) => i.sizes === '192x192' && i.purpose === 'any')
+    const icon512 = manifest.icons?.find((i: any) => i.sizes === '512x512' && i.purpose === 'any')
+    const maskable512 = manifest.icons?.find(
       (i: any) => i.sizes === '512x512' && i.purpose === 'maskable'
     )
 
