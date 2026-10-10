@@ -6,15 +6,27 @@ const mockVerifyToken = jest.fn().mockResolvedValue({
   email: 'admin@test.com',
 })
 
+const mockedFindOrderById = jest.fn()
+const mockedUpdateOrder = jest.fn()
+
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     order: { update: jest.fn(), findUnique: jest.fn() },
+    $transaction: jest.fn(async (cb) => {
+      const mockTx = {
+        order: { 
+          update: jest.fn().mockResolvedValue({ id: 'ord_1', status: 'preparing' }),
+          findUnique: jest.fn(),
+        },
+      }
+      return cb(mockTx)
+    }),
   },
 }))
 
 jest.mock('@/lib/dal/orders', () => ({
-  findOrderById: jest.fn(),
-  updateOrder: jest.fn(),
+  findOrderById: mockedFindOrderById,
+  updateOrder: mockedUpdateOrder,
 }))
 
 jest.mock('@/lib/dal/payments', () => ({
@@ -140,6 +152,7 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
       status: 'out_for_delivery',
       customer_id: 'usr_1',
       restaurant_id: 'vnd_1',
+      rider_id: 'rider_1', // CR-03: Rider must be explicitly assigned
     }
     findOrderById.mockResolvedValue(mockOrder)
     updateOrder.mockResolvedValue(mockOrder)
