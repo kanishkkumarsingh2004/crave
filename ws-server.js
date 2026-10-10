@@ -5,6 +5,16 @@ const { WebSocketServer } = require('ws')
 const { v4: uuidv4 } = require('uuid')
 const { TextEncoder } = require('util')
 
+// ---------------------------------------------------------------------------
+// Prisma client for ownership verification
+// ws-server.js runs as plain Node.js (not Next.js), so we create a dedicated
+// client here rather than reusing the Next.js singleton.
+// ---------------------------------------------------------------------------
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+})
+
 const WS_OPEN = 1
 const PORT = process.env.WS_PORT || 8000
 const INSTANCE_ID = `ws_inst_${process.pid}_${Math.random().toString(36).substring(2, 7)}`
@@ -370,74 +380,133 @@ const CHANNEL_AUTH_RULES = {
   map_live_analytics: { roles: ['admin'] },
 }
 
-// Track allowed order subscriptions per customer: customerId -> Set<orderId>
-const customerOrderSubscriptions = new Map()
-
 // Track driver-order associations: driverId -> Set<orderId>
+// Populated authoritatively from the /__ws/broadcast internal API (server-side only).
 const driverOrderAssignments = new Map()
 
-function authorizeChannel(channel, clientInfo, subscriptionData = {}) {
+/**
+ * Verify channel role eligibility (synchronous, no DB call).
+ * Returns false immediately if the role is not permitted for this channel.
+ */
+function checkRoleForChannel(channel, clientInfo) {
   const rules = CHANNEL_AUTH_RULES[channel]
   if (!rules) return false
+  return rules.roles.includes(clientInfo.role)
+}
 
-  // Check role
-  if (!rules.roles.includes(clientInfo.role)) return false
+/**
+ * Authorise an ownership-channel subscription by querying the database.
+ *
+ * - Admins: always permitted.
+ * - Vendors: permitted for order_update / approval_update if the order belongs
+ *   to their restaurant (restaurant_id match). Denied for driver_location.
+ * - Customers: permitted only if Order.customer_id === clientInfo.userId.
+ * - Drivers/riders: permitted only if Order.rider_id === clientInfo.userId.
+ *
+ * Fails CLOSED: any DB error or unexpected path returns false.
+ *
+ * @param {string} channel
+ * @param {object} clientInfo
+ * @param {string} orderId - client-supplied; treated as untrusted input.
+ * @returns {Promise<boolean>}
+ */
+async function verifyOrderOwnership(channel, clientInfo, orderId) {
+  if (!orderId || typeof orderId !== 'string' || orderId.trim() === '') return false
 
-  // Check ownership if required
-  if (rules.requireOwnership) {
+  // Admins may subscribe to any order on any ownership channel
+  if (clientInfo.role === 'admin') return true
+
+  try {
+    // Fetch only the ownership columns – never trust client-supplied identity
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        customer_id: true,
+        rider_id: true,
+        restaurant_id: true,
+      },
+    })
+
+    if (!order) return false // Order does not exist
+
     if (channel === 'order_update' || channel === 'approval_update') {
-      // Admin and vendors can subscribe globally to their kitchen orders
+      // Customer who placed the order
       if (
-        clientInfo.role === 'admin' ||
-        clientInfo.role === 'restaurant_vendor' ||
-        clientInfo.role === 'cravexp_store_vendor' ||
-        clientInfo.role === 'vendor'
+        (clientInfo.role === 'user' || clientInfo.role === 'customer') &&
+        order.customer_id === clientInfo.userId
       ) {
         return true
       }
 
-      const orderId = subscriptionData.orderId
-      if (!orderId) return false // Must specify orderId for customer/driver ownership channels
-
-      // Check if customer owns this order
-      const allowedOrders = customerOrderSubscriptions.get(clientInfo.customerId)
-      if (allowedOrders && allowedOrders.has(orderId)) {
+      // Driver/rider assigned to the order
+      if (
+        (clientInfo.role === 'rider' || clientInfo.role === 'driver') &&
+        order.rider_id === clientInfo.userId
+      ) {
         return true
       }
 
-      // Dynamic registration for authenticated customer/rider session
-      if (clientInfo.customerId || clientInfo.driverId) {
-        registerCustomerOrder(clientInfo.customerId || clientInfo.driverId, orderId)
+      // Vendor whose restaurant owns the order
+      if (
+        (clientInfo.role === 'restaurant_vendor' ||
+          clientInfo.role === 'cravexp_store_vendor' ||
+          clientInfo.role === 'vendor') &&
+        clientInfo.restaurantId &&
+        order.restaurant_id === clientInfo.restaurantId
+      ) {
         return true
       }
 
       return false
-    } else if (channel === 'driver_location') {
-      if (clientInfo.role === 'admin') return true
-
-      const orderId = subscriptionData.orderId
-      if (!orderId) return false
-
-      if (clientInfo.role === 'user' || clientInfo.role === 'customer') {
-        return Boolean(clientInfo.customerId)
-      } else if (clientInfo.role === 'rider' || clientInfo.role === 'driver') {
-        return Boolean(clientInfo.driverId)
-      }
     }
+
+    if (channel === 'driver_location') {
+      // Customers may only track an order they placed
+      if (
+        (clientInfo.role === 'user' || clientInfo.role === 'customer') &&
+        order.customer_id === clientInfo.userId
+      ) {
+        return true
+      }
+
+      // Drivers may only track an order they are assigned to
+      if (
+        (clientInfo.role === 'rider' || clientInfo.role === 'driver') &&
+        order.rider_id === clientInfo.userId
+      ) {
+        return true
+      }
+
+      return false
+    }
+  } catch (err) {
+    console.error('[ws-server] DB ownership check failed, denying subscription:', err.message)
+    return false // Fail closed
   }
 
-  return true
+  return false
 }
 
-// Register a customer's order for subscription access
-function registerCustomerOrder(customerId, orderId) {
-  if (!customerOrderSubscriptions.has(customerId)) {
-    customerOrderSubscriptions.set(customerId, new Set())
-  }
-  customerOrderSubscriptions.get(customerId).add(orderId)
+/**
+ * Full channel authorization (async).
+ * For non-ownership channels: role check only.
+ * For ownership channels: role check + DB ownership proof.
+ *
+ * @returns {Promise<boolean>}
+ */
+async function authorizeChannelAsync(channel, clientInfo, subscriptionData = {}) {
+  if (!checkRoleForChannel(channel, clientInfo)) return false
+
+  const rules = CHANNEL_AUTH_RULES[channel]
+  if (!rules.requireOwnership) return true
+
+  // All ownership channels require a DB-verified orderId
+  const orderId = subscriptionData.orderId
+  return verifyOrderOwnership(channel, clientInfo, orderId)
 }
 
-// Register driver-order assignment
+// Register driver-order assignment (called from internal broadcast API only)
 function assignDriverToOrder(driverId, orderId) {
   if (!driverOrderAssignments.has(driverId)) {
     driverOrderAssignments.set(driverId, new Set())
@@ -492,14 +561,12 @@ const server = createServer((req, res) => {
             'driver_location',
             'control',
             'map_live_analytics',
-            '__internal_register_order',
             '__internal_assign_driver',
             '__internal_remove_driver',
           ])
 
-          // Internal channels for ownership management (require x-internal-secret)
+          // Internal channels for driver-order assignment management (require x-internal-secret)
           const INTERNAL_CHANNELS = new Set([
-            '__internal_register_order',
             '__internal_assign_driver',
             '__internal_remove_driver',
           ])
@@ -520,12 +587,8 @@ const server = createServer((req, res) => {
 
             let result = false
             switch (msg.channel) {
-              case '__internal_register_order':
-                if (msg.data.customerId && msg.data.orderId) {
-                  registerCustomerOrder(msg.data.customerId, msg.data.orderId)
-                  result = true
-                }
-                break
+              // __internal_register_order is intentionally removed:
+              // customer ownership is now proven via DB lookup, not pre-registration.
               case '__internal_assign_driver':
                 if (msg.data.driverId && msg.data.orderId) {
                   assignDriverToOrder(msg.data.driverId, msg.data.orderId)
@@ -642,57 +705,73 @@ wss.on('connection', async (ws, req) => {
       switch (msg.type) {
         case 'subscribe':
           if (Array.isArray(msg.channels)) {
-            msg.channels.forEach((ch) => {
-              // Authorize channel subscription with ownership data
-              const subscriptionData = {
-                orderId: msg.orderId, // Client must provide orderId for ownership channels
+            // Each ownership channel requires a DB round-trip; process sequentially
+            // to avoid sending the subscribed ACK before all checks complete.
+            ;(async () => {
+              for (const ch of msg.channels) {
+                const subscriptionData = {
+                  orderId: msg.orderId, // untrusted – verified against DB in authorizeChannelAsync
+                }
+
+                let authorized = false
+                try {
+                  authorized = await authorizeChannelAsync(ch, info, subscriptionData)
+                } catch (err) {
+                  console.error('[ws-server] authorizeChannelAsync threw unexpectedly:', err.message)
+                  authorized = false // fail closed
+                }
+
+                if (!authorized) {
+                  ws.send(
+                    JSON.stringify({
+                      channel: 'control',
+                      data: { type: 'error', message: `Unauthorized to subscribe to ${ch}` },
+                      ts: Date.now(),
+                    })
+                  )
+                  continue // deny this channel, try next
+                }
+
+                info.subscribed.add(ch)
+
+                // Initialize channel map if needed
+                if (!channelSubscribers.has(ch)) {
+                  channelSubscribers.set(ch, new Map())
+                }
+                const channelMap = channelSubscribers.get(ch)
+
+                // For ownership channels, track per-order; otherwise use 'global'
+                const isOwnershipChannel = [
+                  'order_update',
+                  'approval_update',
+                  'driver_location',
+                ].includes(ch)
+                const orderKey =
+                  isOwnershipChannel && subscriptionData.orderId
+                    ? subscriptionData.orderId
+                    : 'global'
+
+                if (!channelMap.has(orderKey)) {
+                  channelMap.set(orderKey, new Set())
+                }
+                channelMap.get(orderKey).add(ws)
+
+                // Sync subscription state across instances
+                syncSubscription(ch, 'subscribe')
               }
-              if (!authorizeChannel(ch, info, subscriptionData)) {
+
+              // ACK after all channels have been processed
+              if (ws.readyState === WS_OPEN) {
                 ws.send(
                   JSON.stringify({
                     channel: 'control',
-                    data: { type: 'error', message: `Unauthorized to subscribe to ${ch}` },
+                    data: { type: 'subscribed', clientId },
                     ts: Date.now(),
                   })
                 )
-                return
               }
-
-              info.subscribed.add(ch)
-
-              // Initialize channel map if needed
-              if (!channelSubscribers.has(ch)) {
-                channelSubscribers.set(ch, new Map())
-              }
-              const channelMap = channelSubscribers.get(ch)
-
-              // For ownership channels, track per-order; otherwise use 'global'
-              const isOwnershipChannel = [
-                'order_update',
-                'approval_update',
-                'driver_location',
-              ].includes(ch)
-              const orderKey =
-                isOwnershipChannel && subscriptionData.orderId ? subscriptionData.orderId : 'global'
-
-              if (!channelMap.has(orderKey)) {
-                channelMap.set(orderKey, new Set())
-              }
-              channelMap.get(orderKey).add(ws)
-
-              // Sync subscription state across instances
-              syncSubscription(ch, 'subscribe')
-            })
+            })()
           }
-          // Use authenticated identity, not client-supplied
-          // Client-supplied customerId/driverId are ignored for security
-          ws.send(
-            JSON.stringify({
-              channel: 'control',
-              data: { type: 'subscribed', clientId },
-              ts: Date.now(),
-            })
-          )
           break
 
         case 'unsubscribe':
