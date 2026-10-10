@@ -1,11 +1,11 @@
 // ============================================
-// Load Test Configuration
+// Load Test Configuration & Benchmarking Script
 // ============================================
 import http from 'k6/http'
 import ws from 'k6/ws'
 import { check, sleep } from 'k6'
 
-const CONFIG = {
+export const CONFIG = {
   // Target VUs per stage
   stages: [
     { duration: '30s', target: 10 },
@@ -37,7 +37,7 @@ const CONFIG = {
     vendorCoupons: '/api/admin/coupons',
   },
 
-  // Demo credentials
+  // Demo credentials (used strictly in test environments)
   users: {
     admin: { email: 'admin@crave.com', password: '1234567890' },
     user: { email: 'user@crave.com', password: '1234567890' },
@@ -61,29 +61,40 @@ export const options = {
   thresholds: CONFIG.thresholds,
 }
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000'
-const WS_URL = __ENV.WS_URL || 'ws://localhost:8000/api/ws'
+const env = typeof __ENV !== 'undefined' ? __ENV : typeof process !== 'undefined' ? process.env : {}
+const BASE_URL = env.BASE_URL || 'http://localhost:3000'
+const WS_URL = env.WS_URL || 'ws://localhost:8000/api/ws'
+const COMMIT_SHA = env.COMMIT_SHA || 'unspecified'
+const APP_ENV = env.APP_ENV || 'staging'
+
+/**
+ * Derives peak virtual users configured across all stages dynamically.
+ */
+export function calculateConfiguredPeakVUs(stages) {
+  if (!Array.isArray(stages) || stages.length === 0) return 0
+  return stages.reduce((max, stage) => {
+    const target = Number(stage.target) || 0
+    return target > max ? target : max
+  }, 0)
+}
 
 function login(email, password) {
-  const res = http.post(
-    `${BASE_URL}/api/auth/login`,
-    JSON.stringify({
-      email,
-      password,
-    }),
-    {
+  try {
+    const res = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({ email, password }), {
       headers: { 'Content-Type': 'application/json' },
+      timeout: '5s',
+    })
+    if (res.status === 200 && res.body) {
+      const data = JSON.parse(res.body)
+      return data.token || ''
     }
-  )
-  if (res.status === 200) {
-    const data = JSON.parse(res.body)
-    return data.token
+  } catch (err) {
+    // Fail silently in setup but return empty string so scenarios register auth failure
   }
   return ''
 }
 
 export function setup() {
-  // Login as different roles for authenticated tests
   return {
     adminToken: login(CONFIG.users.admin.email, CONFIG.users.admin.password),
     userToken: login(CONFIG.users.user.email, CONFIG.users.user.password),
@@ -119,8 +130,8 @@ export default function (data) {
     'menu items < 2000ms': (r) => r.timings.duration < CONFIG.timing.menuItems,
   })
 
-  // Test 4: Create order as USER (should work)
-  if (data.userToken) {
+  // Test 4: Create order as USER (requires auth)
+  if (data && data.userToken) {
     const orderPayload = JSON.stringify({
       restaurantId: 'rest_01',
       items: [{ id: 'mi_01', quantity: 2 }],
@@ -134,10 +145,15 @@ export default function (data) {
       'create order as user success': (r) => r.status === 200 || r.status === 201,
       'create order < 3000ms': (r) => r.timings.duration < CONFIG.timing.orders,
     })
+  } else {
+    // Surface failure explicitly rather than silently skipping authenticated test
+    check(null, {
+      'user authentication token present': () => false,
+    })
   }
 
   // Test 5: Admin stats as ADMIN
-  if (data.adminToken) {
+  if (data && data.adminToken) {
     const statsRes = http.get(`${BASE_URL}${CONFIG.endpoints.adminStats}`, {
       headers: authHeaders(data.adminToken),
     })
@@ -148,7 +164,7 @@ export default function (data) {
   }
 
   // Test 6: Vendor coupons as VENDOR
-  if (data.vendorToken) {
+  if (data && data.vendorToken) {
     const couponsRes = http.get(`${BASE_URL}${CONFIG.endpoints.vendorCoupons}`, {
       headers: authHeaders(data.vendorToken),
     })
@@ -159,65 +175,97 @@ export default function (data) {
   }
 
   // Test 7: WebSocket as USER
-  if (data.userToken) {
+  if (data && data.userToken) {
     const wsUrlWithToken = `${WS_URL}?token=${data.userToken}`
     ws.connect(wsUrlWithToken, {}, function (socket) {
       socket.on('open', () => {
         socket.send(JSON.stringify({ type: 'subscribe', channels: ['order_update'] }))
       })
-      socket.on('message', (msg) => {})
-      socket.setTimeout(function () {
-        socket.close()
-      }, 5000)
+      socket.on('message', () => {})
+      socket.setTimeout(() => socket.close(), 5000)
     })
   }
 
   // Test 8: WebSocket as RIDER (driver location)
-  if (data.riderToken) {
+  if (data && data.riderToken) {
     const wsUrlWithToken = `${WS_URL}?token=${data.riderToken}`
     ws.connect(wsUrlWithToken, {}, function (socket) {
       socket.on('open', () => {
         socket.send(JSON.stringify({ type: 'subscribe', channels: ['driver_location'] }))
       })
-      socket.on('message', (msg) => {})
-      socket.setTimeout(function () {
-        socket.close()
-      }, 5000)
+      socket.on('message', () => {})
+      socket.setTimeout(() => socket.close(), 5000)
     })
   }
 
   sleep(1)
 }
 
+/**
+ * Builds a secure allowlisted summary artifact and console report.
+ * Ensures zero credentials, tokens, cookies, or secrets are ever persisted.
+ */
 export function handleSummary(data) {
-  const totalReqs = data.metrics.http_reqs.values.count
-  const failedReqs = data.metrics.http_req_failed.values.passes
+  const metrics = data?.metrics || {}
+
+  // Safe metric extraction
+  const totalReqs = metrics.http_reqs?.values?.count || 0
+  const failedReqs = metrics.http_req_failed?.values?.passes || 0
   const failPct = totalReqs > 0 ? ((failedReqs / totalReqs) * 100).toFixed(2) : '0.00'
-  const avgDuration = data.metrics.http_req_duration.values.avg.toFixed(2)
-  const p95Duration = data.metrics.http_req_duration.values['p(95)'].toFixed(2)
-  const maxDuration = data.metrics.http_req_duration.values.max.toFixed(2)
-  const reqsPerSec = data.metrics.http_reqs.values.rate.toFixed(2)
-  const wsAvg = data.metrics.ws_connecting
-    ? data.metrics.ws_connecting.values.avg.toFixed(2)
-    : 'N/A'
 
-  const checkRate = data.metrics.checks
-    ? (
-        (data.metrics.checks.values.passes /
-          (data.metrics.checks.values.passes + data.metrics.checks.values.fails)) *
-        100
-      ).toFixed(2)
-    : 'N/A'
+  const avgDuration = metrics.http_req_duration?.values?.avg?.toFixed(2) || '0.00'
+  const p95Duration = metrics.http_req_duration?.values?.['p(95)']?.toFixed(2) || '0.00'
+  const maxDuration = metrics.http_req_duration?.values?.max?.toFixed(2) || '0.00'
+  const reqsPerSec = metrics.http_reqs?.values?.rate?.toFixed(2) || '0.00'
 
-  const summary = `
+  const wsAvg =
+    metrics.ws_connecting?.values?.avg != null ? metrics.ws_connecting.values.avg.toFixed(2) : 'N/A'
+
+  const checkPasses = metrics.checks?.values?.passes || 0
+  const checkFails = metrics.checks?.values?.fails || 0
+  const totalChecks = checkPasses + checkFails
+  const checkRate = totalChecks > 0 ? ((checkPasses / totalChecks) * 100).toFixed(2) : 'N/A'
+
+  // Dynamic peak and plan calculation
+  const configuredPeakVUs = calculateConfiguredPeakVUs(CONFIG.stages)
+  const observedPeakVUs = metrics.vus?.values?.max || metrics.vus_max?.values?.value || 0
+
+  // Threshold evaluations
+  const p95Ok = parseFloat(p95Duration) <= 5000
+  const failRateOk = parseFloat(failPct) < 10
+  const checksOk = checkRate !== 'N/A' && parseFloat(checkRate) >= 90
+  const overallThresholdsPass = p95Ok && failRateOk && checksOk
+
+  // Auth availability audit
+  const hasUserAuth = Boolean(data?.setup_data?.userToken)
+  const hasAdminAuth = Boolean(data?.setup_data?.adminToken)
+  const hasVendorAuth = Boolean(data?.setup_data?.vendorToken)
+  const hasRiderAuth = Boolean(data?.setup_data?.riderToken)
+  const allAuthPresent = hasUserAuth && hasAdminAuth && hasVendorAuth && hasRiderAuth
+
+  const stagePlanStr = CONFIG.stages
+    .map((s, idx) => `    Stage ${idx + 1}: ${s.duration} -> target ${s.target} VUs`)
+    .join('\n')
+
+  const consoleReport = `
 ===========================================
-LOAD TEST SUMMARY
+CRAVE PRODUCTION LOAD BENCHMARK SUMMARY
 ===========================================
-Configuration:
-  Target VUs (peak): ${CONFIG.stages[3].target}
-  Stages: ${CONFIG.stages.length}
-  Base URL: ${BASE_URL}
-  WS URL: ${WS_URL}
+Metadata:
+  Timestamp:       ${new Date().toISOString()}
+  Environment:     ${APP_ENV}
+  Commit SHA:      ${COMMIT_SHA}
+
+Concurrency:
+  Configured Peak: ${configuredPeakVUs} VUs
+  Observed Peak:   ${observedPeakVUs} VUs
+  Configured Plan:
+${stagePlanStr}
+
+Endpoints & Targets:
+  Base URL:        ${BASE_URL}
+  WS URL:          ${WS_URL}
+  Auth Tested:     ${allAuthPresent ? 'YES (All roles configured)' : 'PARTIAL / SKIPPED'}
 
 Results:
   Total Requests:      ${totalReqs}
@@ -225,19 +273,67 @@ Results:
   Avg Response Time:   ${avgDuration} ms
   p(95) Response Time: ${p95Duration} ms
   Max Response Time:   ${maxDuration} ms
-  Requests/sec:        ${reqsPerSec}
+  Throughput:          ${reqsPerSec} reqs/sec
   WS Connect Avg:      ${wsAvg} ms
-  Checks Pass Rate:    ${checkRate}%
+  Checks Pass Rate:    ${checkRate}% (${checkPasses} passed, ${checkFails} failed)
 
-Thresholds:
-  http_req_duration p(95) < 5000ms: ${p95Duration <= 5000 ? '✅ PASS' : '❌ FAIL'}
-  http_req_failed rate < 10%:       ${failPct < 10 ? '✅ PASS' : '❌ FAIL'}
-  checks rate > 90%:                 ${checkRate >= 90 ? '✅ PASS' : '❌ FAIL'}
+Threshold Gates:
+  http_req_duration p(95) < 5000ms: ${p95Ok ? '✅ PASS' : '❌ FAIL'}
+  http_req_failed rate < 10%:       ${failRateOk ? '✅ PASS' : '❌ FAIL'}
+  checks rate > 90%:                 ${checksOk ? '✅ PASS' : '❌ FAIL'}
+  Overall Gate Status:              ${overallThresholdsPass ? '✅ BENCHMARK PASSED' : '❌ BENCHMARK FAILED'}
 ===========================================
 `
 
+  // Explicit allowlisted artifact: zero secrets, tokens, or raw setup_data
+  const allowlistedSummary = {
+    benchmark: 'crave-checkout-load-test',
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    environment: APP_ENV,
+    commitSha: COMMIT_SHA,
+    concurrency: {
+      configuredPeakVUs,
+      observedPeakVUs,
+      stages: CONFIG.stages,
+    },
+    authCoverage: {
+      userScenarioAvailable: hasUserAuth,
+      adminScenarioAvailable: hasAdminAuth,
+      vendorScenarioAvailable: hasVendorAuth,
+      riderScenarioAvailable: hasRiderAuth,
+      allCredentialsAvailable: allAuthPresent,
+    },
+    execution: {
+      testRunDurationMs: data?.state?.testRunDurationMs || 0,
+      totalRequests: totalReqs,
+      failedRequests: failedReqs,
+      requestFailureRatePct: parseFloat(failPct),
+      requestsPerSecond: parseFloat(reqsPerSec),
+      checksPassRatePct: checkRate !== 'N/A' ? parseFloat(checkRate) : null,
+      checksPassed: checkPasses,
+      checksFailed: checkFails,
+    },
+    metrics: {
+      http_req_duration: metrics.http_req_duration?.values || {},
+      http_req_failed: metrics.http_req_failed?.values || {},
+      checks: metrics.checks?.values || {},
+      http_reqs: metrics.http_reqs?.values || {},
+      ws_connecting: metrics.ws_connecting?.values || {},
+    },
+    thresholds: {
+      'http_req_duration:p(95)<5000': { pass: p95Ok, valueMs: parseFloat(p95Duration) },
+      'http_req_failed:rate<0.10': { pass: failRateOk, failPct: parseFloat(failPct) },
+      'checks:rate>0.90': {
+        pass: checksOk,
+        passPct: checkRate !== 'N/A' ? parseFloat(checkRate) : null,
+      },
+    },
+    overallPassed: overallThresholdsPass,
+  }
+
   return {
-    stdout: summary,
-    'summary.json': JSON.stringify(data),
+    stdout: consoleReport,
+    'summary.json': JSON.stringify(allowlistedSummary, null, 2),
   }
 }

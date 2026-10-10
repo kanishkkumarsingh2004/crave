@@ -181,4 +181,92 @@ describe('Orders PATCH - WebSocket Broadcast Integration', () => {
       })
     )
   })
+
+  it('does NOT broadcast when caller is unauthorized', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_unauthorized',
+      role: 'user',
+      email: 'user@test.com',
+    })
+    mockFindOrderById.mockResolvedValue({
+      status: 'sent_to_vendor',
+      customer_id: 'usr_different',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeAuthedRequest({ orderId: 'ord_1', status: 'preparing' })
+
+    await PATCH(req)
+
+    expect(broadcast).not.toHaveBeenCalled()
+  })
+
+  it('does NOT broadcast when status transition is invalid', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+    mockFindOrderById.mockResolvedValue({
+      status: 'completed',
+      customer_id: 'usr_1',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeAuthedRequest({ orderId: 'ord_1', status: 'preparing' })
+
+    await PATCH(req)
+
+    expect(broadcast).not.toHaveBeenCalled()
+  })
+
+  it('does NOT broadcast when database update fails', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+    mockFindOrderById.mockResolvedValue({
+      status: 'payment_verified',
+      customer_id: 'usr_1',
+    })
+    mockUpdateOrder.mockRejectedValueOnce(new Error('DB failure'))
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeAuthedRequest({ orderId: 'ord_1', status: 'sent_to_vendor' })
+
+    await PATCH(req)
+
+    expect(broadcast).not.toHaveBeenCalled()
+  })
+
+  it('isolates orderId and status payload in broadcast', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+    mockFindOrderById.mockResolvedValue({
+      id: 'ord_isolated_456',
+      status: 'payment_verified',
+      customer_id: 'usr_1',
+    })
+    mockUpdateOrder.mockResolvedValue({
+      id: 'ord_isolated_456',
+      status: 'sent_to_vendor',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeAuthedRequest({ orderId: 'ord_isolated_456', status: 'sent_to_vendor' })
+
+    await PATCH(req)
+
+    expect(broadcast).toHaveBeenCalledWith(
+      'order_update',
+      expect.objectContaining({
+        orderId: 'ord_isolated_456',
+        order: expect.objectContaining({ id: 'ord_isolated_456', status: 'sent_to_vendor' }),
+      })
+    )
+  })
 })
