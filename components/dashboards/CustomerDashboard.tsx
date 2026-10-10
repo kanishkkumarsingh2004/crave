@@ -64,7 +64,8 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 import { usePathname, useRouter } from 'next/navigation'
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
 
 import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
@@ -73,8 +74,9 @@ import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/d
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-64 w-full rounded-2xl bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-bold animate-pulse">
-      Loading Live Interactive Map...
+    <div className="h-64 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
+      <CraveSpinner size="md" variant="crave" />
+      <span className="tracking-wider uppercase text-[11px] text-white">Loading Live Interactive Map...</span>
     </div>
   ),
 })
@@ -82,9 +84,9 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
 const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#09090b] border border-[#27272a] flex flex-col items-center justify-center gap-2 text-xs text-gray-400 font-bold animate-pulse">
-      <div className="size-8 border-2 border-[#d9f447] border-t-transparent rounded-full animate-spin mb-1" />
-      <span>Loading Mapcn Live Rider Map...</span>
+    <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
+      <CraveSpinner size="lg" variant="crave" />
+      <span className="tracking-wider uppercase text-[11px] text-white">Connecting Live Rider GPS Map...</span>
     </div>
   ),
 })
@@ -265,6 +267,11 @@ export default function CustomerDashboard({
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<Array<PastOrder>>([])
+  const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false)
+  const isSubmittingCheckoutRef = useRef(false)
+  const checkoutIdempotencyKeyRef = useRef<string | null>(null)
+  const [isApprovingPayment, setIsApprovingPayment] = useState(false)
+  const isApprovingPaymentRef = useRef(false)
 
   useEffect(() => {
     if (showMobileSideMenu) {
@@ -1162,6 +1169,11 @@ export default function CustomerDashboard({
 
   async function handleCheckoutSubmit(e: FormEvent) {
     e.preventDefault()
+    // Immediate synchronous lock against double clicks
+    if (isSubmittingCheckoutRef.current || isSubmittingCheckout) {
+      return
+    }
+
     setUtrError('')
 
     const cleanUtr = utrRef.trim()
@@ -1194,7 +1206,15 @@ export default function CustomerDashboard({
       return
     }
 
-    const orderId = crypto.randomUUID()
+    // Synchronously lock
+    isSubmittingCheckoutRef.current = true
+    setIsSubmittingCheckout(true)
+
+    if (!checkoutIdempotencyKeyRef.current) {
+      checkoutIdempotencyKeyRef.current = crypto.randomUUID()
+    }
+    const orderId = checkoutIdempotencyKeyRef.current
+
     const otpBytes = new Uint32Array(1)
     crypto.getRandomValues(otpBytes)
     const generatedOtp = String(100000 + (otpBytes[0] % 900000))
@@ -1209,6 +1229,7 @@ export default function CustomerDashboard({
     try {
       const orderPayload = {
         id: orderId,
+        idempotency_key: orderId,
         customer_id: user.id,
         customer_name: user.name,
         customer_phone: user?.phone || null,
@@ -1229,11 +1250,15 @@ export default function CustomerDashboard({
         payment_method: 'UPI Online',
         delivery_otp: generatedOtp,
         utr_ref: cleanUtr,
+        customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
       }
 
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': orderId,
+        },
         body: JSON.stringify(orderPayload),
       })
 
@@ -1242,6 +1267,7 @@ export default function CustomerDashboard({
         throw new Error(resData.error || 'Failed to submit order.')
       }
 
+      checkoutIdempotencyKeyRef.current = null
       const savedOrder = resData.order
 
       const rawDateVal = savedOrder.created_at || savedOrder.createdAt || savedOrder.timestamp
@@ -1289,6 +1315,9 @@ export default function CustomerDashboard({
         driverPhone: null,
         timestamp: nowTime,
       })
+    } finally {
+      setIsSubmittingCheckout(false)
+      isSubmittingCheckoutRef.current = false
     }
 
     setShowCheckoutModal(false)
@@ -3209,11 +3238,23 @@ export default function CustomerDashboard({
                 <button
                   type="submit"
                   disabled={
-                    !checkoutConfig || !companyUpiId || utrRef.replace(/\D/g, '').length < 10
+                    isSubmittingCheckout ||
+                    !checkoutConfig ||
+                    !companyUpiId ||
+                    utrRef.replace(/\D/g, '').length < 10
                   }
-                  className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] transition hover:bg-[#c2dc3a] shadow-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-gray-600"
+                  className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] transition hover:bg-[#c2dc3a] shadow-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-gray-600 relative overflow-hidden flex items-center justify-center"
                 >
-                  Submit Order &amp; Start Verification (₹{grandTotal})
+                  {isSubmittingCheckout ? (
+                    <CraveButtonLoader
+                      label="Securing & Placing Order..."
+                      sublabel="Verifying payment details with kitchen"
+                      variant="dark"
+                      size="md"
+                    />
+                  ) : (
+                    <>Submit Order &amp; Start Verification (₹{grandTotal})</>
+                  )}
                 </button>
               </form>
             )}
@@ -3225,8 +3266,12 @@ export default function CustomerDashboard({
       {verifyingModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white text-center animate-in zoom-in-95 duration-200">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-md animate-pulse">
-              <Sparkles className="size-7 fill-current" />
+            <div className="relative mx-auto flex items-center justify-center size-20">
+              <div className="absolute inset-0 rounded-full bg-[#d9f447]/20 blur-xl animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-[#d9f447]/30 animate-ping opacity-40" />
+              <div className="relative size-16 grid place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-lg">
+                <Sparkles className="size-8 fill-current" />
+              </div>
             </div>
 
             <h3 className="mt-4 text-xl font-bold text-white">Verifying Payment Details</h3>
@@ -3253,8 +3298,11 @@ export default function CustomerDashboard({
 
                 <button
                   type="button"
+                  disabled={isApprovingPayment}
                   onClick={async () => {
-                    if (!verifyingModal.orderId) return
+                    if (!verifyingModal.orderId || isApprovingPaymentRef.current || isApprovingPayment) return
+                    isApprovingPaymentRef.current = true
+                    setIsApprovingPayment(true)
                     try {
                       await fetch('/api/orders', {
                         method: 'PATCH',
@@ -3266,11 +3314,22 @@ export default function CustomerDashboard({
                         }),
                       })
                       setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
-                    } catch (e) {}
+                    } catch (e) {
+                      console.error('Instant approve error:', e)
+                    } finally {
+                      setIsApprovingPayment(false)
+                      isApprovingPaymentRef.current = false
+                    }
                   }}
-                  className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5"
+                  className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to Kitchen
+                  {isApprovingPayment ? (
+                    <CraveButtonLoader label="Approving Order..." variant="dark" size="sm" />
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to Kitchen
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -3350,7 +3409,7 @@ export default function CustomerDashboard({
                 <div className="flex items-center gap-3.5">
                   <div className="grid size-10 place-items-center rounded-xl bg-emerald-600 text-white shadow-xs group-hover:scale-105 transition">
                     {gpsDetecting ? (
-                      <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <CraveSpinner size="sm" variant="white" />
                     ) : (
                       <LocateFixed className="size-5" />
                     )}

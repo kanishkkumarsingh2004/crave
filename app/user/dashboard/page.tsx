@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { CravePagePreloader } from '@/components/ui/ModernPreloader'
 
 const getDashboardPath = (role: string) => {
   switch (role) {
@@ -37,13 +38,12 @@ export default function UserDashboardPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading Customer Dashboard...
-          </p>
-        </div>
+      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] flex items-center justify-center p-4">
+        <CravePagePreloader
+          title="Loading Customer Dashboard..."
+          subtitle="Preparing menus, saved addresses and live orders"
+          minHeight="min-h-screen"
+        />
       </div>
     )
   }

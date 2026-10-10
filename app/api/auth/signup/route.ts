@@ -23,6 +23,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
     }
 
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters long' },
+        { status: 400 }
+      )
+    }
+
     if (!role) {
       return NextResponse.json({ error: 'A role must be specified' }, { status: 400 })
     }

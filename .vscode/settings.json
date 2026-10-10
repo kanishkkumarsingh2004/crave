@@ -1,0 +1,10 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "path-intellisense.mappings": {
+    "@": "${workspaceFolder}"
+  },
+  "path-autocomplete.pathMappings": {
+    "@": "${workspaceFolder}"
+  }
+}

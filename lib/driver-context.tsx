@@ -278,6 +278,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [workerLastSyncTime, setWorkerLastSyncTime] = useState<string>('Never')
   const [backgroundSyncIntervalMs, setBackgroundSyncIntervalMs] = useState<number>(3000)
   const workerRef = React.useRef<Worker | null>(null)
+  const isStepAdvancingRef = React.useRef(false)
+  const isAcceptingOfferRef = React.useRef(false)
   const [completedSummaryModal, setCompletedSummaryModal] = useState<CompletedTripItem | null>(null)
 
   // Completed Trips
@@ -769,7 +771,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function acceptBroadcastOffer() {
-    if (!broadcastOffer) return
+    if (!broadcastOffer || isAcceptingOfferRef.current) return
+    isAcceptingOfferRef.current = true
 
     const realId = broadcastOffer.id
     const driverDisplayName = user?.name || 'Verified Delivery Partner'
@@ -832,6 +835,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => {})
     } catch (e) {
       console.error('Failed to update driver assignment:', e)
+    } finally {
+      isAcceptingOfferRef.current = false
     }
 
     // Immediately publish driver live GPS position to WebSocket broadcast
@@ -847,64 +852,70 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function advanceStep() {
-    if (!activeTask) return
+    if (!activeTask || isStepAdvancingRef.current) return
+    isStepAdvancingRef.current = true
+
     const driverDisplayName = user?.name || 'Verified Delivery Partner'
     const driverDisplayPhone = user?.phone || '+91 98765 43210'
 
-    if (activeTask.step === 'assigned') {
-      setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
-      try {
-        await fetch('/api/orders', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+    try {
+      if (activeTask.step === 'assigned') {
+        setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
+        try {
+          await fetch('/api/orders', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: activeTask.id,
+              status: 'ready_for_pickup',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            }),
+          })
+          publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'ready_for_pickup',
-            driver_name: driverDisplayName,
-            driver_phone: driverDisplayPhone,
-          }),
-        })
-        publishLiveEvent('order_update', {
-          orderId: activeTask.id,
-          status: 'ready_for_pickup',
-        })
-      } catch (e) {}
-    } else if (activeTask.step === 'at_restaurant') {
-      setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
-      try {
-        await fetch('/api/orders', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          })
+        } catch (e) {}
+      } else if (activeTask.step === 'at_restaurant') {
+        setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
+        try {
+          await fetch('/api/orders', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: activeTask.id,
+              status: 'picked_up',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            }),
+          })
+          publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'picked_up',
-            driver_name: driverDisplayName,
-            driver_phone: driverDisplayPhone,
-          }),
-        })
-        publishLiveEvent('order_update', {
-          orderId: activeTask.id,
-          status: 'picked_up',
-        })
-      } catch (e) {}
-    } else if (activeTask.step === 'picked_up') {
-      setActiveTask((prev) => (prev ? { ...prev, step: 'arrived_customer' } : null))
-      try {
-        await fetch('/api/orders', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          })
+        } catch (e) {}
+      } else if (activeTask.step === 'picked_up') {
+        setActiveTask((prev) => (prev ? { ...prev, step: 'arrived_customer' } : null))
+        try {
+          await fetch('/api/orders', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: activeTask.id,
+              status: 'out_for_delivery',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            }),
+          })
+          publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'out_for_delivery',
-            driver_name: driverDisplayName,
-            driver_phone: driverDisplayPhone,
-          }),
-        })
-        publishLiveEvent('order_update', {
-          orderId: activeTask.id,
-          status: 'out_for_delivery',
-        })
-      } catch (e) {}
+          })
+        } catch (e) {}
+      }
+    } finally {
+      isStepAdvancingRef.current = false
     }
   }
 
