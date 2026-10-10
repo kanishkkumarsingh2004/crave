@@ -23,7 +23,12 @@ function createPrismaClient(): PrismaClientType {
       process.env.DATABASE_URL ||
       'postgresql://postgres:postgres@localhost:5432/crave?schema=public'
     const { PrismaPg } = require('@prisma/adapter-pg')
-    const adapter = new PrismaPg({ connectionString: dbUrl })
+    const adapter = new PrismaPg({
+      connectionString: dbUrl,
+      max: Number(process.env.DB_POOL_MAX || 20),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    })
     return new PrismaClient({ adapter, log: [] })
   } catch (e) {
     console.warn('Prisma client unavailable:', e)

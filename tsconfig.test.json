@@ -7,8 +7,14 @@
     "target": "es2020",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@/lib/*": ["./lib/*"],
+      "@/components/*": ["./components/*"],
+      "@/app/*": ["./app/*"]
+    }
   },
   "include": [
     "test/**/*",

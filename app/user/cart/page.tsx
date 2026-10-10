@@ -37,7 +37,8 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
 
 interface Coupon {
   id: string
@@ -74,6 +75,8 @@ export default function CartPage() {
   const [utrRef, setUtrRef] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
+  const isSubmittingRef = useRef(false)
+  const idempotencyKeyRef = useRef<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState(false)
 
   // Saved Addresses State
@@ -305,6 +308,8 @@ export default function CartPage() {
         body: JSON.stringify({
           label: newAddressLabel,
           address: newAddressText.trim(),
+          latitude: 12.9716,
+          longitude: 77.5946,
           is_default: savedAddresses.length === 0,
         }),
       })
@@ -337,6 +342,11 @@ export default function CartPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Immediate synchronous lock against rapid double-clicks
+    if (isSubmittingRef.current || isSubmittingOrder) {
+      return
+    }
+
     if (cart.length === 0) {
       toast('Your cart is empty', 'error')
       return
@@ -353,13 +363,24 @@ export default function CartPage() {
       return
     }
 
+    // Synchronously engage lock before async operations
+    isSubmittingRef.current = true
     setIsSubmittingOrder(true)
+
     try {
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = crypto.randomUUID()
+      }
+      const clientOrderId = idempotencyKeyRef.current
+
       const orderPayload = {
+        id: clientOrderId,
+        idempotency_key: clientOrderId,
         customer_id: user.id,
         customer_name: user.name || 'Customer',
         customer_phone: customerPhone,
         customer_address: deliveryAddress,
+        address_id: selectedAddressId || undefined,
         restaurant_id:
           cart[0]?.restaurantId ||
           cart[0]?.vendorId ||
@@ -386,7 +407,10 @@ export default function CartPage() {
       }
 
       const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': clientOrderId,
+      }
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
       }
@@ -402,7 +426,8 @@ export default function CartPage() {
         throw new Error(json.error || 'Failed to place order')
       }
 
-      const createdOrderId = json.order?.id || json.orderId
+      const createdOrderId = json.order?.id || json.orderId || clientOrderId
+      idempotencyKeyRef.current = null
       clearCart()
       setOrderSuccess(true)
       toast('Order placed successfully! Tracking your delivery live...', 'success')
@@ -418,6 +443,7 @@ export default function CartPage() {
       toast(err?.message || 'Could not process order', 'error')
     } finally {
       setIsSubmittingOrder(false)
+      isSubmittingRef.current = false
     }
   }
 
@@ -1067,16 +1093,18 @@ export default function CartPage() {
                     <button
                       type="submit"
                       disabled={isSubmittingOrder || utrRef.trim().length < 10}
-                      className="btn-primary btn-full btn-lg"
+                      className="btn-primary btn-full btn-lg relative overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmittingOrder ? (
-                        <>
-                          <div className="size-4 border-2 border-[#d9f447] dark:border-[#18201c] border-t-transparent rounded-full animate-spin" />
-                          Placing Order...
-                        </>
+                        <CraveButtonLoader
+                          label="Securing & Placing Order..."
+                          sublabel="Confirming payment with restaurant"
+                          variant="dark"
+                          size="md"
+                        />
                       ) : (
                         <>
-                          Confirm &amp; Place Order (₹{grandTotal})
+                          <span>Confirm &amp; Place Order (₹{grandTotal})</span>
                           <ArrowRight className="size-4 text-[#d9f447] dark:text-[#18201c]" />
                         </>
                       )}
