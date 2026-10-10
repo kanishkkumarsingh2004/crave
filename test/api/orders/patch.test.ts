@@ -189,4 +189,150 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
     expect(response.status).toBe(403)
     expect(data.error).toContain('not allowed')
   })
+
+  it('rejects driver location update from unassigned rider when order has assigned rider', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'rider_unassigned',
+      role: 'rider',
+      email: 'rider_intruder@test.com',
+    })
+
+    const mockOrder = {
+      id: 'ord_1',
+      status: 'out_for_delivery',
+      rider_id: 'rider_assigned_legitimate',
+      customer_id: 'usr_1',
+    }
+    findOrderById.mockResolvedValue(mockOrder)
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      orderId: 'ord_1',
+      driver_lat: 12.9716,
+      driver_lng: 77.4695,
+    })
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('not allowed')
+    expect(broadcast).not.toHaveBeenCalled()
+  })
+
+  it('rejects transition from terminal completed state', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+
+    const mockOrder = {
+      id: 'ord_1',
+      status: 'completed',
+      customer_id: 'usr_1',
+    }
+    findOrderById.mockResolvedValue(mockOrder)
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      orderId: 'ord_1',
+      status: 'preparing',
+    })
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('terminal')
+  })
+
+  it('rejects delivery completion if delivery OTP does not match', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'rider_1',
+      role: 'rider',
+      email: 'rider@test.com',
+    })
+
+    const mockOrder = {
+      id: 'ord_1',
+      status: 'out_for_delivery',
+      rider_id: 'rider_1',
+      customer_id: 'usr_1',
+      delivery_otp: '4829',
+    }
+    findOrderById.mockResolvedValue(mockOrder)
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      orderId: 'ord_1',
+      status: 'delivered',
+      otp: '9999',
+    })
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('Valid delivery OTP is required')
+    expect(updateOrder).not.toHaveBeenCalled()
+  })
+
+  it('allows delivery completion when driver provides correct OTP', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'rider_1',
+      role: 'rider',
+      email: 'rider@test.com',
+    })
+
+    const mockOrder = {
+      id: 'ord_1',
+      status: 'out_for_delivery',
+      rider_id: 'rider_1',
+      customer_id: 'usr_1',
+      delivery_otp: '4829',
+    }
+    findOrderById.mockResolvedValue(mockOrder)
+    updateOrder.mockResolvedValue({ ...mockOrder, status: 'delivered' })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      orderId: 'ord_1',
+      status: 'delivered',
+      otp: '4829',
+    })
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+  })
+
+  it('handles updateOrder failure cleanly and aborts broadcasts', async () => {
+    mockVerifyToken.mockResolvedValueOnce({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+
+    const mockOrder = {
+      id: 'ord_1',
+      status: 'payment_verified',
+      customer_id: 'usr_1',
+      restaurant_id: 'vnd_1',
+    }
+    findOrderById.mockResolvedValue(mockOrder)
+    updateOrder.mockRejectedValueOnce(new Error('Database transaction lock conflict'))
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      orderId: 'ord_1',
+      status: 'sent_to_vendor',
+    })
+
+    const response = await PATCH(req)
+    expect(response.status).toBe(500)
+    expect(broadcast).not.toHaveBeenCalled()
+  })
 })
