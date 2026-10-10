@@ -3,6 +3,9 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^k6$': '<rootDir>/test/__mocks__/k6.ts',
+    '^k6/http$': '<rootDir>/test/__mocks__/k6.ts',
+    '^k6/ws$': '<rootDir>/test/__mocks__/k6.ts',
   },
   testMatch: ['<rootDir>/test/**/*.test.{ts,tsx}'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

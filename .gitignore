@@ -21,6 +21,8 @@ node_modules
 # Neon
 .neon/
 neon-*.log
-.agents
 skills-lock.json
 load-test-results.json
+load-test-summary.local.json
+load-tests/results/
+*.local.json

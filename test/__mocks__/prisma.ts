@@ -1,4 +1,4 @@
-const mockPrisma = {
+const mockPrisma: any = {
   restaurant: {
     findMany: jest.fn(),
     findFirst: jest.fn(),
@@ -89,8 +89,15 @@ const mockPrisma = {
     deleteMany: jest.fn(),
   },
   $connect: jest.fn(),
-  $disconnect: jest.fn(),
-  $transaction: jest.fn(),
+  $transaction: jest.fn(async (arg: any) => {
+    if (typeof arg === 'function') {
+      return arg(mockPrisma)
+    }
+    if (Array.isArray(arg)) {
+      return Promise.all(arg)
+    }
+    return arg
+  }),
   $executeRaw: jest.fn(),
   $queryRaw: jest.fn(),
 }

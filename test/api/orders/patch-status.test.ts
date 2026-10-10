@@ -282,4 +282,94 @@ describe('Orders PATCH - Order Status Flow', () => {
     expect(response.status).toBe(403)
     expect(data.error).toContain('Only the assigned driver can confirm delivery')
   })
+
+  it('unassigned rider CANNOT confirm delivery when order is assigned to a different rider', async () => {
+    mockVerifyToken.mockResolvedValue({
+      id: 'usr_rider_intruder',
+      role: 'rider',
+      email: 'rider_intruder@test.com',
+    })
+    mockedFindOrderById.mockResolvedValue({
+      status: 'out_for_delivery',
+      customer_id: 'usr_1',
+      rider_id: 'usr_rider_assigned',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({ orderId: 'ord_1', status: 'delivered' }, RIDER_TOKEN)
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('Only the assigned driver can confirm delivery')
+  })
+
+  it('vendor CANNOT update status of order belonging to another restaurant', async () => {
+    mockVerifyToken.mockResolvedValue({
+      id: 'usr_vendor_1',
+      role: 'restaurant_vendor',
+      email: 'vendor1@test.com',
+      restaurantName: 'Restaurant One',
+    })
+    mockedFindOrderById.mockResolvedValue({
+      status: 'sent_to_vendor',
+      customer_id: 'usr_1',
+      restaurant_id: 'vnd_2',
+      restaurant_name: 'Restaurant Two',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({ orderId: 'ord_1', status: 'preparing' }, VENDOR_TOKEN)
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('not allowed')
+  })
+
+  it('rejects invalid jump across phases (payment_submitted to delivered)', async () => {
+    mockVerifyToken.mockResolvedValue({
+      id: 'usr_admin',
+      role: 'admin',
+      email: 'admin@test.com',
+    })
+    mockedFindOrderById.mockResolvedValue({
+      status: 'payment_submitted',
+      customer_id: 'usr_1',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({ orderId: 'ord_1', status: 'delivered' }, ADMIN_TOKEN)
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('not allowed')
+  })
+
+  it('assigned rider requires valid OTP to confirm delivery when OTP is set', async () => {
+    mockVerifyToken.mockResolvedValue({
+      id: 'usr_rider_assigned',
+      role: 'rider',
+      email: 'rider@test.com',
+    })
+    mockedFindOrderById.mockResolvedValue({
+      status: 'out_for_delivery',
+      rider_id: 'usr_rider_assigned',
+      customer_id: 'usr_1',
+      delivery_otp: '7721',
+    })
+
+    const { PATCH } = await import('@/app/api/orders/route')
+    const req = makeRequest({ orderId: 'ord_1', status: 'delivered', otp: 'wrong' }, RIDER_TOKEN)
+
+    const response = await PATCH(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('Valid delivery OTP is required')
+  })
 })
