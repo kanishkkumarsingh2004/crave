@@ -263,6 +263,10 @@ export async function POST(request: Request) {
     const paymentConfig = await getActiveConfig()
 
     // ─── Deduplication & Idempotency Check ────────────────────────
+    // CR-10 FIX: Before returning an existing order, verify it belongs to the
+    // authenticated customer.  An attacker who guesses another customer's order ID
+    // or supplies it as their idempotency key must receive a generic 404, not the
+    // order data.
     const candidateId = id || idempotencyKey
     if (candidateId && typeof prisma?.order?.findUnique === 'function') {
       try {
@@ -270,6 +274,11 @@ export async function POST(request: Request) {
           where: { id: candidateId },
         })
         if (existingOrderById) {
+          // Ownership check: the order must belong to this customer.
+          if (existingOrderById.customer_id !== finalCustomerId) {
+            // Return generic 404 — do not reveal that an order with this ID exists.
+            return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+          }
           return NextResponse.json({
             success: true,
             order: existingOrderById,
@@ -283,13 +292,18 @@ export async function POST(request: Request) {
     }
 
     // Anti-replay deduplication by UTR reference:
-    // If an order was already submitted with this exact bank UTR reference, return it
+    // If an order was already submitted with this exact bank UTR reference, return it.
+    // CR-10 FIX: Apply the same ownership gate here — only return an order whose
+    // customer_id matches the authenticated caller.
     if (utr_ref && typeof prisma?.order?.findFirst === 'function') {
       try {
         const cleanUtr = String(utr_ref).trim()
         const existingOrderWithUtr = await prisma.order.findFirst({
           where: {
             utr_ref: cleanUtr,
+            // Scope to this customer so one customer cannot deduplicate against
+            // another customer's UTR and receive their order data.
+            customer_id: finalCustomerId,
           },
           orderBy: { created_at: 'desc' },
         })
@@ -496,36 +510,98 @@ export async function POST(request: Request) {
     const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
       'commission' | 'markup' | 'hybrid'
 
-    // ─── CR-006 FIX: Resolve canonical address from the authenticated customer's saved
-    // records — both coordinates (for delivery fee) and address text (stored on order).
+    // ─── CR-006 / CR-12 FIX: Resolve canonical address from the authenticated customer's
+    // saved records — both coordinates (for delivery fee) and address text (stored on order).
     // The client-supplied customer_address string is NEVER written to the order; only
     // the resolved DB record is used.  This prevents mismatch between the label stored
     // on the order and the coordinates used for distance/fee calculation.
+    //
+    // CR-12 rules:
+    //   1. If the caller supplies an explicit address_id, it MUST exist and belong to
+    //      this customer — any other ID is rejected with 400 (not silently substituted).
+    //   2. Only when NO address_id is supplied do we fall back to the default address,
+    //      then any saved address.
+    //   3. If the resolved address has no valid coordinates (null/zero) we return a clear
+    //      validation error rather than silently using the Bengaluru city-centre fallback,
+    //      which would produce misleading delivery fees and a wrong delivery destination.
     let customerLat: number | null = null
     let customerLng: number | null = null
-    let canonicalAddressText: string = 'Bengaluru' // safe fallback label
+    let canonicalAddressText: string = ''
+    let customerAddressState: string | null = null // CR-13: capture for tax jurisdiction
 
-    try {
-      const targetAddressId = body.address_id || body.addressId || null
-      let matchedAddress: any = null
+    const targetAddressId = body.address_id || body.addressId || null
 
-      if (targetAddressId && typeof prisma?.customerAddress?.findFirst === 'function') {
-        matchedAddress = await prisma.customerAddress.findFirst({
-          where: { id: targetAddressId, customer_id: finalCustomerId },
-          select: {
-            latitude: true,
-            longitude: true,
-            address_line1: true,
-            address_line2: true,
-            city: true,
-            state: true,
-            pincode: true,
-            label: true,
-          },
-        })
+    if (targetAddressId) {
+      // Explicit address requested — it must belong to this customer.
+      if (typeof prisma?.customerAddress?.findFirst !== 'function') {
+        return NextResponse.json(
+          { error: 'Address lookup unavailable. Please try again.' },
+          { status: 503 }
+        )
       }
 
-      if (!matchedAddress && typeof prisma?.customerAddress?.findFirst === 'function') {
+      const requestedAddress = await prisma.customerAddress.findFirst({
+        where: { id: targetAddressId, customer_id: finalCustomerId },
+        select: {
+          latitude: true,
+          longitude: true,
+          address_line1: true,
+          address_line2: true,
+          city: true,
+          state: true,
+          pincode: true,
+          label: true,
+        },
+      })
+
+      if (!requestedAddress) {
+        // The address either doesn't exist or belongs to a different customer.
+        // Return a generic error — do not reveal whether the ID exists.
+        return NextResponse.json(
+          { error: 'Selected delivery address not found. Please choose a valid address.' },
+          { status: 400 }
+        )
+      }
+
+      // CR-12: The address must have valid, geocoded coordinates — no silent fallback.
+      const addrLat = requestedAddress.latitude != null ? Number(requestedAddress.latitude) : null
+      const addrLng = requestedAddress.longitude != null ? Number(requestedAddress.longitude) : null
+      if (
+        addrLat === null ||
+        addrLng === null ||
+        !Number.isFinite(addrLat) ||
+        !Number.isFinite(addrLng)
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Selected delivery address does not have valid coordinates. ' +
+              'Please update the address with a precise location before ordering.',
+          },
+          { status: 422 }
+        )
+      }
+
+      customerLat = addrLat
+      customerLng = addrLng
+      customerAddressState = requestedAddress.state || null
+
+      const parts = [
+        requestedAddress.address_line1,
+        requestedAddress.address_line2,
+        requestedAddress.city,
+        requestedAddress.state,
+        requestedAddress.pincode,
+      ].filter(Boolean)
+      canonicalAddressText =
+        parts.length > 0
+          ? parts.join(', ')
+          : requestedAddress.label || 'Customer address'
+    } else {
+      // No explicit address supplied — try default, then any saved address.
+      let matchedAddress: any = null
+
+      if (typeof prisma?.customerAddress?.findFirst === 'function') {
         matchedAddress = await prisma.customerAddress.findFirst({
           where: { customer_id: finalCustomerId, is_default: true },
           select: {
@@ -539,30 +615,41 @@ export async function POST(request: Request) {
             label: true,
           },
         })
-      }
 
-      if (!matchedAddress && typeof prisma?.customerAddress?.findFirst === 'function') {
-        matchedAddress = await prisma.customerAddress.findFirst({
-          where: { customer_id: finalCustomerId },
-          select: {
-            latitude: true,
-            longitude: true,
-            address_line1: true,
-            address_line2: true,
-            city: true,
-            state: true,
-            pincode: true,
-            label: true,
-          },
-        })
+        if (!matchedAddress) {
+          matchedAddress = await prisma.customerAddress.findFirst({
+            where: { customer_id: finalCustomerId },
+            select: {
+              latitude: true,
+              longitude: true,
+              address_line1: true,
+              address_line2: true,
+              city: true,
+              state: true,
+              pincode: true,
+              label: true,
+            },
+          })
+        }
       }
 
       if (matchedAddress) {
-        if (matchedAddress.latitude && matchedAddress.longitude) {
-          customerLat = Number(matchedAddress.latitude)
-          customerLng = Number(matchedAddress.longitude)
+        const addrLat =
+          matchedAddress.latitude != null ? Number(matchedAddress.latitude) : null
+        const addrLng =
+          matchedAddress.longitude != null ? Number(matchedAddress.longitude) : null
+
+        if (
+          addrLat !== null &&
+          addrLng !== null &&
+          Number.isFinite(addrLat) &&
+          Number.isFinite(addrLng)
+        ) {
+          customerLat = addrLat
+          customerLng = addrLng
         }
-        // Build canonical address text from the verified DB record parts.
+        customerAddressState = matchedAddress.state || null
+
         const parts = [
           matchedAddress.address_line1,
           matchedAddress.address_line2,
@@ -570,20 +657,30 @@ export async function POST(request: Request) {
           matchedAddress.state,
           matchedAddress.pincode,
         ].filter(Boolean)
-        if (parts.length > 0) {
-          canonicalAddressText = parts.join(', ')
-        } else if (matchedAddress.label) {
-          canonicalAddressText = matchedAddress.label
-        }
+        canonicalAddressText =
+          parts.length > 0
+            ? parts.join(', ')
+            : matchedAddress.label || ''
       }
-    } catch (e) {
-      // Fall through to city center / fallback label defaults
+
+      // CR-12 FIX: When no explicit address was selected and coordinates are still
+      // missing, reject instead of silently substituting Bengaluru city centre.
+      // The Bengaluru fallback was producing misleading delivery fees and wrong
+      // delivery destinations for customers outside that area.
+      if (customerLat === null || customerLng === null) {
+        return NextResponse.json(
+          {
+            error:
+              'No delivery address with valid coordinates found for your account. ' +
+              'Please add and geocode a delivery address before placing an order.',
+          },
+          { status: 422 }
+        )
+      }
     }
 
-    // Resilient fallback to urban hub center (Bengaluru: 12.9716, 77.5946) if coordinates not yet geocoded
-    if (customerLat === null || customerLng === null) {
-      customerLat = 12.9716
-      customerLng = 77.5946
+    if (!canonicalAddressText) {
+      canonicalAddressText = 'Customer address'
     }
     // Get restaurant coordinates
     const restaurantLat = restaurantDetails?.latitude ? Number(restaurantDetails.latitude) : null
@@ -605,7 +702,10 @@ export async function POST(request: Request) {
       restaurantId: finalRestaurantId,
       restaurantName: finalRestaurantName,
       supplierState: restaurantDetails.supplier_state || 'Karnataka',
-      customerState: restaurantDetails.supplier_state || 'Karnataka',
+      // CR-13 FIX: Customer jurisdiction must come from the verified delivery address,
+      // not the supplier's state.  Using the supplier's state for both fields made every
+      // delivery appear intra-state, producing wrong CGST/SGST vs IGST treatment.
+      customerState: customerAddressState || restaurantDetails.supplier_state || 'Karnataka',
       items: itemsList.map((i) => ({
         name: i.name,
         hsnSacCode: i._menuItem?.hsn_sac_code || '996331',

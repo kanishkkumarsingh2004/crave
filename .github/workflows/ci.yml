@@ -173,22 +173,39 @@ jobs:
 
       - name: Wait for database readiness
         run: |
+          db_ready=false
           for i in {1..30}; do
             if docker exec postgres-test pg_isready -U test -d crave_test; then
               echo "Database ready"
+              db_ready=true
               break
             fi
             echo "Waiting for database... ($i/30)"
             sleep 2
           done
+          if [ "$db_ready" != "true" ]; then
+            echo "❌ Database did not become ready after 30 attempts"
+            echo "--- postgres-test container logs ---"
+            docker logs --tail=50 postgres-test || true
+            exit 1
+          fi
+
+          redis_ready=false
           for i in {1..10}; do
             if docker exec redis-test redis-cli ping | grep -q PONG; then
               echo "Redis ready"
+              redis_ready=true
               break
             fi
             echo "Waiting for Redis... ($i/10)"
             sleep 1
           done
+          if [ "$redis_ready" != "true" ]; then
+            echo "❌ Redis did not become ready after 10 attempts"
+            echo "--- redis-test container logs ---"
+            docker logs --tail=50 redis-test || true
+            exit 1
+          fi
 
       - name: Push database schema
         run: pnpm db:push
@@ -201,14 +218,22 @@ jobs:
 
       - name: Wait for application services readiness
         run: |
+          services_ready=false
           for i in {1..60}; do
             if curl -sf http://localhost:3000/api/health > /dev/null && curl -sf http://localhost:8000/__ws/broadcast > /dev/null; then
               echo "All services ready"
+              services_ready=true
               break
             fi
             echo "Waiting for services... ($i/60)"
             sleep 3
           done
+          if [ "$services_ready" != "true" ]; then
+            echo "❌ Application services did not become ready after 60 attempts (180 s)"
+            echo "--- docker compose logs (last 80 lines) ---"
+            docker compose logs --tail=80 || true
+            exit 1
+          fi
 
       - name: Run load test
         uses: grafana/k6-action@v0.2.0

@@ -9,11 +9,34 @@ const { TextEncoder } = require('util')
 // Prisma client for ownership verification
 // ws-server.js runs as plain Node.js (not Next.js), so we create a dedicated
 // client here rather than reusing the Next.js singleton.
+// Prisma 7+ requires a driver adapter — use @prisma/adapter-pg to match lib/prisma.ts
 // ---------------------------------------------------------------------------
 const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
-})
+const { PrismaPg } = require('@prisma/adapter-pg')
+
+function createPrismaClient() {
+  if (!process.env.DATABASE_URL) {
+    console.error('[ws-server] DATABASE_URL is not set — DB ownership checks will fail')
+    return null
+  }
+  try {
+    const adapter = new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+      max: Number(process.env.DB_POOL_MAX || 5),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    })
+    return new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    })
+  } catch (e) {
+    console.error('[ws-server] Failed to create Prisma client:', e.message)
+    return null
+  }
+}
+
+const prisma = createPrismaClient()
 
 const WS_OPEN = 1
 const PORT = process.env.WS_PORT || 8000
@@ -158,9 +181,15 @@ let redisPub = null
 let redisSub = null
 // Dedicated client for JWT blacklist GET queries (separate from pub/sub clients).
 let redisBlacklist = null
+// CR-15: Dedicated client for driver-assignment Hash read/write.
+let redisAssignments = null
 const REDIS_URL = process.env.REDIS_URL
 const REDIS_CHANNEL = 'crave:ws:events'
 const SUBSCRIPTION_SYNC_CHANNEL = 'crave:ws:subscriptions'
+// CR-15: Channel for cross-instance driver assignment synchronisation.
+const DRIVER_ASSIGNMENT_CHANNEL = 'crave:ws:driver_assignments'
+// CR-15: Redis Hash key — field = driverId, value = JSON-encoded Set (array) of orderIds.
+const DRIVER_ASSIGNMENT_HASH = 'crave:ws:driver_assignment_map'
 
 if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !== 'test') {
   try {
@@ -180,6 +209,8 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
     redisPub = new Redis(REDIS_URL, redisOptions)
     redisSub = new Redis(REDIS_URL, redisOptions)
     redisBlacklist = new Redis(REDIS_URL, redisOptions)
+    // CR-15: Separate client for driver-assignment Hash ops (no interference with pub/sub).
+    redisAssignments = new Redis(REDIS_URL, redisOptions)
 
     const handleRedisError = (type, err) => {
       if (!warnLogged) {
@@ -192,6 +223,34 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
 
     redisPub.on('error', (err) => handleRedisError('Publisher', err))
     redisSub.on('error', (err) => handleRedisError('Subscriber', err))
+    redisAssignments.on('error', (err) => handleRedisError('Assignments', err))
+
+    // CR-15: When the assignments client reconnects, replay the Hash so the local
+    // map is consistent with shared state again.
+    redisAssignments.on('ready', async () => {
+      try {
+        const hash = await redisAssignments.hgetall(DRIVER_ASSIGNMENT_HASH)
+        if (hash) {
+          for (const [driverId, raw] of Object.entries(hash)) {
+            try {
+              const orderIds = JSON.parse(raw)
+              if (Array.isArray(orderIds) && orderIds.length > 0) {
+                driverOrderAssignments.set(driverId, new Set(orderIds))
+              } else {
+                driverOrderAssignments.delete(driverId)
+              }
+            } catch (_) {
+              // Corrupt entry — ignore and let the next write fix it.
+            }
+          }
+          console.log(
+            `[ws-server] Replayed ${Object.keys(hash).length} driver assignment(s) from Redis.`
+          )
+        }
+      } catch (err) {
+        console.warn('[ws-server] Could not replay driver assignments from Redis:', err.message)
+      }
+    })
 
     redisSub.subscribe(REDIS_CHANNEL, (err) => {
       if (!err) {
@@ -203,6 +262,15 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
       if (!err) {
         console.log(
           `🔌 [ws-server] Subscribed to subscription sync channel: ${SUBSCRIPTION_SYNC_CHANNEL}`
+        )
+      }
+    })
+
+    // CR-15: Subscribe to cross-instance driver assignment events.
+    redisSub.subscribe(DRIVER_ASSIGNMENT_CHANNEL, (err) => {
+      if (!err) {
+        console.log(
+          `🔌 [ws-server] Subscribed to driver assignment channel: ${DRIVER_ASSIGNMENT_CHANNEL}`
         )
       }
     })
@@ -243,6 +311,22 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
               channelInstances.get(parsed.channel).delete(parsed.instanceId)
               if (channelInstances.get(parsed.channel).size === 0) {
                 channelInstances.delete(parsed.channel)
+              }
+            }
+          }
+        } else if (_ch === DRIVER_ASSIGNMENT_CHANNEL) {
+          // CR-15: Apply driver assignment / removal events from other instances.
+          if (parsed.origin !== INSTANCE_ID && parsed.driverId) {
+            if (parsed.action === 'assign' && parsed.orderId) {
+              if (!driverOrderAssignments.has(parsed.driverId)) {
+                driverOrderAssignments.set(parsed.driverId, new Set())
+              }
+              driverOrderAssignments.get(parsed.driverId).add(parsed.orderId)
+            } else if (parsed.action === 'remove' && parsed.orderId) {
+              const orders = driverOrderAssignments.get(parsed.driverId)
+              if (orders) {
+                orders.delete(parsed.orderId)
+                if (orders.size === 0) driverOrderAssignments.delete(parsed.driverId)
               }
             }
           }
@@ -315,23 +399,51 @@ async function verifyWSToken(token) {
 
     // Mirror the blacklist checks from lib/jwt.ts so that a server-side logout
     // also invalidates WebSocket connections.
-    // If Redis is available, check both the per-token JTI blacklist and the
-    // per-user (logout-all) blacklist.  Fail closed: if the check itself throws,
-    // treat the token as invalid rather than allowing a potentially revoked token.
-    if (redisBlacklist && redisBlacklist.status === 'ready') {
-      try {
-        if (payload.jti) {
-          const tokenRevoked = await redisBlacklist.get(`crave:jwt:blacklist:${payload.jti}`)
-          if (tokenRevoked) return null
+    // CR-11 FIX: Match the HTTP token-verification policy exactly.
+    //   - If Redis is configured AND ready: perform the blacklist check.
+    //   - If Redis is configured BUT NOT ready (connecting / reconnecting / error):
+    //     fail closed in production — we cannot confirm the token is not revoked.
+    //   - If Redis is not configured at all: skip the check (no revocation store).
+    if (redisBlacklist) {
+      if (redisBlacklist.status !== 'ready') {
+        // Redis is configured but unavailable.  We cannot verify revocation.
+        // Fail closed in production to match lib/jwt.ts behaviour; allow in dev/test.
+        if (process.env.NODE_ENV === 'production') {
+          console.warn(
+            '[ws-server] Redis blacklist unavailable (status: ' +
+              redisBlacklist.status +
+              ') — rejecting WS token in production (fail-closed)'
+          )
+          return null
         }
-        if (payload.id) {
-          const userRevoked = await redisBlacklist.get(`crave:jwt:blacklist:user:${payload.id}`)
-          if (userRevoked) return null
+        // In development / test: log a warning but allow the connection so local
+        // development without Redis is not broken.
+        console.warn(
+          '[ws-server] Redis blacklist unavailable (status: ' +
+            redisBlacklist.status +
+            ') — skipping revocation check in non-production environment'
+        )
+      } else {
+        // Redis is ready — perform both per-token and per-user revocation checks.
+        try {
+          if (payload.jti) {
+            const tokenRevoked = await redisBlacklist.get(`crave:jwt:blacklist:${payload.jti}`)
+            if (tokenRevoked) return null
+          }
+          if (payload.id) {
+            const userRevoked = await redisBlacklist.get(
+              `crave:jwt:blacklist:user:${payload.id}`
+            )
+            if (userRevoked) return null
+          }
+        } catch (redisErr) {
+          // Redis query failed mid-check — fail closed regardless of environment.
+          console.warn(
+            '[ws-server] Redis blacklist check failed, rejecting token:',
+            redisErr.message
+          )
+          return null
         }
-      } catch (redisErr) {
-        // Redis query failed — fail closed to prevent blacklisted tokens from connecting.
-        console.warn('[ws-server] Redis blacklist check failed, rejecting token:', redisErr.message)
-        return null
       }
     }
 
@@ -435,6 +547,9 @@ async function verifyOrderOwnership(channel, clientInfo, orderId) {
   // Admins may subscribe to any order on any ownership channel
   if (clientInfo.role === 'admin') return true
 
+  // If Prisma client failed to initialise (no DATABASE_URL), fail closed
+  if (!prisma) return false
+
   try {
     // Fetch only the ownership columns – never trust client-supplied identity
     const order = await prisma.order.findUnique({
@@ -526,21 +641,67 @@ async function authorizeChannelAsync(channel, clientInfo, subscriptionData = {})
 }
 
 // Register driver-order assignment (called from internal broadcast API only)
+// CR-15 FIX: Write-through to Redis Hash so all instances share the same state.
+// Also publish an event on DRIVER_ASSIGNMENT_CHANNEL so peer instances update
+// their local in-memory maps immediately without waiting for a Hash read.
 function assignDriverToOrder(driverId, orderId) {
   if (!driverOrderAssignments.has(driverId)) {
     driverOrderAssignments.set(driverId, new Set())
   }
   driverOrderAssignments.get(driverId).add(orderId)
+
+  // Persist to shared Redis Hash
+  if (redisAssignments && redisAssignments.status === 'ready') {
+    const orderIds = JSON.stringify([...driverOrderAssignments.get(driverId)])
+    redisAssignments.hset(DRIVER_ASSIGNMENT_HASH, driverId, orderIds).catch((err) => {
+      console.warn('[ws-server] Failed to persist driver assignment to Redis:', err.message)
+    })
+  }
+
+  // Notify peer instances
+  if (redisPub && redisPub.status === 'ready') {
+    redisPub
+      .publish(
+        DRIVER_ASSIGNMENT_CHANNEL,
+        JSON.stringify({ action: 'assign', driverId, orderId, origin: INSTANCE_ID })
+      )
+      .catch(() => {})
+  }
 }
 
 // Remove driver-order assignment (on delivery complete)
+// CR-15 FIX: Mirror removal to Redis Hash and notify peer instances.
 function removeDriverFromOrder(driverId, orderId) {
   const assignedOrders = driverOrderAssignments.get(driverId)
   if (assignedOrders) {
     assignedOrders.delete(orderId)
     if (assignedOrders.size === 0) {
       driverOrderAssignments.delete(driverId)
+      // Remove the Hash field entirely when the driver has no more assignments.
+      if (redisAssignments && redisAssignments.status === 'ready') {
+        redisAssignments.hdel(DRIVER_ASSIGNMENT_HASH, driverId).catch((err) => {
+          console.warn('[ws-server] Failed to remove driver assignment from Redis:', err.message)
+        })
+      }
+    } else {
+      // Update the Hash with the remaining order set.
+      if (redisAssignments && redisAssignments.status === 'ready') {
+        const remaining = JSON.stringify([...assignedOrders])
+        redisAssignments.hset(DRIVER_ASSIGNMENT_HASH, driverId, remaining).catch((err) => {
+          console.warn('[ws-server] Failed to update driver assignment in Redis:', err.message)
+        })
+      }
     }
+  }
+
+  // Notify peer instances
+  if (redisPub && redisPub.status === 'ready') {
+    redisPub
+      .publish(
+        DRIVER_ASSIGNMENT_CHANNEL,
+        JSON.stringify({ action: 'remove', driverId, orderId, origin: INSTANCE_ID })
+      )
+      .catch(() => {})
   }
 }
 
@@ -832,7 +993,15 @@ wss.on('connection', async (ws, req) => {
             break
           }
           // Use authenticated driver ID, not client-supplied
-          if (msg.lat && msg.lng && msg.orderId) {
+          // CR-14 FIX: Use typeof + Number.isFinite instead of truthiness so that
+          // valid zero-valued coordinates (equator / prime meridian) are not rejected.
+          if (
+            typeof msg.lat === 'number' &&
+            Number.isFinite(msg.lat) &&
+            typeof msg.lng === 'number' &&
+            Number.isFinite(msg.lng) &&
+            msg.orderId
+          ) {
             // Verify driver is assigned to this order
             const assignedOrders = driverOrderAssignments.get(info.userId)
             if (!assignedOrders || !assignedOrders.has(msg.orderId)) {
