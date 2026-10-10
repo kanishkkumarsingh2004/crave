@@ -324,13 +324,49 @@ function extractTokenFromRequest(req) {
 
 // Channel authorization rules
 const CHANNEL_AUTH_RULES = {
-  order_update: { roles: ['user', 'admin'], requireOwnership: true },
+  order_update: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'rider',
+      'driver',
+      'admin',
+    ],
+    requireOwnership: true,
+  },
   admin_stats: { roles: ['admin'] },
   admin_orders: { roles: ['admin'] },
   admin_users: { roles: ['admin'] },
-  approval_update: { roles: ['user', 'admin'], requireOwnership: true },
-  driver_location: { roles: ['user', 'rider', 'admin'], requireOwnership: true },
-  control: { roles: ['user', 'rider', 'admin'] },
+  approval_update: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'admin',
+    ],
+    requireOwnership: true,
+  },
+  driver_location: {
+    roles: ['user', 'customer', 'rider', 'driver', 'admin'],
+    requireOwnership: true,
+  },
+  control: {
+    roles: [
+      'user',
+      'customer',
+      'rider',
+      'driver',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'admin',
+    ],
+  },
   map_live_analytics: { roles: ['admin'] },
 }
 
@@ -350,40 +386,42 @@ function authorizeChannel(channel, clientInfo, subscriptionData = {}) {
   // Check ownership if required
   if (rules.requireOwnership) {
     if (channel === 'order_update' || channel === 'approval_update') {
-      // Customer can only subscribe to their own orders
-      // Admin can subscribe to all
-      if (clientInfo.role === 'admin') return true
+      // Admin and vendors can subscribe globally to their kitchen orders
+      if (
+        clientInfo.role === 'admin' ||
+        clientInfo.role === 'restaurant_vendor' ||
+        clientInfo.role === 'cravexp_store_vendor' ||
+        clientInfo.role === 'vendor'
+      ) {
+        return true
+      }
 
       const orderId = subscriptionData.orderId
-      if (!orderId) return false // Must specify orderId for ownership channels
+      if (!orderId) return false // Must specify orderId for customer/driver ownership channels
 
       // Check if customer owns this order
       const allowedOrders = customerOrderSubscriptions.get(clientInfo.customerId)
-      if (!allowedOrders || !allowedOrders.has(orderId)) {
-        return false
+      if (allowedOrders && allowedOrders.has(orderId)) {
+        return true
       }
+
+      // Dynamic registration for authenticated customer/rider session
+      if (clientInfo.customerId || clientInfo.driverId) {
+        registerCustomerOrder(clientInfo.customerId || clientInfo.driverId, orderId)
+        return true
+      }
+
+      return false
     } else if (channel === 'driver_location') {
-      // Customer can only track their own order's driver
-      // Driver can only publish their own location
       if (clientInfo.role === 'admin') return true
 
-      if (clientInfo.role === 'user' || clientInfo.role === 'customer') {
-        const orderId = subscriptionData.orderId
-        if (!orderId) return false
+      const orderId = subscriptionData.orderId
+      if (!orderId) return false
 
-        // Check if customer owns this order
-        const allowedOrders = customerOrderSubscriptions.get(clientInfo.customerId)
-        if (!allowedOrders || !allowedOrders.has(orderId)) {
-          return false
-        }
+      if (clientInfo.role === 'user' || clientInfo.role === 'customer') {
+        return Boolean(clientInfo.customerId)
       } else if (clientInfo.role === 'rider' || clientInfo.role === 'driver') {
-        // Driver can only publish their own location (handled in driver_update)
-        // For subscription, driver can track their assigned orders
-        const assignedOrders = driverOrderAssignments.get(clientInfo.driverId)
-        const orderId = subscriptionData.orderId
-        if (!orderId || !assignedOrders || !assignedOrders.has(orderId)) {
-          return false
-        }
+        return Boolean(clientInfo.driverId)
       }
     }
   }

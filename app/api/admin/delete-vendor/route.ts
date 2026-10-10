@@ -38,40 +38,82 @@ export async function POST(request: Request) {
       }
     }
 
-    // 1. Delete associated menu items
-    if (targetVendorId) {
-      try {
-        await deleteMenuItemsByRestaurant(targetVendorId)
-      } catch (e: any) {
-        console.warn('Menu items deletion notice:', e?.message)
+    const { prisma } = await import('@/lib/prisma')
+
+    // 1. Check if orders exist for this vendor to prevent foreign key violations
+    let hasOrders = false
+    if (targetVendorId && typeof prisma?.order?.count === 'function') {
+      const orderCount = await prisma.order
+        .count({
+          where: { restaurant_id: targetVendorId },
+        })
+        .catch(() => 0)
+      hasOrders = orderCount > 0
+    }
+
+    if (hasOrders && targetVendorId && typeof prisma?.restaurant?.update === 'function') {
+      // Soft-deactivate to preserve financial/order integrity
+      await prisma.restaurant
+        .update({
+          where: { id: targetVendorId },
+          data: { is_open: false },
+        })
+        .catch(() => {})
+
+      if (typeof prisma?.menuItem?.updateMany === 'function') {
+        await prisma.menuItem
+          .updateMany({
+            where: { restaurant_id: targetVendorId },
+            data: { in_stock: false },
+          })
+          .catch(() => {})
+      }
+    } else {
+      // 1. Delete associated menu items
+      if (targetVendorId) {
+        try {
+          await deleteMenuItemsByRestaurant(targetVendorId)
+        } catch (e: any) {
+          console.warn('Menu items deletion notice:', e?.message)
+        }
+      }
+
+      // 2. Delete from restaurants table
+      if (targetVendorId) {
+        try {
+          await deleteRestaurant(targetVendorId)
+        } catch (e: any) {
+          console.warn('Restaurant deletion notice:', e?.message)
+        }
+      }
+      if (targetUserId) {
+        try {
+          await deleteRestaurantsByOwner(targetUserId)
+        } catch (e: any) {
+          console.warn('Owner restaurants deletion notice:', e?.message)
+        }
       }
     }
 
-    // 2. Delete from restaurants table
-    if (targetVendorId) {
-      try {
-        await deleteRestaurant(targetVendorId)
-      } catch (e: any) {
-        console.warn('Restaurant deletion notice:', e?.message)
-      }
-    }
-    if (targetUserId) {
-      try {
-        await deleteRestaurantsByOwner(targetUserId)
-      } catch (e: any) {
-        console.warn('Owner restaurants deletion notice:', e?.message)
-      }
+    // 3. Delete user profile if no orders attached
+    let userHasOrders = false
+    if (targetUserId && typeof prisma?.order?.count === 'function') {
+      const uCount = await prisma.order
+        .count({
+          where: { customer_id: targetUserId },
+        })
+        .catch(() => 0)
+      userHasOrders = uCount > 0
     }
 
-    // 3. Delete from users profile table
-    if (targetUserId) {
+    if (!userHasOrders && targetUserId) {
       try {
         await deleteUser(targetUserId)
       } catch (e: any) {
         console.warn('User deletion notice:', e?.message)
       }
     }
-    if (targetVendorId && targetVendorId !== targetUserId) {
+    if (!userHasOrders && targetVendorId && targetVendorId !== targetUserId) {
       try {
         await deleteUser(targetVendorId)
       } catch (e: any) {

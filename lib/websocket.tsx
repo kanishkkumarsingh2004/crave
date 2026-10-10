@@ -10,6 +10,7 @@ export type UseWebSocketOptions = {
   channels?: string[]
   customerId?: string
   driverId?: string
+  orderId?: string
   onMessage?: (msg: WSMessage) => void
   onConnect?: () => void
   onDisconnect?: () => void
@@ -36,6 +37,7 @@ export function useWebSocket({
   channels = [],
   customerId,
   driverId,
+  orderId,
   onMessage,
   onConnect,
   onDisconnect,
@@ -88,6 +90,7 @@ export function useWebSocket({
                 channels,
                 customerId,
                 driverId,
+                orderId,
               })
             )
           } catch (e) {}

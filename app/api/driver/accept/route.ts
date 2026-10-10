@@ -19,14 +19,26 @@ export async function POST(request: Request) {
     }
 
     const actor = await requireAuthApi(request)
+    const roleStr = actor.role as string
+    const isRiderRole = actor.role === 'rider' || roleStr === 'driver' || actor.role === 'admin'
+    if (!isRiderRole) {
+      return NextResponse.json({ error: 'Rider or driver access required' }, { status: 403 })
+    }
 
     const body = await request.json().catch(() => ({}))
     const requestId = body.requestId || body.orderId || body.id
-    const driverId = body.driverId || body.driver_id || actor.id || 'driver_partner'
+    const driverId =
+      actor.role === 'admin' && (body.driverId || body.driver_id)
+        ? body.driverId || body.driver_id
+        : actor.id
     const driverName =
-      body.driver_name || body.driverName || actor.name || 'Verified Delivery Partner'
+      actor.role === 'admin' && (body.driver_name || body.driverName)
+        ? body.driver_name || body.driverName
+        : actor.name || 'Verified Delivery Partner'
     const driverPhone =
-      body.driver_phone || body.driverPhone || (actor as any)?.phone || '+91 98765 43210'
+      actor.role === 'admin' && (body.driver_phone || body.driverPhone)
+        ? body.driver_phone || body.driverPhone
+        : (actor as any)?.phone || '+91 98765 43210'
 
     if (!driverId || !requestId) {
       return NextResponse.json(
@@ -70,9 +82,10 @@ export async function POST(request: Request) {
         const existing = await findOrderById(requestId)
         if (existing) {
           if (
-            existing.driver_name &&
-            existing.driver_name !== 'Unassigned' &&
-            existing.driver_name !== driverName
+            (existing.rider_id && existing.rider_id !== driverId) ||
+            (existing.driver_name &&
+              existing.driver_name !== 'Unassigned' &&
+              existing.driver_name !== driverName)
           ) {
             return NextResponse.json(
               { error: 'Order has already been assigned to another driver' },
@@ -81,6 +94,7 @@ export async function POST(request: Request) {
           }
           updatedOrder = await updateOrder(requestId, {
             status: 'rider_assigned',
+            rider_id: driverId,
             driver_name: driverName,
             driver_phone: driverPhone,
           })
@@ -88,6 +102,12 @@ export async function POST(request: Request) {
       } catch (dbErr) {
         console.warn('[POST /api/driver/accept] DB update notice:', dbErr)
       }
+
+      // Register driver assignment with internal WebSocket server
+      await broadcast('__internal_assign_driver', {
+        driverId,
+        orderId: requestId,
+      })
 
       // Broadcast driver acceptance to order and driver WebSocket channels
       await broadcast('order_update', {

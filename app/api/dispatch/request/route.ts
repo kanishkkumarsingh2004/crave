@@ -16,11 +16,25 @@ export async function POST(request: Request) {
     }
 
     const actor = token ? await verifyToken(token) : null
-    if (process.env.NODE_ENV !== 'test' && !actor) {
-      return NextResponse.json(
-        { error: 'Authentication required for dispatch requests' },
-        { status: 401 }
-      )
+    if (process.env.NODE_ENV !== 'test') {
+      if (!actor) {
+        return NextResponse.json(
+          { error: 'Authentication required for dispatch requests' },
+          { status: 401 }
+        )
+      }
+      const roleStr = actor.role as string
+      const isAllowed =
+        actor.role === 'admin' ||
+        actor.role === 'restaurant_vendor' ||
+        actor.role === 'cravexp_store_vendor' ||
+        roleStr === 'vendor'
+      if (!isAllowed) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only vendors and administrators can initiate dispatch requests' },
+          { status: 403 }
+        )
+      }
     }
 
     const body = await request.json()

@@ -113,22 +113,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    const passwordHash = ((await scrypt(password, profile.email || email, 64)) as Buffer).toString(
-      'hex'
-    )
-    const matchesPrimary =
-      passwordHash.length === profile.password_hash.length &&
-      crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))
+    let passwordMatches = false
 
-    let matchesFallback = false
-    if (!matchesPrimary) {
-      const fallbackHash = ((await scrypt(password, email, 64)) as Buffer).toString('hex')
-      matchesFallback =
-        fallbackHash.length === profile.password_hash.length &&
-        crypto.timingSafeEqual(Buffer.from(fallbackHash), Buffer.from(profile.password_hash))
+    if (typeof profile.password_hash === 'string' && profile.password_hash.includes(':')) {
+      const [salt, expectedHash] = profile.password_hash.split(':')
+      if (salt && expectedHash) {
+        const computed = ((await scrypt(password, salt, 64)) as Buffer).toString('hex')
+        passwordMatches =
+          computed.length === expectedHash.length &&
+          crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
+      }
+    } else {
+      const passwordHash = ((await scrypt(password, profile.email || email, 64)) as Buffer).toString(
+        'hex'
+      )
+      const matchesPrimary =
+        passwordHash.length === profile.password_hash.length &&
+        crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))
+
+      let matchesFallback = false
+      if (!matchesPrimary) {
+        const fallbackHash = ((await scrypt(password, email, 64)) as Buffer).toString('hex')
+        matchesFallback =
+          fallbackHash.length === profile.password_hash.length &&
+          crypto.timingSafeEqual(Buffer.from(fallbackHash), Buffer.from(profile.password_hash))
+      }
+      passwordMatches = matchesPrimary || matchesFallback
     }
 
-    if (!matchesPrimary && !matchesFallback) {
+    if (!passwordMatches) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 

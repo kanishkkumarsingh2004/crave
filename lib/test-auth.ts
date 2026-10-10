@@ -85,9 +85,10 @@ export function getTestUser(request: Request): JWTPayload | null {
 
 /**
  * Check if request is a test request
+ * SECURITY HARDENED: Test auth headers must ONLY be processed in automated test runners (NODE_ENV === 'test')
  */
 export function isTestRequest(request: Request): boolean {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV !== 'test') {
     return false
   }
   return request.headers.get(TEST_AUTH_HEADER) === 'true'
