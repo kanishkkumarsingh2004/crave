@@ -1,9 +1,8 @@
 /**
  * Database Access Layer — Payments, Settlements & Configs
- * Resilient dual-engine: Prisma ORM with Supabase REST fallback
+ * Prisma ORM with Neon PostgreSQL
  */
 import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 
 // ─── Payment Reviews ────────────────────────────────────
 
@@ -15,108 +14,43 @@ export async function createPaymentReview(data: {
   amount: number
   status?: 'pending' | 'verified' | 'rejected'
 }) {
-  try {
-    return await prisma.paymentReview.create({ data: data as any })
-  } catch {
-    try {
-      const { data: created, error } = await supabase
-        .from('payment_reviews')
-        .insert([data])
-        .select()
-        .single()
-      if (!error && created) return created
-    } catch {}
-    return { ...data, created_at: new Date() }
-  }
+  return await prisma.paymentReview.create({ data: data as any })
 }
 
 export async function updatePaymentReviewStatus(
   orderId: string,
   status: 'pending' | 'verified' | 'rejected'
 ) {
-  try {
-    return await prisma.paymentReview.updateMany({
-      where: { order_id: orderId },
-      data: { status: status as any },
-    })
-  } catch {
-    try {
-      await supabase.from('payment_reviews').update({ status }).eq('order_id', orderId)
-    } catch {}
-    return { count: 1 }
-  }
+  return await prisma.paymentReview.updateMany({
+    where: { order_id: orderId },
+    data: { status: status as any },
+  })
 }
 
 export async function listPaymentReviews(status?: 'pending' | 'verified' | 'rejected') {
-  try {
-    return await prisma.paymentReview.findMany({
-      where: status ? { status: status as any } : undefined,
-      orderBy: { created_at: 'desc' },
-    })
-  } catch {
-    try {
-      let query = supabase
-        .from('payment_reviews')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (status) query = query.eq('status', status)
-      const { data } = await query
-      if (data) return data
-    } catch {}
-    return []
-  }
+  return await prisma.paymentReview.findMany({
+    where: status ? { status: status as any } : undefined,
+    orderBy: { created_at: 'desc' },
+  })
 }
 
 // ─── Payment Config ──────────────────────────────────────
 
 export async function getActivePaymentConfig() {
-  try {
-    let config = await prisma.paymentConfig.findFirst({ where: { is_active: true } })
-    if (!config) {
-      config = await prisma.paymentConfig.findFirst({ orderBy: { updated_at: 'desc' } })
-    }
-    if (config) {
-      return {
-        ...config,
-        ...(config.gst_rate != null && { gst_rate_percent: Number(config.gst_rate) }),
-        ...(config.surge_multiplier != null && {
-          surge_multiplier: Number(config.surge_multiplier),
-        }),
-      }
-    }
-    return null
-  } catch {
-    try {
-      let { data } = await supabase
-        .from('payment_configs')
-        .select('*')
-        .eq('is_active', true)
-        .maybeSingle()
-      if (!data) {
-        const { data: latest } = await supabase
-          .from('payment_configs')
-          .select('*')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        data = latest
-      }
-      if (data) {
-        return {
-          ...data,
-          ...(data.gst_rate != null
-            ? { gst_rate_percent: Number(data.gst_rate) }
-            : data.gst_rate_percent != null
-              ? { gst_rate_percent: Number(data.gst_rate_percent) }
-              : {}),
-          ...(data.surge_multiplier != null && { surge_multiplier: Number(data.surge_multiplier) }),
-        }
-      }
-      return data
-    } catch {
-      return null
+  let config = await prisma.paymentConfig.findFirst({ where: { is_active: true } })
+  if (!config) {
+    config = await prisma.paymentConfig.findFirst({ orderBy: { updated_at: 'desc' } })
+  }
+  if (config) {
+    return {
+      ...config,
+      ...(config.gst_rate != null && { gst_rate_percent: Number(config.gst_rate) }),
+      ...(config.surge_multiplier != null && {
+        surge_multiplier: Number(config.surge_multiplier),
+      }),
     }
   }
+  return null
 }
 
 export async function upsertPaymentConfig(data: {
@@ -175,25 +109,11 @@ export async function upsertPaymentConfig(data: {
     updated_at: new Date(),
   }
 
-  try {
-    return await prisma.paymentConfig.upsert({
-      where: { id: data.id },
-      create: prismaData as any,
-      update: prismaData as any,
-    })
-  } catch (e) {
-    console.error('Prisma upsertPaymentConfig error:', e)
-    try {
-      const { data: upserted } = await supabase
-        .from('payment_configs')
-        .upsert(data)
-        .select()
-        .single()
-      return upserted
-    } catch {
-      return null
-    }
-  }
+  return await prisma.paymentConfig.upsert({
+    where: { id: data.id },
+    create: prismaData as any,
+    update: prismaData as any,
+  })
 }
 
 // ─── Vendor Settlements ──────────────────────────────────
@@ -211,82 +131,33 @@ export async function createVendorSettlement(data: {
   status?: 'scheduled' | 'paid' | 'failed' | 'cancelled'
   transaction_ref?: string
 }) {
-  try {
-    return await prisma.vendorSettlement.create({ data: data as any })
-  } catch {
-    try {
-      const { data: created, error } = await supabase
-        .from('vendor_settlements')
-        .insert([data as any])
-        .select()
-        .single()
-      if (!error && created) return created
-    } catch {}
-    return { ...data, payout_date: new Date() }
-  }
+  return await prisma.vendorSettlement.create({ data: data as any })
 }
 
 export async function listVendorSettlements(restaurantId?: string) {
-  try {
-    return await prisma.vendorSettlement.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
-      orderBy: { payout_date: 'desc' },
-    })
-  } catch {
-    try {
-      let query = supabase
-        .from('vendor_settlements')
-        .select('*')
-        .order('payout_date', { ascending: false })
-      if (restaurantId) query = query.eq('restaurant_id', restaurantId)
-      const { data } = await query
-      if (data) return data
-    } catch {}
-    return []
-  }
+  return await prisma.vendorSettlement.findMany({
+    where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+    orderBy: { payout_date: 'desc' },
+  })
 }
 
 export async function updateVendorSettlementStatus(
   id: string,
   status: 'scheduled' | 'paid' | 'failed' | 'cancelled'
 ) {
-  try {
-    return await prisma.vendorSettlement.update({
-      where: { id },
-      data: { status, payout_date: new Date() },
-    })
-  } catch {
-    try {
-      const { data, error } = await supabase
-        .from('vendor_settlements')
-        .update({ status, payout_date: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single()
-      if (!error && data) return data
-    } catch {}
-    return { id, status, payout_date: new Date() }
-  }
+  return await prisma.vendorSettlement.update({
+    where: { id },
+    data: { status, payout_date: new Date() },
+  })
 }
 
 // ─── Driver UPI Accounts ─────────────────────────────────
 
 export async function listDriverUpiAccounts(driverId: string) {
-  try {
-    return await prisma.driverUpiAccount.findMany({
-      where: { driver_id: driverId },
-      orderBy: { created_at: 'desc' },
-    })
-  } catch {
-    try {
-      const { data } = await supabase
-        .from('driver_upi_accounts')
-        .select('*')
-        .eq('driver_id', driverId)
-      if (data) return data
-    } catch {}
-    return []
-  }
+  return await prisma.driverUpiAccount.findMany({
+    where: { driver_id: driverId },
+    orderBy: { created_at: 'desc' },
+  })
 }
 
 export async function createDriverUpiAccount(data: {
@@ -296,19 +167,7 @@ export async function createDriverUpiAccount(data: {
   bank_name?: string
   is_primary?: boolean
 }) {
-  try {
-    return await prisma.driverUpiAccount.create({ data })
-  } catch {
-    try {
-      const { data: created } = await supabase
-        .from('driver_upi_accounts')
-        .insert([data as any])
-        .select()
-        .single()
-      if (created) return created
-    } catch {}
-    return { ...data, is_verified: false, created_at: new Date() }
-  }
+  return await prisma.driverUpiAccount.create({ data })
 }
 
 // ─── Driver Payouts ──────────────────────────────────────
@@ -320,51 +179,23 @@ export async function createDriverPayout(data: {
   status?: 'pending' | 'paid' | 'failed'
   transaction_ref?: string
 }) {
-  try {
-    return await prisma.driverPayout.create({ data: data as any })
-  } catch {
-    try {
-      const { data: created } = await supabase
-        .from('driver_payouts')
-        .insert([data as any])
-        .select()
-        .single()
-      if (created) return created
-    } catch {}
-    return { ...data, created_at: new Date() }
-  }
+  return await prisma.driverPayout.create({ data: data as any })
 }
 
 export async function listDriverPayouts(driverId: string) {
-  try {
-    return await prisma.driverPayout.findMany({
-      where: { driver_id: driverId },
-      orderBy: { created_at: 'desc' },
-    })
-  } catch {
-    try {
-      const { data } = await supabase.from('driver_payouts').select('*').eq('driver_id', driverId)
-      if (data) return data
-    } catch {}
-    return []
-  }
+  return await prisma.driverPayout.findMany({
+    where: { driver_id: driverId },
+    orderBy: { created_at: 'desc' },
+  })
 }
 
 // ─── Driver Incentives ───────────────────────────────────
 
 export async function listDriverIncentives(driverId?: string) {
-  try {
-    return await prisma.driverIncentive.findMany({
-      where: {
-        is_active: true,
-        ...(driverId && { driver_id: driverId }),
-      },
-    })
-  } catch {
-    try {
-      const { data } = await supabase.from('driver_incentives').select('*').eq('is_active', true)
-      if (data) return data
-    } catch {}
-    return []
-  }
+  return await prisma.driverIncentive.findMany({
+    where: {
+      is_active: true,
+      ...(driverId && { driver_id: driverId }),
+    },
+  })
 }

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
@@ -75,36 +74,20 @@ export async function PATCH(request: Request) {
 
     const targetOrderId = review?.order_id || id
 
-    // 2. Update the corresponding Order record in database (Prisma & Supabase)
+    // 2. Update the corresponding Order record in database (Prisma)
     const newPaymentStatus =
       status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
     const newOrderStatus = status === 'verified' ? 'sent_to_vendor' : undefined
 
     let updatedOrder: any = null
     if (targetOrderId) {
-      try {
-        updatedOrder = await prisma.order.update({
-          where: { id: targetOrderId },
-          data: {
-            payment_status: newPaymentStatus,
-            ...(newOrderStatus ? { status: newOrderStatus } : {}),
-          },
-        })
-      } catch (e) {
-        try {
-          const updatePayload: { payment_status: string; status?: string } = {
-            payment_status: newPaymentStatus,
-          }
-          if (newOrderStatus) updatePayload.status = newOrderStatus
-          const { data } = await supabase
-            .from('orders')
-            .update(updatePayload)
-            .eq('id', targetOrderId)
-            .select()
-            .single()
-          updatedOrder = data
-        } catch (err) {}
-      }
+      updatedOrder = await prisma.order.update({
+        where: { id: targetOrderId },
+        data: {
+          payment_status: newPaymentStatus,
+          ...(newOrderStatus ? { status: newOrderStatus } : {}),
+        },
+      })
 
       // Post double-entry subledger journal entry upon payment verification
       if (newPaymentStatus === 'verified') {

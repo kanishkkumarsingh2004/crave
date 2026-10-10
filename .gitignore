@@ -15,5 +15,11 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .turbo/
-.DS_Store*.tsbuildinfo
+.DS_Store
 *.tsbuildinfo
+
+# Neon
+.neon/
+neon-*.log
+.agents
+skills-lock.json

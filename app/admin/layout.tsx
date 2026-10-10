@@ -245,7 +245,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-xs font-bold text-[#18201c] dark:text-white truncate">
                   {user?.name || 'Sara Vance'}
                 </p>
-                <p className="text-[10px] text-[#607367] dark:text-white/50 truncate">Master Admin</p>
+                <p className="text-[10px] text-[#607367] dark:text-white/50 truncate">
+                  Master Admin
+                </p>
               </div>
             </div>
             <button
@@ -286,7 +288,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Body */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#0b0f0d] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div
+        className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#0b0f0d] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}
+      >
         {/* Top Header Bar for Admin */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e2e8e3] dark:border-[#1e2722] bg-white/90 dark:bg-[#111714]/90 px-4 py-3.5 backdrop-blur-xl sm:px-6 lg:px-8 shadow-xs">
           <div className="flex items-center gap-3">
@@ -294,13 +298,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#5e8210] dark:text-[#d9f447]">
                 {t.admin.commandCenter}
               </p>
-              <h1 className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white">{pageTitle}</h1>
+              <h1 className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white">
+                {pageTitle}
+              </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#18201c] dark:text-white bg-[#f0f4f1] dark:bg-white/5 border border-[#e2e8e3] dark:border-white/10 px-3 py-1.5 rounded-full">
-              <ShieldCheck className="size-4 text-[#5e8210] dark:text-[#d9f447]" /> Master Admin Access
+              <ShieldCheck className="size-4 text-[#5e8210] dark:text-[#d9f447]" /> Master Admin
+              Access
             </span>
 
             <ThemeToggle />

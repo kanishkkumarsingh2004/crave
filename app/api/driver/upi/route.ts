@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createDriverUpiAccount, listDriverUpiAccounts } from '@/lib/dal/payments'
 import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 import { getApiActor, requireAuthApi } from '@/lib/api-auth'
 import crypto from 'crypto'
 
@@ -90,13 +89,7 @@ export async function DELETE(request: Request) {
       }
     }
 
-    try {
-      await prisma.driverUpiAccount.delete({ where: { id } })
-    } catch {
-      try {
-        await supabase.from('driver_upi_accounts').delete().eq('id', id)
-      } catch {}
-    }
+    await prisma.driverUpiAccount.delete({ where: { id } })
 
     return NextResponse.json({ success: true, message: 'UPI handle deleted successfully' })
   } catch (error: any) {

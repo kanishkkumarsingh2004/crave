@@ -274,7 +274,8 @@ export default function HomePage() {
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#18201c] dark:text-white tracking-tight leading-tight">
-                Instant Grocery Delivery in <span className="text-[#b5de28] dark:text-[#d9f447]">15 Minutes.</span>
+                Instant Grocery Delivery in{' '}
+                <span className="text-[#b5de28] dark:text-[#d9f447]">15 Minutes.</span>
               </h2>
 
               <p className="mt-4 text-sm sm:text-base text-[#55635a] dark:text-gray-300 font-medium leading-relaxed">
@@ -317,7 +318,9 @@ export default function HomePage() {
                     3
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-[#18201c] dark:text-white">Live Map Tracking</h4>
+                    <h4 className="text-sm font-extrabold text-[#18201c] dark:text-white">
+                      Live Map Tracking
+                    </h4>
                     <p className="text-xs text-[#616d66] dark:text-gray-400 mt-0.5">
                       Watch your express rider navigate straight to your apartment doorstep.
                     </p>

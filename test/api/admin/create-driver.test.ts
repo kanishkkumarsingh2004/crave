@@ -20,14 +20,6 @@ jest.mock('@/lib/dal', () => ({
   createUser: jest.fn().mockImplementation(async (data: any) => data),
 }))
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockResolvedValue({ data: [], error: null }),
-    }),
-  },
-}))
-
 jest.mock('@/lib/ws-server', () => ({
   broadcast: jest.fn(),
 }))

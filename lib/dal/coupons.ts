@@ -1,47 +1,28 @@
 /**
  * Database Access Layer — Coupons
- * Resilient dual-engine: Prisma ORM with Supabase REST fallback
+ * Prisma ORM with Neon PostgreSQL
  */
 import { prisma } from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
 import type { DiscountType } from '@prisma/client'
 import { redis, isRedisAvailable } from '@/lib/redis'
 
 // ─── Queries ─────────────────────────────────────────────
 
 export async function listCoupons(restaurantId?: string) {
-  try {
-    const list = await prisma.coupon.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
-      orderBy: { created_at: 'desc' },
-    })
-    if (list && list.length > 0) return list
-  } catch (e) {}
-
-  try {
-    let query = supabase.from('coupons').select('*').order('created_at', { ascending: false })
-    if (restaurantId) query = query.eq('restaurant_id', restaurantId)
-    const { data } = await query
-    if (data) return data
-  } catch (e) {}
-
+  const list = await prisma.coupon.findMany({
+    where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+    orderBy: { created_at: 'desc' },
+  })
+  if (list && list.length > 0) return list
   return []
 }
 
 export async function findCouponByCode(code: string) {
   const clean = code.trim().toUpperCase()
-  try {
-    const c = await prisma.coupon.findFirst({
-      where: { code: { equals: clean, mode: 'insensitive' } },
-    })
-    if (c) return c
-  } catch (e) {}
-
-  try {
-    const { data } = await supabase.from('coupons').select('*').ilike('code', clean).maybeSingle()
-    if (data) return data
-  } catch (e) {}
-
+  const c = await prisma.coupon.findFirst({
+    where: { code: { equals: clean, mode: 'insensitive' } },
+  })
+  if (c) return c
   return null
 }
 
@@ -136,21 +117,8 @@ export async function createCoupon(data: {
   restaurant_id?: string
   restaurant_ids?: string[]
 }) {
-  try {
-    const { restaurant_ids, ...prismaData } = data
-    return await prisma.coupon.create({ data: prismaData })
-  } catch (e) {}
-
-  try {
-    const { data: created } = await supabase
-      .from('coupons')
-      .insert([data as any])
-      .select()
-      .single()
-    if (created) return created
-  } catch (e) {}
-
-  return { ...data, created_at: new Date() }
+  const { restaurant_ids, ...prismaData } = data
+  return await prisma.coupon.create({ data: prismaData })
 }
 
 export async function updateCoupon(
@@ -165,22 +133,8 @@ export async function updateCoupon(
     restaurant_ids?: string[]
   }
 ) {
-  try {
-    const { restaurant_ids, ...prismaData } = data
-    return await prisma.coupon.update({ where: { id }, data: prismaData })
-  } catch (e) {}
-
-  try {
-    const { data: updated } = await supabase
-      .from('coupons')
-      .update(data as any)
-      .eq('id', id)
-      .select()
-      .single()
-    if (updated) return updated
-  } catch (e) {}
-
-  return { id, ...data }
+  const { restaurant_ids, ...prismaData } = data
+  return await prisma.coupon.update({ where: { id }, data: prismaData })
 }
 
 export async function incrementCouponUsage(id: string) {
@@ -202,35 +156,14 @@ export async function incrementCouponUsage(id: string) {
       })
       .catch(() => {})
 
-    try {
-      await supabase
-        .from('coupons')
-        .update({ used_count: { increment: 1 } })
-        .eq('id', id)
-    } catch (e) {}
-
     return { id, currentUsage }
   }
 
   // Fallback to DB-only increment
-  try {
-    return await prisma.coupon.update({
-      where: { id },
-      data: { used_count: { increment: 1 } },
-    })
-  } catch (e) {}
-
-  try {
-    const { data: current } = await supabase
-      .from('coupons')
-      .select('used_count')
-      .eq('id', id)
-      .single()
-    const newCount = (current?.used_count || 0) + 1
-    await supabase.from('coupons').update({ used_count: newCount }).eq('id', id)
-  } catch (e) {}
-
-  return { id }
+  return await prisma.coupon.update({
+    where: { id },
+    data: { used_count: { increment: 1 } },
+  })
 }
 
 /**
@@ -244,14 +177,7 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
   limit: number | null
 }> {
   let coupon: any = null
-  try {
-    coupon = await prisma.coupon.findUnique({ where: { id: couponId } })
-  } catch (e) {
-    try {
-      const { data } = await supabase.from('coupons').select('*').eq('id', couponId).maybeSingle()
-      coupon = data
-    } catch (err) {}
-  }
+  coupon = await prisma.coupon.findUnique({ where: { id: couponId } })
 
   const limit = coupon?.usage_limit ?? null
 
@@ -262,19 +188,10 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
     }
 
     // Persist usage count increment in DB
-    try {
-      await prisma.coupon.update({
-        where: { id: couponId },
-        data: { used_count: { increment: 1 } },
-      })
-    } catch (e) {}
-
-    try {
-      await supabase
-        .from('coupons')
-        .update({ used_count: currentUsage })
-        .eq('id', couponId)
-    } catch (e) {}
+    await prisma.coupon.update({
+      where: { id: couponId },
+      data: { used_count: { increment: 1 } },
+    })
 
     return { allowed: true, currentUsage, limit }
   }
@@ -302,24 +219,9 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
     })
     .catch(() => {})
 
-  try {
-    await supabase
-      .from('coupons')
-      .update({ used_count: currentUsage })
-      .eq('id', couponId)
-  } catch (e) {}
-
   return { allowed: true, currentUsage, limit }
 }
 
 export async function deleteCoupon(id: string) {
-  try {
-    return await prisma.coupon.delete({ where: { id } })
-  } catch (e) {}
-
-  try {
-    await supabase.from('coupons').delete().eq('id', id)
-  } catch (e) {}
-
-  return { id }
+  return await prisma.coupon.delete({ where: { id } })
 }
