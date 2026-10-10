@@ -17,6 +17,20 @@ stateDiagram-v2
     REJECTED --> PENDING: Re-submitted with valid UTR
 ```
 
+**Canonical Order States** (single source of truth in Prisma & `lib/order-state-machine.ts`):
+
+- **Payment Phase**: `payment_pending` → `payment_submitted` → `payment_verified`
+- **Fulfillment Phase**: `sent_to_vendor` → `preparing` → `packing` → `ready_for_pickup` → `rider_assigned` → `picked_up` → `out_for_delivery` → `delivered` → `completed`
+- **Terminal**: `cancelled`
+
+**App Flow States** (UI mapping): `PENDING` → `CONFIRMED` → `PREPARING` → `READY_FOR_PICKUP` → `OUT_FOR_DELIVERY` → `DELIVERED`
+
+See `lib/order-state-machine.ts` for:
+
+- Explicit `ORDER_TO_APP_FLOW_MAP` and `ORDER_TO_PAYMENT_MAP`
+- `VALID_TRANSITIONS` with enforced state machine
+- `isValidTransition()`, `getAppFlowStatus()`, `getPaymentStatus()`, `getPhaseName()`
+
 ---
 
 ## 2. Order Fulfillment State Machine
@@ -26,6 +40,12 @@ Order status progresses independently through fulfillment checkpoints:
 ```
 payment_pending ➔ payment_submitted ➔ payment_verified ➔ sent_to_vendor ➔ preparing ➔ packing ➔ ready_for_pickup ➔ rider_assigned ➔ picked_up ➔ out_for_delivery ➔ delivered ➔ completed
 ```
+
+**Transition Rules** (enforced in `lib/order-state-machine.ts`):
+
+- Each state has explicit `VALID_TRANSITIONS` array
+- `CANCELLED` is allowed from any payment/fulfillment state
+- `COMPLETED` is terminal, only reachable from `DELIVERED`
 
 ---
 

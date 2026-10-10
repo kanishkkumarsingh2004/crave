@@ -4,6 +4,9 @@ import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import type { DiscountType } from '@prisma/client'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+export const dynamic = 'force-dynamic'
 
 async function checkAdminOrVendorAuth(request: Request) {
   const authHeader = request.headers.get('authorization')
