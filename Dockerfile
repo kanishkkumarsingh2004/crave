@@ -9,8 +9,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
 RUN pnpm install --frozen-lockfile
 COPY . .
-# Prisma generate needs a database URL - use a dummy one for build time only
-ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/crave?schema=public"
+# Prisma generate needs a database URL - use build arg for build time only
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@localhost:5432/crave?schema=public"}
 RUN npx prisma generate
 RUN pnpm run build
 
@@ -29,7 +30,6 @@ COPY --from=builder /app/next-env.d.ts ./next-env.d.ts
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # CR-015: Only expose public HTTP port (3000)
