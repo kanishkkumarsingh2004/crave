@@ -33,78 +33,7 @@ import React, { useEffect, useState } from 'react'
 export default function CommercialContractsPage() {
   const { toast } = useToast()
 
-  const [contracts, setContracts] = useState<CommercialContract[]>([
-    {
-      id: 'cc_01',
-      restaurantId: 'rest_01',
-      contractNumber: 'CRV-CC-2026-001',
-      version: 1,
-      status: 'ACTIVE',
-      effectiveFrom: '2026-01-01',
-      effectiveUntil: null,
-      currency: 'INR',
-      commercialModel: 'commission',
-      commissionModel: 'PERCENTAGE',
-      commissionRate: 15,
-      markupRate: 0,
-      commissionBasis: 'ORDER_SUBTOTAL',
-      commissionPayer: 'RESTAURANT',
-      priceTaxMode: 'TAX_INCLUSIVE',
-      supplierState: 'Karnataka',
-      gstin: '29AAAAA0000A1Z5',
-      gstStatus: 'REGISTERED',
-      fssaiLicense: '11223344556677',
-      createdAt: '2026-01-01T00:00:00Z',
-      updatedAt: '2026-01-01T00:00:00Z',
-    },
-    {
-      id: 'cc_02',
-      restaurantId: 'rest_02',
-      contractNumber: 'CRV-CC-2026-002',
-      version: 2,
-      status: 'ACTIVE',
-      effectiveFrom: '2026-02-15',
-      effectiveUntil: null,
-      currency: 'INR',
-      commercialModel: 'markup',
-      commissionModel: 'FIXED',
-      commissionRate: 0,
-      markupRate: 10,
-      fixedCommissionAmount: 0,
-      commissionBasis: 'ORDER_SUBTOTAL',
-      commissionPayer: 'RESTAURANT',
-      priceTaxMode: 'TAX_INCLUSIVE',
-      supplierState: 'Karnataka',
-      gstin: '29BBBBA1111B2Z6',
-      gstStatus: 'REGISTERED',
-      fssaiLicense: '22334455667788',
-      createdAt: '2026-02-15T00:00:00Z',
-      updatedAt: '2026-02-15T00:00:00Z',
-    },
-    {
-      id: 'cc_03',
-      restaurantId: 'rest_03',
-      contractNumber: 'CRV-CC-2026-003',
-      version: 1,
-      status: 'PENDING_APPROVAL',
-      effectiveFrom: '2026-03-01',
-      effectiveUntil: null,
-      currency: 'INR',
-      commercialModel: 'hybrid',
-      commissionModel: 'PERCENTAGE',
-      commissionRate: 12,
-      markupRate: 5,
-      commissionBasis: 'ITEM_SUBTOTAL',
-      commissionPayer: 'RESTAURANT',
-      priceTaxMode: 'TAX_EXCLUSIVE',
-      supplierState: 'Maharashtra',
-      gstin: '27CCCCA2222C3Z7',
-      gstStatus: 'COMPOSITION',
-      fssaiLicense: '33445566778899',
-      createdAt: '2026-03-01T00:00:00Z',
-      updatedAt: '2026-03-01T00:00:00Z',
-    },
-  ])
+  const [contracts, setContracts] = useState<CommercialContract[]>([])
 
   const [restaurantsList, setRestaurantsList] = useState<
     { id: string; name: string; address?: string }[]
@@ -154,9 +83,20 @@ export default function CommercialContractsPage() {
       .catch((err) => console.warn('Could not load restaurants for contract form:', err))
   }, [])
 
+  useEffect(() => {
+    fetch('/api/admin/commercial-contracts')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.contracts)) {
+          setContracts(data.contracts)
+        }
+      })
+      .catch((err) => console.warn('Could not load commercial contracts:', err))
+  }, [])
+
   function openCreateModal() {
     setEditingContract(null)
-    setRestaurantIdInput(restaurantsList[0]?.id || 'rest_01')
+    setRestaurantIdInput(restaurantsList[0]?.id || '')
     setContractNumberInput(
       `CRV-CC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`
     )
@@ -171,10 +111,10 @@ export default function CommercialContractsPage() {
     setFixedCommissionInput(0)
     setCommissionBasisInput('ORDER_SUBTOTAL')
     setPriceTaxModeInput('TAX_INCLUSIVE')
-    setSupplierStateInput('Karnataka')
-    setGstinInput('29AAAAA0000A1Z5')
+    setSupplierStateInput('')
+    setGstinInput('')
     setGstStatusInput('REGISTERED')
-    setFssaiLicenseInput('11223344556677')
+    setFssaiLicenseInput('')
     setShowModal(true)
   }
 
@@ -522,9 +462,6 @@ export default function CommercialContractsPage() {
                         {r.name}
                       </option>
                     ))}
-                    {restaurantsList.length === 0 && (
-                      <option value="rest_01">Partner Kitchen Store</option>
-                    )}
                   </select>
                 </div>
               </div>

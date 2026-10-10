@@ -20,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - DATABASE_URL
       # CR-012: No secrets in build args - injected at runtime via env_file
     container_name: crave-backend
     restart: unless-stopped
@@ -52,6 +54,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - DATABASE_URL
       # CR-012: No secrets in build args - injected at runtime via env_file
     container_name: crave-frontend
     restart: unless-stopped
