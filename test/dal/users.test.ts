@@ -11,32 +11,6 @@ import {
 import { prisma } from '@/lib/prisma'
 
 jest.mock('@/lib/prisma', () => require('../__mocks__/prisma'))
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-          single: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-        }),
-        ilike: () => ({
-          maybeSingle: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-        }),
-        order: () => ({
-          then: async () => ({ data: [], error: { message: 'Supabase disabled' } }),
-        }),
-      }),
-      upsert: () => ({
-        select: () => ({
-          single: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-        }),
-      }),
-      delete: () => ({
-        eq: () => Promise.resolve({ data: null, error: { message: 'Supabase disabled' } }),
-      }),
-    }),
-  },
-}))
 
 const mockPrisma = prisma as any
 

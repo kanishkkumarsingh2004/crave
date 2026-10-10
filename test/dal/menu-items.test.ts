@@ -10,25 +10,6 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
-jest.mock('@/lib/supabase', () => {
-  const chainable = {
-    select: () => chainable,
-    eq: () => chainable,
-    order: () => chainable,
-    maybeSingle: async () => ({ data: null, error: { message: 'disabled' } }),
-    single: async () => ({ data: null, error: { message: 'disabled' } }),
-    insert: () => chainable,
-    update: () => chainable,
-    delete: () => chainable,
-    then: (resolve: any) => resolve({ data: [], error: null }),
-  }
-  return {
-    supabase: {
-      from: () => chainable,
-    },
-  }
-})
-
 const mockPrisma = prisma as any
 
 describe('Menu Items DAL', () => {

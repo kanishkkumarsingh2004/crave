@@ -36,29 +36,6 @@ jest.mock('@/lib/prisma', () => {
   }
   return { prisma: mockPrisma, PrismaClient: jest.fn(() => mockPrisma) }
 })
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          order: () => ({
-            then: async () => ({ data: [], error: { message: 'Supabase disabled' } }),
-          }),
-        }),
-        maybeSingle: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-      }),
-      upsert: () => ({
-        select: () => ({
-          single: async () => ({ data: null, error: { message: 'Supabase disabled' } }),
-        }),
-      }),
-      delete: () => ({
-        eq: () => Promise.resolve({ data: null, error: { message: 'Supabase disabled' } }),
-      }),
-    }),
-  },
-}))
-
 const mockPrisma = prisma as any
 
 describe('Restaurants DAL', () => {

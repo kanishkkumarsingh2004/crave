@@ -18,24 +18,6 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: null, error: null }),
-        }),
-      }),
-      upsert: () => ({
-        select: () => ({
-          single: async () => ({ data: null, error: null }),
-        }),
-      }),
-      delete: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
-    }),
-  },
-}))
-
 const mockPrisma = prisma as any
 
 describe('Restaurant Mutations', () => {
@@ -59,16 +41,17 @@ describe('Restaurant Mutations', () => {
       expect(mockPrisma.restaurant.create).toHaveBeenCalledWith({ data })
     })
 
-    it('falls back to Supabase when Prisma fails', async () => {
-      mockPrisma.restaurant.create.mockRejectedValue(new Error('DB error'))
-
-      const result = await createRestaurant({
+    it('returns data when created', async () => {
+      const data = {
         id: 'vnd_new',
         name: 'Restaurant',
         cuisine: 'Italian',
-      })
+      }
+      mockPrisma.restaurant.create.mockResolvedValue(data)
 
-      expect(result).toBeDefined()
+      const result = await createRestaurant(data)
+
+      expect(result).toEqual(data)
     })
   })
 

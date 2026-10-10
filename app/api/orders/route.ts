@@ -303,11 +303,7 @@ export async function POST(request: Request) {
     let couponDiscountAmount = 0
     let couponResult: any = null
     if (coupon_code) {
-      couponResult = await validateAndApplyCoupon(
-        coupon_code,
-        foodSubtotal,
-        finalRestaurantId
-      )
+      couponResult = await validateAndApplyCoupon(coupon_code, foodSubtotal, finalRestaurantId)
       if (!couponResult.valid) {
         return NextResponse.json({ error: couponResult.error || 'Invalid coupon' }, { status: 400 })
       }
@@ -618,8 +614,8 @@ export async function PATCH(request: Request) {
     const assignedRiderId = driver_id
       ? driver_id
       : actor.role === 'rider' || (actor.role as string) === 'driver'
-      ? actor.id
-      : undefined
+        ? actor.id
+        : undefined
 
     // Only pass fields that exist on the Order model to updateOrder.
     const updated = await updateOrder(orderId, {

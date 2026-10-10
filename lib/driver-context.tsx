@@ -1,7 +1,6 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { calculateHaversineDistanceKm } from '@/lib/utils'
@@ -831,15 +830,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           driver_lng: currentLng,
         }),
       }).catch(() => {})
-
-      await supabase
-        .from('orders')
-        .update({
-          driver_name: driverDisplayName,
-          driver_phone: driverDisplayPhone,
-          status: 'rider_assigned',
-        })
-        .eq('id', realId)
     } catch (e) {
       console.error('Failed to update driver assignment:', e)
     }
@@ -980,17 +970,13 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         status: 'delivered',
       })
 
-      supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', activeTask.id)
-        .then(() => {})
-    } catch (e) {}
-
-    setCompletedTrips((prev) => [newTrip, ...prev])
-    setCompletedSummaryModal(newTrip)
-    setActiveTask(null)
-    return { success: true, message: 'Delivery completed successfully with OTP handshake!' }
+      setCompletedTrips((prev) => [newTrip, ...prev])
+      setCompletedSummaryModal(newTrip)
+      setActiveTask(null)
+      return { success: true, message: 'Delivery completed successfully with OTP handshake!' }
+    } catch (e) {
+      return { success: false, message: 'Failed to complete delivery' }
+    }
   }
 
   async function handleAddUpiId(vpa: string, provider: string) {

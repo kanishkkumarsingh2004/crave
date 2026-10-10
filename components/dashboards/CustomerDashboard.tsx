@@ -69,7 +69,6 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
 import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
-import { supabase } from '@/lib/supabase'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
   ssr: false,
@@ -3266,12 +3265,8 @@ export default function CustomerDashboard({
                           payment_status: 'verified',
                         }),
                       })
-                      await supabase
-                        .from('payment_reviews')
-                        .update({ status: 'verified' })
-                        .eq('order_id', verifyingModal.orderId)
+                      setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
                     } catch (e) {}
-                    setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
                   }}
                   className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5"
                 >

@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
           value={`₹${weeklyGross.toLocaleString()}`}
           accent="purple"
           icon={<DollarSign className="size-3.5 sm:size-4" />}
-          note={t.admin.liveData || 'Live Supabase data'}
+          note={t.admin.liveData || 'Live Neon data'}
         />
         <SummaryCard
           title={t.admin.platformCommission || 'Platform Commission'}

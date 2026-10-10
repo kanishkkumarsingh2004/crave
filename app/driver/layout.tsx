@@ -290,7 +290,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.badge && !sidebarCollapsed && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[9px] font-bold shrink-0 ${
-                          isActive ? 'bg-[#121815] text-white' : 'bg-[#eef2ee] dark:bg-white/15 text-[#5e8210] dark:text-[#d9f447]'
+                          isActive
+                            ? 'bg-[#121815] text-white'
+                            : 'bg-[#eef2ee] dark:bg-white/15 text-[#5e8210] dark:text-[#d9f447]'
                         }`}
                       >
                         {item.badge}
@@ -366,7 +368,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div
+        className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}
+      >
         {/* Top Header Bar for Driver */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e2e8e3] dark:border-[#202923] bg-white/90 dark:bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-[#18201c] dark:text-white">
           <div>

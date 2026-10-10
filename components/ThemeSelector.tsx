@@ -59,9 +59,7 @@ export default function ThemeSelector({ className = '', variant = 'cards' }: The
                 className={`size-4 ${isSelected ? 'text-[#121815]' : 'text-gray-500 dark:text-gray-400'}`}
               />
               <span>{opt.label}</span>
-              {isSelected && (
-                <CheckCircle2 className="size-3.5 text-[#121815]" />
-              )}
+              {isSelected && <CheckCircle2 className="size-3.5 text-[#121815]" />}
             </button>
           )
         })}
@@ -104,7 +102,9 @@ export default function ThemeSelector({ className = '', variant = 'cards' }: The
             </div>
 
             <div>
-              <h4 className="font-extrabold text-sm tracking-tight text-[#18201c] dark:text-white">{opt.label}</h4>
+              <h4 className="font-extrabold text-sm tracking-tight text-[#18201c] dark:text-white">
+                {opt.label}
+              </h4>
               <p className="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">
                 {opt.description}
               </p>

@@ -63,7 +63,10 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="Crave" />
       </head>
-      <body className="antialiased bg-background text-foreground transition-colors duration-200" suppressHydrationWarning>
+      <body
+        className="antialiased bg-background text-foreground transition-colors duration-200"
+        suppressHydrationWarning
+      >
         <AuthProvider>
           <CartProvider>
             <LanguageProvider>

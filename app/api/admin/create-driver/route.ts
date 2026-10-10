@@ -1,6 +1,5 @@
 import { createUser, findUserByEmail } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
-import { supabase } from '@/lib/supabase'
 import { broadcast } from '@/lib/ws-server'
 import crypto from 'crypto'
 import { cookies } from 'next/headers'
@@ -71,25 +70,6 @@ export async function POST(request: Request) {
       })
     } catch (err: any) {
       console.warn('Could not insert driver user via Prisma:', err?.message)
-    }
-
-    // Also attempt Supabase insert if available
-    try {
-      await supabase.from('users').insert([
-        {
-          id: driverUserId,
-          name: String(name).trim(),
-          email: cleanEmail,
-          role: 'rider',
-          password_hash: passwordHash,
-          phone: phone ? String(phone).trim() : null,
-          address: address ? String(address).trim() : null,
-          vehicle_type: String(finalVehicleType).trim(),
-          license_plate: finalLicensePlate ? String(finalLicensePlate).trim() : null,
-        },
-      ])
-    } catch (e) {
-      // Supabase insert fallback
     }
 
     // Broadcast real-time driver onboarding to WebSocket listeners
