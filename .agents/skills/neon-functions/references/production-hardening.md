@@ -60,28 +60,28 @@ Compare `X-Secret` before parsing the body or touching Postgres. Missing
 this Function.
 
 ```typescript
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from 'node:crypto'
 
-const originSecret = process.env.ORIGIN_SECRET;
-if (!originSecret) throw new Error("ORIGIN_SECRET is required");
-const expected = Buffer.from(originSecret);
+const originSecret = process.env.ORIGIN_SECRET
+if (!originSecret) throw new Error('ORIGIN_SECRET is required')
+const expected = Buffer.from(originSecret)
 
 function hasOriginSecret(request: Request): boolean {
-  const header = request.headers.get("x-secret");
-  if (header === null) return false;
-  const provided = Buffer.from(header);
-  if (provided.byteLength !== expected.byteLength) return false;
-  return timingSafeEqual(provided, expected);
+  const header = request.headers.get('x-secret')
+  if (header === null) return false
+  const provided = Buffer.from(header)
+  if (provided.byteLength !== expected.byteLength) return false
+  return timingSafeEqual(provided, expected)
 }
 
 export default {
   async fetch(request: Request): Promise<Response> {
     if (!hasOriginSecret(request)) {
-      return new Response("Unauthorized", { status: 401 });
+      return new Response('Unauthorized', { status: 401 })
     }
-    return Response.json({ ok: true });
+    return Response.json({ ok: true })
   },
-};
+}
 ```
 
 Declare `ORIGIN_SECRET` in `neon.ts` `env` and on the app host.
@@ -99,24 +99,24 @@ app request's host or pathname onto the Function; a Next.js `/api/...` route
 is not the Function path.
 
 ```typescript
-const functionUrl = process.env.NEON_FUNCTION_URL;
-const originSecret = process.env.ORIGIN_SECRET;
+const functionUrl = process.env.NEON_FUNCTION_URL
+const originSecret = process.env.ORIGIN_SECRET
 if (!functionUrl || !originSecret) {
-  throw new Error("NEON_FUNCTION_URL and ORIGIN_SECRET are required");
+  throw new Error('NEON_FUNCTION_URL and ORIGIN_SECRET are required')
 }
 
-const headers = new Headers({ "x-secret": originSecret });
-const contentType = request.headers.get("content-type");
-if (contentType) headers.set("content-type", contentType);
-const authorization = request.headers.get("authorization");
-if (authorization) headers.set("authorization", authorization);
+const headers = new Headers({ 'x-secret': originSecret })
+const contentType = request.headers.get('content-type')
+if (contentType) headers.set('content-type', contentType)
+const authorization = request.headers.get('authorization')
+if (authorization) headers.set('authorization', authorization)
 
 return fetch(functionUrl, {
   method: request.method,
   headers,
   body: request.body ? await request.arrayBuffer() : undefined,
-  redirect: "manual",
-});
+  redirect: 'manual',
+})
 ```
 
 ## Function Triggers only
@@ -171,35 +171,32 @@ Wrangler:
 ```jsonc
 {
   "workers_dev": false,
-  "preview_urls": false
+  "preview_urls": false,
 }
 ```
 
 ```typescript
-const FUNCTION_ORIGIN = "https://<invocation-host>"; // neon functions get
+const FUNCTION_ORIGIN = 'https://<invocation-host>' // neon functions get
 
 export default {
-  async fetch(
-    request: Request,
-    env: { ORIGIN_SECRET: string },
-  ): Promise<Response> {
-    const incoming = new URL(request.url);
-    const upstream = new URL(FUNCTION_ORIGIN);
-    upstream.pathname = incoming.pathname;
-    upstream.search = incoming.search;
+  async fetch(request: Request, env: { ORIGIN_SECRET: string }): Promise<Response> {
+    const incoming = new URL(request.url)
+    const upstream = new URL(FUNCTION_ORIGIN)
+    upstream.pathname = incoming.pathname
+    upstream.search = incoming.search
 
-    const headers = new Headers(request.headers);
-    headers.set("x-secret", env.ORIGIN_SECRET);
-    headers.delete("host");
+    const headers = new Headers(request.headers)
+    headers.set('x-secret', env.ORIGIN_SECRET)
+    headers.delete('host')
 
     return fetch(upstream, {
       method: request.method,
       headers,
       body: request.body,
-      redirect: "manual",
-    });
+      redirect: 'manual',
+    })
   },
-};
+}
 ```
 
 Function: require `X-Secret` first (same helper as above), then apply **that
@@ -249,60 +246,55 @@ admission decision; pass `pending` to `waitUntil` so background writes do not
 delay the response.
 
 ```typescript
-import { waitUntil } from "@neon/functions";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import { waitUntil } from '@neon/functions'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
-const namespace = process.env.RATE_LIMIT_PREFIX;
-if (!namespace) throw new Error("RATE_LIMIT_PREFIX is required");
+const namespace = process.env.RATE_LIMIT_PREFIX
+if (!namespace) throw new Error('RATE_LIMIT_PREFIX is required')
 
 const limiter = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(60, "1 m"),
-  prefix: `${namespace}:${process.env.NEON_BRANCH ?? "local"}`,
+  limiter: Ratelimit.slidingWindow(60, '1 m'),
+  prefix: `${namespace}:${process.env.NEON_BRANCH ?? 'local'}`,
   timeout: 1_000,
   analytics: false,
-});
+})
 
-export async function checkQuota(
-  authenticatedPrincipalId: string,
-): Promise<Response | null> {
-  let result: Awaited<ReturnType<typeof limiter.limit>>;
+export async function checkQuota(authenticatedPrincipalId: string): Promise<Response | null> {
+  let result: Awaited<ReturnType<typeof limiter.limit>>
   try {
-    result = await limiter.limit(authenticatedPrincipalId);
+    result = await limiter.limit(authenticatedPrincipalId)
   } catch (error) {
-    console.error("Rate-limit store failed", error);
-    return new Response("Rate limiter unavailable", {
+    console.error('Rate-limit store failed', error)
+    return new Response('Rate limiter unavailable', {
       status: 503,
-      headers: { "Retry-After": "1" },
-    });
+      headers: { 'Retry-After': '1' },
+    })
   }
 
-  waitUntil(result.pending);
+  waitUntil(result.pending)
 
-  if (result.reason === "timeout") {
-    console.error("Rate-limit store timed out");
-    return new Response("Rate limiter unavailable", {
+  if (result.reason === 'timeout') {
+    console.error('Rate-limit store timed out')
+    return new Response('Rate limiter unavailable', {
       status: 503,
-      headers: { "Retry-After": "1" },
-    });
+      headers: { 'Retry-After': '1' },
+    })
   }
 
-  if (result.success) return null;
+  if (result.success) return null
 
-  const retryAfterSeconds = Math.max(
-    1,
-    Math.ceil((result.reset - Date.now()) / 1000),
-  );
-  return new Response("Too Many Requests", {
+  const retryAfterSeconds = Math.max(1, Math.ceil((result.reset - Date.now()) / 1000))
+  return new Response('Too Many Requests', {
     status: 429,
     headers: {
-      "Retry-After": String(retryAfterSeconds),
-      "RateLimit-Limit": String(result.limit),
-      "RateLimit-Remaining": String(result.remaining),
-      "RateLimit-Reset": String(retryAfterSeconds),
+      'Retry-After': String(retryAfterSeconds),
+      'RateLimit-Limit': String(result.limit),
+      'RateLimit-Remaining': String(result.remaining),
+      'RateLimit-Reset': String(retryAfterSeconds),
     },
-  });
+  })
 }
 ```
 

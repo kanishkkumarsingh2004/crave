@@ -68,14 +68,14 @@ Object storage is part of the `neon.ts` infrastructure-as-code config (see the `
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   buckets: {
     images: {}, // private by default
-    "public-assets": { access: "public_read" },
+    'public-assets': { access: 'public_read' },
   },
-});
+})
 ```
 
 Provision the declared buckets on the linked branch:
@@ -130,20 +130,20 @@ npm install files-sdk @aws-sdk/client-s3 @aws-sdk/s3-presigned-post @aws-sdk/s3-
 The adapter resolves its endpoint, region, and credentials from the same injected `AWS_*` env vars — pass only the bucket name:
 
 ```typescript
-import { Files } from "files-sdk";
-import { neon } from "files-sdk/neon";
+import { Files } from 'files-sdk'
+import { neon } from 'files-sdk/neon'
 
-const files = new Files({ adapter: neon({ bucket: "images" }) });
+const files = new Files({ adapter: neon({ bucket: 'images' }) })
 
 // Upload — body may be a Buffer, Uint8Array, Blob, File, ReadableStream, or string
-await files.upload("generated/cat.jpg", fileBuffer, { contentType: "image/jpeg" });
+await files.upload('generated/cat.jpg', fileBuffer, { contentType: 'image/jpeg' })
 
 // Download
-const file = await files.download("generated/cat.jpg");
-const bytes = new Uint8Array(await file.arrayBuffer());
+const file = await files.download('generated/cat.jpg')
+const bytes = new Uint8Array(await file.arrayBuffer())
 
 // Presigned GET — share without exposing credentials (defaults to a 1h expiry)
-const url = await files.url("generated/cat.jpg", { expiresIn: 3600 });
+const url = await files.url('generated/cat.jpg', { expiresIn: 3600 })
 
 // Plus: files.exists(), files.list({ prefix }), files.copy(), files.delete(), files.signedUploadUrl()
 ```
@@ -155,43 +155,41 @@ Swap the adapter import (`files-sdk/s3`, `files-sdk/r2`, `files-sdk/gcs`, …) a
 Neon speaks the S3 API directly, so you can drop down to the AWS SDK whenever you prefer the native client or already depend on it. The credentials, endpoint, and region are read from the standard AWS env chain, so the only setting you pass is `forcePathStyle: true` — Neon requires path-style addressing, so the S3 client **must** set it:
 
 ```typescript
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client } from '@aws-sdk/client-s3'
 
 const s3 = new S3Client({
   forcePathStyle: true, // required: Neon uses path-style addressing
-});
+})
 ```
 
 Then upload, download, and presign with the raw command objects:
 
 ```typescript
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-const BUCKET = "images";
+const BUCKET = 'images'
 
 // Upload
 await s3.send(
   new PutObjectCommand({
     Bucket: BUCKET,
-    Key: "generated/cat.jpg",
+    Key: 'generated/cat.jpg',
     Body: fileBuffer,
-    ContentType: "image/jpeg",
-  }),
-);
+    ContentType: 'image/jpeg',
+  })
+)
 
 // Download
-const res = await s3.send(
-  new GetObjectCommand({ Bucket: BUCKET, Key: "generated/cat.jpg" }),
-);
-const bytes = await res.Body?.transformToByteArray();
+const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: 'generated/cat.jpg' }))
+const bytes = await res.Body?.transformToByteArray()
 
 // Presigned GET — share without exposing credentials
 const url = await getSignedUrl(
   s3,
-  new GetObjectCommand({ Bucket: BUCKET, Key: "generated/cat.jpg" }),
-  { expiresIn: 3600 },
-);
+  new GetObjectCommand({ Bucket: BUCKET, Key: 'generated/cat.jpg' }),
+  { expiresIn: 3600 }
+)
 ```
 
 ## Pairing Storage with the Database on a Branch

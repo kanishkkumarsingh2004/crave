@@ -76,7 +76,9 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
   loading: () => (
     <div className="h-64 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
       <CraveSpinner size="md" variant="crave" />
-      <span className="tracking-wider uppercase text-[11px] text-white">Loading Live Interactive Map...</span>
+      <span className="tracking-wider uppercase text-[11px] text-white">
+        Loading Live Interactive Map...
+      </span>
     </div>
   ),
 })
@@ -86,7 +88,9 @@ const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
   loading: () => (
     <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
       <CraveSpinner size="lg" variant="crave" />
-      <span className="tracking-wider uppercase text-[11px] text-white">Connecting Live Rider GPS Map...</span>
+      <span className="tracking-wider uppercase text-[11px] text-white">
+        Connecting Live Rider GPS Map...
+      </span>
     </div>
   ),
 })
@@ -3300,7 +3304,12 @@ export default function CustomerDashboard({
                   type="button"
                   disabled={isApprovingPayment}
                   onClick={async () => {
-                    if (!verifyingModal.orderId || isApprovingPaymentRef.current || isApprovingPayment) return
+                    if (
+                      !verifyingModal.orderId ||
+                      isApprovingPaymentRef.current ||
+                      isApprovingPayment
+                    )
+                      return
                     isApprovingPaymentRef.current = true
                     setIsApprovingPayment(true)
                     try {
@@ -3327,7 +3336,8 @@ export default function CustomerDashboard({
                     <CraveButtonLoader label="Approving Order..." variant="dark" size="sm" />
                   ) : (
                     <>
-                      <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to Kitchen
+                      <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to
+                      Kitchen
                     </>
                   )}
                 </button>

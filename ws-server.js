@@ -156,6 +156,8 @@ const broadcastLocal = (channel, data, excludeSocket) => {
 // ----------------------------------------------------
 let redisPub = null
 let redisSub = null
+// Dedicated client for JWT blacklist GET queries (separate from pub/sub clients).
+let redisBlacklist = null
 const REDIS_URL = process.env.REDIS_URL
 const REDIS_CHANNEL = 'crave:ws:events'
 const SUBSCRIPTION_SYNC_CHANNEL = 'crave:ws:subscriptions'
@@ -177,6 +179,7 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
 
     redisPub = new Redis(REDIS_URL, redisOptions)
     redisSub = new Redis(REDIS_URL, redisOptions)
+    redisBlacklist = new Redis(REDIS_URL, redisOptions)
 
     const handleRedisError = (type, err) => {
       if (!warnLogged) {
@@ -309,6 +312,29 @@ async function verifyWSToken(token) {
     const { payload } = await jwtVerify(token, secretKey, {
       algorithms: ['HS256'],
     })
+
+    // Mirror the blacklist checks from lib/jwt.ts so that a server-side logout
+    // also invalidates WebSocket connections.
+    // If Redis is available, check both the per-token JTI blacklist and the
+    // per-user (logout-all) blacklist.  Fail closed: if the check itself throws,
+    // treat the token as invalid rather than allowing a potentially revoked token.
+    if (redisBlacklist && redisBlacklist.status === 'ready') {
+      try {
+        if (payload.jti) {
+          const tokenRevoked = await redisBlacklist.get(`crave:jwt:blacklist:${payload.jti}`)
+          if (tokenRevoked) return null
+        }
+        if (payload.id) {
+          const userRevoked = await redisBlacklist.get(`crave:jwt:blacklist:user:${payload.id}`)
+          if (userRevoked) return null
+        }
+      } catch (redisErr) {
+        // Redis query failed — fail closed to prevent blacklisted tokens from connecting.
+        console.warn('[ws-server] Redis blacklist check failed, rejecting token:', redisErr.message)
+        return null
+      }
+    }
+
     return payload
   } catch {
     return null
@@ -351,14 +377,7 @@ const CHANNEL_AUTH_RULES = {
   admin_orders: { roles: ['admin'] },
   admin_users: { roles: ['admin'] },
   approval_update: {
-    roles: [
-      'user',
-      'customer',
-      'restaurant_vendor',
-      'cravexp_store_vendor',
-      'vendor',
-      'admin',
-    ],
+    roles: ['user', 'customer', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor', 'admin'],
     requireOwnership: true,
   },
   driver_location: {
@@ -717,7 +736,10 @@ wss.on('connection', async (ws, req) => {
                 try {
                   authorized = await authorizeChannelAsync(ch, info, subscriptionData)
                 } catch (err) {
-                  console.error('[ws-server] authorizeChannelAsync threw unexpectedly:', err.message)
+                  console.error(
+                    '[ws-server] authorizeChannelAsync threw unexpectedly:',
+                    err.message
+                  )
                   authorized = false // fail closed
                 }
 

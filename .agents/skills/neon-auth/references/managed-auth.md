@@ -21,11 +21,11 @@ SMS is separate: the Phone Number plugin needs an application `send.otp` webhook
 
 ## Packages
 
-| Need | Package |
-| --- | --- |
-| Auth only | `@neondatabase/auth` |
+| Need                           | Package                                |
+| ------------------------------ | -------------------------------------- |
+| Auth only                      | `@neondatabase/auth`                   |
 | Already using the combined SDK | `@neondatabase/neon-js/auth` re-export |
-| Pre-built UI | `@neondatabase/auth-ui` |
+| Pre-built UI                   | `@neondatabase/auth-ui`                |
 
 Keep an existing `SupabaseAuthAdapter()` caller on that API (`signInWithPassword`, `signInWithOAuth`). Do not mix those methods into default Better Auth examples. Password hashes do not migrate from Supabase; `updateUser()` cannot change email or password; email verification needs app UI. Guide: https://neon.com/docs/auth/migrate/from-supabase.md
 
@@ -33,12 +33,12 @@ The Managed client is Better Auth methods through Neon's wrapper. It is not inte
 
 ## Environment
 
-| Variable | Purpose |
-| --- | --- |
-| `NEON_AUTH_BASE_URL` | Branch Managed Auth URL (includes path). Next server; injected into Functions. |
+| Variable                  | Purpose                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `NEON_AUTH_BASE_URL`      | Branch Managed Auth URL (includes path). Next server; injected into Functions.                                              |
 | `NEON_AUTH_COOKIE_SECRET` | Next app secret for cached session cookies. Generate with `openssl rand -base64 32` (32+ characters). Not injected by Neon. |
-| `VITE_NEON_AUTH_URL` | Public Auth URL for Vite / TanStack browser code. Assign the actual branch URL; env pull does not create this alias. |
-| `NEON_AUTH_JWKS_URL` | Injected Functions JWKS. Verify tokens in `neon-functions`, not here. |
+| `VITE_NEON_AUTH_URL`      | Public Auth URL for Vite / TanStack browser code. Assign the actual branch URL; env pull does not create this alias.        |
+| `NEON_AUTH_JWKS_URL`      | Injected Functions JWKS. Verify tokens in `neon-functions`, not here.                                                       |
 
 `neon env pull` / `neon deploy` write Managed `NEON_AUTH_BASE_URL` and `NEON_AUTH_JWKS_URL` when Auth is declared. The cookie secret and `VITE_*` name are application config.
 
@@ -47,20 +47,20 @@ The Managed client is Better Auth methods through Neon's wrapper. It is not inte
 `createNeonAuth` from `@neondatabase/auth/next/server`. Optional Next peer on current `@neondatabase/auth` is `>=16.0.0`; check the installed package before changing an existing app's router file.
 
 ```typescript
-import { createNeonAuth } from "@neondatabase/auth/next/server";
+import { createNeonAuth } from '@neondatabase/auth/next/server'
 
 export const auth = createNeonAuth({
   baseUrl: process.env.NEON_AUTH_BASE_URL!,
   cookies: { secret: process.env.NEON_AUTH_COOKIE_SECRET! },
-});
+})
 ```
 
 `app/api/auth/[...path]/route.ts`:
 
 ```typescript
-import { auth } from "@/lib/auth/server";
+import { auth } from '@/lib/auth/server'
 
-export const { GET, POST, PUT, DELETE, PATCH } = auth.handler();
+export const { GET, POST, PUT, DELETE, PATCH } = auth.handler()
 ```
 
 Those five methods are what the installed SDK returns. Existing apps that export only `GET`/`POST` keep serving GET/POST routes.
@@ -68,21 +68,21 @@ Those five methods are what the installed SDK returns. Existing apps that export
 Browser client takes **no arguments** and talks to that same-origin proxy:
 
 ```typescript
-import { createAuthClient } from "@neondatabase/auth/next";
+import { createAuthClient } from '@neondatabase/auth/next'
 
-export const authClient = createAuthClient();
+export const authClient = createAuthClient()
 ```
 
 Protect routes with `auth.middleware({ loginUrl: "/auth/sign-in" })` from `proxy.ts` on Next 16. Earlier Next apps may still use `middleware.ts`; match the installed SDK. Always set `config.matcher` to the protected pages. A matcher that covers every path redirects JavaScript and CSS for unauthenticated visitors, so the login page cannot load:
 
 ```typescript
-import { auth } from "@/lib/auth/server";
+import { auth } from '@/lib/auth/server'
 
-export default auth.middleware({ loginUrl: "/auth/sign-in" });
+export default auth.middleware({ loginUrl: '/auth/sign-in' })
 
 export const config = {
-  matcher: ["/account/:path*"],
-};
+  matcher: ['/account/:path*'],
+}
 ```
 
 Replace `/account/:path*` with the app's protected routes. Keep login, registration, recovery, `/api/auth`, and static assets accessible without a session.
@@ -90,17 +90,17 @@ Replace `/account/:path*` with the app's protected routes. Keep login, registrat
 Before reading protected data or performing a mutation, check the session inside the Route Handler or Server Action and enforce the resource's authorization rules. Verify direct unauthenticated requests are denied, independently of page redirects:
 
 ```typescript
-const { data: session } = await auth.getSession();
+const { data: session } = await auth.getSession()
 if (!session?.user) {
-  return Response.json({ error: "Unauthorized" }, { status: 401 });
+  return Response.json({ error: 'Unauthorized' }, { status: 401 })
 }
 ```
 
 Server session:
 
 ```typescript
-const { data: session, error } = await auth.getSession();
-const user = session?.user;
+const { data: session, error } = await auth.getSession()
+const user = session?.user
 ```
 
 Do not destructure `{ user }` from the top-level result. Do not pass options into `createAuthClient()` from `/next`. Do not put `fetchOptions` on the Managed `createAuthClient` URL-style config; adapter factories accept fetch options inside `BetterAuthReactAdapter({ fetchOptions })` / `BetterAuthVanillaAdapter(...)`.
@@ -116,12 +116,12 @@ JWT: `const { data, error } = await auth.token();` then `data.token`. Do not cal
 ## React / Vite
 
 ```typescript
-import { createAuthClient } from "@neondatabase/auth";
-import { BetterAuthReactAdapter } from "@neondatabase/auth/react/adapters";
+import { createAuthClient } from '@neondatabase/auth'
+import { BetterAuthReactAdapter } from '@neondatabase/auth/react/adapters'
 
 export const authClient = createAuthClient(import.meta.env.VITE_NEON_AUTH_URL, {
   adapter: BetterAuthReactAdapter(),
-});
+})
 ```
 
 Call adapter factories with `()`. Omit the adapter for vanilla Better Auth methods without `useSession`.
@@ -133,8 +133,8 @@ JWT: `authClient.token()` then `data.token`.
 ## UI
 
 ```typescript
-import "@neondatabase/auth-ui/css";
-import { NeonAuthUIProvider, AuthView } from "@neondatabase/auth-ui";
+import '@neondatabase/auth-ui/css'
+import { NeonAuthUIProvider, AuthView } from '@neondatabase/auth-ui'
 ```
 
 Choose one CSS import: `/css` or `/tailwind`, never both. Current `@neondatabase/auth-ui` uses `<AuthView path={path} />`. Check installed types before copying a `pathname` example from older docs.
@@ -152,22 +152,22 @@ Preserve existing `@neondatabase/auth/react/ui` imports rather than forcing a dr
 Only when the app already uses PostgREST or a Supabase database client:
 
 ```typescript
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
-export default defineConfig({ auth: true, dataApi: true });
+export default defineConfig({ auth: true, dataApi: true })
 ```
 
 Existing external IdP:
 
 ```typescript
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   dataApi: {
-    authProvider: "external",
-    jwksUrl: "https://your-idp/.well-known/jwks.json",
+    authProvider: 'external',
+    jwksUrl: 'https://your-idp/.well-known/jwks.json',
   },
-});
+})
 ```
 
 Do not enable Auth merely to satisfy a `dataApi` type error in an app that never needed the Data API. External JWKS on a Claimable project is accepted only after claim. Combined SDK `createClient({ dataApi: { url, getToken } })` is a query client without `.auth`; confirm the installed `@neondatabase/neon-js` docs before introducing it.

@@ -26,15 +26,15 @@ Rules:
 
 ```typescript
 // drizzle.config.ts
-import { defineConfig } from "drizzle-kit";
+import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
-  schema: "./src/schema.ts",
-  out: "./drizzle",
-  dialect: "postgresql",
+  schema: './src/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
   // Direct (unpooled) URL. Neon exposes it as DATABASE_URL_UNPOOLED.
   dbCredentials: { url: process.env.DATABASE_URL_UNPOOLED },
-});
+})
 ```
 
 ## Extensions
@@ -57,33 +57,28 @@ The columns, the generated `tsvector`, and the `lakebase_ann` index all go in `s
 
 ```typescript
 // src/schema.ts
-import { pgTable, bigint, text, vector, index, customType } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { pgTable, bigint, text, vector, index, customType } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 const tsvector = customType<{ data: string }>({
   dataType() {
-    return "tsvector";
+    return 'tsvector'
   },
-});
+})
 
 export const documents = pgTable(
-  "documents",
+  'documents',
   {
-    id: bigint("id", { mode: "number" }).generatedByDefaultAsIdentity().primaryKey(),
-    title: text("title").notNull(),
-    body: text("body").notNull(),
-    embedding: vector("embedding", { dimensions: 1536 }),
-    bodyTsv: tsvector("body_tsv").generatedAlwaysAs(
-      sql`to_tsvector('english', "body")`,
-    ),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity().primaryKey(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    embedding: vector('embedding', { dimensions: 1536 }),
+    bodyTsv: tsvector('body_tsv').generatedAlwaysAs(sql`to_tsvector('english', "body")`),
   },
   (table) => [
-    index("documents_embedding_ann").using(
-      "lakebase_ann",
-      table.embedding.op("vector_cosine_ops"),
-    ),
-  ],
-);
+    index('documents_embedding_ann').using('lakebase_ann', table.embedding.op('vector_cosine_ops')),
+  ]
+)
 ```
 
 Set the dimension to match your embedding model. Postgres maintains `body_tsv`, so never write it from the app. Generate and apply the migration after the extensions migration above:
@@ -111,23 +106,23 @@ CREATE INDEX documents_body_bm25 ON documents USING lakebase_bm25 (body_tsv);
 Use the query builder with Drizzle's `cosineDistance` helper for vector search. It emits the `<=>` operator, so keep the index on `vector_cosine_ops`:
 
 ```typescript
-import { cosineDistance } from "drizzle-orm";
-import { documents } from "./schema";
+import { cosineDistance } from 'drizzle-orm'
+import { documents } from './schema'
 
 // queryEmbedding: number[] from the same model used for stored documents
-const distance = cosineDistance(documents.embedding, queryEmbedding);
+const distance = cosineDistance(documents.embedding, queryEmbedding)
 
 const rows = await db
   .select({ id: documents.id, title: documents.title, distance })
   .from(documents)
   .orderBy(distance)
-  .limit(k);
+  .limit(k)
 ```
 
 BM25 has no Drizzle helper: `<@>` and `to_bm25query` require raw SQL. Reference the generated column by its `body_tsv` name. Bind user input as parameters through the `sql` template:
 
 ```typescript
-import { sql } from "drizzle-orm";
+import { sql } from 'drizzle-orm'
 
 const rows = await db.execute(sql`
   SELECT id, title,
@@ -138,7 +133,7 @@ const rows = await db.execute(sql`
   FROM documents
   ORDER BY score
   LIMIT ${k}
-`);
+`)
 ```
 
 Run the [hybrid search](hybrid-search.md) RRF query the same way: raw SQL through `db.execute`.
@@ -148,22 +143,22 @@ Run the [hybrid search](hybrid-search.md) RRF query the same way: raw SQL throug
 Per-query GUCs (`lakebase_ann.probes`, `lakebase_ann.epsilon`, `lakebase_bm25.default_limit`, `lakebase_bm25.prefilter`) must be set with `SET LOCAL` inside a transaction so they apply to the same pooled connection as the query:
 
 ```typescript
-import { cosineDistance, sql } from "drizzle-orm";
-import { documents } from "./schema";
+import { cosineDistance, sql } from 'drizzle-orm'
+import { documents } from './schema'
 
-const distance = cosineDistance(documents.embedding, queryEmbedding);
+const distance = cosineDistance(documents.embedding, queryEmbedding)
 
 const rows = await db.transaction(async (tx) => {
   // SET LOCAL scopes the GUC to this transaction's connection; do not hoist it out.
   // Keep probes at 'auto' unless an IVF `lists` layout exists: a numeric value must
   // match the `lists` shape or it errors ("need 0 probes ..."). See vector-search.md.
-  await tx.execute(sql`SET LOCAL lakebase_ann.probes = 'auto'`);
+  await tx.execute(sql`SET LOCAL lakebase_ann.probes = 'auto'`)
   return tx
     .select({ id: documents.id, title: documents.title, distance })
     .from(documents)
     .orderBy(distance)
-    .limit(k);
-});
+    .limit(k)
+})
 ```
 
 Sources:

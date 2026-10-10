@@ -72,11 +72,11 @@ The gateway is part of `neon.ts` (see the `neon` skill for the branch-first work
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   aiGateway: true,
-});
+})
 ```
 
 ```bash
@@ -101,7 +101,7 @@ When `aiGateway` is enabled, Neon injects the gateway credentials as **Neon-bran
 
 | Variable                   | Meaning                                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `NEON_AI_GATEWAY_TOKEN`    | Gateway bearer token (a Neon credential, `nt_live_...`)                                                                              |
+| `NEON_AI_GATEWAY_TOKEN`    | Gateway bearer token (a Neon credential, `nt_live_...`)                                                                             |
 | `NEON_AI_GATEWAY_BASE_URL` | **Bare branch gateway host** (`scheme://host`, **no path** — no `/ai-gateway`): `https://<branch-id>-api.ai.<region>.aws.neon.tech` |
 
 > Neon injects **only** these two vars — it does **not** set `OPENAI_API_KEY` / `OPENAI_BASE_URL`. The `@neon/ai-sdk-provider` and Mastra's `neon/<model>` read `NEON_AI_GATEWAY_*` directly (zero config); for the plain OpenAI SDK / `@ai-sdk/openai`, build the client's `apiKey` + `baseURL` from them (shown below), or set your own `OPENAI_*` by hand (`env pull` leaves user-set vars untouched).
@@ -124,32 +124,32 @@ The [Vercel AI SDK](https://ai-sdk.dev) is the recommended way to call the gatew
 The dedicated `@neon/ai-sdk-provider` reads `NEON_AI_GATEWAY_BASE_URL` + `NEON_AI_GATEWAY_TOKEN` from the injected env with **zero config** and routes each model to the best endpoint (Anthropic → Messages, OpenAI/Codex → Responses, everything else → MLflow). On a Neon Function that streams text and generates images, just pick a catalog model:
 
 ```typescript
-import { neon } from "@neon/ai-sdk-provider";
-import { streamText } from "ai";
+import { neon } from '@neon/ai-sdk-provider'
+import { streamText } from 'ai'
 
 const result = streamText({
-  model: neon("gpt-5-mini"), // or claude-sonnet-4-6, gemini-3-flash, ...
+  model: neon('gpt-5-mini'), // or claude-sonnet-4-6, gemini-3-flash, ...
   messages,
   tools: {
     image_generation: neon.tools.imageGeneration({
-      outputFormat: "jpeg",
-      size: "1024x1024",
+      outputFormat: 'jpeg',
+      size: '1024x1024',
     }),
   },
-});
-return result.toUIMessageStreamResponse();
+})
+return result.toUIMessageStreamResponse()
 ```
 
 A single completion is the same provider with `generateText`:
 
 ```typescript
-import { neon } from "@neon/ai-sdk-provider";
-import { generateText } from "ai";
+import { neon } from '@neon/ai-sdk-provider'
+import { generateText } from 'ai'
 
 const { text } = await generateText({
-  model: neon("claude-haiku-4-5"), // or gpt-5-3-codex, gemini-3-flash, ...
-  prompt: "Summarize Postgres for me.",
-});
+  model: neon('claude-haiku-4-5'), // or gpt-5-3-codex, gemini-3-flash, ...
+  prompt: 'Summarize Postgres for me.',
+})
 ```
 
 > Prefer `@neon/ai-sdk-provider` over the bare `@ai-sdk/openai` `openai()`: Neon injects only `NEON_AI_GATEWAY_*`, not `OPENAI_*`, so `openai()` won't pick up the gateway from the env on its own. If you do use `@ai-sdk/openai`, configure it explicitly with `createOpenAI({ apiKey: process.env.NEON_AI_GATEWAY_TOKEN, baseURL: `${process.env.NEON_AI_GATEWAY_BASE_URL}/openai/v1` })`.
@@ -157,12 +157,12 @@ const { text } = await generateText({
 To build an **agent** — a model that calls tools in a loop and then answers — add `tools` and a `stopWhen` budget. The loop runs in-process, so on a Neon Function it isn't cut off by lambda-style timeouts:
 
 ```typescript
-import { neon } from "@neon/ai-sdk-provider";
-import { generateText, tool, stepCountIs } from "ai";
-import { z } from "zod";
+import { neon } from '@neon/ai-sdk-provider'
+import { generateText, tool, stepCountIs } from 'ai'
+import { z } from 'zod'
 
 const { text } = await generateText({
-  model: neon("claude-sonnet-4-6"),
+  model: neon('claude-sonnet-4-6'),
   prompt: "How many open todos do I have, and what's the oldest one?",
   tools: {
     listTodos: tool({
@@ -172,7 +172,7 @@ const { text } = await generateText({
     }),
   },
   stopWhen: stepCountIs(5), // let the model call tools, then summarize
-});
+})
 ```
 
 For a full AI SDK agent deployed as a Neon Function (streaming, tool calling, image generation, persistence), see the `neon-functions` skill's [references/ai-sdk.md](https://neon.com/docs/ai/skills/neon-functions/references/ai-sdk.md).
@@ -182,20 +182,19 @@ For a full AI SDK agent deployed as a Neon Function (streaming, tool calling, im
 [Mastra](https://mastra.ai) is the recommended framework when you want batteries-included agents — built-in memory, tools, workflows, and tracing — with the model still pointed at the gateway. With `@mastra/core` 1.47+, use a `neon/<model>` magic string; Mastra reads `NEON_AI_GATEWAY_BASE_URL` and `NEON_AI_GATEWAY_TOKEN` from the environment (injected by `neon deploy` when `aiGateway` is enabled). Use `parseEnv` only for other declared services (e.g. `env.postgres.databaseUrl` for `@mastra/pg` memory):
 
 ```typescript
-import { Agent } from "@mastra/core/agent";
-import { parseEnv } from "@neon/env";
-import config from "../neon";
+import { Agent } from '@mastra/core/agent'
+import { parseEnv } from '@neon/env'
+import config from '../neon'
 
-const env = parseEnv(config);
+const env = parseEnv(config)
 
 export const personalAssistant = new Agent({
-  id: "personal-assistant",
-  name: "personal-assistant",
-  instructions:
-    "You are a warm, concise personal assistant with long-term memory.",
-  model: "neon/claude-haiku-4-5",
+  id: 'personal-assistant',
+  name: 'personal-assistant',
+  instructions: 'You are a warm, concise personal assistant with long-term memory.',
+  model: 'neon/claude-haiku-4-5',
   memory, // your Mastra memory store, e.g. @mastra/pg on env.postgres.databaseUrl
-});
+})
 ```
 
 ## Use with Plain SDKs (Lower-Level)
@@ -203,17 +202,17 @@ export const personalAssistant = new Agent({
 When you don't need an agent framework — a single completion, an existing provider-SDK integration, or native provider features — call the gateway with the plain SDKs. Neon injects the `NEON_AI_GATEWAY_*` vars (not `OPENAI_*`), so set the client's `apiKey` + `baseURL` from them. For the OpenAI **Responses** dialect (`/openai/v1`):
 
 ```typescript
-import OpenAI from "openai";
+import OpenAI from 'openai'
 
 const client = new OpenAI({
   apiKey: process.env.NEON_AI_GATEWAY_TOKEN,
   baseURL: `${process.env.NEON_AI_GATEWAY_BASE_URL}/openai/v1`,
-});
+})
 
 const res = await client.responses.create({
-  model: "gpt-5-mini", // swap to claude-sonnet-4-6, gemini-3-flash, ...
-  input: "What is Neon?",
-});
+  model: 'gpt-5-mini', // swap to claude-sonnet-4-6, gemini-3-flash, ...
+  input: 'What is Neon?',
+})
 ```
 
 For the unified **chat-completions** dialect, point `baseURL` at `/v1` instead:
@@ -222,12 +221,12 @@ For the unified **chat-completions** dialect, point `baseURL` at `/v1` instead:
 const client = new OpenAI({
   apiKey: process.env.NEON_AI_GATEWAY_TOKEN,
   baseURL: `${process.env.NEON_AI_GATEWAY_BASE_URL}/v1`,
-});
+})
 
 const res = await client.chat.completions.create({
-  model: "claude-sonnet-4-6",
-  messages: [{ role: "user", content: "What is Neon?" }],
-});
+  model: 'claude-sonnet-4-6',
+  messages: [{ role: 'user', content: 'What is Neon?' }],
+})
 ```
 
 The Anthropic SDK and google-genai work the same way for native provider features — point the Anthropic SDK at `${NEON_AI_GATEWAY_BASE_URL}/anthropic` (it appends `/v1/messages` itself) and google-genai at `${NEON_AI_GATEWAY_BASE_URL}/gemini` (it appends `/v1beta/models/...`).
@@ -266,11 +265,11 @@ Any Neon credential (`nt_live_...`) valid for the branch works as the bearer tok
   "object": "list",
   "data": [
     {
-      "id": "claude-sonnet-4-6",              // catalog model ID — use directly in the `model` field
+      "id": "claude-sonnet-4-6", // catalog model ID — use directly in the `model` field
       "canonical_slug": "claude-sonnet-4-6",
-      "name": "Claude Sonnet 4.6",            // human-readable display name
+      "name": "Claude Sonnet 4.6", // human-readable display name
       "object": "model",
-      "owned_by": "anthropic",                // provider slug, e.g. anthropic | openai | google | meta | alibaba | databricks | ... (non-exhaustive; read live)
+      "owned_by": "anthropic", // provider slug, e.g. anthropic | openai | google | meta | alibaba | databricks | ... (non-exhaustive; read live)
       "created": 0,
       "enabled": true,
       "context_length": null,
@@ -278,19 +277,19 @@ Any Neon credential (`nt_live_...`) valid for the branch works as the bearer tok
         "modality": "text->text",
         "input_modalities": ["text"],
         "output_modalities": ["text"],
-        "tokenizer": "Claude",                // Claude | Gemini | GPT | "" (empty for open-source)
-        "instruct_type": null
+        "tokenizer": "Claude", // Claude | Gemini | GPT | "" (empty for open-source)
+        "instruct_type": null,
       },
       "top_provider": {
         "is_moderated": false,
         "context_length": null,
-        "max_completion_tokens": null
+        "max_completion_tokens": null,
       },
       "pricing": null,
-      "per_request_limits": null
-    }
+      "per_request_limits": null,
+    },
     // ... one entry per model in the branch's catalog
-  ]
+  ],
 }
 ```
 

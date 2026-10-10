@@ -25,11 +25,11 @@ neon claim --help
 If that help lists `create` and you need Auth, `npm i @neon/config` and write `neon.ts`. Then `neon claim create --env-pull`.
 
 ```typescript
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   auth: true,
-});
+})
 ```
 
 `claim create --service` accepts `postgres`, `auth`, `data-api`, `functions`, `object-storage`, and `ai-gateway`. `init --services` accepts the same names except `postgres` (every branch has it). Selecting `data-api` on init also declares Auth. Compatibility-only:
@@ -63,10 +63,10 @@ neon deploy
 ```typescript
 export default defineConfig({
   dataApi: {
-    authProvider: "external",
-    jwksUrl: "https://example.com/.well-known/jwks.json",
+    authProvider: 'external',
+    jwksUrl: 'https://example.com/.well-known/jwks.json',
   },
-});
+})
 ```
 
 `neon checkout` does not apply this to an existing branch. `neon deploy` (alias of `neon config apply`) does.

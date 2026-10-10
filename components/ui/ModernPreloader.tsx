@@ -49,7 +49,9 @@ export function CraveSpinner({ size = 'md', variant = 'crave', className = '' }:
   const currentVariant = variantColors[variant] || variantColors.crave
 
   return (
-    <div className={`relative inline-flex items-center justify-center shrink-0 ${sizeMap[size]} ${className}`}>
+    <div
+      className={`relative inline-flex items-center justify-center shrink-0 ${sizeMap[size]} ${className}`}
+    >
       {/* Outer Glow Halo */}
       <div
         className={`absolute inset-0 rounded-full ${currentVariant.glow} opacity-60 animate-pulse`}
@@ -88,12 +90,12 @@ export function CraveButtonLoader({
   className = '',
 }: ButtonLoaderProps) {
   return (
-    <div className={`inline-flex items-center justify-center gap-2.5 font-bold tracking-tight select-none ${className}`}>
+    <div
+      className={`inline-flex items-center justify-center gap-2.5 font-bold tracking-tight select-none ${className}`}
+    >
       <CraveSpinner size={size === 'sm' ? 'xs' : size === 'lg' ? 'md' : 'sm'} variant={variant} />
       <div className="flex flex-col text-left">
-        <span className="animate-pulse flex items-center gap-1">
-          {label}
-        </span>
+        <span className="animate-pulse flex items-center gap-1">{label}</span>
         {sublabel && (
           <span className="text-[10px] font-normal opacity-70 tracking-normal leading-tight">
             {sublabel}
@@ -116,20 +118,28 @@ export function CravePagePreloader({
   minHeight = 'min-h-[60vh]',
 }: PagePreloaderProps) {
   return (
-    <div className={`w-full ${minHeight} flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300`}>
+    <div
+      className={`w-full ${minHeight} flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300`}
+    >
       <div className="relative flex items-center justify-center">
         {/* Ambient Radial Neon Glow */}
         <div className="absolute size-36 rounded-full bg-[#d9f447]/15 blur-2xl animate-pulse" />
-        
+
         {/* Pulsing Outer Rings */}
-        <div className="absolute size-24 rounded-full border border-[#d9f447]/20 animate-ping opacity-30" style={{ animationDuration: '2s' }} />
+        <div
+          className="absolute size-24 rounded-full border border-[#d9f447]/20 animate-ping opacity-30"
+          style={{ animationDuration: '2s' }}
+        />
         <div className="absolute size-20 rounded-full border border-[#d9f447]/30 animate-pulse" />
 
         {/* Central Brand Spinner Container */}
         <div className="relative size-16 rounded-2xl bg-[#121815] border border-[#27342d] shadow-2xl flex items-center justify-center overflow-hidden">
           {/* Rotating Perimeter Line */}
-          <div className="absolute inset-0 border-2 border-transparent border-t-[#d9f447] border-l-[#d9f447]/60 rounded-2xl animate-spin" style={{ animationDuration: '1.2s' }} />
-          
+          <div
+            className="absolute inset-0 border-2 border-transparent border-t-[#d9f447] border-l-[#d9f447]/60 rounded-2xl animate-spin"
+            style={{ animationDuration: '1.2s' }}
+          />
+
           {/* Crave Dot Icon */}
           <div className="size-4 rounded-full bg-[#d9f447] shadow-[0_0_12px_#d9f447] animate-pulse" />
         </div>

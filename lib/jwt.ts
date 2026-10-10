@@ -52,16 +52,43 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     })
     const payloadWithJti = payload as JWTPayload & { jti?: string }
 
-    // Check if token is blacklisted
-    if (payloadWithJti.jti && isRedisAvailable() && redis) {
-      const blacklisted = await redis.get(`crave:jwt:blacklist:${payloadWithJti.jti}`)
-      if (blacklisted) return null
+    // Determine whether Redis was configured (REDIS_URL set) vs just unavailable right now.
+    // - If Redis was never configured: skip blacklist checks (acceptable in dev/test).
+    // - If Redis was configured but is currently down: fail closed in production so that
+    //   revoked tokens are never silently accepted.  In non-production environments,
+    //   log a warning and pass through to avoid blocking development workflows.
+    const redisWasConfigured = !!process.env.REDIS_URL
+    const redisCurrentlyUp = isRedisAvailable() && !!redis
+
+    if (redisWasConfigured && !redisCurrentlyUp) {
+      if (process.env.NODE_ENV === 'production') {
+        // Fail closed: cannot verify blacklist status, so refuse the token.
+        console.error(
+          '[jwt] SECURITY: Redis is configured but unreachable. Refusing token to prevent revoked-token replay.'
+        )
+        return null
+      } else {
+        // Non-production: warn and allow, so developer workflows are not blocked.
+        console.warn(
+          '[jwt] WARNING: Redis is configured but unreachable. Blacklist check skipped (non-production). ' +
+            'In production this would reject the token.'
+        )
+        return payloadWithJti as JWTPayload
+      }
     }
 
-    // Check if user is blacklisted (logout all sessions)
-    if (payloadWithJti.id && isRedisAvailable() && redis) {
-      const userBlacklisted = await redis.get(`crave:jwt:blacklist:user:${payloadWithJti.id}`)
-      if (userBlacklisted) return null
+    if (redisCurrentlyUp) {
+      // Check if this specific token's JTI has been revoked (single-session logout).
+      if (payloadWithJti.jti) {
+        const blacklisted = await redis!.get(`crave:jwt:blacklist:${payloadWithJti.jti}`)
+        if (blacklisted) return null
+      }
+
+      // Check if the entire user has been logged out (logout-all-sessions).
+      if (payloadWithJti.id) {
+        const userBlacklisted = await redis!.get(`crave:jwt:blacklist:user:${payloadWithJti.id}`)
+        if (userBlacklisted) return null
+      }
     }
 
     return payloadWithJti as JWTPayload

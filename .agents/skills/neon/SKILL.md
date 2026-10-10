@@ -75,17 +75,17 @@ A supplied `DATABASE_URL` with no Neon credentials is schema work: complete it w
 
 New projects are created in AWS regions. Prefer pooled `DATABASE_URL` for application traffic.
 
-| Need | Use |
-| --- | --- |
-| Login, users, sessions (no existing provider) | `neon-auth` — Managed Better Auth (`auth: true`) |
-| Existing Better Auth, Clerk, Supabase Auth, or another working IdP | Keep it. `neon-auth` only if they ask to migrate |
-| User asked to migrate from Supabase Auth | `neon-auth` (Managed Better Auth; keep `SupabaseAuthAdapter()` call shapes) |
-| Files, uploads, blobs (no existing object store) | Object Storage |
-| HTTP APIs, cron, WebSocket, SSE, long-running agents | Functions querying Postgres |
-| LLM calls | AI Gateway |
-| SQL, schema, inspect, search | `neon-postgres` |
-| Existing PostgREST / Supabase database client | Data API (`dataApi` in `neon.ts`) |
-| Generic REST endpoints | Function or existing handler, not Data API |
+| Need                                                               | Use                                                                         |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Login, users, sessions (no existing provider)                      | `neon-auth` — Managed Better Auth (`auth: true`)                            |
+| Existing Better Auth, Clerk, Supabase Auth, or another working IdP | Keep it. `neon-auth` only if they ask to migrate                            |
+| User asked to migrate from Supabase Auth                           | `neon-auth` (Managed Better Auth; keep `SupabaseAuthAdapter()` call shapes) |
+| Files, uploads, blobs (no existing object store)                   | Object Storage                                                              |
+| HTTP APIs, cron, WebSocket, SSE, long-running agents               | Functions querying Postgres                                                 |
+| LLM calls                                                          | AI Gateway                                                                  |
+| SQL, schema, inspect, search                                       | `neon-postgres`                                                             |
+| Existing PostgREST / Supabase database client                      | Data API (`dataApi` in `neon.ts`)                                           |
+| Generic REST endpoints                                             | Function or existing handler, not Data API                                  |
 
 Use `neon-auth` to choose identity and to implement Managed Better Auth; the [Auth guide](references/auth.md) points there. Keep existing Better Auth, Clerk, and Supabase Auth unless the user asked to migrate login. Auth cannot be enabled on a project with IP Allow or Private Networking.
 
@@ -119,7 +119,7 @@ The skills below live in the [`neondatabase/agent-skills`](https://github.com/ne
 | Skill                            | Use it for                                                                                                                                                                           |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `neon-postgres`                  | Working with databases, including connections, schemas, queries, search, and autoscaling: SQL development, schema design, performance optimization, and scaling decisions.           |
-| `neon-auth`                      | Identity routing and Managed Better Auth setup (login, users, sessions, trusted domains). Fetch: https://neon.com/docs/ai/skills/neon-auth/SKILL.md |
+| `neon-auth`                      | Identity routing and Managed Better Auth setup (login, users, sessions, trusted domains). Fetch: https://neon.com/docs/ai/skills/neon-auth/SKILL.md                                  |
 | `neon-postgres-branches`         | Choosing or creating the right branch type for dev, preview, test, or CI workflows. Use this skill as a slash command.                                                               |
 | `neon-object-storage`            | Storing and serving files (uploads, images, blobs), including branching them with the database.                                                                                      |
 | `neon-functions`                 | Deploying long-running or streaming serverless functions — APIs, agents, SSE/WebSocket servers, and Function Triggers (cron and object-storage).                                     |
@@ -307,22 +307,22 @@ npm i @neon/config
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   aiGateway: true,
   buckets: {
     images: {
-      access: "private",
+      access: 'private',
     },
   },
   functions: {
     imagegen: {
-      name: "AI SDK image agent",
-      source: "src/index.ts",
+      name: 'AI SDK image agent',
+      source: 'src/index.ts',
     },
   },
-});
+})
 ```
 
 ### Provision services with neon config
@@ -336,7 +336,7 @@ export default defineConfig({
   functions: {},
   buckets: {},
   aiGateway: true, // see the neon-ai-gateway skill
-});
+})
 ```
 
 Empty `functions` / `buckets` maps are configuration slots, not a deployed API. Do not replace an existing `neon.ts` wholesale with this example.
@@ -375,30 +375,30 @@ Beyond services, `neon.ts` can program what configuration _new_ branches receive
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   auth: true,
   branch: (branch) => {
     if (branch.exists) {
       // leave existing branches untouched
-      return {};
+      return {}
     }
-    if (branch.name.startsWith("dev")) {
+    if (branch.name.startsWith('dev')) {
       return {
-        ttl: "7d", // clean up the branch after 7 days
+        ttl: '7d', // clean up the branch after 7 days
         postgres: {
           computeSettings: {
             autoscalingLimitMinCu: 0.25, // scale to zero
             autoscalingLimitMaxCu: 1, // keep it cheap
-            suspendTimeout: "5m",
+            suspendTimeout: '5m',
           },
         },
-      };
+      }
     }
-    return {};
+    return {}
   },
-});
+})
 ```
 
 The `branch` function receives the target branch (its `name`, whether it `exists` yet, whether it's the default, and more) and returns the tuning you want. Here new `dev-*` branches get a 7-day TTL so they clean themselves up, plus a cheap scale-to-zero compute profile, while existing branches and everything else fall through to the defaults. Because `neon checkout` applies this policy on create, a fresh `dev-*` branch comes up with these settings already in place.
@@ -410,22 +410,22 @@ Because `neon.ts` is TypeScript, the compiler catches invalid infrastructure bef
 ```typescript
 export default defineConfig({
   dataApi: true, // type error: `dataApi` (default authProvider 'neon') requires Neon Auth
-});
+})
 ```
 
 The message names both fixes, so pick one:
 
 ```typescript
 // 1. Enable Neon Auth (the default Data API auth provider):
-export default defineConfig({ auth: true, dataApi: true });
+export default defineConfig({ auth: true, dataApi: true })
 
 // 2. Or verify a third-party IdP instead of Neon Auth:
 export default defineConfig({
   dataApi: {
-    authProvider: "external",
-    jwksUrl: "https://your-idp/.well-known/jwks.json",
+    authProvider: 'external',
+    jwksUrl: 'https://your-idp/.well-known/jwks.json',
   },
-});
+})
 ```
 
 Treat a `neon.ts` type error as the config telling you which services must go together — read the message, it spells out the valid combinations.

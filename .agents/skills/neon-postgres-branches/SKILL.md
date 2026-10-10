@@ -218,28 +218,28 @@ npm i @neon/config
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   branch: (branch) => {
-    if (branch.exists) return {}; // never reconcile existing branches
-    if (branch.isDefault) return { protected: true };
-    if (branch.name.startsWith("preview/") || branch.name.startsWith("dev")) {
+    if (branch.exists) return {} // never reconcile existing branches
+    if (branch.isDefault) return { protected: true }
+    if (branch.name.startsWith('preview/') || branch.name.startsWith('dev')) {
       return {
-        parent: "main",
-        ttl: "7d", // ephemeral: auto-expire 7 days after creation (max 30d)
+        parent: 'main',
+        ttl: '7d', // ephemeral: auto-expire 7 days after creation (max 30d)
         postgres: {
           computeSettings: {
             autoscalingLimitMinCu: 0.25, // scale to zero
             autoscalingLimitMaxCu: 1, // keep throwaway branches cheap
-            suspendTimeout: "5m",
+            suspendTimeout: '5m',
           },
         },
-      };
+      }
     }
-    return {};
+    return {}
   },
-});
+})
 ```
 
 The closure receives a read-only descriptor of the target branch — `name`, `exists`, `isDefault`, `parentId`, and more — and returns the tuning to apply: `parent`, `ttl` (auto-expiry), `protected`, and `postgres.computeSettings`. This is the declarative complement to the **Ephemeral lifecycle hygiene** and per-PR / per-test patterns above: instead of remembering `--expires-at` on every `neon branches create`, the TTL and compute profile live in version control and apply to every matching branch.

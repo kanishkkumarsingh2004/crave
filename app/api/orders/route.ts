@@ -15,6 +15,7 @@ import {
   tolegacyCalculatorResult,
   type OrderPriceInput,
 } from '@/lib/finance/pricing-engine'
+import type { PriceTaxMode } from '@/lib/finance/tax-engine'
 import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
@@ -396,25 +397,26 @@ export async function POST(request: Request) {
       const lineTotal = price * quantity
       foodSubtotal += lineTotal
 
-      // CR-08 FIX: Derive tax rate from authoritative product tax category, not HSN/SAC presence
-      // Use item category to determine tax treatment; default to 5% for restaurant food services
+      // CR-04 FIX: Derive tax rate EXCLUSIVELY from authoritative database/category — never
+      // accept client-supplied taxRate or priceTaxMode.  A modified client request must not
+      // be able to zero-out GST or flip the inclusive/exclusive tax mode.
       const itemCategory = (menuItem.category || '').toLowerCase()
       const isBeverage = itemCategory.includes('beverage') || itemCategory.includes('drink')
       const isAlcohol = itemCategory.includes('alcohol') || itemCategory.includes('liquor')
       const isPackaged = itemCategory.includes('packaged') || itemCategory.includes('grocery')
 
-      let taxRate = 5 // Default: restaurant food services - 5% GST
+      let taxRate = 5 // Default: restaurant food services — 5% GST
       if (isAlcohol) taxRate = 28
       else if (isPackaged) taxRate = 18
       else if (isBeverage) taxRate = 12
 
-      // Allow client override only if explicitly provided and valid
-      if (rawItem.taxRate !== undefined && rawItem.taxRate !== null) {
-        const clientTaxRate = Number(rawItem.taxRate)
-        if (Number.isInteger(clientTaxRate) && clientTaxRate >= 0 && clientTaxRate <= 28) {
-          taxRate = clientTaxRate
-        }
-      }
+      // Tax rate is derived solely from item category above.
+      // MenuItem has no tax_rate column — the schema stores price_tax_mode and hsn_sac_code.
+      // rawItem.taxRate from the client is intentionally IGNORED — no override path.
+
+      // priceTaxMode must come from the DB item or the restaurant contract, never the client.
+      const priceTaxMode = (menuItem.price_tax_mode || 'TAX_INCLUSIVE') as PriceTaxMode
+      // rawItem.priceTaxMode is intentionally IGNORED.
 
       itemsList.push({
         id: itemId,
@@ -423,7 +425,7 @@ export async function POST(request: Request) {
         price,
         lineTotal,
         taxRate,
-        priceTaxMode: rawItem.priceTaxMode || menuItem.price_tax_mode || 'TAX_INCLUSIVE',
+        priceTaxMode,
         // Store original item reference for billing breakdown
         _menuItem: menuItem,
       })
@@ -494,10 +496,14 @@ export async function POST(request: Request) {
     const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
       'commission' | 'markup' | 'hybrid'
 
-    // ─── CR-005: Server-side distance calculation from TRUSTED database coordinates ──────
-    // ─── CR-005 / Resilience: Server-side distance calculation from TRUSTED database coordinates ──
+    // ─── CR-006 FIX: Resolve canonical address from the authenticated customer's saved
+    // records — both coordinates (for delivery fee) and address text (stored on order).
+    // The client-supplied customer_address string is NEVER written to the order; only
+    // the resolved DB record is used.  This prevents mismatch between the label stored
+    // on the order and the coordinates used for distance/fee calculation.
     let customerLat: number | null = null
     let customerLng: number | null = null
+    let canonicalAddressText: string = 'Bengaluru' // safe fallback label
 
     try {
       const targetAddressId = body.address_id || body.addressId || null
@@ -506,30 +512,72 @@ export async function POST(request: Request) {
       if (targetAddressId && typeof prisma?.customerAddress?.findFirst === 'function') {
         matchedAddress = await prisma.customerAddress.findFirst({
           where: { id: targetAddressId, customer_id: finalCustomerId },
-          select: { latitude: true, longitude: true },
+          select: {
+            latitude: true,
+            longitude: true,
+            address_line1: true,
+            address_line2: true,
+            city: true,
+            state: true,
+            pincode: true,
+            label: true,
+          },
         })
       }
 
       if (!matchedAddress && typeof prisma?.customerAddress?.findFirst === 'function') {
         matchedAddress = await prisma.customerAddress.findFirst({
           where: { customer_id: finalCustomerId, is_default: true },
-          select: { latitude: true, longitude: true },
+          select: {
+            latitude: true,
+            longitude: true,
+            address_line1: true,
+            address_line2: true,
+            city: true,
+            state: true,
+            pincode: true,
+            label: true,
+          },
         })
       }
 
       if (!matchedAddress && typeof prisma?.customerAddress?.findFirst === 'function') {
         matchedAddress = await prisma.customerAddress.findFirst({
           where: { customer_id: finalCustomerId },
-          select: { latitude: true, longitude: true },
+          select: {
+            latitude: true,
+            longitude: true,
+            address_line1: true,
+            address_line2: true,
+            city: true,
+            state: true,
+            pincode: true,
+            label: true,
+          },
         })
       }
 
-      if (matchedAddress?.latitude && matchedAddress?.longitude) {
-        customerLat = Number(matchedAddress.latitude)
-        customerLng = Number(matchedAddress.longitude)
+      if (matchedAddress) {
+        if (matchedAddress.latitude && matchedAddress.longitude) {
+          customerLat = Number(matchedAddress.latitude)
+          customerLng = Number(matchedAddress.longitude)
+        }
+        // Build canonical address text from the verified DB record parts.
+        const parts = [
+          matchedAddress.address_line1,
+          matchedAddress.address_line2,
+          matchedAddress.city,
+          matchedAddress.state,
+          matchedAddress.pincode,
+        ].filter(Boolean)
+        if (parts.length > 0) {
+          canonicalAddressText = parts.join(', ')
+        } else if (matchedAddress.label) {
+          canonicalAddressText = matchedAddress.label
+        }
       }
     } catch (e) {
-      // Fall through to city center default
+      // Fall through to city center / fallback label defaults
     }
 
     // Resilient fallback to urban hub center (Bengaluru: 12.9716, 77.5946) if coordinates not yet geocoded
@@ -537,7 +585,6 @@ export async function POST(request: Request) {
       customerLat = 12.9716
       customerLng = 77.5946
     }
-
     // Get restaurant coordinates
     const restaurantLat = restaurantDetails?.latitude ? Number(restaurantDetails.latitude) : null
     const restaurantLng = restaurantDetails?.longitude ? Number(restaurantDetails.longitude) : null
@@ -684,7 +731,10 @@ export async function POST(request: Request) {
             customer_id: finalCustomerId,
             customer_name: customer_name || (actor as any)?.name || 'Customer',
             customer_phone: customer_phone || undefined,
-            customer_address: customer_address || 'Bengaluru',
+            // CR-06 FIX: Use the verified canonical address from the saved address record,
+            // not the raw client-supplied string.  Both the label stored here and the
+            // coordinates used for the delivery-fee calculation come from the same DB row.
+            customer_address: canonicalAddressText,
             restaurant_id: finalRestaurantId || undefined,
             restaurant_name: finalRestaurantName,
             items: itemsForStorage,
@@ -763,9 +813,7 @@ export async function POST(request: Request) {
       // give it back so future orders can use it.
       if (couponIncrementClaimed && couponResult?.coupon?.id) {
         if (isRedisAvailable() && redis) {
-          redis
-            .decr(`crave:coupon:usage:${couponResult.coupon.id}`)
-            .catch(() => {})
+          redis.decr(`crave:coupon:usage:${couponResult.coupon.id}`).catch(() => {})
         }
       }
 
@@ -776,7 +824,10 @@ export async function POST(request: Request) {
             OR: [
               { id: orderId },
               ...(utr_ref ? [{ utr_ref }] : []),
-              { customer_id: finalCustomerId, created_at: { gte: new Date(Date.now() - 30 * 1000) } },
+              {
+                customer_id: finalCustomerId,
+                created_at: { gte: new Date(Date.now() - 30 * 1000) },
+              },
             ],
           },
           orderBy: { created_at: 'desc' },
@@ -875,14 +926,12 @@ export async function PATCH(request: Request) {
       (actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
       (existing.restaurant_id === (actor as any).restaurantId ||
         existing.restaurant_name === actor.restaurantName)
-    const isRiderOrDriver =
-      actor.role === 'rider' || (actor.role as string) === 'driver'
+    const isRiderOrDriver = actor.role === 'rider' || (actor.role as string) === 'driver'
     // CR-04 FIX: An unassigned order (null rider_id) is NOT accessible to any driver.
     // Drivers must be explicitly assigned before they can act on an order.
     const isAdmin = actor.role === 'admin'
     const isAssignedRider =
-      isAdmin ||
-      (isRiderOrDriver && existing.rider_id !== null && existing.rider_id === actor.id)
+      isAdmin || (isRiderOrDriver && existing.rider_id !== null && existing.rider_id === actor.id)
 
     // ── CR-03 + CR-04: Delivery confirmation gate ────────────────────────────
     // Every driver delivery confirmation requires:
@@ -911,10 +960,7 @@ export async function PATCH(request: Request) {
 
         // CR-03: OTP already consumed — reject replay
         if ((existing as any).otp_consumed_at) {
-          return NextResponse.json(
-            { error: 'Delivery OTP has already been used' },
-            { status: 409 }
-          )
+          return NextResponse.json({ error: 'Delivery OTP has already been used' }, { status: 409 })
         }
 
         const providedOtp = String(body.otp || body.delivery_otp || '').trim()
@@ -928,10 +974,7 @@ export async function PATCH(request: Request) {
         const storedOtp = String(existing.delivery_otp).trim()
         const otpMatch =
           providedOtp.length === storedOtp.length &&
-          crypto.timingSafeEqual(
-            Buffer.from(providedOtp, 'utf8'),
-            Buffer.from(storedOtp, 'utf8')
-          )
+          crypto.timingSafeEqual(Buffer.from(providedOtp, 'utf8'), Buffer.from(storedOtp, 'utf8'))
         if (!otpMatch) {
           return NextResponse.json({ error: 'Invalid delivery OTP' }, { status: 400 })
         }
@@ -952,11 +995,11 @@ export async function PATCH(request: Request) {
 
     const canUpdatePaymentStatus = actor.role === 'admin'
 
-    const canUpdateDriverInfo =
-      isAdmin || (isRiderOrDriver && isAssignedRider) || isVendor
+    const canUpdateDriverInfo = isAdmin || (isRiderOrDriver && isAssignedRider)
+    // NOTE: Vendors are intentionally excluded — driver_name/driver_phone/driver_id
+    // are dispatch fields that only the assigned rider or an admin may set.
 
-    const canUpdateItems =
-      isAdmin || (isVendor && existing.status === 'payment_submitted')
+    const canUpdateItems = isAdmin || (isVendor && existing.status === 'payment_submitted')
 
     const canUpdateCoordinates = isAdmin || (isRiderOrDriver && isAssignedRider)
 
@@ -1043,34 +1086,66 @@ export async function PATCH(request: Request) {
       }
     }
 
-    // Determine rider_id update safely (never overwrite rider_id with vendor/customer actor ID)
-    const assignedRiderId = driver_id
-      ? driver_id
-      : actor.role === 'rider' || (actor.role as string) === 'driver'
-        ? actor.id
-        : undefined
+    // CR-03 FIX: Determine rider_id update with strict authority rules.
+    //   - Admin: may supply any driver_id from the body (dispatch management).
+    //   - Rider/driver: their identity comes exclusively from the JWT (actor.id);
+    //     any body-supplied driver_id is IGNORED to prevent self-promotion attacks.
+    //   - Vendor / anyone else: MUST NOT set rider_id — assignment is an admin/dispatch op.
+    // This prevents a vendor from sending { driver_id: "arbitrary-uuid" } to hijack assignment.
+    let assignedRiderId: string | undefined
+    if (isAdmin && driver_id) {
+      assignedRiderId = driver_id
+    } else if (isRiderOrDriver && isAssignedRider) {
+      // Use the authenticated identity — body driver_id is silently ignored.
+      assignedRiderId = actor.id
+    }
+    // vendors and customers get undefined → no rider_id update.
 
     const isDeliveryConfirmation =
       requestedStatus === 'delivered' || requestedStatus === 'completed'
-    const actorIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
+    const actorIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
 
     // ── Atomic update: status transition + OTP consumption (+ admin audit log) ──
+    // CR-05 FIX: Optimistic locking — the WHERE clause conditions on the status value we
+    // validated above.  If a concurrent request already changed the status before this
+    // write, Prisma will throw P2025 (record not found for update), preventing two
+    // requests from both advancing from the same prior state.
     const updated = await prisma.$transaction(async (tx: any) => {
-      const orderUpdate = await tx.order.update({
-        where: { id: orderId },
-        data: {
-          ...(status && { status: status as OrderStatus }),
-          ...(driver_name && { driver_name }),
-          ...(driver_phone && { driver_phone }),
-          ...(assignedRiderId && { rider_id: assignedRiderId }),
-          ...(driver_lat != null && { delivery_latitude: driver_lat }),
-          ...(driver_lng != null && { delivery_longitude: driver_lng }),
-          ...(items && { items }),
-          ...(isDeliveryConfirmation && { delivered_at: new Date() }),
-          // CR-03: Consume OTP atomically with the status transition (driver path only)
-          ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: new Date() }),
-        },
-      })
+      const orderUpdate = await tx.order
+        .update({
+          where: {
+            id: orderId,
+            // Lock on the status we checked: ensures no concurrent transition wins silently.
+            // Only applied when we are changing status; non-status patches skip the guard.
+            ...(hasStatusChange && { status: existing.status as OrderStatus }),
+            // For delivery confirmation, also lock on otp_consumed_at being null so two
+            // concurrent delivery attempts cannot both consume the same OTP.
+            ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: null }),
+          },
+          data: {
+            ...(status && { status: status as OrderStatus }),
+            ...(driver_name && { driver_name }),
+            ...(driver_phone && { driver_phone }),
+            ...(assignedRiderId && { rider_id: assignedRiderId }),
+            ...(driver_lat != null && { delivery_latitude: driver_lat }),
+            ...(driver_lng != null && { delivery_longitude: driver_lng }),
+            ...(items && { items }),
+            ...(isDeliveryConfirmation && { delivered_at: new Date() }),
+            // CR-03: Consume OTP atomically with the status transition (driver path only)
+            ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: new Date() }),
+          },
+        })
+        .catch((err: any) => {
+          // P2025 = record not found for update — the status already changed under us.
+          if (err?.code === 'P2025') {
+            throw Object.assign(
+              new Error('Order status changed by a concurrent request. Please retry.'),
+              { statusCode: 409 }
+            )
+          }
+          throw err
+        })
 
       // CR-03: Admin delivery override — write audit record in same transaction
       if (isDeliveryConfirmation && isAdmin) {

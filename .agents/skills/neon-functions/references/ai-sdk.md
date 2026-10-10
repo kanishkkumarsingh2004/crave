@@ -12,15 +12,15 @@ The agent needs the AI Gateway (and, for the image example, an Object Storage bu
 
 ```typescript
 // neon.ts
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   aiGateway: true,
   buckets: { images: {} },
   functions: {
-    agent: { name: "ai agent", source: "src/index.ts" },
+    agent: { name: 'ai agent', source: 'src/index.ts' },
   },
-});
+})
 ```
 
 ## 2. The handler: stream a tool-calling agent
@@ -29,27 +29,27 @@ The function's default export is a web-standard `{ fetch }` handler. The `@neon/
 
 ```typescript
 // src/index.ts
-import { neon } from "@neon/ai-sdk-provider";
-import { attachDatabasePool } from "@neon/functions";
-import { streamText, tool, stepCountIs, type ModelMessage } from "ai";
-import { z } from "zod";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import { todos } from "./db/schema";
+import { neon } from '@neon/ai-sdk-provider'
+import { attachDatabasePool } from '@neon/functions'
+import { streamText, tool, stepCountIs, type ModelMessage } from 'ai'
+import { z } from 'zod'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+import { todos } from './db/schema'
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-attachDatabasePool(pool);
-const db = drizzle(pool);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 })
+attachDatabasePool(pool)
+const db = drizzle(pool)
 
 export default {
   async fetch(request: Request) {
-    if (request.method !== "POST") {
-      return new Response("POST chat messages here", { status: 405 });
+    if (request.method !== 'POST') {
+      return new Response('POST chat messages here', { status: 405 })
     }
-    const { messages } = (await request.json()) as { messages: ModelMessage[] };
+    const { messages } = (await request.json()) as { messages: ModelMessage[] }
 
     const result = streamText({
-      model: neon("claude-sonnet-4-6"), // swap to gpt-5-mini, gemini-3-flash, …
+      model: neon('claude-sonnet-4-6'), // swap to gpt-5-mini, gemini-3-flash, …
       system: "You are a concise assistant with access to the user's todos.",
       messages,
       tools: {
@@ -63,16 +63,15 @@ export default {
       // the first tool call. The loop runs in-process — no host timeout.
       stopWhen: stepCountIs(5),
       onError({ error }) {
-        console.error("[streamText] error:", error);
+        console.error('[streamText] error:', error)
       },
-    });
+    })
 
     return result.toUIMessageStreamResponse({
-      onError: (error) =>
-        error instanceof Error ? error.message : String(error),
-    });
+      onError: (error) => (error instanceof Error ? error.message : String(error)),
+    })
   },
-};
+}
 ```
 
 `tool({ inputSchema, execute })` is the AI SDK v5+ shape (the parameter is `inputSchema`, not the old `parameters`). The tool's `execute` runs **inside the function**, right next to Postgres — no extra network hop.
@@ -82,39 +81,38 @@ export default {
 The gateway exposes the OpenAI Responses **`image_generation`** built-in tool (GPT-5 models only; the image comes back inline as base64). Persist generated assets to Object Storage and index them in Postgres so they branch together — the **recommended** storage client is the Files SDK `neon` adapter (see the `neon-object-storage` skill):
 
 ```typescript
-import { neon } from "@neon/ai-sdk-provider";
-import { streamText } from "ai";
-import { Files } from "files-sdk";
-import { neon as neonFiles } from "files-sdk/neon";
-import { randomUUID } from "node:crypto";
+import { neon } from '@neon/ai-sdk-provider'
+import { streamText } from 'ai'
+import { Files } from 'files-sdk'
+import { neon as neonFiles } from 'files-sdk/neon'
+import { randomUUID } from 'node:crypto'
 
-const files = new Files({ adapter: neonFiles({ bucket: "images" }) });
+const files = new Files({ adapter: neonFiles({ bucket: 'images' }) })
 
 const result = streamText({
-  model: neon("gpt-5-mini"),
-  system:
-    "Use image_generation when the user asks for a picture, then describe it.",
+  model: neon('gpt-5-mini'),
+  system: 'Use image_generation when the user asks for a picture, then describe it.',
   messages,
   tools: {
     image_generation: neon.tools.imageGeneration({
-      outputFormat: "jpeg",
-      quality: "low", // the gateway caps a response near 640 KB — keep images small
-      size: "1024x1024",
+      outputFormat: 'jpeg',
+      quality: 'low', // the gateway caps a response near 640 KB — keep images small
+      size: '1024x1024',
     }),
   },
   async onStepFinish({ toolResults }) {
     for (const tr of toolResults) {
-      if (tr.toolName !== "image_generation") continue;
-      const base64 = imageResultBase64(tr.output);
-      if (!base64) continue;
-      const key = `generated/${randomUUID()}.jpg`;
-      await files.upload(key, Buffer.from(base64, "base64"), {
-        contentType: "image/jpeg",
-      });
+      if (tr.toolName !== 'image_generation') continue
+      const base64 = imageResultBase64(tr.output)
+      if (!base64) continue
+      const key = `generated/${randomUUID()}.jpg`
+      await files.upload(key, Buffer.from(base64, 'base64'), {
+        contentType: 'image/jpeg',
+      })
       // …insert a row keyed by `key` into Postgres; serve later via files.url(key)
     }
   },
-});
+})
 ```
 
 Keep generated images small: the gateway caps a single response near 640 KB and has an upstream timeout, so request a compressed JPEG rather than a full-size PNG.

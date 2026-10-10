@@ -21,7 +21,7 @@ jest.mock('@/lib/prisma', () => ({
     order: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), findMany: jest.fn() },
     $transaction: jest.fn(async (cb) => {
       const mockTx = {
-        order: { 
+        order: {
           update: jest.fn().mockResolvedValue({ id: 'ord_1', status: 'preparing' }),
           findUnique: jest.fn(),
         },

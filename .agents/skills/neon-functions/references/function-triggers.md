@@ -10,10 +10,10 @@ If `neon deploy` returns 404 `function triggers not available for this project`,
 
 `triggers` is a keyed map on `defineConfig`. Types:
 
-| `type`                   | When it fires                                      | `neon.ts` fields                         | CLI create                                      |
-| ------------------------ | -------------------------------------------------- | ---------------------------------------- | ----------------------------------------------- |
-| `schedule`               | On a five-field UTC cron expression                | `function`, `cron`                       | `neon triggers create --cron '…'`               |
-| `storage_object_created` | When an object is created in a declared bucket     | `function`, `bucket`, optional `prefix`  | `neon triggers create --bucket <name>`          |
+| `type`                   | When it fires                                  | `neon.ts` fields                        | CLI create                             |
+| ------------------------ | ---------------------------------------------- | --------------------------------------- | -------------------------------------- |
+| `schedule`               | On a five-field UTC cron expression            | `function`, `cron`                      | `neon triggers create --cron '…'`      |
+| `storage_object_created` | When an object is created in a declared bucket | `function`, `bucket`, optional `prefix` | `neon triggers create --bucket <name>` |
 
 `create` takes `--cron` or `--bucket`, not both. `@neon/functions` ≥ 0.11.0: `parseTriggerDelivery` accepts both types; `parseTriggerInvocation` and Hono `parseTrigger(c)` stay schedule-only (`storage_object_created` is `invalid_body` there).
 
@@ -21,45 +21,45 @@ If `neon deploy` returns 404 `function triggers not available for this project`,
 
 The trigger name is the `neon.ts` map key (CLI `--name`). It must be unique among every trigger visible on the branch, including other functions.
 
-| Field          | Required | Notes                                                                 |
-| -------------- | -------- | --------------------------------------------------------------------- |
-| `type`         | yes      | `"schedule"` or `"storage_object_created"`                            |
-| `function`     | yes      | Function slug. REST/MCP: `function_slug`                              |
-| `cron`         | schedule | Five-field UTC expression, e.g. `0 * * * *`, `*/15 * * * *`           |
-| `bucket`       | storage  | Bucket name. REST: `storage_object_created.bucket_name`               |
-| `prefix`       | no       | Object-key prefix filter. REST: `storage_object_created.prefix`       |
-| `functionPath` | no       | Path on the function. Default `/`. CLI: `--function-path`             |
-| `enabled`      | no       | Default `true`. CLI: `--enabled false` to create disabled             |
+| Field          | Required | Notes                                                           |
+| -------------- | -------- | --------------------------------------------------------------- |
+| `type`         | yes      | `"schedule"` or `"storage_object_created"`                      |
+| `function`     | yes      | Function slug. REST/MCP: `function_slug`                        |
+| `cron`         | schedule | Five-field UTC expression, e.g. `0 * * * *`, `*/15 * * * *`     |
+| `bucket`       | storage  | Bucket name. REST: `storage_object_created.bucket_name`         |
+| `prefix`       | no       | Object-key prefix filter. REST: `storage_object_created.prefix` |
+| `functionPath` | no       | Path on the function. Default `/`. CLI: `--function-path`       |
+| `enabled`      | no       | Default `true`. CLI: `--enabled false` to create disabled       |
 
 ## neon.ts (preferred)
 
 Declare `triggers` next to `functions` (and `buckets` when using storage). `neon deploy` applies triggers **after** the functions they target. Triggers that exist remotely but are omitted from `neon.ts` are left alone.
 
 ```typescript
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   functions: {
-    ingest: { name: "Object ingest", source: "src/index.ts" },
-    cron: { name: "Cron", source: "src/cron.ts" },
+    ingest: { name: 'Object ingest', source: 'src/index.ts' },
+    cron: { name: 'Cron', source: 'src/cron.ts' },
   },
-  buckets: { assets: { access: "public_read" } },
+  buckets: { assets: { access: 'public_read' } },
   triggers: {
-    "on-upload": {
-      type: "storage_object_created",
-      function: "ingest",
-      bucket: "assets",
-      prefix: "logos/",
-      functionPath: "/object",
+    'on-upload': {
+      type: 'storage_object_created',
+      function: 'ingest',
+      bucket: 'assets',
+      prefix: 'logos/',
+      functionPath: '/object',
     },
-    "every-minute": {
-      type: "schedule",
-      function: "cron",
-      cron: "* * * * *",
-      functionPath: "/cron",
+    'every-minute': {
+      type: 'schedule',
+      function: 'cron',
+      cron: '* * * * *',
+      functionPath: '/cron',
     },
   },
-});
+})
 ```
 
 ```bash
@@ -148,29 +148,29 @@ Parsed (`@neon/functions` ≥ 0.11.0) is camelCase. `parseTriggerDelivery` also 
 ### `parseTriggerDelivery` (both types)
 
 ```typescript
-import { parseTriggerDelivery } from "@neon/functions/triggers";
+import { parseTriggerDelivery } from '@neon/functions/triggers'
 
 export default {
   async fetch(request: Request): Promise<Response> {
-    const parsed = await parseTriggerDelivery(request);
+    const parsed = await parseTriggerDelivery(request)
     if (!parsed.ok) {
-      const status = parsed.error === "invalid_body" ? 400 : 401;
-      return new Response(parsed.error, { status });
+      const status = parsed.error === 'invalid_body' ? 400 : 401
+      return new Response(parsed.error, { status })
     }
 
-    const invocation = parsed.invocation;
-    if (invocation.type === "storage_object_created") {
+    const invocation = parsed.invocation
+    if (invocation.type === 'storage_object_created') {
       return Response.json({
         bucketName: invocation.data.bucketName,
         objectKey: invocation.data.objectKey,
-      });
+      })
     }
 
     return Response.json({
       scheduledAt: invocation.data.scheduledAt,
-    });
+    })
   },
-};
+}
 ```
 
 `parseTriggerDelivery(request)` clones the Request before `json()`, so `request.json()` still works. If you already have the body: `parseTriggerDelivery({ headers, body })` (sync). `parsed.error` is `missing_header`, `invalid_body`, or `invocation_id_mismatch`. Unknown `trigger.type` values fail as `invalid_body`.
@@ -188,32 +188,32 @@ Throws `HTTPException`. `c.req.json()` still works afterwards. Returns `Schedule
 | invalid JSON or payload  | 400    | `Invalid trigger payload`                     |
 
 ```typescript
-import { parseTrigger } from "@neon/functions/hono";
+import { parseTrigger } from '@neon/functions/hono'
 
-app.post("/cron", async (c) => {
-  const invocation = await parseTrigger(c);
-  return c.json({ ok: true, invocationId: invocation.invocationId });
-});
+app.post('/cron', async (c) => {
+  const invocation = await parseTrigger(c)
+  return c.json({ ok: true, invocationId: invocation.invocationId })
+})
 ```
 
 ### `parseTriggerInvocation` (`fetch`, schedule only)
 
 ```typescript
-import { parseTriggerInvocation } from "@neon/functions/triggers";
+import { parseTriggerInvocation } from '@neon/functions/triggers'
 
 export default {
   async fetch(request: Request): Promise<Response> {
-    const parsed = await parseTriggerInvocation(request);
+    const parsed = await parseTriggerInvocation(request)
     if (!parsed.ok) {
-      const status = parsed.error === "invalid_body" ? 400 : 401;
-      return new Response(parsed.error, { status });
+      const status = parsed.error === 'invalid_body' ? 400 : 401
+      return new Response(parsed.error, { status })
     }
     return Response.json({
       ok: true,
       invocationId: parsed.invocation.invocationId,
-    });
+    })
   },
-};
+}
 ```
 
 ## Local `neon dev`

@@ -91,6 +91,36 @@ export async function POST(request: Request) {
       latitude !== undefined ||
       longitude !== undefined
 
+    // CR-08 FIX: Validate commercial settings before writing to the database.
+    // Storing out-of-range values silently corrupts every subsequent order for that restaurant.
+    if (commissionRate !== undefined) {
+      const rate = Number(commissionRate)
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
+        return NextResponse.json(
+          { error: 'commissionRate must be a number between 0 and 100 (percent).' },
+          { status: 400 }
+        )
+      }
+    }
+    if (latitude !== undefined) {
+      const lat = Number(latitude)
+      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+        return NextResponse.json(
+          { error: 'latitude must be a valid decimal between -90 and 90.' },
+          { status: 400 }
+        )
+      }
+    }
+    if (longitude !== undefined) {
+      const lng = Number(longitude)
+      if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+        return NextResponse.json(
+          { error: 'longitude must be a valid decimal between -180 and 180.' },
+          { status: 400 }
+        )
+      }
+    }
+
     // CR-14 FIX: Use Prisma transaction for atomic updates
     // Both user and restaurant updates must succeed or both roll back
     const needsTransaction = Object.keys(userUpdateData).length > 0 && needsRestaurantUpdate
@@ -125,10 +155,12 @@ export async function POST(request: Request) {
 
           let targetRestId = id
           if (typeof tx?.restaurant?.findFirst === 'function') {
-            const foundRest = await tx.restaurant.findFirst({
-              where: { OR: [{ id }, { owner_id: id }] },
-              select: { id: true },
-            }).catch(() => null)
+            const foundRest = await tx.restaurant
+              .findFirst({
+                where: { OR: [{ id }, { owner_id: id }] },
+                select: { id: true },
+              })
+              .catch(() => null)
             if (foundRest?.id) {
               targetRestId = foundRest.id
             }
@@ -160,10 +192,12 @@ export async function POST(request: Request) {
 
         let targetRestId = id
         if (typeof prisma?.restaurant?.findFirst === 'function') {
-          const foundRest = await prisma.restaurant.findFirst({
-            where: { OR: [{ id }, { owner_id: id }] },
-            select: { id: true },
-          }).catch(() => null)
+          const foundRest = await prisma.restaurant
+            .findFirst({
+              where: { OR: [{ id }, { owner_id: id }] },
+              select: { id: true },
+            })
+            .catch(() => null)
           if (foundRest?.id) {
             targetRestId = foundRest.id
           }

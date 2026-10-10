@@ -9,6 +9,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
 ## 2. Priority 0 — Critical Fixes (Security, Auth, Financial Correctness)
 
 ### P0-1: Test Authentication Header Lockout
+
 - **Target:** `lib/auth-helpers.ts`, `lib/test-auth.ts`, `lib/api-auth.ts`
 - **Objective:** Ensure mock test authentication headers can only be processed when explicitly executing inside test runners (`NODE_ENV === 'test'`).
 - **Acceptance Criteria:**
@@ -16,6 +17,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - Jest test suites continue to pass without regression.
 
 ### P0-2: Cryptographically Secure Password Hashing & Schema Validation
+
 - **Target:** `app/api/auth/signup/route.ts`, `app/api/auth/login/route.ts`, `app/api/admin/create-vendor/route.ts`
 - **Objective:** Replace deterministic email-based salt with random per-user salt while supporting backward-compatible login verification for existing legacy hashes.
 - **Acceptance Criteria:**
@@ -24,6 +26,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - Sign-up enforces a minimum of 8 characters for passwords.
 
 ### P0-3: Resilient Order Checkout Address Resolution & Safe Geocoding
+
 - **Target:** `app/api/orders/route.ts`, `app/user/cart/page.tsx`
 - **Objective:** Eliminate hard-blocking 400 errors during order placement when coordinates are missing or when ordering to a non-default address.
 - **Acceptance Criteria:**
@@ -32,6 +35,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - The cart page passes the active `selectedAddressId`.
 
 ### P0-4: Admin Vendor Account Editing ID Resolution
+
 - **Target:** `app/api/admin/edit-account/route.ts`
 - **Objective:** Fix Prisma P2025 crash when editing vendor accounts by resolving the restaurant via `owner_id`.
 - **Acceptance Criteria:**
@@ -39,6 +43,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - Updates succeed whether the ID provided is the user ID or the restaurant ID.
 
 ### P0-5: Driver Assignment Integrity & Authorization Enforcement
+
 - **Target:** `app/api/driver/accept/route.ts`, `app/api/driver/location/route.ts`, `app/api/dispatch/request/route.ts`
 - **Objective:** Require proper roles, bind driver assignments to authenticated sessions, and ensure `rider_id` is set on the order.
 - **Acceptance Criteria:**
@@ -52,6 +57,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
 ## 3. Priority 1 — Reliability & Real-Time Fixes
 
 ### P1-1: WebSocket Authorization & Client Tracking Synchronization
+
 - **Target:** `ws-server.js`, `lib/websocket.tsx`, `lib/ws-server.ts`, `app/api/orders/route.ts`
 - **Objective:** Enable clients to subscribe to `order_update` and `driver_location` with proper `orderId` validation and vendor role permissions.
 - **Acceptance Criteria:**
@@ -61,6 +67,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - `/user/track/[orderId]` successfully receives real-time status and driver coordinates.
 
 ### P1-2: Safe Vendor Deletion with Foreign Key Handling
+
 - **Target:** `app/api/admin/delete-vendor/route.ts`
 - **Objective:** Handle existing orders gracefully during vendor removal without database constraint failures.
 - **Acceptance Criteria:**
@@ -68,6 +75,7 @@ This plan specifies the implementation order, dependencies, acceptance criteria,
   - The admin receives a truthful response regarding the deletion outcome.
 
 ### P1-3: Prisma Connection Pool Bounds
+
 - **Target:** `lib/prisma.ts`
 - **Objective:** Configure connection pool ceiling on `PrismaPg` to prevent database connection exhaustion under load.
 - **Acceptance Criteria:**

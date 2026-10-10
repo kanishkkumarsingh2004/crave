@@ -5,30 +5,30 @@ A Function Trigger is a branch-scoped rule that POSTs to a Neon Function on a cr
 **Prefer `neon.ts`.** Declare a `triggers` map. The record key is the trigger name. `neon deploy` applies triggers after the functions they target. Names must be unique among every trigger visible on the branch. Triggers that exist remotely but are omitted from `neon.ts` are left alone; delete with `neon triggers delete`.
 
 ```typescript
-import { defineConfig } from "@neon/config/v1";
+import { defineConfig } from '@neon/config/v1'
 
 export default defineConfig({
   functions: {
-    ingest: { name: "Object ingest", source: "src/index.ts" },
-    cron: { name: "Cron", source: "src/cron.ts" },
+    ingest: { name: 'Object ingest', source: 'src/index.ts' },
+    cron: { name: 'Cron', source: 'src/cron.ts' },
   },
-  buckets: { assets: { access: "public_read" } },
+  buckets: { assets: { access: 'public_read' } },
   triggers: {
-    "on-upload": {
-      type: "storage_object_created",
-      function: "ingest",
-      bucket: "assets",
-      prefix: "logos/",
-      functionPath: "/object",
+    'on-upload': {
+      type: 'storage_object_created',
+      function: 'ingest',
+      bucket: 'assets',
+      prefix: 'logos/',
+      functionPath: '/object',
     },
-    "every-minute": {
-      type: "schedule",
-      function: "cron",
-      cron: "* * * * *",
-      functionPath: "/cron",
+    'every-minute': {
+      type: 'schedule',
+      function: 'cron',
+      cron: '* * * * *',
+      functionPath: '/cron',
     },
   },
-});
+})
 ```
 
 Needs Neon CLI 4.21 or newer (`@neon/config` 1.7.0).

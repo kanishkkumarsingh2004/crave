@@ -16,3 +16,4 @@ tests
 coverage
 .prisma
 dist
+.agents

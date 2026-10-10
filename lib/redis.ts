@@ -148,8 +148,14 @@ export function createRedisInstance(
   const config = resolveRedisConfig(env)
 
   if (config.warning && (env.NODE_ENV as string) !== 'test' && !g.__redisWarnLogged) {
-    g.__redisWarnLogged = true
-    console.warn(`⚠️ [Redis] ${config.warning}`)
+    // Suppress during Next.js production build — the build runs in NODE_ENV=production
+    // but without runtime env vars, so the warning fires once per compiled route worker.
+    // At actual server startup the warning will still appear if REDIS_URL is missing.
+    const isNextBuild = process.env.NEXT_PHASE === 'phase-production-build'
+    if (!isNextBuild) {
+      g.__redisWarnLogged = true
+      console.warn(`⚠️ [Redis] ${config.warning}`)
+    }
   }
 
   if (!config.enabled || !config.url) {

@@ -28,8 +28,7 @@ export async function POST(request: Request) {
     // Authorization check: Ensure requesting user is updating their own location or is admin
     const roleStr = actor.role as string
     const isSelf = actor.id === driverId
-    const isAuthorizedRider =
-      (actor.role === 'rider' || roleStr === 'driver') && isSelf
+    const isAuthorizedRider = (actor.role === 'rider' || roleStr === 'driver') && isSelf
     const isAdmin = actor.role === 'admin'
 
     if (!isAuthorizedRider && !isAdmin) {

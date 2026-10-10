@@ -33,6 +33,7 @@ This document formalizes the complete financial lifecycle, the mathematical pric
 ```
 
 ### 2.1 Pricing Rules & Mathematical Determinism
+
 - **Item Total:** Calculated strictly from database unit prices:
   $$\text{ItemsTotal} = \sum_{i=1}^{n} (\text{db\_price}_i \times \text{quantity}_i)$$
 - **Delivery Fee:** Distance-tiered model:
@@ -71,6 +72,7 @@ Crave supports both Direct Gateway integration and UPI UTR (Unique Transaction R
 ```
 
 ### 3.1 Concurrency & Idempotency Guarantees
+
 - **UTR Uniqueness:** The `PaymentAttempt` and `PaymentReview` tables enforce a uniqueness constraint on `utr_number`. Re-submitting the same UTR for different orders fails with HTTP 409 Conflict.
 - **Concurrent Verification Protection:** When a payment verification request arrives, it executes within an atomic database transaction. If two parallel requests race to verify the same order, only the first can transition `Order.status` from `PENDING` to `PAID`. Subsequent requests fail closed.
 - **State Transition Machine:**
@@ -84,12 +86,14 @@ Crave supports both Direct Gateway integration and UPI UTR (Unique Transaction R
 To ensure driver earnings and merchant payouts can be reconciled down to the rupee, the commercial engine implements an auditable ledger:
 
 ### 4.1 Financial Ledger Accounts
+
 1. **Customer Receivable:** Cash or UPI received from customer.
 2. **Vendor Payable:** Order items subtotal minus Crave platform commission (e.g., 15%).
 3. **Driver Payable:** Delivery fee + tips minus platform fleet levy.
 4. **Platform Revenue:** Platform commission + platform fee + tax withheld.
 
 ### 4.2 Settlement Math Invariant
+
 For every settled order $k$:
 $$\text{TotalPaid}_k = \text{VendorPayable}_k + \text{DriverPayable}_k + \text{PlatformRevenue}_k$$
 
@@ -99,8 +103,8 @@ Any rounding adjustments are allocated directly to Platform Revenue to guarantee
 
 ## 5. Remaining Payment-Provider Limitations
 
-1. **Manual UTR Banking Integration:** 
-   - *Limitation:* Crave's UPI UTR workflow accepts user-entered 12-digit reference numbers. Without direct banking NPCI/BBPS API integration or webhook feeds from ICICI/HDFC/Razorpay, a UTR indicates *intent to pay* rather than bank-confirmed settlement.
-   - *Production Guardrail:* High-value orders (> ₹1000) or suspicious accounts must enter the `UNDER_REVIEW` state, requiring admin confirmation (`/api/admin/payment-reviews`) before kitchen dispatch.
-2. **Automated Refund Webhooks:** 
-   - *Limitation:* Automated reversals rely on provider API secrets. When mocked or operated offline, refunds require manual reconciliation via the admin settlement interface (`/api/admin/settlements`).
+1. **Manual UTR Banking Integration:**
+   - _Limitation:_ Crave's UPI UTR workflow accepts user-entered 12-digit reference numbers. Without direct banking NPCI/BBPS API integration or webhook feeds from ICICI/HDFC/Razorpay, a UTR indicates _intent to pay_ rather than bank-confirmed settlement.
+   - _Production Guardrail:_ High-value orders (> ₹1000) or suspicious accounts must enter the `UNDER_REVIEW` state, requiring admin confirmation (`/api/admin/payment-reviews`) before kitchen dispatch.
+2. **Automated Refund Webhooks:**
+   - _Limitation:_ Automated reversals rely on provider API secrets. When mocked or operated offline, refunds require manual reconciliation via the admin settlement interface (`/api/admin/settlements`).

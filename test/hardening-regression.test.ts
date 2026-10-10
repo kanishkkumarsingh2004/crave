@@ -1,6 +1,6 @@
 /**
  * @jest-environment node
- * 
+ *
  * CRAVE Forensic Remediation & Hardening Regression Test Suite
  * Verifies P0 and P1 security, authorization, and consistency guarantees.
  */
@@ -12,11 +12,15 @@ describe('CRAVE Forensic Hardening - Regression Suite', () => {
   const originalEnv = (process.env as any).NODE_ENV
 
   afterEach(() => {
-    (process.env as any).NODE_ENV = originalEnv
+    ;(process.env as any).NODE_ENV = originalEnv
     jest.resetModules()
   })
 
-  function makeMockRequest(url: string, body?: any, headers: Record<string, string> = {}): NextRequest {
+  function makeMockRequest(
+    url: string,
+    body?: any,
+    headers: Record<string, string> = {}
+  ): NextRequest {
     return {
       json: async () => body,
       headers: {
@@ -28,23 +32,23 @@ describe('CRAVE Forensic Hardening - Regression Suite', () => {
 
   describe('1. Test Auth Header Lockout (P0-1)', () => {
     it('rejects x-test-auth header when NODE_ENV is development or staging', () => {
-      const headers: Record<string, string> = { [TEST_AUTH_HEADER]: 'true', 'x-test-role': 'admin' };
+      const headers: Record<string, string> = { [TEST_AUTH_HEADER]: 'true', 'x-test-role': 'admin' }
 
-      (process.env as any).NODE_ENV = 'development';
-      let req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers);
-      expect(isTestRequest(req)).toBe(false);
+      ;(process.env as any).NODE_ENV = 'development'
+      let req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers)
+      expect(isTestRequest(req)).toBe(false)
 
-      (process.env as any).NODE_ENV = 'staging';
-      req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers);
-      expect(isTestRequest(req)).toBe(false);
+      ;(process.env as any).NODE_ENV = 'staging'
+      req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers)
+      expect(isTestRequest(req)).toBe(false)
 
-      (process.env as any).NODE_ENV = 'production';
-      req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers);
-      expect(isTestRequest(req)).toBe(false);
-    });
+      ;(process.env as any).NODE_ENV = 'production'
+      req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, headers)
+      expect(isTestRequest(req)).toBe(false)
+    })
 
     it('allows x-test-auth ONLY when NODE_ENV is test', () => {
-      (process.env as any).NODE_ENV = 'test'
+      ;(process.env as any).NODE_ENV = 'test'
       const req = makeMockRequest('http://localhost:3000/api/admin/users', undefined, {
         [TEST_AUTH_HEADER]: 'true',
         'x-test-role': 'admin',
@@ -129,7 +133,7 @@ describe('CRAVE Forensic Hardening - Regression Suite', () => {
 
   describe('5. Dispatch Request Authorization (P0-5)', () => {
     it('rejects regular customer from triggering driver dispatch requests', async () => {
-      (process.env as any).NODE_ENV = 'production'
+      ;(process.env as any).NODE_ENV = 'production'
       jest.doMock('next/headers', () => ({
         cookies: () => ({ get: jest.fn().mockReturnValue(undefined) }),
       }))

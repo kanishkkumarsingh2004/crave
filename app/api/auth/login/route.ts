@@ -124,9 +124,9 @@ export async function POST(request: Request) {
           crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
       }
     } else {
-      const passwordHash = ((await scrypt(password, profile.email || email, 64)) as Buffer).toString(
-        'hex'
-      )
+      const passwordHash = (
+        (await scrypt(password, profile.email || email, 64)) as Buffer
+      ).toString('hex')
       const matchesPrimary =
         passwordHash.length === profile.password_hash.length &&
         crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))

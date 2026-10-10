@@ -131,6 +131,11 @@ export function handleAuthError(error: unknown): NextResponse {
     return NextResponse.json({ error: error.message }, { status: error.statusCode })
   }
   if (error instanceof Error) {
+    // Allow non-AuthError errors to carry a numeric statusCode (e.g. 409 for concurrency conflicts)
+    const statusCode = (error as any).statusCode
+    if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 600) {
+      return NextResponse.json({ error: error.message }, { status: statusCode })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

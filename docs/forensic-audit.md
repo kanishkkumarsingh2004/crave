@@ -46,6 +46,7 @@
 ```
 
 ### Component Ownership
+
 1. **Orders & Checkout:** `app/api/orders/route.ts`, `app/user/cart/page.tsx`, `lib/dal/orders.ts`
 2. **Pricing & Finance:** `lib/finance/pricing-engine.ts`, `lib/finance/tax-engine.ts`, `lib/finance/money.ts`
 3. **Authentication & Authorization:** `lib/jwt.ts`, `lib/auth-helpers.ts`, `lib/api-auth.ts`, `proxy.ts`, `app/api/auth/*`
@@ -58,6 +59,7 @@
 ## 3. Confirmed Defects, Vulnerabilities & Risks
 
 ### Finding F-01: WebSocket Ownership Gate Rejects All Client Subscriptions
+
 - **Classification:** Confirmed Defect & Usability Failure
 - **Severity:** Critical (9.5 / 10)
 - **File / Function:** `ws-server.js` (`authorizeChannel`, `wss.on('connection')`), `lib/websocket.tsx` (`useWebSocket`)
@@ -75,6 +77,7 @@
 ---
 
 ### Finding F-02: Checkout Blocked for Addresses Lacking Coordinates or Non-Default Addresses
+
 - **Classification:** Confirmed Defect
 - **Severity:** High (9.0 / 10)
 - **File / Function:** `app/api/orders/route.ts` (`POST`), `app/user/cart/page.tsx` (`handleSaveNewAddress`)
@@ -92,6 +95,7 @@
 ---
 
 ### Finding F-03: Authentication Bypass Backdoor via Test Headers
+
 - **Classification:** Confirmed Security Weakness
 - **Severity:** High (8.5 / 10)
 - **File / Function:** `lib/auth-helpers.ts` (`getAuthActor`), `lib/test-auth.ts` (`isTestRequest`)
@@ -106,6 +110,7 @@
 ---
 
 ### Finding F-04: Predictable Salt for Password Hashing & Lack of Password Validation
+
 - **Classification:** Confirmed Security Weakness
 - **Severity:** High (8.0 / 10)
 - **File / Function:** `app/api/auth/login/route.ts`, `app/api/auth/signup/route.ts`, `app/api/admin/create-vendor/route.ts`
@@ -116,6 +121,7 @@
 ---
 
 ### Finding F-05: Admin Vendor Account Editing Crashes Due to ID Mismatch
+
 - **Classification:** Confirmed Defect
 - **Severity:** High (8.0 / 10)
 - **File / Function:** `app/api/admin/edit-account/route.ts` (`POST`)
@@ -132,6 +138,7 @@
 ---
 
 ### Finding F-06: Unhandled Foreign Key Constraints Break Vendor Deletion
+
 - **Classification:** Confirmed Defect & Integrity Risk
 - **Severity:** Medium-High (7.5 / 10)
 - **File / Function:** `app/api/admin/delete-vendor/route.ts`, `prisma/schema.prisma`
@@ -142,6 +149,7 @@
 ---
 
 ### Finding F-07: Incomplete Driver Assignment & Unrestricted Dispatch Triggers
+
 - **Classification:** Confirmed Concurrency & Security Weakness
 - **Severity:** High (8.0 / 10)
 - **File / Function:** `app/api/driver/accept/route.ts`, `app/api/dispatch/request/route.ts`, `app/api/driver/location/route.ts`
@@ -156,6 +164,7 @@
 ---
 
 ### Finding F-08: Reliance on Public Demo OSRM Server for Real-Time Distance
+
 - **Classification:** Reliability Risk
 - **Severity:** Medium-High (7.5 / 10)
 - **File / Function:** `lib/distance-pricing.ts` (`fetchOSRMDrivingDistanceKm`)
@@ -166,6 +175,7 @@
 ---
 
 ### Finding F-09: In-Memory Spatial State Desynchronization Across Cluster Pods
+
 - **Classification:** Maintainability & Scalability Risk
 - **Severity:** High (8.0 / 10)
 - **File / Function:** `lib/dispatch/driver-tracker.ts`, `lib/dispatch/atomic-lock.ts`
@@ -176,6 +186,7 @@
 ---
 
 ### Finding F-10: Unbounded Connection Pooling in Prisma Database Adapter
+
 - **Classification:** Reliability Risk
 - **Severity:** Medium (7.0 / 10)
 - **File / Function:** `lib/prisma.ts`
