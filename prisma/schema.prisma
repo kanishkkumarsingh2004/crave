@@ -164,6 +164,7 @@ model Order {
   payment_method        String?     @default("UPI Online")
   created_at            DateTime?   @default(now()) @db.Timestamptz(6)
   delivery_otp          String?
+  otp_consumed_at       DateTime?   @db.Timestamptz(6)  // Set atomically on delivery confirmation; prevents OTP reuse
   picker_name           String?
   tip                   Int         @default(0)
   discount_amount       Int         @default(0)
@@ -484,4 +485,21 @@ enum DriverPayoutStatus {
   pending
   paid
   failed
+}
+
+/// Audit log for admin override actions (delivery confirmations without OTP, etc.)
+/// Append-only — never update or delete rows.
+model AdminOverrideLog {
+  id           String   @id @default(cuid())
+  admin_id     String
+  order_id     String
+  action       String   // e.g. "delivery_confirmed_without_otp", "rider_bypassed"
+  reason       String?  // Optional admin-supplied reason
+  actor_ip     String?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([order_id])
+  @@index([admin_id])
+  @@index([created_at])
+  @@map("admin_override_logs")
 }

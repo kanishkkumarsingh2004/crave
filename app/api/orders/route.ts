@@ -845,15 +845,21 @@ export async function PATCH(request: Request) {
       (existing.restaurant_id === (actor as any).restaurantId ||
         existing.restaurant_name === actor.restaurantName)
     const isRiderOrDriver =
-      actor.role === 'rider' || (actor.role as string) === 'driver' || actor.role === 'admin'
+      actor.role === 'rider' || (actor.role as string) === 'driver'
+    // CR-04 FIX: An unassigned order (null rider_id) is NOT accessible to any driver.
+    // Drivers must be explicitly assigned before they can act on an order.
+    const isAdmin = actor.role === 'admin'
     const isAssignedRider =
-      !existing.rider_id || existing.rider_id === actor.id || actor.role === 'admin'
+      isAdmin ||
+      (isRiderOrDriver && existing.rider_id !== null && existing.rider_id === actor.id)
 
-    // CR-03 FIX: Only assigned driver can mark order as delivered/completed
-    // OTP validation is required for delivery confirmation
+    // ── CR-03 + CR-04: Delivery confirmation gate ────────────────────────────
+    // Every driver delivery confirmation requires:
+    //   1. The actor to be the explicitly assigned rider (CR-04)
+    //   2. A valid, unconsumed OTP from the customer (CR-03)
+    // Admin overrides skip the OTP check but are audit-logged.
     if (requestedStatus === 'delivered' || requestedStatus === 'completed') {
-      // Only assigned driver (or admin) can mark as delivered
-      const isAuthorizedForDelivery = actor.role === 'admin' || (isRiderOrDriver && isAssignedRider)
+      const isAuthorizedForDelivery = isAdmin || isAssignedRider
 
       if (!isAuthorizedForDelivery) {
         return NextResponse.json(
@@ -862,19 +868,50 @@ export async function PATCH(request: Request) {
         )
       }
 
-      // Require OTP for driver delivery confirmation
-      if (actor.role !== 'admin' && existing.delivery_otp) {
+      if (!isAdmin) {
+        // CR-03: A missing OTP in the database is itself a hard block —
+        // it means the order was never set up for delivery confirmation.
+        if (!existing.delivery_otp) {
+          return NextResponse.json(
+            { error: 'Delivery OTP has not been issued for this order' },
+            { status: 422 }
+          )
+        }
+
+        // CR-03: OTP already consumed — reject replay
+        if ((existing as any).otp_consumed_at) {
+          return NextResponse.json(
+            { error: 'Delivery OTP has already been used' },
+            { status: 409 }
+          )
+        }
+
         const providedOtp = String(body.otp || body.delivery_otp || '').trim()
-        if (!providedOtp || providedOtp !== String(existing.delivery_otp).trim()) {
-          return NextResponse.json({ error: 'Valid delivery OTP is required' }, { status: 400 })
+        if (!providedOtp) {
+          return NextResponse.json(
+            { error: 'Delivery OTP is required to confirm delivery' },
+            { status: 400 }
+          )
+        }
+        // Constant-time comparison to prevent timing-oracle attacks
+        const storedOtp = String(existing.delivery_otp).trim()
+        const otpMatch =
+          providedOtp.length === storedOtp.length &&
+          crypto.timingSafeEqual(
+            Buffer.from(providedOtp, 'utf8'),
+            Buffer.from(storedOtp, 'utf8')
+          )
+        if (!otpMatch) {
+          return NextResponse.json({ error: 'Invalid delivery OTP' }, { status: 400 })
         }
       }
+      // Admin override: write audit log inline with the status update (see transaction below)
     }
 
     // CR-01 FIX: Authorization required for ALL mutations, not just status changes
     // Define what each role can do
     const canUpdateStatus =
-      actor.role === 'admin' ||
+      isAdmin ||
       (isVendor && requestedStatus && vendorStatuses.includes(requestedStatus)) ||
       (isRiderOrDriver &&
         isAssignedRider &&
@@ -885,12 +922,12 @@ export async function PATCH(request: Request) {
     const canUpdatePaymentStatus = actor.role === 'admin'
 
     const canUpdateDriverInfo =
-      actor.role === 'admin' || (isRiderOrDriver && isAssignedRider) || isVendor
+      isAdmin || (isRiderOrDriver && isAssignedRider) || isVendor
 
     const canUpdateItems =
-      actor.role === 'admin' || (isVendor && existing.status === 'payment_submitted') // Only vendor can update items before preparing
+      isAdmin || (isVendor && existing.status === 'payment_submitted')
 
-    const canUpdateCoordinates = actor.role === 'admin' || (isRiderOrDriver && isAssignedRider)
+    const canUpdateCoordinates = isAdmin || (isRiderOrDriver && isAssignedRider)
 
     // Check if any requested mutation is allowed
     const hasStatusChange = !!status
@@ -982,16 +1019,42 @@ export async function PATCH(request: Request) {
         ? actor.id
         : undefined
 
-    // Only pass fields that exist on the Order model to updateOrder.
-    const updated = await updateOrder(orderId, {
-      ...(status && { status: status as OrderStatus }),
-      ...(driver_name && { driver_name }),
-      ...(driver_phone && { driver_phone }),
-      ...(assignedRiderId && { rider_id: assignedRiderId }),
-      ...(driver_lat != null && { delivery_latitude: driver_lat }),
-      ...(driver_lng != null && { delivery_longitude: driver_lng }),
-      ...(items && { items }),
-      ...((status === 'completed' || status === 'delivered') && { delivered_at: new Date() }),
+    const isDeliveryConfirmation =
+      requestedStatus === 'delivered' || requestedStatus === 'completed'
+    const actorIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
+
+    // ── Atomic update: status transition + OTP consumption (+ admin audit log) ──
+    const updated = await prisma.$transaction(async (tx: any) => {
+      const orderUpdate = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          ...(status && { status: status as OrderStatus }),
+          ...(driver_name && { driver_name }),
+          ...(driver_phone && { driver_phone }),
+          ...(assignedRiderId && { rider_id: assignedRiderId }),
+          ...(driver_lat != null && { delivery_latitude: driver_lat }),
+          ...(driver_lng != null && { delivery_longitude: driver_lng }),
+          ...(items && { items }),
+          ...(isDeliveryConfirmation && { delivered_at: new Date() }),
+          // CR-03: Consume OTP atomically with the status transition (driver path only)
+          ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: new Date() }),
+        },
+      })
+
+      // CR-03: Admin delivery override — write audit record in same transaction
+      if (isDeliveryConfirmation && isAdmin) {
+        await tx.adminOverrideLog.create({
+          data: {
+            admin_id: actor.id,
+            order_id: orderId,
+            action: 'delivery_confirmed_without_otp',
+            reason: body.admin_reason || null,
+            actor_ip: actorIp,
+          },
+        })
+      }
+
+      return orderUpdate
     })
 
     // Sync payment status to payment_reviews (separate table — not on Order).
