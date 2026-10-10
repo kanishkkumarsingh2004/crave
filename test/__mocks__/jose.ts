@@ -1,6 +1,9 @@
 const nodeCrypto = require('crypto')
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED_JWT_SECRET'
+if (!process.env.JWT_SECRET) {
+  throw new Error('[jose mock] JWT_SECRET env var must be set before importing jose in tests')
+}
+const JWT_SECRET = process.env.JWT_SECRET
 
 function base64UrlEncode(str: string): string {
   return Buffer.from(str)
