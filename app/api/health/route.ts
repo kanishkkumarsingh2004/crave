@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { isRedisAvailable, resolveRedisConfig } from '@/lib/redis'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -18,7 +19,21 @@ export async function GET() {
     dbError = err instanceof Error ? err.message : 'Database connection failed'
   }
 
-  const overall = dbStatus === 'ok' ? 'ok' : 'degraded'
+  const redisConfig = resolveRedisConfig()
+  const redisAvailable = isRedisAvailable()
+  const redisRequired = process.env.REDIS_REQUIRED === 'true'
+
+  let redisCheckStatus: 'ok' | 'degraded' | 'disabled' = 'ok'
+  if (redisConfig.mode === 'disabled' || redisConfig.mode === 'test') {
+    redisCheckStatus = 'disabled'
+  } else if (!redisAvailable) {
+    redisCheckStatus = 'degraded'
+  }
+
+  // If Redis is strictly required for production correctness and offline, mark unhealthy
+  const isRedisCritical = redisRequired && redisCheckStatus === 'degraded'
+  const isHealthy = dbStatus === 'ok' && !isRedisCritical
+  const overall = isHealthy ? (redisCheckStatus === 'degraded' ? 'degraded' : 'ok') : 'unhealthy'
 
   return NextResponse.json(
     {
@@ -32,6 +47,12 @@ export async function GET() {
           latencyMs: dbLatency,
           error: dbError,
         },
+        redis: {
+          status: redisCheckStatus,
+          mode: redisConfig.mode,
+          isDistributed: redisAvailable,
+          required: redisRequired,
+        },
       },
       env: {
         nodeVersion: process.version,
@@ -40,7 +61,7 @@ export async function GET() {
       },
     },
     {
-      status: dbStatus === 'ok' ? 200 : 503,
+      status: isHealthy ? 200 : 503,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
         'Content-Type': 'application/json',
