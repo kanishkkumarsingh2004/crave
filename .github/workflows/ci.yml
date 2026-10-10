@@ -144,10 +144,71 @@ jobs:
       - name: Build application
         run: pnpm build
 
+      - name: Create CI environment file
+        run: |
+          cat > .env << 'EOF'
+          NODE_ENV=production
+          NEXT_PUBLIC_APP_URL=http://localhost:3000
+          JWT_SECRET=test-jwt-secret-for-ci-load-test
+          DATABASE_URL=postgresql://test:test@localhost:5432/crave_test
+          DATABASE_URL_UNPOOLED=postgresql://test:test@localhost:5432/crave_test
+          NEON_BRANCH=production
+          NEON_BUCKET_UPLOADS=uploads
+          WS_INTERNAL_SECRET=test-internal-secret-for-ci
+          REDIS_URL=redis://localhost:6379
+          WS_PORT=8000
+          EOF
+
+      - name: Start PostgreSQL and Redis
+        run: |
+          docker run -d --name postgres-test \
+            -e POSTGRES_USER=test \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=crave_test \
+            -p 5432:5432 \
+            postgres:16-alpine
+          docker run -d --name redis-test \
+            -p 6379:6379 \
+            redis:7-alpine
+
+      - name: Wait for database readiness
+        run: |
+          for i in {1..30}; do
+            if docker exec postgres-test pg_isready -U test -d crave_test; then
+              echo "Database ready"
+              break
+            fi
+            echo "Waiting for database... ($i/30)"
+            sleep 2
+          done
+          for i in {1..10}; do
+            if docker exec redis-test redis-cli ping | grep -q PONG; then
+              echo "Redis ready"
+              break
+            fi
+            echo "Waiting for Redis... ($i/10)"
+            sleep 1
+          done
+
+      - name: Push database schema
+        run: pnpm db:push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
+
       - name: Start application stack
         run: |
           docker compose up -d
-          sleep 10
+
+      - name: Wait for application services readiness
+        run: |
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000/api/health > /dev/null && curl -sf http://localhost:8000/__ws/broadcast > /dev/null; then
+              echo "All services ready"
+              break
+            fi
+            echo "Waiting for services... ($i/60)"
+            sleep 3
+          done
 
       - name: Run load test
         uses: grafana/k6-action@v0.2.0

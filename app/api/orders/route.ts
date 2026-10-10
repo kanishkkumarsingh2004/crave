@@ -35,11 +35,19 @@ import {
   handleAuthError,
   getAuthActor,
 } from '@/lib/auth-helpers'
+import { isValidTransition, getPhaseName } from '@/lib/order-state-machine'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   try {
     const dbConfig: any = await getActivePaymentConfig()
-    if (!dbConfig) return DEFAULT_PAYMENT_CONFIG
+    if (!dbConfig) {
+      console.error(
+        'CRITICAL: No active payment configuration found in database. Order creation blocked.'
+      )
+      throw new Error(
+        'Payment configuration not found. Please configure payment settings in admin panel.'
+      )
+    }
     return {
       ...DEFAULT_PAYMENT_CONFIG,
       upiVpa: dbConfig.merchant_vpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
@@ -102,8 +110,12 @@ async function getActiveConfig(): Promise<PaymentConfig> {
       enableUpiDeepLink: dbConfig.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
       requireUtrNumber: dbConfig.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
     }
-  } catch {
-    return DEFAULT_PAYMENT_CONFIG
+  } catch (error) {
+    console.error('CRITICAL: Failed to load payment configuration:', error)
+    throw new Error(
+      'Payment configuration unavailable. Cannot process orders. ' +
+        'Please check database connectivity and admin payment config.'
+    )
   }
 }
 
@@ -244,9 +256,7 @@ export async function POST(request: Request) {
       discount_amount = 0,
       coupon_code,
       order_type = 'restaurant_food',
-      // Client distance is ignored for fee calculation; server computes from coordinates
-      customer_lat,
-      customer_lng,
+      // Client distance/coordinates are IGNORED for fee calculation; server computes from DB address
     } = body
 
     // CR-005: Derive customer_id from authenticated session only
@@ -290,7 +300,22 @@ export async function POST(request: Request) {
 
     for (const rawItem of rawItems) {
       const itemId = rawItem.id || rawItem.itemId || rawItem.menuItemId
-      const quantity = Number(rawItem.quantity || rawItem.qty || 1)
+      const rawQuantity = rawItem.quantity || rawItem.qty || 1
+
+      // CR-08 FIX: Validate quantity - must be positive integer with sensible max
+      const quantity = Math.floor(Number(rawQuantity))
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        return NextResponse.json(
+          { error: `Quantity must be a positive integer for item ${itemId || 'unknown'}` },
+          { status: 400 }
+        )
+      }
+      if (quantity > 100) {
+        return NextResponse.json(
+          { error: `Quantity exceeds maximum allowed (100) for item ${itemId || 'unknown'}` },
+          { status: 400 }
+        )
+      }
 
       if (!itemId) {
         return NextResponse.json(
@@ -329,13 +354,33 @@ export async function POST(request: Request) {
       const lineTotal = price * quantity
       foodSubtotal += lineTotal
 
+      // CR-08 FIX: Derive tax rate from authoritative product tax category, not HSN/SAC presence
+      // Use item category to determine tax treatment; default to 5% for restaurant food services
+      const itemCategory = (menuItem.category || '').toLowerCase()
+      const isBeverage = itemCategory.includes('beverage') || itemCategory.includes('drink')
+      const isAlcohol = itemCategory.includes('alcohol') || itemCategory.includes('liquor')
+      const isPackaged = itemCategory.includes('packaged') || itemCategory.includes('grocery')
+
+      let taxRate = 5 // Default: restaurant food services - 5% GST
+      if (isAlcohol) taxRate = 28
+      else if (isPackaged) taxRate = 18
+      else if (isBeverage) taxRate = 12
+
+      // Allow client override only if explicitly provided and valid
+      if (rawItem.taxRate !== undefined && rawItem.taxRate !== null) {
+        const clientTaxRate = Number(rawItem.taxRate)
+        if (Number.isInteger(clientTaxRate) && clientTaxRate >= 0 && clientTaxRate <= 28) {
+          taxRate = clientTaxRate
+        }
+      }
+
       itemsList.push({
         id: itemId,
         name: menuItem.name,
         quantity,
         price,
         lineTotal,
-        taxRate: Number((rawItem.taxRate ?? menuItem.hsn_sac_code) ? 5 : 18), // Default tax rates
+        taxRate,
         priceTaxMode: rawItem.priceTaxMode || menuItem.price_tax_mode || 'TAX_INCLUSIVE',
         // Store original item reference for billing breakdown
         _menuItem: menuItem,
@@ -390,27 +435,33 @@ export async function POST(request: Request) {
     const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
       'commission' | 'markup' | 'hybrid'
 
-    // ─── CR-005: Server-side distance calculation from trusted coordinates ──────
-    // Get customer coordinates: from request body or user's default address
-    let customerLat: number | null = typeof customer_lat === 'number' ? customer_lat : null
-    let customerLng: number | null = typeof customer_lng === 'number' ? customer_lng : null
+    // ─── CR-005: Server-side distance calculation from TRUSTED database coordinates ──────
+    // CR-005 FIX: Do NOT accept client-provided coordinates. Always resolve from customer's
+    // default address in the database. If no valid address, return error.
+    let customerLat: number | null = null
+    let customerLng: number | null = null
 
-    // If not provided, try to get from user's default address
-    if (customerLat === null || customerLng === null) {
-      try {
-        // Use prisma to find user's default address
-        const { prisma } = await import('@/lib/prisma')
-        const defaultAddress = await prisma.customerAddress.findFirst({
-          where: { customer_id: finalCustomerId, is_default: true },
-          select: { latitude: true, longitude: true },
-        })
-        if (defaultAddress?.latitude && defaultAddress?.longitude) {
-          customerLat = Number(defaultAddress.latitude)
-          customerLng = Number(defaultAddress.longitude)
-        }
-      } catch (e) {
-        // Ignore, will use fallback
+    try {
+      // Use prisma to find user's default address
+      const { prisma } = await import('@/lib/prisma')
+      const defaultAddress = await prisma.customerAddress.findFirst({
+        where: { customer_id: finalCustomerId, is_default: true },
+        select: { latitude: true, longitude: true },
+      })
+      if (defaultAddress?.latitude && defaultAddress?.longitude) {
+        customerLat = Number(defaultAddress.latitude)
+        customerLng = Number(defaultAddress.longitude)
       }
+    } catch (e) {
+      // Ignore DB errors, will return error below
+    }
+
+    // Require valid delivery address
+    if (customerLat === null || customerLng === null) {
+      return NextResponse.json(
+        { error: 'No valid delivery address found. Please add a default address in your profile.' },
+        { status: 400 }
+      )
     }
 
     // Get restaurant coordinates
@@ -544,86 +595,92 @@ export async function POST(request: Request) {
       })
     }
 
-    // ─── Create Order ────────────────────────────────────────
     // CR-007: Generate OTP server-side using crypto.randomInt (not Math.random)
     const deliveryOtp = String(crypto.randomInt(100000, 999999))
 
-    const order = await createOrder({
-      id: orderId,
-      customer_id: finalCustomerId,
-      customer_name: customer_name || (actor as any)?.name || 'Customer',
-      customer_phone: customer_phone || undefined,
-      customer_address: customer_address || 'Bengaluru',
-      restaurant_id: finalRestaurantId || undefined,
-      restaurant_name: finalRestaurantName,
-      items: itemsForStorage,
-      subtotal: foodSubtotal,
-      packaging_fee: capPackaging,
-      delivery_fee: calcResult.customerBilling.netDeliveryFee,
-      platform_fee: calcResult.customerBilling.platformFee,
-      handling_fee: calcResult.customerBilling.handlingFee,
-      gst: calcResult.customerBilling.gstAmount,
-      total_amount: calcResult.customerBilling.grandTotal,
-      status: 'payment_submitted' as OrderStatus, // CR-005: Server controls status
-      order_type,
-      payment_method,
-      delivery_otp: deliveryOtp, // CR-007: Server-generated OTP
-      tip: Number(tip) || 0,
-      discount_amount: calcResult.customerBilling.couponDiscount, // Server-calculated
-      coupon_code: coupon_code || undefined,
-      commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
-      markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
-      restaurant_payout: vendorNetPayout,
-      platform_revenue: platformProfit,
-      utr_ref,
-      customer_vpa,
-      // CR-004: Persist immutable canonical financial snapshot
-    } as any)
+    // ─── Create Order + Side Effects in Atomic Transaction ─────────────
+    // CR-007 FIX: Use Prisma transaction for atomic order + side effects
+    const { prisma } = await import('@/lib/prisma')
 
-    // Increment coupon usage count once order is safely created
-    if (coupon_code && couponResult?.coupon?.id) {
-      await checkAndIncrementCouponUsage(couponResult.coupon.id).catch((err) => {
-        console.warn('Coupon usage increment notice:', err)
-      })
-    }
-
-    // ─── Best Effort Payment Review Sync ─────────────────────
-    // CR-008: UTR format is not proof of payment - keep as pending until verified
-    if (utr_ref && customer_vpa) {
-      try {
-        await createPaymentReview({
-          id: crypto.randomUUID(),
-          order_id: orderId,
+    const order = await prisma.$transaction(async (tx) => {
+      // 1. Create order
+      const createdOrder = await tx.order.create({
+        data: {
+          id: orderId,
+          customer_id: finalCustomerId,
+          customer_name: customer_name || (actor as any)?.name || 'Customer',
+          customer_phone: customer_phone || undefined,
+          customer_address: customer_address || 'Bengaluru',
+          restaurant_id: finalRestaurantId || undefined,
+          restaurant_name: finalRestaurantName,
+          items: itemsForStorage,
+          subtotal: foodSubtotal,
+          packaging_fee: capPackaging,
+          delivery_fee: calcResult.customerBilling.netDeliveryFee,
+          platform_fee: calcResult.customerBilling.platformFee,
+          handling_fee: calcResult.customerBilling.handlingFee,
+          gst: calcResult.customerBilling.gstAmount,
+          total_amount: calcResult.customerBilling.grandTotal,
+          status: 'payment_submitted' as OrderStatus,
+          order_type,
+          payment_method,
+          delivery_otp: deliveryOtp,
+          tip: Number(tip) || 0,
+          discount_amount: calcResult.customerBilling.couponDiscount,
+          coupon_code: coupon_code || undefined,
+          commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
+          markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
+          restaurant_payout: vendorNetPayout,
+          platform_revenue: platformProfit,
           utr_ref,
           customer_vpa,
-          amount: calcResult.customerBilling.grandTotal, // Server-calculated total
-          status: 'pending',
-        })
-      } catch (err) {
-        console.warn('Payment review creation notice:', err)
-      }
-    }
-
-    // ─── Record Vendor Settlement ────────────────────────────
-    try {
-      await createVendorSettlement({
-        id: `set_${orderId}`,
-        restaurant_name: finalRestaurantName,
-        restaurant_id: finalRestaurantId,
-        gross_sales: foodSubtotal,
-        commission_rate: Number(
-          restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
-        ),
-        commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
-        net_payout: vendorNetPayout,
-        status: 'scheduled',
-        period_start: new Date(),
-        period_end: new Date(),
-        transaction_ref: orderId,
+          financial_snapshot: canonicalResult as any,
+        },
       })
-    } catch (settleErr) {
-      console.warn('Vendor settlement creation notice:', settleErr)
-    }
+
+      // 2. Increment coupon usage (atomic in same transaction)
+      if (coupon_code && couponResult?.coupon?.id) {
+        await tx.coupon.update({
+          where: { id: couponResult.coupon.id },
+          data: { used_count: { increment: 1 } },
+        })
+      }
+
+      // 3. Create payment review (if UTR provided)
+      if (utr_ref && customer_vpa) {
+        await tx.paymentReview.create({
+          data: {
+            id: crypto.randomUUID(),
+            order_id: orderId,
+            utr_ref,
+            customer_vpa,
+            amount: calcResult.customerBilling.grandTotal,
+            status: 'pending',
+          },
+        })
+      }
+
+      // 4. Create vendor settlement
+      await tx.vendorSettlement.create({
+        data: {
+          id: `set_${orderId}`,
+          restaurant_name: finalRestaurantName,
+          restaurant_id: finalRestaurantId,
+          gross_sales: foodSubtotal,
+          commission_rate: Number(
+            restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+          ),
+          commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
+          net_payout: vendorNetPayout,
+          status: 'scheduled',
+          period_start: new Date(),
+          period_end: new Date(),
+          transaction_ref: orderId,
+        },
+      })
+
+      return createdOrder
+    })
 
     // CR-005: Driver assignment is handled by dispatch workflow, not at order creation
     // Driver payout will be created when driver is assigned via PATCH /api/orders
@@ -706,32 +763,130 @@ export async function PATCH(request: Request) {
     const isAssignedRider =
       !existing.rider_id || existing.rider_id === actor.id || actor.role === 'admin'
 
-    // If driver is completing delivery, validate OTP if delivery_otp was generated
-    if (requestedStatus === 'delivered' && actor.role !== 'admin' && !isOwner) {
-      const providedOtp = String(body.otp || body.delivery_otp || '').trim()
-      if (existing.delivery_otp) {
+    // CR-03 FIX: Only assigned driver can mark order as delivered/completed
+    // OTP validation is required for delivery confirmation
+    if (requestedStatus === 'delivered' || requestedStatus === 'completed') {
+      // Only assigned driver (or admin) can mark as delivered
+      const isAuthorizedForDelivery = actor.role === 'admin' || (isRiderOrDriver && isAssignedRider)
+
+      if (!isAuthorizedForDelivery) {
+        return NextResponse.json(
+          { error: 'Only the assigned driver can confirm delivery' },
+          { status: 403 }
+        )
+      }
+
+      // Require OTP for driver delivery confirmation
+      if (actor.role !== 'admin' && existing.delivery_otp) {
+        const providedOtp = String(body.otp || body.delivery_otp || '').trim()
         if (!providedOtp || providedOtp !== String(existing.delivery_otp).trim()) {
           return NextResponse.json({ error: 'Valid delivery OTP is required' }, { status: 400 })
         }
       }
     }
 
-    const allowed =
-      !status ||
+    // CR-01 FIX: Authorization required for ALL mutations, not just status changes
+    // Define what each role can do
+    const canUpdateStatus =
       actor.role === 'admin' ||
-      (isVendor && vendorStatuses.includes(requestedStatus!)) ||
-      (isRiderOrDriver && isAssignedRider && riderStatuses.includes(requestedStatus!)) ||
-      (isOwner && (status === 'completed' || status === 'delivered'))
+      (isVendor && requestedStatus && vendorStatuses.includes(requestedStatus)) ||
+      (isRiderOrDriver &&
+        isAssignedRider &&
+        requestedStatus &&
+        riderStatuses.includes(requestedStatus))
+    // Note: Owner (customer) CANNOT update order status - only driver/admin can
 
-    if (
-      !allowed ||
-      (payment_status && actor.role !== 'admin') ||
-      (driver_lat != null && actor.role !== 'rider' && (actor.role as string) !== 'driver')
-    ) {
+    const canUpdatePaymentStatus = actor.role === 'admin'
+
+    const canUpdateDriverInfo =
+      actor.role === 'admin' || (isRiderOrDriver && isAssignedRider) || isVendor
+
+    const canUpdateItems =
+      actor.role === 'admin' || (isVendor && existing.status === 'payment_submitted') // Only vendor can update items before preparing
+
+    const canUpdateCoordinates = actor.role === 'admin' || (isRiderOrDriver && isAssignedRider)
+
+    // Check if any requested mutation is allowed
+    const hasStatusChange = !!status
+    const hasPaymentStatusChange = !!(payment_status || paymentStatus)
+    const hasDriverInfoChange = !!(driver_name || driver_phone || driver_id)
+    const hasCoordinateChange = !!(driver_lat != null || driver_lng != null)
+    const hasItemsChange = !!items
+
+    const anyChangeRequested =
+      hasStatusChange ||
+      hasPaymentStatusChange ||
+      hasDriverInfoChange ||
+      hasCoordinateChange ||
+      hasItemsChange
+
+    if (!anyChangeRequested) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+    }
+
+    const allowed =
+      (hasStatusChange && canUpdateStatus) ||
+      (hasPaymentStatusChange && canUpdatePaymentStatus) ||
+      (hasDriverInfoChange && canUpdateDriverInfo) ||
+      (hasCoordinateChange && canUpdateCoordinates) ||
+      (hasItemsChange && canUpdateItems)
+
+    // Additional restrictions
+    if (!allowed || (driver_lat != null && !canUpdateCoordinates)) {
       return NextResponse.json(
         { error: 'You are not allowed to update this order' },
         { status: 403 }
       )
+    }
+
+    // CR-04 FIX: Enforce state machine transition rules
+    if (hasStatusChange) {
+      const currentStatus = existing.status as OrderStatus
+      const targetStatus = status as OrderStatus
+
+      if (!isValidTransition(currentStatus, targetStatus)) {
+        return NextResponse.json(
+          {
+            error: `Invalid status transition: ${getPhaseName(currentStatus)} "${currentStatus}" → "${targetStatus}" not allowed`,
+            currentStatus,
+            targetStatus,
+            validNextStates:
+              Object.values(require('@/lib/order-state-machine').VALID_TRANSITIONS)[
+                Object.values(require('@/lib/order-state-machine').OrderStatus).indexOf(
+                  currentStatus
+                )
+              ] || [],
+          },
+          { status: 400 }
+        )
+      }
+
+      // Prevent backward transitions in payment/fulfillment phase
+      const currentPhase = getPhaseName(currentStatus)
+      const targetPhase = getPhaseName(targetStatus)
+      if (
+        currentPhase === 'payment' &&
+        targetPhase === 'payment' &&
+        currentStatus !== targetStatus
+      ) {
+        // Allow forward transitions within payment phase only
+        const validPaymentTransitions =
+          require('@/lib/order-state-machine').VALID_TRANSITIONS[currentStatus] || []
+        if (!validPaymentTransitions.includes(targetStatus)) {
+          return NextResponse.json(
+            { error: `Invalid payment phase transition: ${currentStatus} → ${targetStatus}` },
+            { status: 400 }
+          )
+        }
+      }
+
+      // Prevent moving completed/cancelled orders
+      if (currentStatus === 'completed' || currentStatus === 'cancelled') {
+        return NextResponse.json(
+          { error: `Cannot transition from terminal state: ${currentStatus}` },
+          { status: 400 }
+        )
+      }
     }
 
     // Determine rider_id update safely (never overwrite rider_id with vendor/customer actor ID)

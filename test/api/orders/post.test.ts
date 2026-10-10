@@ -16,6 +16,23 @@ jest.mock('@/lib/prisma', () => ({
     vendorSettlement: { create: jest.fn() },
     driverPayout: { create: jest.fn() },
     menuItem: { findUnique: jest.fn() },
+    customerAddress: { findFirst: jest.fn() },
+    coupon: { update: jest.fn() },
+    $transaction: jest.fn(async (cb) => {
+      const mockTx = {
+        order: {
+          create: jest.fn().mockResolvedValue({
+            id: 'ord_new',
+            status: 'payment_submitted',
+            customer_id: 'usr_test_user',
+          }),
+        },
+        coupon: { update: jest.fn().mockResolvedValue({}) },
+        paymentReview: { create: jest.fn().mockResolvedValue({}) },
+        vendorSettlement: { create: jest.fn().mockResolvedValue({}) },
+      }
+      return cb(mockTx)
+    }),
   },
 }))
 
@@ -28,6 +45,31 @@ jest.mock('@/lib/dal/payments', () => ({
   createVendorSettlement: jest.fn(),
   createDriverPayout: jest.fn(),
   updatePaymentReviewStatus: jest.fn(),
+  getActivePaymentConfig: jest.fn().mockResolvedValue({
+    merchant_vpa: 'crave@upi',
+    merchant_name: 'crave Food Delivery',
+    merchant_category_code: '5812',
+    thank_you_message: 'Thank you!',
+    ifsc_code: 'HDFC0001234',
+    account_number: '1234567890',
+    platform_fee: 6,
+    handling_fee: 5,
+    vendor_commission: 15,
+    packaging_cap: 20,
+    delivery_fee: 30,
+    base_distance_km: 2.5,
+    per_km_rate: 10,
+    free_delivery_threshold: 500,
+    driver_payout_share: 80,
+    surge_multiplier: 1.0,
+    rain_fee: 0,
+    night_surge_fee: 0,
+    is_rain_mode_active: false,
+    is_night_surge_active: false,
+    enable_cash_on_delivery: true,
+    enable_upi_deep_link: true,
+    require_utr_number: true,
+  }),
 }))
 jest.mock('@/lib/dal/restaurants', () => ({
   findRestaurantById: jest.fn(),
@@ -83,25 +125,6 @@ describe('Orders API Route - POST', () => {
       taxRate: 5,
     })
 
-    // Default payment config
-    require('@/lib/prisma').prisma.paymentConfig.findFirst.mockResolvedValue({
-      vendorCommission: 15,
-      packagingCap: 20,
-      baseDeliveryFee: 30,
-      driverPayoutShare: 80,
-      platformFee: 6,
-      handlingFee: 5,
-      baseDistanceKm: 2.5,
-      perKmRate: 10,
-      freeDeliveryThreshold: 500,
-      surgeMultiplier: 1.0,
-      rainFee: 0,
-      nightSurgeFee: 0,
-      isRainModeActive: false,
-      isNightSurgeActive: false,
-      gstRatePercent: 5,
-    })
-
     // Default DAL responses
     require('@/lib/dal/payments').createPaymentReview.mockResolvedValue({})
     require('@/lib/dal/payments').createVendorSettlement.mockResolvedValue({})
@@ -110,6 +133,12 @@ describe('Orders API Route - POST', () => {
       id: 'ord_new',
       status: 'payment_submitted',
       customer_id: 'usr_test_user',
+    })
+
+    // Default customer address mock (for distance calculation)
+    require('@/lib/prisma').prisma.customerAddress.findFirst.mockResolvedValue({
+      latitude: 12.9716,
+      longitude: 77.5946,
     })
   }
 
@@ -214,9 +243,8 @@ describe('Orders API Route - POST', () => {
     const response = await POST(req)
     await response.json()
 
-    expect(require('@/lib/dal').createOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ id: expect.any(String) })
-    )
+    // Verify transaction was called (order creation is now inside transaction)
+    expect(require('@/lib/prisma').prisma.$transaction).toHaveBeenCalled()
   })
 
   it('rejects order when menu item not found', async () => {

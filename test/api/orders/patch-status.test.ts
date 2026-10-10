@@ -242,7 +242,7 @@ describe('Orders PATCH - Order Status Flow', () => {
     )
   })
 
-  it('customer who owns the order can mark delivered', async () => {
+  it('customer who owns the order CANNOT mark delivered (only driver can)', async () => {
     mockVerifyToken.mockResolvedValue({
       id: 'usr_test_user',
       role: 'user',
@@ -260,11 +260,7 @@ describe('Orders PATCH - Order Status Flow', () => {
     const response = await PATCH(req)
     const data = await response.json()
 
-    expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(broadcast).toHaveBeenCalledWith(
-      'order_update',
-      expect.objectContaining({ orderId: 'ord_1' })
-    )
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('Only the assigned driver can confirm delivery')
   })
 })

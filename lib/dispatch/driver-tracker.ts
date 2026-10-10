@@ -243,10 +243,10 @@ async function flushPositionHistory(): Promise<void> {
     positions: typeof positionHistoryBuffer extends Map<string, infer V> ? V : never
   }> = []
 
+  // Collect entries to flush (copy positions, don't clear yet)
   positionHistoryBuffer.forEach((positions, driverId) => {
     if (positions.length > 0) {
       entries.push({ driverId, positions: [...positions] })
-      positions.length = 0 // Clear buffer
     }
   })
 
@@ -268,9 +268,17 @@ async function flushPositionHistory(): Promise<void> {
         })
       )
     )
+    // Only clear buffers AFTER successful transaction
+    entries.forEach(({ driverId }) => {
+      const buffer = positionHistoryBuffer.get(driverId)
+      if (buffer) {
+        buffer.length = 0
+      }
+    })
   } catch (error) {
     // Silently fail - position history is non-critical
-    console.warn('[driver-tracker] History flush failed:', error)
+    // Buffers are preserved for retry on next flush
+    console.warn('[driver-tracker] History flush failed, will retry:', error)
   }
 }
 
