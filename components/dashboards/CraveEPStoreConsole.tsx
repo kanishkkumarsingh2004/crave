@@ -28,7 +28,7 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { GroceryItem } from './CraveXPStore'
 
 interface IncomingGroceryOrder {
@@ -66,6 +66,7 @@ export default function CraveXPStoreConsole() {
   >([])
   const [dashboardError, setDashboardError] = useState('')
   const { toast } = useToast()
+  const pendingOrderStatusRef = useRef<Record<string, boolean>>({})
 
   const [orders, setOrders] = useState<IncomingGroceryOrder[]>([])
   const [inventory, setInventory] = useState<
@@ -326,26 +327,32 @@ export default function CraveXPStoreConsole() {
     orderId: string,
     nextStatus: 'packing' | 'ready' | 'picked_up'
   ) => {
-    if (!restaurantId) return
-    const response = await fetch('/api/orders', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, status: nextStatus }),
-    })
-    if (!response.ok) {
-      triggerToast('Could not update the order. Please try again.')
-      return
-    }
-    setOrders((prev) =>
-      prev.map((order) => (order.id === orderId ? { ...order, status: nextStatus } : order))
-    )
+    if (!restaurantId || pendingOrderStatusRef.current[orderId]) return
+    pendingOrderStatusRef.current[orderId] = true
 
-    if (nextStatus === 'packing')
-      triggerToast(`Order #${orderId} accepted & assigned to store picker!`)
-    else if (nextStatus === 'ready')
-      triggerToast(`Order #${orderId} packed & barcode printed! Ready for rider.`)
-    else if (nextStatus === 'picked_up')
-      triggerToast(`Order #${orderId} handed over to EV Rider! Out for 10-min delivery.`)
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: nextStatus }),
+      })
+      if (!response.ok) {
+        triggerToast('Could not update the order. Please try again.')
+        return
+      }
+      setOrders((prev) =>
+        prev.map((order) => (order.id === orderId ? { ...order, status: nextStatus } : order))
+      )
+
+      if (nextStatus === 'packing')
+        triggerToast(`Order #${orderId} accepted & assigned to store picker!`)
+      else if (nextStatus === 'ready')
+        triggerToast(`Order #${orderId} packed & barcode printed! Ready for rider.`)
+      else if (nextStatus === 'picked_up')
+        triggerToast(`Order #${orderId} handed over to EV Rider! Out for 10-min delivery.`)
+    } finally {
+      pendingOrderStatusRef.current[orderId] = false
+    }
   }
 
   // Toggle checklist item

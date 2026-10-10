@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { CravePagePreloader } from '@/components/ui/ModernPreloader'
 
 export default function HomePage() {
   const { user, role, isLoading } = useAuth()
@@ -41,13 +42,12 @@ export default function HomePage() {
 
   if (!isLoading && user) {
     return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-10 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading crave...
-          </p>
-        </div>
+      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] flex items-center justify-center p-4">
+        <CravePagePreloader
+          title="Loading Crave..."
+          subtitle="Directing you to your personalized dashboard"
+          minHeight="min-h-screen"
+        />
       </div>
     )
   }

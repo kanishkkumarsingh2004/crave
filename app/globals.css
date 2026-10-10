@@ -1426,6 +1426,16 @@ textarea:disabled,
   }
 }
 
+/* Crave Preloader Shimmer Animation */
+@keyframes craveShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 /* Mobile Bezel & Native App Viewport Locking & iOS WebKit Smooth Scrolling */
 html,
 body {

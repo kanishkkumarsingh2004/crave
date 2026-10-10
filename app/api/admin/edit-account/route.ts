@@ -123,8 +123,19 @@ export async function POST(request: Request) {
           if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
           if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
 
+          let targetRestId = id
+          if (typeof tx?.restaurant?.findFirst === 'function') {
+            const foundRest = await tx.restaurant.findFirst({
+              where: { OR: [{ id }, { owner_id: id }] },
+              select: { id: true },
+            }).catch(() => null)
+            if (foundRest?.id) {
+              targetRestId = foundRest.id
+            }
+          }
+
           restaurantResult = await tx.restaurant.update({
-            where: { id },
+            where: { id: targetRestId },
             data: restUpdateData,
           })
         }
@@ -147,7 +158,18 @@ export async function POST(request: Request) {
         if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
         if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
 
-        restaurantResult = await updateRestaurant(id, restUpdateData)
+        let targetRestId = id
+        if (typeof prisma?.restaurant?.findFirst === 'function') {
+          const foundRest = await prisma.restaurant.findFirst({
+            where: { OR: [{ id }, { owner_id: id }] },
+            select: { id: true },
+          }).catch(() => null)
+          if (foundRest?.id) {
+            targetRestId = foundRest.id
+          }
+        }
+
+        restaurantResult = await updateRestaurant(targetRestId, restUpdateData)
       }
     }
 

@@ -9,7 +9,13 @@ const mockVerifyToken = jest.fn().mockResolvedValue({
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    order: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), findUnique: jest.fn() },
+    order: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
     restaurant: { findUnique: jest.fn() },
     paymentConfig: { findFirst: jest.fn() },
     paymentReview: { create: jest.fn(), updateMany: jest.fn() },
@@ -86,6 +92,11 @@ jest.mock('@/lib/jwt', () => ({
 }))
 jest.mock('next/headers', () => ({
   cookies: () => ({ get: jest.fn().mockReturnValue({ value: 'test.jwt.token' }) }),
+}))
+jest.mock('@/lib/rate-limit', () => ({
+  getClientIp: () => '127.0.0.1',
+  checkRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+  rateLimitResponse: jest.fn(),
 }))
 
 describe('Orders API Route - POST', () => {
@@ -423,5 +434,58 @@ describe('Orders API Route - POST', () => {
 
     expect(response.status).toBe(400)
     expect(data.error).toContain('out of stock')
+  })
+
+  it('safely deduplicates and returns existing order when submitted with same order id', async () => {
+    const existingOrder = {
+      id: 'ord_existing_123',
+      customer_id: 'usr_test_user',
+      total_amount: 550,
+      status: 'payment_submitted',
+    }
+    const { prisma } = await import('@/lib/prisma')
+    ;(prisma.order.findUnique as jest.Mock).mockResolvedValueOnce(existingOrder)
+
+    const { POST } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      id: 'ord_existing_123',
+      restaurant_id: 'vnd_1',
+      items: [{ itemId: 'mi_pizza', quantity: 1 }],
+    })
+
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(data.order.id).toBe('ord_existing_123')
+    expect(data.message).toContain('idempotent')
+  })
+
+  it('safely deduplicates within short time window for identical customer order', async () => {
+    const recentDuplicate = {
+      id: 'ord_recent_duplicate',
+      customer_id: 'usr_test_user',
+      restaurant_id: 'vnd_1',
+      utr_ref: '123456789012',
+      status: 'payment_submitted',
+    }
+    const { prisma } = await import('@/lib/prisma')
+    ;(prisma.order.findFirst as jest.Mock).mockResolvedValueOnce(recentDuplicate)
+
+    const { POST } = await import('@/app/api/orders/route')
+    const req = makeRequest({
+      restaurant_id: 'vnd_1',
+      utr_ref: '123456789012',
+      items: [{ itemId: 'mi_pizza', quantity: 1 }],
+    })
+
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(data.order.id).toBe('ord_recent_duplicate')
+    expect(data.message).toContain('deduplicated')
   })
 })

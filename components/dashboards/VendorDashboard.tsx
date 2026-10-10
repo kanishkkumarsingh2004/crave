@@ -16,7 +16,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { CraveSpinner } from '@/components/ui/ModernPreloader'
 
 interface KitchenOrder {
   id: string
@@ -45,6 +46,8 @@ export default function VendorDashboard() {
     customerName: string
     totalAmount: number
   } | null>(null)
+  const [pendingOrders, setPendingOrders] = useState<Record<string, boolean>>({})
+  const pendingOrdersRef = useRef<Record<string, boolean>>({})
 
   const loadLiveKitchenOrders = async () => {
     try {
@@ -149,6 +152,10 @@ export default function VendorDashboard() {
   })
 
   const updateOrderStatus = async (orderId: string, nextStatus: string) => {
+    if (pendingOrdersRef.current[orderId]) return
+    pendingOrdersRef.current[orderId] = true
+    setPendingOrders((prev) => ({ ...prev, [orderId]: true }))
+
     try {
       const response = await fetch('/api/orders', {
         method: 'PATCH',
@@ -159,12 +166,19 @@ export default function VendorDashboard() {
         }),
       })
       if (!response.ok) throw new Error('Order status update failed')
+      setKitchenOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
+      )
     } catch (err) {
       console.error('Failed to update kitchen order status:', err)
+    } finally {
+      pendingOrdersRef.current[orderId] = false
+      setPendingOrders((prev) => {
+        const next = { ...prev }
+        delete next[orderId]
+        return next
+      })
     }
-    setKitchenOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
-    )
   }
 
   const openCount = kitchenOrders.filter(
@@ -360,11 +374,16 @@ export default function VendorDashboard() {
                             order.status === 'accepted') && (
                             <button
                               type="button"
+                              disabled={!!pendingOrders[order.id]}
                               onClick={() => updateOrderStatus(order.id, 'preparing')}
-                              className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-black text-[#0d1310] shadow-sm hover:bg-[#c8e434] active:scale-95 transition flex items-center gap-1 cursor-pointer"
+                              className="rounded-full bg-[#d9f447] px-3 py-1 text-[10px] font-black text-[#0d1310] shadow-sm hover:bg-[#c8e434] active:scale-95 transition flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                               aria-label="Accept Order"
                             >
-                              <CheckCircle2 className="size-3 text-[#0d1310]" />
+                              {pendingOrders[order.id] ? (
+                                <CraveSpinner size="xs" variant="dark" />
+                              ) : (
+                                <CheckCircle2 className="size-3 text-[#0d1310]" />
+                              )}
                               <span className="sr-only">Accept</span>
                             </button>
                           )}
@@ -374,11 +393,16 @@ export default function VendorDashboard() {
                             order.status === 'packing') && (
                             <button
                               type="button"
+                              disabled={!!pendingOrders[order.id]}
                               onClick={() => updateOrderStatus(order.id, 'ready_for_pickup')}
-                              className="rounded-full bg-amber-400 px-3 py-1 text-[10px] font-black text-[#0d1310] shadow-sm hover:bg-amber-300 active:scale-95 transition flex items-center gap-1 cursor-pointer"
+                              className="rounded-full bg-amber-400 px-3 py-1 text-[10px] font-black text-[#0d1310] shadow-sm hover:bg-amber-300 active:scale-95 transition flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                               aria-label="Mark Ready"
                             >
-                              <CookingPot className="size-3" />
+                              {pendingOrders[order.id] ? (
+                                <CraveSpinner size="xs" variant="dark" />
+                              ) : (
+                                <CookingPot className="size-3" />
+                              )}
                               <span className="sr-only">Mark Ready</span>
                             </button>
                           )}
