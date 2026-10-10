@@ -10,9 +10,12 @@ const CONFIG = {
   stages: [
     { duration: '30s', target: 10 },
     { duration: '1m', target: 50 },
-    { duration: '2m', target: 100 },
+    { duration: '1m', target: 100 },
     { duration: '1m', target: 150 },
     { duration: '1m', target: 200 },
+    { duration: '1m', target: 500 },
+    { duration: '1m', target: 1000 },
+    { duration: '1m', target: 100 },
     { duration: '1m', target: 0 },
   ],
 

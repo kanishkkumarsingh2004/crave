@@ -16,6 +16,21 @@ jest.mock('@/lib/jwt', () => ({
   JWTPayload: {},
 }))
 
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    order: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), findMany: jest.fn() },
+    $transaction: jest.fn(async (cb) => {
+      const mockTx = {
+        order: { 
+          update: jest.fn().mockResolvedValue({ id: 'ord_1', status: 'preparing' }),
+          findUnique: jest.fn(),
+        },
+      }
+      return cb(mockTx)
+    }),
+  },
+}))
+
 jest.mock('@/lib/dal', () => ({
   findUserByEmail: jest.fn(),
   listOrders: jest.fn(),
@@ -137,6 +152,7 @@ describe('Orders PATCH - Order Status Flow', () => {
       status: 'picked_up',
       customer_id: 'usr_1',
       restaurant_id: 'vnd_1',
+      rider_id: 'usr_rider', // CR-03: Rider must be explicitly assigned
     })
     mockedUpdateOrder.mockResolvedValue({ status: 'out_for_delivery' })
 
@@ -163,7 +179,10 @@ describe('Orders PATCH - Order Status Flow', () => {
       role: 'rider',
       email: 'rider@test.com',
     })
-    mockedFindOrderById.mockResolvedValue({ status: 'out_for_delivery' })
+    mockedFindOrderById.mockResolvedValue({
+      status: 'out_for_delivery',
+      rider_id: 'usr_rider', // CR-03: Rider must be explicitly assigned
+    })
     mockedUpdateOrder.mockResolvedValue({})
 
     const { PATCH } = await import('@/app/api/orders/route')

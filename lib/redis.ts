@@ -1,4 +1,5 @@
 import Redis, { type RedisOptions } from 'ioredis'
+import fs from 'fs'
 
 type GlobalWithRedis = typeof globalThis & {
   __redisClient: Redis | undefined
@@ -12,7 +13,24 @@ function createRedisInstance(options: RedisOptions = {}): Redis | null {
     return null
   }
 
-  const redisUrl = process.env.REDIS_URL
+  // Auto-detect Redis URL based on environment
+  // - Local dev: uses localhost:6380 (docker-compose host port)
+  // - Docker/production: uses redis:6379 (container network)
+  // - Render/production: uses REDIS_URL env var if provided
+  let redisUrl = process.env.REDIS_URL
+
+  if (!redisUrl) {
+    // Detect if running inside Docker container
+    const inDocker = process.env.DOCKER_CONTAINER === 'true' || 
+      fs.existsSync('/.dockerenv') || 
+      process.env.KUBERNETES_SERVICE_HOST !== undefined
+
+    if (inDocker) {
+      redisUrl = 'redis://redis:6379' // Docker internal network
+    } else {
+      redisUrl = 'redis://localhost:6380' // Local dev with docker-compose host port
+    }
+  }
 
   // Allow disabling via explicit env var or when REDIS_URL is not provided
   if (process.env.REDIS_DISABLED === 'true' || (process.env.NODE_ENV as string) === 'test') {

@@ -8,6 +8,15 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     restaurant: { findFirst: jest.fn() },
     order: { update: jest.fn(), findUnique: jest.fn() },
+    $transaction: jest.fn(async (cb) => {
+      const mockTx = {
+        order: { 
+          update: jest.fn().mockResolvedValue({ id: 'ord_1', status: 'preparing' }),
+          findUnique: jest.fn(),
+        },
+      }
+      return cb(mockTx)
+    }),
   },
 }))
 
@@ -107,6 +116,7 @@ describe('Orders PATCH - WebSocket Broadcast Integration', () => {
     mockFindOrderById.mockResolvedValue({
       status: 'out_for_delivery',
       customer_id: 'usr_1',
+      rider_id: 'rider_1', // CR-03: Rider must be explicitly assigned
     })
     mockUpdateOrder.mockResolvedValue({})
 
