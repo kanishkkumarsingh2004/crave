@@ -82,7 +82,26 @@ All captured high-resolution screenshots are stored in `d:\crave\docs\app_flow_d
      $$\text{Delivery Fee} = \text{Base Fee} + (\text{Distance in km} \times \text{Per KM Rate})$$
    - Surge pricing multiplier is applied if active drivers in the vendor's H3 hexagon index fall below the surge threshold.
 2. **Order Lifecycle States**:
-   `PENDING` → `CONFIRMED` → `PREPARING` → `READY_FOR_PICKUP` → `OUT_FOR_DELIVERY` → `DELIVERED` (or `CANCELLED`).
+
+   **Canonical States** (enforced in Prisma & `lib/order-state-machine.ts`):
+
+   ```
+   payment_pending → payment_submitted → payment_verified → sent_to_vendor → preparing → packing → ready_for_pickup → rider_assigned → picked_up → out_for_delivery → delivered → completed
+   ```
+
+   **App Flow States** (simplified for customer UI - mapped from canonical):
+
+   ```
+   PENDING → CONFIRMED → PREPARING → READY_FOR_PICKUP → OUT_FOR_DELIVERY → DELIVERED
+   ```
+
+   **Payment States** (decoupled, from `docs/billing/PAYMENT_AND_REFUND_STATE_MACHINE.md`):
+
+   ```
+   PENDING → AWAITING_VERIFICATION → VERIFIED/REJECTED
+   ```
+
+   See `lib/order-state-machine.ts` for explicit mapping, transition validation, and phase detection.
 
 ### B. Spatial H3 Dispatch & Driver Lock Rules
 

@@ -7,14 +7,19 @@ import {
   getActivePaymentConfig,
 } from '@/lib/dal/payments'
 import { findRestaurantById, listRestaurants } from '@/lib/dal/restaurants'
+import { findMenuItemById, listMenuItems } from '@/lib/dal/menu-items'
 import {
   findCouponByCode,
   validateAndApplyCoupon,
   checkAndIncrementCouponUsage,
 } from '@/lib/dal/coupons'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
-import { calculateFullBreakdown } from '@/lib/calculator'
-import { calculateOrderPriceSnapshot } from '@/lib/commercial-engine'
+import {
+  calculateOrderPrice,
+  tolegacyCalculatorResult,
+  type OrderPriceInput,
+} from '@/lib/finance/pricing-engine'
+import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
@@ -104,21 +109,17 @@ async function getActiveConfig(): Promise<PaymentConfig> {
 
 export async function GET(request: Request) {
   try {
-    const actor = await getAuthActor(request)
     const { searchParams } = new URL(request.url)
+    const orderId = searchParams.get('orderId')
     const customerId = searchParams.get('customerId')
     const vendorId = searchParams.get('vendorId')
     const vendorName = searchParams.get('vendorName')
-    const orderId = searchParams.get('orderId')
     const driverId = searchParams.get('driverId') || searchParams.get('riderId')
 
-    const isVendorActor =
-      actor?.role === 'restaurant_vendor' ||
-      actor?.role === 'cravexp_store_vendor' ||
-      (actor?.role as string) === 'vendor'
-    const isVendorQuery = Boolean(vendorId || vendorName || isVendorActor)
-
+    // Single order access - requires authentication and ownership check
     if (orderId) {
+      const actor = await requireAuth(request)
+
       const order = await findOrderById(orderId)
       if (!order) {
         return NextResponse.json({
@@ -129,26 +130,31 @@ export async function GET(request: Request) {
       }
 
       // Authorization check for single order access
-      if (actor && actor.role !== 'admin') {
-        const isCustomer = actor.role === 'user' || (actor.role as string) === 'customer'
-        const isRider = actor.role === 'rider' || (actor.role as string) === 'driver'
+      const isAdmin = actor.role === 'admin'
+      const isCustomer = actor.role === 'user' || (actor.role as string) === 'customer'
+      const isRider = actor.role === 'rider' || (actor.role as string) === 'driver'
+      const isVendorActor =
+        actor.role === 'restaurant_vendor' ||
+        actor.role === 'cravexp_store_vendor' ||
+        (actor.role as string) === 'vendor'
 
-        if (isCustomer && order.customer_id && order.customer_id !== actor.id) {
-          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
-        }
-        if (isRider && order.rider_id && order.rider_id !== actor.id) {
-          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
-        }
-        if (
-          isVendorActor &&
-          actor.restaurantId &&
-          order.restaurant_id &&
-          order.restaurant_id !== actor.restaurantId
-        ) {
-          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
-        }
+      if (isCustomer && order.customer_id && order.customer_id !== actor.id) {
+        return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
+      }
+      if (isRider && order.rider_id && order.rider_id !== actor.id) {
+        return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
+      }
+      if (
+        isVendorActor &&
+        actor.restaurantId &&
+        order.restaurant_id &&
+        order.restaurant_id !== actor.restaurantId
+      ) {
+        return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
       }
 
+      // For vendor queries, only show approved orders
+      const isVendorQuery = Boolean(vendorId || vendorName || isVendorActor)
       if (isVendorQuery) {
         const isApproved =
           order.payment_status === 'verified' ||
@@ -168,6 +174,18 @@ export async function GET(request: Request) {
       })
     }
 
+    // List orders - requires authentication for non-admin
+    const actor = await getAuthActor(request)
+    const isVendorActor =
+      actor?.role === 'restaurant_vendor' ||
+      actor?.role === 'cravexp_store_vendor' ||
+      (actor?.role as string) === 'vendor'
+
+    // For non-admin users, require authentication for list operations
+    if (!actor && !isVendorActor) {
+      return handleAuthError(new AuthError('Authentication required', 401))
+    }
+
     let scopedCustomerId = customerId ?? undefined
     let scopedDriverId = driverId ?? undefined
     let scopedRestaurantId = vendorId ?? undefined
@@ -182,17 +200,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // For non-admin users, require authentication for list operations
-    if (!actor && !orderId && !isVendorActor) {
-      return handleAuthError(new AuthError('Authentication required', 401))
-    }
-
     const orders = await listOrders({
       customerId: scopedCustomerId,
       restaurantId: scopedRestaurantId,
       restaurantName: vendorName ?? undefined,
       driverId: scopedDriverId,
-      onlyApprovedForVendor: isVendorQuery ? true : undefined,
+      onlyApprovedForVendor: isVendorActor ? true : undefined,
     })
 
     return NextResponse.json({ success: true, orders })
@@ -215,6 +228,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     // CR-005/CR-006: Only accept safe, non-financial fields from client
     // Financial fields are computed server-side from trusted DB prices/config
+    // CR-005: Client-provided distance is informational only; server calculates from coordinates
     const {
       id,
       customer_name,
@@ -230,74 +244,137 @@ export async function POST(request: Request) {
       discount_amount = 0,
       coupon_code,
       order_type = 'restaurant_food',
-      distance_km,
+      // Client distance is ignored for fee calculation; server computes from coordinates
+      customer_lat,
+      customer_lng,
     } = body
 
     // CR-005: Derive customer_id from authenticated session only
     const finalCustomerId = actor.id
-
-    // CR-006: Recompute subtotal from items (not client-submitted)
-    const itemsList: any[] = Array.isArray(items)
-      ? items
-      : typeof items === 'string'
-        ? JSON.parse(items)
-        : []
-    const foodSubtotal = itemsList.reduce(
-      (sum, i: any) => sum + Number(i.price || 0) * Number(i.quantity || i.qty || 1),
-      0
-    )
-
-    const rawRestaurantId =
-      restaurant_id ||
-      body.restaurantId ||
-      (Array.isArray(items) && items[0]
-        ? items[0].restaurantId || items[0].vendorId || items[0].restaurant_id
-        : '')
-
     const orderId = id || crypto.randomUUID()
     const paymentConfig = await getActiveConfig()
 
     // ─── Resolve Valid Restaurant Record ────────────────────────
     let restaurant: any = null
-    if (rawRestaurantId && typeof findRestaurantById === 'function') {
+    if (restaurant_id && typeof findRestaurantById === 'function') {
       try {
-        restaurant = await findRestaurantById(rawRestaurantId)
+        restaurant = await findRestaurantById(restaurant_id)
       } catch (e) {
         restaurant = null
       }
-    }
-
-    let finalRestaurantId: string | null = null
-    let finalRestaurantName: string = restaurant_name || 'Crave Kitchen Store'
-
-    if (restaurant) {
-      finalRestaurantId = restaurant.id
-      finalRestaurantName = restaurant_name || restaurant.name
-    } else {
-      let rests: any[] = []
-      if (typeof listRestaurants === 'function') {
-        try {
-          rests = (await listRestaurants({ isOpen: true })) || []
-        } catch (e) {
-          rests = []
-        }
-      }
-
-      if (rests.length > 0) {
-        restaurant = rests[0]
-        finalRestaurantId = rests[0].id
-        finalRestaurantName = restaurant_name || rests[0].name || 'Crave Kitchen Store'
-      } else if (rawRestaurantId) {
-        finalRestaurantId = rawRestaurantId
-        finalRestaurantName = restaurant_name || 'Crave Kitchen Store'
-      } else {
-        finalRestaurantId = null
+      // CR-003: If restaurant_id was provided but not found, reject
+      if (!restaurant) {
+        return NextResponse.json(
+          { error: `Restaurant not found: ${restaurant_id}` },
+          { status: 404 }
+        )
       }
     }
 
+    // CR-006: Recompute subtotal from items using TRUSTED database prices
+    // Client provides: itemId, quantity, optional restaurantId
+    // Server fetches: price, in_stock, restaurant_id from database
+    const rawItems: any[] = Array.isArray(items)
+      ? items
+      : typeof items === 'string'
+        ? JSON.parse(items)
+        : []
+
+    if (rawItems.length === 0) {
+      return NextResponse.json({ error: 'At least one item is required' }, { status: 400 })
+    }
+
+    // Fetch each menu item from database for authoritative pricing
+    const itemsList = []
+    let foodSubtotal = 0
+
+    for (const rawItem of rawItems) {
+      const itemId = rawItem.id || rawItem.itemId || rawItem.menuItemId
+      const quantity = Number(rawItem.quantity || rawItem.qty || 1)
+
+      if (!itemId) {
+        return NextResponse.json(
+          { error: 'Each item must have an itemId/menuItemId' },
+          { status: 400 }
+        )
+      }
+
+      // Fetch trusted price from database
+      const menuItem = await findMenuItemById(itemId)
+      if (!menuItem) {
+        return NextResponse.json({ error: `Menu item not found: ${itemId}` }, { status: 404 })
+      }
+
+      // Verify item belongs to the requested restaurant (or one of its menu)
+      if (restaurant && menuItem.restaurant_id !== restaurant.id) {
+        return NextResponse.json(
+          { error: `Item ${itemId} not available at this restaurant` },
+          { status: 400 }
+        )
+      }
+
+      // Check stock
+      if (
+        menuItem.in_stock === false ||
+        (menuItem.stock_count !== undefined && menuItem.stock_count < quantity)
+      ) {
+        return NextResponse.json(
+          { error: `Item ${menuItem.name} is out of stock` },
+          { status: 400 }
+        )
+      }
+
+      // Use TRUSTED database price
+      const price = Number(menuItem.price || 0)
+      const lineTotal = price * quantity
+      foodSubtotal += lineTotal
+
+      itemsList.push({
+        id: itemId,
+        name: menuItem.name,
+        quantity,
+        price,
+        lineTotal,
+        taxRate: Number((rawItem.taxRate ?? menuItem.hsn_sac_code) ? 5 : 18), // Default tax rates
+        priceTaxMode: rawItem.priceTaxMode || menuItem.price_tax_mode || 'TAX_INCLUSIVE',
+        // Store original item reference for billing breakdown
+        _menuItem: menuItem,
+      })
+    }
+
+    // Determine final restaurant ID
+    let finalRestaurantId = restaurant?.id
+
+    // If no restaurant_id was provided in request, derive from items
     if (!finalRestaurantId) {
-      return NextResponse.json({ error: 'Restaurant is required' }, { status: 400 })
+      // All items must belong to the same restaurant
+      const restaurantIds = new Set(itemsList.map((i) => i._menuItem.restaurant_id).filter(Boolean))
+      if (restaurantIds.size !== 1) {
+        return NextResponse.json(
+          { error: 'All items must belong to the same restaurant' },
+          { status: 400 }
+        )
+      }
+      finalRestaurantId = restaurantIds.values().next().value
     }
+
+    // CR-003: Validate restaurant exists
+    let restaurantDetails = restaurant
+    if (!restaurantDetails && finalRestaurantId) {
+      try {
+        restaurantDetails = await findRestaurantById(finalRestaurantId)
+      } catch (e) {
+        restaurantDetails = null
+      }
+    }
+    if (!restaurantDetails) {
+      return NextResponse.json({ error: 'Restaurant not found or unavailable' }, { status: 404 })
+    }
+
+    const finalRestaurantName = restaurant_name || restaurantDetails.name
+
+    // Clean itemsList for storage - remove internal _menuItem reference
+    const itemsForStorage: any[] = itemsList.map(({ _menuItem, ...item }) => item)
 
     // ─── Validate Coupon (if provided) ─────────────────────────────────
     let couponDiscountAmount = 0
@@ -310,83 +387,125 @@ export async function POST(request: Request) {
       couponDiscountAmount = couponResult.discount
     }
 
-    // ─── Live Commercial Calculation via Central Engine ────────────────
-    const commercialModel = (restaurant?.commercial_model || 'commission') as
+    const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
       'commission' | 'markup' | 'hybrid'
-    const isMarkupModel = commercialModel === 'markup'
-    const isHybridModel = commercialModel === 'hybrid'
-    const commissionRate = isMarkupModel
-      ? 0
-      : Number(restaurant?.commission_rate ?? paymentConfig.vendorCommission ?? 15)
-    const markupRate = isMarkupModel || isHybridModel ? Number(restaurant?.markup_rate ?? 0) : 0
 
-    const commercialSnapshot = calculateOrderPriceSnapshot({
-      restaurantId: finalRestaurantId || 'rest_01',
-      restaurantName: finalRestaurantName,
-      supplierState: restaurant?.supplier_state || 'Karnataka',
-      contract: {
-        commercialModel,
-        commissionRate,
-        markupRate,
-        fixedCommissionAmount: Number(restaurant?.fixed_commission ?? 0),
-        fixedMarkupAmount: Number(restaurant?.fixed_markup ?? 0),
-        priceTaxMode: (restaurant?.price_tax_mode as any) || 'TAX_INCLUSIVE',
-      },
-      items: itemsList.map((i: any) => ({
-        name: i.name || 'Food Item',
-        quantity: Number(i.quantity || i.qty || 1),
-        price: Number(i.price || 0),
-        taxRate: Number(i.taxRate ?? 5),
-        priceTaxMode: i.priceTaxMode || restaurant?.price_tax_mode || 'TAX_INCLUSIVE',
-      })),
-      tip: Number(tip) || 0,
-      couponDiscountAmount: couponDiscountAmount,
-    })
+    // ─── CR-005: Server-side distance calculation from trusted coordinates ──────
+    // Get customer coordinates: from request body or user's default address
+    let customerLat: number | null = typeof customer_lat === 'number' ? customer_lat : null
+    let customerLng: number | null = typeof customer_lng === 'number' ? customer_lng : null
 
-    // Accept real distance from client or default to base distance (avoids incorrect fee calc)
-    const resolvedDistanceKm =
-      typeof distance_km === 'number' && distance_km > 0
-        ? distance_km
-        : paymentConfig.baseDistanceKm || 2.5
+    // If not provided, try to get from user's default address
+    if (customerLat === null || customerLng === null) {
+      try {
+        // Use prisma to find user's default address
+        const { prisma } = await import('@/lib/prisma')
+        const defaultAddress = await prisma.customerAddress.findFirst({
+          where: { customer_id: finalCustomerId, is_default: true },
+          select: { latitude: true, longitude: true },
+        })
+        if (defaultAddress?.latitude && defaultAddress?.longitude) {
+          customerLat = Number(defaultAddress.latitude)
+          customerLng = Number(defaultAddress.longitude)
+        }
+      } catch (e) {
+        // Ignore, will use fallback
+      }
+    }
 
-    const calcResult = calculateFullBreakdown(
-      {
-        subtotal: foodSubtotal,
-        distanceKm: resolvedDistanceKm,
-        packagingFee: paymentConfig.packagingCap || 20, // CR-006: Server-controlled packaging fee
-        tip: Number(tip) || 0,
-        restaurantName: finalRestaurantName,
-        vendorCommissionPercent: commissionRate,
-        driverPayoutSharePercent: paymentConfig.driverPayoutShare,
-        platformFee: paymentConfig.platformFee,
-        handlingFee: paymentConfig.handlingFee,
-        baseDeliveryFee: paymentConfig.baseDeliveryFee,
-        baseDistanceKm: paymentConfig.baseDistanceKm,
-        perKmRate: paymentConfig.perKmRate,
-        freeDeliveryThreshold: paymentConfig.freeDeliveryThreshold,
-        surgeMultiplier: paymentConfig.surgeMultiplier,
-        rainFee: paymentConfig.rainFee,
-        nightSurgeFee: paymentConfig.nightSurgeFee,
-        isRainModeActive: paymentConfig.isRainModeActive,
-        isNightSurgeActive: paymentConfig.isNightSurgeActive,
-      },
-      couponDiscountAmount > 0
-        ? { discount_type: 'flat', discount_value: couponDiscountAmount }
-        : undefined
+    // Get restaurant coordinates
+    const restaurantLat = restaurantDetails?.latitude ? Number(restaurantDetails.latitude) : null
+    const restaurantLng = restaurantDetails?.longitude ? Number(restaurantDetails.longitude) : null
+
+    // Calculate road distance using server-side coordinates
+    const serverCalculatedDistanceKm = calculateRoadTravelDistanceKm(
+      restaurantLat,
+      restaurantLng,
+      customerLat,
+      customerLng
     )
 
+    // ─── Single Authoritative Pricing Engine (lib/finance/pricing-engine.ts) ─────
+    // Convert to paise for the authoritative engine
+    const pricingInput: OrderPriceInput = {
+      orderId,
+      orderType: order_type as 'restaurant_food' | 'cravexp_grocery',
+      restaurantId: finalRestaurantId,
+      restaurantName: finalRestaurantName,
+      supplierState: restaurantDetails.supplier_state || 'Karnataka',
+      customerState: restaurantDetails.supplier_state || 'Karnataka',
+      items: itemsList.map((i) => ({
+        name: i.name,
+        hsnSacCode: i._menuItem?.hsn_sac_code || '996331',
+        quantity: i.quantity,
+        unitPricePaise: Math.round(i.price * 100),
+        priceTaxMode: i.priceTaxMode,
+        taxCategory: 'RESTAURANT_SERVICE' as const,
+        taxRatePercent: i.taxRate,
+        customCommissionRatePercent: i._menuItem?.custom_commission_rate
+          ? Number(i._menuItem.custom_commission_rate)
+          : undefined,
+        customMarkupRatePercent: i._menuItem?.custom_markup_rate
+          ? Number(i._menuItem.custom_markup_rate)
+          : undefined,
+      })),
+      delivery: {
+        baseDeliveryFeePaise: Math.round((paymentConfig.baseDeliveryFee || 30) * 100),
+        baseDistanceKm: paymentConfig.baseDistanceKm || 2.5,
+        perKmRatePaise: Math.round((paymentConfig.perKmRate || 10) * 100),
+        freeDeliveryThresholdPaise: Math.round((paymentConfig.freeDeliveryThreshold || 500) * 100),
+        // CR-005: Use server-calculated distance, ignore client-provided distance_km
+        roadDistanceKm: serverCalculatedDistanceKm,
+      },
+      surcharges: {
+        surgeMultiplier: paymentConfig.surgeMultiplier || 1.0,
+        rainFeePaise: Math.round((paymentConfig.rainFee || 0) * 100),
+        nightSurgeFeePaise: Math.round((paymentConfig.nightSurgeFee || 0) * 100),
+        isRainActive: paymentConfig.isRainModeActive || false,
+        isNightSurgeActive: paymentConfig.isNightSurgeActive || false,
+      },
+      platformFeePaise: Math.round((paymentConfig.platformFee || 6) * 100),
+      handlingFeePaise: Math.round((paymentConfig.handlingFee || 5) * 100),
+      packagingFeePaise: Math.round((paymentConfig.packagingCap || 20) * 100),
+      smallCartFeePaise: 0,
+      smallCartThresholdPaise: 0,
+      couponDiscountPaise: Math.round(couponDiscountAmount * 100),
+      couponFundingSource: 'SHARED',
+      restaurantDiscountSharePercent: 50,
+      tipPaise: Math.round((tip || 0) * 100),
+      contract: {
+        contractNumber: restaurantDetails.contract_number || 'DEFAULT',
+        version: 1,
+        commercialModel,
+        commissionRatePercent: Number(
+          restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+        ),
+        markupRatePercent: Number(restaurantDetails.markup_rate || 0),
+        fixedCommissionPaise: Math.round((restaurantDetails.fixed_commission || 0) * 100),
+        fixedMarkupPaise: Math.round((restaurantDetails.fixed_markup || 0) * 100),
+        commissionBasis: 'ORDER_SUBTOTAL',
+        priceTaxMode: restaurantDetails.price_tax_mode || 'TAX_INCLUSIVE',
+        gstStatus: restaurantDetails.gst_status || 'REGISTERED',
+        supplierState: restaurantDetails.supplier_state || 'Karnataka',
+        restaurantGstin: restaurantDetails.gstin || '',
+      },
+    }
+
+    // Call the authoritative pricing engine
+    const canonicalResult = calculateOrderPrice(pricingInput)
+    const calcResult = tolegacyCalculatorResult(canonicalResult)
+
+    // Extract values from canonical result
+    const vendorNetPayout = Math.round(canonicalResult.vendorPayableNetPaise / 100)
+    const driverPayout = Math.round(canonicalResult.riderPayablePaise / 100)
+    const platformProfit = Math.round(canonicalResult.platformNetRevenuePaise / 100)
     const capPackaging = calcResult.customerBilling.packagingFee
-    const vendorNetPayout =
-      commercialSnapshot.restaurantPayableNet || calcResult.vendorSettlement.netVendorPayout
-    const driverPayout = calcResult.driverEarnings.totalDriverEarnings
-    const platformProfit =
-      commercialSnapshot.platformNetRevenue || calcResult.platformEconomics.platformNetProfit
 
     const billingBreakdown = {
       subtotal: foodSubtotal,
       commercial_model: commercialModel,
-      markup_rate: markupRate,
-      markup_amount: commercialSnapshot.markupAmount,
+      markup_rate: Number(restaurantDetails.markup_rate || 0),
+      markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
       packaging_fee: capPackaging,
       delivery_fee: calcResult.customerBilling.netDeliveryFee,
       platform_fee: calcResult.customerBilling.platformFee,
@@ -400,8 +519,10 @@ export async function POST(request: Request) {
       tip: calcResult.customerBilling.tip,
       discount_amount: calcResult.customerBilling.couponDiscount,
       total_amount: calcResult.customerBilling.grandTotal,
-      vendor_commission_rate: commissionRate,
-      vendor_commission_amount: commercialSnapshot.grossCommission,
+      vendor_commission_rate: Number(
+        restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+      ),
+      vendor_commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
       vendor_net_payout: vendorNetPayout,
       driver_payout: driverPayout,
       driver_base_payout: calcResult.driverEarnings.baseDistanceShare,
@@ -411,10 +532,10 @@ export async function POST(request: Request) {
       platform_net_profit: platformProfit,
     }
 
-    if (itemsList.length > 0) {
-      itemsList[0].billing_breakdown = billingBreakdown
+    if (itemsForStorage.length > 0) {
+      itemsForStorage[0].billing_breakdown = billingBreakdown
     } else {
-      itemsList.push({
+      itemsForStorage.push({
         id: 'meta',
         name: 'Order Metadata',
         qty: 1,
@@ -435,7 +556,7 @@ export async function POST(request: Request) {
       customer_address: customer_address || 'Bengaluru',
       restaurant_id: finalRestaurantId || undefined,
       restaurant_name: finalRestaurantName,
-      items: itemsList,
+      items: itemsForStorage,
       subtotal: foodSubtotal,
       packaging_fee: capPackaging,
       delivery_fee: calcResult.customerBilling.netDeliveryFee,
@@ -450,13 +571,14 @@ export async function POST(request: Request) {
       tip: Number(tip) || 0,
       discount_amount: calcResult.customerBilling.couponDiscount, // Server-calculated
       coupon_code: coupon_code || undefined,
-      commission_amount: commercialSnapshot.grossCommission,
-      markup_amount: commercialSnapshot.markupAmount,
+      commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
+      markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
       restaurant_payout: vendorNetPayout,
       platform_revenue: platformProfit,
       utr_ref,
       customer_vpa,
-    })
+      // CR-004: Persist immutable canonical financial snapshot
+    } as any)
 
     // Increment coupon usage count once order is safely created
     if (coupon_code && couponResult?.coupon?.id) {
@@ -489,8 +611,10 @@ export async function POST(request: Request) {
         restaurant_name: finalRestaurantName,
         restaurant_id: finalRestaurantId,
         gross_sales: foodSubtotal,
-        commission_rate: commissionRate,
-        commission_amount: calcResult.vendorSettlement.commissionDeducted,
+        commission_rate: Number(
+          restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+        ),
+        commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
         net_payout: vendorNetPayout,
         status: 'scheduled',
         period_start: new Date(),

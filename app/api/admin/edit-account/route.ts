@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { broadcast } from '@/lib/ws-server'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers?.get ? request.headers.get('authorization') : null

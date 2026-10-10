@@ -306,7 +306,13 @@ const CHANNEL_AUTH_RULES = {
   map_live_analytics: { roles: ['admin'] },
 }
 
-function authorizeChannel(channel, clientInfo) {
+// Track allowed order subscriptions per customer: customerId -> Set<orderId>
+const customerOrderSubscriptions = new Map()
+
+// Track driver-order associations: driverId -> Set<orderId>
+const driverOrderAssignments = new Map()
+
+function authorizeChannel(channel, clientInfo, subscriptionData = {}) {
   const rules = CHANNEL_AUTH_RULES[channel]
   if (!rules) return false
 
@@ -317,14 +323,71 @@ function authorizeChannel(channel, clientInfo) {
   if (rules.requireOwnership) {
     if (channel === 'order_update' || channel === 'approval_update') {
       // Customer can only subscribe to their own orders
-      // This is handled at subscription time by checking customerId
+      // Admin can subscribe to all
+      if (clientInfo.role === 'admin') return true
+
+      const orderId = subscriptionData.orderId
+      if (!orderId) return false // Must specify orderId for ownership channels
+
+      // Check if customer owns this order
+      const allowedOrders = customerOrderSubscriptions.get(clientInfo.customerId)
+      if (!allowedOrders || !allowedOrders.has(orderId)) {
+        return false
+      }
     } else if (channel === 'driver_location') {
       // Customer can only track their own order's driver
       // Driver can only publish their own location
+      if (clientInfo.role === 'admin') return true
+
+      if (clientInfo.role === 'user' || clientInfo.role === 'customer') {
+        const orderId = subscriptionData.orderId
+        if (!orderId) return false
+
+        // Check if customer owns this order
+        const allowedOrders = customerOrderSubscriptions.get(clientInfo.customerId)
+        if (!allowedOrders || !allowedOrders.has(orderId)) {
+          return false
+        }
+      } else if (clientInfo.role === 'rider' || clientInfo.role === 'driver') {
+        // Driver can only publish their own location (handled in driver_update)
+        // For subscription, driver can track their assigned orders
+        const assignedOrders = driverOrderAssignments.get(clientInfo.driverId)
+        const orderId = subscriptionData.orderId
+        if (!orderId || !assignedOrders || !assignedOrders.has(orderId)) {
+          return false
+        }
+      }
     }
   }
 
   return true
+}
+
+// Register a customer's order for subscription access
+function registerCustomerOrder(customerId, orderId) {
+  if (!customerOrderSubscriptions.has(customerId)) {
+    customerOrderSubscriptions.set(customerId, new Set())
+  }
+  customerOrderSubscriptions.get(customerId).add(orderId)
+}
+
+// Register driver-order assignment
+function assignDriverToOrder(driverId, orderId) {
+  if (!driverOrderAssignments.has(driverId)) {
+    driverOrderAssignments.set(driverId, new Set())
+  }
+  driverOrderAssignments.get(driverId).add(orderId)
+}
+
+// Remove driver-order assignment (on delivery complete)
+function removeDriverFromOrder(driverId, orderId) {
+  const assignedOrders = driverOrderAssignments.get(driverId)
+  if (assignedOrders) {
+    assignedOrders.delete(orderId)
+    if (assignedOrders.size === 0) {
+      driverOrderAssignments.delete(driverId)
+    }
+  }
 }
 
 const server = createServer((req, res) => {
@@ -367,11 +430,56 @@ const server = createServer((req, res) => {
             'driver_location',
             'control',
             'map_live_analytics',
+            '__internal_register_order',
+            '__internal_assign_driver',
+            '__internal_remove_driver',
+          ])
+
+          // Internal channels for ownership management (require x-internal-secret)
+          const INTERNAL_CHANNELS = new Set([
+            '__internal_register_order',
+            '__internal_assign_driver',
+            '__internal_remove_driver',
           ])
 
           if (!msg.channel || !ALLOWED_CHANNELS.has(msg.channel)) {
             res.writeHead(400, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ error: 'Invalid or unauthorized channel' }))
+            return
+          }
+
+          // Handle internal ownership management channels
+          if (INTERNAL_CHANNELS.has(msg.channel)) {
+            if (!msg.data || typeof msg.data !== 'object') {
+              res.writeHead(400, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ error: 'Invalid internal payload' }))
+              return
+            }
+
+            let result = false
+            switch (msg.channel) {
+              case '__internal_register_order':
+                if (msg.data.customerId && msg.data.orderId) {
+                  registerCustomerOrder(msg.data.customerId, msg.data.orderId)
+                  result = true
+                }
+                break
+              case '__internal_assign_driver':
+                if (msg.data.driverId && msg.data.orderId) {
+                  assignDriverToOrder(msg.data.driverId, msg.data.orderId)
+                  result = true
+                }
+                break
+              case '__internal_remove_driver':
+                if (msg.data.driverId && msg.data.orderId) {
+                  removeDriverFromOrder(msg.data.driverId, msg.data.orderId)
+                  result = true
+                }
+                break
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ success: result }))
             return
           }
 
@@ -473,8 +581,11 @@ wss.on('connection', async (ws, req) => {
         case 'subscribe':
           if (Array.isArray(msg.channels)) {
             msg.channels.forEach((ch) => {
-              // Authorize channel subscription
-              if (!authorizeChannel(ch, info)) {
+              // Authorize channel subscription with ownership data
+              const subscriptionData = {
+                orderId: msg.orderId, // Client must provide orderId for ownership channels
+              }
+              if (!authorizeChannel(ch, info, subscriptionData)) {
                 ws.send(
                   JSON.stringify({
                     channel: 'control',
@@ -534,7 +645,19 @@ wss.on('connection', async (ws, req) => {
             break
           }
           // Use authenticated driver ID, not client-supplied
-          if (msg.lat && msg.lng) {
+          if (msg.lat && msg.lng && msg.orderId) {
+            // Verify driver is assigned to this order
+            const assignedOrders = driverOrderAssignments.get(info.userId)
+            if (!assignedOrders || !assignedOrders.has(msg.orderId)) {
+              ws.send(
+                JSON.stringify({
+                  channel: 'control',
+                  data: { type: 'error', message: 'Not assigned to this order' },
+                  ts: Date.now(),
+                })
+              )
+              break
+            }
             // Validate coordinate ranges
             if (msg.lat < -90 || msg.lat > 90 || msg.lng < -180 || msg.lng > 180) {
               ws.send(
