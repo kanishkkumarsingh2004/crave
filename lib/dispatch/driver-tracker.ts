@@ -356,7 +356,15 @@ export function removeDriverLocation(driverId: string): void {
     driverSpatialIndex.delete(driverId)
   }
   if (isRedisAvailable() && redis) {
-    redis.del(`crave:driver:loc:${driverId}`).catch(() => {})
+    const pipe = redis.pipeline()
+    // CR-05 FIX: Remove driver from H3 cell set atomically with location key deletion.
+    // Without SREM, stale driver IDs accumulate in the cell set until the TTL expires,
+    // causing distributed reads to pipeline GETs for drivers that no longer exist.
+    if (existing?.h3Cell) {
+      pipe.srem(`crave:h3:cell:${existing.h3Cell}`, driverId)
+    }
+    pipe.del(`crave:driver:loc:${driverId}`)
+    pipe.exec().catch(() => {})
   }
 }
 
@@ -410,36 +418,55 @@ export function getDriversInH3Cell(
 }
 
 /**
- * Retrieve all drivers in an H3 cell with Redis fallback for distributed deployments
- * First checks local memory, then falls back to Redis for distributed deployments
+ * Retrieve all drivers in an H3 cell with Redis for distributed deployments.
+ *
+ * CR-06 FIX: Always merge local + Redis results rather than short-circuiting when
+ * local.length > 0. Under multi-pod load, other pods' drivers live only in Redis;
+ * returning local-only produces incomplete candidate sets and biases dispatch toward
+ * drivers registered on this pod.
+ *
+ * Deduplication is by driverId — local entries win over Redis (more recently written).
  */
 export async function getDriversInH3CellDistributed(
   h3Cell: string,
   maxAgeMs: number = DEFAULT_MAX_LOCATION_AGE_MS
 ): Promise<DriverLocationState[]> {
-  // 1. Prefer local memory (fast path)
+  // Always collect local drivers first
   const local = getDriversInH3Cell(h3Cell, maxAgeMs)
-  if (local.length > 0 || !isRedisAvailable() || !redis) return local
 
-  // 2. Fallback / merge from Redis
-  const ids = await redis.smembers(`crave:h3:cell:${h3Cell}`)
-  if (!ids.length) return local
+  // If Redis is unavailable fall back to local-only
+  if (!isRedisAvailable() || !redis) return local
 
-  const pipe = redis.pipeline()
-  ids.forEach((id) => pipe.get(`crave:driver:loc:${id}`))
-  const results = await pipe.exec()
+  // Build a dedup map seeded with local entries (local wins on conflict)
+  const merged = new Map<string, DriverLocationState>()
+  local.forEach((d) => merged.set(d.driverId, d))
 
-  const remote: DriverLocationState[] = []
-  results?.forEach(([, val]) => {
-    if (typeof val === 'string') {
-      try {
-        const parsed = JSON.parse(val) as DriverLocationState
-        if (Date.now() - parsed.lastUpdated <= maxAgeMs) remote.push(parsed)
-      } catch {}
+  try {
+    const ids = await redis.smembers(`crave:h3:cell:${h3Cell}`)
+    if (ids.length > 0) {
+      const pipe = redis.pipeline()
+      ids.forEach((id) => pipe.get(`crave:driver:loc:${id}`))
+      const results = await pipe.exec()
+
+      results?.forEach(([, val]) => {
+        if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val) as DriverLocationState
+            if (
+              Date.now() - parsed.lastUpdated <= maxAgeMs &&
+              !merged.has(parsed.driverId) // local entry already present — keep it
+            ) {
+              merged.set(parsed.driverId, parsed)
+            }
+          } catch {}
+        }
+      })
     }
-  })
+  } catch {
+    // Redis error — return whatever we have so far (local at minimum)
+  }
 
-  return remote
+  return Array.from(merged.values())
 }
 
 /**

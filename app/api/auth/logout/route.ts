@@ -5,12 +5,23 @@ import { cookies } from 'next/headers'
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies()
-    const token =
+    const cookieToken =
       cookieStore.get('crave_auth_token')?.value || cookieStore.get('drop_auth_token')?.value || ''
 
-    // Blacklist the current token
-    if (token) {
-      await blacklistToken(token)
+    // CR-08 FIX: Also extract token from Authorization: Bearer header so clients that
+    // authenticate without a cookie (mobile apps, API integrations) have their token
+    // blacklisted. Both paths are blacklisted when both are present.
+    const authHeader = request.headers.get('authorization') || ''
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : ''
+
+    // Blacklist cookie token
+    if (cookieToken) {
+      await blacklistToken(cookieToken)
+    }
+
+    // Blacklist bearer token only if it is distinct from the cookie token
+    if (bearerToken && bearerToken !== cookieToken) {
+      await blacklistToken(bearerToken)
     }
 
     const response = NextResponse.json({ success: true, message: 'Logged out successfully' })

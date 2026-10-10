@@ -7,7 +7,8 @@ import {
 import { prisma } from '@/lib/prisma'
 import { findRestaurantById } from '@/lib/dal/restaurants'
 import { findMenuItemById } from '@/lib/dal/menu-items'
-import { validateAndApplyCoupon } from '@/lib/dal/coupons'
+import { validateAndApplyCoupon, checkAndIncrementCouponUsage } from '@/lib/dal/coupons'
+import { redis, isRedisAvailable } from '@/lib/redis'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import {
   calculateOrderPrice,
@@ -463,14 +464,31 @@ export async function POST(request: Request) {
     const itemsForStorage: any[] = itemsList.map(({ _menuItem, ...item }) => item)
 
     // ─── Validate Coupon (if provided) ─────────────────────────────────
+    // CR-03 FIX: Two-phase coupon gate.
+    //   Phase 1 (here): validateAndApplyCoupon checks eligibility and computes the discount
+    //                   but does NOT increment the counter.
+    //   Phase 2 (below): checkAndIncrementCouponUsage atomically claims the slot in Redis
+    //                   (INCR with DECR-on-overshoot) before the DB transaction opens.
+    //                   If the transaction rolls back, compensateCouponIncrement() releases
+    //                   the Redis slot so it is not permanently consumed.
     let couponDiscountAmount = 0
     let couponResult: any = null
+    let couponIncrementClaimed = false // tracks whether we must compensate on failure
     if (coupon_code) {
       couponResult = await validateAndApplyCoupon(coupon_code, foodSubtotal, finalRestaurantId)
       if (!couponResult.valid) {
         return NextResponse.json({ error: couponResult.error || 'Invalid coupon' }, { status: 400 })
       }
       couponDiscountAmount = couponResult.discount
+
+      // Atomically claim one usage slot (Redis INCR + limit guard)
+      if (couponResult.coupon?.id) {
+        const usageCheck = await checkAndIncrementCouponUsage(couponResult.coupon.id)
+        if (!usageCheck.allowed) {
+          return NextResponse.json({ error: 'Coupon usage limit exceeded' }, { status: 400 })
+        }
+        couponIncrementClaimed = true
+      }
     }
 
     const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
@@ -694,7 +712,8 @@ export async function POST(request: Request) {
           },
         })
 
-        // 2. Increment coupon usage (atomic in same transaction)
+        // 2. Increment coupon usage in DB (Redis slot was already claimed atomically above;
+        //    this keeps the DB used_count in sync inside the same transaction).
         if (coupon_code && couponResult?.coupon?.id) {
           await tx.coupon.update({
             where: { id: couponResult.coupon.id },
@@ -738,6 +757,18 @@ export async function POST(request: Request) {
         return createdOrder
       })
     } catch (txErr: any) {
+      // CR-03 FIX: Release the Redis coupon slot if the DB transaction failed.
+      // checkAndIncrementCouponUsage already does a DECR internally on overshoot, but if
+      // the transaction fails for an unrelated reason after the slot was claimed we must
+      // give it back so future orders can use it.
+      if (couponIncrementClaimed && couponResult?.coupon?.id) {
+        if (isRedisAvailable() && redis) {
+          redis
+            .decr(`crave:coupon:usage:${couponResult.coupon.id}`)
+            .catch(() => {})
+        }
+      }
+
       // Anti-concurrency collision recovery: If duplicate order ID or duplicate UTR was inserted concurrently
       if (txErr?.code === 'P2002') {
         const recoveredOrder = await prisma.order.findFirst({

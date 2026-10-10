@@ -6,7 +6,7 @@ import {
   DEFAULT_MAX_LOCATION_AGE_MS,
   type DriverLocationState,
 } from './driver-tracker'
-import { isDriverLocked, isDriverLockedAsync } from './atomic-lock'
+import { isDriverLocked, isDriverLockedAsync, acquireDriverOfferLock } from './atomic-lock'
 import { calculateHaversineDistanceKm, calculateEstimatedEtaMinutes } from '../utils'
 
 export interface DispatchRequest {
@@ -154,7 +154,7 @@ export async function findGeofencedCandidateDrivers(
           continue
         }
 
-        // Eligibility Check 3: Distributed Lock Check
+        // Eligibility Check 3: Distributed Lock Check — skip already-locked drivers
         if (await isDriverLockedAsync(driver.driverId)) {
           continue
         }
@@ -168,6 +168,18 @@ export async function findGeofencedCandidateDrivers(
         )
 
         if (distanceKm > maxSearchRadiusKm) {
+          continue
+        }
+
+        // CR-04 FIX: Atomically acquire a dispatch offer lock for this driver before
+        // adding them to the candidate set. Two pods scanning the same cell concurrently
+        // will race on Redis SET NX — only one wins. The loser skips this driver.
+        // The caller is responsible for releasing the lock via releaseDriverLock() when
+        // the offer is accepted, rejected, or times out.
+        const lockAcquired = await acquireDriverOfferLock(driver.driverId, requestId)
+        if (!lockAcquired) {
+          // Another pod just claimed this driver between the isDriverLockedAsync check
+          // and now — skip to avoid duplicate offers.
           continue
         }
 
