@@ -13,7 +13,7 @@ const DEFAULT_OFFER_TTL_MS = 15 * 1000 // 15 seconds offer timeout window
 
 /**
  * PRIMARY API: Acquire a distributed atomic offer lock for a candidate driver.
- * Uses Redis SET NX PX for cross-pod atomicity, falls back to local memory if Redis unavailable.
+ * Uses Redis SET NX PX for cross-pod atomicity. In production, fails closed if Redis unavailable.
  * Returns true if lock was successfully acquired, false if driver is already locked.
  */
 export async function acquireDriverOfferLock(
@@ -39,11 +39,20 @@ export async function acquireDriverOfferLock(
       }
       return false // Locked by another request
     } catch (e) {
-      console.warn('[atomic-lock] Redis unavailable, falling back to local lock:', e)
+      console.error('[atomic-lock] Redis error during acquire:', e)
+      // In production, fail closed if Redis is configured but fails
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Redis unavailable - cannot acquire distributed lock')
+      }
     }
   }
 
-  // Fallback: Local memory lock (single-instance only)
+  // In production, require Redis for distributed locking
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Redis required for distributed locking in production')
+  }
+
+  // Development fallback: Local memory lock (single-instance only)
   const existingLock = offerLocks.get(driverId)
   if (existingLock && existingLock.expiresAt > now) {
     if (existingLock.requestId === requestId) {
@@ -84,6 +93,11 @@ export async function tryLockDriverForOffer(
       return true
     }
     return false
+  }
+
+  // In production, require Redis for distributed locking
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Redis required for distributed locking in production')
   }
 
   // Fallback to local
@@ -130,7 +144,16 @@ export async function isDriverLockedAsync(driverId: string): Promise<boolean> {
     try {
       const redisLock = await redis.get(`crave:lock:driver:${driverId}`)
       if (redisLock) return true
-    } catch (e) {}
+    } catch (e) {
+      console.error('[atomic-lock] Redis error during isDriverLockedAsync:', e)
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Redis unavailable - cannot check distributed lock')
+      }
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Redis required for distributed lock check in production')
   }
 
   if (lock && lock.expiresAt <= now) {
@@ -141,6 +164,7 @@ export async function isDriverLockedAsync(driverId: string): Promise<boolean> {
 
 /**
  * Release an offer lock manually (e.g. driver rejected offer or offer completed)
+ * Uses atomic compare-and-delete in Redis (Lua script) for safety
  */
 export async function releaseDriverLock(driverId: string, requestId?: string): Promise<boolean> {
   const lock = offerLocks.get(driverId)
@@ -154,17 +178,31 @@ export async function releaseDriverLock(driverId: string, requestId?: string): P
   if (isRedisAvailable() && redis) {
     try {
       const key = `crave:lock:driver:${driverId}`
+      // Atomic compare-and-delete: only delete if value matches requestId
       if (requestId) {
-        const currentVal = await redis.get(key)
-        if (currentVal && currentVal !== requestId) {
-          return false // Lock owned by another request in Redis
-        }
+        const luaScript = `
+          if redis.call("get", KEYS[1]) == ARGV[1] then
+            return redis.call("del", KEYS[1])
+          else
+            return 0
+          end
+        `
+        const result = await redis.eval(luaScript, 1, key, requestId)
+        return result === 1
       }
+      // No requestId provided - just delete
       await redis.del(key)
       return true
-    } catch {
-      // Fall through
+    } catch (e) {
+      console.error('[atomic-lock] Redis error during release:', e)
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Redis unavailable - cannot release distributed lock')
+      }
     }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Redis required for distributed lock release in production')
   }
 
   return lock !== undefined

@@ -84,7 +84,7 @@ describe('Orders API Route - PATCH (order_update broadcast)', () => {
   it('broadcasts order_update on order status change', async () => {
     const mockOrder = {
       id: 'ord_1',
-      status: 'new',
+      status: 'payment_verified',
       customer_id: 'usr_test_user',
       restaurant_id: 'vnd_1',
       restaurant_name: 'Spice Garden',

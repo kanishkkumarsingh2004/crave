@@ -86,7 +86,9 @@ function coalesceGpsUpdate(driverId, lat, lng, orderId, now) {
 // Primary Client Directory: ws -> client metadata
 const connectedClients = new Map()
 
-// High-Performance Inverted Channel Index: channel -> Set<ws>
+// High-Performance Inverted Index: channel -> Map<orderId, Set<ws>>
+// For ownership channels (order_update, approval_update, driver_location), we track per-order subscriptions
+// For non-ownership channels, orderId is 'global'
 const channelSubscribers = new Map()
 
 // Cross-instance subscription tracking: channel -> Set<instance_id>
@@ -99,18 +101,44 @@ const MESSAGE_CACHE_MAX = 10000
 
 /**
  * Broadcast an event to all locally connected clients subscribed to this channel.
+ * For ownership channels (order_update, approval_update, driver_location),
+ * filters by orderId so only authorized subscribers receive the event.
  */
 const broadcastLocal = (channel, data, excludeSocket) => {
   const subscribers = channelSubscribers.get(channel)
   if (!subscribers || subscribers.size === 0) return
 
+  // For ownership channels, filter by orderId
+  const orderId = data?.orderId
+  const isOwnershipChannel = ['order_update', 'approval_update', 'driver_location'].includes(
+    channel
+  )
+
   const payload = JSON.stringify({ channel, data, ts: Date.now() })
-  subscribers.forEach((ws) => {
-    if (excludeSocket && ws === excludeSocket) return
-    if (ws.readyState === WS_OPEN) {
-      ws.send(payload)
+
+  if (isOwnershipChannel && orderId) {
+    // Send only to subscribers of this specific order
+    const orderSubscribers = subscribers.get(orderId)
+    if (orderSubscribers) {
+      orderSubscribers.forEach((ws) => {
+        if (excludeSocket && ws === excludeSocket) return
+        if (ws.readyState === WS_OPEN) {
+          ws.send(payload)
+        }
+      })
     }
-  })
+  } else {
+    // Non-ownership channel or no orderId: send to all 'global' subscribers
+    const globalSubscribers = subscribers.get('global')
+    if (globalSubscribers) {
+      globalSubscribers.forEach((ws) => {
+        if (excludeSocket && ws === excludeSocket) return
+        if (ws.readyState === WS_OPEN) {
+          ws.send(payload)
+        }
+      })
+    }
+  }
 }
 
 // ----------------------------------------------------
@@ -254,8 +282,8 @@ const syncSubscription = (channel, action) => {
 
 const WS_INTERNAL_SECRET = process.env.WS_INTERNAL_SECRET
 
-if (!WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('FATAL: WS_INTERNAL_SECRET environment variable is required in production')
+if (!WS_INTERNAL_SECRET) {
+  console.error('FATAL: WS_INTERNAL_SECRET environment variable is required')
   process.exit(1)
 }
 
@@ -394,11 +422,7 @@ const server = createServer((req, res) => {
   if (req.url && req.url.startsWith('/__ws/broadcast')) {
     if (req.method === 'POST') {
       const incomingSecret = req.headers['x-internal-secret']
-      if (
-        process.env.NODE_ENV !== 'test' &&
-        WS_INTERNAL_SECRET &&
-        incomingSecret !== WS_INTERNAL_SECRET
-      ) {
+      if (incomingSecret !== WS_INTERNAL_SECRET) {
         res.writeHead(403, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ error: 'Forbidden' }))
         return
@@ -597,10 +621,26 @@ wss.on('connection', async (ws, req) => {
               }
 
               info.subscribed.add(ch)
+
+              // Initialize channel map if needed
               if (!channelSubscribers.has(ch)) {
-                channelSubscribers.set(ch, new Set())
+                channelSubscribers.set(ch, new Map())
               }
-              channelSubscribers.get(ch).add(ws)
+              const channelMap = channelSubscribers.get(ch)
+
+              // For ownership channels, track per-order; otherwise use 'global'
+              const isOwnershipChannel = [
+                'order_update',
+                'approval_update',
+                'driver_location',
+              ].includes(ch)
+              const orderKey =
+                isOwnershipChannel && subscriptionData.orderId ? subscriptionData.orderId : 'global'
+
+              if (!channelMap.has(orderKey)) {
+                channelMap.set(orderKey, new Set())
+              }
+              channelMap.get(orderKey).add(ws)
 
               // Sync subscription state across instances
               syncSubscription(ch, 'subscribe')
@@ -621,10 +661,18 @@ wss.on('connection', async (ws, req) => {
           if (Array.isArray(msg.channels)) {
             msg.channels.forEach((ch) => {
               info.subscribed.delete(ch)
-              const set = channelSubscribers.get(ch)
-              if (set) {
-                set.delete(ws)
-                if (set.size === 0) channelSubscribers.delete(ch)
+              const channelMap = channelSubscribers.get(ch)
+              if (channelMap) {
+                // Remove from all order keys for this channel
+                channelMap.forEach((wsSet, orderKey) => {
+                  wsSet.delete(ws)
+                  if (wsSet.size === 0) {
+                    channelMap.delete(orderKey)
+                  }
+                })
+                if (channelMap.size === 0) {
+                  channelSubscribers.delete(ch)
+                }
               }
               // Sync subscription state across instances
               syncSubscription(ch, 'unsubscribe')
@@ -700,10 +748,18 @@ wss.on('connection', async (ws, req) => {
     const info = connectedClients.get(ws)
     if (info) {
       info.subscribed.forEach((ch) => {
-        const set = channelSubscribers.get(ch)
-        if (set) {
-          set.delete(ws)
-          if (set.size === 0) channelSubscribers.delete(ch)
+        const channelMap = channelSubscribers.get(ch)
+        if (channelMap) {
+          // Remove from all order keys for this channel
+          channelMap.forEach((wsSet, orderKey) => {
+            wsSet.delete(ws)
+            if (wsSet.size === 0) {
+              channelMap.delete(orderKey)
+            }
+          })
+          if (channelMap.size === 0) {
+            channelSubscribers.delete(ch)
+          }
         }
       })
       // Clean up GPS coalescing buffer for this driver

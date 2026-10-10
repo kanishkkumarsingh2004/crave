@@ -168,6 +168,8 @@ export async function createOrder(data: {
   platform_revenue?: number
   utr_ref?: string
   customer_vpa?: string
+  // CR-004: Immutable canonical financial snapshot
+  financial_snapshot?: any
 }) {
   const { utr_ref, customer_vpa, ...prismaData } = data
   return prisma.order.create({ data: prismaData as any })

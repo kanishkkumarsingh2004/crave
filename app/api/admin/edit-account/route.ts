@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { broadcast } from '@/lib/ws-server'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Account ID is required.' }, { status: 400 })
     }
 
+    // CR-14 FIX: Validate target account exists before attempting updates
+    const targetUser = await findUserById(id)
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+    }
+
     const cleanEmail = email ? String(email).trim().toLowerCase() : undefined
     const finalStoreName = storeName || restaurantName
     const finalVehicleType = vehicleType || vehicle_type
@@ -65,10 +72,7 @@ export async function POST(request: Request) {
     if (password && String(password).trim().length > 0) {
       let targetEmail = cleanEmail
       if (!targetEmail) {
-        try {
-          const existingUser: any = await findUserById(id)
-          targetEmail = existingUser?.email
-        } catch {}
+        targetEmail = targetUser.email
       }
       if (targetEmail) {
         userUpdateData.password_hash = crypto
@@ -77,15 +81,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update User record in database
-    try {
-      await updateUser(id, userUpdateData)
-    } catch (e) {
-      console.warn('User table update notice:', e)
-    }
-
-    // If account has restaurant/vendor attributes, also update restaurant record
-    if (
+    // Determine if restaurant update is needed
+    const needsRestaurantUpdate =
       finalStoreName ||
       cuisine ||
       commissionRate !== undefined ||
@@ -93,21 +90,64 @@ export async function POST(request: Request) {
       address ||
       latitude !== undefined ||
       longitude !== undefined
-    ) {
-      const restUpdateData: Record<string, any> = {}
-      if (finalStoreName) restUpdateData.name = String(finalStoreName).trim()
-      if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
-      if (address) restUpdateData.address = String(address).trim()
-      if (phone) restUpdateData.phone = String(phone).trim()
-      if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
-      if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
-      if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
-      if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
 
-      try {
-        await updateRestaurant(id, restUpdateData)
-      } catch (e) {
-        console.warn('Restaurant table update notice:', e)
+    // CR-14 FIX: Use Prisma transaction for atomic updates
+    // Both user and restaurant updates must succeed or both roll back
+    const needsTransaction = Object.keys(userUpdateData).length > 0 && needsRestaurantUpdate
+
+    let userResult: any = null
+    let restaurantResult: any = null
+
+    if (needsTransaction) {
+      // Use transaction for atomicity
+      await prisma.$transaction(async (tx) => {
+        // Update User
+        if (Object.keys(userUpdateData).length > 0) {
+          userResult = await tx.user.update({
+            where: { id },
+            data: userUpdateData,
+          })
+        } else {
+          userResult = targetUser
+        }
+
+        // Update Restaurant (if needed)
+        if (needsRestaurantUpdate) {
+          const restUpdateData: Record<string, any> = {}
+          if (finalStoreName) restUpdateData.name = String(finalStoreName).trim()
+          if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
+          if (address) restUpdateData.address = String(address).trim()
+          if (phone) restUpdateData.phone = String(phone).trim()
+          if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
+          if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
+          if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
+          if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
+
+          restaurantResult = await tx.restaurant.update({
+            where: { id },
+            data: restUpdateData,
+          })
+        }
+      })
+    } else {
+      // Single table updates (no transaction needed for single table)
+      if (Object.keys(userUpdateData).length > 0) {
+        userResult = await updateUser(id, userUpdateData)
+      } else {
+        userResult = targetUser
+      }
+      if (needsRestaurantUpdate) {
+        const restUpdateData: Record<string, any> = {}
+        if (finalStoreName) restUpdateData.name = String(finalStoreName).trim()
+        if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
+        if (address) restUpdateData.address = String(address).trim()
+        if (phone) restUpdateData.phone = String(phone).trim()
+        if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
+        if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
+        if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
+        if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
+
+        restaurantResult = await updateRestaurant(id, restUpdateData)
       }
     }
 
@@ -119,6 +159,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'Account details successfully updated.',
       updated: { id, ...userUpdateData },
+      restaurantUpdated: needsRestaurantUpdate,
     })
   } catch (error: any) {
     console.error('Error updating account:', error)
