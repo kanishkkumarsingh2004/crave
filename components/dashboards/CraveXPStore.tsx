@@ -282,27 +282,14 @@ export default function CraveXPStore() {
               </div>
             </div>
 
-            {/* Right Card: Quick Cart / Inventory Status (Desktop only to save mobile height) */}
-            <div className="hidden lg:flex flex-col items-stretch gap-3 shrink-0 min-w-[220px]">
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
-                  LIVE CATALOG
-                </span>
-                <p className="text-2xl font-black text-[#d9f447] mt-0.5">
-                  {groceryItems.length} {groceryItems.length === 1 ? 'Product' : 'Products'}
-                </p>
-                <p className="text-[11px] text-gray-300 mt-0.5 flex items-center justify-center gap-1">
-                  <span className="size-1.5 rounded-full bg-emerald-400" />
-                  PostgreSQL Real-time
-                </p>
-              </div>
-
+            {/* Right Card: Quick Cart Button (Desktop) */}
+            <div className="hidden lg:flex items-center shrink-0">
               <button
                 onClick={() => router.push('/user/cart')}
                 className="flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-6 py-3.5 text-xs font-black text-[#0d1410] shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <ShoppingCart className="size-4" />
-                <span>{cartTotalItems} {cartTotalItems === 1 ? 'Item' : 'Items'}</span>
+                <span>{cartTotalItems > 0 ? `Cart (${cartTotalItems})` : 'View Cart'}</span>
                 {cartSubtotal > 0 && <span className="font-extrabold">· ₹{cartSubtotal}</span>}
               </button>
             </div>
@@ -417,13 +404,6 @@ export default function CraveXPStore() {
               {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
             </span>
           </div>
-
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <Zap className="size-3.5 text-emerald-600 fill-emerald-600" />
-              Direct DB Inventory
-            </span>
-          </div>
         </div>
 
         {/* LOADING SKELETON */}
@@ -449,7 +429,7 @@ export default function CraveXPStore() {
                   No products found for &ldquo;{searchQuery}&rdquo;
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
-                  Try searching for a different product or clear your search to explore all available dark store items.
+                  Try searching for a different product or clear your search to explore all groceries.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
@@ -471,7 +451,7 @@ export default function CraveXPStore() {
                   Fresh Inventory Arriving Shortly
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 max-w-md mx-auto leading-relaxed">
-                  Our Kanakapura Road fulfillment center is actively restocking daily essentials and fresh groceries directly to the live database catalog.
+                  Our fulfillment center is actively restocking fresh groceries and daily essentials.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <Link
