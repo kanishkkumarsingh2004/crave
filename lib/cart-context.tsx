@@ -13,6 +13,8 @@ export interface CartItem {
   restaurantName?: string
   restaurantId?: string
   vendorId?: string
+  restaurantLat?: number
+  restaurantLng?: number
 }
 
 interface CartContextType {

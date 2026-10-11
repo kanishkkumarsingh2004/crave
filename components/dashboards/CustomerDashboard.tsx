@@ -148,6 +148,8 @@ type MenuItem = {
   restaurantName?: string
   restaurantId?: string
   vendorId?: string
+  restaurantLat?: number
+  restaurantLng?: number
 }
 
 type CartItem = MenuItem & {
@@ -488,6 +490,8 @@ export default function CustomerDashboard({
           restaurantName: item.restaurantName,
           restaurantId: item.restaurantId,
           vendorId: item.vendorId,
+          restaurantLat: item.restaurantLat,
+          restaurantLng: item.restaurantLng,
         }))
       )
     }
@@ -695,6 +699,11 @@ export default function CustomerDashboard({
             const matchedObj = mapped.find((a: any) => a.address === chosen) || primary
             if (matchedObj?.lat != null && matchedObj?.lng != null) {
               setSelectedMapPin({ lat: matchedObj.lat, lng: matchedObj.lng })
+            } else {
+              const cached = getCachedLocation()
+              if (cached?.lat && cached?.lng) {
+                setSelectedMapPin({ lat: cached.lat, lng: cached.lng })
+              }
             }
           }
           return
@@ -703,19 +712,28 @@ export default function CustomerDashboard({
     } catch (err) {}
 
     if (user?.address) {
+      const cached = getCachedLocation()
+      const fallbackLat = cached?.lat ?? 12.9716
+      const fallbackLng = cached?.lng ?? 77.5946
       setSavedAddresses([
         {
           id: 'addr_default',
           label: 'Home',
           address: user.address,
           tag: 'Primary',
-          lat: 12.679898,
-          lng: 77.469493,
+          lat: fallbackLat,
+          lng: fallbackLng,
         },
       ])
       setDeliveryAddress((prev) => prev || user.address || '')
+      setSelectedMapPin({ lat: fallbackLat, lng: fallbackLng })
     } else {
-      setSavedAddresses([])
+      const cached = getCachedLocation()
+      if (cached?.lat && cached?.lng) {
+        setSelectedMapPin({ lat: cached.lat, lng: cached.lng })
+      } else {
+        setSavedAddresses([])
+      }
     }
   }, [user?.id, user?.address])
 
@@ -1270,6 +1288,19 @@ export default function CustomerDashboard({
   function addToCart(item: MenuItem) {
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
     const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id
+    const itemRestLat =
+      selectedRestaurant?.latitude != null
+        ? Number(selectedRestaurant.latitude)
+        : (item as any)?.restaurantLat != null
+        ? Number((item as any).restaurantLat)
+        : undefined
+    const itemRestLng =
+      selectedRestaurant?.longitude != null
+        ? Number(selectedRestaurant.longitude)
+        : (item as any)?.restaurantLng != null
+        ? Number((item as any).restaurantLng)
+        : undefined
+
     if (cart.length > 0) {
       const currentRest = cart[0].restaurantName || selectedRestaurant?.name || 'Kitchen Store'
       if (
@@ -1300,6 +1331,8 @@ export default function CustomerDashboard({
           restaurantName: itemRest,
           restaurantId: itemRestId,
           vendorId: itemRestId,
+          restaurantLat: itemRestLat,
+          restaurantLng: itemRestLng,
         },
       ]
     })
@@ -1310,7 +1343,31 @@ export default function CustomerDashboard({
     if (!conflictModal.newItem) return
     const item = conflictModal.newItem
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
-    setCart([{ ...item, qty: 1, restaurantName: itemRest }])
+    const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id
+    const itemRestLat =
+      selectedRestaurant?.latitude != null
+        ? Number(selectedRestaurant.latitude)
+        : (item as any)?.restaurantLat != null
+        ? Number((item as any).restaurantLat)
+        : undefined
+    const itemRestLng =
+      selectedRestaurant?.longitude != null
+        ? Number(selectedRestaurant.longitude)
+        : (item as any)?.restaurantLng != null
+        ? Number((item as any).restaurantLng)
+        : undefined
+
+    setCart([
+      {
+        ...item,
+        qty: 1,
+        restaurantName: itemRest,
+        restaurantId: itemRestId,
+        vendorId: itemRestId,
+        restaurantLat: itemRestLat,
+        restaurantLng: itemRestLng,
+      },
+    ])
     setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })
     triggerToast(`Cart reset. Added ${item.name}!`)
   }
@@ -1365,12 +1422,33 @@ export default function CustomerDashboard({
   }
 
   // Dynamic Road Distance & Admin Payment Config Pricing Engine
+  const currentCartRestaurantId =
+    selectedRestaurant?.id ||
+    cart[0]?.restaurantId ||
+    cart[0]?.vendorId ||
+    (cart[0] as any)?.restaurant_id ||
+    null
+
+  const currentCartRestaurant = useMemo(() => {
+    if (selectedRestaurant) return selectedRestaurant
+    if (!currentCartRestaurantId) return null
+    return restaurantsList.find((r) => r.id === currentCartRestaurantId) || null
+  }, [selectedRestaurant, currentCartRestaurantId, restaurantsList])
+
   const activeRestaurantLat =
-    selectedRestaurant?.latitude != null ? Number(selectedRestaurant.latitude) : 12.679898
+    currentCartRestaurant?.latitude != null
+      ? Number(currentCartRestaurant.latitude)
+      : (cart[0] as any)?.restaurantLat != null
+      ? Number((cart[0] as any).restaurantLat)
+      : null
   const activeRestaurantLng =
-    selectedRestaurant?.longitude != null ? Number(selectedRestaurant.longitude) : 77.469493
-  const activeDestLat = selectedMapPin?.lat ?? 12.679898
-  const activeDestLng = selectedMapPin?.lng ?? 77.469493
+    currentCartRestaurant?.longitude != null
+      ? Number(currentCartRestaurant.longitude)
+      : (cart[0] as any)?.restaurantLng != null
+      ? Number((cart[0] as any).restaurantLng)
+      : null
+  const activeDestLat = selectedMapPin?.lat ?? null
+  const activeDestLng = selectedMapPin?.lng ?? null
 
   const calculatedRoadDistanceKm = useMemo(() => {
     return calculateRoadTravelDistanceKm(
@@ -1832,7 +1910,7 @@ export default function CustomerDashboard({
               <span>Cart ({totalCartItemCount})</span>
               {cartSubtotal > 0 && (
                 <span className="text-[#d9f447] dark:text-[#18201c] font-black">
-                  &bull; ₹{grandTotal}
+                  &bull; ₹{cartSubtotal}
                 </span>
               )}
             </button>
@@ -3430,16 +3508,16 @@ export default function CustomerDashboard({
                                   calculateRoadTravelDistanceKm(
                                     activeOrder.restaurantLat
                                       ? Number(activeOrder.restaurantLat)
-                                      : 12.6817,
+                                      : 12.9716,
                                     activeOrder.restaurantLng
                                       ? Number(activeOrder.restaurantLng)
-                                      : 77.4729,
+                                      : 77.5946,
                                     activeOrder.customerLat
                                       ? Number(activeOrder.customerLat)
-                                      : (selectedMapPin?.lat ?? 12.679898),
+                                      : (selectedMapPin?.lat ?? 12.9716),
                                     activeOrder.customerLng
                                       ? Number(activeOrder.customerLng)
-                                      : (selectedMapPin?.lng ?? 77.469493)
+                                      : (selectedMapPin?.lng ?? 77.5946)
                                   ) *
                                     3 +
                                     10
@@ -3450,16 +3528,16 @@ export default function CustomerDashboard({
                                   calculateRoadTravelDistanceKm(
                                     activeOrder.restaurantLat
                                       ? Number(activeOrder.restaurantLat)
-                                      : 12.6817,
+                                      : 12.9716,
                                     activeOrder.restaurantLng
                                       ? Number(activeOrder.restaurantLng)
-                                      : 77.4729,
+                                      : 77.5946,
                                     activeOrder.customerLat
                                       ? Number(activeOrder.customerLat)
-                                      : (selectedMapPin?.lat ?? 12.679898),
+                                      : (selectedMapPin?.lat ?? 12.9716),
                                     activeOrder.customerLng
                                       ? Number(activeOrder.customerLng)
-                                      : (selectedMapPin?.lng ?? 77.469493)
+                                      : (selectedMapPin?.lng ?? 77.5946)
                                   ) *
                                     3 +
                                     15
@@ -3963,7 +4041,7 @@ export default function CustomerDashboard({
               <div className="sticky bottom-0 mb-safe mt-6 rounded-2xl bg-[#121815] p-4 text-white flex items-center justify-between shadow-2xl border border-[#25332a]">
                 <div>
                   <p className="text-xs text-[#9eb3a4]">{totalCartItemCount} items in cart</p>
-                  <p className="text-lg font-bold text-[#d9f447]">₹{grandTotal}</p>
+                  <p className="text-lg font-bold text-[#d9f447]">₹{cartSubtotal}</p>
                 </div>
                 <button
                   onClick={() => router.push('/user/cart')}

@@ -103,7 +103,13 @@ export default function CartPage() {
   const [newAddressText, setNewAddressText] = useState('')
   const [isSavingAddress, setIsSavingAddress] = useState(false)
   const [isGpsDetecting, setIsGpsDetecting] = useState(false)
-  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(() => {
+    const cached = getCachedLocation()
+    if (cached?.lat && cached?.lng) {
+      return { lat: cached.lat, lng: cached.lng }
+    }
+    return null
+  })
 
   const handleDetectGpsInCart = async () => {
     setIsGpsDetecting(true)
@@ -120,13 +126,50 @@ export default function CartPage() {
     }
   }
 
+  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(() => {
+    const first = cart[0] as any
+    if (first?.restaurantLat != null && first?.restaurantLng != null) {
+      return { lat: Number(first.restaurantLat), lng: Number(first.restaurantLng) }
+    }
+    return null
+  })
+
+  useEffect(() => {
+    const first = cart[0] as any
+    if (first?.restaurantLat != null && first?.restaurantLng != null) {
+      setRestaurantCoords({ lat: Number(first.restaurantLat), lng: Number(first.restaurantLng) })
+    }
+    const restId =
+      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id || undefined
+    if (!restId) {
+      if (!first?.restaurantLat) setRestaurantCoords(null)
+      return
+    }
+    let isMounted = true
+    fetch(`/api/restaurants?restaurantId=${encodeURIComponent(restId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return
+        const r = data.restaurants?.[0] || data.restaurant
+        if (r && r.latitude != null && r.longitude != null) {
+          setRestaurantCoords({ lat: Number(r.latitude), lng: Number(r.longitude) })
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [cart])
+
   const deliveryServiceability = useMemo(() => {
     if (!detectedCoords?.lat || !detectedCoords?.lng) return null
     return checkDeliveryServiceability({
       customerLat: detectedCoords.lat,
       customerLng: detectedCoords.lng,
+      restaurantLat: restaurantCoords?.lat,
+      restaurantLng: restaurantCoords?.lng,
     })
-  }, [detectedCoords])
+  }, [detectedCoords, restaurantCoords])
 
   const handleAddressSelectedFromModal = (addr: AddressItem) => {
     const savedItem: SavedAddress = {
@@ -214,9 +257,24 @@ export default function CartPage() {
                 setDetectedCoords({ lat: Number(def.latitude), lng: Number(def.longitude) })
               }
             }
+          } else {
+            const cached = getCachedLocation()
+            if (cached?.lat && cached?.lng) {
+              setDetectedCoords({ lat: cached.lat, lng: cached.lng })
+            }
           }
         } else if (localAddrs.length > 0) {
           setSavedAddresses(localAddrs)
+          setSelectedAddressId(localAddrs[0].id)
+          setDeliveryAddress(localAddrs[0].address)
+          if (localAddrs[0].latitude != null && localAddrs[0].longitude != null) {
+            setDetectedCoords({ lat: Number(localAddrs[0].latitude), lng: Number(localAddrs[0].longitude) })
+          }
+        } else {
+          const cached = getCachedLocation()
+          if (cached?.lat && cached?.lng) {
+            setDetectedCoords({ lat: cached.lat, lng: cached.lng })
+          }
         }
       } catch (e) {
         if (localAddrs.length > 0) {
@@ -275,36 +333,12 @@ export default function CartPage() {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const activeConfig = paymentConfig || getLocalPaymentConfig()
 
-  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(null)
-
-  useEffect(() => {
-    const restId =
-      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id || undefined
-    if (!restId) {
-      setRestaurantCoords(null)
-      return
-    }
-    let isMounted = true
-    fetch(`/api/restaurants?restaurantId=${encodeURIComponent(restId)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!isMounted) return
-        const r = data.restaurants?.[0] || data.restaurant
-        if (r && r.latitude != null && r.longitude != null) {
-          setRestaurantCoords({ lat: Number(r.latitude), lng: Number(r.longitude) })
-        }
-      })
-      .catch(() => {})
-    return () => {
-      isMounted = false
-    }
-  }, [cart])
 
   const roadDistanceKm = useMemo(() => {
-    const rLat = restaurantCoords?.lat ?? 12.679898
-    const rLng = restaurantCoords?.lng ?? 77.469493
-    const cLat = detectedCoords?.lat ?? 12.679898
-    const cLng = detectedCoords?.lng ?? 77.469493
+    const rLat = restaurantCoords?.lat ?? null
+    const rLng = restaurantCoords?.lng ?? null
+    const cLat = detectedCoords?.lat ?? null
+    const cLng = detectedCoords?.lng ?? null
     return calculateRoadTravelDistanceKm(rLat, rLng, cLat, cLng)
   }, [restaurantCoords, detectedCoords])
 
@@ -1090,6 +1124,9 @@ export default function CartPage() {
                               onClick={() => {
                                 setSelectedAddressId(addr.id)
                                 setDeliveryAddress(addr.address)
+                                if (addr.latitude != null && addr.longitude != null) {
+                                  setDetectedCoords({ lat: Number(addr.latitude), lng: Number(addr.longitude) })
+                                }
                                 if (typeof window !== 'undefined') {
                                   localStorage.setItem('crave_selected_address', addr.address)
                                 }
