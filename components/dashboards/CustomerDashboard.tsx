@@ -72,6 +72,8 @@ import {
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
+import CraveLogo from '@/components/CraveLogo'
+import CraveXPDeliveryIllustration from '@/components/illustrations/CraveXPDeliveryIllustration'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
@@ -1870,81 +1872,56 @@ export default function CustomerDashboard({
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
         {activeTab === 'explore' && (
           <div className="flex flex-col gap-8">
-            {/* craveXP 10-Min Instamart Store Hero Banner */}
+            {/* craveXP 10-Min Instamart Store Hero Banner (Clean & Aesthetic with Vector Illustration) */}
             <div
               onClick={() => router.push('/user/cravexp')}
-              className="relative overflow-hidden rounded-3xl bg-[#0f1411] bg-gradient-to-br from-[#121815] via-[#17221c] to-[#0c100d] p-6 sm:p-8 text-white shadow-2xl border border-white/10 hover:border-[#d9f447]/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 group cursor-pointer transition duration-300"
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-6 sm:p-8 lg:p-9 text-white shadow-2xl border border-white/[0.12] hover:border-[#d9f447]/40 flex flex-col md:flex-row items-center justify-between gap-6 group cursor-pointer transition-all duration-300"
             >
-              {/* Ambient lighting effect */}
-              <div className="absolute -right-20 -top-20 size-80 rounded-full bg-[#d9f447]/12 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/20 transition duration-700" />
-              <div className="absolute -left-20 -bottom-20 size-60 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+              {/* Luxury Ambient Lighting Glows */}
+              <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/18 transition duration-700" />
+              <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 flex items-start sm:items-center gap-4 sm:gap-5">
-                <div className="relative grid size-14 sm:size-16 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] font-black text-2xl shadow-xl shadow-[#d9f447]/20 shrink-0 group-hover:scale-105 group-hover:rotate-1 transition duration-300 ring-2 ring-[#d9f447]/40">
-                  <Zap className="size-8 fill-current text-[#121815]" />
-                  <span className="absolute -bottom-1 -right-1 flex size-3">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d9f447] opacity-75" />
-                    <span className="relative inline-flex size-3 rounded-full bg-emerald-500" />
+              {/* Left Content Column */}
+              <div className="relative z-10 flex-1 max-w-xl">
+                {/* Branding & Live Status Header Bar */}
+                <div className="flex flex-wrap items-center gap-2.5 mb-3">
+                  <CraveLogo variant="cravexp" size="lg" theme="light" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
+                    <span className="relative flex size-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                    </span>
+                    <span>10-Min Dark Store Hub</span>
+                  </div>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
+                    <span className="size-1 rounded-full bg-emerald-500" />
+                    <span>Real-Time Inventory</span>
                   </span>
                 </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:text-[#d9f447] transition">
-                      crave<span className="text-[#d9f447]">XP</span> Instamart
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447]/15 border border-[#d9f447]/40 px-3 py-0.5 text-[10px] font-black text-[#d9f447] tracking-wider uppercase">
-                      <Zap className="size-3 fill-[#d9f447] text-[#d9f447]" />
-                      <span>10-Min Express Drop</span>
-                    </span>
-                    <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
-                      <span className="size-1 rounded-full bg-gray-500" />
-                      <span>Live Dark Store Hub</span>
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-xs text-gray-300 max-w-xl leading-relaxed">
-                    Fresh dairy, farm eggs, artisanal breads, chilled drinks, chips &amp; veggies delivered to your doorstep in 10 minutes.
-                  </p>
 
-                  {/* Interactive Quick Preview Category Tags with Lucide Icons (NO EMOJIS) */}
-                  <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-                    {[
-                      { icon: Milk, label: 'Dairy & Milk' },
-                      { icon: CircleDot, label: 'Farm Eggs' },
-                      { icon: Coffee, label: 'Chilled Drinks' },
-                      { icon: Package, label: 'Instant Snacks' },
-                      { icon: Wheat, label: 'Bakery & Bread' },
-                      { icon: Apple, label: 'Fresh Fruits' },
-                      { icon: Sparkles, label: 'Sweet Treats' },
-                    ].map((item) => {
-                      const TagIcon = item.icon
-                      return (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            router.push('/user/cravexp')
-                          }}
-                          className="group/pill inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] hover:bg-[#d9f447] text-gray-200 hover:text-[#121815] px-2.5 py-1 text-[11px] font-semibold border border-white/10 hover:border-[#d9f447] transition-all duration-200 cursor-pointer shadow-xs active:scale-95"
-                        >
-                          <TagIcon className="size-3 text-emerald-400 group-hover/pill:text-[#121815] transition" />
-                          <span>{item.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                  Ultra-Fast Grocery &amp; Daily Essentials
+                </h2>
+                <p className="mt-2 text-xs sm:text-sm text-gray-300 font-normal leading-relaxed">
+                  Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks delivered to your doorstep in 10 minutes.
+                </p>
+
+                {/* Direct Action Button */}
+                <div className="mt-5">
+                  <Link
+                    href="/user/cravexp"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] px-7 py-3.5 text-xs font-black shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group/btn whitespace-nowrap"
+                  >
+                    <span>Open Instamart Store</span>
+                    <ArrowRight className="size-4 group-hover/btn:translate-x-1 transition duration-200" />
+                  </Link>
                 </div>
               </div>
 
-              <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
-                <Link
-                  href="/user/cravexp"
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#e4fc57] px-7 py-4 text-xs font-black text-[#121815] shadow-xl shadow-[#d9f447]/25 ring-2 ring-[#d9f447]/50 hover:scale-105 active:scale-95 transition-all duration-200 group/btn"
-                >
-                  <span>Open Instamart Store</span>
-                  <ArrowRight className="size-4 group-hover/btn:translate-x-1.5 transition duration-200" />
-                </Link>
+              {/* Right Column: Custom Express Delivery Illustration */}
+              <div className="relative z-10 w-full sm:w-[280px] lg:w-[320px] shrink-0 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-500">
+                <CraveXPDeliveryIllustration className="w-full h-auto max-h-[175px]" />
               </div>
             </div>
 

@@ -1,46 +1,137 @@
+import React from 'react'
+
 interface CraveLogoProps {
   className?: string
   variant?: 'full' | 'small' | 'cravexp' // 'full' = crave. | 'small' = c. | 'cravexp' = craveXP.
-  theme?: 'dark' | 'light' // dark text vs light/white text
+  theme?: 'dark' | 'light' | 'auto' // dark text (#18201c) vs light/white text (#ffffff) vs auto (currentColor)
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 export default function CraveLogo({
   className = '',
   variant = 'full',
-  theme = 'dark',
+  theme = 'auto',
   size = 'md',
 }: CraveLogoProps) {
-  const textColor = theme === 'light' ? 'text-white' : 'text-[#18201c] dark:text-white'
-  const dotColor = theme === 'light' ? 'bg-[#d9f447]' : 'bg-[#d9f447] dark:bg-[#d9f447]'
-  const xpColor = theme === 'light' ? 'text-[#d9f447]' : 'text-[#d9f447] dark:text-[#d9f447]'
+  // Theme color resolution:
+  // 'light' => crisp white (#ffffff) for dark backgrounds (e.g. hero banners, dark footer)
+  // 'dark'  => obsidian black (#18201c) for light backgrounds
+  // 'auto'  => inherits currentColor with automatic light/dark mode support
+  const craveColor =
+    theme === 'light'
+      ? '#ffffff'
+      : theme === 'dark'
+        ? '#18201c'
+        : 'currentColor'
 
-  const sizeStyles = {
-    sm: { text: 'text-lg font-black tracking-tight', dot: 'size-1.5 ml-[1px]' },
-    md: { text: 'text-2xl font-black tracking-tight', dot: 'size-2 ml-[1.5px]' },
-    lg: { text: 'text-3xl font-black tracking-tight', dot: 'size-2.5 ml-[2px]' },
-    xl: { text: 'text-4xl font-black tracking-tight', dot: 'size-3 ml-[2px]' },
+  const xpColor = '#d9f447'
+  const dotColor = '#d9f447'
+
+  const sizeClasses = {
+    sm: 'h-5 w-auto',
+    md: 'h-6 sm:h-[26px] w-auto',
+    lg: 'h-8 sm:h-[34px] w-auto',
+    xl: 'h-10 sm:h-11 w-auto',
   }[size]
 
+  const wrapperTextClass =
+    theme === 'auto' ? 'text-[#18201c] dark:text-white' : ''
+
+  if (variant === 'small') {
+    return (
+      <svg
+        viewBox="0 0 28 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`inline-block select-none overflow-visible align-middle ${wrapperTextClass} ${sizeClasses} ${className}`}
+        role="img"
+        aria-label="crave logo"
+      >
+        <text
+          x="0"
+          y="25"
+          fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontWeight="900"
+          fontSize="30"
+          letterSpacing="-0.04em"
+          fill={craveColor}
+        >
+          c
+        </text>
+        <rect
+          x="17"
+          y="18.5"
+          width="5.5"
+          height="5.5"
+          rx="1.2"
+          fill={dotColor}
+        />
+      </svg>
+    )
+  }
+
+  if (variant === 'cravexp') {
+    return (
+      <svg
+        viewBox="0 0 138 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`inline-block select-none overflow-visible align-middle ${wrapperTextClass} ${sizeClasses} ${className}`}
+        role="img"
+        aria-label="craveXP logo"
+      >
+        <text
+          x="0"
+          y="25"
+          fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontWeight="900"
+          fontSize="30"
+          letterSpacing="-0.04em"
+        >
+          <tspan fill={craveColor}>crave</tspan>
+          <tspan fill={xpColor}>XP</tspan>
+        </text>
+        <rect
+          x="124"
+          y="18.5"
+          width="5.5"
+          height="5.5"
+          rx="1.2"
+          fill={dotColor}
+        />
+      </svg>
+    )
+  }
+
+  // Default 'full' variant: "crave."
   return (
-    <span
-      className={`inline-flex items-baseline select-none ${textColor} ${className}`}
-      aria-label={variant === 'cravexp' ? 'craveXP. logo' : 'crave. logo'}
+    <svg
+      viewBox="0 0 92 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`inline-block select-none overflow-visible align-middle ${wrapperTextClass} ${sizeClasses} ${className}`}
+      role="img"
+      aria-label="crave logo"
     >
-      {variant === 'small' ? (
-        <span className={sizeStyles.text}>c</span>
-      ) : variant === 'cravexp' ? (
-        <span className={sizeStyles.text}>
-          crave<span className={xpColor}>XP</span>
-        </span>
-      ) : (
-        <span className={sizeStyles.text}>crave</span>
-      )}
-      {/* Square full stop period placed immediately after 'e' or 'XP' at baseline */}
-      <span
-        className={`inline-block shrink-0 rounded-[1px] ${dotColor} ${sizeStyles.dot}`}
-        aria-hidden="true"
+      <text
+        x="0"
+        y="25"
+        fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontWeight="900"
+        fontSize="30"
+        letterSpacing="-0.04em"
+        fill={craveColor}
+      >
+        crave
+      </text>
+      <rect
+        x="81"
+        y="18.5"
+        width="5.5"
+        height="5.5"
+        rx="1.2"
+        fill={dotColor}
       />
-    </span>
+    </svg>
   )
 }

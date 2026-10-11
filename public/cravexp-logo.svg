@@ -1,0 +1,16 @@
+<svg width="144" height="32" viewBox="0 0 144 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="craveXP logo">
+  <!-- craveXP Signature Brandmark -->
+  <text
+    x="0"
+    y="25"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-weight="900"
+    font-size="30"
+    letter-spacing="-0.04em"
+  >
+    <tspan fill="#ffffff">crave</tspan>
+    <tspan fill="#d9f447">XP</tspan>
+  </text>
+  <!-- Electric Chartreuse Square Period -->
+  <rect x="129" y="18.5" width="6" height="6" rx="1.2" fill="#d9f447"/>
+</svg>

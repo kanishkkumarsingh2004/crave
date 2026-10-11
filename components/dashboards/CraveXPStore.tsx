@@ -125,35 +125,43 @@ export default function CraveXPStore() {
 
   return (
     <div className="min-h-screen bg-[#f7f8f5] dark:bg-[#121815] text-[#18201c] dark:text-white pb-32 sm:pb-36 transition-colors duration-200">
-      {/* RESTORED CRAVEXP HERO BANNER CARD (Zero Duplicate Navbar) */}
+      {/* RESTORED CRAVEXP HERO BANNER CARD (Ultra-Premium Obsidian Glassmorphism) */}
       <section className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#18201c] via-[#24302a] to-[#18201c] p-6 sm:p-8 text-white shadow-xl border-2 border-emerald-500/30">
-          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <CraveLogo variant="cravexp" size="lg" />
-                <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 whitespace-nowrap">
-                  CraveXP 10 Store
-                </span>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-6 sm:p-8 lg:p-9 text-white shadow-2xl border border-white/[0.12]">
+          {/* Luxury Ambient Lighting Glows */}
+          <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-30" />
+
+          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2.5 mb-2.5">
+                <CraveLogo variant="cravexp" size="lg" theme="light" />
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span>10-Min Dark Store Hub</span>
+                </div>
               </div>
-              <h1 className="text-2xl font-black sm:text-3xl text-white">
-                Ultra-fast Grocery & Daily Essentials
+              <h1 className="text-2xl font-black sm:text-3xl text-white tracking-tight">
+                Ultra-fast Grocery &amp; Daily Essentials
               </h1>
-              <p className="mt-1 text-xs text-gray-300 max-w-xl font-medium">
-                Sourced directly from our CraveXP 10 Store hub. Delivered to your doorstep in 10
-                minutes.
+              <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
+                Sourced directly from our CraveXP 10 Store hub. Delivered fresh to your doorstep in 10 minutes.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#d9f447]">
-                <MapPin className="size-4" />
+                <MapPin className="size-4 text-[#d9f447] shrink-0" />
                 <span>{CRAVEXP_DARK_STORE_INFO.address}</span>
               </div>
             </div>
 
             {/* Cart Trigger Card */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={() => router.push('/user/cart')}
-                className="flex items-center gap-2.5 rounded-2xl bg-[#d9f447] px-5 py-3 text-xs font-black text-[#18201c] shadow-lg hover:bg-[#c8e434] hover:text-white transition"
+                className="flex items-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-6 py-3.5 text-xs font-black text-[#0d1410] shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
                 <ShoppingCart className="size-4" />
                 <span>{cartTotalItems} items</span>
