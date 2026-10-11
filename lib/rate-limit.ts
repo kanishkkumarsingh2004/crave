@@ -45,6 +45,10 @@ export async function checkRateLimit(
   tier: RateLimitTierKey = 'USER'
 ): Promise<{ allowed: boolean; remaining: number; resetTime: number; retryAfter?: number }> {
   const { limit, windowMs } = RateLimitTier[tier]
+  const isLocalhost =
+    key.includes('127.0.0.1') || key.includes('::1') || key.includes('localhost')
+  const effectiveLimit =
+    process.env.NODE_ENV === 'development' && isLocalhost ? Math.max(limit, 100) : limit
   const now = Date.now()
   const redisKey = `crave:ratelimit:${tier}:${key}`
 
@@ -67,7 +71,7 @@ export async function checkRateLimit(
 
         const resetTime = now + (ttl > 0 ? ttl : windowMs)
 
-        if (count > limit) {
+        if (count > effectiveLimit) {
           return {
             allowed: false,
             remaining: 0,
@@ -78,7 +82,7 @@ export async function checkRateLimit(
 
         return {
           allowed: true,
-          remaining: Math.max(0, limit - count),
+          remaining: Math.max(0, effectiveLimit - count),
           resetTime,
         }
       }
@@ -88,7 +92,7 @@ export async function checkRateLimit(
   }
 
   // In-memory fallback
-  return checkRateLimitMemory(key, limit, windowMs, now)
+  return checkRateLimitMemory(key, effectiveLimit, windowMs, now)
 }
 
 /**

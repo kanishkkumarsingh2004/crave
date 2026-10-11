@@ -56,11 +56,9 @@ export default function LoginPage() {
                     ? '/admin/dashboard'
                     : '/dashboard'
         router.push(targetPath)
-      } else {
-        setErrorMsg('Email or password is incorrect.')
       }
-    } catch {
-      setErrorMsg('An unexpected error occurred. Please try again.')
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Email or password is incorrect.')
     } finally {
       setSubmitting(false)
     }

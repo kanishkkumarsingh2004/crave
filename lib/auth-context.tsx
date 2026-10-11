@@ -134,10 +134,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false)
         return result.user as UserProfile
       }
-      return null
+      const errMsg =
+        result.error ||
+        (response.status === 429
+          ? 'Too many login attempts. Please wait a moment and try again.'
+          : 'Email or password is incorrect.')
+      throw new Error(errMsg)
     } catch (err) {
       console.error('Login error:', err)
-      return null
+      throw err
     }
   }
 
