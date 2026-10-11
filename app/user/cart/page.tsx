@@ -34,6 +34,7 @@ import {
   Trash2,
   User,
   X,
+  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -69,10 +70,8 @@ export default function CartPage() {
   } | null>(null)
 
   // Order & Payment State
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    user?.address || 'Kanakapura Road, Central Hub, Bengaluru'
-  )
-  const [customerPhone, setCustomerPhone] = useState(user?.phone || '+91 98765 43210')
+  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '')
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || '')
   const [paymentMethod, setPaymentMethod] = useState<'upi'>('upi')
   const [utrRef, setUtrRef] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
@@ -560,18 +559,23 @@ export default function CartPage() {
               {cart.length > 0 ? (
                 <>
                   {/* Cart Items Card */}
-                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
-                    <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white mb-4 flex items-center gap-2">
-                      <ShoppingBag className="size-4 text-[#b5de28]" /> Items in your Order
-                    </h2>
+                  <div className="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
+                    <div className="flex items-center justify-between pb-3.5 border-b border-gray-100 dark:border-white/5 mb-4">
+                      <h2 className="text-sm sm:text-base font-extrabold text-[#18201c] dark:text-white flex items-center gap-2">
+                        <ShoppingBag className="size-4 text-[#86a018] dark:text-[#d9f447]" /> Items in your Order
+                      </h2>
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        {totalCount} {totalCount === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
 
-                    <div className="divide-y divide-[#f0f3eb] dark:divide-[#27342d]">
+                    <div className="divide-y divide-gray-100 dark:divide-white/5">
                       {cart.map((item) => (
                         <div
                           key={item.id}
-                          className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
+                          className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-3.5 min-w-0">
                             {item.image ? (
                               <img
                                 src={item.image}
@@ -580,43 +584,43 @@ export default function CartPage() {
                                   e.currentTarget.onerror = null
                                   e.currentTarget.src =
                                     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'
-                                }}
-                                className="size-12 sm:size-14 rounded-2xl object-cover shrink-0 border border-[#e5e9e1] dark:border-[#27342d]"
+                               }}
+                                className="size-14 sm:size-16 rounded-2xl object-cover shrink-0 border border-gray-100 dark:border-white/10 shadow-2xs"
                               />
                             ) : (
-                              <div className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0 font-bold text-[10px] sm:text-xs">
+                              <div className="grid size-14 sm:size-16 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#86a018] dark:text-[#d9f447] shrink-0 font-black text-xs shadow-2xs">
                                 FOOD
                               </div>
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate">
+                              <h3 className="text-xs sm:text-sm font-extrabold text-[#18201c] dark:text-white truncate">
                                 {item.name}
                               </h3>
                               {item.restaurantName && (
-                                <p className="text-[10px] sm:text-[11px] font-medium text-[#737e77] dark:text-gray-400 truncate">
+                                <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 truncate mt-0.5">
                                   {item.restaurantName}
                                 </p>
                               )}
-                              <p className="text-xs font-bold text-[#b5de28] mt-0.5">
-                                ₹{item.price} each
+                              <p className="text-xs font-black text-[#86a018] dark:text-[#d9f447] mt-1">
+                                ₹{item.price} <span className="text-[10px] font-medium text-gray-400">/ item</span>
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t border-gray-100 dark:border-[#27342d] sm:border-t-0">
-                            <div className="flex items-center gap-2 rounded-2xl bg-[#f8f9f6] dark:bg-[#121815] border border-[#e2e7dd] dark:border-[#27342d] px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-extrabold text-[#18201c] dark:text-white">
+                          <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 pt-2 sm:pt-0 border-t border-gray-100 dark:border-white/5 sm:border-t-0">
+                            <div className="flex items-center gap-2 rounded-2xl bg-[#f4f6f1] dark:bg-[#121815] border border-gray-200/80 dark:border-white/10 px-3 py-1.5 text-xs font-extrabold text-[#18201c] dark:text-white shadow-2xs">
                               <button
                                 onClick={() => updateItemQty(item.id, -1)}
-                                className="text-[#55635a] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white transition p-1"
+                                className="text-gray-500 hover:text-[#18201c] dark:text-gray-400 dark:hover:text-white transition p-0.5"
                                 aria-label="Decrease quantity"
                               >
                                 <Minus className="size-3.5" />
                               </button>
-                              <span className="min-w-[16px] text-center">{item.qty}</span>
+                              <span className="min-w-[18px] text-center font-black">{item.qty}</span>
                               <button
                                 onClick={() => updateItemQty(item.id, 1)}
-                                className="text-[#55635a] dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white transition p-1"
+                                className="text-gray-500 hover:text-[#18201c] dark:text-gray-400 dark:hover:text-white transition p-0.5"
                                 aria-label="Increase quantity"
                               >
                                 <Plus className="size-3.5" />
@@ -624,13 +628,13 @@ export default function CartPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="font-black text-xs sm:text-sm text-[#18201c] dark:text-white w-14 text-right">
+                              <span className="font-black text-sm text-[#18201c] dark:text-white w-16 text-right">
                                 ₹{item.price * item.qty}
                               </span>
 
                               <button
                                 onClick={() => removeItem(item.id)}
-                                className="text-gray-400 hover:text-rose-600 transition p-1"
+                                className="p-1.5 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
                                 title="Remove Item"
                               >
                                 <Trash2 className="size-4" />
@@ -643,69 +647,98 @@ export default function CartPage() {
                   </div>
 
                   {/* Delivery Location & Address Section */}
-                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-                        <MapPin className="size-4 text-[#b5de28]" /> Delivery Address &amp; Contact
+                  <div className="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-white/5">
+                      <h2 className="text-sm sm:text-base font-extrabold text-[#18201c] dark:text-white flex items-center gap-2">
+                        <MapPin className="size-4 text-[#86a018] dark:text-[#d9f447]" /> Delivery Address &amp; Contact
                       </h2>
                       <button
                         type="button"
                         onClick={() => setShowAddressModal(true)}
-                        className="text-xs font-extrabold text-[#b5de28] hover:text-[#5d7010] flex items-center gap-1 transition"
+                        className="text-xs font-black text-[#86a018] dark:text-[#d9f447] hover:underline flex items-center gap-1 transition cursor-pointer"
                       >
                         <MapPin className="size-3.5" />
                         {savedAddresses.length > 0
-                          ? `Change Address (${savedAddresses.length})`
-                          : 'Manage Saved Addresses'}
+                          ? `Saved Addresses (${savedAddresses.length})`
+                          : 'Manage Saved'}
                       </button>
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <label className="label-base">Delivery Doorstep Address</label>
-                        <div className="relative">
+                    <div className="space-y-4">
+                      {/* Active Address Visual Card */}
+                      <div className="rounded-2xl border border-gray-200/80 dark:border-white/10 bg-[#fafbf8] dark:bg-[#121815] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="grid size-9 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 mt-0.5">
+                            <Home className="size-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                                {selectedAddressId
+                                  ? savedAddresses.find((a) => a.id === selectedAddressId)?.label || 'Selected'
+                                  : 'Active'}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-[#18201c] dark:text-white mt-1 line-clamp-2">
+                              {deliveryAddress || 'No address set yet. Enter below or auto-detect.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            disabled={isGpsDetecting}
+                            onClick={handleDetectGpsInCart}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] px-3 py-1.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#27342d] transition shadow-2xs"
+                          >
+                            <LocateFixed className="size-3 text-[#86a018] dark:text-[#d9f447]" />
+                            <span>{isGpsDetecting ? 'Detecting...' : 'Detect GPS'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="sm:col-span-2">
+                          <label className="font-extrabold text-[#55635a] dark:text-gray-400 block mb-1 text-xs">
+                            Doorstep Address (Building, Street, Area)
+                          </label>
                           <input
                             type="text"
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="House No, Apartment / Building, Street, Area, Bengaluru"
-                            className="input-base pr-20"
+                            placeholder="Flat/House No, Apartment, Street, Area, Bengaluru"
+                            className="w-full rounded-2xl border border-gray-200/80 dark:border-white/10 bg-[#fcfdfe] dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 text-xs font-medium outline-none focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/20 transition"
                           />
-                          {selectedAddressId && (
-                            <span className="absolute right-3 top-2.5 bg-[#b5de28] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                              {savedAddresses.find((a) => a.id === selectedAddressId)?.label ||
-                                'Saved'}
-                            </span>
-                          )}
                         </div>
-                      </div>
 
-                      <div>
-                        <label className="label-base">
-                          Customer Phone Number (For Rider OTP Delivery)
-                        </label>
-                        <input
-                          type="text"
-                          value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
-                          placeholder="+91 98765 43210"
-                          className="input-base"
-                        />
+                        <div className="sm:col-span-2">
+                          <label className="font-extrabold text-[#55635a] dark:text-gray-400 block mb-1 text-xs">
+                            Recipient Phone Number (For Rider Delivery OTP)
+                          </label>
+                          <input
+                            type="tel"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            placeholder="Enter 10-digit mobile number"
+                            className="w-full rounded-2xl border border-gray-200/80 dark:border-white/10 bg-[#fcfdfe] dark:bg-[#121815] text-[#18201c] dark:text-white px-3.5 py-2.5 text-xs font-medium outline-none focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/20 transition"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Coupons & Offers Card */}
-                  <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-                        <Tag className="size-4 text-[#b5de28]" /> Apply Promo Code / Coupon
+                  <div className="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xs">
+                    <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-white/5">
+                      <h2 className="text-sm sm:text-base font-extrabold text-[#18201c] dark:text-white flex items-center gap-2">
+                        <Tag className="size-4 text-[#86a018] dark:text-[#d9f447]" /> Apply Promo Code / Coupon
                       </h2>
                       {appliedCoupon ? (
                         <button
                           type="button"
                           onClick={handleRemoveCoupon}
-                          className="text-xs font-bold text-rose-600 hover:text-rose-800 transition"
+                          className="text-xs font-black text-rose-600 hover:text-rose-800 transition cursor-pointer"
                         >
                           Remove Code
                         </button>
@@ -713,30 +746,30 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => setShowCouponsModal(true)}
-                          className="text-xs font-extrabold text-[#b5de28] hover:text-[#5d7010] flex items-center gap-1 transition"
+                          className="text-xs font-black text-[#86a018] dark:text-[#d9f447] hover:underline flex items-center gap-1 transition cursor-pointer"
                         >
-                          <Sparkles className="size-3.5" /> View All ({availableCoupons.length})
+                          <Sparkles className="size-3.5" /> View Offers ({availableCoupons.length})
                         </button>
                       )}
                     </div>
 
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-200 p-3.5 sm:p-4">
+                      <div className="flex items-center justify-between rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3.5 sm:p-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <Sparkles className="size-5 text-emerald-600 fill-emerald-600 shrink-0" />
+                          <Sparkles className="size-5 text-emerald-600 dark:text-emerald-400 fill-emerald-600 dark:fill-emerald-400 shrink-0" />
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2 font-extrabold text-[#18201c]">
+                            <div className="flex items-center gap-2 font-black text-[#18201c] dark:text-white">
                               <span className="bg-emerald-600 text-white font-mono px-2 py-0.5 rounded-md text-xs">
                                 {appliedCoupon.code}
                               </span>
-                              <span className="text-xs text-emerald-900">Applied</span>
+                              <span className="text-xs text-emerald-800 dark:text-emerald-300">Applied</span>
                             </div>
-                            <p className="text-xs text-emerald-700 mt-0.5 font-medium truncate">
+                            <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5 font-medium truncate">
                               {appliedCoupon.description || `Discount Applied`}
                             </p>
                           </div>
                         </div>
-                        <span className="font-black text-emerald-800 text-xs sm:text-sm shrink-0 ml-2">
+                        <span className="font-black text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm shrink-0 ml-2">
                           -₹{couponDiscount}
                         </span>
                       </div>
@@ -853,30 +886,30 @@ export default function CartPage() {
                   </div>
                 </>
               ) : (
-                <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-8 sm:p-12 text-center shadow-xs">
-                  <div className="mx-auto grid size-14 sm:size-16 place-items-center rounded-full bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] mb-4">
-                    <ShoppingCart className="size-7 sm:size-8" />
+                <div className="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-8 sm:p-14 text-center shadow-xs">
+                  <div className="mx-auto grid size-16 sm:size-20 place-items-center rounded-3xl bg-[#d9f447]/20 text-[#18201c] dark:text-[#d9f447] mb-5 shadow-2xs">
+                    <ShoppingCart className="size-8 sm:size-10 text-[#86a018] dark:text-[#d9f447]" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-[#18201c] dark:text-white">
+                  <h2 className="text-xl sm:text-2xl font-black text-[#18201c] dark:text-white">
                     Your Cart is Currently Empty
                   </h2>
-                  <p className="mt-2 text-xs text-[#55635a] dark:text-gray-300 max-w-sm mx-auto leading-relaxed">
-                    Explore gourmet kitchens, pizzas, biryani, or instant 15-min groceries on Crave
-                    to get started!
+                  <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                    Explore freshly cooked gourmet dishes, pizzas, biryani, or instant 10-minute groceries on Crave to start filling your basket.
                   </p>
 
-                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
                     <Link
                       href="/user/explore"
-                      className="w-full sm:w-auto rounded-full bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-white dark:text-[#18201c] shadow-md hover:bg-[#323d36] dark:hover:bg-[#c8e434] transition text-center"
+                      className="w-full sm:w-auto flex-1 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-3.5 text-xs font-black text-white dark:text-[#18201c] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition text-center"
                     >
                       Explore Kitchens
                     </Link>
                     <Link
                       href="/user/cravexp"
-                      className="w-full sm:w-auto rounded-full bg-[#d9f447] dark:bg-[#27342d] px-6 py-3 text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] shadow-md hover:bg-[#c8e434] dark:hover:bg-[#324239] transition text-center"
+                      className="w-full sm:w-auto flex-1 rounded-2xl bg-white dark:bg-[#27342d] border border-gray-200 dark:border-[#27342d] px-6 py-3.5 text-xs font-black text-[#18201c] dark:text-[#d9f447] shadow-xs hover:bg-[#f4f7ed] dark:hover:bg-[#34463d] transition text-center flex items-center justify-center gap-1.5"
                     >
-                      craveXP Instamart (15 Min)
+                      <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447] fill-current" />
+                      <span>CraveXP 10-Min Store</span>
                     </Link>
                   </div>
                 </div>
@@ -885,12 +918,15 @@ export default function CartPage() {
 
             {/* Right Column: Bill Summary & Payment Section */}
             {cart.length > 0 && (
-              <div className="space-y-6 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
+              <div id="payment-section" className="space-y-6 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
                 {/* Bill Breakdown Card */}
-                <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xl">
-                  <h2 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white mb-4 flex items-center justify-between border-b border-[#f0f3eb] dark:border-[#27342d] pb-3">
-                    <span>Payment Summary</span>
-                    <span className="text-[10px] sm:text-xs font-normal text-gray-500 dark:text-gray-400">
+                <div className="rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-xl">
+                  <h2 className="text-sm sm:text-base font-extrabold text-[#18201c] dark:text-white mb-4 flex items-center justify-between border-b border-gray-100 dark:border-white/5 pb-3">
+                    <span className="flex items-center gap-2">
+                      <Tag className="size-4 text-[#86a018] dark:text-[#d9f447]" />
+                      Payment Summary
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-gray-400">
                       Prices in INR (₹)
                     </span>
                   </h2>
@@ -1524,7 +1560,42 @@ export default function CartPage() {
         </div>
       )}
 
-      <Footer />
+      {/* Hide Footer only in the mobile aspect */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Mobile Floating Checkout Summary Bar (shows above bottom nav when cart has items) */}
+      {cart.length > 0 && !orderSuccess && (
+        <div className="fixed bottom-[56px] inset-x-0 z-30 lg:hidden bg-white/95 dark:bg-[#151d18]/95 border-t border-gray-200/90 dark:border-white/10 p-3 px-4 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] uppercase font-extrabold text-gray-500 dark:text-gray-400 block tracking-wider leading-none">
+              Total ({totalCount} {totalCount === 1 ? 'item' : 'items'})
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-base font-black text-[#18201c] dark:text-[#d9f447]">
+                ₹{grandTotal}
+              </span>
+              {couponDiscount > 0 && (
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded">
+                  Saved ₹{couponDiscount}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('checkout-action-section')
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-5 py-2.5 text-xs font-black shadow-lg active:scale-95 transition shrink-0"
+          >
+            <span>Proceed to Pay</span>
+            <ArrowRight className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Mobile Customer Bottom Navigation Bar */}
       <nav

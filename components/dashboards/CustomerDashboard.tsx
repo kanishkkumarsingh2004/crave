@@ -81,7 +81,7 @@ import {
   getDeviceCoordinates,
 } from '@/lib/client-location'
 import { usePathname, useRouter } from 'next/navigation'
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
 
 import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
@@ -361,7 +361,7 @@ export default function CustomerDashboard({
   initialTab?: 'explore' | 'live-order' | 'orders' | 'profile'
   initialOrderId?: string
 }) {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -652,63 +652,64 @@ export default function CustomerDashboard({
   const [optNotifications, setOptNotifications] = useState(true)
   const [walletBalance, setWalletBalance] = useState(150)
 
-  useEffect(() => {
+  const loadAddresses = useCallback(async () => {
     if (!user?.id) {
       setSavedAddresses([])
       return
     }
-    const loadAddresses = async () => {
-      try {
-        const res = await fetch('/api/user/addresses')
-        if (res.ok) {
-          const json = await res.json()
-          if (json.addresses && Array.isArray(json.addresses) && json.addresses.length > 0) {
-            const mapped = json.addresses.map((row: any) => ({
-              id: row.id,
-              label: row.label,
-              address: row.address,
-              tag: row.is_default ? 'Primary' : row.label,
-              lat: row.latitude == null ? null : Number(row.latitude),
-              lng: row.longitude == null ? null : Number(row.longitude),
-              isDefault: Boolean(row.is_default),
-            }))
-            setSavedAddresses(mapped)
+    try {
+      const res = await fetch('/api/user/addresses')
+      if (res.ok) {
+        const json = await res.json()
+        if (json.addresses && Array.isArray(json.addresses) && json.addresses.length > 0) {
+          const mapped = json.addresses.map((row: any) => ({
+            id: row.id,
+            label: row.label,
+            address: row.address,
+            tag: row.is_default ? 'Primary' : row.label,
+            lat: row.latitude == null ? null : Number(row.latitude),
+            lng: row.longitude == null ? null : Number(row.longitude),
+            isDefault: Boolean(row.is_default),
+          }))
+          setSavedAddresses(mapped)
 
-            const primary = mapped.find((a: any) => a.isDefault) || mapped[0]
-            const stored =
-              typeof window !== 'undefined' ? localStorage.getItem('crave_selected_address') : null
-            const chosen = stored || primary?.address || user?.address || ''
+          const primary = mapped.find((a: any) => a.isDefault) || mapped[0]
+          const stored =
+            typeof window !== 'undefined' ? localStorage.getItem('crave_selected_address') : null
+          const chosen = stored || primary?.address || user?.address || ''
 
-            if (chosen) {
-              setDeliveryAddress(chosen)
-              const matchedObj = mapped.find((a: any) => a.address === chosen) || primary
-              if (matchedObj?.lat != null && matchedObj?.lng != null) {
-                setSelectedMapPin({ lat: matchedObj.lat, lng: matchedObj.lng })
-              }
+          if (chosen) {
+            setDeliveryAddress(chosen)
+            const matchedObj = mapped.find((a: any) => a.address === chosen) || primary
+            if (matchedObj?.lat != null && matchedObj?.lng != null) {
+              setSelectedMapPin({ lat: matchedObj.lat, lng: matchedObj.lng })
             }
-            return
           }
+          return
         }
-      } catch (err) {}
-
-      if (user.address) {
-        setSavedAddresses([
-          {
-            id: 'addr_default',
-            label: 'Home',
-            address: user.address,
-            tag: 'Primary',
-            lat: 12.679898,
-            lng: 77.469493,
-          },
-        ])
-        setDeliveryAddress((prev) => prev || user.address || '')
-      } else {
-        setSavedAddresses([])
       }
+    } catch (err) {}
+
+    if (user?.address) {
+      setSavedAddresses([
+        {
+          id: 'addr_default',
+          label: 'Home',
+          address: user.address,
+          tag: 'Primary',
+          lat: 12.679898,
+          lng: 77.469493,
+        },
+      ])
+      setDeliveryAddress((prev) => prev || user.address || '')
+    } else {
+      setSavedAddresses([])
     }
-    loadAddresses()
   }, [user?.id, user?.address])
+
+  useEffect(() => {
+    loadAddresses()
+  }, [loadAddresses])
 
   async function handleDetectGpsLocation(isAutoMount = false) {
     setGpsDetecting(true)
@@ -825,6 +826,14 @@ export default function CustomerDashboard({
   // Profile editing
   const [editAddress, setEditAddress] = useState(false)
   const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [profileNameInput, setProfileNameInput] = useState(user?.name || '')
+  const [profilePhoneInput, setProfilePhoneInput] = useState(user?.phone || '')
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+
+  useEffect(() => {
+    if (user?.name) setProfileNameInput(user.name)
+    if (user?.phone) setProfilePhoneInput(user.phone)
+  }, [user?.name, user?.phone])
 
   const updateDeliveryAddress = (addr: string) => {
     const trimmed = (addr || '').trim()
@@ -833,6 +842,74 @@ export default function CustomerDashboard({
       try {
         localStorage.setItem('crave_selected_address', trimmed)
       } catch {}
+    }
+  }
+
+  async function handleSaveProfile() {
+    setIsSavingProfile(true)
+    try {
+      const res = await fetch('/api/user/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileNameInput.trim() || undefined,
+          phone: profilePhoneInput.trim() || undefined,
+          address: deliveryAddress.trim() || undefined,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to update profile')
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('crave_user')
+          if (raw) {
+            const current = JSON.parse(raw)
+            const updated = {
+              ...current,
+              name: profileNameInput.trim() || current.name,
+              phone: profilePhoneInput.trim() || current.phone,
+              address: deliveryAddress.trim() || current.address,
+            }
+            localStorage.setItem('crave_user', JSON.stringify(updated))
+          }
+        } catch {}
+      }
+
+      if (updateUser) {
+        updateUser({
+          name: profileNameInput.trim() || user?.name,
+          phone: profilePhoneInput.trim() || user?.phone,
+          address: deliveryAddress.trim() || user?.address,
+        })
+      }
+
+      await loadAddresses()
+
+      setEditAddress(false)
+      triggerToast('Profile & contact details updated!')
+    } catch (err: any) {
+      triggerToast(err?.message || 'Could not save profile changes')
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  async function handleDeleteSavedAddress(id: string, label: string) {
+    try {
+      const res = await fetch(`/api/user/addresses?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setSavedAddresses((prev) => prev.filter((a) => a.id !== id))
+        triggerToast(`Address "${label}" deleted`)
+      } else {
+        triggerToast('Could not delete address')
+      }
+    } catch {
+      triggerToast('Could not delete address')
     }
   }
 
@@ -1551,10 +1628,10 @@ export default function CustomerDashboard({
   return (
     <div className="min-h-screen bg-[#fafbf9] dark:bg-[#0c100e] pb-32 sm:pb-36 lg:pb-12 text-[#18201c] dark:text-white transition-colors duration-200">
       {/* Top Header Navigation Banner */}
-      <div className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-3 py-3 sm:px-6 shadow-2xs">
-        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-2 sm:gap-4">
+      <div className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-3 py-2.5 sm:px-6 sm:py-3 shadow-2xs">
+        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-1.5 sm:gap-4">
           {/* Left Block: Logo + Location Selector */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
             <Link
               href="/"
               className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] dark:text-white shrink-0 hover:opacity-90 transition"
@@ -1566,22 +1643,22 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1.5 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 text-left group min-w-0 flex-1 max-w-[150px] xs:max-w-[200px] sm:max-w-[280px] lg:max-w-[340px] rounded-2xl p-1 sm:p-1.5 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
             >
-              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
+              <div className="grid size-7 xs:size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
                 <MapPin className="size-3.5 sm:size-4 lg:size-5" />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] sm:text-[10px] lg:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1 leading-none">
+                  <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
                     DELIVER TO
                   </span>
-                  <span className="text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-[#86a018] group-hover:underline">
+                  <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-[#86a018] group-hover:underline">
                     (Change)
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate">
-                  <span className="truncate max-w-[110px] xs:max-w-[140px] sm:max-w-[200px] lg:max-w-[280px]">
+                <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate mt-0.5">
+                  <span className="truncate">
                     {deliveryAddress || user?.address || 'Select Delivery Location'}
                   </span>
                   <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
@@ -1651,24 +1728,26 @@ export default function CustomerDashboard({
           </div>
 
           {/* Right Block: Instamart Quick Link + Cart + ThemeToggle + Mobile Hamburger */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <Link
               href="/user/cravexp"
-              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447]/15 hover:bg-[#25322b] dark:hover:bg-[#d9f447]/25 text-white dark:text-[#d9f447] border border-white/10 dark:border-[#d9f447]/40 px-3 sm:px-3.5 py-1.5 text-xs font-black transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs group cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#18201c] dark:bg-[#d9f447]/15 hover:bg-[#25322b] dark:hover:bg-[#d9f447]/25 text-white dark:text-[#d9f447] border border-white/10 dark:border-[#d9f447]/40 px-2 sm:px-3.5 py-1.5 text-xs font-black transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs group cursor-pointer"
             >
               <div className="relative flex items-center justify-center">
                 <Zap className="size-3.5 fill-[#d9f447] text-[#d9f447] group-hover:scale-115 transition" />
                 <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-emerald-400 animate-ping" />
               </div>
-              <span className="tracking-tight hidden xs:inline">
+              <span className="tracking-tight hidden xs:inline text-xs">
                 crave<span className="text-[#d9f447] dark:text-white">XP</span>
               </span>
-              <span className="rounded-full bg-[#d9f447] text-[#121815] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-2xs">
+              <span className="rounded-full bg-[#d9f447] text-[#121815] px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider shadow-2xs">
                 10m
               </span>
             </Link>
 
-            <ThemeToggle />
+            <div className="hidden sm:flex items-center">
+              <ThemeToggle />
+            </div>
 
             <button
               onClick={() => router.push('/user/cart')}
@@ -1686,7 +1765,7 @@ export default function CustomerDashboard({
             {/* Quick Mobile Cart Button */}
             <button
               onClick={() => router.push('/user/cart')}
-              className="lg:hidden relative grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
+              className="lg:hidden relative grid size-8 xs:size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
               aria-label="View Cart"
             >
               <ShoppingCart className="size-4 text-[#18201c] dark:text-white" />
@@ -1700,10 +1779,10 @@ export default function CustomerDashboard({
             {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
             <button
               onClick={() => setShowMobileSideMenu(true)}
-              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
+              className="lg:hidden grid size-8 xs:size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
               aria-label="Open side menu"
             >
-              <Menu className="size-5 text-[#18201c] dark:text-white" />
+              <Menu className="size-4 xs:size-5 text-[#18201c] dark:text-white" />
             </button>
           </div>
         </div>
@@ -1918,24 +1997,24 @@ export default function CustomerDashboard({
         </div>
       </aside>
 
-      <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1240px] px-3.5 pt-4 sm:pt-6 sm:px-6 lg:px-8">
         {activeTab === 'explore' && (
-          <div className="flex flex-col gap-8">
-            {/* craveXP 10-Min Instamart Store Hero Banner (Clean & Aesthetic with Vector Illustration) */}
+          <div className="flex flex-col gap-6 sm:gap-8">
+            {/* craveXP 10-Min Dark Store Hero Banner (Clean & Aesthetic with Vector Illustration) */}
             <div
               onClick={() => router.push('/user/cravexp')}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-6 sm:p-8 lg:p-9 text-white shadow-2xl border border-white/[0.12] hover:border-[#d9f447]/40 flex flex-col md:flex-row items-center justify-between gap-6 group cursor-pointer transition-all duration-300"
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-5 sm:p-8 lg:p-9 text-white shadow-2xl border border-white/[0.12] hover:border-[#d9f447]/40 flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 group cursor-pointer transition-all duration-300"
             >
               {/* Luxury Ambient Lighting Glows */}
               <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/18 transition duration-700" />
               <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
               {/* Left Content Column */}
-              <div className="relative z-10 flex-1 max-w-xl">
+              <div className="relative z-10 flex-1 w-full max-w-xl">
                 {/* Branding & Live Status Header Bar */}
-                <div className="flex flex-wrap items-center gap-2.5 mb-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3">
                   <CraveLogo variant="cravexp" size="lg" theme="light" />
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-2.5 sm:px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
                     <span className="relative flex size-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
@@ -1948,29 +2027,29 @@ export default function CustomerDashboard({
                   </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
                   Ultra-Fast Grocery &amp; Daily Essentials
                 </h2>
-                <p className="mt-2 text-xs sm:text-sm text-gray-300 font-normal leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-300 font-normal leading-relaxed">
                   Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks delivered to your doorstep in 10 minutes.
                 </p>
 
                 {/* Direct Action Button */}
-                <div className="mt-5">
+                <div className="mt-4 sm:mt-5">
                   <Link
                     href="/user/cravexp"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] px-7 py-3.5 text-xs font-black shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group/btn whitespace-nowrap"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] px-6 sm:px-7 py-3 sm:py-3.5 text-xs font-black shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group/btn"
                   >
-                    <span>Open Instamart Store</span>
+                    <span>Open CraveXP Store</span>
                     <ArrowRight className="size-4 group-hover/btn:translate-x-1 transition duration-200" />
                   </Link>
                 </div>
               </div>
 
               {/* Right Column: Custom Express Delivery Illustration */}
-              <div className="relative z-10 w-full sm:w-[280px] lg:w-[320px] shrink-0 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-500">
-                <CraveXPDeliveryIllustration className="w-full h-auto max-h-[175px]" />
+              <div className="relative z-10 w-full sm:w-[260px] md:w-[280px] lg:w-[320px] shrink-0 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-500">
+                <CraveXPDeliveryIllustration className="w-full max-w-[240px] sm:max-w-[280px] h-auto max-h-[150px] sm:max-h-[175px]" />
               </div>
             </div>
 
@@ -2587,7 +2666,7 @@ export default function CustomerDashboard({
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-16">
-            {/* 1. Hero Profile Card with Vibrant Accents & Stats */}
+            {/* 1. Profile Hero Card */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-linear-to-br from-white via-[#fbfcf9] to-[#f4f7ed] dark:from-[#18201c] dark:via-[#1c2621] dark:to-[#141b17] p-6 sm:p-8 shadow-sm">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4 sm:gap-5">
@@ -2603,7 +2682,7 @@ export default function CustomerDashboard({
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                        <ShieldCheck className="size-3" /> Verified Customer
+                        <ShieldCheck className="size-3" /> Customer Account
                       </span>
                     </div>
 
@@ -2612,15 +2691,21 @@ export default function CustomerDashboard({
                     </h2>
 
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#55635a] dark:text-gray-300 font-medium">
-                      <span className="flex items-center gap-1">
-                        <Mail className="size-3 text-[#b5de28]" />
-                        {user?.email || 'authenticated@crave.com'}
-                      </span>
-                      <span>&bull;</span>
-                      <span className="flex items-center gap-1">
-                        <PhoneCall className="size-3 text-[#b5de28]" />
-                        {user?.phone || '+91 98765 43210'}
-                      </span>
+                      {user?.email && (
+                        <span className="flex items-center gap-1">
+                          <Mail className="size-3 text-[#b5de28]" />
+                          {user.email}
+                        </span>
+                      )}
+                      {user?.email && user?.phone && <span>&bull;</span>}
+                      {user?.phone ? (
+                        <span className="flex items-center gap-1">
+                          <PhoneCall className="size-3 text-[#b5de28]" />
+                          {user.phone}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500 italic">No phone added</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2643,7 +2728,7 @@ export default function CustomerDashboard({
                 </div>
               </div>
 
-              {/* 3 Quick Interactive Stats Pills */}
+              {/* Real Account Stats Only */}
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-[#e5e9e0] dark:border-[#27342d] pt-6">
                 <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
                   <div className="grid size-11 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -2651,82 +2736,111 @@ export default function CustomerDashboard({
                   </div>
                   <div>
                     <p className="text-lg font-black text-[#18201c] dark:text-white">
-                      {
-                        pastOrders.filter(
-                          (o) => o.status === 'Delivered' || o.status === 'In Progress'
-                        ).length
-                      }
+                      {pastOrders.length}
                     </p>
                     <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
-                      Orders Delivered
+                      Total Orders Placed
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
-                  <div className="grid size-11 place-items-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
-                    <Tag className="size-5" />
+                  <div className="grid size-11 place-items-center rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 shrink-0">
+                    <MapPin className="size-5" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-amber-600 dark:text-amber-400">
-                      ₹{pastOrders.reduce((a, o) => a + (o.discount || 0), 0)}
+                    <p className="text-lg font-black text-[#18201c] dark:text-white">
+                      {savedAddresses.length}
                     </p>
                     <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
-                      Lifetime Saved
+                      Saved Addresses
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
+                  <div className="grid size-11 place-items-center rounded-xl bg-[#d9f447]/20 text-[#18201c] dark:text-[#d9f447] shrink-0">
+                    <Home className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-[#18201c] dark:text-white truncate">
+                      {deliveryAddress ? deliveryAddress.split(',')[0] : 'None Selected'}
+                    </p>
+                    <p className="text-[11px] font-semibold text-[#66756c] dark:text-gray-400">
+                      Active Delivery Destination
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            {/* Edit Personal Info Drawer / Form if active */}
+
+            {/* 2. Edit Profile Details Drawer */}
             {editAddress && (
-              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-md animate-in slide-in-from-top-4 duration-200">
-                <h3 className="text-sm font-bold text-[#18201c] dark:text-white mb-3 flex items-center gap-2">
-                  <User className="size-4 text-[#b5de28]" /> Edit Profile &amp; Contact Details
-                </h3>
-                <div className="space-y-4 text-xs">
+              <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-md animate-in slide-in-from-top-4 duration-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#27342d]">
+                  <h3 className="text-sm font-bold text-[#18201c] dark:text-white flex items-center gap-2">
+                    <User className="size-4 text-[#b5de28]" /> Edit Profile &amp; Contact Details
+                  </h3>
+                  <span className="text-[11px] text-gray-400">Synced directly to your account</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="font-bold text-[#55635a] dark:text-gray-400 block mb-1">
-                      Primary Doorstep Address
+                    <label className="font-bold text-[#55635a] dark:text-gray-400 block mb-1 text-xs">
+                      Full Name
                     </label>
-                    <textarea
-                      rows={2}
-                      value={deliveryAddress}
-                      onChange={(e) => setDeliveryAddress(e.target.value)}
-                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 font-medium outline-none focus:border-[#b5de28]"
+                    <input
+                      type="text"
+                      value={profileNameInput}
+                      onChange={(e) => setProfileNameInput(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 text-xs font-medium outline-none focus:border-[#b5de28]"
                     />
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setEditAddress(false)}
-                      className="rounded-xl border border-gray-200 dark:border-[#27342d] px-4 py-2 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!deliveryAddress.trim()) {
-                          triggerToast('Please enter a delivery address')
-                          return
-                        }
-                        try {
-                          const res = await fetch('/api/user/update', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ address: deliveryAddress }),
-                          })
-                          if (!res.ok) throw new Error('Failed to save')
-                          setEditAddress(false)
-                          triggerToast('Personal details updated successfully!')
-                        } catch {
-                          triggerToast('Could not save address. Please try again.')
-                        }
-                      }}
-                      className="rounded-xl bg-[#b5de28] px-5 py-2 font-black text-white hover:bg-[#728812] transition shadow-xs"
-                    >
-                      Save Changes
-                    </button>
+
+                  <div>
+                    <label className="font-bold text-[#55635a] dark:text-gray-400 block mb-1 text-xs">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={profilePhoneInput}
+                      onChange={(e) => setProfilePhoneInput(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 text-xs font-medium outline-none focus:border-[#b5de28]"
+                    />
                   </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#55635a] dark:text-gray-400 block mb-1 text-xs">
+                    Primary Doorstep Address
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Enter building, street, area, city..."
+                    className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-3 text-xs font-medium outline-none focus:border-[#b5de28]"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-[#27342d]">
+                  <button
+                    type="button"
+                    onClick={() => setEditAddress(false)}
+                    className="rounded-xl border border-gray-200 dark:border-[#27342d] px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#27342d]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingProfile}
+                    onClick={handleSaveProfile}
+                    className="rounded-xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2 text-xs font-black text-white dark:text-[#18201c] hover:bg-[#2a3831] transition shadow-xs disabled:opacity-50"
+                  >
+                    {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                  </button>
                 </div>
               </div>
             )}
@@ -2790,56 +2904,82 @@ export default function CustomerDashboard({
                 ) : (
                   savedAddresses.map((addr) => {
                     const isSelected = deliveryAddress === addr.address
+                    const hasCoords = addr.lat != null && addr.lng != null
                     return (
                       <div
                         key={addr.id}
                         className={`flex flex-col justify-between rounded-2xl p-4 border transition-all ${
                           isSelected
                             ? 'border-[#b5de28] dark:border-[#d9f447] bg-[#f8fbf4] dark:bg-[#151f19] shadow-xs'
-                            : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300'
+                            : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] hover:border-gray-300 dark:hover:border-gray-700'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="grid size-7 place-items-center rounded-lg bg-[#f0f3eb] dark:bg-[#27342d] text-[#d9f447] text-xs font-bold">
-                              {addr.label.toLowerCase().includes('work') ? (
-                                <Building2 className="size-3.5 text-[#d9f447]" />
-                              ) : addr.label.toLowerCase().includes('home') ? (
-                                <Home className="size-3.5 text-[#d9f447]" />
-                              ) : (
-                                <MapPin className="size-3.5 text-[#d9f447]" />
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="grid size-7 place-items-center rounded-lg bg-[#f0f3eb] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] text-xs font-bold">
+                                {addr.label.toLowerCase().includes('work') ? (
+                                  <Building2 className="size-3.5" />
+                                ) : addr.label.toLowerCase().includes('home') ? (
+                                  <Home className="size-3.5" />
+                                ) : (
+                                  <MapPin className="size-3.5" />
+                                )}
+                              </span>
+                              <span className="font-extrabold text-xs text-[#18201c] dark:text-white capitalize">
+                                {addr.label}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {isSelected && (
+                                <span className="rounded-full bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-wide">
+                                  Active
+                                </span>
                               )}
-                            </span>
-                            <span className="font-extrabold text-xs text-[#18201c] dark:text-white capitalize">
-                              {addr.label}
-                            </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteSavedAddress(addr.id, addr.label)
+                                }}
+                                title="Delete address"
+                                className="p-1 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          {isSelected && (
-                            <span className="rounded-full bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 uppercase">
-                              Active
-                            </span>
+
+                          <p className="text-xs text-[#55635a] dark:text-gray-300 font-medium my-2.5 line-clamp-2 leading-relaxed">
+                            {addr.address}
+                          </p>
+
+                          {hasCoords && (
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mb-3 flex items-center gap-1">
+                              <LocateFixed className="size-2.5 text-[#b5de28]" />
+                              <span>
+                                {addr.lat!.toFixed(4)}°, {addr.lng!.toFixed(4)}°
+                              </span>
+                            </p>
                           )}
                         </div>
-
-                        <p className="text-xs text-[#55635a] dark:text-gray-300 font-medium my-2.5 line-clamp-2 leading-relaxed">
-                          {addr.address}
-                        </p>
 
                         <button
                           type="button"
                           onClick={() => {
                             updateDeliveryAddress(addr.address)
                             setSelectedMapPin(
-                              addr.lat != null && addr.lng != null
-                                ? { lat: addr.lat, lng: addr.lng }
+                              hasCoords
+                                ? { lat: addr.lat!, lng: addr.lng! }
                                 : null
                             )
                             triggerToast(`Switched active delivery location to ${addr.label}!`)
                           }}
                           className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
                             isSelected
-                              ? 'bg-[#d9f447] text-[#18201c]'
-                              : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc]'
+                              ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c]'
+                              : 'bg-[#f4f7ed] dark:bg-[#27342d] text-[#18201c] dark:text-white hover:bg-[#e2e7dc] dark:hover:bg-[#34463d]'
                           }`}
                         >
                           {isSelected ? 'Delivering Here' : 'Deliver Here'}
@@ -2851,7 +2991,7 @@ export default function CustomerDashboard({
               </div>
             </div>
 
-            {/* 7. Help, Support & Trust Policies Footer Bar */}
+            {/* 5. Help, Support & Trust Policies Footer Bar */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 text-left">
                 <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0">

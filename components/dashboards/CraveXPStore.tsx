@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
+  Sparkles,
   Wheat,
   Zap,
 } from 'lucide-react'
@@ -235,27 +236,27 @@ export default function CraveXPStore() {
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="rounded-3xl bg-white p-12 text-center border border-[#e2e7dc] shadow-sm">
-            <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-100 text-amber-600 mb-3">
-              <Package className="size-6" />
+          <div className="rounded-3xl bg-white dark:bg-[#18201c] p-8 sm:p-12 text-center border border-[#e2e7dc] dark:border-[#27342d] shadow-sm">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#d9f447]/20 text-[#18201c] dark:text-[#d9f447] mb-3.5 shadow-2xs">
+              <Sparkles className="size-7 text-[#86a018] dark:text-[#d9f447]" />
             </div>
-            <h4 className="text-base font-bold text-[#18201c]">
-              No products found in CraveXP 10 Store
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2">
+              <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span>Stocking In Progress</span>
+            </div>
+            <h4 className="text-lg sm:text-xl font-black text-[#18201c] dark:text-white">
+              Coming Soon to CraveXP Store
             </h4>
-            <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-              Products are added dynamically through the craveXP Hub Operator Console (
-              <code className="font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                /vendor/crave-ep
-              </code>
-              ). Log in with a vendor account to add inventory.
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 max-w-md mx-auto leading-relaxed">
+              We are currently stocking our CraveXP dark store shelves with actual fresh inventory, daily essentials, and quick bites. 10-minute delivery will be live shortly!
             </p>
-            <div className="mt-5">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/vendor/crave-ep"
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#323f37] transition"
+                href="/user/explore"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-black text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition"
               >
-                <span>Go to craveXP Hub Console</span>
-                <ArrowRight className="size-4 text-[#d9f447]" />
+                <span>Explore Kitchens &amp; Food</span>
+                <ArrowRight className="size-4" />
               </Link>
             </div>
           </div>

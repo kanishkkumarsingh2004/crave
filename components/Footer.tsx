@@ -4,9 +4,9 @@ import CraveLogo from '@/components/CraveLogo'
 import { ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 
-export default function Footer() {
+export default function Footer({ className = '' }: { className?: string }) {
   return (
-    <footer className="bg-[#0b100d] text-stone-400 text-xs py-10 md:py-14 border-t border-stone-800/80 font-sans selection:bg-[#d9f447] selection:text-[#121815]">
+    <footer className={`bg-[#0b100d] text-stone-400 text-xs py-10 md:py-14 border-t border-stone-800/80 font-sans selection:bg-[#d9f447] selection:text-[#121815] ${className}`}>
       <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-12 pb-10 border-b border-stone-800/80">
           {/* Column 1: Brand & Operational Status (5 cols on lg) */}

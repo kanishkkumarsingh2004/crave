@@ -42,6 +42,7 @@ interface AuthContextType {
     requiresEmailConfirmation?: boolean
   }>
   logout: () => Promise<void>
+  updateUser?: (data: Partial<UserProfile>) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -188,6 +189,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUser = (data: Partial<UserProfile>) => {
+    setUser((prev) => {
+      if (!prev) return null
+      const updated = { ...prev, ...data }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('crave_user', JSON.stringify(updated))
+        } catch {}
+      }
+      return updated
+    })
+  }
+
   const role: UserRole = user?.role || 'user'
 
   return (
@@ -200,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         logout,
+        updateUser,
       }}
     >
       {children}
