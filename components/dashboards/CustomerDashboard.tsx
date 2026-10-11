@@ -135,6 +135,7 @@ type Restaurant = {
   isPureVeg?: boolean
   latitude?: number | string | null
   longitude?: number | string | null
+  isOpen?: boolean
 }
 
 type MenuItem = {
@@ -374,11 +375,12 @@ export default function CustomerDashboard({
 
   const currentTabFromPath = useMemo(() => {
     if (pathname.includes('/user/track')) return 'live-order'
+    if (initialOrderId || pathname.match(/\/user\/orders\/[^\/]+/)) return 'live-order'
     if (pathname.includes('/user/orders')) return 'orders'
     if (pathname.includes('/user/profile')) return 'profile'
     if (pathname.includes('/user/explore')) return 'explore'
     return initialTab
-  }, [pathname, initialTab])
+  }, [pathname, initialTab, initialOrderId])
 
   const [activeTab, setActiveTab] = useState(currentTabFromPath)
 
@@ -502,7 +504,7 @@ export default function CustomerDashboard({
 
         if (restData.length > 0) {
           parsed = restData
-            .filter((r: any) => r.id !== 'cravexp_dark_store_01' && r.is_dark_store === false)
+            .filter((r: any) => r.id !== 'cravexp_dark_store_01' && !r.is_dark_store)
             .map((r: any) => ({
               id: r.id,
               name: r.name,
@@ -519,6 +521,9 @@ export default function CustomerDashboard({
               address: r.address ?? '',
               offer: r.offer ? String(r.offer) : undefined,
               isPureVeg: r.is_pure_veg ?? false,
+              isOpen: r.is_open ?? true,
+              latitude: r.latitude != null ? Number(r.latitude) : undefined,
+              longitude: r.longitude != null ? Number(r.longitude) : undefined,
             }))
         }
         setRestaurantsList(parsed)
@@ -1017,6 +1022,25 @@ export default function CustomerDashboard({
       setSelectedOrderId(initialOrderId)
     }
   }, [initialOrderId])
+
+  // Single order direct sync when navigating with selected/initial order ID
+  useEffect(() => {
+    if (!selectedOrderId || !user?.id) return
+    const exists = ordersData.some((o: any) => String(o.id) === String(selectedOrderId))
+    if (!exists) {
+      fetch(`/api/orders?orderId=${encodeURIComponent(selectedOrderId)}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.order) {
+            setOrdersData((prev) => {
+              if (prev.some((o: any) => String(o.id) === String(json.order.id))) return prev
+              return [json.order, ...prev]
+            })
+          }
+        })
+        .catch(() => {})
+    }
+  }, [selectedOrderId, user?.id, ordersData])
 
   const inProgressOrders = useMemo(() => {
     if (!user?.id || !ordersData.length) return []
@@ -2448,6 +2472,14 @@ export default function CustomerDashboard({
 
                           {/* Gradient Overlay for badges */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
+
+                          {rest.isOpen === false && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                              <span className="rounded-full bg-red-600/90 text-white px-3 py-1 text-[11px] font-black uppercase tracking-wider shadow-md">
+                                Currently Closed
+                              </span>
+                            </div>
+                          )}
 
                           <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap">
                             {rest.tag && (

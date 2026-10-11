@@ -275,9 +275,38 @@ export default function CartPage() {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const activeConfig = paymentConfig || getLocalPaymentConfig()
 
+  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(null)
+
+  useEffect(() => {
+    const restId =
+      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id || undefined
+    if (!restId) {
+      setRestaurantCoords(null)
+      return
+    }
+    let isMounted = true
+    fetch(`/api/restaurants?restaurantId=${encodeURIComponent(restId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return
+        const r = data.restaurants?.[0] || data.restaurant
+        if (r && r.latitude != null && r.longitude != null) {
+          setRestaurantCoords({ lat: Number(r.latitude), lng: Number(r.longitude) })
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [cart])
+
   const roadDistanceKm = useMemo(() => {
-    return calculateRoadTravelDistanceKm(12.679898, 77.469493, 12.679898, 77.469493)
-  }, [])
+    const rLat = restaurantCoords?.lat ?? 12.679898
+    const rLng = restaurantCoords?.lng ?? 77.469493
+    const cLat = detectedCoords?.lat ?? 12.679898
+    const cLng = detectedCoords?.lng ?? 77.469493
+    return calculateRoadTravelDistanceKm(rLat, rLng, cLat, cLng)
+  }, [restaurantCoords, detectedCoords])
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -594,6 +623,8 @@ export default function CartPage() {
         customer_phone: customerPhone.trim() || user?.phone || '+910000000000',
         customer_address: deliveryAddress.trim(),
         address_id: selectedAddressId || undefined,
+        delivery_latitude: detectedCoords?.lat,
+        delivery_longitude: detectedCoords?.lng,
         restaurant_id: restId,
         restaurant_name: restName,
         items: cart.map((i) => ({
@@ -640,9 +671,9 @@ export default function CartPage() {
 
       setTimeout(() => {
         if (orderId) {
-          router.push(`/user/orders/${orderId}`)
+          router.push(`/user/track/${orderId}`)
         } else {
-          router.push('/user/orders')
+          router.push('/user/track')
         }
       }, 1500)
     } catch (err: any) {
