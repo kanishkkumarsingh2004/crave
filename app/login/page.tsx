@@ -1,67 +1,31 @@
 'use client'
 
 import CraveLogo from '@/components/CraveLogo'
-import Navbar, { roleDetails } from '@/components/Navbar'
-import { useAuth, UserRole } from '@/lib/auth-context'
+import Navbar from '@/components/Navbar'
+import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
-  Bike,
-  CheckCircle2,
   Eye,
   EyeOff,
-  KeyRound,
   Loader2,
   Lock,
   Mail,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
-  Store,
-  User,
-  UtensilsCrossed,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-interface QuickRole {
-  id: string
-  label: string
-  email: string
-  pass: string
-  role: string
-  icon: React.ElementType
-}
-
-const QUICK_ROLES: QuickRole[] = [
-  { id: 'user', label: 'Customer', email: 'user@crave.com', pass: '1234567890', role: 'Epicurean Patron', icon: User },
-  { id: 'vendor', label: 'Kitchen Chef', email: 'vendor@crave.com', pass: '1234567890', role: 'Master Hearth', icon: UtensilsCrossed },
-  { id: 'driver', label: 'Courier Rider', email: 'rider@crave.com', pass: '1234567890', role: 'Dispatch Fleet', icon: Bike },
-  { id: 'darkstore', label: 'CraveXP Store', email: 'darkstore@crave.com', pass: '1234567890', role: 'Dark Store', icon: Store },
-  { id: 'admin', label: 'Administrator', email: 'admin@crave.com', pass: '1234567890', role: 'Command Center', icon: ShieldCheck },
-]
-
 export default function LoginPage() {
-  const { user, login, logout } = useAuth()
+  const { login } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  function handleSelectQuickRole(r: QuickRole) {
-    setEmail(r.email)
-    setPassword(r.pass)
-    setSelectedRole(r.id)
-    setErrorMsg('')
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -114,11 +78,6 @@ export default function LoginPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Editorial Branding (Desktop) */}
           <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest uppercase text-stone-500 dark:text-stone-400">
-              <span className="size-1.5 rounded-full bg-[#5e8210] dark:bg-[#d9f447]" />
-              <span>Private Access Portal</span>
-            </div>
-
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] leading-[1.05] text-[#121815] dark:text-white">
               Gastronomic mastery. <br />
               <span className="font-serif italic font-normal text-stone-500 dark:text-stone-400">
@@ -130,42 +89,13 @@ export default function LoginPage() {
               Sign in to orchestrate artisan culinary deliveries, inspect live hearth queues, or manage South Bengaluru&apos;s finest kitchens.
             </p>
 
-            {/* Quick Demo Switcher Container */}
-            <div className="pt-2">
-              <div className="text-[11px] font-mono tracking-wider uppercase text-stone-400 dark:text-stone-500 mb-3 flex items-center justify-center lg:justify-start gap-1.5">
-                <KeyRound className="size-3 text-[#5e8210] dark:text-[#d9f447]" />
-                <span>Instant Demo Persona Switcher</span>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                {QUICK_ROLES.map((r) => {
-                  const Icon = r.icon
-                  const isActive = selectedRole === r.id
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleSelectQuickRole(r)}
-                      className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all duration-200 border ${
-                        isActive
-                          ? 'border-[#121815] dark:border-[#d9f447] bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] shadow-sm'
-                          : 'border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 text-stone-700 dark:text-stone-300 hover:border-black/25 dark:hover:border-white/25 hover:bg-white dark:hover:bg-white/10'
-                      }`}
-                    >
-                      <Icon className={`size-3.5 ${isActive ? 'text-[#d9f447] dark:text-[#121815]' : 'text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200'}`} />
-                      <span>{r.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             {/* Editorial Provenance Accents */}
-            <div className="hidden lg:grid grid-cols-2 gap-4 pt-6 border-t border-black/5 dark:border-white/10 text-xs text-stone-500 dark:text-stone-400">
-              <div className="flex items-center gap-2 font-medium">
+            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 dark:border-white/10 text-xs text-stone-500 dark:text-stone-400">
+              <div className="flex items-center gap-2 font-medium justify-center lg:justify-start">
                 <ShieldCheck className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <span>256-bit encryption</span>
               </div>
-              <div className="flex items-center gap-2 font-medium">
+              <div className="flex items-center gap-2 font-medium justify-center lg:justify-start">
                 <Sparkles className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <span>Zero surcharge</span>
               </div>
@@ -175,42 +105,6 @@ export default function LoginPage() {
           {/* Right Frosted Glass Authentication Console */}
           <div className="lg:col-span-7">
             <div className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/90 dark:bg-[#141b17]/90 p-7 sm:p-9 shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all">
-              {/* Active Session Notification */}
-              {user && mounted && (
-                <div className="mb-6 rounded-2xl border border-amber-300/60 dark:border-amber-600/30 bg-amber-50/80 dark:bg-amber-950/30 p-4 text-xs backdrop-blur-md">
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
-                      <p className="font-bold text-amber-950 dark:text-amber-200">
-                        Active session: <span className="underline">{user.name}</span> (
-                        {roleDetails[user.role]?.title || user.role})
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                      You are already authenticated. You can return directly to your workspace or switch accounts below.
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <Link
-                        href="/dashboard"
-                        className="rounded-xl bg-[#121815] dark:bg-[#d9f447] px-3.5 py-1.5 text-xs font-bold text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90"
-                      >
-                        Open Workspace
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await logout()
-                          router.push('/login')
-                        }}
-                        className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white/80 dark:bg-black/30 px-3.5 py-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 transition hover:bg-rose-50 dark:hover:bg-rose-950/50"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Console Header */}
               <div className="flex items-center justify-between pb-6 border-b border-black/5 dark:border-white/10">
                 <div>
@@ -245,10 +139,7 @@ export default function LoginPage() {
                       required
                       placeholder="e.g. user@crave.com"
                       value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value)
-                        setSelectedRole(null)
-                      }}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
                     />
                   </div>

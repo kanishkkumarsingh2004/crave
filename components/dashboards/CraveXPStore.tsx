@@ -138,13 +138,6 @@ export default function CraveXPStore() {
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2.5 mb-2.5">
                 <CraveLogo variant="cravexp" size="lg" theme="light" />
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
-                  <span className="relative flex size-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                  </span>
-                  <span>10-Min Dark Store Hub</span>
-                </div>
               </div>
               <h1 className="text-2xl font-black sm:text-3xl text-white tracking-tight">
                 Ultra-fast Grocery &amp; Daily Essentials

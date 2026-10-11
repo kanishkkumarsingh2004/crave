@@ -28,6 +28,8 @@ import {
   CreditCard,
   Crown,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileText,
   Filter,
   Flame,
@@ -38,6 +40,7 @@ import {
   Home,
   KeyRound,
   Leaf,
+  Loader2,
   LocateFixed,
   Lock,
   LogOut,
@@ -897,6 +900,66 @@ export default function CustomerDashboard({
     }
   }
 
+  // Password Management State & Handlers
+  const [showPasswordSection, setShowPasswordSection] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [passwordFeedback, setPasswordFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  async function handleChangePassword(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    setPasswordFeedback(null)
+
+    if (!currentPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Please enter your current password.' })
+      return
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordFeedback({ type: 'error', message: 'New password must be at least 8 characters long.' })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New password and confirmation do not match.' })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New password cannot be the same as your current password.' })
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      const res = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update password')
+      }
+
+      setPasswordFeedback({ type: 'success', message: 'Password updated successfully in database!' })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      triggerToast('Password changed successfully!')
+    } catch (err: any) {
+      setPasswordFeedback({ type: 'error', message: err?.message || 'Failed to update password' })
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
   async function handleDeleteSavedAddress(id: string, label: string) {
     try {
       const res = await fetch(`/api/user/addresses?id=${encodeURIComponent(id)}`, {
@@ -1727,24 +1790,8 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Right Block: Instamart Quick Link + Cart + ThemeToggle + Mobile Hamburger */}
+          {/* Right Block: Cart + ThemeToggle + Mobile Hamburger */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            <Link
-              href="/user/cravexp"
-              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#18201c] dark:bg-[#d9f447]/15 hover:bg-[#25322b] dark:hover:bg-[#d9f447]/25 text-white dark:text-[#d9f447] border border-white/10 dark:border-[#d9f447]/40 px-2 sm:px-3.5 py-1.5 text-xs font-black transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs group cursor-pointer"
-            >
-              <div className="relative flex items-center justify-center">
-                <Zap className="size-3.5 fill-[#d9f447] text-[#d9f447] group-hover:scale-115 transition" />
-                <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-emerald-400 animate-ping" />
-              </div>
-              <span className="tracking-tight hidden xs:inline text-xs">
-                crave<span className="text-[#d9f447] dark:text-white">XP</span>
-              </span>
-              <span className="rounded-full bg-[#d9f447] text-[#121815] px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider shadow-2xs">
-                10m
-              </span>
-            </Link>
-
             <div className="hidden sm:flex items-center">
               <ThemeToggle />
             </div>
@@ -1977,7 +2024,7 @@ export default function CustomerDashboard({
             className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition"
           >
             <Zap className="size-5 text-emerald-600 fill-emerald-600" />
-            <span>craveXP Instamart (10 Min)</span>
+            <span>craveXP Instamart</span>
           </Link>
         </div>
 
@@ -2011,20 +2058,9 @@ export default function CustomerDashboard({
 
               {/* Left Content Column */}
               <div className="relative z-10 flex-1 w-full max-w-xl">
-                {/* Branding & Live Status Header Bar */}
+                {/* Branding Header Bar */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3">
                   <CraveLogo variant="cravexp" size="lg" theme="light" />
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-2.5 sm:px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md">
-                    <span className="relative flex size-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                    </span>
-                    <span>10-Min Dark Store Hub</span>
-                  </div>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
-                    <span className="size-1 rounded-full bg-emerald-500" />
-                    <span>Real-Time Inventory</span>
-                  </span>
                 </div>
 
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
@@ -2502,10 +2538,6 @@ export default function CustomerDashboard({
                     <p className="font-extrabold text-sm sm:text-base text-white group-hover:text-[#d9f447] transition">
                       Need Groceries or Midnight Snacks Fast?
                     </p>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447]/20 border border-[#d9f447]/30 px-2 py-0.5 text-[9px] font-black text-[#d9f447] uppercase tracking-wider">
-                      <Zap className="size-2.5 fill-current text-[#d9f447]" />
-                      <span>10 Min Drop</span>
-                    </span>
                   </div>
                   <p className="text-xs text-gray-300 mt-1 max-w-xl">
                     Daily essentials, fresh milk, chilled beverages, farm eggs, chips &amp; munchies dispatched instantly from our local dark store.
@@ -2667,14 +2699,14 @@ export default function CustomerDashboard({
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-16">
             {/* 1. Profile Hero Card */}
-            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-linear-to-br from-white via-[#fbfcf9] to-[#f4f7ed] dark:from-[#18201c] dark:via-[#1c2621] dark:to-[#141b17] p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative overflow-hidden rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-linear-to-br from-white via-[#fbfcf9] to-[#f4f7ed] dark:from-[#18201c] dark:via-[#1c2621] dark:to-[#141b17] p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between relative z-10">
                 <div className="flex items-center gap-4 sm:gap-5">
                   <div className="relative">
-                    <div className="grid size-16 sm:size-20 place-items-center rounded-2xl bg-linear-to-tr from-[#b5de28] to-[#d9f447] text-[#18201c] font-black text-2xl sm:text-3xl shadow-md">
+                    <div className="grid size-16 sm:size-20 place-items-center rounded-2xl bg-linear-to-tr from-[#b5de28] to-[#d9f447] text-[#18201c] font-black text-2xl sm:text-3xl shadow-md ring-4 ring-[#b5de28]/20">
                       {(user?.name || 'C').charAt(0).toUpperCase()}
                     </div>
-                    <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-[#18201c]">
+                    <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-emerald-500 text-white ring-2 ring-white dark:ring-[#18201c] shadow-xs">
                       <Check className="size-3.5 stroke-[3]" />
                     </span>
                   </div>
@@ -2682,7 +2714,10 @@ export default function CustomerDashboard({
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                        <ShieldCheck className="size-3" /> Customer Account
+                        <ShieldCheck className="size-3" /> Verified Customer Account
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60">
+                        <Crown className="size-2.5" /> Crave Member
                       </span>
                     </div>
 
@@ -2693,14 +2728,14 @@ export default function CustomerDashboard({
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#55635a] dark:text-gray-300 font-medium">
                       {user?.email && (
                         <span className="flex items-center gap-1">
-                          <Mail className="size-3 text-[#b5de28]" />
+                          <Mail className="size-3.5 text-[#b5de28]" />
                           {user.email}
                         </span>
                       )}
                       {user?.email && user?.phone && <span>&bull;</span>}
                       {user?.phone ? (
                         <span className="flex items-center gap-1">
-                          <PhoneCall className="size-3 text-[#b5de28]" />
+                          <PhoneCall className="size-3.5 text-[#b5de28]" />
                           {user.phone}
                         </span>
                       ) : (
@@ -2710,17 +2745,38 @@ export default function CustomerDashboard({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-center">
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
                   <button
-                    onClick={() => setEditAddress(!editAddress)}
-                    className="inline-flex items-center gap-1.5 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-bold text-[#18201c] dark:text-white hover:bg-[#f4f7ed] dark:hover:bg-[#27342d] transition shadow-xs"
+                    onClick={() => {
+                      setEditAddress(!editAddress)
+                      if (!editAddress) setShowPasswordSection(false)
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-2xl border px-3.5 py-2 text-xs font-bold transition shadow-xs ${
+                      editAddress
+                        ? 'border-[#b5de28] bg-[#b5de28]/10 text-[#18201c] dark:text-[#d9f447]'
+                        : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white hover:bg-[#f4f7ed] dark:hover:bg-[#27342d]'
+                    }`}
                   >
                     <User className="size-3.5" />
                     {editAddress ? 'Close Edit' : 'Edit Profile'}
                   </button>
                   <button
+                    onClick={() => {
+                      setShowPasswordSection(!showPasswordSection)
+                      if (!showPasswordSection) setEditAddress(false)
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-2xl border px-3.5 py-2 text-xs font-bold transition shadow-xs ${
+                      showPasswordSection
+                        ? 'border-[#b5de28] bg-[#b5de28]/15 text-[#18201c] dark:text-[#d9f447]'
+                        : 'border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white hover:bg-[#f4f7ed] dark:hover:bg-[#27342d]'
+                    }`}
+                  >
+                    <KeyRound className="size-3.5 text-[#b5de28]" />
+                    {showPasswordSection ? 'Hide Security' : 'Change Password'}
+                  </button>
+                  <button
                     onClick={() => logout()}
-                    className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 px-4 py-2 text-xs font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-xs"
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 px-3.5 py-2 text-xs font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-xs"
                   >
                     <LogOut className="size-3.5" />
                     Sign Out
@@ -2729,7 +2785,7 @@ export default function CustomerDashboard({
               </div>
 
               {/* Real Account Stats Only */}
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-[#e5e9e0] dark:border-[#27342d] pt-6">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-[#e5e9e0] dark:border-[#27342d] pt-6 relative z-10">
                 <div className="flex items-center gap-3.5 rounded-2xl bg-white dark:bg-[#121815] p-3.5 border border-[#e5e9e0] dark:border-[#27342d] shadow-2xs">
                   <div className="grid size-11 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">
                     <ShoppingBag className="size-5" />
@@ -2845,7 +2901,196 @@ export default function CustomerDashboard({
               </div>
             )}
 
-            {/* 3. Appearance & Theme Settings (User Requirement: Default Light, Switch to Dark in Accounts) */}
+            {/* 3. Dedicated Security & Change Password Section */}
+            <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] gap-3 mb-5">
+                <div className="flex items-start gap-3">
+                  <div className="grid size-10 place-items-center rounded-2xl bg-[#d9f447]/20 text-[#18201c] dark:text-[#d9f447] shrink-0 mt-0.5">
+                    <KeyRound className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-[#18201c] dark:text-white flex items-center gap-2">
+                      <span>Password &amp; Security</span>
+                    </h3>
+                    <p className="text-xs text-[#55635a] dark:text-gray-400 mt-0.5 font-medium">
+                      Update your account password securely. Changes are encrypted and saved directly to the database.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                    <ShieldCheck className="size-3.5" /> Scrypt Encrypted
+                  </span>
+                </div>
+              </div>
+
+              {/* Feedback Alert */}
+              {passwordFeedback && (
+                <div
+                  className={`mb-5 flex items-start gap-3 rounded-2xl p-4 text-xs font-semibold transition ${
+                    passwordFeedback.type === 'success'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80'
+                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/80'
+                  }`}
+                >
+                  {passwordFeedback.type === 'success' ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="size-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <p>{passwordFeedback.message}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPasswordFeedback(null)}
+                    className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Current Password */}
+                  <div>
+                    <label className="font-bold text-[#55635a] dark:text-gray-300 block mb-1.5 text-xs">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <Lock className="size-3.5" />
+                      </div>
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Current password"
+                        autoComplete="current-password"
+                        className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white pl-9 pr-10 py-2.5 text-xs font-medium outline-none focus:border-[#b5de28] transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        title={showCurrentPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showCurrentPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="font-bold text-[#55635a] dark:text-gray-300 block mb-1.5 text-xs">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <KeyRound className="size-3.5" />
+                      </div>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Min. 8 characters"
+                        autoComplete="new-password"
+                        className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white pl-9 pr-10 py-2.5 text-xs font-medium outline-none focus:border-[#b5de28] transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        title={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showNewPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="font-bold text-[#55635a] dark:text-gray-300 block mb-1.5 text-xs">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <CheckCircle2 className="size-3.5" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter new password"
+                        autoComplete="new-password"
+                        className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white pl-9 pr-10 py-2.5 text-xs font-medium outline-none focus:border-[#b5de28] transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Password guidelines & action bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#66756c] dark:text-gray-400 font-medium">
+                    <span className="flex items-center gap-1">
+                      <span className={`inline-block size-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                      At least 8 characters
+                    </span>
+                    <span>&bull;</span>
+                    <span className="flex items-center gap-1">
+                      <span className={`inline-block size-1.5 rounded-full ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                      Passwords match
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    {(currentPassword || newPassword || confirmPassword) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentPassword('')
+                          setNewPassword('')
+                          setConfirmPassword('')
+                          setPasswordFeedback(null)
+                        }}
+                        className="rounded-xl border border-gray-200 dark:border-[#27342d] px-3.5 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#27342d] transition"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2 text-xs font-black text-white dark:text-[#18201c] hover:bg-[#2a3831] dark:hover:bg-[#e4fc62] transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isChangingPassword ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          <span>Updating DB...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="size-3.5" />
+                          <span>Update Password</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* 4. Appearance & Theme Settings */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] gap-2 mb-5">
                 <div>
@@ -2867,7 +3112,7 @@ export default function CustomerDashboard({
               <ThemeSelector />
             </div>
 
-            {/* 4. Saved Delivery Locations Quick Selector */}
+            {/* 5. Saved Delivery Locations Quick Selector */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
                 <div>
@@ -2991,7 +3236,7 @@ export default function CustomerDashboard({
               </div>
             </div>
 
-            {/* 5. Help, Support & Trust Policies Footer Bar */}
+            {/* 6. Help, Support & Trust Policies Footer Bar */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 text-left">
                 <div className="grid size-10 place-items-center rounded-2xl bg-[#f4f7ed] dark:bg-[#27342d] text-[#b5de28] dark:text-[#d9f447] shrink-0">

@@ -44,6 +44,15 @@ export async function PATCH(request: Request) {
     if ('name' in b) updates.name = String(b.name)
     if ('phone' in b) updates.phone = b.phone ? String(b.phone) : null
     if ('address' in b) updates.address = b.address ? String(b.address) : null
+    if ('password' in b || 'newPassword' in b) {
+      const pwd = String(b.password || b.newPassword)
+      if (pwd.length >= 8) {
+        const crypto = require('crypto')
+        const salt = crypto.randomBytes(16).toString('hex')
+        const hash = crypto.scryptSync(pwd, salt, 64).toString('hex')
+        updates.password_hash = `${salt}:${hash}`
+      }
+    }
   }
 
   if (Object.keys(updates).length === 0) {
