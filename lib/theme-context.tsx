@@ -110,7 +110,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext)
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
+    return {
+      theme: 'light' as Theme,
+      resolvedTheme: 'light' as ResolvedTheme,
+      setTheme: () => {},
+    }
   }
   return context
 }
+

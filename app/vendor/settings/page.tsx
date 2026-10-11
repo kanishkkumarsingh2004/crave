@@ -101,7 +101,7 @@ export default function VendorSettingsPage() {
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
-      <div className="min-h-screen bg-[#0a0f0d] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
         <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -159,27 +159,27 @@ export default function VendorSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar">
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar transition-colors duration-200">
       <VendorSidebar />
 
       <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 space-y-6">
         {/* Header Hero */}
-        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl">
+        <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-6 shadow-sm dark:shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
                 Restaurant Profile &amp; Payout Settings
               </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
                 Bank Profile &amp; Kitchen Settings
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                 Manage the contact, payout, and availability details stored for this restaurant.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 bg-[#18201c] p-3 rounded-2xl border border-[#27342d]">
-              <span className="text-xs font-bold text-gray-300">Accepting Orders:</span>
+            <div className="flex items-center gap-3 bg-stone-100 dark:bg-[#18201c] p-3 rounded-2xl border border-stone-200 dark:border-[#27342d]">
+              <span className="text-xs font-bold text-stone-700 dark:text-gray-300">Accepting Orders:</span>
               <AppleToggle
                 checked={kitchenOpen}
                 onChange={() => void handleToggleKitchen()}
@@ -191,8 +191,8 @@ export default function VendorSettingsPage() {
               <span
                 className={`text-[11px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full ${
                   kitchenOpen
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                    : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                 }`}
               >
                 {kitchenOpen ? 'ONLINE' : 'OFFLINE'}
@@ -203,20 +203,20 @@ export default function VendorSettingsPage() {
 
         {/* Toast Alert Message */}
         {toastMsg && (
-          <div className="rounded-2xl border border-[#d9f447]/40 bg-[#d9f447]/10 p-4 text-xs font-bold text-[#d9f447] shadow-lg animate-in fade-in duration-200">
+          <div className="rounded-2xl border border-[#86a018]/40 dark:border-[#d9f447]/40 bg-[#d9f447]/15 p-4 text-xs font-bold text-[#5e700a] dark:text-[#d9f447] shadow-sm animate-in fade-in duration-200">
             {toastMsg}
           </div>
         )}
 
         {/* Theme & Visual Appearance Section */}
-        <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-4">
-          <div className="flex items-center gap-3 border-b border-[#202b24] pb-4">
-            <div className="grid size-10 place-items-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
+        <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-4">
+          <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
+            <div className="grid size-10 place-items-center rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 font-bold">
               <Palette className="size-5" />
             </div>
             <div>
-              <h3 className="font-black text-base text-white">Appearance &amp; Theme Mode</h3>
-              <p className="text-xs text-gray-400">
+              <h3 className="font-black text-base text-[#121815] dark:text-white">Appearance &amp; Theme Mode</h3>
+              <p className="text-xs text-stone-500 dark:text-gray-400">
                 Choose your preferred store portal display mode (Light, Dark, or System Sync).
               </p>
             </div>
@@ -227,14 +227,14 @@ export default function VendorSettingsPage() {
         {/* Bank & Payout Form */}
         <form onSubmit={handleSaveSettings} className="space-y-6">
           {/* Registered Bank Account Card */}
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-bold">
                 <Building2 className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">Payout Bank Account</h3>
-                <p className="text-xs text-gray-400">
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">Payout Bank Account</h3>
+                <p className="text-xs text-stone-500 dark:text-gray-400">
                   Bank details stored on your restaurant profile
                 </p>
               </div>
@@ -242,72 +242,72 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-gray-200">Account Holder Name</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Account Holder Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Krishna Sagar Pvt Ltd"
                   value={accountHolder}
                   onChange={(e) => setAccountHolder(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Bank Name</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Bank Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. HDFC Bank"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Bank Account Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Bank Account Number</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 5010023456789"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">IFSC Code</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">IFSC Code</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. HDFC0001234"
                   value={ifscCode}
                   onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold uppercase text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-gray-200">Primary Payout UPI VPA (Optional)</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Primary Payout UPI VPA (Optional)</label>
                 <input
                   type="text"
                   value={payoutUpi}
                   onChange={(e) => setPayoutUpi(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   placeholder="e.g. restaurant@bank"
                 />
               </div>
             </div>
 
-            <div className="rounded-2xl bg-emerald-500/10 p-4 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-3">
-              <ShieldCheck className="size-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 p-4 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-3">
+              <ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-extrabold text-white">
+                <p className="font-extrabold text-[#121815] dark:text-white">
                   {accountNumber ? 'Bank details saved' : 'Bank details not configured'}
                 </p>
-                <p className="mt-0.5 text-emerald-300/80">
+                <p className="mt-0.5 text-emerald-700/80 dark:text-emerald-300/80">
                   {accountNumber
                     ? 'Current bank information is loaded from the restaurant profile.'
                     : 'Add payout details and save them to the restaurant profile.'}
@@ -317,67 +317,67 @@ export default function VendorSettingsPage() {
           </div>
 
           {/* Restaurant License & Address Info */}
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
+          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 font-bold">
                 <FileText className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">FSSAI License &amp; Store Details</h3>
-                <p className="text-xs text-gray-400">Government compliance and pickup address</p>
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">FSSAI License &amp; Store Details</h3>
+                <p className="text-xs text-stone-500 dark:text-gray-400">Government compliance and pickup address</p>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-gray-200">FSSAI Registration License #</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">FSSAI Registration License #</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 11223344556677"
                   value={fssaiLicense}
                   onChange={(e) => setFssaiLicense(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Manager Phone Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Manager Phone Number</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-gray-200">Kitchen Pickup Address</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Kitchen Pickup Address</label>
                 <textarea
                   rows={2}
                   required
                   placeholder="Enter full pickup address for riders..."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-semibold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
             </div>
           </div>
 
           {/* Commercial Tax & GST Profile Card */}
-          <div className="rounded-3xl border border-[#222e27] bg-[#121815] p-6 shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
+          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 font-bold">
                 <ShieldCheck className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">
                   GST Tax Registration &amp; Pricing Mode
                 </h3>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-gray-400">
                   Commercial engine tax profile &amp; place of supply configuration
                 </p>
               </div>
@@ -385,60 +385,60 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-gray-200">GSTIN Registration Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">GSTIN Registration Number</label>
                 <input
                   type="text"
                   placeholder="e.g. 29AAAAA0000A1Z5"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold uppercase text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold uppercase text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">GST Registration Status</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">GST Registration Status</label>
                 <select
                   value={gstStatus}
                   onChange={(e) => setGstStatus(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 >
-                  <option value="REGISTERED" className="bg-[#121815] text-white">
+                  <option value="REGISTERED" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     REGISTERED (Regular Taxable)
                   </option>
-                  <option value="UNREGISTERED" className="bg-[#121815] text-white">
+                  <option value="UNREGISTERED" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     UNREGISTERED
                   </option>
-                  <option value="COMPOSITION" className="bg-[#121815] text-white">
+                  <option value="COMPOSITION" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     COMPOSITION SCHEME
                   </option>
-                  <option value="EXEMPT" className="bg-[#121815] text-white">
+                  <option value="EXEMPT" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     EXEMPT
                   </option>
                 </select>
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Supplier Registration State</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Supplier Registration State</label>
                 <input
                   type="text"
                   placeholder="e.g. Karnataka"
                   value={supplierState}
                   onChange={(e) => setSupplierState(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white placeholder-gray-400 outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Default Menu Price Tax Mode</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Default Menu Price Tax Mode</label>
                 <select
                   value={priceTaxMode}
                   onChange={(e) => setPriceTaxMode(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 >
-                  <option value="TAX_INCLUSIVE" className="bg-[#121815] text-white">
+                  <option value="TAX_INCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     TAX INCLUSIVE (Displayed price includes 5% GST)
                   </option>
-                  <option value="TAX_EXCLUSIVE" className="bg-[#121815] text-white">
+                  <option value="TAX_EXCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     TAX EXCLUSIVE (5% GST added at checkout)
                   </option>
                 </select>
@@ -450,7 +450,7 @@ export default function VendorSettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-lg shadow-[#d9f447]/10 hover:bg-[#c8e434] active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition cursor-pointer"
             >
               <Save className="size-4 text-[#0d1310]" /> Save Bank &amp; Store Settings
             </button>

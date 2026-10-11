@@ -147,7 +147,7 @@ export default function VendorSalesPage() {
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
-      <div className="min-h-screen bg-[#0a0f0d] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
         <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -204,28 +204,28 @@ export default function VendorSalesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full transition-colors duration-200">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] w-full px-3.5 pt-6 sm:px-6 lg:px-8 space-y-6 min-w-0 overflow-hidden">
         {/* Sales Overview Banner */}
-        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-4 sm:p-6 shadow-xl w-full min-w-0">
+        <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-4 sm:p-6 shadow-sm dark:shadow-xl w-full min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
             <div className="min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
                 Restaurant Financial Analytics
               </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white truncate">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white truncate">
                 Sales Revenue &amp; Settlements
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5 truncate">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 truncate">
                 Financial performance for{' '}
-                <strong className="text-white">{user?.restaurantName || 'Your restaurant'}</strong>
+                <strong className="text-stone-800 dark:text-white">{user?.restaurantName || 'Your restaurant'}</strong>
               </p>
             </div>
             <Link
               href="/vendor/settings"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d9f447] px-5 py-2.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition shrink-0 self-start sm:self-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d9f447] px-5 py-2.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition shrink-0 self-start sm:self-auto cursor-pointer"
             >
               Manage Payout Bank Details <ArrowUpRight className="size-3.5 text-[#0d1310]" />
             </Link>
@@ -235,87 +235,87 @@ export default function VendorSalesPage() {
         {/* 5 Financial Summary KPI Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5 w-full min-w-0">
           {/* Card 1: Gross Sales */}
-          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+          <div className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-3.5 sm:p-4 shadow-sm dark:shadow-lg hover:border-[#86a018]/40 dark:hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-1 min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
                 Gross Sales
               </span>
-              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 shrink-0">
                 <DollarSign className="size-3.5" />
               </div>
             </div>
-            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-white truncate">
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#121815] dark:text-white truncate">
               ₹{totalGrossSales.toLocaleString()}
             </p>
-            <p className="text-[10px] text-gray-400 mt-1 truncate">
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Across {totalRecordCount} {orders.length > 0 ? 'orders' : 'records'}
             </p>
           </div>
 
           {/* Card 2: Platform Cut */}
-          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+          <div className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-3.5 sm:p-4 shadow-sm dark:shadow-lg hover:border-[#86a018]/40 dark:hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-1 min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
                 Platform Cut ({commissionRate}%)
               </span>
-              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 shrink-0">
                 <Percent className="size-3.5" />
               </div>
             </div>
-            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-400 truncate">
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
               -₹{totalCommission.toLocaleString()}
             </p>
-            <p className="text-[10px] text-gray-400 mt-1 truncate">Commission cut</p>
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">Commission cut</p>
           </div>
 
           {/* Card 3: Net Vendor Payout */}
-          <div className="rounded-2xl sm:rounded-3xl border border-[#222e27] bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
+          <div className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-3.5 sm:p-4 shadow-sm dark:shadow-lg hover:border-[#86a018]/40 dark:hover:border-[#d9f447]/40 transition-all min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-1 min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 truncate">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
                 Net Vendor Payout
               </span>
-              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shrink-0">
                 <TrendingUp className="size-3.5" />
               </div>
             </div>
-            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-400 truncate">
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400 truncate">
               ₹{totalNetEarnings.toLocaleString()}
             </p>
-            <p className="text-[10px] text-gray-400 mt-1 truncate">Total net earnings</p>
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">Total net earnings</p>
           </div>
 
-          {/* NEW Card 4: Settled Price (Disbursed Payout) */}
-          <div className="rounded-2xl sm:rounded-3xl border border-emerald-500/30 bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-emerald-400/60 transition-all min-w-0 overflow-hidden">
+          {/* Card 4: Settled Price (Disbursed Payout) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-emerald-500/30 bg-white dark:bg-[#121815] p-3.5 sm:p-4 shadow-sm dark:shadow-lg hover:border-emerald-500/60 transition-all min-w-0 overflow-hidden">
             <div className="flex items-center justify-between gap-1 min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 truncate">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 truncate">
                 Settled Price
               </span>
-              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 shrink-0">
                 <CheckCircle2 className="size-3.5" />
               </div>
             </div>
-            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#d9f447] truncate">
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#5e700a] dark:text-[#d9f447] truncate">
               ₹{totalSettledAmount.toLocaleString()}
             </p>
-            <p className="text-[10px] text-emerald-400 font-semibold mt-1 truncate">
+            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-1 truncate">
               Transferred to bank
             </p>
           </div>
 
-          {/* NEW Card 5: Remaining Settlement Price (Pending Balance) */}
-          <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-[#121815] p-3.5 sm:p-4 shadow-lg hover:border-amber-400/60 transition-all min-w-0 overflow-hidden col-span-2 sm:col-span-1">
+          {/* Card 5: Remaining Settlement Price (Pending Balance) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-white dark:bg-[#121815] p-3.5 sm:p-4 shadow-sm dark:shadow-lg hover:border-amber-500/60 transition-all min-w-0 overflow-hidden col-span-2 sm:col-span-1">
             <div className="flex items-center justify-between gap-1 min-w-0">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-400 truncate">
                 Remaining Settlement Price
               </span>
-              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+              <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 shrink-0">
                 <Clock3 className="size-3.5" />
               </div>
             </div>
-            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-400 truncate">
+            <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
               ₹{remainingSettlementBalance.toLocaleString()}
             </p>
-            <p className="text-[10px] text-amber-300/80 mt-1 truncate">Awaiting payout release</p>
+            <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-1 truncate">Awaiting payout release</p>
           </div>
         </div>
       </div>

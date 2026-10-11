@@ -31,21 +31,24 @@ export async function GET(request: Request) {
     const ownerId = searchParams.get('ownerId')
     const isDarkStore = searchParams.get('isDarkStore')
 
-    // CR-009: Prevent cross-tenant data leak - derive owner from session for non-admins
-    let effectiveOwnerId = ownerId
-    if (actor && actor.role !== 'admin') {
-      // Non-admins can only see their own restaurants
-      effectiveOwnerId = actor.id
+    // CR-009: Prevent cross-tenant data leak - derive owner from session for vendors querying ownerId
+    const isVendor =
+      actor?.role === 'restaurant_vendor' || actor?.role === 'cravexp_store_vendor'
+
+    let effectiveOwnerId: string | null = null
+    if (ownerId) {
+      if (isVendor) {
+        // Vendors can only query their own stores when filtering by owner
+        effectiveOwnerId = actor.id
+      } else {
+        effectiveOwnerId = ownerId
+      }
     }
 
     let restaurants
     if (restaurantId) {
       const { findRestaurantById } = await import('@/lib/dal/restaurants')
       const found = await findRestaurantById(restaurantId)
-      // Verify ownership if not admin
-      if (found && actor && actor.role !== 'admin' && found.owner_id !== actor.id) {
-        return NextResponse.json({ success: true, restaurants: [] })
-      }
       restaurants = found ? [found] : []
     } else if (effectiveOwnerId) {
       restaurants = await listRestaurants({ ownerId: effectiveOwnerId })

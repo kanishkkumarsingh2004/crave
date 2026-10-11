@@ -321,28 +321,28 @@ export default function VendorMenuPage() {
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
-      <div className="min-h-screen bg-[#0a0f0d] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
         <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar">
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar transition-colors duration-200">
       <VendorSidebar />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Menu Catalog Hero */}
-        <div className="rounded-3xl border border-[#233027] bg-gradient-to-r from-[#141b17] via-[#111614] to-[#18231c] p-6 shadow-xl">
+        <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-6 shadow-sm dark:shadow-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
                 Restaurant Menu Management
               </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-white">
+              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                 Add, edit, set pricing, or toggle live dish availability for customer orders.
               </p>
             </div>
@@ -350,7 +350,7 @@ export default function VendorMenuPage() {
             <button
               onClick={openAddModal}
               disabled={!restaurantId}
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition cursor-pointer"
             >
               <Plus className="size-4 text-[#0d1310]" /> Add New Dish
             </button>
@@ -364,10 +364,10 @@ export default function VendorMenuPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border ${
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border cursor-pointer ${
                   selectedCategory === cat
                     ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447] font-black'
-                    : 'bg-[#141c17] text-gray-300 border-[#233228] hover:bg-[#1c2720] hover:text-white'
+                    : 'bg-stone-100 dark:bg-[#141c17] text-stone-700 dark:text-gray-300 border-stone-200 dark:border-[#233228] hover:bg-stone-200/80 dark:hover:bg-[#1c2720] hover:text-stone-900 dark:hover:text-white'
                 }`}
               >
                 {cat}
@@ -376,13 +376,13 @@ export default function VendorMenuPage() {
           </div>
 
           <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3.5 top-2.5 size-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-2.5 size-4 text-stone-400 dark:text-gray-400" />
             <input
               type="text"
               placeholder="Search dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-[#233228] bg-[#141c17] py-2 pl-9 pr-4 text-xs font-medium text-white placeholder-gray-500 outline-none focus:border-[#d9f447] shadow-xs"
+              className="w-full rounded-full border border-stone-200 dark:border-[#233228] bg-white dark:bg-[#141c17] py-2 pl-9 pr-4 text-xs font-medium text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447] shadow-xs"
             />
           </div>
         </div>
@@ -390,36 +390,36 @@ export default function VendorMenuPage() {
         {/* Menu Items Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {menuLoading ? (
-            <p className="col-span-full rounded-2xl border border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
+            <p className="col-span-full rounded-2xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-8 text-center text-sm text-stone-500 dark:text-gray-400">
               Loading menu from the database...
             </p>
           ) : menuError ? (
             <p
               role="alert"
-              className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-300"
+              className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-600 dark:text-rose-300"
             >
               {menuError}
             </p>
           ) : !restaurantId ? (
-            <p className="col-span-full rounded-2xl border border-dashed border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
+            <p className="col-span-full rounded-2xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-8 text-center text-sm text-stone-500 dark:text-gray-400">
               No restaurant is linked to this vendor account yet.
             </p>
           ) : filteredItems.length === 0 ? (
-            <p className="col-span-full rounded-2xl border border-dashed border-[#222e27] bg-[#121815] p-8 text-center text-sm text-gray-400">
+            <p className="col-span-full rounded-2xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-8 text-center text-sm text-stone-500 dark:text-gray-400">
               No menu items are stored for this restaurant yet.
             </p>
           ) : (
             filteredItems.map((item) => (
               <div
                 key={item.id}
-                className={`rounded-3xl border p-4 bg-[#121815] shadow-xl flex flex-col justify-between transition ${
+                className={`rounded-3xl border p-4 bg-white dark:bg-[#121815] shadow-sm dark:shadow-xl flex flex-col justify-between transition ${
                   item.in_stock
-                    ? 'border-[#233027] hover:border-[#d9f447]/40'
+                    ? 'border-stone-200 dark:border-[#233027] hover:border-[#86a018]/40 dark:hover:border-[#d9f447]/40'
                     : 'border-rose-500/30 bg-rose-500/5'
                 }`}
               >
                 <div>
-                  <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3 bg-[#171f1b]">
+                  <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3 bg-stone-100 dark:bg-[#171f1b]">
                     {item.image ? (
                       <img
                         src={item.image}
@@ -427,11 +427,11 @@ export default function VendorMenuPage() {
                         className={`size-full object-cover transition ${!item.in_stock ? 'grayscale opacity-60' : ''}`}
                       />
                     ) : (
-                      <div className="grid size-full place-items-center bg-[#171f1b] text-gray-500">
+                      <div className="grid size-full place-items-center bg-stone-100 dark:bg-[#171f1b] text-stone-400 dark:text-gray-500">
                         <Utensils className="size-8" aria-hidden="true" />
                       </div>
                     )}
-                    <span className="absolute top-3 left-3 rounded-full bg-[#18201c]/90 px-3 py-1 text-[10px] font-black uppercase text-[#d9f447] border border-[#27342d] backdrop-blur-md shadow-xs">
+                    <span className="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-[#18201c]/90 px-3 py-1 text-[10px] font-black uppercase text-[#86a018] dark:text-[#d9f447] border border-stone-200 dark:border-[#27342d] backdrop-blur-md shadow-xs">
                       {item.category}
                     </span>
                     {!item.in_stock && (
@@ -442,24 +442,24 @@ export default function VendorMenuPage() {
                   </div>
 
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-extrabold text-base text-white leading-snug">
+                    <h3 className="font-extrabold text-base text-[#121815] dark:text-white leading-snug">
                       {item.name}
                     </h3>
-                    <span className="font-black text-lg text-[#d9f447] shrink-0">
+                    <span className="font-black text-lg text-[#5e700a] dark:text-[#d9f447] shrink-0">
                       ₹{item.price}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>
+                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-[#202b24] flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-stone-100 dark:border-[#202b24] flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => handleToggleStock(item.id, item.in_stock)}
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold transition border ${
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold transition border cursor-pointer ${
                       item.in_stock
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
                     }`}
                   >
                     {item.in_stock ? 'In Stock' : 'Out of Stock'}
@@ -468,14 +468,14 @@ export default function VendorMenuPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => openEditModal(item)}
-                      className="grid size-8 place-items-center rounded-xl bg-[#1c2620] text-gray-300 hover:text-white hover:bg-[#25332a] transition border border-[#28372e]"
+                      className="grid size-8 place-items-center rounded-xl bg-stone-100 dark:bg-[#1c2620] text-stone-700 dark:text-gray-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200 dark:hover:bg-[#25332a] transition border border-stone-200 dark:border-[#28372e] cursor-pointer"
                       title="Edit Dish"
                     >
                       <Edit className="size-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item.id, item.name)}
-                      className="grid size-8 place-items-center rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition border border-rose-500/20"
+                      className="grid size-8 place-items-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition border border-rose-500/20 cursor-pointer"
                       title="Delete Dish"
                     >
                       <Trash2 className="size-3.5" />
@@ -487,9 +487,9 @@ export default function VendorMenuPage() {
           )}
 
           {filteredItems.length === 0 && (
-            <div className="col-span-full rounded-3xl border border-dashed border-[#222e27] bg-[#121815] p-12 text-center text-gray-400">
-              <Utensils className="mx-auto size-12 text-gray-600 mb-2" />
-              <p className="font-bold text-base text-white">No Dishes Found</p>
+            <div className="col-span-full rounded-3xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-12 text-center text-stone-500 dark:text-gray-400">
+              <Utensils className="mx-auto size-12 text-stone-400 dark:text-gray-600 mb-2" />
+              <p className="font-bold text-base text-[#121815] dark:text-white">No Dishes Found</p>
               <p className="text-xs mt-1">
                 Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.
               </p>
@@ -500,20 +500,20 @@ export default function VendorMenuPage() {
 
       {/* Add / Edit Dish Modal */}
       {showItemModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-[#121815] border border-[#233027] p-6 shadow-2xl max-h-[90vh] overflow-y-auto text-white">
-            <div className="flex items-center justify-between border-b border-[#202b24] pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#121815] border border-stone-200 dark:border-[#233027] p-6 shadow-2xl max-h-[90vh] overflow-y-auto text-[#121815] dark:text-white">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-[#202b24] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447]">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
                   {editingItem ? 'Edit Dish Details' : 'Create New Menu Item'}
                 </span>
-                <h3 className="text-xl font-black text-white mt-0.5">
+                <h3 className="text-xl font-black text-[#121815] dark:text-white mt-0.5">
                   {editingItem ? editingItem.name : 'Add Dish to Menu'}
                 </h3>
               </div>
               <button
                 onClick={() => setShowItemModal(false)}
-                className="grid size-8 place-items-center rounded-full bg-[#1c2620] text-gray-400 hover:text-white hover:bg-[#25332a]"
+                className="grid size-8 place-items-center rounded-full bg-stone-100 dark:bg-[#1c2620] text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200 dark:hover:bg-[#25332a] cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -521,35 +521,35 @@ export default function VendorMenuPage() {
 
             <form onSubmit={handleSaveItem} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-gray-200">Dish Name</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Dish Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Avocado Quinoa Harvest Bowl"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-medium text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-gray-200">Category</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">Category</label>
                   <select
                     value={categoryInput}
                     onChange={(e) => setCategoryInput(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-medium text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   >
-                    <option value="Bowls">Bowls</option>
-                    <option value="Wraps">Wraps</option>
-                    <option value="Starters">Starters</option>
-                    <option value="Beverages">Beverages</option>
-                    <option value="Desserts">Desserts</option>
+                    <option value="Bowls" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Bowls</option>
+                    <option value="Wraps" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Wraps</option>
+                    <option value="Starters" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Starters</option>
+                    <option value="Beverages" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Beverages</option>
+                    <option value="Desserts" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Desserts</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-200">Price (₹)</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">Price (₹)</label>
                   <input
                     type="number"
                     required
@@ -558,75 +558,75 @@ export default function VendorMenuPage() {
                     onChange={(e) =>
                       setPriceInput(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Description / Ingredients</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Description / Ingredients</label>
                 <textarea
                   rows={2}
                   placeholder="e.g. Organic quinoa topped with wild basil pesto & roasted cherry tomatoes"
                   value={descInput}
                   onChange={(e) => setDescInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-medium text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-medium text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-gray-200">HSN/SAC Code</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">HSN/SAC Code</label>
                   <input
                     type="text"
                     value={hsnSacInput}
                     onChange={(e) => setHsnSacInput(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono font-bold text-white outline-none focus:border-[#d9f447]"
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                     placeholder="996331"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-200">MRP (Optional)</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">MRP (Optional)</label>
                   <input
                     type="number"
                     value={mrpInput}
                     onChange={(e) =>
                       setMrpInput(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-200">GST Tax Mode</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">GST Tax Mode</label>
                   <select
                     value={priceTaxModeInput}
                     onChange={(e) => setPriceTaxModeInput(e.target.value as any)}
-                    className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-bold text-white outline-none focus:border-[#d9f447]"
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   >
-                    <option value="TAX_INCLUSIVE">TAX INCLUSIVE</option>
-                    <option value="TAX_EXCLUSIVE">TAX EXCLUSIVE</option>
+                    <option value="TAX_INCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">TAX INCLUSIVE</option>
+                    <option value="TAX_EXCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">TAX EXCLUSIVE</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-gray-200">Dish Image URL</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">Dish Image URL</label>
                 <input
                   type="url"
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#233027] bg-[#0d1210] p-3 font-mono text-[11px] text-white outline-none focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono text-[11px] text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl bg-[#171f1b] p-4 border border-[#233027]">
-                <span className="font-bold text-white">In-Stock Availability</span>
+              <div className="flex items-center justify-between rounded-2xl bg-stone-50 dark:bg-[#171f1b] p-4 border border-stone-200 dark:border-[#233027]">
+                <span className="font-bold text-[#121815] dark:text-white">In-Stock Availability</span>
                 <button
                   type="button"
                   onClick={() => setInStockInput(!inStockInput)}
-                  className={`px-4 py-1.5 rounded-full font-bold transition ${
+                  className={`px-4 py-1.5 rounded-full font-bold transition cursor-pointer ${
                     inStockInput ? 'bg-emerald-500 text-[#0d1310]' : 'bg-rose-500 text-white'
                   }`}
                 >
@@ -634,17 +634,17 @@ export default function VendorMenuPage() {
                 </button>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#202b24]">
+              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-stone-100 dark:border-[#202b24]">
                 <button
                   type="button"
                   onClick={() => setShowItemModal(false)}
-                  className="rounded-full border border-[#2a382e] bg-[#1a231e] px-5 py-2.5 font-bold text-gray-300 hover:text-white transition"
+                  className="rounded-full border border-stone-200 dark:border-[#2a382e] bg-stone-100 dark:bg-[#1a231e] px-5 py-2.5 font-bold text-stone-700 dark:text-gray-300 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#d9f447] px-7 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] transition"
+                  className="rounded-full bg-[#d9f447] px-7 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] transition cursor-pointer"
                 >
                   {editingItem ? 'Save Dish Changes' : 'Add Dish to Menu'}
                 </button>

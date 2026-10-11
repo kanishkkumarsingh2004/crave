@@ -9,6 +9,43 @@ export interface ThemeToggleProps {
   variant?: 'icon' | 'pill'
 }
 
+const SunIcon =
+  Sun ||
+  function DefaultSun(props: any) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
+    )
+  }
+
+const MoonIcon =
+  Moon ||
+  function DefaultMoon(props: any) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </svg>
+    )
+  }
+
 export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -30,7 +67,7 @@ export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeT
         className={`grid size-9 place-items-center rounded-xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-gray-500 opacity-60 ${className}`}
         disabled
       >
-        <Sun className="size-4" />
+        <SunIcon className="size-4" />
       </button>
     )
   }
@@ -51,12 +88,12 @@ export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeT
       >
         {isDark ? (
           <>
-            <Sun className="size-3.5 text-[#d9f447]" />
+            <SunIcon className="size-3.5 text-[#d9f447]" />
             <span>Light Mode</span>
           </>
         ) : (
           <>
-            <Moon className="size-3.5 text-[#18201c]" />
+            <MoonIcon className="size-3.5 text-[#18201c]" />
             <span>Dark Mode</span>
           </>
         )}
@@ -77,9 +114,9 @@ export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeT
       } ${className}`}
     >
       {isDark ? (
-        <Sun className="size-4 text-[#d9f447] transition-transform duration-200 hover:rotate-45" />
+        <SunIcon className="size-4 text-[#d9f447] transition-transform duration-200 hover:rotate-45" />
       ) : (
-        <Moon className="size-4 text-[#18201c] transition-transform duration-200 hover:-rotate-12" />
+        <MoonIcon className="size-4 text-[#18201c] transition-transform duration-200 hover:-rotate-12" />
       )}
     </button>
   )

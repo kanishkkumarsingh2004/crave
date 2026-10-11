@@ -36,75 +36,95 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    let profile: any = await findUserInDb(email)
-    if (!profile && email.endsWith('@gmail.com')) {
-      profile = await findUserInDb(email.replace('@gmail.com', '@crave.com'))
+    let lookupEmail = email
+    if (process.env.NODE_ENV !== 'production') {
+      if (email === 'admin') lookupEmail = 'admin@crave.com'
+      else if (email === 'vendor') lookupEmail = 'vendor@crave.com'
+      else if (email === 'user') lookupEmail = 'user@crave.com'
+      else if (email === 'darkstore' || email === 'store' || email === 'cravexp') lookupEmail = 'darkstore@crave.com'
+      else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
     }
-    if (!profile && email.endsWith('@crave.com')) {
-      profile = await findUserInDb(email.replace('@crave.com', '@gmail.com'))
+
+    let profile: any = await findUserInDb(lookupEmail)
+    if (!profile && lookupEmail.endsWith('@gmail.com')) {
+      profile = await findUserInDb(lookupEmail.replace('@gmail.com', '@crave.com'))
+    }
+    if (!profile && lookupEmail.endsWith('@crave.com')) {
+      profile = await findUserInDb(lookupEmail.replace('@crave.com', '@gmail.com'))
     }
 
     const isDemoEmail =
-      email === 'admin@gmail.com' ||
-      email === 'admin@crave.com' ||
-      email === 'user@gmail.com' ||
-      email === 'user@crave.com' ||
-      email === 'vendor@gmail.com' ||
-      email === 'vendor@crave.com' ||
-      email === 'darkstore@crave.com' ||
-      email === 'rider@crave.com'
+      lookupEmail === 'admin@gmail.com' ||
+      lookupEmail === 'admin@crave.com' ||
+      lookupEmail === 'user@gmail.com' ||
+      lookupEmail === 'user@crave.com' ||
+      lookupEmail === 'vendor@gmail.com' ||
+      lookupEmail === 'vendor@crave.com' ||
+      lookupEmail === 'darkstore@crave.com' ||
+      lookupEmail === 'darkstore@gmail.com' ||
+      lookupEmail === 'store@crave.com' ||
+      lookupEmail === 'cravexp@crave.com' ||
+      lookupEmail === 'rider@crave.com' ||
+      lookupEmail === 'rider@gmail.com' ||
+      lookupEmail === 'driver@crave.com'
+
+    const isDemoPassword =
+      password === '1234567890' ||
+      password === 'Password123!' ||
+      password === 'Password123' ||
+      password === 'admin123'
 
     if (
       process.env.NODE_ENV !== 'production' &&
       !profile &&
       isDemoEmail &&
-      password === '1234567890'
+      isDemoPassword
     ) {
-      if (email.startsWith('admin')) {
+      if (lookupEmail.startsWith('admin')) {
         profile = {
           id: 'usr_admin_01',
           name: 'System Administrator',
-          email,
+          email: lookupEmail,
           role: 'admin',
-          password_hash: ((await scrypt(password, email, 64)) as Buffer).toString('hex'),
+          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
-      } else if (email.startsWith('vendor')) {
+      } else if (lookupEmail.startsWith('vendor')) {
         profile = {
           id: 'usr_vendor_01',
           name: 'Chef Marco',
-          email,
+          email: lookupEmail,
           role: 'restaurant_vendor',
           restaurant_name: 'Spice Garden',
           cuisine: 'North Indian & Fast Food',
-          password_hash: ((await scrypt(password, email, 64)) as Buffer).toString('hex'),
+          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
-      } else if (email.startsWith('darkstore') || email.startsWith('store')) {
+      } else if (lookupEmail.startsWith('darkstore') || lookupEmail.startsWith('store') || lookupEmail.startsWith('cravexp')) {
         profile = {
           id: 'usr_darkstore_01',
           name: 'Dark Store Operator',
-          email,
+          email: lookupEmail,
           role: 'cravexp_store_vendor',
           restaurant_name: 'CraveXP 10-Min Dark Store',
           cuisine: 'Instant Groceries & Snacks',
-          password_hash: ((await scrypt(password, email, 64)) as Buffer).toString('hex'),
+          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
-      } else if (email.startsWith('rider')) {
+      } else if (lookupEmail.startsWith('rider') || lookupEmail.startsWith('driver')) {
         profile = {
           id: 'usr_rider_01',
           name: 'Rider Rahul',
-          email,
+          email: lookupEmail,
           role: 'rider',
           vehicle_type: 'Electric Scooter',
           license_plate: 'KA-01-CR-2026',
-          password_hash: ((await scrypt(password, email, 64)) as Buffer).toString('hex'),
+          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
-      } else if (email.startsWith('user')) {
+      } else if (lookupEmail.startsWith('user')) {
         profile = {
           id: 'usr_customer_01',
           name: 'Crave Customer',
-          email,
+          email: lookupEmail,
           role: 'user',
-          password_hash: ((await scrypt(password, email, 64)) as Buffer).toString('hex'),
+          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
       }
     }
@@ -115,7 +135,9 @@ export async function POST(request: Request) {
 
     let passwordMatches = false
 
-    if (typeof profile.password_hash === 'string' && profile.password_hash.includes(':')) {
+    if (process.env.NODE_ENV !== 'production' && isDemoEmail && isDemoPassword) {
+      passwordMatches = true
+    } else if (typeof profile.password_hash === 'string' && profile.password_hash.includes(':')) {
       const [salt, expectedHash] = profile.password_hash.split(':')
       if (salt && expectedHash) {
         const computed = ((await scrypt(password, salt, 64)) as Buffer).toString('hex')
@@ -123,9 +145,9 @@ export async function POST(request: Request) {
           computed.length === expectedHash.length &&
           crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
       }
-    } else {
+    } else if (profile.password_hash) {
       const passwordHash = (
-        (await scrypt(password, profile.email || email, 64)) as Buffer
+        (await scrypt(password, profile.email || lookupEmail, 64)) as Buffer
       ).toString('hex')
       const matchesPrimary =
         passwordHash.length === profile.password_hash.length &&
@@ -133,7 +155,7 @@ export async function POST(request: Request) {
 
       let matchesFallback = false
       if (!matchesPrimary) {
-        const fallbackHash = ((await scrypt(password, email, 64)) as Buffer).toString('hex')
+        const fallbackHash = ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex')
         matchesFallback =
           fallbackHash.length === profile.password_hash.length &&
           crypto.timingSafeEqual(Buffer.from(fallbackHash), Buffer.from(profile.password_hash))
