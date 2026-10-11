@@ -15,7 +15,10 @@ export async function GET(request?: Request) {
       if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
 
       const payload = token ? await verifyToken(token) : null
-      if (!payload || payload.role !== 'admin') {
+      if (!payload) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (payload.role !== 'admin') {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
       }
     }

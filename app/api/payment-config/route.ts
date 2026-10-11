@@ -1,6 +1,6 @@
 import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
-import { getApiActor, requireAdmin } from '@/lib/api-auth'
+import { getApiActor, requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 
 export interface PaymentConfig {
   upiVpa: string
@@ -229,6 +229,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, config: fullConfig })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     return NextResponse.json(
       { error: error?.message || 'Failed to save payment configuration' },
       { status: 500 }

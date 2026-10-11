@@ -7,7 +7,7 @@ import {
 import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { updateOrder, findOrderById } from '@/lib/dal'
 import { broadcast } from '@/lib/ws-server'
-import { getApiActor, requireAuthApi } from '@/lib/api-auth'
+import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
@@ -143,6 +143,8 @@ export async function POST(request: Request) {
       await releaseDriverLock(driverId, requestId)
     }
   } catch (err: any) {
+    const authRes = handleApiAuthError(err)
+    if (authRes) return authRes
     console.error('[POST /api/driver/accept]', err)
     return NextResponse.json(
       { error: err?.message || 'Failed to accept dispatch offer' },

@@ -36,13 +36,26 @@ export async function getApiActor(request: Request): Promise<JWTPayload | null> 
   return token ? verifyToken(token) : null
 }
 
+export class AuthApiError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode: number = 401
+  ) {
+    super(message)
+    this.name = 'AuthApiError'
+  }
+}
+
 /**
- * Require admin role - throws 403 if not admin
+ * Require admin role - throws 403 if not admin, 401 if not authenticated
  */
 export async function requireAdmin(request: Request): Promise<JWTPayload> {
   const actor = await getApiActor(request)
-  if (!actor || actor.role !== 'admin') {
-    throw new Error('Admin access required')
+  if (!actor) {
+    throw new AuthApiError('Authentication required', 401)
+  }
+  if (actor.role !== 'admin') {
+    throw new AuthApiError('Admin access required', 403)
   }
   return actor
 }
@@ -53,7 +66,7 @@ export async function requireAdmin(request: Request): Promise<JWTPayload> {
 export async function requireAuthApi(request: Request): Promise<JWTPayload> {
   const actor = await getApiActor(request)
   if (!actor) {
-    throw new Error('Authentication required')
+    throw new AuthApiError('Authentication required', 401)
   }
   return actor
 }
@@ -68,9 +81,31 @@ export async function requireRoleApi(
   const actor = await requireAuthApi(request)
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
   if (!roles.includes(actor.role)) {
-    throw new Error('Insufficient permissions')
+    throw new AuthApiError('Insufficient permissions', 403)
   }
   return actor
+}
+
+/**
+ * Handle API auth error consistently across API handlers
+ */
+export function handleApiAuthError(error: any): NextResponse | null {
+  if (error instanceof AuthApiError || error?.name === 'AuthApiError' || error?.statusCode) {
+    return NextResponse.json(
+      { error: error.message || 'Unauthorized' },
+      { status: error.statusCode || 401 }
+    )
+  }
+  if (error?.message === 'Authentication required') {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  if (error?.message === 'Admin access required') {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+  }
+  if (error?.message === 'Insufficient permissions') {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
+  return null
 }
 
 /**

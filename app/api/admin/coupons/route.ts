@@ -14,10 +14,13 @@ async function checkAdminOrVendorAuth(request: Request) {
   if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
 
   const payload = token ? await verifyToken(token) : null
-  if (!payload || (payload.role !== 'admin' && payload.role !== 'restaurant_vendor')) {
-    return false
+  if (!payload) {
+    return { authorized: false, status: 401, error: 'Authentication required' }
   }
-  return true
+  if (payload.role !== 'admin' && payload.role !== 'restaurant_vendor') {
+    return { authorized: false, status: 403, error: 'Admin or Vendor access required' }
+  }
+  return { authorized: true, status: 200 }
 }
 
 export async function GET(request: Request) {
@@ -34,8 +37,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    if (!(await checkAdminOrVendorAuth(request))) {
-      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    const auth = await checkAdminOrVendorAuth(request)
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const body = await request.json()
@@ -67,8 +71,9 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    if (!(await checkAdminOrVendorAuth(request))) {
-      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    const auth = await checkAdminOrVendorAuth(request)
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const body = await request.json()
@@ -96,8 +101,9 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    if (!(await checkAdminOrVendorAuth(request))) {
-      return NextResponse.json({ error: 'Admin or Vendor access required' }, { status: 403 })
+    const auth = await checkAdminOrVendorAuth(request)
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
     const { searchParams } = new URL(request.url)

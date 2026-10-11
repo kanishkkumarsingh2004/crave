@@ -67,11 +67,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await getActor(request)
+    if (!actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     if (
-      !actor ||
-      (actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor')
+      actor.role !== 'admin' &&
+      actor.role !== 'restaurant_vendor' &&
+      actor.role !== 'cravexp_store_vendor'
     ) {
       return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
     }
@@ -113,11 +115,13 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const actor = await getActor(request)
+    if (!actor) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     if (
-      !actor ||
-      (actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor')
+      actor.role !== 'admin' &&
+      actor.role !== 'restaurant_vendor' &&
+      actor.role !== 'cravexp_store_vendor'
     ) {
       return NextResponse.json({ error: 'Unauthorized to modify restaurant' }, { status: 403 })
     }

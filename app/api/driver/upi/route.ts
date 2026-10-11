@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createDriverUpiAccount, listDriverUpiAccounts } from '@/lib/dal/payments'
 import { prisma } from '@/lib/prisma'
-import { getApiActor, requireAuthApi } from '@/lib/api-auth'
+import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import crypto from 'crypto'
 
 export async function GET(request: Request) {
@@ -22,6 +22,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, savedUpiList: formatted })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[GET /api/driver/upi]', error)
     return NextResponse.json({ success: false, savedUpiList: [] }, { status: 500 })
   }
@@ -59,6 +61,8 @@ export async function POST(request: Request) {
       },
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[POST /api/driver/upi]', error)
     return NextResponse.json(
       { error: error?.message || 'Failed to save UPI account' },
@@ -93,6 +97,8 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true, message: 'UPI handle deleted successfully' })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     return NextResponse.json(
       { error: error?.message || 'Failed to delete UPI handle' },
       { status: 500 }

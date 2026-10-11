@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createDriverPayout, listDriverPayouts } from '@/lib/dal/payments'
-import { requireAuthApi } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import crypto from 'crypto'
 
 export async function GET(request: Request) {
@@ -30,6 +30,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, payoutLogs: formatted })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[GET /api/driver/payouts]', error)
     return NextResponse.json({ success: false, payoutLogs: [] }, { status: 500 })
   }
@@ -66,6 +68,8 @@ export async function POST(request: Request) {
       },
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[POST /api/driver/payouts]', error)
     return NextResponse.json(
       { error: error?.message || 'Failed to process payout request' },

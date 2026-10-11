@@ -20,11 +20,17 @@ export async function GET(request: Request) {
       actor = getTestUser(request) || MOCK_TEST_VENDOR
     }
 
+    if (!actor) {
+      return NextResponse.json(
+        { error: 'Authentication required to query driver candidates' },
+        { status: 401 }
+      )
+    }
+
     if (
-      !actor ||
-      (actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor')
+      actor.role !== 'admin' &&
+      actor.role !== 'restaurant_vendor' &&
+      actor.role !== 'cravexp_store_vendor'
     ) {
       return NextResponse.json(
         { error: 'Unauthorized to query driver candidates' },

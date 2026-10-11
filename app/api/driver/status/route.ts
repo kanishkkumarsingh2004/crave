@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
-import { requireAuthApi } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +42,8 @@ export async function POST(request: Request) {
       updatedAt: new Date().toISOString(),
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[POST /api/driver/status]', error)
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to update duty status' },

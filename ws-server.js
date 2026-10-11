@@ -509,6 +509,58 @@ const CHANNEL_AUTH_RULES = {
     ],
   },
   map_live_analytics: { roles: ['admin'] },
+  restaurants: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'rider',
+      'driver',
+      'admin',
+    ],
+  },
+  menu_items: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'rider',
+      'driver',
+      'admin',
+    ],
+  },
+  user_profile: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'rider',
+      'driver',
+      'admin',
+    ],
+  },
+  user_addresses: {
+    roles: [
+      'user',
+      'customer',
+      'restaurant_vendor',
+      'cravexp_store_vendor',
+      'vendor',
+      'rider',
+      'driver',
+      'admin',
+    ],
+  },
+  admin_settlements: { roles: ['admin', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor'] },
+  admin_coupons: {
+    roles: ['user', 'customer', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor', 'admin'],
+  },
 }
 
 // Track driver-order associations: driverId -> Set<orderId>
@@ -747,14 +799,22 @@ const server = createServer((req, res) => {
             'driver_location',
             'control',
             'map_live_analytics',
+            'restaurants',
+            'menu_items',
+            'user_profile',
+            'user_addresses',
+            'admin_settlements',
+            'admin_coupons',
             '__internal_assign_driver',
             '__internal_remove_driver',
+            '__internal_register_order',
           ])
 
           // Internal channels for driver-order assignment management (require x-internal-secret)
           const INTERNAL_CHANNELS = new Set([
             '__internal_assign_driver',
             '__internal_remove_driver',
+            '__internal_register_order',
           ])
 
           if (!msg.channel || !ALLOWED_CHANNELS.has(msg.channel)) {
@@ -773,8 +833,9 @@ const server = createServer((req, res) => {
 
             let result = false
             switch (msg.channel) {
-              // __internal_register_order is intentionally removed:
-              // customer ownership is now proven via DB lookup, not pre-registration.
+              case '__internal_register_order':
+                result = true
+                break
               case '__internal_assign_driver':
                 if (msg.data.driverId && msg.data.orderId) {
                   assignDriverToOrder(msg.data.driverId, msg.data.orderId)
@@ -837,6 +898,13 @@ function validateBroadcastPayload(channel, data) {
       return data.type && typeof data.type === 'string'
     case 'control':
       return data.type && typeof data.type === 'string'
+    case 'restaurants':
+    case 'menu_items':
+    case 'user_profile':
+    case 'user_addresses':
+    case 'admin_settlements':
+    case 'admin_coupons':
+      return !data.type || typeof data.type === 'string'
     default:
       return false
   }

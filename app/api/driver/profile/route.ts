@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { findUserById, updateUser } from '@/lib/dal/users'
-import { requireAuthApi } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
   try {
@@ -35,6 +35,8 @@ export async function GET(request: Request) {
       },
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[GET /api/driver/profile]', error)
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to load driver profile' },
@@ -79,6 +81,8 @@ export async function PUT(request: Request) {
       },
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[PUT /api/driver/profile]', error)
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to update driver profile' },

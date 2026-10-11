@@ -29,7 +29,11 @@ import {
   handleAuthError,
   getAuthActor,
 } from '@/lib/auth-helpers'
-import { isValidTransition, getPhaseName } from '@/lib/order-state-machine'
+import {
+  isValidTransition,
+  getPhaseName,
+  VALID_TRANSITIONS,
+} from '@/lib/order-state-machine'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   try {
@@ -1168,11 +1172,7 @@ export async function PATCH(request: Request) {
             currentStatus,
             targetStatus,
             validNextStates:
-              Object.values(require('@/lib/order-state-machine').VALID_TRANSITIONS)[
-                Object.values(require('@/lib/order-state-machine').OrderStatus).indexOf(
-                  currentStatus
-                )
-              ] || [],
+              (VALID_TRANSITIONS as Record<string, string[]>)[currentStatus] || [],
           },
           { status: 400 }
         )
@@ -1188,7 +1188,7 @@ export async function PATCH(request: Request) {
       ) {
         // Allow forward transitions within payment phase only
         const validPaymentTransitions =
-          require('@/lib/order-state-machine').VALID_TRANSITIONS[currentStatus] || []
+          (VALID_TRANSITIONS as Record<string, string[]>)[currentStatus] || []
         if (!validPaymentTransitions.includes(targetStatus)) {
           return NextResponse.json(
             { error: `Invalid payment phase transition: ${currentStatus} → ${targetStatus}` },
