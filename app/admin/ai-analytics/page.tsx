@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useState } from 'react'
+import AppleProgressBar from '@/components/ui/AppleProgressBar'
 
 export default function AIAnalyticsPage() {
   const [email, setEmail] = useState('')
@@ -211,13 +212,22 @@ export default function AIAnalyticsPage() {
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-[#27342d] flex items-center justify-between text-xs">
-                  <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
-                    Development Status
-                  </span>
-                  <span className="font-mono font-bold text-[#18201c] dark:text-white">
-                    {feat.progress}%
-                  </span>
+                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-[#27342d] space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
+                      Readiness Level
+                    </span>
+                    <span className="font-mono font-bold text-[#18201c] dark:text-white">
+                      {feat.progress}%
+                    </span>
+                  </div>
+                  <AppleProgressBar
+                    value={feat.progress}
+                    max={100}
+                    color={feat.progress >= 85 ? 'emerald' : 'amber'}
+                    height="sm"
+                    showValue={false}
+                  />
                 </div>
               </div>
             )

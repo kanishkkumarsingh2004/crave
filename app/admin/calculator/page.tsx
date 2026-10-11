@@ -24,6 +24,7 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
+import AppleSlider from '@/components/ui/AppleSlider'
 import { calculateFullBreakdown, CalculatorInput, FullCalculatorResult } from '@/lib/calculator'
 
 interface DbData {
@@ -494,65 +495,61 @@ export default function CalculatorPlaygroundPage() {
 
               <div className="space-y-4 text-xs">
                 {/* Cart Subtotal */}
-                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
-                  <div className="flex justify-between font-bold">
-                    <span className="text-gray-700 dark:text-gray-300">Food Subtotal (₹)</span>
-                    <span className="text-[#18201c] dark:text-[#d9f447] font-mono text-sm font-black">₹{subtotal}</span>
-                  </div>
-                  <input
-                    type="range"
+                <div className="bg-gray-50 dark:bg-[#0b0f0d] p-4 rounded-2xl border border-gray-200 dark:border-[#202923]">
+                  <AppleSlider
+                    label="Food Subtotal (₹)"
+                    unit="₹"
+                    value={subtotal}
                     min={50}
                     max={3000}
                     step={25}
-                    value={subtotal}
-                    onChange={(e) => setSubtotal(Number(e.target.value))}
-                    className="w-full accent-[#18201c] dark:accent-[#d9f447] bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    onChange={setSubtotal}
+                    iconVariant="currency"
+                    accentColor="lime"
+                    minLabel="₹50"
+                    maxLabel="₹3,000"
                   />
-                  <div className="pt-1">
+                  <div className="pt-2">
                     <input
                       type="number"
                       value={subtotal}
                       onChange={(e) => setSubtotal(Number(e.target.value))}
-                      className="w-full bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-lg px-3 py-1.5 text-[#18201c] dark:text-white font-mono font-bold text-xs outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
+                      className="w-full bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-1.5 text-[#18201c] dark:text-white font-mono font-bold text-xs outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                     />
                   </div>
                 </div>
 
                 {/* Road Distance */}
-                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
-                  <div className="flex justify-between font-bold">
-                    <span className="text-gray-700 dark:text-gray-300">Delivery Distance (KM)</span>
-                    <span className="text-[#18201c] dark:text-[#d9f447] font-mono text-sm font-black">
-                      {distanceKm} km
-                    </span>
-                  </div>
-                  <input
-                    type="range"
+                <div className="bg-gray-50 dark:bg-[#0b0f0d] p-4 rounded-2xl border border-gray-200 dark:border-[#202923]">
+                  <AppleSlider
+                    label="Delivery Distance (KM)"
+                    unit="km"
+                    value={distanceKm}
                     min={0.5}
                     max={25}
                     step={0.5}
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full accent-[#18201c] dark:accent-[#d9f447] bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    onChange={setDistanceKm}
+                    iconVariant="distance"
+                    accentColor="blue"
+                    minLabel="0.5 km"
+                    maxLabel="25 km"
                   />
                 </div>
 
                 {/* Driver Share % */}
-                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
-                  <div className="flex justify-between font-bold">
-                    <span className="text-gray-700 dark:text-gray-300">Driver Payout Share (%)</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-black">
-                      {driverPayoutSharePercent}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
+                <div className="bg-gray-50 dark:bg-[#0b0f0d] p-4 rounded-2xl border border-gray-200 dark:border-[#202923]">
+                  <AppleSlider
+                    label="Driver Payout Share (%)"
+                    unit="%"
+                    value={driverPayoutSharePercent}
                     min={50}
                     max={100}
                     step={5}
-                    value={driverPayoutSharePercent}
-                    onChange={(e) => setDriverPayoutSharePercent(Number(e.target.value))}
-                    className="w-full accent-emerald-500 dark:accent-emerald-400 bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    onChange={setDriverPayoutSharePercent}
+                    iconVariant="percent"
+                    accentColor="emerald"
+                    minLabel="50%"
+                    maxLabel="100%"
                   />
                 </div>
 

@@ -5,13 +5,11 @@ import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
 import {
-  Activity,
   BarChart3,
   Calculator,
   ChevronLeft,
   ChevronRight,
   CreditCard,
-  FileText,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -108,17 +106,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       label: 'Calculator Playground',
       icon: Calculator,
     },
-    {
-      href: '/admin/commercial-contracts',
-      label: 'Commercial Contracts & Rules',
-      icon: FileText,
-    },
     { href: '/admin/payments', label: t.admin.paymentReviewQueue, icon: CreditCard },
     { href: '/admin/users', label: t.admin.userAccounts, icon: Users },
     { href: '/admin/coupons', label: t.admin.couponsDiscounts, icon: Tag },
     { href: '/admin/vendor-settlements', label: t.admin.vendorSettlements, icon: Store },
     { href: '/admin/payment-config', label: t.admin.paymentConfigs, icon: QrCode },
-    { href: '/admin/system', label: t.admin.systemHealthLogs, icon: Activity },
     { href: '/admin/settings', label: t.admin.adminSettings, icon: Settings },
   ]
 

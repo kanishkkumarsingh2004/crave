@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import AppleToggle from '@/components/ui/AppleToggle'
+import AppleSlider from '@/components/ui/AppleSlider'
 import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 
@@ -397,22 +398,19 @@ export default function AdminPaymentConfigPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-[#18201c] dark:text-white">
-                  Driver Payout Share (% of delivery fee)
-                </label>
-                <div className="mt-1.5 flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="50"
-                    max="100"
-                    value={driverPayoutShare}
-                    onChange={(e) => setDriverPayoutShare(parseInt(e.target.value))}
-                    className="flex-1 accent-[#86a018]"
-                  />
-                  <span className="font-mono font-bold text-sm bg-gray-100 dark:bg-[#121815] text-[#18201c] dark:text-white px-3 py-1 rounded-xl border border-gray-200 dark:border-[#27342d]">
-                    {driverPayoutShare}%
-                  </span>
-                </div>
+                <AppleSlider
+                  label="Driver Payout Share (% of delivery fee)"
+                  unit="%"
+                  value={driverPayoutShare}
+                  min={50}
+                  max={100}
+                  step={5}
+                  onChange={setDriverPayoutShare}
+                  iconVariant="percent"
+                  accentColor="emerald"
+                  minLabel="50%"
+                  maxLabel="100%"
+                />
                 <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
                   Driver gets {driverPayoutShare}% of delivery fee + 100% customer tips.
                 </p>
@@ -613,37 +611,33 @@ export default function AdminPaymentConfigPage() {
 
             {/* Test Controls */}
             <div className="mt-5 flex flex-col gap-4 bg-[#f8f9f6] dark:bg-[#121815] p-4 rounded-2xl border border-gray-200 dark:border-[#27342d] text-xs">
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-gray-700 dark:text-gray-300">Food Item Subtotal:</span>
-                  <span className="text-[#18201c] dark:text-white">₹{testOrderValue}</span>
-                </div>
-                <input
-                  type="range"
-                  min="100"
-                  max="1200"
-                  step="50"
-                  value={testOrderValue}
-                  onChange={(e) => setTestOrderValue(parseInt(e.target.value))}
-                  className="w-full accent-[#86a018]"
-                />
-              </div>
+              <AppleSlider
+                label="Food Item Subtotal"
+                unit="₹"
+                value={testOrderValue}
+                min={100}
+                max={1200}
+                step={50}
+                onChange={setTestOrderValue}
+                iconVariant="currency"
+                accentColor="lime"
+                minLabel="₹100"
+                maxLabel="₹1,200"
+              />
 
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-gray-700 dark:text-gray-300">Delivery Distance:</span>
-                  <span className="text-[#18201c] dark:text-white">{testDistanceKm} km</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="15"
-                  step="0.5"
-                  value={testDistanceKm}
-                  onChange={(e) => setTestDistanceKm(parseFloat(e.target.value))}
-                  className="w-full accent-[#86a018]"
-                />
-              </div>
+              <AppleSlider
+                label="Delivery Distance"
+                unit="km"
+                value={testDistanceKm}
+                min={1}
+                max={15}
+                step={0.5}
+                onChange={setTestDistanceKm}
+                iconVariant="distance"
+                accentColor="blue"
+                minLabel="1 km"
+                maxLabel="15 km"
+              />
             </div>
 
             {/* Simulated Live Fee Breakdown Card */}
