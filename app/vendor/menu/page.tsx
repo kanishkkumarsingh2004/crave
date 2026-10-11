@@ -69,7 +69,7 @@ export default function VendorMenuPage() {
   }, [user, role, isLoading, router])
 
   // Load this vendor's menu only; an empty query must not leave placeholder rows visible.
-  // Load live menu items for logged-in vendor from Supabase
+  // Load live menu items for logged-in vendor from database
   useEffect(() => {
     async function loadLiveMenu() {
       if (!user?.id) {

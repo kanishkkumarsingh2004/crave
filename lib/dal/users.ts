@@ -1,7 +1,6 @@
 /**
  * Database Access Layer — Users
  * Single source of truth: Prisma/PostgreSQL.
- * Supabase is fully disabled — all legacy fallback branches removed.
  */
 import { prisma } from '@/lib/prisma'
 import type { User, UserRole } from '@prisma/client'

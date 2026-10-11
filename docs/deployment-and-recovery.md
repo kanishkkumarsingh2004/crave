@@ -55,7 +55,7 @@ const pool = new Pool({
 })
 ```
 
-_Note on Serverless / PgBouncer:_ When deploying to Vercel or AWS Lambda with multiple instances, route queries through PgBouncer or Supabase connection pooling (port 6543, transaction pooling mode).
+_Note on Serverless / PgBouncer:_ When deploying to Vercel or AWS Lambda with multiple instances, route queries through PgBouncer or managed connection pooling (transaction pooling mode).
 
 ---
 

@@ -322,7 +322,7 @@ export default function CraveXPStoreConsole() {
     setStoreOnline(nextStatus)
   }
 
-  // Handle Order Status Workflow & Supabase Sync
+  // Handle Order Status Workflow & Database Sync
   const handleUpdateOrderStatus = async (
     orderId: string,
     nextStatus: 'packing' | 'ready' | 'picked_up'

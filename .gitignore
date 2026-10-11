@@ -8,8 +8,9 @@ __v0_jsx-dev-runtime.ts
 
 # Environment variables
 .env
-.env.local
+.env.*
 .env*.local
+!.env.example
 
 # Common ignores
 node_modules
@@ -19,6 +20,7 @@ node_modules
 *.tsbuildinfo
 
 # Neon
+.neon
 .neon/
 neon-*.log
 skills-lock.json

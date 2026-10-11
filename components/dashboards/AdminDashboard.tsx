@@ -854,7 +854,7 @@ export default function AdminDashboard() {
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9eb3a4] mt-1 font-medium">
             Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer
-            insights &amp; live Supabase sync.
+            insights &amp; live database sync.
           </p>
         </div>
 
@@ -862,7 +862,7 @@ export default function AdminDashboard() {
           onClick={fetchAccountsAndVendors}
           className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202923] transition shadow-xs"
         >
-          <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Supabase Data
+          <RefreshCw className="size-3.5 text-[#86a018]" /> Refresh Database Data
         </button>
       </div>
 
@@ -980,7 +980,7 @@ export default function AdminDashboard() {
           <div className="space-y-3 sm:hidden">
             {vendorAccounts.length === 0 ? (
               <div className="rounded-2xl border border-gray-200 dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-6 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                No vendor stores currently registered in Supabase database. Click &apos;+ Onboard
+                No vendor stores currently registered in database. Click &apos;+ Onboard
                 New Store&apos; to add one.
               </div>
             ) : (
@@ -1112,7 +1112,7 @@ export default function AdminDashboard() {
                 {vendorAccounts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                      No vendor stores currently registered in Supabase database. Click &apos;+
+                      No vendor stores currently registered in database. Click &apos;+
                       Onboard New Store&apos; to add one.
                     </td>
                   </tr>
@@ -1314,7 +1314,7 @@ export default function AdminDashboard() {
                 {customerAccounts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                      No customer accounts currently stored in Supabase users table.
+                      No customer accounts currently stored in database users table.
                     </td>
                   </tr>
                 ) : (
@@ -1416,7 +1416,7 @@ export default function AdminDashboard() {
           <div className="space-y-3 sm:hidden">
             {driverAccounts.length === 0 ? (
               <div className="rounded-2xl border border-gray-200 dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-6 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                No driver accounts found in Supabase users table. Click &apos;+ Add Driver&apos; to
+                No driver accounts found in database users table. Click &apos;+ Add Driver&apos; to
                 onboard one.
               </div>
             ) : (
@@ -1500,7 +1500,7 @@ export default function AdminDashboard() {
                 {driverAccounts.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                      No driver accounts found in Supabase users table. Click &apos;+ Add
+                      No driver accounts found in database users table. Click &apos;+ Add
                       Driver&apos; to onboard one.
                     </td>
                   </tr>
@@ -1605,7 +1605,7 @@ export default function AdminDashboard() {
               {adminAccounts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                    No admin records found in Supabase users table.
+                    No admin records found in database users table.
                   </td>
                 </tr>
               ) : (
@@ -1700,7 +1700,7 @@ export default function AdminDashboard() {
               ))}
               {vendorsList.length === 0 && (
                 <div className="col-span-full p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4] border border-dashed border-gray-300 dark:border-[#2d3b32] rounded-2xl bg-gray-50 dark:bg-[#121815]">
-                  No stores in Supabase database. Click &apos;+ Onboard Restaurant Vendor&apos; to
+                  No stores in database. Click &apos;+ Onboard Restaurant Vendor&apos; to
                   add a new Restaurant or XP Store.
                 </div>
               )}
@@ -2178,7 +2178,7 @@ export default function AdminDashboard() {
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Register vendor credentials, store profile, cuisine, and commission model in
-                  Supabase.
+                  database.
                 </p>
               </div>
               <button
@@ -2841,7 +2841,7 @@ export default function AdminDashboard() {
               <div className="mt-5 space-y-4">
                 {productsLoading ? (
                   <div className="p-8 text-center text-xs text-gray-500 dark:text-gray-400">
-                    Loading store products from Supabase database...
+                    Loading store products from database...
                   </div>
                 ) : vendorProducts.length === 0 ? (
                   <div className="p-8 text-center text-xs text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-[#27342d] rounded-2xl">
@@ -3161,7 +3161,7 @@ export default function AdminDashboard() {
               Are you sure you want to permanently delete store{' '}
               <strong className="text-gray-900 dark:text-white">{deleteConfirmVendor.name}</strong>
               {deleteConfirmVendor.email ? ` (${deleteConfirmVendor.email})` : ''}? This action will
-              erase the store, owner account, and all associated menu items from Supabase.
+              erase the store, owner account, and all associated menu items from database.
             </p>
             <div className="mt-6 flex items-center gap-3">
               <button

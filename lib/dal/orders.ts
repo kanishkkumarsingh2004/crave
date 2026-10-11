@@ -1,6 +1,6 @@
 /**
  * Database Access Layer — Orders
- * Requires Prisma or Supabase to be available; no silent local file fallback.
+ * Requires Prisma PostgreSQL connection to be available.
  */
 import { prisma } from '@/lib/prisma'
 import type { OrderStatus } from '@prisma/client'

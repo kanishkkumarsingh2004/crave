@@ -1,6 +1,6 @@
 'use client'
 
-import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
+import { Coupon, fetchCoupons } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
 import AppleToggle from '@/components/ui/AppleToggle'
 import {
@@ -58,7 +58,7 @@ export default function AdminCouponsPage() {
 
   useEffect(() => {
     async function load() {
-      const data = await fetchCouponsFromSupabase()
+      const data = await fetchCoupons()
       setCoupons(data)
 
       try {
@@ -210,7 +210,7 @@ export default function AdminCouponsPage() {
       showToast(`New Coupon '${formattedCode}' created and published!`)
     }
 
-    setCoupons(await fetchCouponsFromSupabase())
+    setCoupons(await fetchCoupons())
     closeModal()
   }
 
@@ -230,7 +230,7 @@ export default function AdminCouponsPage() {
       showToast('Could not update coupon status.')
       return
     }
-    setCoupons(await fetchCouponsFromSupabase())
+    setCoupons(await fetchCoupons())
     showToast(`Coupon '${item.code}' status toggled to ${newStatus ? 'Active' : 'Inactive'}.`)
   }
 
@@ -247,7 +247,7 @@ export default function AdminCouponsPage() {
       showToast('Could not delete coupon.')
       return
     }
-    setCoupons(await fetchCouponsFromSupabase())
+    setCoupons(await fetchCoupons())
     showToast(`Coupon '${item?.code}' deleted successfully.`)
   }
 

@@ -132,7 +132,7 @@ const en = {
     netVendorPay: 'Net Vendor Pay',
     deliveryFleet: 'Delivery Fleet',
     totalCustomers: 'Total Customers',
-    liveData: 'Live Supabase data',
+    liveData: 'Live Data',
     settlementRevenue: 'Settlement revenue',
     vendorSettlementNote: 'Vendor settlements',
     registeredRiders: 'Registered riders',

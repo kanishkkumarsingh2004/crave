@@ -14,7 +14,7 @@ export interface Coupon {
   restaurantIds?: string[]
 }
 
-export async function fetchCouponsFromSupabase(restaurantId?: string): Promise<Coupon[]> {
+export async function fetchCoupons(restaurantId?: string): Promise<Coupon[]> {
   try {
     const url = restaurantId
       ? `/api/admin/coupons?restaurantId=${encodeURIComponent(restaurantId)}`

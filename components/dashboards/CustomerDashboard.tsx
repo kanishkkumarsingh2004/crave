@@ -84,7 +84,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
 
-import { Coupon, fetchCouponsFromSupabase, validateCoupon } from '@/lib/coupons'
+import { Coupon, fetchCoupons, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
 import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
 
@@ -1118,7 +1118,7 @@ export default function CustomerDashboard({
   const { toast } = useToast()
 
   useEffect(() => {
-    fetchCouponsFromSupabase().then((coupons) => {
+    fetchCoupons().then((coupons) => {
       setAvailableCoupons(coupons.filter((c) => c.isActive))
     })
   }, [])

@@ -29,7 +29,7 @@ describe('Users DAL', () => {
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'usr_1' } })
     })
 
-    it('returns null when Prisma fails and Supabase fails', async () => {
+    it('returns null when Prisma database query fails', async () => {
       mockPrisma.user.findUnique = jest.fn().mockRejectedValue(new Error('DB error'))
 
       const result = await findUserById('usr_1')
