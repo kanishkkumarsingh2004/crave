@@ -1,6 +1,7 @@
 'use client'
 
 import ThemeSelector from '@/components/ThemeSelector'
+import AppleToggle from '@/components/ui/AppleToggle'
 import { useToast } from '@/lib/toast-context'
 import {
   AlertTriangle,
@@ -286,19 +287,13 @@ export default function AdminSettingsPage() {
                     Automatically match new confirmed orders with the nearest online rider.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAutoAssignDrivers((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoAssignDrivers ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      autoAssignDrivers ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={autoAssignDrivers}
+                  onChange={setAutoAssignDrivers}
+                  iconVariant="truck"
+                  activeColor="bg-blue-600"
+                  ariaLabel="Auto-assign nearby delivery rider"
+                />
               </div>
             </div>
 
@@ -315,19 +310,13 @@ export default function AdminSettingsPage() {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsMaintenanceMode((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    isMaintenanceMode ? 'bg-amber-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      isMaintenanceMode ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={isMaintenanceMode}
+                  onChange={setIsMaintenanceMode}
+                  iconVariant="power"
+                  activeColor="bg-amber-500"
+                  ariaLabel="Platform maintenance mode"
+                />
               </div>
 
               {isMaintenanceMode && (
@@ -416,19 +405,13 @@ export default function AdminSettingsPage() {
                     Enforce OTP verification for master admin accounts
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRequireAdmin2FA((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireAdmin2FA ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      requireAdmin2FA ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={requireAdmin2FA}
+                  onChange={setRequireAdmin2FA}
+                  iconVariant="shield"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Require admin 2FA"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-gray-50 dark:bg-[#121815]/60 p-4 flex items-center justify-between">
@@ -440,19 +423,13 @@ export default function AdminSettingsPage() {
                     Require uppercase, numbers &amp; symbols
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEnforceStrongPassword((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enforceStrongPassword ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      enforceStrongPassword ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={enforceStrongPassword}
+                  onChange={setEnforceStrongPassword}
+                  iconVariant="lock"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Enforce strong passwords"
+                />
               </div>
             </div>
           </div>
@@ -494,19 +471,13 @@ export default function AdminSettingsPage() {
                     Order verification &amp; delivery OTPs
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSendSmsAlerts((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendSmsAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      sendSmsAlerts ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={sendSmsAlerts}
+                  onChange={setSendSmsAlerts}
+                  iconVariant="bell"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="SMS gateway alerts"
+                />
               </div>
             </div>
 
@@ -520,19 +491,13 @@ export default function AdminSettingsPage() {
                     Live drop tracking updates
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSendWhatsappAlerts((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendWhatsappAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      sendWhatsappAlerts ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={sendWhatsappAlerts}
+                  onChange={setSendWhatsappAlerts}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="WhatsApp business alerts"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
@@ -544,19 +509,13 @@ export default function AdminSettingsPage() {
                     Tax invoices on completed drops
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSendEmailReceipts((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    sendEmailReceipts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      sendEmailReceipts ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={sendEmailReceipts}
+                  onChange={setSendEmailReceipts}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Email invoices"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex items-center justify-between bg-white dark:bg-[#121815]/40">
@@ -569,19 +528,13 @@ export default function AdminSettingsPage() {
                     Play sound alert on new orders
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEnableSoundAlerts((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    enableSoundAlerts ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      enableSoundAlerts ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={enableSoundAlerts}
+                  onChange={setEnableSoundAlerts}
+                  iconVariant="sound"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Audio order chimes"
+                />
               </div>
             </div>
           </div>
@@ -608,19 +561,13 @@ export default function AdminSettingsPage() {
                     Bypass manual admin verification
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAutoApproveVendors((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoApproveVendors ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      autoApproveVendors ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={autoApproveVendors}
+                  onChange={setAutoApproveVendors}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Auto-approve vendors"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
@@ -632,19 +579,13 @@ export default function AdminSettingsPage() {
                     Require food safety license upload
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRequireFssaiLicense((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireFssaiLicense ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      requireFssaiLicense ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={requireFssaiLicense}
+                  onChange={setRequireFssaiLicense}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Mandatory FSSAI license"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
@@ -656,19 +597,13 @@ export default function AdminSettingsPage() {
                     Require tax GST number for payouts
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRequireGstin((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireGstin ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      requireGstin ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={requireGstin}
+                  onChange={setRequireGstin}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Mandatory GSTIN"
+                />
               </div>
 
               <div className="rounded-2xl border border-gray-200 dark:border-[#27342d] p-4 flex flex-col justify-between bg-white dark:bg-[#121815]/40 gap-3">
@@ -680,19 +615,13 @@ export default function AdminSettingsPage() {
                     Require driving &amp; vehicle documents
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRequireDriverLicense((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    requireDriverLicense ? 'bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block size-4 transform rounded-full bg-white transition ${
-                      requireDriverLicense ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <AppleToggle
+                  checked={requireDriverLicense}
+                  onChange={setRequireDriverLicense}
+                  iconVariant="truck"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Mandatory driver license"
+                />
               </div>
             </div>
           </div>

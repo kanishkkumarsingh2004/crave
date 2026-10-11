@@ -208,14 +208,14 @@ export default function VendorDashboard() {
       <div className="mx-auto max-w-[1240px] w-full px-3.5 pt-4 sm:px-4 lg:px-6 space-y-4 overflow-hidden min-w-0">
         {/* Live Order Arrival Popup Banner */}
         {liveBanner && (
-          <div className="rounded-2xl border-2 border-[#d9f447] bg-[#141d18] p-4 text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between w-full min-w-0">
+          <div className="rounded-2xl border-2 border-emerald-500/40 bg-[#141d18] p-4 text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between w-full min-w-0">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="grid size-8 place-items-center rounded-xl bg-[#d9f447] text-[#0d1310] animate-bounce shadow-md shrink-0">
+              <div className="grid size-8 place-items-center rounded-xl bg-emerald-500 text-[#0d1310] animate-bounce shadow-md shrink-0">
                 <Bell className="size-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="rounded-full bg-[#d9f447] px-2 py-0.5 text-[9px] font-black uppercase text-[#0d1310] shrink-0">
+                  <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-400 shrink-0">
                     LIVE NEW ORDER
                   </span>
                   <span className="font-mono text-[10px] font-bold text-gray-400">
@@ -223,7 +223,7 @@ export default function VendorDashboard() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs font-extrabold truncate">
-                  Order placed by <span className="text-[#d9f447]">{liveBanner.customerName}</span>{' '}
+                  Order placed by <span className="text-emerald-400">{liveBanner.customerName}</span>{' '}
                   · Total: ₹{liveBanner.totalAmount}
                 </p>
               </div>
@@ -244,13 +244,13 @@ export default function VendorDashboard() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="inline-block size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#d9f447] animate-pulse shrink-0" />
+                <span className="inline-block size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse shrink-0" />
                 <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 truncate">
                   Kitchen Active • Accepting Orders
                 </span>
               </div>
               <h2 className="mt-1.5 text-xl sm:text-2xl font-black text-white tracking-tight truncate">
-                Welcome back, <span className="text-[#d9f447]">{user?.name || 'Chef'}</span>
+                Welcome back, <span className="text-emerald-400">{user?.name || 'Chef'}</span>
               </h2>
               <p className="text-[10px] text-gray-400 mt-0.5 truncate">
                 Managing kitchen operations for{' '}
@@ -260,7 +260,7 @@ export default function VendorDashboard() {
             <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
               <Link
                 href="/vendor/menu"
-                className="rounded-full bg-[#1e2822] border border-[#2d3d33] px-3 py-1.5 text-[10px] font-extrabold text-white hover:border-[#d9f447] transition flex items-center gap-1"
+                className="rounded-full bg-[#1e2822] border border-[#2d3d33] px-3 py-1.5 text-[10px] font-extrabold text-white hover:border-emerald-500/40 transition flex items-center gap-1"
               >
                 Manage Menu
               </Link>
@@ -315,7 +315,7 @@ export default function VendorDashboard() {
                   Customer orders requiring food preparation &amp; dispatch
                 </p>
               </div>
-              <span className="self-start sm:self-auto shrink-0 rounded-full bg-[#d9f447]/10 px-3 py-1 text-[10px] font-black text-[#d9f447] border border-[#d9f447]/30">
+              <span className="self-start sm:self-auto shrink-0 rounded-lg bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
                 Active Orders ({openCount})
               </span>
             </div>

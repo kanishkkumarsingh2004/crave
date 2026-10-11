@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
+import AppleToggle from '@/components/ui/AppleToggle'
 import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
 import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 
@@ -466,19 +467,13 @@ export default function AdminPaymentConfigPage() {
                       <CloudRain className="size-4 text-blue-600 dark:text-blue-400" /> Rain / Bad
                       Weather Fee
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsRainModeActive((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                        isRainModeActive ? 'bg-blue-600' : 'bg-gray-300 dark:bg-[#202923]'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block size-4 transform rounded-full bg-white transition ${
-                          isRainModeActive ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
+                    <AppleToggle
+                      checked={isRainModeActive}
+                      onChange={setIsRainModeActive}
+                      iconVariant="rain"
+                      activeColor="bg-blue-600"
+                      ariaLabel="Rain surge fee mode"
+                    />
                   </div>
                   <div className="mt-3">
                     <label className="text-[10px] font-bold text-blue-800 dark:text-blue-300">
@@ -499,19 +494,13 @@ export default function AdminPaymentConfigPage() {
                       <Flame className="size-4 text-purple-600 dark:text-purple-400" /> Late Night
                       Rush Fee
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsNightSurgeActive((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                        isNightSurgeActive ? 'bg-purple-600' : 'bg-gray-300 dark:bg-[#202923]'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block size-4 transform rounded-full bg-white transition ${
-                          isNightSurgeActive ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
+                    <AppleToggle
+                      checked={isNightSurgeActive}
+                      onChange={setIsNightSurgeActive}
+                      iconVariant="moon"
+                      activeColor="bg-purple-600"
+                      ariaLabel="Late night rush fee mode"
+                    />
                   </div>
                   <div className="mt-3">
                     <label className="text-[10px] font-bold text-purple-800 dark:text-purple-300">

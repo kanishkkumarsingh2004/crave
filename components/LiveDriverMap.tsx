@@ -171,10 +171,10 @@ export default function LiveDriverMap({
         <MapMarker longitude={restaurantLng} latitude={restaurantLat}>
           <MarkerContent>
             <div className="flex flex-col items-center">
-              <div className="bg-[#d9f447] text-white px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-extrabold whitespace-nowrap shadow-md mb-1 border border-white">
+              <div className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold whitespace-nowrap shadow-md mb-1 border border-white/20">
                 {restaurantName}
               </div>
-              <div className="size-6 sm:size-7 rounded-full bg-[#d9f447] border-2 border-white flex items-center justify-center shadow-lg">
+              <div className="size-6 sm:size-7 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center shadow-lg">
                 <Store className="size-3 sm:size-3.5 text-white" />
               </div>
             </div>
@@ -199,12 +199,12 @@ export default function LiveDriverMap({
         <MapMarker longitude={driverPos[0]} latitude={driverPos[1]}>
           <MarkerContent>
             <div className="relative size-10 sm:size-12 flex items-center justify-center">
-              <div className="absolute size-10 sm:size-12 bg-[#d9f447]/40 rounded-full animate-ping" />
+              <div className="absolute size-10 sm:size-12 bg-emerald-500/30 rounded-full animate-ping" />
               <div
-                className="size-8 sm:size-9 rounded-full bg-[#18201c] border-2 border-[#d9f447] flex items-center justify-center shadow-2xl transition-transform duration-300"
+                className="size-8 sm:size-9 rounded-full bg-[#18201c] border-2 border-emerald-400 flex items-center justify-center shadow-2xl transition-transform duration-300"
                 style={{ transform: `rotate(${headingAngle}deg)` }}
               >
-                <Navigation className="size-4 sm:size-5 text-[#d9f447] fill-[#d9f447]" />
+                <Navigation className="size-4 sm:size-5 text-emerald-400 fill-emerald-400" />
               </div>
             </div>
           </MarkerContent>
@@ -215,10 +215,10 @@ export default function LiveDriverMap({
       <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex items-center gap-2 pointer-events-none max-w-[calc(100%-70px)]">
         <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#18181b]/95 border border-[#27272a] px-2 py-1 sm:px-3.5 sm:py-1.5 shadow-xl backdrop-blur-md max-w-full">
           <span className="relative flex size-2 sm:size-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d9f447] opacity-75"></span>
-            <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-[#d9f447]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-emerald-400"></span>
           </span>
-          <span className="text-[8px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#d9f447] flex items-center gap-1 truncate">
+          <span className="text-[8px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1 truncate">
             Live Driver Mobile GPS
             {isLoadingRoute && (
               <RefreshCw className="size-2.5 sm:size-3 animate-spin text-gray-400 shrink-0" />
@@ -231,7 +231,7 @@ export default function LiveDriverMap({
       <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-16 z-10 pointer-events-none">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 rounded-xl bg-[#09090b]/95 border border-[#27272a] px-2.5 py-1.5 sm:px-4 sm:py-2.5 shadow-2xl backdrop-blur-md max-w-full">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="grid size-7 sm:size-9 place-items-center rounded-xl bg-[#18201c] text-[#d9f447] border border-[#d9f447]/40 shrink-0 shadow-md">
+            <div className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 shadow-md">
               <Bike className="size-3 sm:size-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -242,15 +242,17 @@ export default function LiveDriverMap({
                 <span className="text-[8px] sm:text-[10px] text-emerald-400 font-semibold bg-emerald-950/80 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-700/50 shrink-0">
                   {!driverName
                     ? 'Finding Rider'
-                    : statusStep >= 3
-                      ? 'On the Way'
-                      : statusStep === 2
-                        ? 'At Kitchen'
-                        : 'Assigned'}
+                    : statusStep >= 4
+                      ? 'Delivered'
+                      : statusStep >= 3
+                        ? 'On the Way'
+                        : statusStep === 2
+                          ? 'At Kitchen'
+                          : 'Assigned'}
                 </span>
               </p>
               <p className="text-[8px] sm:text-[10px] text-emerald-300/90 font-medium truncate max-w-[140px] sm:max-w-[360px] mt-0.5 flex items-center gap-1">
-                <MapPin className="size-2.5 sm:size-3 text-[#d9f447] shrink-0" />
+                <MapPin className="size-2.5 sm:size-3 text-emerald-400 shrink-0" />
                 <span className="truncate">
                   {driverName ? `Address: ${driverAddress}` : `Store: ${restaurantName}`}
                 </span>
@@ -258,7 +260,7 @@ export default function LiveDriverMap({
             </div>
           </div>
           <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-[#27272a] pt-1 sm:pt-0 shrink-0">
-            <p className="text-[8px] sm:text-[10px] font-bold text-[#d9f447] uppercase tracking-wider">
+            <p className="text-[8px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
               Street Route
             </p>
             <p className="text-[10px] sm:text-xs font-extrabold text-white">{distanceText}</p>

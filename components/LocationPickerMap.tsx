@@ -201,9 +201,9 @@ export default function LocationPickerMap({
           className="flex items-center gap-2 rounded-full bg-[#18201c] px-3.5 py-2 text-xs font-bold text-white shadow-xl hover:bg-[#2b3931] hover:scale-105 active:scale-95 transition border border-white/20 disabled:opacity-50"
         >
           {isLocating ? (
-            <div className="size-3.5 border-2 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
+            <div className="size-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Locate className="size-3.5 text-[#d9f447]" />
+            <Locate className="size-3.5 text-emerald-400" />
           )}
           <span className="hidden sm:inline">{isLocating ? 'Syncing...' : 'Sync Location'}</span>
         </button>
@@ -250,9 +250,9 @@ export default function LocationPickerMap({
           >
             <MarkerContent>
               <div className="relative flex items-center justify-center size-10 cursor-grab active:cursor-grabbing">
-                <div className="absolute size-10 bg-[#d9f447]/50 rounded-full animate-ping" />
-                <div className="size-8 rounded-full bg-[#18201c] border-2 border-white flex items-center justify-center shadow-2xl">
-                  <MapPin className="size-4 text-[#d9f447]" />
+                <div className="absolute size-10 bg-emerald-500/30 rounded-full animate-ping" />
+                <div className="size-8 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center shadow-2xl">
+                  <MapPin className="size-4 text-white" />
                 </div>
               </div>
             </MarkerContent>
@@ -279,7 +279,7 @@ export default function LocationPickerMap({
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute -inset-1 rounded-full bg-[#b5de28] animate-ping opacity-75" />
+                    <div className="absolute -inset-1 rounded-full bg-emerald-500 animate-ping opacity-75" />
                   )}
                   <div
                     className={`size-7 rounded-full border-2 border-white flex items-center justify-center shadow-lg transition ${
@@ -288,7 +288,7 @@ export default function LocationPickerMap({
                         : isRestaurant
                           ? 'bg-amber-500 text-white'
                           : 'bg-purple-600 text-white'
-                    } ${isSelected ? 'ring-4 ring-[#b5de28]' : ''}`}
+                    } ${isSelected ? 'ring-4 ring-emerald-500' : ''}`}
                   >
                     {isDriver ? (
                       <Bike className="size-3.5" />
@@ -302,7 +302,7 @@ export default function LocationPickerMap({
               </MarkerContent>
               <MarkerTooltip>
                 <div className="flex flex-col gap-1 p-2 text-xs max-w-xs bg-[#121815]/95 text-white rounded-xl shadow-2xl border border-white/20 backdrop-blur-md">
-                  <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#d9f447]">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-400">
                     <span className="capitalize px-1.5 py-0.5 rounded bg-white/10 text-[10px] tracking-wide">
                       {isAddress ? 'Address' : pin.type}
                     </span>
@@ -326,7 +326,7 @@ export default function LocationPickerMap({
       {gridVisible && activeCellData && (
         <div className="absolute bottom-3 left-3 z-20 w-72 max-w-[calc(100vw-2.5rem)] rounded-2xl border border-white/20 bg-[#121815]/95 p-3.5 text-white shadow-2xl backdrop-blur-md animate-in fade-in duration-200">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#d9f447]">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
               <Hexagon className="size-4 animate-spin-slow" />
               <span>H3 Hex Spatial Cell</span>
             </div>

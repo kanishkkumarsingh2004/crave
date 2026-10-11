@@ -252,31 +252,31 @@ export default function CalculatorPlaygroundPage() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#202923] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-[#202923] pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-[#d9f447]/10 text-[#d9f447] rounded-xl border border-[#d9f447]/20 shadow-[0_0_15px_rgba(217,244,71,0.15)]">
+            <div className="p-2.5 bg-emerald-50 text-emerald-800 dark:bg-[#d9f447]/10 dark:text-[#d9f447] rounded-xl border border-emerald-200 dark:border-[#d9f447]/20 shadow-xs dark:shadow-[0_0_15px_rgba(217,244,71,0.15)]">
               <Calculator className="size-6" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#18201c] dark:text-white">
               Unit Economics Calculator &amp; Financial Simulator
             </h1>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Real-time database integration: Fetch live parameters from PostgreSQL and simulate
             customer bills, vendor payouts, driver earnings, and platform margin.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#121815] border border-[#202923] text-xs shadow-inner">
-            <Database className="size-3.5 text-[#d9f447]" />
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] text-xs shadow-inner">
+            <Database className="size-3.5 text-emerald-600 dark:text-[#d9f447]" />
             {loadingDb ? (
-              <span className="text-yellow-400 font-bold animate-pulse">Syncing DB...</span>
+              <span className="text-amber-500 font-bold animate-pulse">Syncing DB...</span>
             ) : dbError ? (
-              <span className="text-red-400 font-bold">DB Error</span>
+              <span className="text-red-500 font-bold">DB Error</span>
             ) : (
-              <span className="text-emerald-400 flex items-center gap-1.5 font-bold">
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-bold">
                 <CheckCircle2 className="size-3.5" /> DB Connected
               </span>
             )}
@@ -285,7 +285,7 @@ export default function CalculatorPlaygroundPage() {
           <button
             onClick={fetchDbData}
             disabled={loadingDb}
-            className="flex items-center gap-2 px-4 py-2 bg-[#d9f447] text-[#121815] font-extrabold rounded-xl hover:bg-[#c8e434] transition duration-200 text-xs shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] font-extrabold rounded-xl hover:bg-[#2c372f] dark:hover:bg-[#c8e434] transition duration-200 text-xs shadow-md hover:scale-105 active:scale-95 disabled:opacity-50"
           >
             <RefreshCw className={`size-3.5 ${loadingDb ? 'animate-spin' : ''}`} />
             Fetch Live DB Values
@@ -294,13 +294,13 @@ export default function CalculatorPlaygroundPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-[#202923] pb-3 text-xs">
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-[#202923] pb-3 text-xs">
         <button
           onClick={() => setActiveTab('calculator')}
           className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
             activeTab === 'calculator'
-              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
-              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+              ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-sm dark:shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 dark:bg-[#121815] dark:text-gray-400 dark:hover:text-white dark:border-[#202923]'
           }`}
         >
           <Sliders className="size-3.5" /> Interactive Playground
@@ -309,8 +309,8 @@ export default function CalculatorPlaygroundPage() {
           onClick={() => setActiveTab('db_config')}
           className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
             activeTab === 'db_config'
-              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
-              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+              ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-sm dark:shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 dark:bg-[#121815] dark:text-gray-400 dark:hover:text-white dark:border-[#202923]'
           }`}
         >
           <Zap className="size-3.5" /> DB Config
@@ -319,8 +319,8 @@ export default function CalculatorPlaygroundPage() {
           onClick={() => setActiveTab('db_restaurants')}
           className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
             activeTab === 'db_restaurants'
-              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
-              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+              ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-sm dark:shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 dark:bg-[#121815] dark:text-gray-400 dark:hover:text-white dark:border-[#202923]'
           }`}
         >
           <Store className="size-3.5" /> DB Restaurants ({dbData?.restaurants?.length || 0})
@@ -329,8 +329,8 @@ export default function CalculatorPlaygroundPage() {
           onClick={() => setActiveTab('db_coupons')}
           className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
             activeTab === 'db_coupons'
-              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
-              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+              ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-sm dark:shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 dark:bg-[#121815] dark:text-gray-400 dark:hover:text-white dark:border-[#202923]'
           }`}
         >
           <Tag className="size-3.5" /> DB Coupons ({dbData?.coupons?.length || 0})
@@ -339,8 +339,8 @@ export default function CalculatorPlaygroundPage() {
           onClick={() => setActiveTab('db_orders')}
           className={`flex items-center gap-2 px-4 py-2 font-extrabold rounded-xl transition ${
             activeTab === 'db_orders'
-              ? 'bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
-              : 'bg-[#121815] text-gray-400 hover:text-white border border-[#202923]'
+              ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-sm dark:shadow-[0_4px_16px_rgba(217,244,71,0.2)]'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 dark:bg-[#121815] dark:text-gray-400 dark:hover:text-white dark:border-[#202923]'
           }`}
         >
           <Layers className="size-3.5" /> DB Recent Orders ({dbData?.orders?.length || 0})
@@ -353,12 +353,12 @@ export default function CalculatorPlaygroundPage() {
           {/* Left Controls Column (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             {/* Presets from DB Card */}
-            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-[#202923] pb-3">
-                <h3 className="text-xs font-extrabold text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
+            <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#202923] pb-3">
+                <h3 className="text-xs font-extrabold text-emerald-700 dark:text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
                   <Database className="size-4" /> Load Real Data from Database
                 </h3>
-                <span className="text-[10px] bg-[#1e2722] px-2.5 py-1 rounded-full font-bold text-gray-400 border border-white/5">
+                <span className="text-[10px] bg-gray-100 dark:bg-[#1e2722] px-2.5 py-1 rounded-full font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/5">
                   Preset Loader
                 </span>
               </div>
@@ -366,11 +366,11 @@ export default function CalculatorPlaygroundPage() {
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1.5">DB Restaurant:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">DB Restaurant:</label>
                     <select
                       value={selectedRestaurantId}
                       onChange={(e) => handleSelectDbRestaurant(e.target.value)}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-medium focus:border-[#d9f447] outline-none truncate transition"
+                      className="w-full bg-gray-50 dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-[#18201c] dark:text-white font-medium focus:border-emerald-500 dark:focus:border-[#d9f447] outline-none truncate transition"
                     >
                       <option value="">-- Choose Restaurant --</option>
                       {dbData?.restaurants?.map((rest) => (
@@ -382,11 +382,11 @@ export default function CalculatorPlaygroundPage() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1.5">DB Coupon:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">DB Coupon:</label>
                     <select
                       value={selectedCouponCode}
                       onChange={(e) => setSelectedCouponCode(e.target.value)}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-medium focus:border-[#d9f447] outline-none truncate transition"
+                      className="w-full bg-gray-50 dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-[#18201c] dark:text-white font-medium focus:border-emerald-500 dark:focus:border-[#d9f447] outline-none truncate transition"
                     >
                       <option value="">None (No Discount)</option>
                       {dbData?.coupons?.map((coup) => (
@@ -404,9 +404,9 @@ export default function CalculatorPlaygroundPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-gray-300 font-bold">Select DB Recent Order:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold">Select DB Recent Order:</label>
                     {!selectedRestaurantId && (
-                      <span className="text-[10px] text-amber-400 font-bold">
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
                         Select restaurant first
                       </span>
                     )}
@@ -417,8 +417,8 @@ export default function CalculatorPlaygroundPage() {
                     onChange={(e) => handleSelectDbOrder(e.target.value)}
                     className={`w-full border rounded-xl px-3 py-2 text-xs font-medium outline-none transition ${
                       !selectedRestaurantId
-                        ? 'bg-[#0b0f0d]/50 border-[#1a221d] text-gray-500 cursor-not-allowed'
-                        : 'bg-[#0b0f0d] border-[#202923] text-white focus:border-[#d9f447]'
+                        ? 'bg-gray-100 dark:bg-[#0b0f0d]/50 border-gray-200 dark:border-[#1a221d] text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-50 dark:bg-[#0b0f0d] border-gray-200 dark:border-[#202923] text-[#18201c] dark:text-white focus:border-emerald-500 dark:focus:border-[#d9f447]'
                     }`}
                   >
                     {!selectedRestaurantId ? (
@@ -442,14 +442,14 @@ export default function CalculatorPlaygroundPage() {
             </div>
 
             {/* Playground Inputs & Controls */}
-            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-5 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#202923] pb-3 gap-2">
-                <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Sliders className="size-4 text-[#d9f447]" /> Financial Simulation Parameters
+            <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#202923] pb-3 gap-2">
+                <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Sliders className="size-4 text-emerald-600 dark:text-[#d9f447]" /> Financial Simulation Parameters
                 </h3>
                 <button
                   onClick={resetToSystemDefaults}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-extrabold text-[#d9f447] transition"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] transition"
                 >
                   <RefreshCw className="size-3" /> Reset Defaults
                 </button>
@@ -457,35 +457,35 @@ export default function CalculatorPlaygroundPage() {
 
               {/* Quick Simulation Presets */}
               <div className="space-y-2">
-                <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
                   Quick Simulation Presets:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={resetToSystemDefaults}
-                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 hover:text-white rounded-xl text-xs font-bold transition active:scale-95"
+                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 hover:text-black dark:text-gray-200 dark:hover:text-white rounded-xl text-xs font-bold transition active:scale-95"
                   >
                     Standard Meal (₹450)
                   </button>
                   <button
                     type="button"
                     onClick={applyRainSurgePreset}
-                    className="px-3 py-1.5 bg-blue-950/60 border border-blue-500/40 text-blue-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 dark:bg-blue-950/60 dark:border-blue-500/40 dark:text-blue-300 dark:hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
                   >
                     <CloudRain className="size-3.5" /> Heavy Rain (+₹25)
                   </button>
                   <button
                     type="button"
                     onClick={applyNightSurgePreset}
-                    className="px-3 py-1.5 bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                    className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 dark:bg-purple-950/60 dark:border-purple-500/40 dark:text-purple-300 dark:hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
                   >
                     <Moon className="size-3.5" /> Late Night Surge (+₹20)
                   </button>
                   <button
                     type="button"
                     onClick={applyHighValueOrderPreset}
-                    className="px-3 py-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 dark:bg-amber-950/60 dark:border-amber-500/40 dark:text-amber-300 dark:hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
                   >
                     <Sparkles className="size-3.5" /> High Value (Free Delivery)
                   </button>
@@ -494,10 +494,10 @@ export default function CalculatorPlaygroundPage() {
 
               <div className="space-y-4 text-xs">
                 {/* Cart Subtotal */}
-                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
                   <div className="flex justify-between font-bold">
-                    <span className="text-gray-300">Food Subtotal (₹)</span>
-                    <span className="text-[#d9f447] font-mono text-sm font-black">₹{subtotal}</span>
+                    <span className="text-gray-700 dark:text-gray-300">Food Subtotal (₹)</span>
+                    <span className="text-[#18201c] dark:text-[#d9f447] font-mono text-sm font-black">₹{subtotal}</span>
                   </div>
                   <input
                     type="range"
@@ -506,23 +506,23 @@ export default function CalculatorPlaygroundPage() {
                     step={25}
                     value={subtotal}
                     onChange={(e) => setSubtotal(Number(e.target.value))}
-                    className="w-full accent-[#d9f447] bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    className="w-full accent-[#18201c] dark:accent-[#d9f447] bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
                   />
                   <div className="pt-1">
                     <input
                       type="number"
                       value={subtotal}
                       onChange={(e) => setSubtotal(Number(e.target.value))}
-                      className="w-full bg-[#121815] border border-[#202923] rounded-lg px-3 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-[#d9f447]"
+                      className="w-full bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-lg px-3 py-1.5 text-[#18201c] dark:text-white font-mono font-bold text-xs outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                     />
                   </div>
                 </div>
 
                 {/* Road Distance */}
-                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
                   <div className="flex justify-between font-bold">
-                    <span className="text-gray-300">Delivery Distance (KM)</span>
-                    <span className="text-[#d9f447] font-mono text-sm font-black">
+                    <span className="text-gray-700 dark:text-gray-300">Delivery Distance (KM)</span>
+                    <span className="text-[#18201c] dark:text-[#d9f447] font-mono text-sm font-black">
                       {distanceKm} km
                     </span>
                   </div>
@@ -533,15 +533,15 @@ export default function CalculatorPlaygroundPage() {
                     step={0.5}
                     value={distanceKm}
                     onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full accent-[#d9f447] bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    className="w-full accent-[#18201c] dark:accent-[#d9f447] bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
                   />
                 </div>
 
                 {/* Driver Share % */}
-                <div className="space-y-1.5 bg-[#0b0f0d] p-3.5 rounded-xl border border-[#202923]">
+                <div className="space-y-1.5 bg-gray-50 dark:bg-[#0b0f0d] p-3.5 rounded-xl border border-gray-200 dark:border-[#202923]">
                   <div className="flex justify-between font-bold">
-                    <span className="text-gray-300">Driver Payout Share (%)</span>
-                    <span className="text-emerald-400 font-mono text-sm font-black">
+                    <span className="text-gray-700 dark:text-gray-300">Driver Payout Share (%)</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-black">
                       {driverPayoutSharePercent}%
                     </span>
                   </div>
@@ -552,75 +552,75 @@ export default function CalculatorPlaygroundPage() {
                     step={5}
                     value={driverPayoutSharePercent}
                     onChange={(e) => setDriverPayoutSharePercent(Number(e.target.value))}
-                    className="w-full accent-emerald-400 bg-[#1e2722] h-2 rounded-lg cursor-pointer"
+                    className="w-full accent-emerald-500 dark:accent-emerald-400 bg-gray-200 dark:bg-[#1e2722] h-2 rounded-lg cursor-pointer"
                   />
                 </div>
 
                 {/* Multi-column Inputs */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">
                       Vendor Commission %
                     </label>
                     <input
                       type="number"
                       value={vendorCommissionPercent}
                       onChange={(e) => setVendorCommissionPercent(Number(e.target.value))}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                      className="w-full bg-white dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-[#18201c] dark:text-white font-mono font-bold outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">Platform Fee (₹)</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">Platform Fee (₹)</label>
                     <input
                       type="number"
                       value={platformFee}
                       onChange={(e) => setPlatformFee(Number(e.target.value))}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                      className="w-full bg-white dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-[#18201c] dark:text-white font-mono font-bold outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">
                       Handling Charge (₹)
                     </label>
                     <input
                       type="number"
                       value={handlingFee}
                       onChange={(e) => setHandlingFee(Number(e.target.value))}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:border-[#d9f447]"
+                      className="w-full bg-white dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-[#18201c] dark:text-white font-mono font-bold outline-none focus:border-[#18201c] dark:focus:border-[#d9f447]"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 font-bold mb-1">Customer Tip (₹)</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">Customer Tip (₹)</label>
                     <input
                       type="number"
                       value={tip}
                       onChange={(e) => setTip(Number(e.target.value))}
-                      className="w-full bg-[#0b0f0d] border border-[#202923] rounded-xl px-3 py-2 text-emerald-400 font-mono font-black outline-none focus:border-emerald-400"
+                      className="w-full bg-white dark:bg-[#0b0f0d] border border-gray-200 dark:border-[#202923] rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 font-mono font-black outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 {/* Rain & Night Surge Toggles */}
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#202923]">
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-[#202923]">
                   <button
                     onClick={() => setIsRainModeActive(!isRainModeActive)}
                     className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
                       isRainModeActive
-                        ? 'bg-blue-950/50 border-blue-500/60 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                        : 'bg-[#0b0f0d] border-[#202923] text-gray-400 hover:text-gray-200'
+                        ? 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-950/50 dark:border-blue-500/60 dark:text-blue-200 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                        : 'bg-white dark:bg-[#0b0f0d] border-gray-200 dark:border-[#202923] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <CloudRain
-                        className={`size-4 ${isRainModeActive ? 'text-blue-400' : 'text-gray-500'}`}
+                        className={`size-4 ${isRainModeActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
                       />
                       <div>
-                        <p className="font-extrabold text-xs">Rain Surge</p>
-                        <p className="text-[10px] text-gray-400">+₹{rainFee}</p>
+                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">Rain Surge</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">+₹{rainFee}</p>
                       </div>
                     </div>
                     <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isRainModeActive ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isRainModeActive ? 'bg-blue-600 text-white dark:bg-blue-500' : 'bg-gray-200 text-gray-600 dark:bg-white/10 dark:text-gray-400'}`}
                     >
                       {isRainModeActive ? 'ON' : 'OFF'}
                     </span>
@@ -630,21 +630,21 @@ export default function CalculatorPlaygroundPage() {
                     onClick={() => setIsNightSurgeActive(!isNightSurgeActive)}
                     className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
                       isNightSurgeActive
-                        ? 'bg-purple-950/50 border-purple-500/60 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                        : 'bg-[#0b0f0d] border-[#202923] text-gray-400 hover:text-gray-200'
+                        ? 'bg-purple-50 border-purple-300 text-purple-800 dark:bg-purple-950/50 dark:border-purple-500/60 dark:text-purple-200 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                        : 'bg-white dark:bg-[#0b0f0d] border-gray-200 dark:border-[#202923] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <Moon
-                        className={`size-4 ${isNightSurgeActive ? 'text-purple-400' : 'text-gray-500'}`}
+                        className={`size-4 ${isNightSurgeActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500'}`}
                       />
                       <div>
-                        <p className="font-extrabold text-xs">Night Surge</p>
-                        <p className="text-[10px] text-gray-400">+₹{nightSurgeFee}</p>
+                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">Night Surge</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">+₹{nightSurgeFee}</p>
                       </div>
                     </div>
                     <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isNightSurgeActive ? 'bg-purple-500 text-white' : 'bg-white/10 text-gray-400'}`}
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isNightSurgeActive ? 'bg-purple-600 text-white dark:bg-purple-500' : 'bg-gray-200 text-gray-600 dark:bg-white/10 dark:text-gray-400'}`}
                     >
                       {isNightSurgeActive ? 'ON' : 'OFF'}
                     </span>
@@ -659,135 +659,135 @@ export default function CalculatorPlaygroundPage() {
             {/* Unit Economics 4-Grid Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 1. Customer Bill Card */}
-              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
-                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                    <DollarSign className="size-4 text-[#d9f447]" /> Customer Bill
+              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <DollarSign className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Customer Bill
                   </span>
-                  <span className="text-xs font-mono font-black text-[#d9f447] bg-[#d9f447]/10 border border-[#d9f447]/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-mono font-black text-[#18201c] bg-gray-100 border border-gray-200 dark:text-[#d9f447] dark:bg-[#d9f447]/10 dark:border-[#d9f447]/20 px-2.5 py-1 rounded-lg">
                     ₹{customerBilling.grandTotal}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs font-mono text-gray-300">
+                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Food Subtotal</span>
-                    <span>₹{customerBilling.subtotal}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Food Subtotal</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">₹{customerBilling.subtotal}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Packaging Charge</span>
-                    <span>₹{customerBilling.packagingFee}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Packaging Charge</span>
+                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.packagingFee}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Delivery Fee ({distanceKm}km)</span>
-                    <span>₹{customerBilling.netDeliveryFee}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Delivery Fee ({distanceKm}km)</span>
+                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.netDeliveryFee}</span>
                   </div>
                   {customerBilling.couponDiscount > 0 && (
-                    <div className="flex justify-between text-emerald-400 font-bold">
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                       <span>Coupon ({selectedCouponCode})</span>
                       <span>-₹{customerBilling.couponDiscount}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Platform &amp; Handling</span>
-                    <span>₹{customerBilling.platformFee + customerBilling.handlingFee}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Platform &amp; Handling</span>
+                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.platformFee + customerBilling.handlingFee}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">GST (18%)</span>
-                    <span>₹{customerBilling.gstAmount}</span>
+                    <span className="text-gray-500 dark:text-gray-400">GST (18%)</span>
+                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.gstAmount}</span>
                   </div>
                   {customerBilling.tip > 0 && (
-                    <div className="flex justify-between text-emerald-400 font-bold">
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                       <span>Driver Tip</span>
                       <span>+₹{customerBilling.tip}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Total Paid</span>
-                    <span className="text-[#d9f447]">₹{customerBilling.grandTotal}</span>
+                    <span className="text-[#18201c] dark:text-[#d9f447]">₹{customerBilling.grandTotal}</span>
                   </div>
                 </div>
               </div>
 
               {/* 2. Vendor Net Payout Card */}
-              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
-                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                    <Store className="size-4 text-orange-400" /> Vendor Payout
+              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <Store className="size-4 text-orange-500 dark:text-orange-400" /> Vendor Payout
                   </span>
-                  <span className="text-xs font-mono font-black text-orange-400 bg-orange-400/10 border border-orange-400/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-mono font-black text-orange-600 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-400/10 dark:border-orange-400/20 px-2.5 py-1 rounded-lg">
                     ₹{vendorSettlement.netVendorPayout}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs font-mono text-gray-300">
+                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Gross Food Sales</span>
-                    <span>₹{vendorSettlement.grossSales}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Gross Food Sales</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">₹{vendorSettlement.grossSales}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Commission Rate</span>
-                    <span>{vendorSettlement.commissionRatePercent}%</span>
+                    <span className="text-gray-500 dark:text-gray-400">Commission Rate</span>
+                    <span className="text-[#18201c] dark:text-white">{vendorSettlement.commissionRatePercent}%</span>
                   </div>
-                  <div className="flex justify-between text-rose-400 font-bold">
+                  <div className="flex justify-between text-rose-600 dark:text-rose-400 font-bold">
                     <span>Commission Deducted</span>
                     <span>-₹{vendorSettlement.commissionDeducted}</span>
                   </div>
-                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Net Vendor Payout</span>
-                    <span className="text-orange-400">₹{vendorSettlement.netVendorPayout}</span>
+                    <span className="text-orange-600 dark:text-orange-400">₹{vendorSettlement.netVendorPayout}</span>
                   </div>
                 </div>
               </div>
 
               {/* 3. Driver Earnings Card */}
-              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
-                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                    <Truck className="size-4 text-emerald-400" /> Driver Earnings
+              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <Truck className="size-4 text-emerald-500 dark:text-emerald-400" /> Driver Earnings
                   </span>
-                  <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-mono font-black text-emerald-600 bg-emerald-50 border border-emerald-200 dark:text-emerald-400 dark:bg-emerald-400/10 dark:border-emerald-400/20 px-2.5 py-1 rounded-lg">
                     ₹{driverEarnings.totalDriverEarnings}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs font-mono text-gray-300">
+                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Base Distance Share</span>
-                    <span>₹{driverEarnings.baseDistanceShare}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Base Distance Share</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">₹{driverEarnings.baseDistanceShare}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Extra KM Share</span>
-                    <span>₹{driverEarnings.extraDistanceShare}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Extra KM Share</span>
+                    <span className="text-[#18201c] dark:text-white">₹{driverEarnings.extraDistanceShare}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Surge/Rain Share</span>
-                    <span>₹{driverEarnings.surgeRainShare}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Surge/Rain Share</span>
+                    <span className="text-[#18201c] dark:text-white">₹{driverEarnings.surgeRainShare}</span>
                   </div>
                   {driverEarnings.tip > 0 && (
-                    <div className="flex justify-between text-emerald-400 font-bold">
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                       <span>100% Customer Tip</span>
                       <span>+₹{driverEarnings.tip}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Total Driver Payout</span>
-                    <span className="text-emerald-400">₹{driverEarnings.totalDriverEarnings}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">₹{driverEarnings.totalDriverEarnings}</span>
                   </div>
                 </div>
               </div>
 
               {/* 4. Platform Net Profit Card */}
-              <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-xl">
-                <div className="flex items-center justify-between border-b border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                    <Coins className="size-4 text-yellow-400" /> Platform Margin
+              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <Coins className="size-4 text-amber-500 dark:text-yellow-400" /> Platform Margin
                   </span>
                   <span
                     className={`text-xs font-mono font-black px-2.5 py-1 rounded-lg border ${
                       platformEconomics.platformNetProfit >= 0
-                        ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20'
-                        : 'text-rose-400 bg-rose-400/10 border-rose-400/20'
+                        ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-yellow-400 dark:bg-yellow-400/10 dark:border-yellow-400/20'
+                        : 'text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-400/10 dark:border-rose-400/20'
                     }`}
                   >
                     ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}
@@ -795,30 +795,30 @@ export default function CalculatorPlaygroundPage() {
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs font-mono text-gray-300">
+                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Total Customer Paid</span>
-                    <span>₹{platformEconomics.totalCollectedFromCustomer}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Total Customer Paid</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">₹{platformEconomics.totalCollectedFromCustomer}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Less: Vendor Payout</span>
                     <span>-₹{platformEconomics.totalPaidToVendor}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Less: Driver Earnings</span>
                     <span>-₹{platformEconomics.totalPaidToDriver}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Less: GST Payable</span>
                     <span>-₹{platformEconomics.totalGstCollected}</span>
                   </div>
-                  <div className="flex justify-between font-extrabold text-white pt-2.5 border-t border-[#202923] text-sm">
+                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Platform Profit Margin</span>
                     <span
                       className={
                         platformEconomics.platformNetProfit >= 0
-                          ? 'text-yellow-400'
-                          : 'text-rose-400'
+                          ? 'text-amber-700 dark:text-yellow-400'
+                          : 'text-rose-600 dark:text-rose-400'
                       }
                     >
                       ₹{platformEconomics.platformNetProfit}
@@ -829,63 +829,63 @@ export default function CalculatorPlaygroundPage() {
             </div>
 
             {/* Comprehensive Output Breakdown Table */}
-            <div className="bg-[#121815] border border-[#202923] rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-[#202923] pb-3">
-                <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Sparkles className="size-4 text-[#d9f447]" /> Unit Economics Summary Table
+            <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl">
+              <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-3">
+                <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics Summary Table
                 </h3>
-                <span className="text-[10px] text-gray-400 font-mono">Real-time Computation</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Real-time Computation</span>
               </div>
 
               <div className="overflow-x-auto text-xs font-mono">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#202923] text-gray-400 uppercase text-[10px] bg-[#0b0f0d]">
+                    <tr className="border-b border-gray-200 dark:border-[#202923] text-gray-500 dark:text-gray-400 uppercase text-[10px] bg-gray-50 dark:bg-[#0b0f0d]">
                       <th className="py-2.5 px-3">Entity</th>
                       <th className="py-2.5 px-3">Revenue / Amount</th>
                       <th className="py-2.5 px-3">Outflow / Cost</th>
                       <th className="py-2.5 px-3">Net Profit / Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1c241f] text-gray-300">
-                    <tr className="hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-white">Customer</td>
-                      <td className="py-3 px-3 text-[#d9f447] font-bold">
+                  <tbody className="divide-y divide-gray-100 dark:divide-[#1c241f] text-gray-700 dark:text-gray-300">
+                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Customer</td>
+                      <td className="py-3 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">
                         ₹{customerBilling.grandTotal}
                       </td>
                       <td className="py-3 px-3 text-gray-400">-</td>
-                      <td className="py-3 px-3 text-gray-400">Order Fulfilled</td>
+                      <td className="py-3 px-3 text-gray-500 dark:text-gray-400">Order Fulfilled</td>
                     </tr>
-                    <tr className="hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-white">Restaurant Vendor</td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Restaurant Vendor</td>
                       <td className="py-3 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
-                      <td className="py-3 px-3 text-rose-400 font-bold">
+                      <td className="py-3 px-3 text-rose-600 dark:text-rose-400 font-bold">
                         -₹{vendorSettlement.commissionDeducted} (Commission)
                       </td>
-                      <td className="py-3 px-3 text-orange-400 font-extrabold">
+                      <td className="py-3 px-3 text-orange-600 dark:text-orange-400 font-extrabold">
                         ₹{vendorSettlement.netVendorPayout}
                       </td>
                     </tr>
-                    <tr className="hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-white">Delivery Driver</td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Delivery Driver</td>
                       <td className="py-3 px-3">
                         ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
                       </td>
                       <td className="py-3 px-3 text-gray-400">-</td>
-                      <td className="py-3 px-3 text-emerald-400 font-extrabold">
+                      <td className="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold">
                         ₹{driverEarnings.totalDriverEarnings}
                       </td>
                     </tr>
-                    <tr className="bg-[#17211b] border-t-2 border-[#202923]">
-                      <td className="py-3 px-3 font-black text-[#d9f447]">Platform (Crave)</td>
-                      <td className="py-3 px-3 text-yellow-400 font-bold">
+                    <tr className="bg-gray-50 dark:bg-[#17211b] border-t-2 border-gray-200 dark:border-[#202923]">
+                      <td className="py-3 px-3 font-black text-[#18201c] dark:text-[#d9f447]">Platform (Crave)</td>
+                      <td className="py-3 px-3 text-amber-700 dark:text-yellow-400 font-bold">
                         ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
                       </td>
-                      <td className="py-3 px-3 text-gray-400">
+                      <td className="py-3 px-3 text-gray-600 dark:text-gray-400">
                         ₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor}{' '}
                         (Payouts)
                       </td>
-                      <td className="py-3 px-3 font-black text-yellow-400 text-sm">
+                      <td className="py-3 px-3 font-black text-amber-700 dark:text-yellow-400 text-sm">
                         ₹{platformEconomics.platformNetProfit} (
                         {platformEconomics.profitMarginPercent}%)
                       </td>
@@ -900,11 +900,11 @@ export default function CalculatorPlaygroundPage() {
 
       {/* Tab Content: DB Payment Config */}
       {activeTab === 'db_config' && (
-        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-          <h3 className="text-base font-bold text-[#d9f447] flex items-center gap-2">
+        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
+          <h3 className="text-base font-bold text-[#18201c] dark:text-[#d9f447] flex items-center gap-2">
             <Zap className="size-4" /> Active Database Payment Configuration
           </h3>
-          <pre className="bg-[#0b0e0d] p-4 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto border border-[#232e27]">
+          <pre className="bg-gray-900 dark:bg-[#0b0e0d] p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-gray-800 dark:border-[#232e27]">
             {JSON.stringify(dbData?.paymentConfig || {}, null, 2)}
           </pre>
         </div>
@@ -912,22 +912,22 @@ export default function CalculatorPlaygroundPage() {
 
       {/* Tab Content: DB Restaurants */}
       {activeTab === 'db_restaurants' && (
-        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Store className="size-4 text-orange-400" /> Loaded DB Restaurants (
+        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
+          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
+            <Store className="size-4 text-orange-500 dark:text-orange-400" /> Loaded DB Restaurants (
             {dbData?.restaurants?.length || 0})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {dbData?.restaurants?.map((rest) => (
               <div
                 key={rest.id}
-                className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+                className="bg-gray-50 dark:bg-[#0f1412] p-4 rounded-xl border border-gray-200 dark:border-[#232e27] space-y-1 text-xs"
               >
-                <p className="font-bold text-white text-sm">{rest.name}</p>
-                <p className="text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
-                <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
+                <p className="font-bold text-[#18201c] dark:text-white text-sm">{rest.name}</p>
+                <p className="text-gray-500 dark:text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
+                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-[#1f2923] text-gray-600 dark:text-gray-300 font-mono">
                   <span>Commission Rate:</span>
-                  <span className="text-[#d9f447] font-bold">{rest.commission_rate ?? 15}%</span>
+                  <span className="text-[#18201c] dark:text-[#d9f447] font-bold">{rest.commission_rate ?? 15}%</span>
                 </div>
               </div>
             ))}
@@ -937,24 +937,24 @@ export default function CalculatorPlaygroundPage() {
 
       {/* Tab Content: DB Coupons */}
       {activeTab === 'db_coupons' && (
-        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Tag className="size-4 text-[#d9f447]" /> Loaded DB Active Coupons (
+        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
+          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
+            <Tag className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Loaded DB Active Coupons (
             {dbData?.coupons?.length || 0})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {dbData?.coupons?.map((coup) => (
               <div
                 key={coup.id}
-                className="bg-[#0f1412] p-4 rounded-lg border border-[#232e27] space-y-1 text-xs"
+                className="bg-gray-50 dark:bg-[#0f1412] p-4 rounded-xl border border-gray-200 dark:border-[#232e27] space-y-1 text-xs"
               >
-                <span className="font-mono font-extrabold text-[#d9f447] bg-[#d9f447]/10 px-2 py-0.5 rounded">
+                <span className="font-mono font-extrabold text-[#18201c] bg-gray-200 dark:text-[#d9f447] dark:bg-[#d9f447]/10 px-2 py-0.5 rounded">
                   {coup.code}
                 </span>
-                <p className="text-gray-300 pt-1">{coup.description}</p>
-                <div className="flex justify-between pt-2 border-t border-[#1f2923] text-gray-300 font-mono">
+                <p className="text-gray-600 dark:text-gray-300 pt-1">{coup.description}</p>
+                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-[#1f2923] text-gray-600 dark:text-gray-300 font-mono">
                   <span>Discount Value:</span>
-                  <span className="text-emerald-400 font-bold">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                     {coup.discount_type === 'percentage'
                       ? `${coup.discount_value}%`
                       : `₹${coup.discount_value}`}
@@ -968,15 +968,15 @@ export default function CalculatorPlaygroundPage() {
 
       {/* Tab Content: DB Orders */}
       {activeTab === 'db_orders' && (
-        <div className="bg-[#151c18] border border-[#26332b] rounded-xl p-6 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Layers className="size-4 text-purple-400" /> Recent Database Orders (
+        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
+          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
+            <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database Orders (
             {dbData?.orders?.length || 0})
           </h3>
           <div className="overflow-x-auto text-xs font-mono">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#28352e] text-gray-400 uppercase text-[10px]">
+                <tr className="border-b border-gray-200 dark:border-[#28352e] text-gray-500 dark:text-gray-400 uppercase text-[10px] bg-gray-50 dark:bg-transparent">
                   <th className="py-2 px-3">Order ID</th>
                   <th className="py-2 px-3">Customer</th>
                   <th className="py-2 px-3">Restaurant</th>
@@ -985,16 +985,16 @@ export default function CalculatorPlaygroundPage() {
                   <th className="py-2 px-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e2722] text-gray-300">
+              <tbody className="divide-y divide-gray-100 dark:divide-[#1e2722] text-gray-700 dark:text-gray-300">
                 {dbData?.orders?.map((ord) => (
-                  <tr key={ord.id} className="hover:bg-[#1b241f] transition">
-                    <td className="py-2.5 px-3 text-gray-400">{ord.id.slice(0, 10)}...</td>
-                    <td className="py-2.5 px-3 font-semibold text-white">{ord.customer_name}</td>
-                    <td className="py-2.5 px-3 text-gray-300">{ord.restaurant_name}</td>
-                    <td className="py-2.5 px-3">₹{ord.subtotal}</td>
-                    <td className="py-2.5 px-3 text-[#d9f447] font-bold">₹{ord.total_amount}</td>
+                  <tr key={ord.id} className="hover:bg-gray-50 dark:hover:bg-[#1b241f] transition">
+                    <td className="py-2.5 px-3 text-gray-500 dark:text-gray-400">{ord.id.slice(0, 10)}...</td>
+                    <td className="py-2.5 px-3 font-semibold text-[#18201c] dark:text-white">{ord.customer_name}</td>
+                    <td className="py-2.5 px-3 text-gray-600 dark:text-gray-300">{ord.restaurant_name}</td>
+                    <td className="py-2.5 px-3 font-medium">₹{ord.subtotal}</td>
+                    <td className="py-2.5 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">₹{ord.total_amount}</td>
                     <td className="py-2.5 px-3">
-                      <span className="bg-[#242f29] px-2 py-0.5 rounded text-gray-300 text-[10px]">
+                      <span className="bg-gray-100 dark:bg-[#242f29] px-2 py-0.5 rounded text-gray-700 dark:text-gray-300 text-[10px]">
                         {ord.status}
                       </span>
                     </td>

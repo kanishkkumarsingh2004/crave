@@ -3,7 +3,7 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NODE_ENV=production
 
-FROM node:20-alpine AS builder
+FROM base AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
@@ -15,7 +15,7 @@ ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@localhost:5432/
 RUN npx prisma generate
 RUN pnpm run build
 
-FROM node:20-alpine AS runner
+FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 

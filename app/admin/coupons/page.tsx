@@ -2,6 +2,7 @@
 
 import { Coupon, fetchCouponsFromSupabase } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
+import AppleToggle from '@/components/ui/AppleToggle'
 import {
   Building2,
   Check,
@@ -634,7 +635,7 @@ export default function AdminCouponsPage() {
       {/* Create / Edit Coupon Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d]">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d]">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
               <h3 className="text-lg font-bold text-[#18201c] dark:text-white">
                 {editingCoupon ? 'Edit Coupon Code' : 'Create New Promo Coupon'}
@@ -884,24 +885,25 @@ export default function AdminCouponsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-[#121815] p-3 border border-transparent dark:border-[#27342d]">
+              <div className="flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-[#121815] p-4 border border-gray-200 dark:border-[#27342d]">
                 <div>
                   <p className="font-bold text-[#18201c] dark:text-white">Active Status</p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">
                     Customers can use this coupon immediately in cart
                   </p>
                 </div>
-                <input
-                  type="checkbox"
+                <AppleToggle
                   checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="size-5 accent-[#86a018] cursor-pointer"
+                  onChange={setIsActive}
+                  iconVariant="check"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Coupon active status"
                 />
               </div>
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-full bg-[#121815] dark:bg-[#86a018] py-3 font-bold text-white dark:text-[#121815] shadow-md hover:bg-[#232f29] dark:hover:bg-[#97b41e] transition"
+                className="mt-2 w-full rounded-full bg-[#18201c] text-white hover:bg-black dark:bg-[#d9f447] dark:text-[#121815] py-3 font-bold shadow-md dark:hover:bg-[#c2dc3a] transition"
               >
                 {editingCoupon ? 'Save Coupon Changes' : 'Publish Coupon'}
               </button>
@@ -913,7 +915,7 @@ export default function AdminCouponsPage() {
       {/* Restaurant Selection Popup Modal */}
       {showRestaurantModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-transparent dark:border-[#27342d] flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d] flex flex-col max-h-[85vh]">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
               <div>

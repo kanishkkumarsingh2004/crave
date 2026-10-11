@@ -2419,14 +2419,14 @@ export default function CustomerDashboard({
                       <div className="space-y-2.5 sm:space-y-3 min-w-0">
                         {/* Status Badges */}
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black text-[#18201c] shadow-xs tracking-wide uppercase">
-                            <span className="size-1.5 rounded-full bg-[#18201c] animate-pulse" />
+                          <span className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide uppercase">
+                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             Order #
                             {typeof activeOrder.id === 'string' && activeOrder.id.length > 10
                               ? activeOrder.id.slice(0, 8).toUpperCase()
                               : activeOrder.id}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-emerald-300 backdrop-blur-xs">
+                          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-1 text-[10px] sm:text-xs font-semibold text-emerald-300 backdrop-blur-xs">
                             {activeOrder.statusText || 'Order Confirmed'}
                           </span>
                           {activeOrder.otp &&
@@ -2437,8 +2437,8 @@ export default function CustomerDashboard({
                               activeOrder.rawStatus === 'out_for_delivery' ||
                               activeOrder.rawStatus === 'picked_up' ||
                               activeOrder.rawStatus === 'arrived_customer') && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-mono font-black text-[#18201c] shadow-xs">
-                                <span className="text-[9px] sm:text-[10px] uppercase font-sans font-bold tracking-wider opacity-75">
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 shadow-xs">
+                                <span className="text-[9px] sm:text-[10px] uppercase font-sans font-semibold tracking-wider text-emerald-400/80">
                                   Delivery OTP
                                 </span>
                                 <span className="tracking-widest">{activeOrder.otp}</span>
@@ -2571,8 +2571,8 @@ export default function CustomerDashboard({
                           )}
                         </h3>
                       </div>
-                      <span className="self-start sm:self-center text-[10px] sm:text-xs font-extrabold text-emerald-700 dark:text-[#d9f447] bg-emerald-50 dark:bg-[#d9f447]/10 px-3 py-1 rounded-full border border-emerald-200 dark:border-[#d9f447]/30 flex items-center gap-1.5 shadow-xs">
-                        <span className="size-2 rounded-full bg-emerald-500 dark:bg-[#d9f447] animate-ping" />
+                      <span className="self-start sm:self-center text-[10px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-md border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-1.5 shadow-xs">
+                        <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
                         Step {activeOrder.statusStep} of 4
                       </span>
                     </div>
@@ -2582,7 +2582,7 @@ export default function CustomerDashboard({
                       {/* Connecting Track Line (Background & Filled Animated Progress) */}
                       <div className="absolute top-[26px] sm:top-[30px] left-8 right-8 sm:left-12 sm:right-12 h-1.5 bg-gray-100 dark:bg-[#253229] rounded-full z-0 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-emerald-500 via-[#d9f447] to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(217,244,71,0.5)]"
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out shadow-sm"
                           style={{
                             width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
                           }}
@@ -2799,7 +2799,7 @@ export default function CustomerDashboard({
                           </p>
                         </div>
                       </div>
-                      <span className="font-mono font-black text-base sm:text-lg text-[#18201c] dark:text-[#d9f447] bg-white dark:bg-[#121815] border border-[#d9f447]/60 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
+                      <span className="font-mono font-bold text-base sm:text-lg text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#121815] border border-emerald-500/30 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
                         {activeOrder.otp}
                       </span>
                     </div>
@@ -2811,8 +2811,8 @@ export default function CustomerDashboard({
                 <div className="flex items-center justify-between">
                   <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white flex items-center gap-2">
                     <span className="relative flex size-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d9f447] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full size-2.5 bg-[#b5de28]"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full size-2.5 bg-emerald-500"></span>
                     </span>
                     Active Orders Under Process ({inProgressOrders.length})
                   </h3>
@@ -2963,7 +2963,7 @@ export default function CustomerDashboard({
           <div className="max-h-[90vh] w-full max-w-[600px] overflow-y-auto rounded-t-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white sm:rounded-3xl">
             <div className="flex items-start justify-between border-b border-[#25332a] pb-4">
               <div>
-                <span className="rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#d9f447]">
+                <span className="rounded-md bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90">
                   {selectedRestaurant.tag}
                 </span>
                 <h2 className="mt-1 text-2xl font-bold text-white">{selectedRestaurant.name}</h2>
@@ -3150,7 +3150,7 @@ export default function CustomerDashboard({
                       Delivery Partner Fee
                     </span>
                     {pricingBreakdown.isFreeDelivery ? (
-                      <span className="font-bold text-[#d9f447] bg-[#d9f447]/20 border border-[#d9f447]/40 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10px]">
                         FREE
                       </span>
                     ) : (
@@ -3192,9 +3192,9 @@ export default function CustomerDashboard({
                   )}
 
                   {appliedCoupon && couponDiscount > 0 && (
-                    <div className="flex items-center justify-between font-bold text-[#d9f447] bg-[#d9f447]/10 p-2 rounded-xl border border-[#d9f447]/30">
+                    <div className="flex items-center justify-between font-bold text-emerald-400 bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
                       <span className="flex items-center gap-1">
-                        <Tag className="size-3.5 text-[#d9f447]" />
+                        <Tag className="size-3.5 text-emerald-400" />
                         Coupon ({appliedCoupon.code})
                       </span>
                       <span>-₹{couponDiscount}</span>

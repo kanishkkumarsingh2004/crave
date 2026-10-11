@@ -150,12 +150,12 @@ export default function DriverSettingsPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-sm text-white">{upi.vpa}</span>
                       {upi.isPrimary && (
-                        <span className="rounded-full bg-[#d9f447] text-[#121815] px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                        <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                           Default Payout
                         </span>
                       )}
                       {upi.isVerified && (
-                        <span className="text-[10px] font-bold text-[#d9f447] bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30">
                           NPCI Verified
                         </span>
                       )}

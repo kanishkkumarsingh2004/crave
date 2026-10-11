@@ -72,20 +72,20 @@ export default function DriverDashboard() {
                 <span>Trip Distance:</span>
                 <span className="text-sky-400">{broadcastOffer.distance}</span>
               </div>
-              <div className="rounded-2xl bg-[#d9f447]/10 p-3 text-white space-y-1.5 border border-[#d9f447]/30">
+              <div className="rounded-2xl bg-emerald-500/10 p-3 text-white space-y-1.5 border border-emerald-500/20">
                 <div className="flex justify-between font-bold text-sm">
                   <span>Driver Trip Earnings:</span>
-                  <span className="text-[#d9f447] font-extrabold text-base">
+                  <span className="text-emerald-400 font-extrabold text-base">
                     ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
                   </span>
                 </div>
-                <div className="flex justify-between text-[11px] text-[#9eb3a4] pt-1 border-t border-[#d9f447]/20 font-medium">
+                <div className="flex justify-between text-[11px] text-[#9eb3a4] pt-1 border-t border-emerald-500/20 font-medium">
                   <span>Base Pay: ₹{broadcastOffer.basePayout}</span>
                   {broadcastOffer.surgeBonus > 0 && (
                     <span>Surge: +₹{broadcastOffer.surgeBonus}</span>
                   )}
                   {broadcastOffer.tip > 0 && (
-                    <span className="font-bold text-[#d9f447]">Tip: +₹{broadcastOffer.tip}</span>
+                    <span className="font-bold text-emerald-400">Tip: +₹{broadcastOffer.tip}</span>
                   )}
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function DriverDashboard() {
                     <div className="font-bold text-white">₹{log.amount}</div>
                     <div className="text-[11px] text-[#9eb3a4]">{log.date}</div>
                   </div>
-                  <span className="rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 px-2.5 py-1 text-[10px] font-bold text-[#d9f447]">
+                  <span className="rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] font-bold text-emerald-400 capitalize">
                     {log.status}
                   </span>
                 </div>
@@ -312,7 +312,7 @@ function MiniCard({
   icon: React.ReactNode
 }) {
   const style = {
-    green: 'bg-[#d9f447]/20 text-[#d9f447] border border-[#d9f447]/30',
+    green: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
     amber: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
     blue: 'bg-sky-500/20 text-sky-400 border border-sky-500/30',
   }

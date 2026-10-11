@@ -542,7 +542,7 @@ export default function Navbar() {
                 className="flex items-center justify-between rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <span>Dashboard</span>
-                <span className="rounded-full bg-[#f0f5db] dark:bg-[#27342d] px-2 py-0.5 text-[10px] text-[#b5de28] dark:text-[#d9f447] capitalize">
+                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 capitalize">
                   {role}
                 </span>
               </Link>

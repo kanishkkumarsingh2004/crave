@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import AppleToggle from '@/components/ui/AppleToggle'
 import { useWebSocket } from '@/lib/websocket'
 import {
   MapPin,
@@ -322,15 +323,15 @@ export default function MapLiveAnalyticsPage() {
                     onClick={() => setIsSettingsOpen(false)}
                     className="fixed inset-0 z-40 bg-black/40 sm:hidden backdrop-blur-xs"
                   />
-                  <div className="fixed inset-x-4 top-20 z-50 max-w-sm mx-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
-                      <div className="flex items-center gap-2 font-extrabold text-sm text-[#18201c]">
-                        <SlidersHorizontal className="size-4 text-[#b5de28]" />
+                  <div className="fixed inset-x-4 top-20 z-50 max-w-sm mx-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#202923] pb-2.5 mb-3">
+                      <div className="flex items-center gap-2 font-extrabold text-sm text-[#18201c] dark:text-white">
+                        <SlidersHorizontal className="size-4 text-[#8fa71c] dark:text-[#b5de28]" />
                         <span>Map Live Settings</span>
                       </div>
                       <button
                         onClick={() => setIsSettingsOpen(false)}
-                        className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                        className="p-1 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition"
                       >
                         <X className="size-4" />
                       </button>
@@ -339,9 +340,9 @@ export default function MapLiveAnalyticsPage() {
                     <div className="space-y-4 text-xs">
                       {/* Telemetry Auto-Sync */}
                       <div className="space-y-1.5">
-                        <label className="font-bold text-[#18201c] flex items-center justify-between">
+                        <label className="font-bold text-[#18201c] dark:text-white flex items-center justify-between">
                           <span>Telemetry Stream Mode</span>
-                          <span className="text-[10px] text-emerald-700 font-bold font-mono">
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono">
                             {autoSyncInterval === 1
                               ? 'Event-Driven Live Stream'
                               : autoSyncInterval > 0
@@ -349,7 +350,7 @@ export default function MapLiveAnalyticsPage() {
                                 : 'Disabled'}
                           </span>
                         </label>
-                        <div className="grid grid-cols-6 gap-1 bg-gray-100 p-1 rounded-xl">
+                        <div className="grid grid-cols-6 gap-1 bg-gray-100 dark:bg-[#1c241f] p-1 rounded-xl">
                           {[1, 3, 5, 10, 30, 0].map((interval) => (
                             <button
                               key={interval}
@@ -358,8 +359,8 @@ export default function MapLiveAnalyticsPage() {
                                 autoSyncInterval === interval
                                   ? interval === 1
                                     ? 'bg-emerald-600 text-white shadow-xs'
-                                    : 'bg-[#18201c] text-white shadow-xs'
-                                  : 'text-gray-600 hover:text-[#18201c]'
+                                    : 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-xs'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                               }`}
                             >
                               {interval === 1 ? 'Live' : interval === 0 ? 'Off' : `${interval}s`}
@@ -369,31 +370,25 @@ export default function MapLiveAnalyticsPage() {
                       </div>
 
                       {/* H3 Spatial Grid Settings */}
-                      <div className="space-y-2 border-t border-gray-100 pt-3">
+                      <div className="space-y-2 border-t border-gray-100 dark:border-[#202923] pt-3">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-[#18201c] flex items-center gap-1.5">
-                            <Hexagon className="size-3.5 text-[#b5de28]" />
+                          <span className="font-bold text-[#18201c] dark:text-white flex items-center gap-1.5">
+                            <Hexagon className="size-3.5 text-[#8fa71c] dark:text-[#b5de28]" />
                             <span>H3 Spatial Hex Grid</span>
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setH3GridEnabled((prev) => !prev)}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                              h3GridEnabled ? 'bg-[#b5de28]' : 'bg-gray-300'
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                h3GridEnabled ? 'translate-x-4' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
+                          <AppleToggle
+                            checked={h3GridEnabled}
+                            onChange={setH3GridEnabled}
+                            iconVariant="check"
+                            activeColor="bg-[#34c759]"
+                            ariaLabel="H3 spatial hex grid"
+                          />
                         </div>
 
                         {h3GridEnabled && (
-                          <div className="pl-5 space-y-2">
+                          <div className="pl-2 space-y-2 pt-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-600">Grid Resolution</span>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">Grid Resolution</span>
                               <div className="flex flex-wrap gap-1">
                                 {[5, 6, 7, 8, 9].map((res) => (
                                   <button
@@ -401,8 +396,8 @@ export default function MapLiveAnalyticsPage() {
                                     onClick={() => setH3Resolution(res)}
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       h3Resolution === res
-                                        ? 'bg-[#18201c] text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815]'
+                                        : 'bg-gray-100 dark:bg-[#1c241f] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#253229]'
                                     }`}
                                   >
                                     Res {res}
@@ -412,31 +407,26 @@ export default function MapLiveAnalyticsPage() {
                             </div>
 
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-600 flex items-center gap-1">
+                              <span className="text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
                                 <Layers className="size-3 text-amber-500" />
                                 <span>Density Heatmap</span>
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => setH3HeatmapEnabled((prev) => !prev)}
-                                className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                                  h3HeatmapEnabled ? 'bg-amber-500' : 'bg-gray-300'
-                                }`}
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block size-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                    h3HeatmapEnabled ? 'translate-x-3' : 'translate-x-0'
-                                  }`}
-                                />
-                              </button>
+                              <AppleToggle
+                                checked={h3HeatmapEnabled}
+                                onChange={setH3HeatmapEnabled}
+                                iconVariant="power"
+                                activeColor="bg-amber-500"
+                                size="sm"
+                                ariaLabel="Density heatmap layer"
+                              />
                             </div>
                           </div>
                         )}
                       </div>
 
                       {/* Layer Visibilities */}
-                      <div className="space-y-2 border-t border-gray-100 pt-3">
-                        <span className="font-bold text-[#18201c]">Pin Layers</span>
+                      <div className="space-y-2 border-t border-gray-100 dark:border-[#202923] pt-3">
+                        <span className="font-bold text-[#18201c] dark:text-white">Pin Layers</span>
                         <div className="space-y-1.5 pl-1">
                           {[
                             {
@@ -457,11 +447,11 @@ export default function MapLiveAnalyticsPage() {
                           ].map((layer) => (
                             <label
                               key={layer.key}
-                              className="flex items-center justify-between text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded-lg"
+                              className="flex items-center justify-between text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-1 rounded-lg"
                             >
                               <span className="flex items-center gap-2">
                                 <span className={`size-2 rounded-full ${layer.color}`} />
-                                <span>{layer.label}</span>
+                                <span className="font-medium">{layer.label}</span>
                               </span>
                               <input
                                 type="checkbox"
@@ -472,7 +462,7 @@ export default function MapLiveAnalyticsPage() {
                                     [layer.key]: e.target.checked,
                                   }))
                                 }
-                                className="rounded text-[#b5de28] focus:ring-[#b5de28]"
+                                className="rounded text-[#18201c] dark:text-[#b5de28] focus:ring-[#b5de28]"
                               />
                             </label>
                           ))}

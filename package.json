@@ -24,6 +24,8 @@
     "typecheck:ts": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:test": "tsx scripts/test-db-connection.ts",
+    "db:test:flow": "tsx scripts/test-order-flow.ts",
     "db:studio": "prisma studio",
     "db:admin": "tsx scripts/create-admin.ts",
     "db:seed": "tsx scripts/seed-local-db.ts",

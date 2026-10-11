@@ -356,7 +356,7 @@ export default function HomePage() {
                       <p className="text-[10px] text-white/60">Kanakapura Road Hub #01</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#d9f447] px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-[#18201c] shrink-0">
+                  <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold tracking-wider text-emerald-400 shrink-0">
                     15 MIN EXPRESS
                   </span>
                 </div>
@@ -364,7 +364,7 @@ export default function HomePage() {
                 {/* Items Grid Preview */}
                 <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="rounded-2xl bg-white/5 p-3.5 sm:p-4 border border-white/10 flex items-center gap-3 min-w-0">
-                    <div className="grid size-9 sm:size-10 place-items-center rounded-xl bg-[#d9f447]/20 text-[#d9f447] shrink-0">
+                    <div className="grid size-9 sm:size-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400 shrink-0">
                       <ShoppingBag className="size-4 sm:size-5" />
                     </div>
                     <div className="min-w-0 flex-1">

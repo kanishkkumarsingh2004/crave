@@ -157,11 +157,8 @@ export default function PwaInstallPrompt() {
 
           {/* Text Details */}
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-sm tracking-tight text-white flex items-center gap-2 flex-wrap">
-              <span>Install Crave App</span>
-              <span className="inline-flex items-center text-[10px] bg-[#d9f447]/15 text-[#d9f447] font-bold px-2 py-0.5 rounded-full border border-[#d9f447]/30 whitespace-nowrap shrink-0 shadow-xs">
-                Fast &amp; Free
-              </span>
+            <h4 className="font-bold text-sm tracking-tight text-white">
+              Install Crave App
             </h4>
             <p className="text-xs text-white/70 truncate mt-0.5">
               {isIos
@@ -233,7 +230,7 @@ export default function PwaInstallPrompt() {
               </div>
 
               <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
-                <div className="w-7 h-7 rounded-lg bg-[#d9f447]/20 text-[#d9f447] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                   <PlusSquare className="w-4 h-4" />
                 </div>
                 <div className="text-xs">

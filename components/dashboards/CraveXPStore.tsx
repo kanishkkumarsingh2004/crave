@@ -132,7 +132,7 @@ export default function CraveXPStore() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <CraveLogo variant="cravexp" size="lg" />
-                <span className="rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#18201c] whitespace-nowrap">
+                <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 whitespace-nowrap">
                   CraveXP 10 Store
                 </span>
               </div>
@@ -337,13 +337,13 @@ export default function CraveXPStore() {
       {/* CRAVEXP FLOATING CART BAR (Bottom of Screen) */}
       {cartTotalItems > 0 && (
         <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 mx-auto max-w-xl">
-          <div className="flex items-center justify-between rounded-2xl bg-[#18201c] p-3 text-white shadow-2xl border-2 border-[#d9f447]/40 animate-slide-up">
+          <div className="flex items-center justify-between rounded-2xl bg-[#18201c] p-3 text-white shadow-2xl border border-[#2d3b32] animate-slide-up">
             <div className="flex items-center gap-3">
-              <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
+              <div className="grid size-10 place-items-center rounded-xl bg-emerald-500 text-white">
                 <ShoppingBag className="size-5" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-wider text-[#d9f447]">
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                   {cartTotalItems} {cartTotalItems === 1 ? 'ITEM' : 'ITEMS'} ADDED
                 </p>
                 <p className="text-sm font-extrabold text-white">₹{cartSubtotal}</p>
@@ -352,7 +352,7 @@ export default function CraveXPStore() {
 
             <button
               onClick={() => router.push('/user/cart')}
-              className="flex items-center gap-2 rounded-xl bg-[#d9f447] px-4 py-2.5 text-xs font-black text-[#18201c] shadow-md hover:bg-[#cbe638] transition"
+              className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-600 transition"
             >
               <span>View Cart</span>
               <ArrowRight className="size-4" />

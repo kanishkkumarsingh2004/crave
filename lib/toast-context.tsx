@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useState } from 'react'
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +15,7 @@ export interface Toast {
 interface ToastContextValue {
   toasts: Toast[]
   toast: (message: string, variant?: ToastVariant) => void
+  dismiss: (id?: string) => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -25,16 +26,37 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined)
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const toast = useCallback((message: string, variant: ToastVariant = 'success') => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-    setToasts((prev) => [...prev, { id, message, variant }])
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 3500)
+  const dismiss = useCallback((id?: string) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    setToasts((prev) => (id ? prev.filter((t) => t.id !== id) : []))
   }, [])
 
-  return <ToastContext.Provider value={{ toasts, toast }}>{children}</ToastContext.Provider>
+  const toast = useCallback((message: string, variant: ToastVariant = 'success') => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+
+    // Strictly display ONE toast at a time — prevents messy overlapping screen clusters
+    setToasts([{ id, message, variant }])
+
+    timerRef.current = setTimeout(() => {
+      setToasts([])
+      timerRef.current = null
+    }, 3200)
+  }, [])
+
+  return (
+    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+      {children}
+    </ToastContext.Provider>
+  )
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

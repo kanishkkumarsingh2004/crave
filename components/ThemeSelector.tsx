@@ -93,8 +93,8 @@ export default function ThemeSelector({ className = '', variant = 'cards' }: The
                 <Icon className="size-5" />
               </div>
               {isSelected ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black uppercase text-[#121815] shadow-xs">
-                  <CheckCircle2 className="size-3 text-[#121815]" /> Active
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="size-3 text-emerald-500" /> Active
                 </span>
               ) : (
                 <span className="size-4 rounded-full border border-gray-300 dark:border-[#27342d]" />

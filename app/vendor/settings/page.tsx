@@ -1,6 +1,7 @@
 'use client'
 
 import ThemeSelector from '@/components/ThemeSelector'
+import AppleToggle from '@/components/ui/AppleToggle'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { Building2, FileText, Palette, Save, ShieldCheck, Sparkles } from 'lucide-react'
@@ -179,16 +180,23 @@ export default function VendorSettingsPage() {
 
             <div className="flex items-center gap-3 bg-[#18201c] p-3 rounded-2xl border border-[#27342d]">
               <span className="text-xs font-bold text-gray-300">Accepting Orders:</span>
-              <button
-                type="button"
-                onClick={handleToggleKitchen}
+              <AppleToggle
+                checked={kitchenOpen}
+                onChange={() => void handleToggleKitchen()}
                 disabled={!restaurantId || settingsLoading}
-                className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                  kitchenOpen ? 'bg-emerald-500 text-[#0d1310]' : 'bg-rose-500 text-white'
+                iconVariant="power"
+                activeColor="bg-[#34c759]"
+                ariaLabel="Accepting orders status"
+              />
+              <span
+                className={`text-[11px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full ${
+                  kitchenOpen
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                 }`}
               >
                 {kitchenOpen ? 'ONLINE' : 'OFFLINE'}
-              </button>
+              </span>
             </div>
           </div>
         </div>
