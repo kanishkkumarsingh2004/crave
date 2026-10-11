@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex flex-col justify-between bg-white dark:bg-[#111714] text-[#18201c] dark:text-white transition-all duration-300 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen lg:z-40 border-r border-[#e2e8e3] dark:border-[#1e2722] shadow-xs ${
           sidebarOpen ? 'translate-x-0 shadow-2xl w-72' : '-translate-x-full lg:translate-x-0'
-        } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
+        } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}
       >
         <div
           className={`flex flex-col gap-5 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-3' : 'p-4'}`}
@@ -165,12 +165,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </Link>
 
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="grid size-7 place-items-center rounded-lg bg-black/5 dark:bg-white/10 text-gray-700 dark:text-white lg:hidden transition hover:bg-black/10 dark:hover:bg-white/20"
-            >
-              <X className="size-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {/* Desktop Minimize Toggle Button right in the header */}
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+                className="hidden lg:grid size-8 place-items-center rounded-xl border border-[#e2e8e3] dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition"
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
+                ) : (
+                  <ChevronLeft className="size-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </button>
+
+              {/* Mobile Close Button */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="grid size-7 place-items-center rounded-lg bg-black/5 dark:bg-white/10 text-gray-700 dark:text-white lg:hidden transition hover:bg-black/10 dark:hover:bg-white/20"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
           </div>
 
           {/* Navigation Links */}
@@ -206,7 +224,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   />
                   <span
                     className={`truncate transition-all duration-200 ease-in-out whitespace-nowrap ${
-                      sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[170px]'
+                      sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[200px]'
                     }`}
                   >
                     {item.label}
@@ -217,71 +235,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        {/* Sidebar Bottom Profile & Minimize Button */}
-        <div className="border-t border-[#e2e8e3] dark:border-white/10 p-3.5 flex flex-col gap-2 transition-all duration-300 ease-in-out bg-[#f4f7f4] dark:bg-[#0e1310]">
+        {/* Sidebar Bottom Profile (Spacious & Decongested) */}
+        <div className="border-t border-[#e2e8e3] dark:border-white/10 p-3.5 transition-all duration-300 ease-in-out bg-[#f4f7f4] dark:bg-[#0e1310]">
           <div
-            className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2.5'} rounded-xl bg-white dark:bg-white/5 border border-[#e2e8e3] dark:border-white/5 transition-all duration-300 ease-in-out`}
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-2.5'} rounded-2xl bg-white dark:bg-white/5 border border-[#e2e8e3] dark:border-white/5 shadow-xs transition-all duration-300 ease-in-out`}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span
-                className="grid size-8 place-items-center rounded-lg bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-800 text-xs shrink-0"
+            <span
+              className="grid size-9 place-items-center rounded-xl bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-extrabold border border-purple-200 dark:border-purple-800 text-xs shrink-0"
+              title={user?.name || 'Sara Vance'}
+            >
+              {user?.name
+                ? user.name
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()
+                : 'SV'}
+            </span>
+            <div
+              className={`transition-all duration-300 ease-in-out overflow-hidden min-w-0 flex-1 ${
+                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100'
+              }`}
+            >
+              <p
+                className="text-xs font-bold text-[#18201c] dark:text-white truncate"
                 title={user?.name || 'Sara Vance'}
               >
-                SV
-              </span>
-              <div
-                className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 flex-1 ${
-                  sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-                }`}
-              >
-                <p className="text-xs font-bold text-[#18201c] dark:text-white truncate">
-                  {user?.name || 'Sara Vance'}
-                </p>
-                <p className="text-[10px] text-[#607367] dark:text-white/50 truncate">
-                  Master Admin
-                </p>
-              </div>
+                {user?.name || 'Sara Vance'}
+              </p>
+              <p className="text-[10px] font-semibold text-[#607367] dark:text-white/50 truncate">
+                Master Admin
+              </p>
             </div>
             <button
+              type="button"
               onClick={() => logout()}
               title="Sign Out"
-              className={`grid size-7 place-items-center rounded-lg bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-300 shrink-0 ${
-                sidebarCollapsed ? 'hidden' : 'block'
+              aria-label="Sign Out"
+              className={`grid size-8 place-items-center rounded-xl bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-200 shrink-0 ${
+                sidebarCollapsed ? 'hidden' : 'grid'
               }`}
             >
               <LogOut className="size-3.5" />
             </button>
           </div>
-
-          {/* Bottom Single Minimize Toggle Arrow Button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar'}
-            className={`hidden lg:flex items-center ${
-              sidebarCollapsed ? 'justify-center py-2.5' : 'justify-between px-3.5 py-2.5'
-            } rounded-xl border border-[#e2e8e3] dark:border-white/10 bg-white dark:bg-white/5 text-xs font-semibold text-[#44554b] dark:text-white/70 hover:bg-[#eef2ee] dark:hover:bg-white/10 hover:text-[#121815] dark:hover:text-white transition-all duration-300 ease-in-out`}
-          >
-            <span
-              className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                sidebarCollapsed ? 'opacity-0 max-w-0 hidden' : 'opacity-100 max-w-[130px]'
-              }`}
-            >
-              {t.admin.minimizeSidebar}
-            </span>
-            <span className="transition-transform duration-300 ease-in-out">
-              {sidebarCollapsed ? (
-                <ChevronRight className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
-              ) : (
-                <ChevronLeft className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
-              )}
-            </span>
-          </button>
         </div>
       </aside>
 
       {/* Main Content Body */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#0b0f0d] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}
+        className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#0b0f0d] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'}`}
       >
         {/* Top Header Bar for Admin */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e2e8e3] dark:border-[#1e2722] bg-white/90 dark:bg-[#111714]/90 px-4 py-3.5 backdrop-blur-xl sm:px-6 lg:px-8 shadow-xs">
