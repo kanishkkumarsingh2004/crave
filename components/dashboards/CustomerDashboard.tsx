@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast-context'
 import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
 import {
   AlertTriangle,
+  Apple,
   ArrowLeft,
   ArrowRight,
   Award,
@@ -17,7 +18,11 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  CircleDot,
+  Clock,
+  Coffee,
   Compass,
   Copy,
   CreditCard,
@@ -39,8 +44,10 @@ import {
   Mail,
   MapPin,
   Menu,
+  Milk,
   Minus,
   Moon,
+  Package,
   PhoneCall,
   Plus,
   RefreshCw,
@@ -56,7 +63,9 @@ import {
   Trash2,
   User,
   Utensils,
+  UtensilsCrossed,
   Wallet,
+  Wheat,
   X,
   Zap,
 } from 'lucide-react'
@@ -192,9 +201,57 @@ type CheckoutConfig = {
 const categoryList = [
   {
     id: 'All',
-    label: 'All Items',
+    label: 'All Cravings',
     image:
       'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Biryani',
+    label: 'Dum Biryani',
+    image:
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Pizza',
+    label: 'Artisanal Pizza',
+    image:
+      'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'North Indian',
+    label: 'North Indian',
+    image:
+      'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Burgers',
+    label: 'Gourmet Burgers',
+    image:
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Starters',
+    label: 'Asian Momos',
+    image:
+      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chinese',
+    label: 'Wok & Chinese',
+    image:
+      'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Pasta',
+    label: 'Italian Pasta',
+    image:
+      'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'South Indian',
+    label: 'South Indian',
+    image:
+      'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'Healthy',
@@ -209,12 +266,83 @@ const categoryList = [
       'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
   },
   {
-    id: 'Starters',
-    label: 'Asian Momos',
+    id: 'Kebabs',
+    label: 'Tandoor & Kebabs',
     image:
-      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chaat',
+    label: 'Street Chaat',
+    image:
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chicken',
+    label: 'Crispy Chicken',
+    image:
+      'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Sandwich',
+    label: 'Gourmet Subs',
+    image:
+      'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Desserts',
+    label: 'Cakes & Treats',
+    image:
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Ice Cream',
+    label: 'Ice Creams',
+    image:
+      'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Beverages',
+    label: 'Brews & Shakes',
+    image:
+      'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Coffee',
+    label: 'Specialty Coffee',
+    image:
+      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Thali',
+    label: 'Royal Thalis',
+    image:
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
   },
 ]
+
+const CATEGORY_SYNONYMS: Record<string, string[]> = {
+  All: [],
+  Biryani: ['biryani', 'hyderabadi', 'mughlai', 'rice'],
+  Pizza: ['pizza', 'italian', 'crust', 'woodfired'],
+  'North Indian': ['north indian', 'punjabi', 'curry', 'roti', 'dal'],
+  Burgers: ['burger', 'burgers', 'american', 'fast food', 'slider'],
+  Starters: ['momo', 'momos', 'dimsum', 'starter', 'starters', 'appetizer', 'asian'],
+  Chinese: ['chinese', 'noodle', 'noodles', 'manchurian', 'wok', 'asian', 'fried rice'],
+  Pasta: ['pasta', 'italian', 'spaghetti', 'lasagna', 'penne'],
+  'South Indian': ['south indian', 'dosa', 'idli', 'vada', 'filter coffee', 'udupi'],
+  Healthy: ['healthy', 'salad', 'bowl', 'diet', 'fit', 'organic', 'vegan'],
+  Wraps: ['wrap', 'wraps', 'roll', 'rolls', 'shawarma', 'frankie'],
+  Kebabs: ['kebab', 'kebabs', 'tandoor', 'tandoori', 'grill', 'bbq', 'tikka'],
+  Chaat: ['chaat', 'street', 'pani puri', 'samosa', 'bhel', 'snack'],
+  Chicken: ['chicken', 'crispy', 'wings', 'fried chicken', 'poultry'],
+  Sandwich: ['sandwich', 'sandwiches', 'sub', 'subs', 'toast', 'panini', 'cafe'],
+  Desserts: ['dessert', 'desserts', 'cake', 'sweet', 'bakery', 'pastry', 'waffle'],
+  'Ice Cream': ['ice cream', 'gelato', 'sundae', 'kulfi', 'dessert'],
+  Beverages: ['beverage', 'beverages', 'drink', 'drinks', 'shake', 'smoothie', 'juice', 'soda'],
+  Coffee: ['coffee', 'cafe', 'latte', 'espresso', 'cappuccino', 'cold brew'],
+  Thali: ['thali', 'combo', 'meal', 'meals', 'platter', 'indian'],
+}
 
 type CustomerTab = 'explore' | 'live-order' | 'orders' | 'profile'
 
@@ -254,6 +382,14 @@ export default function CustomerDashboard({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState('All')
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
+  const categoryScrollRef = useRef<HTMLDivElement>(null)
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -350 : 350
+      categoryScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
 
   // Filter Toggles
   const [pureVegOnly, setPureVegOnly] = useState(false)
@@ -356,17 +492,17 @@ export default function CustomerDashboard({
               id: r.id,
               name: r.name,
               cuisine: r.cuisine ?? '',
-              rating: r.rating == null ? '4.8' : String(r.rating),
+              rating: r.rating != null ? String(r.rating) : '4.5',
               ratingCount:
-                r.rating_count == null ? '1.2k+' : Number(r.rating_count).toLocaleString(),
-              eta: r.delivery_minutes == null ? '25 min' : `${r.delivery_minutes} min`,
-              distance: '1.8 km',
-              costForTwo: r.cost_for_two == null ? '₹350 for two' : `₹${r.cost_for_two} for two`,
+                r.rating_count != null ? Number(r.rating_count).toLocaleString() : '',
+              eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
+              distance: r.distance ? String(r.distance) : '',
+              costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
               image:
                 r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-              tag: r.cuisine?.split(' ')[0] ?? 'Popular',
-              address: r.address ?? 'Bengaluru',
-              offer: r.offer ?? '40% OFF',
+              tag: r.cuisine?.split(' ')[0] ?? '',
+              address: r.address ?? '',
+              offer: r.offer ? String(r.offer) : undefined,
               isPureVeg: r.is_pure_veg ?? false,
             }))
         }
@@ -1119,8 +1255,27 @@ export default function CustomerDashboard({
         rest.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) ||
         rest.address.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const matchesTag =
-        selectedTag === 'All' || rest.tag.toLowerCase() === selectedTag.toLowerCase()
+      const matchesTag = (() => {
+        if (selectedTag === 'All') return true
+        const tagLower = selectedTag.toLowerCase()
+        if (
+          rest.tag.toLowerCase().includes(tagLower) ||
+          rest.cuisine.toLowerCase().includes(tagLower) ||
+          rest.name.toLowerCase().includes(tagLower)
+        ) {
+          return true
+        }
+        const synonyms = CATEGORY_SYNONYMS[selectedTag]
+        if (synonyms && synonyms.length > 0) {
+          return synonyms.some(
+            (syn) =>
+              rest.cuisine.toLowerCase().includes(syn) ||
+              rest.name.toLowerCase().includes(syn) ||
+              rest.tag.toLowerCase().includes(syn)
+          )
+        }
+        return false
+      })()
       const matchesPureVeg = pureVegOnly ? rest.isPureVeg : true
       const matchesOffers = offersOnly ? Boolean(rest.offer) : true
       const matchesFast = fastDeliveryOnly ? parseInt(rest.eta) <= 25 : true
@@ -1343,9 +1498,9 @@ export default function CustomerDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] pb-32 sm:pb-36 lg:pb-12 text-[#18201c] dark:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#fafbf9] dark:bg-[#0c100e] pb-32 sm:pb-36 lg:pb-12 text-[#18201c] dark:text-white transition-colors duration-200">
       {/* Top Header Navigation Banner */}
-      <div className="sticky top-0 z-30 border-b border-[#eaefe5] dark:border-[#27342d] bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md px-3 py-2.5 sm:px-6 shadow-xs">
+      <div className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-3 py-3 sm:px-6 shadow-2xs">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-2 sm:gap-4">
           {/* Left Block: Logo + Location Selector */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -1356,13 +1511,13 @@ export default function CustomerDashboard({
               crave<span className="text-[#86a018]">.</span>
             </Link>
 
-            <div className="hidden lg:block h-7 w-px bg-gray-200 dark:bg-gray-800 mx-1 shrink-0" />
+            <div className="hidden lg:block h-7 w-px bg-gray-200 dark:bg-white/10 mx-1 shrink-0" />
 
             <button
               onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1 hover:bg-gray-100/80 dark:hover:bg-[#18201c] transition"
+              className="flex items-center gap-2 text-left group min-w-0 rounded-2xl p-1.5 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
             >
-              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-[#27342d] text-[#d9f447] shrink-0 shadow-xs">
+              <div className="grid size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
                 <MapPin className="size-3.5 sm:size-4 lg:size-5" />
               </div>
               <div className="min-w-0">
@@ -1384,43 +1539,47 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Center Block: Desktop Page Navigation Tabs (Hidden on small screens) */}
-          <div className="hidden lg:flex items-center gap-1.5 text-sm font-bold justify-center">
+          {/* Center Block: Desktop Page Navigation Tabs (Apple Segmented Glass Control) */}
+          <div className="hidden lg:flex items-center gap-1 text-sm font-bold justify-center bg-gray-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-gray-200/60 dark:border-white/10 backdrop-blur-xl">
             <button
               onClick={() => navigateToTab('explore')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
                 activeTab === 'explore'
-                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+                  ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
               <Compass
-                className={`size-4 ${activeTab === 'explore' ? 'text-[#d9f447] dark:text-[#18201c]' : 'text-[#b5de28]'}`}
+                className={`size-4 ${
+                  activeTab === 'explore'
+                    ? 'text-[#86a018] dark:text-[#d9f447]'
+                    : 'text-gray-400'
+                }`}
               />
               <span>Explore</span>
             </button>
 
             <button
               onClick={() => navigateToTab('live-order')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
                 activeTab === 'live-order'
-                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+                  ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
               <Bike className="size-4" />
               <span>Track Drop</span>
               {activeOrder && activeOrder.statusStep < 4 && (
-                <span className="size-2 rounded-full bg-[#d9f447] dark:bg-[#18201c] animate-pulse" />
+                <span className="size-2 rounded-full bg-[#86a018] dark:bg-[#d9f447] animate-pulse" />
               )}
             </button>
 
             <button
               onClick={() => navigateToTab('orders')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
                 activeTab === 'orders'
-                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+                  ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
               <History className="size-4" />
@@ -1429,10 +1588,10 @@ export default function CustomerDashboard({
 
             <button
               onClick={() => navigateToTab('profile')}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 transition shrink-0 border ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
                 activeTab === 'profile'
-                  ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] border-[#18201c] dark:border-[#d9f447] shadow-xs'
-                  : 'bg-[#f8fafc] dark:bg-[#18201c] text-gray-600 dark:text-gray-300 border-[#e2e8f0] dark:border-[#27342d] hover:text-[#18201c] dark:hover:text-white hover:bg-white dark:hover:bg-[#27342d]'
+                  ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
               <User className="size-4" />
@@ -1440,18 +1599,34 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Right Block: Cart (Desktop only) + ThemeToggle + Mobile 3-Line Hamburger Button */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right Block: Instamart Quick Link + Cart + ThemeToggle + Mobile Hamburger */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <Link
+              href="/user/cravexp"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447]/15 hover:bg-[#25322b] dark:hover:bg-[#d9f447]/25 text-white dark:text-[#d9f447] border border-white/10 dark:border-[#d9f447]/40 px-3 sm:px-3.5 py-1.5 text-xs font-black transition-all duration-200 hover:scale-105 active:scale-95 shadow-xs group cursor-pointer"
+            >
+              <div className="relative flex items-center justify-center">
+                <Zap className="size-3.5 fill-[#d9f447] text-[#d9f447] group-hover:scale-115 transition" />
+                <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-emerald-400 animate-ping" />
+              </div>
+              <span className="tracking-tight hidden xs:inline">
+                crave<span className="text-[#d9f447] dark:text-white">XP</span>
+              </span>
+              <span className="rounded-full bg-[#d9f447] text-[#121815] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-2xs">
+                10m
+              </span>
+            </Link>
+
             <ThemeToggle />
 
             <button
               onClick={() => router.push('/user/cart')}
-              className="hidden lg:flex relative items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-sm font-bold text-white dark:text-[#18201c] shadow-md hover:bg-[#2a3831] dark:hover:bg-[#c8e434] transition active:scale-95 shrink-0"
+              className="hidden lg:flex relative items-center gap-2.5 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
             >
               <ShoppingCart className="size-4 text-[#d9f447] dark:text-[#18201c]" />
               <span>Cart ({totalCartItemCount})</span>
               {cartSubtotal > 0 && (
-                <span className="text-[#d9f447] dark:text-[#18201c] font-semibold">
+                <span className="text-[#d9f447] dark:text-[#18201c] font-black">
                   &bull; ₹{grandTotal}
                 </span>
               )}
@@ -1460,12 +1635,12 @@ export default function CustomerDashboard({
             {/* Quick Mobile Cart Button */}
             <button
               onClick={() => router.push('/user/cart')}
-              className="lg:hidden relative grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0"
+              className="lg:hidden relative grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
               aria-label="View Cart"
             >
               <ShoppingCart className="size-4 text-[#18201c] dark:text-white" />
               {totalCartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#b5de28] text-[9px] font-black text-white shadow-sm">
+                <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#86a018] text-[9px] font-black text-white shadow-sm">
                   {totalCartItemCount}
                 </span>
               )}
@@ -1474,7 +1649,7 @@ export default function CustomerDashboard({
             {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
             <button
               onClick={() => setShowMobileSideMenu(true)}
-              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0"
+              className="lg:hidden grid size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
               aria-label="Open side menu"
             >
               <Menu className="size-5 text-[#18201c] dark:text-white" />
@@ -1695,82 +1870,239 @@ export default function CustomerDashboard({
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
         {activeTab === 'explore' && (
           <div className="flex flex-col gap-8">
-            {/* craveXP 10-Min Instamart Store Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-[#18201c] p-6 text-white shadow-xl border border-[#2a3831] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="grid size-14 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] font-black text-2xl shadow-lg shrink-0">
+            {/* craveXP 10-Min Instamart Store Hero Banner */}
+            <div
+              onClick={() => router.push('/user/cravexp')}
+              className="relative overflow-hidden rounded-3xl bg-[#0f1411] bg-gradient-to-br from-[#121815] via-[#17221c] to-[#0c100d] p-6 sm:p-8 text-white shadow-2xl border border-white/10 hover:border-[#d9f447]/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 group cursor-pointer transition duration-300"
+            >
+              {/* Ambient lighting effect */}
+              <div className="absolute -right-20 -top-20 size-80 rounded-full bg-[#d9f447]/12 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/20 transition duration-700" />
+              <div className="absolute -left-20 -bottom-20 size-60 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex items-start sm:items-center gap-4 sm:gap-5">
+                <div className="relative grid size-14 sm:size-16 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] font-black text-2xl shadow-xl shadow-[#d9f447]/20 shrink-0 group-hover:scale-105 group-hover:rotate-1 transition duration-300 ring-2 ring-[#d9f447]/40">
                   <Zap className="size-8 fill-current text-[#121815]" />
+                  <span className="absolute -bottom-1 -right-1 flex size-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d9f447] opacity-75" />
+                    <span className="relative inline-flex size-3 rounded-full bg-emerald-500" />
+                  </span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:text-[#d9f447] transition">
                       crave<span className="text-[#d9f447]">XP</span> Instamart
                     </span>
-                    <span className="text-xs font-semibold text-gray-400">
-                      10-Minute Express Drop
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447]/15 border border-[#d9f447]/40 px-3 py-0.5 text-[10px] font-black text-[#d9f447] tracking-wider uppercase">
+                      <Zap className="size-3 fill-[#d9f447] text-[#d9f447]" />
+                      <span>10-Min Express Drop</span>
+                    </span>
+                    <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
+                      <span className="size-1 rounded-full bg-gray-500" />
+                      <span>Live Dark Store Hub</span>
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-300 max-w-lg">
-                    Milk, Eggs, Bread, Cold Drinks, Chips &amp; Fresh Veggies delivered from our
-                    nearest craveXP store in 10 minutes.
+                  <p className="mt-1.5 text-xs text-gray-300 max-w-xl leading-relaxed">
+                    Fresh dairy, farm eggs, artisanal breads, chilled drinks, chips &amp; veggies delivered to your doorstep in 10 minutes.
                   </p>
+
+                  {/* Interactive Quick Preview Category Tags with Lucide Icons (NO EMOJIS) */}
+                  <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
+                    {[
+                      { icon: Milk, label: 'Dairy & Milk' },
+                      { icon: CircleDot, label: 'Farm Eggs' },
+                      { icon: Coffee, label: 'Chilled Drinks' },
+                      { icon: Package, label: 'Instant Snacks' },
+                      { icon: Wheat, label: 'Bakery & Bread' },
+                      { icon: Apple, label: 'Fresh Fruits' },
+                      { icon: Sparkles, label: 'Sweet Treats' },
+                    ].map((item) => {
+                      const TagIcon = item.icon
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push('/user/cravexp')
+                          }}
+                          className="group/pill inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] hover:bg-[#d9f447] text-gray-200 hover:text-[#121815] px-2.5 py-1 text-[11px] font-semibold border border-white/10 hover:border-[#d9f447] transition-all duration-200 cursor-pointer shadow-xs active:scale-95"
+                        >
+                          <TagIcon className="size-3 text-emerald-400 group-hover/pill:text-[#121815] transition" />
+                          <span>{item.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <Link
-                href="/user/cravexp"
-                className="rounded-2xl bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#121815] shadow-xl hover:bg-[#c8e434] transition hover:scale-105 active:scale-95 shrink-0 flex items-center gap-2"
-              >
-                Open craveXP Instamart Store
-                <ArrowRight className="size-4" />
-              </Link>
+              <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
+                <Link
+                  href="/user/cravexp"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#e4fc57] px-7 py-4 text-xs font-black text-[#121815] shadow-xl shadow-[#d9f447]/25 ring-2 ring-[#d9f447]/50 hover:scale-105 active:scale-95 transition-all duration-200 group/btn"
+                >
+                  <span>Open Instamart Store</span>
+                  <ArrowRight className="size-4 group-hover/btn:translate-x-1.5 transition duration-200" />
+                </Link>
+              </div>
             </div>
 
-            {/* Search, Food Categories & Filters */}
+            {/* Search, Food Categories & Interactive Filter Chips */}
             <div className="flex flex-col gap-5">
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-3.5 size-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search dishes or cuisines..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white placeholder:text-gray-400 py-3 pl-11 pr-4 text-xs shadow-xs outline-none transition focus:border-[#86a018] focus:ring-2 focus:ring-[#d9f447]/50 font-medium"
-                />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1 group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-400 group-focus-within:text-[#86a018] transition" />
+                  <input
+                    type="text"
+                    placeholder="Search dishes, gourmet kitchens, or cuisines..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white/90 dark:bg-[#18201c]/90 text-[#18201c] dark:text-white placeholder:text-gray-400 py-3.5 pl-11 pr-10 text-xs sm:text-sm shadow-xs outline-none transition focus:border-[#86a018] focus:ring-4 focus:ring-[#d9f447]/20 font-medium backdrop-blur-md"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 size-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition text-[10px]"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Toggle Filter Chips */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setPureVegOnly(!pureVegOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      pureVegOnly
+                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-emerald-500'
+                    }`}
+                  >
+                    <Leaf className="size-3.5 text-emerald-500" />
+                    <span>Pure Veg</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFastDeliveryOnly(!fastDeliveryOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      fastDeliveryOnly
+                        ? 'bg-[#18201c] dark:bg-[#d9f447] border-[#18201c] dark:border-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#86a018]'
+                    }`}
+                  >
+                    <Zap className="size-3.5 text-amber-500" />
+                    <span>Fast Delivery (≤25m)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOffersOnly(!offersOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      offersOnly
+                        ? 'bg-amber-500 border-amber-500 text-[#18201c] shadow-xs font-extrabold'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-amber-400'
+                    }`}
+                  >
+                    <Tag className="size-3.5 text-amber-500" />
+                    <span>Offers</span>
+                  </button>
+                </div>
               </div>
 
-              {/* What's on your mind? Circular Food Categories */}
-              <div>
-                <h3 className="text-sm font-bold text-[#18201c] dark:text-white mb-3 tracking-tight">
-                  What&apos;s on your mind?
-                </h3>
-                <div className="flex items-center gap-5 overflow-x-auto pb-2 no-scrollbar">
+              {/* What's on your mind? Food Categories Carousel */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white tracking-tight flex items-center gap-2">
+                        <span>What&apos;s on your mind?</span>
+                        <span className="rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-extrabold text-gray-500 dark:text-gray-300">
+                          {categoryList.length} Cuisines
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Explore handpicked cravings by authentic culinary style
+                      </p>
+                    </div>
+
+                    {selectedTag !== 'All' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTag('All')}
+                        className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-2.5 py-1 text-[10px] font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                      >
+                        <span>Reset</span>
+                        <X className="size-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scroll navigation arrows for desktop */}
+                  <div className="hidden sm:flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => scrollCategories('left')}
+                      className="grid size-8 place-items-center rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shadow-xs cursor-pointer"
+                      aria-label="Scroll categories left"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollCategories('right')}
+                      className="grid size-8 place-items-center rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shadow-xs cursor-pointer"
+                      aria-label="Scroll categories right"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  ref={categoryScrollRef}
+                  className="flex items-center gap-4 sm:gap-5 overflow-x-auto pb-3 pt-1 no-scrollbar scroll-smooth"
+                >
                   {categoryList.map((cat) => {
                     const isSelected = selectedTag === cat.id
                     return (
                       <button
                         key={cat.id}
+                        type="button"
                         onClick={() => setSelectedTag(cat.id)}
-                        className="flex flex-col items-center gap-1.5 group shrink-0 transition"
+                        className="flex flex-col items-center gap-2 group shrink-0 transition cursor-pointer"
                       >
                         <div
-                          className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition ${
+                          className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition duration-300 p-0.5 ${
                             isSelected
-                              ? 'border-[#18201c] dark:border-[#d9f447] ring-2 ring-[#18201c]/20 dark:ring-[#d9f447]/30 scale-105'
-                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                              ? 'border-[#18201c] dark:border-[#d9f447] ring-4 ring-[#18201c]/10 dark:ring-[#d9f447]/20 scale-105 shadow-md'
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600 hover:scale-102'
                           }`}
                         >
                           <img
                             src={cat.image}
                             alt={cat.label}
-                            className="size-full object-cover group-hover:scale-110 transition duration-300"
+                            loading="eager"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80'
+                            }}
+                            className="size-full rounded-full object-cover group-hover:scale-110 transition duration-500"
                           />
+                          {isSelected && (
+                            <span className="absolute inset-0 bg-[#d9f447]/15 rounded-full pointer-events-none" />
+                          )}
                         </div>
                         <span
-                          className={`text-xs tracking-tight ${
+                          className={`text-xs tracking-tight transition max-w-[84px] text-center line-clamp-1 ${
                             isSelected
-                              ? 'text-[#18201c] dark:text-white font-bold'
-                              : 'text-gray-600 dark:text-gray-400 font-medium'
+                              ? 'text-[#18201c] dark:text-[#d9f447] font-extrabold'
+                              : 'text-gray-600 dark:text-gray-400 font-medium group-hover:text-[#18201c] dark:group-hover:text-white'
                           }`}
                         >
                           {cat.label}
@@ -1783,147 +2115,250 @@ export default function CustomerDashboard({
             </div>
 
             {/* Trending Quick-Add Dishes */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-bold text-base text-[#18201c] dark:text-white flex items-center gap-1.5">
-                    <Flame className="size-4 text-amber-500 fill-amber-500" /> Signature Dishes
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {selectedRestaurant?.name
-                      ? `Menu items from ${selectedRestaurant.name}.`
-                      : 'Menu items from available restaurants.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                {menuItemsList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-gray-200 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-gray-600 transition"
-                  >
-                    <div>
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-36 w-full rounded-xl object-cover"
-                        />
-                      ) : (
-                        <div className="grid h-36 w-full place-items-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400">
-                          <ShoppingBag className="size-8" />
-                        </div>
-                      )}
-                      <p className="mt-3 font-bold text-sm text-[#18201c] dark:text-white">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                        {item.detail}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-[#27342d]">
-                      <span className="font-bold text-sm text-[#18201c] dark:text-white">
-                        ₹{item.price}
+            {(menuItemsList.length > 0 || selectedRestaurant) && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white flex items-center gap-2">
+                      <span className="grid size-6 place-items-center rounded-lg bg-[#86a018]/10 text-[#86a018]">
+                        <Sparkles className="size-3.5 text-[#86a018]" />
                       </span>
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="rounded-full bg-[#d9f447] px-4 py-1.5 text-xs font-bold text-[#18201c] hover:scale-105 transition shadow-xs"
-                      >
-                        + Add to Cart
-                      </button>
-                    </div>
+                      <span>Signature Dishes</span>
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {selectedRestaurant?.name
+                        ? `Chef recommendations from ${selectedRestaurant.name}.`
+                        : 'Master chef specials from available partner kitchens.'}
+                    </p>
                   </div>
-                ))}
+                  {selectedRestaurant && (
+                    <button
+                      onClick={() => setSelectedRestaurant(null)}
+                      className="text-xs font-bold text-[#86a018] hover:underline cursor-pointer"
+                    >
+                      View all kitchens
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {menuItemsList.length === 0 ? (
+                    <p className="col-span-full rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] p-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                      No signature dishes listed for {selectedRestaurant?.name}.
+                    </p>
+                  ) : (
+                    menuItemsList.map((item) => (
+                    <div
+                      key={item.id}
+                      className="group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg transition duration-300"
+                    >
+                      <div>
+                        <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                            />
+                          ) : (
+                            <div className="grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+                              <ShoppingBag className="size-8" />
+                            </div>
+                          )}
+
+                          {/* Veg / Non-Veg culinary indicator dot badge */}
+                          <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1">
+                            <div
+                              className={`size-3 rounded-sm border flex items-center justify-center ${
+                                item.veg ? 'border-emerald-600' : 'border-rose-600'
+                              }`}
+                            >
+                              <div
+                                className={`size-1.5 rounded-full ${
+                                  item.veg ? 'bg-emerald-600' : 'bg-rose-600'
+                                }`}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
+                              {item.veg ? 'Veg' : 'Non-Veg'}
+                            </span>
+                          </div>
+
+                          {/* Restaurant tag */}
+                          <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90">
+                            {item.restaurantName || 'Partner Kitchen'}
+                          </div>
+                        </div>
+
+                        <div className="mt-3.5">
+                          <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white group-hover:text-[#86a018] transition line-clamp-1">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                            {item.detail}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                            Price
+                          </span>
+                          <span className="font-black text-base text-[#18201c] dark:text-white">
+                            ₹{item.price}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => addToCart(item)}
+                          className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Plus className="size-3.5 stroke-[3]" />
+                          <span>Add to Cart</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
+          )}
 
-            {/* Featured Restaurant Card */}
+          {/* Featured Restaurant Card Grid */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-bold text-lg text-[#18201c] dark:text-white">
+                  <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white">
                     Restaurants ({filteredRestaurants.length})
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Available restaurants from the database.
                   </p>
                 </div>
+                {(searchQuery ||
+                  selectedTag !== 'All' ||
+                  pureVegOnly ||
+                  offersOnly ||
+                  fastDeliveryOnly) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('')
+                      setSelectedTag('All')
+                      setPureVegOnly(false)
+                      setOffersOnly(false)
+                      setFastDeliveryOnly(false)
+                    }}
+                    className="text-xs font-bold text-[#86a018] hover:underline cursor-pointer"
+                  >
+                    Reset filters
+                  </button>
+                )}
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredRestaurants.length === 0 ? (
-                  <p className="col-span-full rounded-2xl border border-dashed border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                    No restaurants match these filters.
-                  </p>
+                  <div className="col-span-full rounded-3xl border border-dashed border-gray-200 dark:border-[#27342d] bg-white/60 dark:bg-[#18201c]/60 p-12 text-center flex flex-col items-center justify-center">
+                    <div className="size-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-3">
+                      <UtensilsCrossed className="size-6 text-gray-400" />
+                    </div>
+                    <p className="col-span-full rounded-2xl p-2 text-center text-sm font-bold text-gray-700 dark:text-gray-300">
+                      No restaurants match these filters.
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
+                      Try broadening your search query or clear selected cuisine filters to view all available kitchens.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('')
+                        setSelectedTag('All')
+                        setPureVegOnly(false)
+                        setOffersOnly(false)
+                        setFastDeliveryOnly(false)
+                      }}
+                      className="mt-4 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-5 py-2 text-xs font-bold hover:scale-105 active:scale-95 transition shadow-xs cursor-pointer"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
                 ) : (
                   filteredRestaurants.map((rest) => (
                     <div
                       key={rest.id}
                       onClick={() => setSelectedRestaurant(rest)}
-                      className="group cursor-pointer overflow-hidden rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] transition hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
+                      className="group cursor-pointer overflow-hidden rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-gray-300 dark:hover:border-white/20 flex flex-col justify-between"
                     >
                       <div>
-                        <div className="relative h-48 w-full overflow-hidden">
+                        <div className="relative h-48 sm:h-52 w-full overflow-hidden">
                           {rest.image ? (
                             <img
                               src={rest.image}
                               alt={rest.name}
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                              className="h-full w-full object-cover transition duration-700 group-hover:scale-108"
                             />
                           ) : (
                             <div className="grid size-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
                               <MapPin className="size-8" />
                             </div>
                           )}
-                          <div className="absolute left-3 top-3 flex items-center gap-1.5">
+
+                          {/* Gradient Overlay for badges */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
+
+                          <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap">
                             {rest.tag && (
-                              <span className="rounded-full bg-white/95 dark:bg-[#18201c]/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4f5f15] dark:text-[#d9f447] backdrop-blur-md shadow-xs">
+                              <span className="rounded-full bg-white/95 dark:bg-[#18201c]/95 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#4f5f15] dark:text-[#d9f447] backdrop-blur-md shadow-xs">
                                 {rest.tag}
                               </span>
                             )}
                             {rest.isPureVeg && (
-                              <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow-xs">
+                              <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-black uppercase text-white shadow-xs">
                                 Pure Veg
                               </span>
                             )}
                           </div>
 
+                          {rest.rating && (
+                            <div className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs flex items-center gap-1">
+                              <Award className="size-3" />
+                              <span>{rest.rating}</span>
+                            </div>
+                          )}
+
                           {rest.eta && (
-                            <span className="absolute bottom-3 right-3 rounded-full bg-[#18201c] px-3 py-1 text-[10px] font-bold text-white shadow-xs">
+                            <span className="absolute bottom-3 right-3 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
+                              <Clock className="size-3 text-[#d9f447]" />
                               {rest.eta}
                             </span>
                           )}
 
                           {rest.offer && (
-                            <span className="absolute bottom-3 left-3 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-extrabold text-[#18201c] shadow-md flex items-center gap-1">
+                            <span className="absolute bottom-3 left-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1 text-[10px] font-black text-[#18201c] shadow-md flex items-center gap-1">
                               <Tag className="size-3" /> {rest.offer}
                             </span>
                           )}
                         </div>
 
-                        <div className="p-4">
-                          <div className="flex items-start justify-between">
+                        <div className="p-4 sm:p-5">
+                          <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h3 className="font-bold text-base tracking-tight text-[#18201c] dark:text-white">
+                              <h3 className="font-extrabold text-base tracking-tight text-[#18201c] dark:text-white group-hover:text-[#86a018] transition">
                                 {rest.name}
                               </h3>
-                              <p className="mt-0.5 text-xs text-[#737e77] dark:text-gray-400">
+                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                                 {rest.cuisine}
                               </p>
                             </div>
                           </div>
 
-                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#737e77] dark:text-gray-400">
+                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
                             {rest.address && (
                               <span className="flex min-w-0 items-center gap-1 truncate">
-                                <MapPin className="size-3.5 shrink-0 text-[#8aa31c]" />
-                                {rest.address}
+                                <MapPin className="size-3.5 shrink-0 text-[#86a018]" />
+                                <span className="truncate">{rest.address}</span>
                               </span>
                             )}
                             {rest.costForTwo && (
-                              <span className="shrink-0 font-semibold text-gray-600 dark:text-gray-400">
+                              <span className="shrink-0 font-bold text-gray-700 dark:text-gray-300">
                                 {rest.costForTwo}
                               </span>
                             )}
@@ -1931,12 +2366,13 @@ export default function CustomerDashboard({
                         </div>
                       </div>
 
-                      <div className="p-4 pt-0">
-                        <div className="flex items-center justify-between border-t border-[#f0f3eb] dark:border-[#27342d] pt-3 text-xs">
-                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold text-[11px]">
+                      <div className="p-4 sm:p-5 pt-0">
+                        <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/5 pt-3 text-xs">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
                             {rest.eta ? `Delivery · ${rest.eta}` : 'Delivery time unavailable'}
                           </span>
-                          <span className="font-bold text-[#86a018] group-hover:underline flex items-center gap-1">
+                          <span className="font-bold text-[#86a018] group-hover:translate-x-0.5 transition flex items-center gap-1">
                             View Menu <ArrowRight className="size-3" />
                           </span>
                         </div>
@@ -1944,6 +2380,38 @@ export default function CustomerDashboard({
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+
+            {/* Secondary craveXP Dark Store Quick-Switch Prompt */}
+            <div
+              onClick={() => router.push('/user/cravexp')}
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#141b17] via-[#1b2720] to-[#121915] p-5 sm:p-6 border border-emerald-500/20 hover:border-[#d9f447]/50 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group transition duration-300"
+            >
+              <div className="flex items-center gap-4">
+                <div className="grid size-12 place-items-center rounded-2xl bg-[#d9f447]/15 border border-[#d9f447]/30 text-[#d9f447] shrink-0 group-hover:scale-105 transition">
+                  <Zap className="size-6 fill-current text-[#d9f447]" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-extrabold text-sm sm:text-base text-white group-hover:text-[#d9f447] transition">
+                      Need Groceries or Midnight Snacks Fast?
+                    </p>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447]/20 border border-[#d9f447]/30 px-2 py-0.5 text-[9px] font-black text-[#d9f447] uppercase tracking-wider">
+                      <Zap className="size-2.5 fill-current text-[#d9f447]" />
+                      <span>10 Min Drop</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1 max-w-xl">
+                    Daily essentials, fresh milk, chilled beverages, farm eggs, chips &amp; munchies dispatched instantly from our local dark store.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 self-stretch sm:self-auto flex items-center justify-end">
+                <span className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 group-hover:bg-[#d9f447] text-white group-hover:text-[#121815] px-4 py-2.5 text-xs font-black transition duration-200">
+                  <span>Visit craveXP Store</span>
+                  <ArrowRight className="size-3.5 group-hover:translate-x-1 transition duration-200" />
+                </span>
               </div>
             </div>
           </div>

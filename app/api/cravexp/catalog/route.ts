@@ -27,13 +27,19 @@ async function ensureStore() {
 function mapItem(item: any): CraveXPGroceryItem {
   const mrp = Number(item.mrp ?? item.price)
   const price = Number(item.price)
+  const safeImage =
+    item.image && !item.image.includes('photo-1516467508483-a7212febe31a')
+      ? item.image
+      : item.name?.toLowerCase().includes('egg')
+        ? 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500'
+        : item.image || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500'
   return {
     id: item.id,
     name: item.name,
     unit: item.unit || '1 Pack',
     price,
     mrp,
-    image: item.image || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500',
+    image: safeImage,
     category: item.category || 'Grocery Essentials',
     inStock: item.in_stock !== false,
     restaurantId: CRAVEXP_DARK_STORE_ID,

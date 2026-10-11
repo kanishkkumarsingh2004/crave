@@ -217,18 +217,18 @@ export default function HomePage() {
           </div>
 
           {/* ── EDITORIAL PROVENANCE TICKER ── */}
-          <div className="mt-12 sm:mt-16 pt-8 border-t border-black/5 dark:border-white/10">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center lg:text-left text-xs font-mono tracking-wider uppercase text-gray-500 dark:text-gray-400">
-              <div>
+          <div className="mt-8 sm:mt-16 pt-5 sm:pt-8 border-t border-black/5 dark:border-white/10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-center lg:text-left text-[11px] sm:text-xs font-mono tracking-wider uppercase text-gray-500 dark:text-gray-400">
+              <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">25 MIN</span> AVERAGE DISPATCH
               </div>
-              <div>
+              <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">120+</span> VERIFIED HEARTHS
               </div>
-              <div>
+              <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CLIENT SATISFACTION
               </div>
-              <div>
+              <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span> CONVENIENCE SURCHARGE
               </div>
             </div>
@@ -240,108 +240,108 @@ export default function HomePage() {
       {/* =========================================================================
           THE 3 CORE EXPERIENCES: FOOD DELIVERY × 15-MIN BLINKIT × DINING
          ========================================================================= */}
-      <section className="py-12 sm:py-16 bg-white dark:bg-[#0c120e] border-t border-b border-black/5 dark:border-white/10">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
-          <div className="grid gap-6 md:grid-cols-3">
+      <section className="py-8 sm:py-16 bg-white dark:bg-[#0c120e] border-t border-b border-black/5 dark:border-white/10">
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-3.5 sm:gap-6 md:grid-cols-3">
             {/* PORTAL 1: FOOD DELIVERY */}
             <div
               onClick={() => handleNavigate('/user/explore')}
-              className="group cursor-pointer rounded-3xl border border-black/10 dark:border-white/10 bg-gray-50/70 dark:bg-[#111714] p-7 transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
+              className="group cursor-pointer rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 bg-gray-50/70 dark:bg-[#111714] p-4 sm:p-6 lg:p-7 transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] shadow-xs">
-                    <UtensilsCrossed className="size-5" />
+                  <div className="grid size-9 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] shadow-xs">
+                    <UtensilsCrossed className="size-4 sm:size-5" />
                   </div>
-                  <span className="text-[11px] font-black tracking-wider uppercase text-gray-400 dark:text-gray-500">
+                  <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-gray-400 dark:text-gray-500">
                     Average 24 min
                   </span>
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <h3 className="text-xl font-black text-[#121815] dark:text-white tracking-tight">
+                <div className="mt-3 sm:mt-6 space-y-1 sm:space-y-2">
+                  <h3 className="text-base sm:text-xl font-black text-[#121815] dark:text-white tracking-tight">
                     Food Delivery
                   </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
                     Order from verified neighbourhood kitchens. Tamper-proof packaging, genuine
                     restaurant pricing, and dedicated e-bike riders.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
+              <div className="mt-4 sm:mt-8 flex items-center justify-between pt-3 sm:pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
                 <span className="text-[#121815] dark:text-white group-hover:translate-x-0.5 transition-transform">
                   Explore Kitchens
                 </span>
-                <ArrowRight className="size-4 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
+                <ArrowRight className="size-3.5 sm:size-4 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
               </div>
             </div>
 
             {/* PORTAL 2: BLINKIT-STYLE 15-MINUTE INSTANT GROCERY */}
             <div
               onClick={() => handleNavigate('/user/cravexp')}
-              className="group cursor-pointer rounded-3xl border border-[#d9f447]/50 dark:border-[#d9f447]/30 bg-gradient-to-b from-[#f8faed] to-white dark:from-[#131b16] dark:to-[#111714] p-7 transition-all duration-300 hover:shadow-xl hover:border-[#5e8210] dark:hover:border-[#d9f447] flex flex-col justify-between"
+              className="group cursor-pointer rounded-2xl sm:rounded-3xl border border-[#d9f447]/50 dark:border-[#d9f447]/30 bg-gradient-to-b from-[#f8faed] to-white dark:from-[#131b16] dark:to-[#111714] p-4 sm:p-6 lg:p-7 transition-all duration-300 hover:shadow-xl hover:border-[#5e8210] dark:hover:border-[#d9f447] flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-xs font-black">
-                    <Zap className="size-5 fill-current" />
+                  <div className="grid size-9 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-[#d9f447] text-[#121815] shadow-xs font-black">
+                    <Zap className="size-4 sm:size-5 fill-current" />
                   </div>
-                  <span className="text-[11px] font-black tracking-wider uppercase text-[#5e8210] dark:text-[#d9f447]">
+                  <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-[#5e8210] dark:text-[#d9f447]">
                     10-15 Min Flash Drop
                   </span>
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <h3 className="text-xl font-black text-[#121815] dark:text-white tracking-tight">
+                <div className="mt-3 sm:mt-6 space-y-1 sm:space-y-2">
+                  <h3 className="text-base sm:text-xl font-black text-[#121815] dark:text-white tracking-tight">
                     CraveXP Instamart
                   </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
                     Hyper-local dark-store essentials. Fresh dairy, cold beverages, gelato tubs,
                     and snacks packed in 120s with IoT cold-chain protection.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
+              <div className="mt-4 sm:mt-8 flex items-center justify-between pt-3 sm:pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
                 <span className="text-[#5e8210] dark:text-[#d9f447] group-hover:translate-x-0.5 transition-transform">
                   Shop 15-Min Store
                 </span>
-                <ArrowRight className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
+                <ArrowRight className="size-3.5 sm:size-4 text-[#5e8210] dark:text-[#d9f447]" />
               </div>
             </div>
 
             {/* PORTAL 3: EXCLUSIVE OFFERS & VALUE */}
             <div
               onClick={() => handleNavigate('/user/explore')}
-              className="group cursor-pointer rounded-3xl border border-black/10 dark:border-white/10 bg-gray-50/70 dark:bg-[#111714] p-7 transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
+              className="group cursor-pointer rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 bg-gray-50/70 dark:bg-[#111714] p-4 sm:p-6 lg:p-7 transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-gray-200 dark:bg-white/10 text-[#121815] dark:text-white shadow-xs">
-                    <Tag className="size-5" />
+                  <div className="grid size-9 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-gray-200 dark:bg-white/10 text-[#121815] dark:text-white shadow-xs">
+                    <Tag className="size-4 sm:size-5" />
                   </div>
-                  <span className="text-[11px] font-black tracking-wider uppercase text-gray-400 dark:text-gray-500">
+                  <span className="text-[10px] sm:text-[11px] font-black tracking-wider uppercase text-gray-400 dark:text-gray-500">
                     Transparent Savings
                   </span>
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <h3 className="text-xl font-black text-[#121815] dark:text-white tracking-tight">
+                <div className="mt-3 sm:mt-6 space-y-1 sm:space-y-2">
+                  <h3 className="text-base sm:text-xl font-black text-[#121815] dark:text-white tracking-tight">
                     Chef Specials &amp; Combos
                   </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
                     Verified restaurant partner coupons, family sharing trays, and complimentary
                     add-ons with no surprise convenience fees.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
+              <div className="mt-4 sm:mt-8 flex items-center justify-between pt-3 sm:pt-4 border-t border-black/5 dark:border-white/5 text-xs font-black">
                 <span className="text-[#121815] dark:text-white group-hover:translate-x-0.5 transition-transform">
                   View Today&apos;s Specials
                 </span>
-                <ArrowRight className="size-4 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
+                <ArrowRight className="size-3.5 sm:size-4 text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
               </div>
             </div>
           </div>
@@ -351,15 +351,15 @@ export default function HomePage() {
       {/* =========================================================================
           ZOMATO-STYLE CURATED KITCHENS (TOP RATED ON KANAKAPURA ROAD)
          ========================================================================= */}
-      <section className="py-14 sm:py-18 bg-white dark:bg-[#0c120e] border-t border-black/5 dark:border-white/10">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
+      <section className="py-8 sm:py-18 bg-white dark:bg-[#0c120e] border-t border-black/5 dark:border-white/10">
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-8 gap-2.5">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
                 <Star className="size-3.5 text-amber-500 fill-amber-500" />
                 <span>Verified Neighbourhood Kitchens</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#121815] dark:text-white">
+              <h2 className="text-xl sm:text-3xl font-black tracking-tight text-[#121815] dark:text-white">
                 Top Rated Culinary Partners
               </h2>
             </div>
@@ -373,7 +373,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3.5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
             {FEATURED_KITCHENS.map((k) => (
               <div
                 key={k.id}
@@ -381,14 +381,14 @@ export default function HomePage() {
                 className="group cursor-pointer rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#111714] overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
               >
                 <div>
-                  <div className="relative h-44 w-full overflow-hidden bg-gray-100 dark:bg-white/5">
+                  <div className="relative h-36 sm:h-44 w-full overflow-hidden bg-gray-100 dark:bg-white/5">
                     <img
                       src={k.image}
                       alt={k.name}
                       loading="lazy"
                       className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute top-2.5 right-2.5 rounded-lg bg-emerald-600 text-white px-2 py-0.5 text-[11px] font-black flex items-center gap-1 shadow-sm">
+                    <div className="absolute top-2.5 right-2.5 rounded-lg bg-emerald-600 text-white px-2 py-0.5 text-[10px] sm:text-[11px] font-black flex items-center gap-1 shadow-sm">
                       <span>{k.rating}</span>
                       <Star className="size-2.5 fill-current" />
                     </div>
@@ -397,18 +397,18 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-1">
+                  <div className="p-3.5 sm:p-4 space-y-1">
                     <h3 className="text-sm font-black text-[#121815] dark:text-white group-hover:text-[#5e8210] dark:group-hover:text-[#d9f447] transition-colors truncate">
                       {k.name}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{k.cuisine}</p>
-                    <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{k.cuisine}</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 dark:text-gray-500 truncate">
                       {k.tag}
                     </p>
                   </div>
                 </div>
 
-                <div className="px-4 pb-4 pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
+                <div className="px-3.5 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
                   <span className="font-bold text-emerald-700 dark:text-emerald-400 truncate">
                     {k.offer}
                   </span>
@@ -423,39 +423,39 @@ export default function HomePage() {
       {/* =========================================================================
           APPLE-GRADE METRICS & DISCIPLINE BAR
          ========================================================================= */}
-      <section className="py-14 bg-[#fbfcfb] dark:bg-[#080d0a] border-t border-black/5 dark:border-white/10">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-black/5 dark:divide-white/10">
-            <div className="pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
+      <section className="py-8 sm:py-14 bg-[#fbfcfb] dark:bg-[#080d0a] border-t border-black/5 dark:border-white/10">
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6 text-center divide-y-0 md:divide-x divide-black/5 dark:divide-white/10">
+            <div className="p-3 sm:p-0 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] md:bg-transparent">
+              <p className="text-2xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
                 25 min
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
                 Average doorstep delivery speed
               </p>
             </div>
-            <div className="pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
+            <div className="p-3 sm:p-0 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] md:bg-transparent">
+              <p className="text-2xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
                 120+
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
                 Local kitchen &amp; artisan partners
               </p>
             </div>
-            <div className="pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight flex items-center justify-center">
+            <div className="p-3 sm:p-0 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] md:bg-transparent">
+              <p className="text-2xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight flex items-center justify-center">
                 <span>4.9</span>
-                <Star className="size-5 sm:size-6 fill-amber-500 text-amber-500 ml-1.5" />
+                <Star className="size-4 sm:size-6 fill-amber-500 text-amber-500 ml-1.5" />
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
                 Customer satisfaction score
               </p>
             </div>
-            <div className="pt-4 md:pt-0">
-              <p className="text-3xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
+            <div className="p-3 sm:p-0 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] md:bg-transparent">
+              <p className="text-2xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
                 Zero
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
                 Hidden platform markups
               </p>
             </div>
@@ -466,11 +466,11 @@ export default function HomePage() {
       {/* =========================================================================
           FINAL CONFIDENT ACTION BANNER
          ========================================================================= */}
-      <section className="py-16 sm:py-20 bg-white dark:bg-[#0c120e] border-t border-black/5 dark:border-white/10">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-[#121815] text-white p-8 sm:p-14 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 border border-black/10">
-            <div className="space-y-3 max-w-xl text-center md:text-left">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+      <section className="py-8 sm:py-20 bg-white dark:bg-[#0c120e] border-t border-black/5 dark:border-white/10">
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl sm:rounded-3xl bg-[#121815] text-white p-6 sm:p-14 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 border border-black/10">
+            <div className="space-y-2 sm:space-y-3 max-w-xl text-center md:text-left">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
                 Real food. Real speed. <br />
                 <span className="text-[#d9f447]">Ready when you are.</span>
               </h2>
@@ -482,7 +482,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => handleNavigate('/user/explore')}
-              className="rounded-xl bg-[#d9f447] text-[#121815] px-8 py-4 text-xs font-black shadow-lg hover:bg-[#c2dc3a] transition-all active:scale-98 shrink-0 flex items-center gap-2"
+              className="w-full sm:w-auto justify-center rounded-xl bg-[#d9f447] text-[#121815] px-6 py-3.5 sm:px-8 sm:py-4 text-xs font-black shadow-lg hover:bg-[#c2dc3a] transition-all active:scale-98 shrink-0 flex items-center gap-2"
             >
               <span>Explore All Kitchens</span>
               <ArrowRight className="size-4" />

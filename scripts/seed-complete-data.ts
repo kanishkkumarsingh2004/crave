@@ -240,7 +240,7 @@ async function seedCompleteData() {
       category: 'Dairy & Eggs',
       is_veg: false,
       in_stock: true,
-      image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=500',
+      image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500',
     },
     {
       id: 'item_cxp_03',
