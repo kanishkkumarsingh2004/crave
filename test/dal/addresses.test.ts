@@ -2,6 +2,8 @@ import {
   createCustomerAddress,
   deleteCustomerAddress,
   getCustomerAddresses,
+  setDefaultAddress,
+  updateCustomerAddress,
 } from '@/lib/dal/addresses'
 import { prisma } from '@/lib/prisma'
 
@@ -75,6 +77,76 @@ describe('Addresses DAL', () => {
     })
   })
 
+  test('updateCustomerAddress updates existing address and respects ownership', async () => {
+    mockPrisma.customerAddress.findFirst.mockResolvedValueOnce({
+      id: 'addr_1',
+      customer_id: 'user_1',
+      label: 'Home',
+      address: '123 Main St',
+      latitude: '12.9716',
+      longitude: '77.5946',
+      is_default: false,
+    })
+    mockPrisma.customerAddress.update.mockImplementationOnce((args: any) => ({
+      id: 'addr_1',
+      customer_id: 'user_1',
+      label: args.data.label,
+      address: args.data.address,
+      latitude: args.data.latitude,
+      longitude: args.data.longitude,
+      is_default: args.data.is_default,
+      created_at: new Date(),
+    }))
+
+    const updated = await updateCustomerAddress({
+      id: 'addr_1',
+      customer_id: 'user_1',
+      label: 'Office',
+      address: '999 Tech Park',
+      latitude: 12.9352,
+      longitude: 77.6245,
+    })
+
+    expect(updated).not.toBeNull()
+    expect(updated?.label).toBe('Office')
+    expect(updated?.address).toBe('999 Tech Park')
+    expect(updated?.latitude).toBe(12.9352)
+  })
+
+  test('updateCustomerAddress returns null if not found or unauthorized', async () => {
+    mockPrisma.customerAddress.findFirst.mockResolvedValueOnce(null)
+
+    const updated = await updateCustomerAddress({
+      id: 'addr_other',
+      customer_id: 'user_1',
+      label: 'Office',
+    })
+
+    expect(updated).toBeNull()
+  })
+
+  test('setDefaultAddress sets default and unsets others', async () => {
+    mockPrisma.customerAddress.findFirst.mockResolvedValueOnce({
+      id: 'addr_1',
+      customer_id: 'user_1',
+      address: '123 Main St',
+    })
+    mockPrisma.customerAddress.updateMany.mockResolvedValueOnce({ count: 2 })
+    mockPrisma.customerAddress.update.mockResolvedValueOnce({ id: 'addr_1', is_default: true })
+    mockPrisma.user.update.mockResolvedValueOnce({ id: 'user_1', address: '123 Main St' })
+
+    const ok = await setDefaultAddress('addr_1', 'user_1')
+    expect(ok).toBe(true)
+    expect(mockPrisma.customerAddress.updateMany).toHaveBeenCalledWith({
+      where: { customer_id: 'user_1' },
+      data: { is_default: false },
+    })
+    expect(mockPrisma.customerAddress.update).toHaveBeenCalledWith({
+      where: { id: 'addr_1' },
+      data: { is_default: true },
+    })
+  })
+
   test('deleteCustomerAddress deletes address for customer', async () => {
     mockPrisma.customerAddress.deleteMany.mockResolvedValueOnce({ count: 1 })
 
@@ -85,3 +157,4 @@ describe('Addresses DAL', () => {
     })
   })
 })
+

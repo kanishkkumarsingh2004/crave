@@ -86,6 +86,10 @@ import {
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
+const AddressModal = dynamic(() => import('@/components/AddressModal'), {
+  ssr: false,
+})
+
 
 import { Coupon, fetchCoupons, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
@@ -4256,220 +4260,21 @@ export default function CustomerDashboard({
         </div>
       )}
 
-      {/* Location Selector & GPS Map Pin Drop Modal */}
-      {showLocationModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setShowLocationModal(false)}
-        >
-          <div
-            className="w-full max-w-xl overflow-hidden rounded-t-[2rem] sm:rounded-3xl bg-white shadow-2xl border-t sm:border border-gray-200 flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300 pb-safe"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Mobile Sheet Drag Handle */}
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-2.5 sm:hidden shrink-0" />
+      {/* Production-Grade Swiggy/Zomato Add & Manage Address Modal */}
+      <AddressModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onSelectAddress={(addr) => {
+          updateDeliveryAddress(addr.address)
+          if (addr.latitude != null && addr.longitude != null) {
+            setSelectedMapPin({ lat: Number(addr.latitude), lng: Number(addr.longitude) })
+          }
+          loadAddresses()
+          setShowLocationModal(false)
+          triggerToast(`Switched delivery address to ${addr.label}!`)
+        }}
+      />
 
-            <div className="flex items-center justify-between border-b border-gray-100 p-5 bg-[#18201c] text-white">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] font-bold">
-                  <MapPin className="size-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base">Select Delivery Location</h3>
-                  <p className="text-xs text-gray-300">Choose a saved address or drop map pin</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowLocationModal(false)}
-                className="grid size-8 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <button
-                type="button"
-                onClick={() => handleDetectGpsLocation(false)}
-                disabled={gpsDetecting}
-                className="w-full flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-emerald-900 hover:bg-emerald-100/70 transition shadow-xs group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="grid size-10 place-items-center rounded-xl bg-emerald-600 text-white shadow-xs group-hover:scale-105 transition">
-                    {gpsDetecting ? (
-                      <CraveSpinner size="sm" variant="white" />
-                    ) : (
-                      <LocateFixed className="size-5" />
-                    )}
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-sm">
-                      {gpsDetecting
-                        ? 'Detecting Precise GPS Location...'
-                        : 'Use Current GPS Location'}
-                    </p>
-                    <p className="text-xs text-emerald-700">
-                      Auto-detect latitude &amp; longitude via browser geolocation
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-emerald-700 bg-white px-3 py-1 rounded-full border border-emerald-200">
-                  {gpsDetecting ? 'Locating...' : 'Detect'}
-                </span>
-              </button>
-
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-                  Saved Addresses ({savedAddresses.length})
-                </h4>
-                <div className="space-y-3">
-                  {savedAddresses.length === 0 ? (
-                    <p className="rounded-xl border border-dashed border-gray-300 p-4 text-xs text-gray-500">
-                      No saved addresses yet.
-                    </p>
-                  ) : (
-                    savedAddresses.map((addr) => {
-                      const isSelected = deliveryAddress === addr.address
-                      return (
-                        <div
-                          key={addr.id}
-                          onClick={() => {
-                            updateDeliveryAddress(addr.address)
-                            setSelectedMapPin(
-                              addr.lat != null && addr.lng != null
-                                ? { lat: addr.lat, lng: addr.lng }
-                                : null
-                            )
-                            setShowLocationModal(false)
-                            triggerToast(`Switched delivery address to ${addr.label}!`)
-                          }}
-                          className={`flex items-start justify-between rounded-2xl p-4 border cursor-pointer transition ${
-                            isSelected
-                              ? 'border-[#18201c] bg-[#18201c]/5 shadow-xs'
-                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`grid size-9 place-items-center rounded-xl shrink-0 mt-0.5 ${
-                                isSelected ? 'bg-[#18201c] text-white' : 'bg-gray-100 text-gray-700'
-                              }`}
-                            >
-                              <MapPin className="size-4" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm text-[#18201c]">
-                                  {addr.label}
-                                </span>
-                                <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded-md">
-                                  {addr.tag}
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-600 mt-1 font-medium">
-                                {addr.address}
-                              </p>
-                              {addr.lat != null && addr.lng != null && (
-                                <p className="mt-0.5 font-mono text-[10px] text-gray-400">
-                                  Coordinates: {addr.lat}&deg; N, {addr.lng}&deg; E
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {isSelected && (
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                              Active
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                    Live Interactive Map Pin Placement
-                  </h4>
-                  <span className="text-xs font-mono font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                    {selectedMapPin
-                      ? `${selectedMapPin.lat.toFixed(4)}°, ${selectedMapPin.lng.toFixed(4)}°`
-                      : 'Drag pin or click map'}
-                  </span>
-                </div>
-
-                <LocationPickerMap
-                  initialLat={selectedMapPin?.lat ?? 12.679898}
-                  initialLng={selectedMapPin?.lng ?? 77.469493}
-                  onLocationSelect={(lat, lng, address) => {
-                    setSelectedMapPin({ lat, lng })
-                    if (address) {
-                      setNewAddressInput(address)
-                    }
-                  }}
-                />
-              </div>
-
-              <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-[#18201c]">Add &amp; Refine Doorstep Details</h4>
-                  {selectedMapPin && (
-                    <span className="text-[11px] font-mono text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                      GPS Locked ({selectedMapPin.lat.toFixed(4)}, {selectedMapPin.lng.toFixed(4)})
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-gray-500 font-semibold">Label:</span>
-                  {(['Home', 'Work', 'Other'] as const).map((lbl) => (
-                    <button
-                      key={lbl}
-                      type="button"
-                      onClick={() => setNewAddressLabel(lbl)}
-                      className={`px-3 py-1 rounded-full font-bold border transition ${
-                        newAddressLabel === lbl
-                          ? 'bg-[#18201c] text-white border-[#18201c]'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                      }`}
-                    >
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-semibold text-gray-500 mb-1 block">
-                    Street Address &amp; Doorstep Details
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Flat 302, 4th Floor, Building Name, Street..."
-                    value={newAddressInput}
-                    onChange={(e) => setNewAddressInput(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-xs font-medium outline-none focus:border-[#18201c] bg-white"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">
-                    Auto-filled from GPS. You can add your flat, floor, or landmark details before saving.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAddNewAddress}
-                  className="w-full rounded-xl bg-[#18201c] py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#2a3831] transition"
-                >
-                  Save &amp; Set as Active Delivery Address
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Cart Store Conflict Modal */}
       {conflictModal.open && (

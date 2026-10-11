@@ -40,6 +40,14 @@ import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/d
 import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-location'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
+import dynamic from 'next/dynamic'
+import type { AddressItem } from '@/components/AddressModal'
+import { checkDeliveryServiceability } from '@/lib/serviceability'
+
+const AddressModal = dynamic(() => import('@/components/AddressModal'), {
+  ssr: false,
+})
+
 
 interface Coupon {
   id: string
@@ -111,6 +119,40 @@ export default function CartPage() {
       setIsGpsDetecting(false)
     }
   }
+
+  const deliveryServiceability = useMemo(() => {
+    if (!detectedCoords?.lat || !detectedCoords?.lng) return null
+    return checkDeliveryServiceability({
+      customerLat: detectedCoords.lat,
+      customerLng: detectedCoords.lng,
+    })
+  }, [detectedCoords])
+
+  const handleAddressSelectedFromModal = (addr: AddressItem) => {
+    const savedItem: SavedAddress = {
+      id: addr.id,
+      label: addr.label,
+      address: addr.address,
+      is_default: Boolean(addr.is_default),
+      latitude: addr.latitude != null ? Number(addr.latitude) : undefined,
+      longitude: addr.longitude != null ? Number(addr.longitude) : undefined,
+    }
+    setSelectedAddressId(savedItem.id)
+    setDeliveryAddress(savedItem.address)
+    if (savedItem.latitude != null && savedItem.longitude != null) {
+      setDetectedCoords({ lat: savedItem.latitude, lng: savedItem.longitude })
+    }
+    setSavedAddresses((prev) => {
+      const exists = prev.some((a) => a.id === savedItem.id)
+      if (exists) return prev.map((a) => (a.id === savedItem.id ? savedItem : a))
+      return [savedItem, ...prev]
+    })
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crave_selected_address', savedItem.address)
+    }
+    toast(`Delivering to ${savedItem.label}!`, 'success')
+  }
+
 
   // Sync user defaults when profile finishes loading
   useEffect(() => {
@@ -496,6 +538,13 @@ export default function CartPage() {
 
     if (!deliveryAddress.trim()) {
       toast('Please enter or select a delivery address', 'error')
+      const target = document.getElementById('address-section')
+      if (target) target.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
+    if (deliveryServiceability && !deliveryServiceability.isServiceable) {
+      toast(deliveryServiceability.reason || 'The selected delivery address is outside our delivery area', 'error')
       const target = document.getElementById('address-section')
       if (target) target.scrollIntoView({ behavior: 'smooth' })
       return
@@ -906,11 +955,11 @@ export default function CartPage() {
 
                       <button
                         type="button"
-                        onClick={() => setIsAddingAddressInline(!isAddingAddressInline)}
+                        onClick={() => setShowAddressModal(true)}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] px-3.5 py-1.5 text-xs font-black shadow-xs hover:opacity-90 active:scale-95 transition"
                       >
                         <Plus className="size-3.5 stroke-[3]" />
-                        <span>{isAddingAddressInline ? 'Close Form' : 'Add New Address'}</span>
+                        <span>Add New Address</span>
                       </button>
                     </div>
 
@@ -1056,7 +1105,7 @@ export default function CartPage() {
                         {/* Prominent "+ Add Address" card right inside the grid */}
                         <button
                           type="button"
-                          onClick={() => setIsAddingAddressInline(true)}
+                          onClick={() => setShowAddressModal(true)}
                           className="rounded-2xl border-2 border-dashed border-black/15 dark:border-white/15 hover:border-black/30 dark:hover:border-white/30 p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition group min-h-[72px]"
                         >
                           <Plus className="size-4 text-[#5e8210] dark:text-[#d9f447] group-hover:scale-110 transition" />
@@ -1068,19 +1117,29 @@ export default function CartPage() {
                     {/* Active Address Input & Contact Phone */}
                     <div className="space-y-4 pt-2">
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
                           <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
                             Delivery Address Details
                           </label>
-                          <button
-                            type="button"
-                            disabled={isGpsDetecting}
-                            onClick={handleDetectGpsInCart}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline"
-                          >
-                            <LocateFixed className="size-3.5" />
-                            <span>{isGpsDetecting ? 'Detecting...' : 'Use Current Location'}</span>
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddressModal(true)}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline"
+                            >
+                              <MapPin className="size-3.5" />
+                              <span>Adjust Pin / Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isGpsDetecting}
+                              onClick={handleDetectGpsInCart}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline"
+                            >
+                              <LocateFixed className="size-3.5" />
+                              <span>{isGpsDetecting ? 'Detecting...' : 'Use GPS'}</span>
+                            </button>
+                          </div>
                         </div>
                         <input
                           type="text"
@@ -1090,7 +1149,35 @@ export default function CartPage() {
                           placeholder="House / Flat No., Apartment Name, Street, Area"
                           className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 outline-none focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15 transition"
                         />
+
+                        {/* Live Delivery Serviceability Feedback */}
+                        {deliveryServiceability && (
+                          <div className="mt-2">
+                            {!deliveryServiceability.isServiceable ? (
+                              <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                                <AlertTriangle className="size-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                                <div>
+                                  <p className="font-extrabold">Delivery Not Available at This Location</p>
+                                  <p className="text-[11px] mt-0.5 opacity-90">{deliveryServiceability.reason}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                                  <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Serviceable Location (Crave Delivery Zone)</span>
+                                </span>
+                                {deliveryServiceability.distanceKm != null && (
+                                  <span className="font-mono text-[10px] font-bold opacity-80">
+                                    {deliveryServiceability.distanceKm} km away
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+
 
                       <div>
                         <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1.5">
@@ -1623,6 +1710,14 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      {/* Production-Grade Swiggy/Zomato Add & Manage Address Modal */}
+      <AddressModal
+        isOpen={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        onSelectAddress={handleAddressSelectedFromModal}
+        initialSelectedId={selectedAddressId}
+      />
 
       <Footer />
     </div>

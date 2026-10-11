@@ -130,6 +130,110 @@ export async function createCustomerAddress(data: {
   }
 }
 
+export async function updateCustomerAddress(data: {
+  id: string
+  customer_id: string
+  label?: string
+  address?: string
+  latitude?: number | null
+  longitude?: number | null
+  is_default?: boolean
+}): Promise<CustomerAddressDTO | null> {
+  try {
+    const existing = await prisma.customerAddress.findFirst({
+      where: { id: data.id, customer_id: data.customer_id },
+    })
+
+    if (!existing) {
+      return null
+    }
+
+    let lat = existing.latitude != null ? Number(existing.latitude) : null
+    let lng = existing.longitude != null ? Number(existing.longitude) : null
+
+    if (data.latitude != null && data.longitude != null) {
+      lat = data.latitude
+      lng = data.longitude
+    } else if (data.address && data.address !== existing.address) {
+      const coords = await resolveCoordinates(data.address, data.latitude, data.longitude)
+      lat = coords.lat
+      lng = coords.lng
+    }
+
+    if (data.is_default) {
+      await prisma.customerAddress.updateMany({
+        where: { customer_id: data.customer_id },
+        data: { is_default: false },
+      })
+    }
+
+    const updated = await prisma.customerAddress.update({
+      where: { id: data.id },
+      data: {
+        label: data.label !== undefined ? data.label : existing.label,
+        address: data.address !== undefined ? data.address : existing.address,
+        is_default: data.is_default !== undefined ? data.is_default : existing.is_default,
+        latitude: lat != null ? new Prisma.Decimal(lat) : existing.latitude,
+        longitude: lng != null ? new Prisma.Decimal(lng) : existing.longitude,
+      },
+    })
+
+    if (data.is_default || updated.is_default) {
+      try {
+        await prisma.user.update({
+          where: { id: data.customer_id },
+          data: { address: updated.address },
+        })
+      } catch {}
+    }
+
+    return {
+      id: updated.id,
+      customer_id: updated.customer_id,
+      label: updated.label,
+      address: updated.address,
+      is_default: updated.is_default,
+      latitude: updated.latitude != null ? Number(updated.latitude) : lat,
+      longitude: updated.longitude != null ? Number(updated.longitude) : lng,
+      created_at: updated.created_at,
+    }
+  } catch (err) {
+    console.error('[updateCustomerAddress error]', err)
+    return null
+  }
+}
+
+export async function setDefaultAddress(id: string, customerId: string): Promise<boolean> {
+  try {
+    const existing = await prisma.customerAddress.findFirst({
+      where: { id, customer_id: customerId },
+    })
+    if (!existing) return false
+
+    await prisma.customerAddress.updateMany({
+      where: { customer_id: customerId },
+      data: { is_default: false },
+    })
+
+    await prisma.customerAddress.update({
+      where: { id },
+      data: { is_default: true },
+    })
+
+    try {
+      await prisma.user.update({
+        where: { id: customerId },
+        data: { address: existing.address },
+      })
+    } catch {}
+
+    return true
+  } catch (err) {
+    console.error('[setDefaultAddress error]', err)
+    return false
+  }
+}
+
 export async function deleteCustomerAddress(id: string, customerId: string): Promise<boolean> {
   try {
     const result = await prisma.customerAddress.deleteMany({
@@ -141,3 +245,4 @@ export async function deleteCustomerAddress(id: string, customerId: string): Pro
     return false
   }
 }
+
