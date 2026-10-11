@@ -1,4 +1,4 @@
-import { updateUser, findUserById } from '@/lib/dal'
+import { updateUser, findUserById, createCustomerAddress } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
@@ -52,6 +52,19 @@ export async function PATCH(request: Request) {
 
   try {
     const updated = await updateUser(userId, updates)
+
+    if (updates.address && typeof updates.address === 'string' && updates.address.trim()) {
+      try {
+        await createCustomerAddress({
+          customer_id: userId,
+          label: 'Home',
+          address: updates.address.trim(),
+          is_default: true,
+        })
+      } catch (addrErr) {
+        console.warn('[PATCH /api/user/update] Could not sync customer_address:', addrErr)
+      }
+    }
 
     broadcast('user_profile', {
       type: 'update',

@@ -37,6 +37,43 @@ export async function getCustomerAddresses(customerId: string): Promise<Customer
   }
 }
 
+async function resolveCoordinates(
+  address: string,
+  lat?: number | null,
+  lng?: number | null
+): Promise<{ lat: number; lng: number }> {
+  if (lat != null && !isNaN(lat) && lng != null && !isNaN(lng)) {
+    return { lat, lng }
+  }
+
+  // Attempt forward geocoding if online
+  if (address && typeof address === 'string' && address.trim()) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.trim())}&limit=1`
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'CraveDeliveryPlatform/1.0 (support@crave.app)',
+          Accept: 'application/json',
+        },
+        signal: AbortSignal.timeout(2500),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        if (Array.isArray(json) && json.length > 0 && json[0].lat && json[0].lon) {
+          const parsedLat = parseFloat(json[0].lat)
+          const parsedLng = parseFloat(json[0].lon)
+          if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+            return { lat: parsedLat, lng: parsedLng }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Default fallback coordinates (Bengaluru central coordinates)
+  return { lat: 12.9716, lng: 77.5946 }
+}
+
 export async function createCustomerAddress(data: {
   customer_id: string
   label: string
@@ -47,6 +84,10 @@ export async function createCustomerAddress(data: {
 }): Promise<CustomerAddressDTO> {
   const isDefault = Boolean(data.is_default)
   const id = crypto.randomUUID()
+
+  const coords = await resolveCoordinates(data.address, data.latitude, data.longitude)
+  const finalLat = coords.lat
+  const finalLng = coords.lng
 
   if (isDefault) {
     try {
@@ -64,12 +105,8 @@ export async function createCustomerAddress(data: {
       label: data.label,
       address: data.address,
       is_default: isDefault,
-      latitude:
-        data.latitude != null && !isNaN(data.latitude) ? new Prisma.Decimal(data.latitude) : null,
-      longitude:
-        data.longitude != null && !isNaN(data.longitude)
-          ? new Prisma.Decimal(data.longitude)
-          : null,
+      latitude: new Prisma.Decimal(finalLat),
+      longitude: new Prisma.Decimal(finalLng),
     },
   })
 
@@ -87,8 +124,8 @@ export async function createCustomerAddress(data: {
     label: created.label,
     address: created.address,
     is_default: created.is_default,
-    latitude: created.latitude != null ? Number(created.latitude) : null,
-    longitude: created.longitude != null ? Number(created.longitude) : null,
+    latitude: created.latitude != null ? Number(created.latitude) : finalLat,
+    longitude: created.longitude != null ? Number(created.longitude) : finalLng,
     created_at: created.created_at,
   }
 }

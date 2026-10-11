@@ -74,6 +74,12 @@ import Link from 'next/link'
 import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 import CraveLogo from '@/components/CraveLogo'
 import CraveXPDeliveryIllustration from '@/components/illustrations/CraveXPDeliveryIllustration'
+import {
+  autoDetectAndGeocodeLocation,
+  checkGeolocationPermission,
+  getCachedLocation,
+  getDeviceCoordinates,
+} from '@/lib/client-location'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
@@ -704,34 +710,76 @@ export default function CustomerDashboard({
     loadAddresses()
   }, [user?.id, user?.address])
 
-  function handleDetectGpsLocation() {
+  async function handleDetectGpsLocation(isAutoMount = false) {
     setGpsDetecting(true)
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = parseFloat(pos.coords.latitude.toFixed(4))
-          const lng = parseFloat(pos.coords.longitude.toFixed(4))
-          setSelectedMapPin({ lat, lng })
-          updateDeliveryAddress(`${lat}, ${lng}`)
-          setGpsDetecting(false)
-          triggerToast(`GPS Location Detected: ${lat}° N, ${lng}° E`)
-        },
-        () => {
-          setGpsDetecting(false)
-          triggerToast('Could not determine your current location.')
-        },
-        { timeout: 4000 }
-      )
-    } else {
+    try {
+      const geocoded = await autoDetectAndGeocodeLocation()
+      setSelectedMapPin({ lat: geocoded.lat, lng: geocoded.lng })
+      setNewAddressInput(geocoded.formattedAddress)
+      updateDeliveryAddress(geocoded.formattedAddress)
+
+      if (isAutoMount) {
+        // If auto-detected on mount and user has no saved addresses, automatically register it
+        if (user?.id && savedAddresses.length === 0) {
+          try {
+            const res = await fetch('/api/user/addresses', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                label: 'Current Location',
+                address: geocoded.formattedAddress,
+                latitude: geocoded.lat,
+                longitude: geocoded.lng,
+                is_default: true,
+              }),
+            })
+            if (res.ok) {
+              const json = await res.json()
+              if (json.address) {
+                const newEntry: CustomerAddress = {
+                  id: json.address.id,
+                  label: json.address.label,
+                  address: json.address.address,
+                  tag: 'Primary',
+                  lat: Number(json.address.latitude),
+                  lng: Number(json.address.longitude),
+                }
+                setSavedAddresses([newEntry])
+              }
+            }
+          } catch {}
+        }
+      } else {
+        triggerToast(`📍 Located: ${geocoded.shortAddress || geocoded.formattedAddress}`)
+      }
+    } catch (err: any) {
+      if (!isAutoMount) {
+        triggerToast('Could not access precise GPS. Please enable location permissions or select on the map.')
+      }
+    } finally {
       setGpsDetecting(false)
-      triggerToast('Geolocation is not supported by your browser')
     }
   }
 
   async function handleAddNewAddress() {
-    if (!user?.id || !newAddressInput.trim()) {
+    if (!newAddressInput.trim()) {
       triggerToast('Please enter an address or drop a pin on the map!')
       return
+    }
+
+    let lat = selectedMapPin?.lat ?? null
+    let lng = selectedMapPin?.lng ?? null
+
+    // If coordinates are missing, fallback to cached location or Bangalore center
+    if (lat == null || lng == null) {
+      const cached = getCachedLocation()
+      if (cached?.lat != null && cached?.lng != null) {
+        lat = cached.lat
+        lng = cached.lng
+      } else {
+        lat = 12.9716
+        lng = 77.5946
+      }
     }
 
     try {
@@ -741,8 +789,8 @@ export default function CustomerDashboard({
         body: JSON.stringify({
           label: newAddressLabel,
           address: newAddressInput.trim(),
-          latitude: selectedMapPin?.lat ?? null,
-          longitude: selectedMapPin?.lng ?? null,
+          latitude: lat,
+          longitude: lng,
           is_default: true,
         }),
       })
@@ -764,10 +812,11 @@ export default function CustomerDashboard({
       }
 
       setSavedAddresses((prev) => [newEntry, ...prev.filter((a) => a.id !== newEntry.id)])
+      setSelectedMapPin({ lat, lng })
       updateDeliveryAddress(data.address)
       setNewAddressInput('')
       setShowLocationModal(false)
-      triggerToast(`Address & coordinates saved & set as current delivery location!`)
+      triggerToast(`Address & GPS coordinates saved & set as current delivery location!`)
     } catch (err) {
       triggerToast('Could not save this address to your account.')
     }
@@ -3857,7 +3906,7 @@ export default function CustomerDashboard({
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <button
                 type="button"
-                onClick={handleDetectGpsLocation}
+                onClick={() => handleDetectGpsLocation(false)}
                 disabled={gpsDetecting}
                 className="w-full flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-emerald-900 hover:bg-emerald-100/70 transition shadow-xs group"
               >
@@ -3981,7 +4030,14 @@ export default function CustomerDashboard({
               </div>
 
               <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50 space-y-3">
-                <h4 className="text-xs font-bold text-[#18201c]">Add New Custom Address</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-[#18201c]">Add &amp; Refine Doorstep Details</h4>
+                  {selectedMapPin && (
+                    <span className="text-[11px] font-mono text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                      GPS Locked ({selectedMapPin.lat.toFixed(4)}, {selectedMapPin.lng.toFixed(4)})
+                    </span>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-gray-500 font-semibold">Label:</span>
@@ -4001,13 +4057,21 @@ export default function CustomerDashboard({
                   ))}
                 </div>
 
-                <input
-                  type="text"
-                  placeholder="Enter building, apartment, street address details..."
-                  value={newAddressInput}
-                  onChange={(e) => setNewAddressInput(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 p-3 text-xs font-medium outline-none focus:border-[#18201c] bg-white"
-                />
+                <div>
+                  <label className="text-[11px] font-semibold text-gray-500 mb-1 block">
+                    Street Address &amp; Doorstep Details
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Flat 302, 4th Floor, Building Name, Street..."
+                    value={newAddressInput}
+                    onChange={(e) => setNewAddressInput(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 p-3 text-xs font-medium outline-none focus:border-[#18201c] bg-white"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Auto-filled from GPS. You can add your flat, floor, or landmark details before saving.
+                  </p>
+                </div>
 
                 <button
                   type="button"

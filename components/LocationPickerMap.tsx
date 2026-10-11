@@ -84,25 +84,16 @@ export default function LocationPickerMap({
     onHeatmapEnabledChange?.(val)
   }
 
-  // Reverse Geocoding helper via OpenStreetMap Nominatim
+  // Reverse Geocoding helper via server API
   const fetchReverseGeocode = async (lat: number, lng: number) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-        {
-          headers: {
-            'Accept-Language': 'en',
-          },
-        }
-      )
+      const res = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`)
       if (res.ok) {
         const data = await res.json()
-        if (data && data.display_name) {
-          const parts = data.display_name.split(', ')
-          const cleanAddr = parts.slice(0, 4).join(', ')
-          setDetectedAddress(cleanAddr)
-          onLocationSelect(lat, lng, cleanAddr)
-          return cleanAddr
+        if (data && data.formattedAddress) {
+          setDetectedAddress(data.formattedAddress)
+          onLocationSelect(lat, lng, data.formattedAddress)
+          return data.formattedAddress
         }
       }
     } catch (err) {
@@ -124,32 +115,23 @@ export default function LocationPickerMap({
   }, [initialLat, initialLng])
 
   // Sync Device Location Handler
-  const handleSyncGpsLocation = () => {
+  const handleSyncGpsLocation = async () => {
     setIsLocating(true)
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = parseFloat(pos.coords.latitude.toFixed(6))
-          const lng = parseFloat(pos.coords.longitude.toFixed(6))
-          setCurrentCoords({ lat, lng })
-          fetchReverseGeocode(lat, lng)
-          mapRef.current?.flyTo({
-            center: [lng, lat],
-            zoom: 14,
-            essential: true,
-          })
-          setIsLocating(false)
-        },
-        (err) => {
-          console.warn('Geolocation error:', err)
-          setIsLocating(false)
-          alert('Could not access device location. Please enable location permissions.')
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      )
-    } else {
+    try {
+      const { getDeviceCoordinates } = await import('@/lib/client-location')
+      const coords = await getDeviceCoordinates()
+      setCurrentCoords(coords)
+      await fetchReverseGeocode(coords.lat, coords.lng)
+      mapRef.current?.flyTo({
+        center: [coords.lng, coords.lat],
+        zoom: 15,
+        essential: true,
+      })
       setIsLocating(false)
-      alert('Geolocation is not supported by your browser.')
+    } catch (err: any) {
+      console.warn('Geolocation error:', err)
+      setIsLocating(false)
+      alert(err?.message || 'Could not access device location. Please enable location permissions.')
     }
   }
 

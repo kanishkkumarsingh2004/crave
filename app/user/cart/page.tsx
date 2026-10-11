@@ -21,6 +21,7 @@ import {
   ExternalLink,
   History,
   Home,
+  LocateFixed,
   MapPin,
   Minus,
   Plus,
@@ -37,6 +38,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
+import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-location'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
 
@@ -92,10 +94,35 @@ export default function CartPage() {
   const [newAddressLabel, setNewAddressLabel] = useState('Home')
   const [newAddressText, setNewAddressText] = useState('')
   const [isSavingAddress, setIsSavingAddress] = useState(false)
+  const [isGpsDetecting, setIsGpsDetecting] = useState(false)
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null)
+
+  const handleDetectGpsInCart = async () => {
+    setIsGpsDetecting(true)
+    try {
+      const geocoded = await autoDetectAndGeocodeLocation()
+      setDetectedCoords({ lat: geocoded.lat, lng: geocoded.lng })
+      setNewAddressText(geocoded.formattedAddress)
+      toast(`GPS Address Detected: ${geocoded.shortAddress || geocoded.formattedAddress}`, 'success')
+    } catch (err: any) {
+      toast('Could not detect GPS location. Please allow browser location access.', 'error')
+    } finally {
+      setIsGpsDetecting(false)
+    }
+  }
 
   // Sync user defaults when profile finishes loading
   useEffect(() => {
-    if (user?.address) setDeliveryAddress(user.address)
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('crave_selected_address')
+      if (stored) {
+        setDeliveryAddress(stored)
+      } else if (user?.address) {
+        setDeliveryAddress(user.address)
+      }
+    } else if (user?.address) {
+      setDeliveryAddress(user.address)
+    }
     if (user?.phone) setCustomerPhone(user.phone)
   }, [user])
 
@@ -116,6 +143,9 @@ export default function CartPage() {
             if (def) {
               setSelectedAddressId(def.id)
               setDeliveryAddress(def.address)
+              if (def.latitude != null && def.longitude != null) {
+                setDetectedCoords({ lat: Number(def.latitude), lng: Number(def.longitude) })
+              }
             }
           }
         }
@@ -296,6 +326,10 @@ export default function CartPage() {
       return
     }
 
+    const cached = getCachedLocation()
+    const lat = detectedCoords?.lat ?? cached?.lat ?? 12.9716
+    const lng = detectedCoords?.lng ?? cached?.lng ?? 77.5946
+
     setIsSavingAddress(true)
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
@@ -308,8 +342,8 @@ export default function CartPage() {
         body: JSON.stringify({
           label: newAddressLabel,
           address: newAddressText.trim(),
-          latitude: 12.9716,
-          longitude: 77.5946,
+          latitude: lat,
+          longitude: lng,
           is_default: savedAddresses.length === 0,
         }),
       })
@@ -322,6 +356,9 @@ export default function CartPage() {
       setSavedAddresses((prev) => [json.address, ...prev])
       setSelectedAddressId(json.address.id)
       setDeliveryAddress(json.address.address)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('crave_selected_address', json.address.address)
+      }
       setNewAddressText('')
       toast(`Address "${json.address.label}" saved & selected!`, 'success')
       setShowAddressModal(false)
@@ -1394,10 +1431,41 @@ export default function CartPage() {
 
               {/* Add New Address Form */}
               <div className="rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-[#fcfdfe] dark:bg-[#121815] p-4 space-y-3 mt-4">
-                <p className="text-xs font-black text-[#18201c] dark:text-white flex items-center gap-1.5">
-                  <Plus className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Add a New Delivery
-                  Address
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black text-[#18201c] dark:text-white flex items-center gap-1.5">
+                    <Plus className="size-4 text-[#b5de28] dark:text-[#d9f447]" /> Add a New Delivery Address
+                  </p>
+                  {detectedCoords && (
+                    <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                      GPS Locked ({detectedCoords.lat.toFixed(4)}, {detectedCoords.lng.toFixed(4)})
+                    </span>
+                  )}
+                </div>
+
+                {/* GPS Detect Button */}
+                <button
+                  type="button"
+                  onClick={handleDetectGpsInCart}
+                  disabled={isGpsDetecting}
+                  className="w-full flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100/70 transition shadow-xs group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="grid size-8 place-items-center rounded-lg bg-emerald-600 text-white shrink-0 group-hover:scale-105 transition">
+                      <LocateFixed className="size-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-xs">
+                        {isGpsDetecting ? 'Detecting Precise GPS Location...' : 'Use Current GPS Location'}
+                      </p>
+                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                        Auto-fills street address &amp; locks your coordinates
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-white dark:bg-[#18201c] px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    {isGpsDetecting ? 'Locating...' : 'Detect'}
+                  </span>
+                </button>
 
                 <form onSubmit={handleSaveNewAddress} className="space-y-3">
                   <div>
@@ -1427,9 +1495,12 @@ export default function CartPage() {
                       required
                       value={newAddressText}
                       onChange={(e) => setNewAddressText(e.target.value)}
-                      placeholder="House/Flat No, Building, Road / Landmark, Area, Bengaluru"
-                      className="input-base min-h-[80px] resize-y"
+                      placeholder="Flat/House No., Floor, Building, Street, Area..."
+                      className="input-base min-h-[80px] resize-y text-xs"
                     />
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                      Auto-filled from GPS. Add your flat/building number or landmark details before saving.
+                    </p>
                   </div>
 
                   <button type="submit" disabled={isSavingAddress} className="btn-primary btn-full">

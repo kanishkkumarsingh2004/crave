@@ -20,7 +20,7 @@ import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
-import type { OrderStatus } from '@prisma/client'
+import { Prisma, type OrderStatus } from '@prisma/client'
 import crypto from 'crypto'
 import {
   requireAuth,
@@ -543,13 +543,10 @@ export async function POST(request: Request) {
       const requestedAddress = await prisma.customerAddress.findFirst({
         where: { id: targetAddressId, customer_id: finalCustomerId },
         select: {
+          id: true,
           latitude: true,
           longitude: true,
-          address_line1: true,
-          address_line2: true,
-          city: true,
-          state: true,
-          pincode: true,
+          address: true,
           label: true,
         },
       })
@@ -584,17 +581,15 @@ export async function POST(request: Request) {
 
       customerLat = addrLat
       customerLng = addrLng
-      customerAddressState = requestedAddress.state || null
+      customerAddressState = 'Karnataka'
 
-      const parts = [
-        requestedAddress.address_line1,
-        requestedAddress.address_line2,
-        requestedAddress.city,
-        requestedAddress.state,
-        requestedAddress.pincode,
-      ].filter(Boolean)
       canonicalAddressText =
-        parts.length > 0 ? parts.join(', ') : requestedAddress.label || 'Customer address'
+        requestedAddress.address ||
+        (typeof body.customer_address === 'string' && body.customer_address.trim()
+          ? body.customer_address.trim()
+          : '') ||
+        requestedAddress.label ||
+        'Customer address'
     } else {
       // No explicit address supplied — try default, then any saved address.
       let matchedAddress: any = null
@@ -603,13 +598,10 @@ export async function POST(request: Request) {
         matchedAddress = await prisma.customerAddress.findFirst({
           where: { customer_id: finalCustomerId, is_default: true },
           select: {
+            id: true,
             latitude: true,
             longitude: true,
-            address_line1: true,
-            address_line2: true,
-            city: true,
-            state: true,
-            pincode: true,
+            address: true,
             label: true,
           },
         })
@@ -618,13 +610,10 @@ export async function POST(request: Request) {
           matchedAddress = await prisma.customerAddress.findFirst({
             where: { customer_id: finalCustomerId },
             select: {
+              id: true,
               latitude: true,
               longitude: true,
-              address_line1: true,
-              address_line2: true,
-              city: true,
-              state: true,
-              pincode: true,
+              address: true,
               label: true,
             },
           })
@@ -644,16 +633,51 @@ export async function POST(request: Request) {
           customerLat = addrLat
           customerLng = addrLng
         }
-        customerAddressState = matchedAddress.state || null
+        customerAddressState = 'Karnataka'
+        canonicalAddressText =
+          matchedAddress.address ||
+          (typeof body.customer_address === 'string' && body.customer_address.trim()
+            ? body.customer_address.trim()
+            : '') ||
+          matchedAddress.label ||
+          ''
+      } else if (
+        body.customer_address &&
+        typeof body.customer_address === 'string' &&
+        body.customer_address.trim()
+      ) {
+        // If customer has no saved address record yet, but supplied address & coordinates in order payload
+        const clientLat = body.delivery_latitude ?? body.latitude ?? null
+        const clientLng = body.delivery_longitude ?? body.longitude ?? null
+        const parsedLat = clientLat != null ? Number(clientLat) : null
+        const parsedLng = clientLng != null ? Number(clientLng) : null
 
-        const parts = [
-          matchedAddress.address_line1,
-          matchedAddress.address_line2,
-          matchedAddress.city,
-          matchedAddress.state,
-          matchedAddress.pincode,
-        ].filter(Boolean)
-        canonicalAddressText = parts.length > 0 ? parts.join(', ') : matchedAddress.label || ''
+        if (
+          parsedLat != null &&
+          parsedLng != null &&
+          Number.isFinite(parsedLat) &&
+          Number.isFinite(parsedLng)
+        ) {
+          customerLat = parsedLat
+          customerLng = parsedLng
+          canonicalAddressText = body.customer_address.trim()
+          customerAddressState = 'Karnataka'
+
+          // Auto-register in DB so subsequent orders have a saved address
+          try {
+            await prisma.customerAddress.create({
+              data: {
+                id: crypto.randomUUID(),
+                customer_id: finalCustomerId,
+                label: 'Home',
+                address: canonicalAddressText,
+                latitude: new Prisma.Decimal(customerLat),
+                longitude: new Prisma.Decimal(customerLng),
+                is_default: true,
+              },
+            })
+          } catch {}
+        }
       }
 
       // CR-12 FIX: When no explicit address was selected and coordinates are still

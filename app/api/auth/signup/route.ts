@@ -1,5 +1,5 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
-import { createUser, findUserByEmail } from '@/lib/dal'
+import { createUser, findUserByEmail, createCustomerAddress } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
@@ -74,6 +74,20 @@ export async function POST(request: Request) {
         address: address || null,
         password_hash: passwordHash,
       })
+
+      // Register default customer address in DB if address provided
+      if (address && typeof address === 'string' && address.trim()) {
+        try {
+          await createCustomerAddress({
+            customer_id: finalUserId,
+            label: 'Home',
+            address: address.trim(),
+            is_default: true,
+          })
+        } catch (addrErr) {
+          console.warn('[Signup] Could not auto-create customer_address:', addrErr)
+        }
+      }
     } catch (err: unknown) {
       console.error('User profile creation failed:', err)
       const isDatabaseConfigured = Boolean(process.env.DATABASE_URL)
