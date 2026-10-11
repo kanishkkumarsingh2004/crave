@@ -27,7 +27,7 @@ export interface CraveXPGroceryItem {
 
 export async function fetchCraveXPGroceryItems(): Promise<CraveXPGroceryItem[]> {
   if (typeof window !== 'undefined') {
-    const response = await fetch('/api/cravexp/catalog')
+    const response = await fetch('/api/cravexp/catalog', { cache: 'no-store' })
     if (!response.ok) throw new Error('Failed to load CraveXP catalog')
     const data = await response.json()
     return data.items ?? []

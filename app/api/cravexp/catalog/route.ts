@@ -6,6 +6,9 @@ import {
 } from '@/lib/cravexp-grocery-catalog'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function ensureStore() {
   await prisma.restaurant.upsert({
     where: { id: CRAVEXP_DARK_STORE_ID },

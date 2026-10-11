@@ -12,6 +12,7 @@ import {
   Download,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
   ShieldCheck,
   ShoppingBag,
@@ -22,9 +23,14 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState, useRef } from 'react'
+
+const AddressModal = dynamic(() => import('@/components/AddressModal'), {
+  ssr: false,
+})
 
 export const roleDetails: Partial<
   Record<
@@ -61,8 +67,8 @@ export const roleDetails: Partial<
     icon: ShieldCheck,
   },
   user: {
-    title: 'User',
-    badge: 'User View',
+    title: 'Customer',
+    badge: 'Customer View',
     color: 'text-emerald-700',
     bg: 'bg-emerald-100 border-emerald-200',
     icon: ShoppingBag,
@@ -92,9 +98,12 @@ export const roleDetails: Partial<
 
 export default function Navbar() {
   const { user, role, logout } = useAuth()
-  const { totalCount: cartCount } = useCart()
+  const { items: cartItems, totalCount: cartCount } = useCart()
+  const cartSubtotal = cartItems.reduce((acc, i) => acc + i.price * i.qty, 0)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showAddressModal, setShowAddressModal] = useState(false)
+  const [deliveryAddress, setDeliveryAddress] = useState('')
   const [mounted, setMounted] = useState(false)
   const mobileMenuRef = useRef<HTMLElement>(null)
   const lastFocusedRef = useRef<HTMLElement | null>(null)
@@ -103,7 +112,19 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('crave_selected_address')
+      if (stored) setDeliveryAddress(stored)
+      else if (user?.address) setDeliveryAddress(user.address)
+    } else if (user?.address) {
+      setDeliveryAddress(user.address)
+    }
+  }, [user?.address])
+
+  const normalizedRole = (user?.role || role || '').toString().toLowerCase().trim()
+  const isCustomer = Boolean(
+    user && (normalizedRole === 'customer' || normalizedRole === 'user')
+  )
 
   // Focus trap for mobile menu
   useEffect(() => {
@@ -144,15 +165,15 @@ export default function Navbar() {
   }, [showMobileMenu])
 
   const currentDashboardLink =
-    role === 'customer' || role === 'user'
+    isCustomer
       ? '/user/dashboard'
-      : role === 'rider' || role === 'driver'
+      : normalizedRole === 'rider' || normalizedRole === 'driver'
         ? '/driver/dashboard'
-        : role === 'restaurant_vendor' || role === 'vendor'
+        : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'
           ? '/vendor/dashboard'
-          : role === 'cravexp_store_vendor'
+          : normalizedRole === 'cravexp_store_vendor'
             ? '/vendor/crave-ep'
-            : role === 'admin'
+            : normalizedRole === 'admin'
               ? '/admin/dashboard'
               : '/'
   const logoTargetLink = user ? currentDashboardLink : '/'
@@ -160,11 +181,13 @@ export default function Navbar() {
   if (!mounted) {
     return (
       <>
-        <header className="sticky top-0 z-50 border-b border-[#e5e9e1] dark:border-[#27342d] bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
-          <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-50 border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
+          <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
-                <CraveLogo variant="full" size="md" />
+                <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white">
+                  crave<span className="text-[#86a018]">.</span>
+                </span>
               </Link>
             </div>
             <div className="flex items-center gap-3">
@@ -182,19 +205,6 @@ export default function Navbar() {
                   Sign up
                 </Link>
               </div>
-              <button
-                onClick={() => setShowMobileMenu((v) => !v)}
-                className="grid size-10 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] lg:hidden"
-                aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
-                aria-expanded={showMobileMenu}
-                aria-controls="mobile-menu-drawer"
-              >
-                {showMobileMenu ? (
-                  <X className="size-5 text-[#18201c] dark:text-white" />
-                ) : (
-                  <Menu className="size-5 text-[#18201c] dark:text-white" />
-                )}
-              </button>
             </div>
           </nav>
         </header>
@@ -204,100 +214,147 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#e5e9e1] dark:border-[#27342d] bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <div className="flex items-center gap-6">
-            <Link href={logoTargetLink} className="flex items-center gap-2 group">
-              <CraveLogo variant="full" size="md" />
+      <header className="sticky top-0 z-50 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl transition-colors duration-200">
+        <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3 gap-2">
+          {/* Logo & Deliver-To Location */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Link href={logoTargetLink} className="flex items-center gap-2 group shrink-0">
+              <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white hover:opacity-90 transition">
+                crave<span className="text-[#86a018]">.</span>
+              </span>
             </Link>
+
+            {isCustomer && (
+              <>
+                <div className="hidden sm:block h-6 w-px bg-gray-200 dark:bg-white/10 mx-1 shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 text-left group min-w-0 max-w-[130px] xs:max-w-[170px] sm:max-w-[240px] lg:max-w-[300px] rounded-2xl p-1 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
+                  title="Change delivery location"
+                >
+                  <div className="grid size-7 sm:size-8 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
+                    <MapPin className="size-3.5 sm:size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1 leading-none">
+                      <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-gray-400">
+                        DELIVER TO
+                      </span>
+                      <span className="text-[8px] sm:text-[9px] font-bold text-[#86a018] group-hover:underline">
+                        (Change)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-xs font-bold text-[#18201c] dark:text-white truncate mt-0.5">
+                      <span className="truncate">{deliveryAddress || user?.address || 'Select Delivery Location'}</span>
+                      <ChevronDown className="size-3 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
+                    </div>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Center navigation links */}
-          <div className="hidden items-center gap-6 text-xs font-semibold text-[#5a655f] dark:text-gray-300 lg:flex">
+          <div className="hidden items-center gap-1 text-xs font-bold justify-center bg-gray-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-gray-200/60 dark:border-white/10 backdrop-blur-xl lg:flex">
             {user ? (
               <>
-                {role === 'customer' ? (
+                {isCustomer ? (
                   <>
                     <Link
                       href="/user/explore"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
-                        pathname.includes('/user/explore') || pathname.includes('/user/dashboard')
-                          ? 'text-[#18201c] dark:text-white font-bold'
-                          : ''
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.includes('/user/explore') || (pathname.includes('/user/dashboard') && !pathname.includes('/user/cravexp'))
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
                       <Compass className="size-3.5 text-[#b5de28]" />
-                      Explore Kitchens
+                      <span>Explore</span>
                     </Link>
                     <Link
                       href="/user/cravexp"
-                      className={`flex items-center gap-1.5 transition hover:text-emerald-700 dark:hover:text-emerald-400 ${
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
                         pathname.includes('/user/cravexp')
-                          ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-                          : ''
+                          ? 'bg-white dark:bg-[#18201c] text-emerald-700 dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400'
                       }`}
                     >
                       <Zap className="size-3.5 text-emerald-600 fill-emerald-600" />
-                      <span>
-                        crave<strong className="text-emerald-600">XP</strong> Instamart
+                      <span>craveXP Instamart</span>
+                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-black uppercase">
+                        10m
                       </span>
                     </Link>
                     <Link
-                      href="/user/orders"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
-                        pathname.includes('/user/orders')
-                          ? 'text-[#18201c] dark:text-white font-bold'
-                          : ''
-                      }`}
-                    >
-                      <ShoppingBag className="size-3.5 text-[#b5de28]" />
-                      My Orders
-                    </Link>
-                    <Link
                       href="/user/track"
-                      className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
                         pathname.includes('/user/track')
-                          ? 'text-[#18201c] dark:text-white font-bold'
-                          : ''
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
                       <Bike className="size-3.5 text-[#b5de28]" />
-                      Track Live Drop
+                      <span>Track Drop</span>
+                    </Link>
+                    <Link
+                      href="/user/orders"
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.includes('/user/orders')
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                      }`}
+                    >
+                      <ShoppingBag className="size-3.5 text-[#b5de28]" />
+                      <span>Orders</span>
                     </Link>
                   </>
                 ) : (
                   <Link
                     href={currentDashboardLink}
-                    className={`flex items-center gap-1.5 transition hover:text-[#18201c] dark:hover:text-white ${
+                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
                       pathname.includes('dashboard')
-                        ? 'text-[#18201c] dark:text-white font-bold'
-                        : ''
+                        ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                     }`}
                   >
                     <LayoutDashboard className="size-3.5 text-[#b5de28]" />
-                    Dashboard ({roleDetails[role]?.title})
+                    <span>Dashboard ({roleDetails[normalizedRole as UserRole]?.title || user?.role || role})</span>
                   </Link>
                 )}
               </>
-            ) : (
-              <></>
-            )}
+            ) : null}
           </div>
 
           {/* Right side — auth & profile */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <ThemeToggle />
 
             {user && (
               <Link
                 href="/user/cart"
-                className="relative grid size-9 place-items-center rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-[#f8f9f6] dark:bg-[#18201c] text-[#18201c] dark:text-white hover:bg-[#f1f4ed] dark:hover:bg-[#27342d] transition shrink-0"
-                title="View Cart Page"
+                className="hidden sm:flex relative items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+                title="View Cart"
+              >
+                <ShoppingCart className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
+                <span>Cart ({cartCount})</span>
+                {cartSubtotal > 0 && (
+                  <span className="text-[#d9f447] dark:text-[#18201c] font-black">
+                    &bull; ₹{cartSubtotal}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {user && (
+              <Link
+                href="/user/cart"
+                className="sm:hidden relative grid size-8 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs"
+                title="View Cart"
               >
                 <ShoppingCart className="size-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#b5de28] text-[9px] font-black text-white shadow-sm">
+                  <span className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-[#86a018] text-[9px] font-black text-white shadow-sm">
                     {cartCount}
                   </span>
                 )}
@@ -308,7 +365,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserDropdown((v) => !v)}
-                  className="flex items-center gap-2.5 rounded-full border border-[#dbe1d7] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-1 pr-3 transition hover:bg-[#f4f7f1] dark:hover:bg-[#27342d]"
+                  className="flex items-center gap-2 rounded-full border border-[#dbe1d7] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-1 pr-2.5 transition hover:bg-[#f4f7f1] dark:hover:bg-[#27342d]"
                 >
                   {user.avatar ? (
                     <img
@@ -326,14 +383,14 @@ export default function Navbar() {
                       {user.name}
                     </p>
                     <p className="mt-0.5 text-[10px] font-medium capitalize text-[#75817a] dark:text-gray-400">
-                      {user.role}
+                      {isCustomer ? 'Customer' : user.role}
                     </p>
                   </div>
-                  <ChevronDown className="size-3.5 text-[#88928a] dark:text-gray-400" />
+                  <ChevronDown className="size-3 text-[#88928a] dark:text-gray-400" />
                 </button>
 
                 {showUserDropdown && (
-                  <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 shadow-2xl">
+                  <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                     {/* User info header */}
                     <div className="border-b border-[#eff2ed] dark:border-[#27342d] px-3 py-2.5">
                       <p className="text-xs font-bold text-[#18201c] dark:text-white">
@@ -343,14 +400,18 @@ export default function Navbar() {
                         {user.email}
                       </p>
                       <span
-                        className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${roleDetails[user.role]?.bg} ${roleDetails[user.role]?.color}`}
+                        className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
+                          isCustomer
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : (roleDetails[user.role]?.bg || 'bg-gray-100') + ' ' + (roleDetails[user.role]?.color || 'text-gray-700')
+                        }`}
                       >
-                        {user.role} Account
+                        {isCustomer ? 'Customer View' : `${user.role} Account`}
                       </span>
                     </div>
 
                     {/* Role-specific links */}
-                    {user.role === 'customer' ? (
+                    {isCustomer ? (
                       <>
                         <Link
                           href="/user/explore"
@@ -366,15 +427,7 @@ export default function Navbar() {
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                         >
                           <Zap className="size-4 text-emerald-600 fill-emerald-600" />
-                          craveXP. Instamart (10 Min)
-                        </Link>
-                        <Link
-                          href="/vendor/crave-ep"
-                          onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-[#18201c] dark:text-white bg-[#f0f3eb] dark:bg-[#27342d] hover:bg-[#e2e7dc] dark:hover:bg-[#324239]"
-                        >
-                          <Store className="size-4 text-[#b5de28]" />
-                          craveXP. Console
+                          craveXP Instamart (10 Min)
                         </Link>
                         <Link
                           href="/user/orders"
@@ -397,7 +450,7 @@ export default function Navbar() {
                           onClick={() => setShowUserDropdown(false)}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
                         >
-                          <LayoutDashboard className="size-4 text-[#b5de28]" />
+                          <User className="size-4 text-[#b5de28]" />
                           My Profile Settings
                         </Link>
                       </>
@@ -411,14 +464,16 @@ export default function Navbar() {
                           <LayoutDashboard className="size-4 text-[#b5de28]" />
                           Go to Dashboard
                         </Link>
-                        <Link
-                          href="/vendor/crave-ep"
-                          onClick={() => setShowUserDropdown(false)}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
-                        >
-                          <Store className="size-4 text-emerald-600" />
-                          craveXP. Console
-                        </Link>
+                        {(normalizedRole === 'cravexp_store_vendor' || normalizedRole === 'admin') && (
+                          <Link
+                            href="/vendor/crave-ep"
+                            onClick={() => setShowUserDropdown(false)}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+                          >
+                            <Store className="size-4 text-emerald-600" />
+                            craveXP. Console
+                          </Link>
+                        )}
                       </>
                     )}
 
@@ -543,7 +598,7 @@ export default function Navbar() {
               >
                 <span>Dashboard</span>
                 <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 capitalize">
-                  {role}
+                  {isCustomer ? 'Customer' : user?.role || role}
                 </span>
               </Link>
 
@@ -556,6 +611,20 @@ export default function Navbar() {
               >
                 <Compass className="size-5 text-[#b5de28]" />
                 Explore
+              </Link>
+
+              <Link
+                href="/user/cravexp"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+              >
+                <span className="flex items-center gap-3">
+                  <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+                  <span>craveXP Instamart</span>
+                </span>
+                <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                  10 MIN
+                </span>
               </Link>
 
               <Link
@@ -675,6 +744,20 @@ export default function Navbar() {
           )}
         </nav>
       </aside>
+
+      {showAddressModal && (
+        <AddressModal
+          isOpen={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onSelectAddress={(addr) => {
+            setDeliveryAddress(addr.address)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('crave_selected_address', addr.address)
+            }
+            setShowAddressModal(false)
+          }}
+        />
+      )}
     </>
   )
 }
