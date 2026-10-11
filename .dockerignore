@@ -17,3 +17,5 @@ coverage
 .prisma
 dist
 .agents
+load-test-results.json
+load-tests/

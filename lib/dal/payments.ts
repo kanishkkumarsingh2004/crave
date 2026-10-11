@@ -42,9 +42,15 @@ export async function getActivePaymentConfig() {
     config = await prisma.paymentConfig.findFirst({ orderBy: { updated_at: 'desc' } })
   }
   if (config) {
+    const gstRate =
+      config.gst_rate_percent != null
+        ? Number(config.gst_rate_percent)
+        : config.gst_rate != null
+          ? Number(config.gst_rate)
+          : undefined
     return {
       ...config,
-      ...(config.gst_rate != null && { gst_rate_percent: Number(config.gst_rate) }),
+      ...(gstRate != null && { gst_rate_percent: gstRate, gst_rate: gstRate }),
       ...(config.surge_multiplier != null && {
         surge_multiplier: Number(config.surge_multiplier),
       }),
@@ -105,7 +111,10 @@ export async function upsertPaymentConfig(data: {
 
   const prismaData = {
     ...cleaned,
-    ...(gst_rate_percent != null && { gst_rate: gst_rate_percent }),
+    ...(gst_rate_percent != null && {
+      gst_rate: gst_rate_percent,
+      gst_rate_percent: gst_rate_percent,
+    }),
     updated_at: new Date(),
   }
 

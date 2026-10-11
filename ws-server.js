@@ -706,6 +706,12 @@ function removeDriverFromOrder(driverId, orderId) {
 }
 
 const server = createServer((req, res) => {
+  if (req.url === '/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ status: 'healthy', uptime: process.uptime() }))
+    return
+  }
+
   if (req.url && req.url.startsWith('/__ws/broadcast')) {
     if (req.method === 'POST') {
       const incomingSecret = req.headers['x-internal-secret']

@@ -3,29 +3,47 @@ import { listOrders } from '@/lib/dal/orders'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { calculateFullBreakdown } from '@/lib/calculator'
+import { getTestUser, isTestRequest, MOCK_TEST_DRIVER } from '@/lib/test-auth'
 
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token)
-      token =
-        (await cookies()).get('crave_auth_token')?.value ||
-        (await cookies()).get('drop_auth_token')?.value ||
-        ''
-    const actor = token ? await verifyToken(token) : null
+    if (!token) {
+      try {
+        const c = await cookies()
+        token =
+          c.get('crave_auth_token')?.value ||
+          c.get('drop_auth_token')?.value ||
+          ''
+      } catch {}
+    }
+    let actor = token ? await verifyToken(token) : null
 
-    if (process.env.NODE_ENV !== 'test' && !actor) {
+    if (!actor && process.env.NODE_ENV === 'test' && isTestRequest(request)) {
+      actor = getTestUser(request) || MOCK_TEST_DRIVER
+    }
+
+    if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    const isDriverOrAdmin = actor.role === 'rider' || actor.role === 'admin'
+    if (!isDriverOrAdmin) {
+      return NextResponse.json({ error: 'Rider or administrator access required' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
     const driverId =
-      actor?.role === 'admin'
-        ? searchParams.get('driverId') || actor?.id || 'driver_partner'
-        : actor?.id || searchParams.get('driverId') || 'driver_partner'
+      actor.role === 'admin'
+        ? searchParams.get('driverId') || actor.id || 'driver_partner'
+        : actor.id || searchParams.get('driverId') || 'driver_partner'
 
-    const allOrders = await listOrders()
+    const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 200)
+    const allOrders = await listOrders({
+      riderId: driverId !== 'driver_partner' ? driverId : undefined,
+      limit,
+    })
 
     // Filter orders assigned to this driver
     const driverOrders = allOrders.filter(

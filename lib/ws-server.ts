@@ -1,3 +1,4 @@
+import http from 'http'
 import { redis, isRedisAvailable } from '@/lib/redis'
 
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
@@ -7,7 +8,7 @@ const WS_INTERNAL_SECRET = process.env.WS_INTERNAL_SECRET || 'crave_internal_ws_
 
 function ensureInternalSecret() {
   if (!process.env.WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
-    console.warn('Notice: WS_INTERNAL_SECRET not set in env, using default broadcast secret.')
+    throw new Error('FATAL: WS_INTERNAL_SECRET must be set in production environment.')
   }
 }
 
@@ -44,7 +45,6 @@ export const broadcast = async (
   }
 
   try {
-    const http = require('http')
 
     return new Promise<boolean>((resolve) => {
       const req = http.request(

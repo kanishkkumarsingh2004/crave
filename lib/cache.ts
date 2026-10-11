@@ -69,17 +69,26 @@ export async function cacheDel(...keys: string[]): Promise<number> {
 }
 
 /**
- * Delete all keys matching a pattern
+ * Delete all keys matching a pattern using non-blocking SCAN
  */
 export async function cacheDelPattern(pattern: string, namespace?: string): Promise<number> {
   if (!isRedisAvailable() || !redis) return 0
 
   try {
     const patternKey = buildKey(pattern, namespace)
-    const keys = await redis.keys(patternKey)
-    if (keys.length === 0) return 0
-    const result = await redis.del(...keys)
-    return result
+    let cursor = '0'
+    let totalDeleted = 0
+
+    do {
+      const [nextCursor, matchedKeys] = await redis.scan(cursor, 'MATCH', patternKey, 'COUNT', 100)
+      cursor = nextCursor
+      if (matchedKeys.length > 0) {
+        const deleted = await redis.del(...matchedKeys)
+        totalDeleted += deleted
+      }
+    } while (cursor !== '0')
+
+    return totalDeleted
   } catch {
     return 0
   }

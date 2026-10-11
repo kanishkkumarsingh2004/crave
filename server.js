@@ -47,5 +47,11 @@ app.prepare().then(() => {
   })
 
   const PORT = process.env.PORT || 3000
-  server.listen(PORT, () => {})
+  server.on('error', (err) => {
+    console.error('Server error:', err)
+    process.exit(1)
+  })
+  server.listen(PORT, () => {
+    console.log(`> Ready on http://localhost:${PORT}`)
+  })
 })

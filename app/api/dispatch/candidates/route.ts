@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
 
 export async function GET(request: Request) {
   try {
@@ -13,19 +14,22 @@ export async function GET(request: Request) {
         token = c.get('crave_auth_token')?.value || ''
       } catch {}
     }
-    if (process.env.NODE_ENV !== 'test') {
-      const actor = token ? await verifyToken(token) : null
-      if (
-        !actor ||
-        (actor.role !== 'admin' &&
-          actor.role !== 'restaurant_vendor' &&
-          actor.role !== 'cravexp_store_vendor')
-      ) {
-        return NextResponse.json(
-          { error: 'Unauthorized to query driver candidates' },
-          { status: 403 }
-        )
-      }
+
+    let actor = token ? await verifyToken(token) : null
+    if (!actor && process.env.NODE_ENV === 'test' && isTestRequest(request)) {
+      actor = getTestUser(request) || MOCK_TEST_VENDOR
+    }
+
+    if (
+      !actor ||
+      (actor.role !== 'admin' &&
+        actor.role !== 'restaurant_vendor' &&
+        actor.role !== 'cravexp_store_vendor')
+    ) {
+      return NextResponse.json(
+        { error: 'Unauthorized to query driver candidates' },
+        { status: 403 }
+      )
     }
     const { searchParams } = new URL(request.url)
     const lat = parseFloat(searchParams.get('lat') || '')

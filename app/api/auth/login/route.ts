@@ -1,4 +1,4 @@
-import { createToken, JWTPayload } from '@/lib/jwt'
+import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
       id: profile.id,
       name: profile?.name || profile?.email?.split('@')[0] || 'User',
       email: profile?.email || email,
-      role: profile?.role || 'customer',
+      role: (profile?.role as JWTRole) || 'user',
       phone: profile?.phone ?? undefined,
       address: profile?.address ?? undefined,
       avatar: profile?.avatar ?? undefined,

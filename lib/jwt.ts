@@ -15,23 +15,29 @@ function getJwtSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
+export type JWTRole = 'user' | 'restaurant_vendor' | 'cravexp_store_vendor' | 'rider' | 'admin'
+
 export interface JWTPayload {
   id: string
   name: string
   email: string
-  role: 'user' | 'restaurant_vendor' | 'cravexp_store_vendor' | 'rider' | 'admin'
+  role: JWTRole
   phone?: string
   address?: string
   avatar?: string
   restaurantName?: string
+  restaurantId?: string
+  restaurant_id?: string
   cuisine?: string
   vehicleType?: string
   licensePlate?: string
+  vehicleNo?: string
   /** ISO 639-1 locale code stored on the user row, e.g. 'en' | 'kn' */
   locale?: string
   /** JWT ID for token revocation */
   jti?: string
-  [key: string]: any
+  iat?: number
+  exp?: number
 }
 
 export async function createToken(payload: JWTPayload): Promise<string> {
@@ -50,7 +56,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     const { payload } = await jwtVerify(token, getJwtSecretKey(), {
       algorithms: ['HS256'],
     })
-    const payloadWithJti = payload as JWTPayload & { jti?: string }
+    const payloadWithJti = payload as unknown as JWTPayload & { jti?: string }
 
     // Determine whether Redis was configured (REDIS_URL set) vs just unavailable right now.
     // - If Redis was never configured: skip blacklist checks (acceptable in dev/test).
@@ -151,7 +157,7 @@ export async function decodeToken(token: string): Promise<JWTPayload | null> {
   try {
     const { decodeJwt } = await import('jose')
     const decoded = decodeJwt(token)
-    return decoded as JWTPayload
+    return decoded as unknown as JWTPayload
   } catch (error) {
     return null
   }

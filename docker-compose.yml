@@ -1,13 +1,44 @@
 name: crave-food-delivery
 
 services:
+  # ─── 1. PostgreSQL Relational Database ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: crave-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crave_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      # Expose to localhost only for administrative tools/migrations, never 0.0.0.0
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-crave_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ─── 2. Redis In-Memory Cache & Pub/Sub ────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: crave-redis
     restart: unless-stopped
-    command: ['redis-server', '--appendonly', 'yes']
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
     ports:
-      - '6380:6379'
+      # Expose to localhost only for debugging/tools, never public interfaces
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -15,17 +46,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
 
+  # ─── 3. Backend WebSocket Real-Time Server ─────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - DATABASE_URL
-      # CR-012: No secrets in build args - injected at runtime via env_file
+        - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgrespassword@postgres:5432/crave_db?schema=public}
     container_name: crave-backend
     restart: unless-stopped
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
@@ -33,9 +74,13 @@ services:
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
+      DIRECT_URL: ${CONTAINER_DIRECT_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
+      REDIS_URL: ${CONTAINER_REDIS_URL:-redis://redis:6379}
+      WS_INTERNAL_SECRET: ${WS_INTERNAL_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
     command: ['node', 'ws-server.js']
-    # CR-015: WebSocket port kept internal (not published to host)
+    # WebSocket port kept strictly internal on crave-network (proxied via frontend)
     expose:
       - '8000'
     healthcheck:
@@ -44,23 +89,33 @@ services:
           'CMD',
           'node',
           '-e',
-          "const http=require('http');const r=http.get('http://localhost:8000/__ws/broadcast',{timeout:5000},(res)=>{process.exit(res.statusCode<500?0:1)});r.on('error',()=>process.exit(1))",
+          "const http=require('http');const r=http.get('http://localhost:8000/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
         ]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 15s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
 
+  # ─── 4. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - DATABASE_URL
-      # CR-012: No secrets in build args - injected at runtime via env_file
+        - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgrespassword@postgres:5432/crave_db?schema=public}
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
       backend:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -69,30 +124,50 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
+      DIRECT_URL: ${CONTAINER_DIRECT_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
+      REDIS_URL: ${CONTAINER_REDIS_URL:-redis://redis:6379}
       WS_PORT: 8000
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      WS_INTERNAL_SECRET: ${WS_INTERNAL_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_WS_PORT: 8000
       NEXT_PUBLIC_WS_HOST: backend
     command: ['node', 'server.js']
-    # CR-015: Only expose public HTTP port
+    # Public ingress HTTP port
     ports:
-      - '3000:3000'
+      - '${PORT:-3000}:3000'
     healthcheck:
       test:
         [
           'CMD',
           'node',
           '-e',
-          "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:3000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
+          "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
         ]
-      interval: 30s
+      interval: 20s
       timeout: 5s
-      start_period: 30s
       retries: 3
+      start_period: 30s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+# ─── Networks & Persistent Volumes ──────────────────────────────────────────
+networks:
+  crave-network:
+    name: crave-network
+    driver: bridge
 
 volumes:
+  postgres_data:
+    name: crave_postgres_data
   redis_data:
+    name: crave_redis_data
