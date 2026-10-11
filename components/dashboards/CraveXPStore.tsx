@@ -222,69 +222,69 @@ export default function CraveXPStore() {
   return (
     <div className="min-h-screen bg-[#f7f8f5] dark:bg-[#0c100e] text-[#18201c] dark:text-white pb-36 transition-colors duration-200">
       {/* ULTRA-PREMIUM CRAVEXP OBSIDIAN HERO SECTION */}
-      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-5 sm:pt-6">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f0d] via-[#121a15] to-[#070b09] p-5 sm:p-8 lg:p-10 text-white shadow-2xl border border-white/10">
+      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-3 sm:pt-6">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0a0f0d] via-[#121a15] to-[#070b09] p-4 sm:p-7 lg:p-9 text-white shadow-2xl border border-white/10">
           {/* Ambient Lighting & Mesh Glows */}
           <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/15 blur-3xl pointer-events-none" />
           <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40" />
 
-          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Left Content */}
             <div className="max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2.5 mb-3">
+              <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-2.5">
                 <CraveLogo variant="cravexp" size="lg" theme="light" />
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-[10px] font-black tracking-wider text-emerald-400 uppercase shadow-xs">
-                  <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                  10-MIN EXPRESS DISPATCH
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black tracking-wider text-emerald-400 uppercase shadow-xs">
+                  <span className="size-1.5 sm:size-2 rounded-full bg-emerald-400 animate-pulse" />
+                  10-MIN DISPATCH
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447]/10 border border-[#d9f447]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#d9f447]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447]/10 border border-[#d9f447]/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-[#d9f447]">
                   <Flame className="size-3 text-[#d9f447]" />
-                  Live Dark Store
+                  Live Store
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
                 Fresh Groceries &amp; Daily Essentials in 10 Minutes
               </h1>
-              <p className="mt-2 text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
-                Direct fulfillment from our automated micro-warehouse. Chilled, packed, and delivered to your doorstep at lightning speed.
+              <p className="mt-1 sm:mt-1.5 text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
+                Direct fulfillment from our automated micro-warehouse. Chilled, packed, and delivered to your doorstep.
               </p>
 
               {/* Dark Store Hub Location Pill */}
-              <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-                <div className="inline-flex items-center gap-1.5 rounded-2xl bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-300">
-                  <MapPin className="size-3.5 text-[#d9f447] shrink-0" />
-                  <span className="truncate max-w-[280px] sm:max-w-none">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <div className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-gray-300">
+                  <MapPin className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
+                  <span className="truncate max-w-[240px] sm:max-w-none">
                     {CRAVEXP_DARK_STORE_INFO.address}
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded-xl border border-emerald-500/20">
+                <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-xl border border-emerald-500/20">
                   <CheckCircle2 className="size-3" />
-                  Fulfillment Verified
+                  Verified Hub
                 </div>
               </div>
 
               {/* Service Badges */}
-              <div className="mt-4 grid grid-cols-3 gap-2 max-w-lg pt-3 border-t border-white/10">
-                <div className="flex items-center gap-1.5 text-gray-300">
-                  <Zap className="size-3.5 text-[#d9f447] shrink-0" />
-                  <span className="text-[11px] font-bold">~3.8m Dispatch</span>
+              <div className="mt-3 flex flex-wrap items-center gap-3 sm:gap-4 pt-2.5 border-t border-white/10 text-gray-300 text-[10px] sm:text-xs font-bold">
+                <div className="flex items-center gap-1">
+                  <Zap className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
+                  <span>~3.8m Dispatch</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-gray-300">
-                  <ShieldCheck className="size-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-[11px] font-bold">100% Cold-Chain</span>
+                <div className="flex items-center gap-1">
+                  <ShieldCheck className="size-3 sm:size-3.5 text-emerald-400 shrink-0" />
+                  <span>100% Cold-Chain</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-gray-300">
-                  <Package className="size-3.5 text-[#d9f447] shrink-0" />
-                  <span className="text-[11px] font-bold">Tamper Proof</span>
+                <div className="flex items-center gap-1">
+                  <Package className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
+                  <span>Tamper Proof</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Card: Quick Cart / Inventory Status */}
-            <div className="flex flex-row sm:flex-col items-stretch gap-3 shrink-0 lg:min-w-[220px]">
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 text-center hidden sm:block">
+            {/* Right Card: Quick Cart / Inventory Status (Desktop only to save mobile height) */}
+            <div className="hidden lg:flex flex-col items-stretch gap-3 shrink-0 min-w-[220px]">
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 text-center">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
                   LIVE CATALOG
                 </span>
@@ -299,7 +299,7 @@ export default function CraveXPStore() {
 
               <button
                 onClick={() => router.push('/user/cart')}
-                className="flex-1 flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-6 py-3.5 text-xs font-black text-[#0d1410] shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-6 py-3.5 text-xs font-black text-[#0d1410] shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <ShoppingCart className="size-4" />
                 <span>{cartTotalItems} {cartTotalItems === 1 ? 'Item' : 'Items'}</span>
@@ -311,16 +311,16 @@ export default function CraveXPStore() {
       </section>
 
       {/* SEARCH, SORT & FILTER BAR */}
-      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-5 sm:pt-6">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-3 sm:pt-5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           {/* Instant Search Bar */}
-          <div className="relative flex-1 flex items-center rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-4 py-3 shadow-xs focus-within:border-[#86a018] dark:focus-within:border-[#d9f447] transition">
-            <Search className="size-4 text-gray-400 mr-2.5 shrink-0" />
+          <div className="relative flex-1 flex items-center rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-3.5 py-2.5 sm:py-3 shadow-xs focus-within:border-[#86a018] dark:focus-within:border-[#d9f447] transition">
+            <Search className="size-4 text-gray-400 mr-2 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search milk, bread, eggs, apples, daily essentials..."
+              placeholder="Search milk, bread, eggs, apples, essentials..."
               className="w-full bg-transparent text-xs font-bold outline-none placeholder:text-gray-400 text-[#18201c] dark:text-white"
             />
             {searchQuery && (
@@ -334,35 +334,35 @@ export default function CraveXPStore() {
             )}
           </div>
 
-          {/* Quick Filters */}
+          {/* Quick Filters - Clean single row on mobile */}
           <div className="flex items-center gap-2 shrink-0">
             {/* In-Stock Toggle */}
             <button
               onClick={() => setInStockOnly((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-2xl px-3.5 py-3 text-xs font-bold border transition cursor-pointer ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 sm:py-3 text-xs font-bold border transition cursor-pointer ${
                 inStockOnly
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs'
                   : 'bg-white dark:bg-[#141b17] border-gray-200/90 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
               }`}
             >
               <Check className={`size-3.5 ${inStockOnly ? 'text-emerald-600' : 'text-gray-400'}`} />
-              <span>In Stock Only</span>
+              <span>In Stock</span>
             </button>
 
             {/* Sort Dropdown */}
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-initial">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 aria-label="Sort products"
-                className="appearance-none rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-4 py-3 pr-8 text-xs font-bold text-gray-700 dark:text-gray-300 outline-none hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer"
+                className="w-full appearance-none rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-3.5 py-2.5 sm:py-3 pr-7 text-xs font-bold text-gray-700 dark:text-gray-300 outline-none hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer"
               >
-                <option value="featured">Featured First</option>
+                <option value="featured">Featured</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
                 <option value="discount">Biggest Discount</option>
               </select>
-              <SlidersHorizontal className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3 text-gray-400" />
+              <SlidersHorizontal className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-gray-400" />
             </div>
           </div>
         </div>
@@ -406,7 +406,7 @@ export default function CraveXPStore() {
       </section>
 
       {/* PRODUCT GRID CONTAINER */}
-      <main className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-6">
+      <main className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-6 pb-28 sm:pb-24">
         {/* Header row */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -533,12 +533,12 @@ export default function CraveXPStore() {
                   </div>
 
                   {/* Product Image Container */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-50 dark:bg-white/[0.03] p-2.5 mb-2.5 flex items-center justify-center">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-[#1a221e] mb-2.5">
                     <img
                       src={item.image}
                       alt={item.name}
                       loading="lazy"
-                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-108"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         // Fallback image if broken
                         const target = e.target as HTMLImageElement
@@ -620,17 +620,17 @@ export default function CraveXPStore() {
 
       {/* FLOATING GLASS BOTTOM CART DRAWER */}
       {cartTotalItems > 0 && (
-        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:left-4 sm:right-4 z-40 mx-auto max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center justify-between rounded-3xl bg-[#0a0f0d]/95 dark:bg-[#070b09]/95 backdrop-blur-2xl p-3 sm:p-3.5 text-white shadow-2xl border border-white/15">
-            <div className="flex items-center gap-3">
-              <div className="grid size-11 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md shadow-[#d9f447]/20">
-                <ShoppingBag className="size-5" />
+        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:left-auto sm:right-6 sm:w-[420px] z-[70] animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center justify-between rounded-2xl sm:rounded-3xl bg-[#0a0f0d]/95 dark:bg-[#070b09]/95 backdrop-blur-2xl p-2.5 sm:p-3.5 text-white shadow-2xl border border-white/15">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="grid size-9 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md shadow-[#d9f447]/20 shrink-0">
+                <ShoppingBag className="size-4 sm:size-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-[#d9f447]">
+              <div className="min-w-0">
+                <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#d9f447] truncate">
                   {cartTotalItems} {cartTotalItems === 1 ? 'ITEM' : 'ITEMS'} IN CART
                 </p>
-                <p className="text-base font-black text-white leading-tight">
+                <p className="text-sm sm:text-base font-black text-white leading-tight">
                   ₹{cartSubtotal}
                 </p>
               </div>
@@ -638,10 +638,10 @@ export default function CraveXPStore() {
 
             <button
               onClick={() => router.push('/user/cart')}
-              className="flex items-center gap-2 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-5 py-3 text-xs font-black text-[#18201c] shadow-lg shadow-[#d9f447]/25 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs font-black text-[#18201c] shadow-lg shadow-[#d9f447]/25 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer shrink-0"
             >
-              <span>Proceed to Checkout</span>
-              <ArrowRight className="size-4" />
+              <span>Checkout</span>
+              <ArrowRight className="size-3.5 sm:size-4" />
             </button>
           </div>
         </div>
