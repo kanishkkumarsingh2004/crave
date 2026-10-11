@@ -1,44 +1,12 @@
 name: crave-food-delivery
 
 services:
-  # ─── 1. PostgreSQL Relational Database ─────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: crave-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-crave_db}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      # Expose to localhost only for administrative tools/migrations, never 0.0.0.0
-      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-crave_db}']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - crave-network
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '10m'
-        max-file: '3'
-
-  # ─── 2. Redis In-Memory Cache & Pub/Sub ────────────────────────────────────
+  # ─── 1. Redis In-Memory Cache & Pub/Sub (isolated for crave) ───────────────
   redis:
     image: redis:7-alpine
     container_name: crave-redis
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
-    ports:
-      # Expose to localhost only for debugging/tools, never public interfaces
-      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -48,25 +16,23 @@ services:
       retries: 5
       start_period: 5s
     networks:
-      - crave-network
+      crave-network:
+        aliases:
+          - redis
     logging:
       driver: 'json-file'
       options:
         max-size: '10m'
         max-file: '3'
 
-  # ─── 3. Backend WebSocket Real-Time Server ─────────────────────────────────
+  # ─── 2. Backend WebSocket Real-Time Server ─────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgrespassword@postgres:5432/crave_db?schema=public}
     container_name: crave-backend
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
@@ -74,13 +40,8 @@ services:
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
-      DIRECT_URL: ${CONTAINER_DIRECT_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
-      REDIS_URL: ${CONTAINER_REDIS_URL:-redis://redis:6379}
-      WS_INTERNAL_SECRET: ${WS_INTERNAL_SECRET}
-      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: redis://redis:6379
     command: ['node', 'ws-server.js']
-    # WebSocket port kept strictly internal on crave-network (proxied via frontend)
     expose:
       - '8000'
     healthcheck:
@@ -103,19 +64,15 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # ─── 4. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
+  # ─── 3. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgrespassword@postgres:5432/crave_db?schema=public}
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
       backend:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -124,20 +81,12 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
-      DIRECT_URL: ${CONTAINER_DIRECT_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-crave_db}?schema=public}
-      REDIS_URL: ${CONTAINER_REDIS_URL:-redis://redis:6379}
       WS_PORT: 8000
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      WS_INTERNAL_SECRET: ${WS_INTERNAL_SECRET}
-      JWT_SECRET: ${JWT_SECRET}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      NEXT_PUBLIC_WS_PORT: 8000
-      NEXT_PUBLIC_WS_HOST: backend
+      REDIS_URL: redis://redis:6379
     command: ['node', 'server.js']
-    # Public ingress HTTP port
     ports:
       - '${PORT:-3000}:3000'
     healthcheck:
@@ -167,7 +116,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
-    name: crave_postgres_data
   redis_data:
     name: crave_redis_data
