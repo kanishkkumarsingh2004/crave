@@ -4,6 +4,7 @@ import { useDriver } from '@/lib/driver-context'
 import {
   CheckCircle2,
   Clock3,
+  Loader2,
   MapPin,
   MessageSquare,
   Navigation,
@@ -27,6 +28,8 @@ export default function DriverDashboardPage() {
   } = useDriver()
 
   const [otpInput, setOtpInput] = useState('')
+  const [otpError, setOtpError] = useState('')
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [delayModalOpen, setDelayModalOpen] = useState(false)
   const [smsDrawerOpen, setSmsDrawerOpen] = useState(false)
   const [sentSmsMsg, setSentSmsMsg] = useState('')
@@ -214,11 +217,18 @@ export default function DriverDashboardPage() {
                       type="text"
                       maxLength={6}
                       value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value)}
-                      className="w-36 rounded-xl border border-sky-500/50 bg-[#1c2620] px-3 py-2 text-center text-base font-extrabold tracking-widest text-white outline-none focus:border-sky-400 font-mono"
+                      disabled={isVerifyingOtp}
+                      onChange={(e) => {
+                        setOtpInput(e.target.value)
+                        setOtpError('')
+                      }}
+                      className="w-36 rounded-xl border border-sky-500/50 bg-[#1c2620] px-3 py-2 text-center text-base font-extrabold tracking-widest text-white outline-none focus:border-sky-400 font-mono disabled:opacity-60"
                       placeholder="xxxxxx"
                     />
                   </div>
+                  {otpError && (
+                    <p className="mt-2 text-xs font-bold text-rose-400">{otpError}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -256,16 +266,38 @@ export default function DriverDashboardPage() {
 
             {activeTask.step === 'arrived_customer' && (
               <button
-                onClick={() => {
-                  const res = completeDelivery(otpInput)
-                  if (!res.success) {
-                    alert(res.message)
+                disabled={isVerifyingOtp}
+                onClick={async () => {
+                  const trimmed = otpInput.trim()
+                  if (!trimmed || trimmed.length !== 6 || !/^\d{6}$/.test(trimmed)) {
+                    setOtpError('Please enter the valid 6-digit Delivery OTP provided by the customer.')
+                    return
+                  }
+                  setIsVerifyingOtp(true)
+                  setOtpError('')
+                  try {
+                    const res = await completeDelivery(trimmed)
+                    if (!res.success) {
+                      setOtpError(res.message)
+                    } else {
+                      setOtpInput('')
+                      setOtpError('')
+                    }
+                  } finally {
+                    setIsVerifyingOtp(false)
                   }
                 }}
-                className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] shadow-lg transition hover:bg-[#c2dc3a] flex items-center justify-center gap-2"
+                className="mt-2 w-full rounded-full bg-[#d9f447] py-3.5 text-xs font-extrabold text-[#121815] shadow-lg transition hover:bg-[#c2dc3a] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                <CheckCircle2 className="size-4 text-[#121815]" /> Verify OTP &amp; Complete
-                Delivery
+                {isVerifyingOtp ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin text-[#121815]" /> Verifying OTP with Server...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4 text-[#121815]" /> Verify OTP &amp; Complete Delivery
+                  </>
+                )}
               </button>
             )}
           </div>

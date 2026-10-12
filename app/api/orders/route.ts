@@ -271,7 +271,21 @@ export async function GET(request: Request) {
         includeAvailableForRider: isRiderActor || Boolean(searchParams.get('available')),
       })
 
-      return NextResponse.json({ success: true, orders })
+      // Sanitize delivery_otp for non-customer, non-admin callers (riders and vendors must not see the secret OTP)
+      let sanitizedOrders = orders
+      if (
+        actor &&
+        actor.role !== 'admin' &&
+        actor.role !== 'user' &&
+        (actor.role as string) !== 'customer'
+      ) {
+        sanitizedOrders = orders.map((o: any) => {
+          const { delivery_otp, ...safe } = o
+          return safe
+        })
+      }
+
+      return NextResponse.json({ success: true, orders: sanitizedOrders })
     } catch (error) {
       return handleAuthError(error)
     }

@@ -14,6 +14,7 @@ import {
   DollarSign,
   KeyRound,
   LayoutGrid,
+  Loader2,
   MapPin,
   Navigation,
   PackageCheck,
@@ -62,6 +63,7 @@ export default function DriverAcceptedOrdersPage() {
 
   const [otpInput, setOtpInput] = useState('')
   const [otpError, setOtpError] = useState('')
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [liveOrders, setLiveOrders] = useState<ManagedOrder[]>([])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'accepted' | 'preparing' | 'ready'>('all')
@@ -145,15 +147,26 @@ export default function DriverAcceptedOrdersPage() {
     fetchLiveOrders()
   }, [])
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const result = completeDelivery(otpInput)
-    if (!result.success) {
-      setOtpError(result.message)
-    } else {
-      setOtpError('')
-      setOtpInput('')
-      fetchLiveOrders()
+    const trimmed = otpInput.trim()
+    if (!trimmed || trimmed.length !== 6 || !/^\d{6}$/.test(trimmed)) {
+      setOtpError('Please enter the valid 6-digit Delivery OTP provided by the customer.')
+      return
+    }
+    setIsVerifyingOtp(true)
+    setOtpError('')
+    try {
+      const result = await completeDelivery(trimmed)
+      if (!result.success) {
+        setOtpError(result.message)
+      } else {
+        setOtpError('')
+        setOtpInput('')
+        fetchLiveOrders()
+      }
+    } finally {
+      setIsVerifyingOtp(false)
     }
   }
 
@@ -331,14 +344,27 @@ export default function DriverAcceptedOrdersPage() {
                     maxLength={6}
                     placeholder="xxxxxx"
                     value={otpInput}
-                    onChange={(e) => setOtpInput(e.target.value)}
-                    className="flex-1 rounded-xl border border-[#2d3b32] bg-[#1c2620] p-3 font-mono text-center text-lg font-bold text-white outline-none tracking-widest focus:border-[#d9f447]"
+                    disabled={isVerifyingOtp}
+                    onChange={(e) => {
+                      setOtpInput(e.target.value)
+                      setOtpError('')
+                    }}
+                    className="flex-1 rounded-xl border border-[#2d3b32] bg-[#1c2620] p-3 font-mono text-center text-lg font-bold text-white outline-none tracking-widest focus:border-[#d9f447] disabled:opacity-60"
                   />
                   <button
                     type="submit"
-                    className="rounded-xl bg-emerald-500 px-6 py-3 text-xs font-extrabold text-[#121815] shadow-md hover:bg-emerald-400 transition flex items-center gap-1.5 cursor-pointer"
+                    disabled={isVerifyingOtp}
+                    className="rounded-xl bg-emerald-500 px-6 py-3 text-xs font-extrabold text-[#121815] shadow-md hover:bg-emerald-400 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
                   >
-                    <CheckCircle2 className="size-4" /> Verify OTP &amp; Complete
+                    {isVerifyingOtp ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin text-[#121815]" /> Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="size-4" /> Verify OTP &amp; Complete
+                      </>
+                    )}
                   </button>
                 </div>
                 {otpError && <p className="text-xs font-bold text-rose-400">{otpError}</p>}

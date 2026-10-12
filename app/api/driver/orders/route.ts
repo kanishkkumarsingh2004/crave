@@ -126,12 +126,18 @@ export async function GET(request: Request) {
         }
       })
 
+    const sanitizeForDriver = (o: any) => {
+      if (!o) return o
+      const { delivery_otp, ...safe } = o
+      return safe
+    }
+
     return NextResponse.json({
       success: true,
       driverId,
-      activeOrder: activeOrder || null,
+      activeOrder: sanitizeForDriver(activeOrder) || null,
       completedTrips,
-      allAssignedOrders: driverOrders,
+      allAssignedOrders: driverOrders.map(sanitizeForDriver),
     })
   } catch (error: any) {
     console.error('[GET /api/driver/orders]', error)

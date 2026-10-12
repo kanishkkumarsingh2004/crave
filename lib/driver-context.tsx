@@ -183,7 +183,7 @@ interface DriverContextType {
   triggerSimulatedOffer: () => void
   acceptBroadcastOffer: () => void
   advanceStep: () => void
-  completeDelivery: (otpInput?: string) => { success: boolean; message: string }
+  completeDelivery: (otpInput?: string) => Promise<{ success: boolean; message: string }>
   handleAddUpiId: (vpa: string, provider: string) => void
   setPrimaryUpi: (id: string) => void
   deleteUpiId: (id: string) => void
@@ -266,7 +266,7 @@ export function getDriverPayoutDetails(order: any): {
 }
 
 export function DriverProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [isOnline, setIsOnline] = useState(true)
   const [activeTask, setActiveTask] = useState<DeliveryTask | null>(null)
   const [broadcastOffer, setBroadcastOffer] = useState<BroadcastOrderOffer | null>(null)
@@ -945,23 +945,24 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function completeDelivery(otpInput?: string): { success: boolean; message: string } {
+  async function completeDelivery(
+    otpInput?: string
+  ): Promise<{ success: boolean; message: string }> {
     if (!activeTask) return { success: false, message: 'No active delivery task.' }
 
-    const expectedOtp = String(activeTask.otp || '').trim()
-    const providedOtp = String(otpInput || '').trim()
+    const cleanOtp = String(otpInput || '').trim()
 
-    if (expectedOtp && providedOtp && providedOtp !== expectedOtp) {
+    if (!cleanOtp) {
       return {
         success: false,
-        message: `Incorrect OTP (${providedOtp}). Ask customer for the 6-digit Delivery OTP shown on their live tracking screen.`,
+        message: 'Please enter the 6-digit Delivery OTP provided by the customer.',
       }
     }
 
-    if (expectedOtp && !providedOtp) {
+    if (!/^\d{6}$/.test(cleanOtp)) {
       return {
         success: false,
-        message: 'Please enter the Delivery OTP provided by the customer.',
+        message: 'Invalid OTP format. Please enter a valid 6-digit numeric OTP.',
       }
     }
 
@@ -984,23 +985,30 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           orderId: activeTask.id,
           status: 'delivered',
+          otp: cleanOtp,
+          delivery_otp: cleanOtp,
         }),
-      }).catch(() => {})
+      })
 
-      fetch('/api/orders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: activeTask.id,
-          status: 'completed',
-        }),
-      }).catch(() => {})
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}))
+        const errMsg =
+          errJson.error ||
+          'Server rejected OTP verification. Please verify the 6-digit code with the customer.'
+        return {
+          success: false,
+          message: errMsg,
+        }
+      }
 
       publishLiveEvent('order_update', {
         orderId: activeTask.id,
@@ -1011,8 +1019,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       setCompletedSummaryModal(newTrip)
       setActiveTask(null)
       return { success: true, message: 'Delivery completed successfully with OTP handshake!' }
-    } catch (e) {
-      return { success: false, message: 'Failed to complete delivery' }
+    } catch (e: any) {
+      return {
+        success: false,
+        message: e?.message || 'Network error while completing delivery. Please check connection.',
+      }
     }
   }
 

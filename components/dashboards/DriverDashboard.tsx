@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Clock3,
   KeyRound,
+  Loader2,
   MapPinned,
   Navigation,
   Radio,
@@ -34,17 +35,29 @@ export default function DriverDashboard() {
 
   const [otpValue, setOtpValue] = useState('')
   const [otpError, setOtpError] = useState('')
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
 
   const totalEarnings = completedTrips.reduce((sum, trip) => sum + trip.total, 0)
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const result = completeDelivery(otpValue)
-    if (!result.success) {
-      setOtpError(result.message)
-    } else {
-      setOtpError('')
-      setOtpValue('')
+    const trimmed = otpValue.trim()
+    if (!trimmed || trimmed.length !== 6 || !/^\d{6}$/.test(trimmed)) {
+      setOtpError('Please enter the valid 6-digit Delivery OTP provided by the customer.')
+      return
+    }
+    setIsVerifyingOtp(true)
+    setOtpError('')
+    try {
+      const result = await completeDelivery(trimmed)
+      if (!result.success) {
+        setOtpError(result.message)
+      } else {
+        setOtpError('')
+        setOtpValue('')
+      }
+    } finally {
+      setIsVerifyingOtp(false)
     }
   }
 
@@ -219,15 +232,25 @@ export default function DriverDashboard() {
                     maxLength={6}
                     placeholder="xxxxxx"
                     value={otpValue}
+                    disabled={isVerifyingOtp}
                     onChange={(e) => setOtpValue(e.target.value)}
-                    className="w-full rounded-xl border border-[#25332a] bg-[#1c2620] p-2.5 font-mono text-center text-base font-bold text-white outline-none focus:border-[#d9f447]"
+                    className="w-full rounded-xl border border-[#25332a] bg-[#1c2620] p-2.5 font-mono text-center text-base font-bold text-white outline-none focus:border-[#d9f447] disabled:opacity-60"
                   />
                   {otpError && <p className="text-[11px] font-bold text-rose-400">{otpError}</p>}
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5"
+                    disabled={isVerifyingOtp}
+                    className="w-full rounded-xl bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5 disabled:opacity-60 cursor-pointer"
                   >
-                    <CheckCircle2 className="size-4" /> Verify OTP &amp; Complete Delivery
+                    {isVerifyingOtp ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" /> Verifying OTP...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="size-4" /> Verify OTP &amp; Complete Delivery
+                      </>
+                    )}
                   </button>
                 </form>
               )}
