@@ -58,15 +58,21 @@ export async function POST(request: Request) {
       else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
     }
 
-    let profile: any = await findUserInDb(lookupEmail)
-    if (!profile && lookupEmail.endsWith('@gmail.com')) {
-      profile = await findUserInDb(lookupEmail.replace('@gmail.com', '@crave.com'))
-    }
-    if (!profile && lookupEmail.endsWith('@crave.com')) {
-      profile = await findUserInDb(lookupEmail.replace('@crave.com', '@gmail.com'))
+    let profile: any = null
+    try {
+      profile = await findUserInDb(lookupEmail)
+      if (!profile && lookupEmail.endsWith('@gmail.com')) {
+        profile = await findUserInDb(lookupEmail.replace('@gmail.com', '@crave.com'))
+      }
+      if (!profile && lookupEmail.endsWith('@crave.com')) {
+        profile = await findUserInDb(lookupEmail.replace('@crave.com', '@gmail.com'))
+      }
+    } catch (dbErr: any) {
+      console.warn('[login] Database lookup unavailable, falling back to demo profiles if applicable:', dbErr?.message || dbErr)
     }
 
     const isDemoEmail =
+      lookupEmail === 'admin' ||
       lookupEmail === 'admin@gmail.com' ||
       lookupEmail === 'admin@crave.com' ||
       lookupEmail === 'user@gmail.com' ||
@@ -82,10 +88,13 @@ export async function POST(request: Request) {
       lookupEmail === 'driver@crave.com'
 
     const isDemoPassword =
+      password === 'admin' ||
+      password === 'admin123' ||
       password === '1234567890' ||
       password === 'Password123!' ||
       password === 'Password123' ||
-      password === 'admin123'
+      password === '123456' ||
+      password === 'password'
 
     if (process.env.NODE_ENV !== 'production' && !profile && isDemoEmail && isDemoPassword) {
       if (lookupEmail.startsWith('admin')) {

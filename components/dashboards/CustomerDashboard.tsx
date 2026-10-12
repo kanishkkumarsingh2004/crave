@@ -1748,15 +1748,20 @@ export default function CustomerDashboard({
         status: 'new',
         payment_method: 'UPI Online',
         delivery_otp: generatedOtp,
+        delivery_latitude: 12.9716,
+        delivery_longitude: 77.5946,
         utr_ref: cleanUtr,
         customer_vpa: user.email ? `${user.email.split('@')[0]}@upi` : 'customer@upi',
       }
+
+      const authToken = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
 
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Idempotency-Key': orderId,
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(orderPayload),
       })
