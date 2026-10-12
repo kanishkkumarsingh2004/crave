@@ -482,10 +482,14 @@ async function seedCompleteData() {
   ]
 
   for (const item of menuItems) {
+    const itemWithStock = {
+      ...item,
+      stock_count: 50,
+    }
     await prisma.menuItem.upsert({
       where: { id: item.id },
-      update: item,
-      create: item,
+      update: itemWithStock,
+      create: itemWithStock,
     })
     console.log(`  ✓ Item: ${item.name} (₹${item.price})`)
   }

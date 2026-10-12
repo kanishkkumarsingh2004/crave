@@ -31,6 +31,15 @@ import {
   getAuthActor,
 } from '@/lib/auth-helpers'
 import { isValidTransition, getPhaseName, VALID_TRANSITIONS } from '@/lib/order-state-machine'
+import {
+  acquireIdempotency,
+  completeIdempotency,
+  releaseIdempotency,
+} from '@/lib/idempotency'
+import {
+  processPaymentVerificationTx,
+  processPaymentRejectionTx,
+} from '@/lib/finance/payment-service'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   try {
@@ -314,7 +323,23 @@ export async function POST(request: Request) {
       const orderId = id || crypto.randomUUID()
       const paymentConfig = await getActiveConfig()
 
-      // P0-A: Database unique constraint order_customer_idempotency enforces idempotency atomically.
+      // P0-A: Distributed, transaction-safe idempotency acquisition
+      if (idempotencyKey) {
+        const idemCheck = await acquireIdempotency(idempotencyKey, 'order_checkout', body)
+        if (idemCheck.status === 'completed') {
+          return NextResponse.json(idemCheck.body, { status: idemCheck.statusCode || 200 })
+        }
+        if (idemCheck.status === 'processing') {
+          return NextResponse.json(
+            {
+              error:
+                'An order checkout with this idempotency key is already in progress. Please retry shortly.',
+            },
+            { status: 409, headers: { 'Retry-After': '2' } }
+          )
+        }
+      }
+
       // If client supplied explicit order id, check for existing order record:
       if (id && typeof prisma?.order?.findUnique === 'function') {
         try {
@@ -488,10 +513,12 @@ export async function POST(request: Request) {
         }
 
         // Check stock
+        const hasStockTracking = typeof menuItem.stock_count === 'number' && menuItem.stock_count > 0
         if (
           menuItem.in_stock === false ||
-          (menuItem.stock_count !== undefined && menuItem.stock_count < quantity)
+          (hasStockTracking && menuItem.stock_count < quantity)
         ) {
+          if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout')
           return NextResponse.json(
             { error: `Item ${menuItem.name} is out of stock` },
             { status: 400 }
@@ -940,19 +967,42 @@ export async function POST(request: Request) {
 
       // ─── Create Order + Side Effects in Atomic Transaction ─────────────
       // CR-007 FIX: Use Prisma transaction for atomic order + side effects
+      // ─── Create Order + Side Effects in Atomic Transaction ─────────────
+      // CR-007 FIX: Use Prisma transaction for atomic order + inventory + financial records
       let order: any
       try {
         order = await prisma.$transaction(async (tx: any) => {
-          // 1. Create order
+          // 1. Atomic Inventory Decrement:
+          // Strictly decrement stock count inside transaction for tracked items to prevent overselling
+          for (const { itemId, quantity } of validatedRaw) {
+            const item = menuItemMap.get(itemId)
+            if (item && typeof item.stock_count === 'number' && item.stock_count > 0) {
+              const updated = await tx.menuItem.updateMany({
+                where: {
+                  id: itemId,
+                  in_stock: true,
+                  stock_count: { gte: quantity },
+                },
+                data: {
+                  stock_count: { decrement: quantity },
+                },
+              })
+              if (updated.count === 0) {
+                throw new Error(`INSUFFICIENT_STOCK:${item.name || itemId}`)
+              }
+            }
+          }
+
+          // 2. Initial order status: strictly server-authoritative
+          // Never mark order paid/verified solely because frontend claims so
+          const initialStatus: OrderStatus = utr_ref ? 'payment_submitted' : 'payment_pending'
+
           const createdOrder = await tx.order.create({
             data: {
               id: orderId,
               customer_id: finalCustomerId,
               customer_name: customer_name || (actor as any)?.name || 'Customer',
               customer_phone: customer_phone || undefined,
-              // CR-06 FIX: Use the verified canonical address from the saved address record,
-              // not the raw client-supplied string.  Both the label stored here and the
-              // coordinates used for the delivery-fee calculation come from the same DB row.
               customer_address: canonicalAddressText,
               restaurant_id: finalRestaurantId || undefined,
               restaurant_name: finalRestaurantName,
@@ -964,7 +1014,8 @@ export async function POST(request: Request) {
               handling_fee: calcResult.customerBilling.handlingFee,
               gst: calcResult.customerBilling.gstAmount,
               total_amount: calcResult.customerBilling.grandTotal,
-              status: 'payment_submitted' as OrderStatus,
+              status: initialStatus,
+              payment_status: 'pending',
               order_type,
               payment_method,
               delivery_otp: deliveryOtp,
@@ -975,15 +1026,14 @@ export async function POST(request: Request) {
               markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
               restaurant_payout: vendorNetPayout,
               platform_revenue: platformProfit,
-              utr_ref,
+              utr_ref: utr_ref ? String(utr_ref).trim() : undefined,
               customer_vpa: customer_vpa || (actor as any)?.email || 'customer@upi',
               financial_snapshot: canonicalResult as any,
-              // P0-A FIX: Database-level unique constraint backed idempotency key
               idempotency_key: idempotencyKey || undefined,
             },
           })
 
-          // 2. Increment coupon usage in DB (Redis slot was already claimed atomically above;
+          // 3. Increment coupon usage in DB (Redis slot was already claimed atomically above;
           //    this keeps the DB used_count in sync inside the same transaction).
           if (coupon_code && couponResult?.coupon?.id) {
             await tx.coupon.update({
@@ -992,13 +1042,32 @@ export async function POST(request: Request) {
             })
           }
 
-          // 3. Create payment review (if UTR provided)
+          // 4. Create initial PaymentTransaction with pending status
+          await tx.paymentTransaction.create({
+            data: {
+              id: `tx_${orderId}`,
+              order_id: orderId,
+              gateway: payment_method.toLowerCase().includes('upi') ? 'upi' : 'cash_on_delivery',
+              gateway_payment_id: utr_ref ? String(utr_ref).trim() : null,
+              amount: calcResult.customerBilling.grandTotal,
+              currency: 'INR',
+              status: 'pending',
+              idempotency_key: idempotencyKey ? `tx_${idempotencyKey}` : `tx_key_${orderId}`,
+              raw_payload: {
+                payment_method,
+                customer_vpa: customer_vpa || null,
+                utr_ref: utr_ref || null,
+              },
+            },
+          })
+
+          // 5. Create payment review (if UTR provided)
           if (utr_ref) {
             await tx.paymentReview.create({
               data: {
                 id: crypto.randomUUID(),
                 order_id: orderId,
-                utr_ref,
+                utr_ref: String(utr_ref).trim(),
                 customer_vpa: customer_vpa || (actor as any)?.email || 'customer@upi',
                 amount: calcResult.customerBilling.grandTotal,
                 status: 'pending',
@@ -1006,9 +1075,10 @@ export async function POST(request: Request) {
             })
           }
 
-          // 4. Create vendor settlement
-          await tx.vendorSettlement.create({
-            data: {
+          // 6. Create or upsert vendor settlement (strictly once per order)
+          await tx.vendorSettlement.upsert({
+            where: { id: `set_${orderId}` },
+            create: {
               id: `set_${orderId}`,
               restaurant_name: finalRestaurantName,
               restaurant_id: finalRestaurantId,
@@ -1023,23 +1093,35 @@ export async function POST(request: Request) {
               period_end: new Date(),
               transaction_ref: orderId,
             },
+            update: {},
           })
 
           return createdOrder
         })
         mark('db')
       } catch (txErr: any) {
-        // CR-03 FIX: Release the Redis coupon slot if the DB transaction failed.
-        // checkAndIncrementCouponUsage already does a DECR internally on overshoot, but if
-        // the transaction fails for an unrelated reason after the slot was claimed we must
-        // give it back so future orders can use it.
+        // Release idempotency lock on failure so the user or client can retry
+        if (idempotencyKey) {
+          await releaseIdempotency(idempotencyKey, 'order_checkout')
+        }
+
+        // Release the Redis coupon slot if the DB transaction failed
         if (couponIncrementClaimed && couponResult?.coupon?.id) {
           if (isRedisAvailable() && redis) {
             redis.decr(`crave:coupon:usage:${couponResult.coupon.id}`).catch(() => {})
           }
         }
 
-        // P0-A FIX: Anti-concurrency collision recovery using database constraint violation (P2002)
+        // Explicit insufficient stock error
+        if (txErr?.message?.startsWith('INSUFFICIENT_STOCK:')) {
+          const itemName = txErr.message.split(':')[1]
+          return NextResponse.json(
+            { error: `Item ${itemName} is out of stock or insufficient quantity available` },
+            { status: 400 }
+          )
+        }
+
+        // Anti-concurrency collision recovery using database constraint violation (P2002)
         if (txErr?.code === 'P2002') {
           try {
             const recoveredOrder = await prisma.order.findFirst({
@@ -1103,12 +1185,20 @@ export async function POST(request: Request) {
       })
       mark('broadcast')
 
-      return NextResponse.json({
+      const responseData = {
         success: true,
         message: 'Order created successfully!',
         order,
+        orderId: order.id,
         billing: billingBreakdown,
-      })
+      }
+
+      // Mark idempotency key as completed and cache response for exact replays
+      if (idempotencyKey) {
+        await completeIdempotency(idempotencyKey, 'order_checkout', 201, responseData)
+      }
+
+      return NextResponse.json(responseData, { status: 201 })
     } catch (error) {
       return handleAuthError(error)
     }
@@ -1424,12 +1514,34 @@ export async function PATCH(request: Request) {
       // Dispatch pending outbox events across WebSocket & Redis Pub/Sub
       dispatchPendingOutboxEvents().catch(() => {})
 
-      // Sync payment status to payment_reviews (separate table — not on Order).
+      // Sync payment status atomically via payment-service
       const newPaymentStatus = payment_status || paymentStatus
       if (newPaymentStatus) {
-        try {
-          await updatePaymentReviewStatus(orderId, newPaymentStatus)
-        } catch (e) {}
+        if (newPaymentStatus === 'verified') {
+          try {
+            await processPaymentVerificationTx({
+              orderId,
+              actorId: actor.id,
+              gateway: 'admin_manual',
+            })
+          } catch (e: any) {
+            console.warn('[PATCH /api/orders] Verification notice:', e)
+          }
+        } else if (newPaymentStatus === 'rejected') {
+          try {
+            await processPaymentRejectionTx({
+              orderId,
+              actorId: actor.id,
+              reason: body.rejection_reason || 'Payment rejected by admin',
+            })
+          } catch (e: any) {
+            console.warn('[PATCH /api/orders] Rejection notice:', e)
+          }
+        } else {
+          try {
+            await updatePaymentReviewStatus(orderId, newPaymentStatus)
+          } catch (e) {}
+        }
         await broadcast('approval_update', { status: newPaymentStatus, orderId })
       }
 

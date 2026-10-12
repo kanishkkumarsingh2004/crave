@@ -189,23 +189,31 @@ export function buildOrderConfirmedJournal(
     snapshot.restaurantServiceTaxBreakdown.totalGstPaise +
     snapshot.platformServiceTaxBreakdown.totalGstPaise
 
-  // Delivery revenue retained by platform (after rider share)
-  const riderDeliverySharePaise =
-    snapshot.riderBasePayPaise +
-    snapshot.riderDistancePayPaise +
-    snapshot.riderSurgeIncentivePaise +
-    snapshot.riderRainIncentivePaise +
-    snapshot.riderNightIncentivePaise
+  const riderPayableExTipPaise = Math.max(0, (snapshot.riderPayablePaise || 0) - (snapshot.riderTipPaise || 0))
+  const tipPaise = snapshot.riderTipPaise || 0
+  const vendorPayablePaise = snapshot.vendorPayableNetPaise || 0
 
-  const platformDeliveryRevenuePaise = Math.max(
+  // Total liabilities to external parties (vendor, driver, government GST)
+  const externalLiabilitiesPaise =
+    vendorPayablePaise +
+    riderPayableExTipPaise +
+    tipPaise +
+    totalGstPaise
+
+  // Net platform revenue ensures double-entry balance: Debits === Credits exactly
+  const platformRetainedRevenuePaise = Math.max(
     0,
-    snapshot.grossDeliveryFeePaise - riderDeliverySharePaise
+    snapshot.customerPayablePaise - externalLiabilitiesPaise
   )
-
-  const riderPayableExTipPaise = snapshot.riderPayablePaise - snapshot.riderTipPaise
+  const commissionRevPaise = Math.min(
+    snapshot.grossCommissionPaise || 0,
+    platformRetainedRevenuePaise
+  )
+  const feeRevPaise = platformRetainedRevenuePaise - commissionRevPaise
+  const platformSubsidyPaise = Math.max(0, externalLiabilitiesPaise - snapshot.customerPayablePaise)
 
   const lines: JournalLine[] = [
-    // Assets / debits
+    // Assets / debits: Customer Payment
     {
       accountCode: 'PAYMENT_CLEARING',
       debitPaise: snapshot.customerPayablePaise,
@@ -213,13 +221,29 @@ export function buildOrderConfirmedJournal(
       description: `Customer payment received for order ${orderId}`,
     },
 
+    // If platform subsidy needed to balance external liabilities
+    ...(platformSubsidyPaise > 0
+      ? [
+          {
+            accountCode: 'DISCOUNT_EXPENSE' as AccountCode,
+            debitPaise: platformSubsidyPaise,
+            creditPaise: 0,
+            description: `Platform delivery subsidy for order ${orderId}`,
+          },
+        ]
+      : []),
+
     // Liabilities / credits — vendor
-    {
-      accountCode: 'VENDOR_PAYABLE',
-      debitPaise: 0,
-      creditPaise: snapshot.vendorPayableNetPaise,
-      description: `Restaurant payable for order ${orderId} (${snapshot.restaurantName})`,
-    },
+    ...(vendorPayablePaise > 0
+      ? [
+          {
+            accountCode: 'VENDOR_PAYABLE' as AccountCode,
+            debitPaise: 0,
+            creditPaise: vendorPayablePaise,
+            description: `Restaurant payable for order ${orderId} (${snapshot.restaurantName})`,
+          },
+        ]
+      : []),
 
     // Liabilities / credits — rider (excluding tip)
     ...(riderPayableExTipPaise > 0
@@ -234,37 +258,40 @@ export function buildOrderConfirmedJournal(
       : []),
 
     // Liabilities / credits — tip clearing (100% pass-through)
-    ...(snapshot.riderTipPaise > 0
+    ...(tipPaise > 0
       ? [
           {
             accountCode: 'RIDER_TIP_CLEARING' as AccountCode,
             debitPaise: 0,
-            creditPaise: snapshot.riderTipPaise,
+            creditPaise: tipPaise,
             description: `Customer tip in transit to rider for order ${orderId}`,
           },
         ]
       : []),
 
     // Revenue — commission
-    ...(snapshot.grossCommissionPaise > 0
+    ...(commissionRevPaise > 0
       ? [
           {
             accountCode: 'PLATFORM_COMMISSION_REV' as AccountCode,
             debitPaise: 0,
-            creditPaise: snapshot.grossCommissionPaise,
-            description: `Platform commission (${snapshot.commissionRatePercent}%) on order ${orderId}`,
+            creditPaise: commissionRevPaise,
+            description: `Platform commission (${snapshot.commissionRatePercent || 0}%) on order ${orderId}`,
           },
         ]
       : []),
 
     // Revenue — platform fees
-    {
-      accountCode: 'PLATFORM_FEE_REV',
-      debitPaise: 0,
-      creditPaise:
-        snapshot.platformFeePaise + snapshot.handlingFeePaise + platformDeliveryRevenuePaise,
-      description: `Platform fee + handling + delivery revenue for order ${orderId}`,
-    },
+    ...(feeRevPaise > 0
+      ? [
+          {
+            accountCode: 'PLATFORM_FEE_REV' as AccountCode,
+            debitPaise: 0,
+            creditPaise: feeRevPaise,
+            description: `Platform fee + handling + delivery margin for order ${orderId}`,
+          },
+        ]
+      : []),
 
     // Liability — GST collected
     ...(totalGstPaise > 0

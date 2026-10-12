@@ -84,100 +84,48 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Review ID and status are required' }, { status: 400 })
       }
 
-      const newPaymentStatus: PaymentStatus =
-        status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending'
-      const newOrderStatus: OrderStatus | undefined =
-        status === 'verified' ? ('sent_to_vendor' as OrderStatus) : undefined
+      // Look up review to get order_id and utr_ref
+      const review = await prisma.paymentReview.findUnique({
+        where: { id },
+      })
 
-      // P0-B FIX: Wrap payment review update and order update in atomic transaction
-      let review: any = null
+      if (!review) {
+        return NextResponse.json({ error: 'Payment review record not found' }, { status: 404 })
+      }
+
+      const targetOrderId = review.order_id || id
       let updatedOrder: any = null
 
-      if (typeof prisma?.$transaction === 'function') {
-        const txResult = await prisma.$transaction(async (tx) => {
-          const rev = await tx.paymentReview.update({
-            where: { id },
-            data: { status: status as PaymentStatus },
-          })
-
-          const targetOrderId = rev.order_id || id
-          let ord = null
-          if (targetOrderId) {
-            ord = await tx.order.update({
-              where: { id: targetOrderId },
-              data: {
-                payment_status: newPaymentStatus,
-                ...(newOrderStatus ? { status: newOrderStatus } : {}),
-              },
-            })
-          }
-
-          return { review: rev, updatedOrder: ord }
+      if (status === 'verified') {
+        const { processPaymentVerificationTx } = await import('@/lib/finance/payment-service')
+        const outcome = await processPaymentVerificationTx({
+          orderId: targetOrderId,
+          gatewayPaymentId: review.utr_ref,
+          amount: review.amount,
+          actorId: payload.id,
+          gateway: 'UPI_MANUAL',
+          idempotencyKey: `admin_verify_${review.id}`,
         })
-        review = txResult.review
-        updatedOrder = txResult.updatedOrder
+        updatedOrder = outcome.order
+      } else if (status === 'rejected') {
+        const { processPaymentRejectionTx } = await import('@/lib/finance/payment-service')
+        const outcome = await processPaymentRejectionTx({
+          orderId: targetOrderId,
+          reason: body.reason || 'Admin rejected payment review',
+          actorId: payload.id,
+          idempotencyKey: `admin_reject_${review.id}`,
+        })
+        updatedOrder = outcome.order
       } else {
-        review = await prisma.paymentReview.update({
+        // Pending: just update the review status
+        await prisma.paymentReview.update({
           where: { id },
-          data: { status: status as PaymentStatus },
+          data: { status: 'pending' },
         })
-        const targetOrderId = review?.order_id || id
-        if (targetOrderId) {
-          updatedOrder = await prisma.order.update({
-            where: { id: targetOrderId },
-            data: {
-              payment_status: newPaymentStatus,
-              ...(newOrderStatus ? { status: newOrderStatus } : {}),
-            },
-          })
-        }
       }
       mark('db')
 
-      const targetOrderId = review?.order_id || id
-
-      // P0-B FIX: Post ledger AFTER transaction commit — idempotent and safe to retry separately
-      if (newPaymentStatus === 'verified' && updatedOrder) {
-        try {
-          const snapshot =
-            (updatedOrder.financial_snapshot as any) ||
-            calculateOrderPrice({
-              orderType: (updatedOrder.order_type as any) || 'restaurant_food',
-              restaurantId: updatedOrder.restaurant_id || 'rest_01',
-              restaurantName: updatedOrder.restaurant_name,
-              items: (Array.isArray(updatedOrder.items) ? (updatedOrder.items as any[]) : []).map(
-                (i: any) => ({
-                  name: i.name || 'Food Item',
-                  quantity: Number(i.quantity || i.qty || 1),
-                  unitPricePaise: Math.round(Number(i.price || 0) * 100),
-                })
-              ),
-              delivery: {
-                baseDeliveryFeePaise: (updatedOrder.delivery_fee || 30) * 100,
-                baseDistanceKm: 2.5,
-                perKmRatePaise: 1000,
-                roadDistanceKm: 2.5,
-              },
-              tipPaise: (updatedOrder.tip || 0) * 100,
-              couponDiscountPaise: (updatedOrder.discount_amount || 0) * 100,
-            })
-
-          if (snapshot) {
-            const journal = buildOrderConfirmedJournal(targetOrderId, snapshot)
-            await persistJournalTransaction(journal).catch((err) =>
-              console.error(
-                '[payment-review] ledger posting failed — requires manual reconciliation:',
-                err
-              )
-            )
-          }
-        } catch (ledgerErr) {
-          console.warn('[payment-review] ledger posting calculation notice:', ledgerErr)
-        }
-      }
-      mark('ledger')
-
-      // P0-B FIX: Broadcast real-time WebSocket events only AFTER DB commit succeeds
+      // Broadcast real-time WebSocket events
       await broadcast('approval_update', { status, orderId: targetOrderId })
       if (updatedOrder) {
         await broadcast('order_update', { order: updatedOrder, orderId: targetOrderId })
@@ -193,6 +141,7 @@ export async function PATCH(request: Request) {
 
       return NextResponse.json({ success: true, count: 1 })
     } catch (error: any) {
+      console.error('[admin/payment-reviews] Update error:', error)
       return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 500 })
     }
   })

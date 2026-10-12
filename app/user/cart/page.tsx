@@ -716,6 +716,7 @@ export default function CartPage() {
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : {}),
         },
         body: JSON.stringify(orderData),
       })

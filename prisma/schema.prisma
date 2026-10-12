@@ -184,6 +184,8 @@ model Order {
   utr_ref               String?
 
   ledger_entries        LedgerEntry[]
+  payment_transactions  PaymentTransaction[]
+  refunds               Refund[]
 
   // Idempotency key for preventing duplicate order creation under network retries
   idempotency_key       String?
@@ -525,3 +527,78 @@ model OrderOutbox {
   @@index([order_id, created_at])
   @@map("order_outbox")
 }
+
+/// Generic, high-performance idempotency records for checkout, webhooks, refunds, and settlements.
+model IdempotencyRecord {
+  id            String    @id @default(cuid())
+  key           String    @unique
+  scope         String    // "order_checkout" | "payment_webhook" | "refund" | "settlement"
+  status        String    // "processing" | "completed" | "failed"
+  request_hash  String?
+  response_code Int?
+  response_body Json?
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
+  expires_at    DateTime  @db.Timestamptz(6)
+
+  @@index([scope, status])
+  @@index([key, scope])
+  @@map("idempotency_records")
+}
+
+/// Explicit payment transactions linked to orders (gateway webhooks, UPI, intents).
+model PaymentTransaction {
+  id                 String          @id @default(cuid())
+  order_id           String
+  idempotency_key    String          @unique
+  gateway            String          // "UPI_MANUAL" | "RAZORPAY" | "CASHFREE" | "STRIPE" | "MOCK"
+  gateway_payment_id String?         @unique
+  amount             Int             // in rupees
+  currency           String          @default("INR")
+  status             PaymentTxStatus @default(pending)
+  failure_reason     String?
+  raw_payload        Json?
+  verified_at        DateTime?       @db.Timestamptz(6)
+  created_at         DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime        @updatedAt @db.Timestamptz(6)
+
+  order              Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([status])
+  @@map("payment_transactions")
+}
+
+/// Refund records for customer returns, cancellations, and overpayment reversals.
+model Refund {
+  id                String        @id @default(cuid())
+  order_id          String
+  idempotency_key   String        @unique
+  amount            Int           // in rupees
+  reason            String
+  status            RefundStatus  @default(pending)
+  gateway_refund_id String?       @unique
+  processed_at      DateTime?     @db.Timestamptz(6)
+  created_at        DateTime      @default(now()) @db.Timestamptz(6)
+
+  order             Order         @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@map("refunds")
+}
+
+enum PaymentTxStatus {
+  pending
+  processing
+  verified
+  failed
+  refunded
+}
+
+enum RefundStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
