@@ -48,11 +48,14 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Auto-redirect if already authenticated
+  // Auto-redirect if already authenticated (unless explicit logout requested)
   useEffect(() => {
+    if (typeof window !== 'undefined' && (window.location.search.includes('logout') || window.location.search.includes('switch'))) {
+      return
+    }
     if (!isLoading && user) {
       const destination = getTargetDashboard(user)
-      window.location.href = destination
+      window.location.replace(destination)
     }
   }, [user, isLoading])
 
@@ -70,7 +73,7 @@ export default function LoginPage() {
       const authenticatedUser = await login(email.trim(), password)
       if (authenticatedUser) {
         const targetPath = getTargetDashboard(authenticatedUser)
-        window.location.href = targetPath
+        window.location.replace(targetPath)
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Email or password is incorrect.')
@@ -154,7 +157,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = getTargetDashboard(user)
+                      window.location.replace(getTargetDashboard(user))
                     }}
                     className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-3.5 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-[0.99] shadow-md hover:shadow-xl"
                   >
@@ -164,7 +167,7 @@ export default function LoginPage() {
 
                   <button
                     type="button"
-                    onClick={() => logout()}
+                    onClick={() => void logout()}
                     className="w-full flex items-center justify-center gap-2 rounded-2xl border border-black/10 dark:border-white/10 py-3 px-6 text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                   >
                     <span>Sign Out / Switch Account</span>

@@ -2185,7 +2185,6 @@ export default function CustomerDashboard({
             onClick={async () => {
               setShowMobileSideMenu(false)
               await logout()
-              router.push('/login')
             }}
             className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
           >

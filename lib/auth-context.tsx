@@ -83,10 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearClientCookies = () => {
     if (typeof document === 'undefined') return
-    const expired = '; path=/; max-age=0; SameSite=Lax'
-    document.cookie = `crave_auth_token=${expired}`
-    document.cookie = `drop_auth_token=${expired}`
-    document.cookie = `crave_token=${expired}`
+    const names = ['crave_auth_token', 'drop_auth_token', 'crave_token']
+    for (const name of names) {
+      document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`
+      document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure`
+    }
   }
 
   useEffect(() => {
@@ -94,6 +95,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function restoreSession() {
       try {
+        // If the URL has an explicit logout flag, purge local state and do not restore
+        if (
+          typeof window !== 'undefined' &&
+          (window.location.search.includes('logout=') || window.location.search.includes('signout='))
+        ) {
+          localStorage.removeItem('crave_user')
+          localStorage.removeItem('crave_token')
+          sessionStorage.clear()
+          clearClientCookies()
+          if (!cancelled) {
+            setUser(null)
+            setToken(null)
+            setIsLoading(false)
+          }
+          return
+        }
+
         const savedUserStr =
           typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
         const savedToken =
@@ -103,13 +121,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           syncClientCookies(savedToken)
         }
 
-        // Validate session with server to verify token isn't expired/revoked
+        // Validate session with server using an AbortController with a 4500ms timeout
         try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 4500)
+
           const headers: HeadersInit = {}
           if (savedToken && savedToken !== 'local-token') {
             headers['Authorization'] = `Bearer ${savedToken}`
           }
-          const res = await fetch('/api/auth/me', { headers })
+          const res = await fetch('/api/auth/me', {
+            headers,
+            signal: controller.signal,
+            credentials: 'include',
+          })
+          clearTimeout(timeoutId)
+
           if (res.ok) {
             const data = await res.json()
             if (data.authenticated && data.user && !cancelled) {
@@ -129,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (typeof window !== 'undefined') {
               localStorage.removeItem('crave_user')
               localStorage.removeItem('crave_token')
+              sessionStorage.clear()
             }
             clearClientCookies()
             if (!cancelled) {
@@ -139,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return
           }
         } catch {
-          // If network error/offline, fall back gracefully to local storage
+          // If network error, timeout, or offline, fall back gracefully to cached local storage
         }
 
         if (savedUserStr) {
@@ -249,20 +277,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      const activeToken =
+        token || (typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null)
+
       if (typeof window !== 'undefined') {
         localStorage.removeItem('crave_user')
         localStorage.removeItem('crave_token')
+        sessionStorage.clear()
       }
       clearClientCookies()
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+
+      // Notify server to revoke JWT in Redis/memory and purge HttpOnly cookies
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken && activeToken !== 'local-token'
+            ? { Authorization: `Bearer ${activeToken}` }
+            : {}),
+        },
+        body: JSON.stringify({ token: activeToken }),
+        credentials: 'include',
+      }).catch(() => {})
     } catch (err) {
       console.error('Logout error:', err)
-    }
-    setUser(null)
-    setToken(null)
-    setIsLoading(false)
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+    } finally {
+      setUser(null)
+      setToken(null)
+      setIsLoading(false)
+      if (typeof window !== 'undefined') {
+        window.location.replace('/login?logout=1')
+      }
     }
   }
 

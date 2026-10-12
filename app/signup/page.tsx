@@ -172,7 +172,6 @@ export default function SignupPage() {
                         type="button"
                         onClick={async () => {
                           await logout()
-                          router.push('/signup')
                         }}
                         className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white/80 dark:bg-black/30 px-3.5 py-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 transition hover:bg-rose-50 dark:hover:bg-rose-950/50"
                       >

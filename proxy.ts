@@ -20,8 +20,41 @@ function getDashboardForRole(role: string): string {
   }
 }
 
+function clearAuthCookies(response: NextResponse, isSecure: boolean) {
+  const cookieNames = ['crave_auth_token', 'drop_auth_token', 'crave_token']
+  for (const name of cookieNames) {
+    response.cookies.set(name, '', {
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: 'lax',
+    })
+    response.cookies.set(name, '', {
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: false,
+      secure: isSecure,
+      sameSite: 'lax',
+    })
+    if (isSecure) {
+      response.cookies.set(name, '', {
+        path: '/',
+        maxAge: 0,
+        expires: new Date(0),
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+      })
+    }
+    response.cookies.delete(name)
+  }
+}
+
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
   const authHeader = request.headers.get('authorization')
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
   const token =
@@ -30,23 +63,46 @@ export async function proxy(request: NextRequest) {
     request.cookies.get('drop_auth_token')?.value ||
     request.cookies.get('crave_token')?.value
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
-  const isAdminPath = pathname.startsWith('/admin')
-  const isVendorPath = pathname.startsWith('/vendor')
-  const isDriverPath = pathname.startsWith('/driver')
-  const isUserPath = pathname.startsWith('/user')
+  const isHttps =
+    request.nextUrl.protocol === 'https:' ||
+    request.headers.get('x-forwarded-proto') === 'https'
+  const isSecure = process.env.NODE_ENV === 'production' && isHttps
 
-  // If already authenticated and visiting /login or /signup, redirect to their role dashboard
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  const isExplicitLogout =
+    searchParams.has('logout') ||
+    searchParams.has('signout') ||
+    searchParams.has('switch')
+
+  // If user explicitly navigated with logout/switch intent, do NOT redirect to dashboard!
+  // Instead, wipe any lingering cookies on response and serve login/signup cleanly.
+  if (isAuthPage && isExplicitLogout) {
+    const res = NextResponse.next()
+    clearAuthCookies(res, isSecure)
+    return res
+  }
+
+  // If visiting /login or /signup
   if (isAuthPage) {
     if (token) {
       const payload = await verifyToken(token)
       if (payload) {
         const targetDashboard = getDashboardForRole(payload.role as string)
         return NextResponse.redirect(new URL(targetDashboard, request.url))
+      } else {
+        // Token was present on login page but is invalid/expired/blacklisted: clean it up
+        const res = NextResponse.next()
+        clearAuthCookies(res, isSecure)
+        return res
       }
     }
     return NextResponse.next()
   }
+
+  const isAdminPath = pathname.startsWith('/admin')
+  const isVendorPath = pathname.startsWith('/vendor')
+  const isDriverPath = pathname.startsWith('/driver')
+  const isUserPath = pathname.startsWith('/user')
 
   if (!isAdminPath && !isVendorPath && !isDriverPath && !isUserPath) {
     return NextResponse.next()
@@ -54,13 +110,17 @@ export async function proxy(request: NextRequest) {
 
   if (!token) {
     const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    const res = NextResponse.redirect(loginUrl)
+    clearAuthCookies(res, isSecure)
+    return res
   }
 
   const payload = await verifyToken(token)
   if (!payload) {
     const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    const res = NextResponse.redirect(loginUrl)
+    clearAuthCookies(res, isSecure)
+    return res
   }
 
   const role = payload.role as string

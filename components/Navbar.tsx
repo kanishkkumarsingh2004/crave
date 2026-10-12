@@ -560,9 +560,8 @@ export default function Navbar() {
                     {/* Sign out */}
                     <button
                       onClick={async () => {
-                        await logout()
                         setShowUserDropdown(false)
-                        router.push('/login')
+                        await logout()
                       }}
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-t border-[#eff2ed] dark:border-[#27342d] mt-1 pt-2"
                     >
@@ -797,9 +796,8 @@ export default function Navbar() {
 
               <button
                 onClick={async () => {
-                  await logout()
                   setShowMobileMenu(false)
-                  router.push('/login')
+                  await logout()
                 }}
                 className="rounded-xl px-4 py-4 text-left font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[44px]"
               >

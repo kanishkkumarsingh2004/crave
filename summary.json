@@ -2,7 +2,7 @@
   "testType": "spike",
   "testName": "Spike Test (Flash Sale Simulation)",
   "description": "Survive sudden viral traffic surge",
-  "timestamp": "2026-10-12T13:47:40.261Z",
+  "timestamp": "2026-10-12T18:01:15.941Z",
   "environment": "staging",
   "commitSha": "local",
   "baseUrl": "http://localhost:3000",
@@ -35,21 +35,21 @@
     ]
   },
   "results": {
-    "totalRequests": 37656,
-    "failedRequests": 158,
-    "failureRatePct": 0.42,
-    "avgResponseTimeMs": 875.32,
-    "p95ResponseTimeMs": 3611.03,
-    "maxResponseTimeMs": 5226.26,
-    "throughputRps": 129.58,
+    "totalRequests": 35370,
+    "failedRequests": 206,
+    "failureRatePct": 0.58,
+    "avgResponseTimeMs": 950.74,
+    "p95ResponseTimeMs": 4714.63,
+    "maxResponseTimeMs": 5380.06,
+    "throughputRps": 120.47,
     "wsConnectAvgMs": null,
     "wsErrorRatePct": "0.00",
-    "checksPassRatePct": 99.59,
-    "checksPassed": 37497,
-    "checksFailed": 155
+    "checksPassRatePct": 99.43,
+    "checksPassed": 35163,
+    "checksFailed": 203
   },
   "customMetrics": {
-    "restErrors": 0.004116647190056305,
+    "restErrors": 0.005739976248374145,
     "authErrors": 0.75,
     "totalOrdersCreated": 0
   }
