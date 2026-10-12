@@ -354,7 +354,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // If client supplied explicit order id, check for existing order record:
+      // If client supplied explicit order id, check for existing active order record:
       if (id && typeof prisma?.order?.findUnique === 'function') {
         try {
           const existingOrderById = await prisma.order.findUnique({
@@ -364,23 +364,27 @@ export async function POST(request: Request) {
             if (existingOrderById.customer_id !== finalCustomerId) {
               return NextResponse.json({ error: 'Order not found' }, { status: 404 })
             }
-            return NextResponse.json({
-              success: true,
-              order: existingOrderById,
-              orderId: existingOrderById.id,
-              message: 'Order already processed (idempotent)',
-            })
+            // Only deduplicate if the order is still active / in progress
+            if (!['delivered', 'completed', 'cancelled'].includes(existingOrderById.status)) {
+              return NextResponse.json({
+                success: true,
+                order: existingOrderById,
+                orderId: existingOrderById.id,
+                message: 'Order already processed (idempotent)',
+              })
+            }
           }
         } catch (e) {}
       }
 
-      // Check for existing order by idempotency key:
+      // Check for existing order by idempotency key (only active in-progress orders):
       if (idempotencyKey && typeof prisma?.order?.findFirst === 'function') {
         try {
           const existingByIdempotency = await prisma.order.findFirst({
             where: {
               customer_id: finalCustomerId,
               idempotency_key: idempotencyKey,
+              status: { notIn: ['delivered', 'completed', 'cancelled'] },
             } as any,
           })
           if (existingByIdempotency) {
@@ -395,18 +399,18 @@ export async function POST(request: Request) {
       }
 
       // Anti-replay deduplication by UTR reference:
-      // If an order was already submitted with this exact bank UTR reference, return it.
-      // CR-10 FIX: Apply the same ownership gate here — only return an order whose
-      // customer_id matches the authenticated caller.
+      // If an active order was already submitted with this exact bank UTR reference within the last 15 mins, return it.
+      // Crucial: Delivered, completed, or cancelled orders must NEVER block creating a new order.
       if (utr_ref && typeof prisma?.order?.findFirst === 'function') {
         try {
           const cleanUtr = String(utr_ref).trim()
+          const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
           const existingOrderWithUtr = await prisma.order.findFirst({
             where: {
               utr_ref: cleanUtr,
-              // Scope to this customer so one customer cannot deduplicate against
-              // another customer's UTR and receive their order data.
               customer_id: finalCustomerId,
+              status: { notIn: ['delivered', 'completed', 'cancelled'] },
+              created_at: { gte: fifteenMinutesAgo },
             },
             orderBy: { created_at: 'desc' },
           })

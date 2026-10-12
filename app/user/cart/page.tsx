@@ -729,6 +729,7 @@ export default function CartPage() {
 
       setOrderSuccess(true)
       clearCart()
+      setUtrRef('')
       toast('Order placed successfully! Verifying payment...', 'success')
 
       const createdOrder = json.order || json.data
