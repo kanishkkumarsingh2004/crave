@@ -37,9 +37,9 @@ export default function DriverDashboard() {
 
   const totalEarnings = completedTrips.reduce((sum, trip) => sum + trip.total, 0)
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const result = completeDelivery(otpValue)
+    const result = await completeDelivery(otpValue)
     if (!result.success) {
       setOtpError(result.message)
     } else {

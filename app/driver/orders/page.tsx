@@ -145,9 +145,9 @@ export default function DriverAcceptedOrdersPage() {
     fetchLiveOrders()
   }, [])
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const result = completeDelivery(otpInput)
+    const result = await completeDelivery(otpInput)
     if (!result.success) {
       setOtpError(result.message)
     } else {

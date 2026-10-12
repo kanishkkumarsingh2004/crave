@@ -171,7 +171,7 @@ export async function createOrder(data: {
   // CR-004: Immutable canonical financial snapshot
   financial_snapshot?: any
 }) {
-  const { utr_ref, customer_vpa, ...prismaData } = data
+  const { customer_vpa, ...prismaData } = data
   return prisma.order.create({ data: prismaData as any })
 }
 
@@ -194,6 +194,11 @@ export async function updateOrder(
     delivered_at?: Date
     picker_name?: string
     items?: any
+    delivery_otp?: string
+    otp_consumed_at?: Date | null
+    payment_status?: any
+    payment_reviewed_by?: string
+    payment_reviewed_at?: Date
   }
 ) {
   return prisma.order.update({ where: { id }, data })

@@ -1,20 +1,12 @@
 import { createUser, findUserByEmail } from '@/lib/dal'
-import { verifyToken } from '@/lib/jwt'
+import { requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 import { broadcast } from '@/lib/ws-server'
 import crypto from 'crypto'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
+    await requireAdmin(request)
 
     const body = await request.json()
     const {
@@ -97,6 +89,8 @@ export async function POST(request: Request) {
       },
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('Error in create-driver endpoint:', error)
     return NextResponse.json(
       { error: error?.message || 'Failed to onboard driver' },

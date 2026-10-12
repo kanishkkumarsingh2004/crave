@@ -1,7 +1,6 @@
 import { updateUser, findUserById } from '@/lib/dal/users'
 import { updateRestaurant } from '@/lib/dal/restaurants'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { broadcast } from '@/lib/ws-server'
@@ -11,14 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
+    await requireAdmin(request)
 
     const body = await request.json()
     const {
@@ -212,6 +204,8 @@ export async function POST(request: Request) {
       restaurantUpdated: needsRestaurantUpdate,
     })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('Error updating account:', error)
     return NextResponse.json(
       { error: error?.message || 'Failed to update account' },
@@ -219,3 +213,5 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export const PATCH = POST

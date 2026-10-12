@@ -256,8 +256,8 @@ export default function DriverDashboardPage() {
 
             {activeTask.step === 'arrived_customer' && (
               <button
-                onClick={() => {
-                  const res = completeDelivery(otpInput)
+                onClick={async () => {
+                  const res = await completeDelivery(otpInput)
                   if (!res.success) {
                     alert(res.message)
                   }

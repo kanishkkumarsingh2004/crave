@@ -1,21 +1,11 @@
-import { verifyToken, type JWTPayload } from '@/lib/jwt'
+import { type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
+import { requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
-    if (payload.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
+    await requireAdmin(request)
 
     const { searchParams } = new URL(request.url)
     const role = searchParams.get('role')
@@ -71,6 +61,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, users: formatted })
   } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
     console.error('[GET /api/admin/users]', error)
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to load users' },

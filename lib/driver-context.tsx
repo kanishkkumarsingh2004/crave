@@ -173,7 +173,7 @@ interface DriverContextType {
   triggerSimulatedOffer: () => void
   acceptBroadcastOffer: () => void
   advanceStep: () => void
-  completeDelivery: (otpInput?: string) => { success: boolean; message: string }
+  completeDelivery: (otpInput?: string) => Promise<{ success: boolean; message: string }>
   handleAddUpiId: (vpa: string, provider: string) => void
   setPrimaryUpi: (id: string) => void
   deleteUpiId: (id: string) => void
@@ -866,22 +866,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     try {
       if (activeTask.step === 'assigned') {
         setActiveTask((prev) => (prev ? { ...prev, step: 'at_restaurant' } : null))
-        try {
-          await fetch('/api/orders', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId: activeTask.id,
-              status: 'ready_for_pickup',
-              driver_name: driverDisplayName,
-              driver_phone: driverDisplayPhone,
-            }),
-          })
-          publishLiveEvent('order_update', {
-            orderId: activeTask.id,
-            status: 'ready_for_pickup',
-          })
-        } catch (e) {}
+        publishLiveEvent('driver_status', {
+          driverId: user?.id,
+          orderId: activeTask.id,
+          step: 'at_restaurant',
+        })
       } else if (activeTask.step === 'at_restaurant') {
         setActiveTask((prev) => (prev ? { ...prev, step: 'picked_up' } : null))
         try {
@@ -924,7 +913,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function completeDelivery(otpInput?: string): { success: boolean; message: string } {
+  async function completeDelivery(otpInput?: string): Promise<{ success: boolean; message: string }> {
     if (!activeTask) return { success: false, message: 'No active delivery task.' }
 
     const expectedOtp = String(activeTask.otp || '').trim()

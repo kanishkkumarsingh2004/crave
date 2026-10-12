@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     // XP-08 FIX (1): Ownership + role check.
     // A driver can only request a payout for themselves. Admins may specify any driverId.
     const requestedDriverId = bodyDriverId || actor.id
-    if (actor.role !== 'admin' && actor.role !== 'rider' && actor.role !== 'driver') {
+    if (actor.role !== 'admin' && actor.role !== 'rider') {
       return NextResponse.json({ error: 'Forbidden: Only drivers or admins can request payouts' }, { status: 403 })
     }
     if (actor.role !== 'admin' && requestedDriverId !== actor.id) {
@@ -70,12 +70,24 @@ export async function POST(request: Request) {
     // Fetch driver earnings from completed orders to determine available balance
     const driverOrders = await prisma.order.findMany({
       where: { rider_id: requestedDriverId, status: { in: ['delivered', 'completed'] } },
-      select: { driver_payout: true },
+      select: { items: true, delivery_fee: true, tip: true, financial_snapshot: true },
     })
-    const totalEarnings = driverOrders.reduce(
-      (sum: number, o: any) => sum + Number(o.driver_payout || 0),
-      0
-    )
+    const totalEarnings = driverOrders.reduce((sum: number, o: any) => {
+      let payout = 0
+      const snap = o.financial_snapshot as any
+      if (snap?.driverPayoutPaise != null) {
+        payout = snap.driverPayoutPaise / 100
+      } else {
+        const itemsArr = Array.isArray(o.items) ? o.items : []
+        const breakdown = itemsArr[0]?.billing_breakdown
+        if (breakdown?.driver_payout != null) {
+          payout = Number(breakdown.driver_payout)
+        } else {
+          payout = Number(o.delivery_fee || 30) + Number(o.tip || 0)
+        }
+      }
+      return sum + payout
+    }, 0)
     const availableBalance = Math.max(0, totalEarnings - alreadyPaidOut)
 
     if (Number(amount) > availableBalance) {

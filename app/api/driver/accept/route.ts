@@ -111,8 +111,15 @@ export async function POST(request: Request) {
 
       // Broadcast driver acceptance to order and driver WebSocket channels
       await broadcast('order_update', {
+        type: 'order_status_update',
         orderId: requestId,
-        order: updatedOrder,
+        order: updatedOrder || {
+          id: requestId,
+          status: 'rider_assigned',
+          rider_id: driverId,
+          driver_name: driverName,
+          driver_phone: driverPhone,
+        },
         driverId,
         driver_name: driverName,
         driver_phone: driverPhone,
