@@ -194,7 +194,7 @@ export default function LoginPage() {
                         type="text"
                         required
                         autoComplete="username"
-                        placeholder="e.g. admin@crave.com or admin"
+                        placeholder="e.g. name@example.com or username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
@@ -226,55 +226,6 @@ export default function LoginPage() {
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Quick-Fill Demo Profiles for Instant Testing */}
-                  <div className="pt-1">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-stone-500 dark:text-stone-400 mb-2">
-                      <span>Quick Test Profiles:</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail('admin@crave.com')
-                          setPassword('admin123')
-                        }}
-                        className="rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-500/20 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 transition-all"
-                      >
-                        ⚡ Admin
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail('user@crave.com')
-                          setPassword('Password123!')
-                        }}
-                        className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 transition-all"
-                      >
-                        👤 Customer
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail('vendor@crave.com')
-                          setPassword('Password123!')
-                        }}
-                        className="rounded-xl border border-sky-500/30 bg-sky-500/10 dark:bg-sky-500/20 px-2.5 py-1.5 text-[11px] font-bold text-sky-700 dark:text-sky-300 hover:bg-sky-500/25 transition-all"
-                      >
-                        🍳 Kitchen
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail('rider@crave.com')
-                          setPassword('Password123!')
-                        }}
-                        className="rounded-xl border border-purple-500/30 bg-purple-500/10 dark:bg-purple-500/20 px-2.5 py-1.5 text-[11px] font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-500/25 transition-all"
-                      >
-                        🛵 Rider
                       </button>
                     </div>
                   </div>

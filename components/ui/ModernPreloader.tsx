@@ -1,5 +1,7 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
+
 interface SpinnerProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   variant?: 'crave' | 'white' | 'dark' | 'emerald'
@@ -119,51 +121,70 @@ export function CravePagePreloader({
 }: PagePreloaderProps) {
   return (
     <div
-      className={`w-full ${minHeight} flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300`}
+      className={`w-full ${minHeight} flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300 relative select-none`}
     >
       <div className="relative flex items-center justify-center">
-        {/* Ambient Radial Neon Glow */}
-        <div className="absolute size-36 rounded-full bg-[#d9f447]/15 blur-2xl animate-pulse" />
+        {/* Ambient Radial Neon Aura */}
+        <div className="absolute size-44 rounded-full bg-[#d9f447]/15 blur-3xl animate-pulse" />
 
-        {/* Pulsing Outer Rings */}
-        <div
-          className="absolute size-24 rounded-full border border-[#d9f447]/20 animate-ping opacity-30"
-          style={{ animationDuration: '2s' }}
-        />
-        <div className="absolute size-20 rounded-full border border-[#d9f447]/30 animate-pulse" />
+        {/* Outer Orbital Glowing Track */}
+        <div className="relative size-24 flex items-center justify-center">
+          {/* Subtle Outer Boundary Ring */}
+          <div className="absolute inset-0 rounded-3xl border border-black/5 dark:border-white/10" />
 
-        {/* Central Brand Spinner Container */}
-        <div className="relative size-16 rounded-2xl bg-[#121815] border border-[#27342d] shadow-2xl flex items-center justify-center overflow-hidden">
-          {/* Rotating Perimeter Line */}
-          <div
-            className="absolute inset-0 border-2 border-transparent border-t-[#d9f447] border-l-[#d9f447]/60 rounded-2xl animate-spin"
-            style={{ animationDuration: '1.2s' }}
-          />
+          {/* High-Precision Rotating Neon Orbit SVG */}
+          <svg
+            className="absolute inset-0 size-full animate-spin"
+            viewBox="0 0 96 96"
+            style={{ animationDuration: '2.2s' }}
+          >
+            <circle
+              cx="48"
+              cy="48"
+              r="42"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-black/[0.04] dark:text-white/[0.06] fill-none"
+            />
+            <circle
+              cx="48"
+              cy="48"
+              r="42"
+              stroke="#d9f447"
+              strokeWidth="2.5"
+              strokeDasharray="60 200"
+              strokeLinecap="round"
+              className="fill-none drop-shadow-[0_0_10px_#d9f447]"
+            />
+          </svg>
 
-          {/* Crave Dot Icon */}
-          <div className="size-4 rounded-full bg-[#d9f447] shadow-[0_0_12px_#d9f447] animate-pulse" />
+          {/* Central Frosted Glass Emblem */}
+          <div className="relative size-16 rounded-2xl bg-white/90 dark:bg-[#121815]/90 border border-black/10 dark:border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex items-center justify-center overflow-hidden">
+            <CraveLogo variant="small" size="lg" className="relative z-10 transition-transform" />
+          </div>
         </div>
       </div>
 
-      {/* Modern Shimmering Typography */}
-      <div className="mt-6 max-w-xs space-y-1">
-        <h4 className="text-sm font-black uppercase tracking-wider text-[#18201c] dark:text-white flex items-center justify-center gap-1.5">
-          {title}
+      {/* Modern Shimmering Brand Typography */}
+      <div className="mt-6 max-w-sm space-y-1.5 px-4">
+        <h4 className="text-sm sm:text-base font-black tracking-tight text-[#18201c] dark:text-white flex items-center justify-center gap-2">
+          <span>{title}</span>
         </h4>
-        <p className="text-xs text-[#5f7466] dark:text-[#9eb3a4] font-medium leading-relaxed">
+        <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
           {subtitle}
         </p>
       </div>
 
-      {/* Modern Slim Shimmer Progress Bar */}
-      <div className="mt-5 w-36 h-1 rounded-full bg-[#eaefe5] dark:bg-[#25332a] overflow-hidden relative">
+      {/* Modern High-End Shimmer Progress Bar */}
+      <div className="mt-5 w-40 sm:w-48 h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden relative backdrop-blur-md">
         <div
-          className="absolute inset-y-0 w-1/2 rounded-full bg-[#d9f447] shadow-[0_0_8px_#d9f447]"
+          className="absolute inset-y-0 w-2/5 rounded-full bg-gradient-to-r from-transparent via-[#d9f447] to-[#d9f447] shadow-[0_0_10px_#d9f447]"
           style={{
-            animation: 'craveShimmer 1.4s ease-in-out infinite alternate',
+            animation: 'craveShimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
           }}
         />
       </div>
     </div>
   )
 }
+
