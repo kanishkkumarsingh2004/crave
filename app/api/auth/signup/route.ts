@@ -48,7 +48,13 @@ export async function POST(request: Request) {
     const finalRole = 'user' as const
 
     // Check if email already exists via Prisma
-    const existingUser = await findUserByEmail(cleanEmail)
+    let existingUser = null
+    try {
+      existingUser = await findUserByEmail(cleanEmail)
+    } catch (dbErr: any) {
+      console.warn('[Signup] DB check skipped (database unreachable):', dbErr?.message)
+    }
+
     if (existingUser) {
       return NextResponse.json(
         {

@@ -203,6 +203,38 @@ export async function POST(request: Request) {
       locale: profile?.locale ?? 'en',
     }
 
+    let restaurantId: string | undefined = undefined
+    if (
+      userPayload.role === 'restaurant_vendor' ||
+      userPayload.role === 'cravexp_store_vendor' ||
+      (userPayload.role as string) === 'vendor'
+    ) {
+      try {
+        const { prisma } = await import('@/lib/prisma')
+        const rest = await prisma.restaurant.findFirst({
+          where: {
+            OR: [
+              { owner_id: profile.id },
+              ...(profile.restaurant_name ? [{ name: profile.restaurant_name }] : []),
+            ],
+          },
+        })
+        if (rest) {
+          restaurantId = rest.id
+          if (!userPayload.restaurantName) {
+            userPayload.restaurantName = rest.name
+          }
+        }
+      } catch (err) {
+        console.warn('[login] could not resolve restaurant for vendor:', err)
+      }
+    }
+
+    if (restaurantId) {
+      userPayload.restaurantId = restaurantId
+      userPayload.restaurant_id = restaurantId
+    }
+
     const token = await createToken(userPayload)
     return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token, request)
   } catch (error) {

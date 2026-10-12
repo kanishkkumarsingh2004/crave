@@ -84,62 +84,86 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Review ID and status are required' }, { status: 400 })
       }
 
-      // Look up review to get order_id and utr_ref
-      const review = await prisma.paymentReview.findUnique({
-        where: { id },
+      const lookupId = String(id).trim()
+      const explicitOrderId = body.orderId ? String(body.orderId).trim() : undefined
+
+      // Look up review by either review.id or review.order_id
+      let review = await prisma.paymentReview.findFirst({
+        where: {
+          OR: [
+            { id: lookupId },
+            { order_id: lookupId },
+            ...(explicitOrderId ? [{ order_id: explicitOrderId }, { id: explicitOrderId }] : []),
+          ],
+        },
       })
 
-      if (!review) {
-        return NextResponse.json({ error: 'Payment review record not found' }, { status: 404 })
+      // If no review record exists, check if the Order exists directly
+      const targetOrderId = explicitOrderId || review?.order_id || lookupId
+      const targetOrder = await prisma.order.findUnique({
+        where: { id: targetOrderId },
+      })
+
+      if (!review && !targetOrder) {
+        return NextResponse.json({ error: 'Payment review and Order record not found' }, { status: 404 })
       }
 
-      const targetOrderId = review.order_id || id
+      const finalOrderId = targetOrder?.id || review?.order_id || targetOrderId
       let updatedOrder: any = null
 
       if (status === 'verified') {
         const { processPaymentVerificationTx } = await import('@/lib/finance/payment-service')
         const outcome = await processPaymentVerificationTx({
-          orderId: targetOrderId,
-          gatewayPaymentId: review.utr_ref,
-          amount: review.amount,
+          orderId: finalOrderId,
+          gatewayPaymentId: review?.utr_ref || targetOrder?.utr_ref || `UTR_${Date.now()}`,
+          amount: review?.amount || targetOrder?.total_amount,
           actorId: payload.id,
           gateway: 'UPI_MANUAL',
-          idempotencyKey: `admin_verify_${review.id}`,
+          idempotencyKey: `admin_verify_${review?.id || finalOrderId}_${Date.now()}`,
         })
         updatedOrder = outcome.order
       } else if (status === 'rejected') {
         const { processPaymentRejectionTx } = await import('@/lib/finance/payment-service')
         const outcome = await processPaymentRejectionTx({
-          orderId: targetOrderId,
+          orderId: finalOrderId,
           reason: body.reason || 'Admin rejected payment review',
           actorId: payload.id,
-          idempotencyKey: `admin_reject_${review.id}`,
+          idempotencyKey: `admin_reject_${review?.id || finalOrderId}_${Date.now()}`,
         })
         updatedOrder = outcome.order
       } else {
-        // Pending: just update the review status
-        await prisma.paymentReview.update({
-          where: { id },
-          data: { status: 'pending' },
-        })
+        // Pending: update the review status if review exists
+        if (review) {
+          await prisma.paymentReview.update({
+            where: { id: review.id },
+            data: { status: 'pending' },
+          })
+        }
       }
       mark('db')
 
-      // Broadcast real-time WebSocket events
-      await broadcast('approval_update', { status, orderId: targetOrderId })
+      // Broadcast real-time WebSocket events across customer, vendor, and admin channels
+      await broadcast('approval_update', { status, orderId: finalOrderId })
       if (updatedOrder) {
-        await broadcast('order_update', { order: updatedOrder, orderId: targetOrderId })
-        await broadcast('admin_orders', { order: updatedOrder, orderId: targetOrderId })
+        await broadcast('order_update', { order: updatedOrder, orderId: finalOrderId })
+        await broadcast('admin_orders', { order: updatedOrder, orderId: finalOrderId })
+        await broadcast('vendor_orders', { order: updatedOrder, orderId: finalOrderId })
+        if (updatedOrder.restaurant_id) {
+          await broadcast(`vendor_orders_${updatedOrder.restaurant_id}`, {
+            order: updatedOrder,
+            orderId: finalOrderId,
+          })
+        }
       }
       await broadcast('admin_stats', {
         type: 'payment_review_updated',
-        id: targetOrderId,
+        id: finalOrderId,
         status,
         timestamp: new Date().toISOString(),
       })
       mark('broadcast')
 
-      return NextResponse.json({ success: true, count: 1 })
+      return NextResponse.json({ success: true, count: 1, order: updatedOrder })
     } catch (error: any) {
       console.error('[admin/payment-reviews] Update error:', error)
       return NextResponse.json({ error: error?.message || 'Failed to update' }, { status: 500 })

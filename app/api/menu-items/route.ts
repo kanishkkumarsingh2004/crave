@@ -82,11 +82,29 @@ export async function POST(request: Request) {
         image: body.image || null,
         is_veg: body.is_veg ?? null,
         unit: body.unit || null,
-        mrp: body.mrp != null ? Number(body.mrp) : null,
+        mrp: body.mrp != null && body.mrp !== '' ? Number(body.mrp) : null,
         stock_count: Number(body.stock_count ?? 0),
         sku_code: body.sku_code || null,
+        hsn_sac_code: body.hsn_sac_code || '996331',
+        price_tax_mode: body.price_tax_mode || 'TAX_INCLUSIVE',
+        custom_commission_rate:
+          body.custom_commission_rate != null && body.custom_commission_rate !== ''
+            ? Number(body.custom_commission_rate)
+            : null,
+        custom_markup_rate:
+          body.custom_markup_rate != null && body.custom_markup_rate !== ''
+            ? Number(body.custom_markup_rate)
+            : null,
+        expiry_date: body.expiry_date ? new Date(body.expiry_date) : null,
       },
     })
+
+    if (body.restaurant_id) {
+      try {
+        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        await cacheDel(CacheKeys.menus.byRestaurant(body.restaurant_id))
+      } catch {}
+    }
 
     await broadcast('menu_items', { type: 'create', item, timestamp: new Date().toISOString() })
 
@@ -139,12 +157,34 @@ export async function PATCH(request: Request) {
       }
     }
 
-    // Normalize numeric fields
+    // Normalize numeric and date fields
     if (data.price != null) data.price = Number(data.price)
-    if (data.mrp != null) data.mrp = Number(data.mrp)
+    if (data.mrp !== undefined) data.mrp = data.mrp != null && data.mrp !== '' ? Number(data.mrp) : null
     if (data.stock_count != null) data.stock_count = Number(data.stock_count)
+    if (data.custom_commission_rate !== undefined) {
+      data.custom_commission_rate =
+        data.custom_commission_rate != null && data.custom_commission_rate !== ''
+          ? Number(data.custom_commission_rate)
+          : null
+    }
+    if (data.custom_markup_rate !== undefined) {
+      data.custom_markup_rate =
+        data.custom_markup_rate != null && data.custom_markup_rate !== ''
+          ? Number(data.custom_markup_rate)
+          : null
+    }
+    if (data.expiry_date !== undefined) {
+      data.expiry_date = data.expiry_date ? new Date(data.expiry_date) : null
+    }
 
     const item = await prisma.menuItem.update({ where: { id }, data })
+
+    if (item.restaurant_id) {
+      try {
+        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        await cacheDel(CacheKeys.menus.byRestaurant(item.restaurant_id))
+      } catch {}
+    }
 
     await broadcast('menu_items', { type: 'update', item, timestamp: new Date().toISOString() })
 

@@ -13,6 +13,15 @@ const DEFAULT_DRIVER_LNG = 77.469493
 const DEFAULT_RESTAURANT_LAT = 12.9352
 const DEFAULT_RESTAURANT_LNG = 77.6245
 
+const ELIGIBLE_DRIVER_OFFER_STATUSES = [
+  'ready_for_pickup',
+  'ready',
+  'sent_to_vendor',
+  'preparing',
+  'cooking',
+  'packing',
+]
+
 /**
  * Creates a broadcast order offer from an order target
  * Shared utility to eliminate duplicate code between WebSocket listener and polling
@@ -24,7 +33,8 @@ function createBroadcastOfferFromOrder(
   if (!target || !target.id) return null
   if (
     !target.id ||
-    (target.status !== 'ready_for_pickup' && target.status !== 'ready') ||
+    !ELIGIBLE_DRIVER_OFFER_STATUSES.includes(target.status) ||
+    (target.rider_id && target.rider_id !== 'Unassigned') ||
     (target.driver_name &&
       target.driver_name !== 'Unassigned' &&
       target.driver_name !== 'Unassigned Driver')
@@ -427,7 +437,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           // Find active orders needing driver pickup
           const availableOrders = json.orders.filter(
             (o: any) =>
-              (o.status === 'ready_for_pickup' || o.status === 'ready') &&
+              ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+              !o.rider_id &&
               (!o.driver_name ||
                 o.driver_name === 'Unassigned' ||
                 o.driver_name === 'Unassigned Driver')
@@ -741,7 +752,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            (o.status === 'ready_for_pickup' || o.status === 'ready') &&
+            ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+            !o.rider_id &&
             (!o.driver_name ||
               o.driver_name === 'Unassigned' ||
               o.driver_name === 'Unassigned Driver')

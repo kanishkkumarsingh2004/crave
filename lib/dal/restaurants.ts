@@ -22,6 +22,7 @@ const RESTAURANT_LISTING_SELECT = {
   longitude: true,
   phone: true,
   fssai_license: true,
+  owner_id: true,
 } as const
 
 // All scalar columns needed for order pricing / vendor logic.
@@ -121,6 +122,36 @@ export async function listDarkStores() {
 
 // ─── Mutations ───────────────────────────────────────────
 
+const VALID_RESTAURANT_FIELDS = new Set([
+  'id',
+  'name',
+  'cuisine',
+  'rating',
+  'rating_count',
+  'delivery_minutes',
+  'image',
+  'is_open',
+  'is_pure_veg',
+  'is_dark_store',
+  'cost_for_two',
+  'offer',
+  'address',
+  'latitude',
+  'longitude',
+  'phone',
+  'fssai_license',
+  'gstin',
+  'gst_status',
+  'supplier_state',
+  'price_tax_mode',
+  'contract_number',
+  'bank_account_name',
+  'bank_name',
+  'bank_account_number',
+  'bank_ifsc',
+  'payout_vpa',
+])
+
 export async function createRestaurant(data: {
   id: string
   name: string
@@ -129,6 +160,7 @@ export async function createRestaurant(data: {
   delivery_minutes?: number
   image?: string
   is_open?: boolean
+  is_pure_veg?: boolean
   is_dark_store?: boolean
   address?: string
   owner_id?: string
@@ -154,7 +186,17 @@ export async function createRestaurant(data: {
   contract_number?: string
   gst_rate_percent?: number
 }) {
-  const created = await prisma.restaurant.create({ data: data as any })
+  const { owner_id, ...rest } = data
+  const filteredData: Record<string, any> = {}
+  for (const [key, value] of Object.entries(rest)) {
+    if (VALID_RESTAURANT_FIELDS.has(key) && value !== undefined) {
+      filteredData[key] = value
+    }
+  }
+  if (owner_id) {
+    filteredData.owner = { connect: { id: owner_id } }
+  }
+  const created = await prisma.restaurant.create({ data: filteredData as any })
   await invalidateRestaurantCache()
   return created
 }
@@ -169,7 +211,17 @@ async function invalidateRestaurantCache(): Promise<void> {
 }
 
 export async function updateRestaurant(id: string, data: Partial<Omit<Restaurant, 'id'>>) {
-  const updated = await prisma.restaurant.update({ where: { id }, data: data as any })
+  const { owner_id, ...rest } = data as any
+  const filteredData: Record<string, any> = {}
+  for (const [key, value] of Object.entries(rest)) {
+    if (VALID_RESTAURANT_FIELDS.has(key) && value !== undefined) {
+      filteredData[key] = value
+    }
+  }
+  if (owner_id) {
+    filteredData.owner = { connect: { id: owner_id } }
+  }
+  const updated = await prisma.restaurant.update({ where: { id }, data: filteredData })
   await invalidateRestaurantCache()
   return updated
 }

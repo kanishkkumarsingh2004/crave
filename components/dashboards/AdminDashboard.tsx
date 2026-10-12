@@ -87,6 +87,7 @@ interface VendorStore {
   bannerUrl?: string
   latitude?: number
   longitude?: number
+  phone?: string
 }
 
 export default function AdminDashboard() {
@@ -268,6 +269,7 @@ export default function AdminDashboard() {
             bannerUrl: r.image,
             latitude: r.latitude ? Number(r.latitude) : undefined,
             longitude: r.longitude ? Number(r.longitude) : undefined,
+            phone: r.phone || undefined,
           }))
         : []
 
@@ -277,7 +279,13 @@ export default function AdminDashboard() {
 
       if (usersData && usersData.length > 0) {
         usersData.forEach((u: any) => {
-          const matchedVendor = realVendorsList.find((v) => v.userId === u.id || v.id === u.id)
+          const matchedVendor = realVendorsList.find(
+            (v) =>
+              (v.userId && v.userId === u.id) ||
+              v.id === u.id ||
+              (u.restaurant_name && v.storeName && u.restaurant_name.toLowerCase() === v.storeName.toLowerCase()) ||
+              (u.name && v.storeName && u.name.toLowerCase() === v.storeName.toLowerCase())
+          )
           const isXP =
             matchedVendor?.description?.toLowerCase().includes('xp') ||
             u.cuisine?.toLowerCase().includes('xp')
@@ -310,10 +318,10 @@ export default function AdminDashboard() {
                     : u.role === 'cravexp_store_vendor'
                       ? 'CraveXP Store Vendor'
                       : u.address || 'Registered Customer',
-            phone: u.phone || undefined,
-            address: u.address || undefined,
+            phone: u.phone || matchedVendor?.phone || undefined,
+            address: u.address || matchedVendor?.address || undefined,
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
-            cuisine: u.cuisine || undefined,
+            cuisine: u.cuisine || matchedVendor?.description || undefined,
             commissionRate: Number(u.commission_rate || matchedVendor?.commissionRate || 15),
             paymentModel:
               u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP'
@@ -338,7 +346,14 @@ export default function AdminDashboard() {
 
       if (realVendorsList.length > 0) {
         realVendorsList.forEach((v) => {
-          const exists = combinedAccounts.some((a) => a.id === v.id || a.id === v.userId)
+          const exists = combinedAccounts.some(
+            (a) =>
+              a.id === v.id ||
+              (v.userId && a.id === v.userId) ||
+              (a.restaurantName && v.storeName && a.restaurantName.toLowerCase() === v.storeName.toLowerCase()) ||
+              (a.detail && v.storeName && a.detail.toLowerCase() === v.storeName.toLowerCase()) ||
+              (a.name && v.storeName && a.name.toLowerCase() === v.storeName.toLowerCase())
+          )
           if (!exists) {
             const isXP =
               v.description?.toLowerCase().includes('xp') ||
@@ -986,7 +1001,15 @@ export default function AdminDashboard() {
             ) : (
               vendorAccounts.map((account) => {
                 const matchedVendor = vendorsList.find(
-                  (v) => v.id === account.id || v.userId === account.id
+                  (v) =>
+                    v.id === account.id ||
+                    (v.userId && v.userId === account.id) ||
+                    (account.restaurantName &&
+                      v.storeName &&
+                      account.restaurantName.toLowerCase() === v.storeName.toLowerCase()) ||
+                    (account.detail &&
+                      v.storeName &&
+                      account.detail.toLowerCase() === v.storeName.toLowerCase())
                 )
                 const isXPStore =
                   account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
@@ -1123,7 +1146,15 @@ export default function AdminDashboard() {
                 ) : (
                   vendorAccounts.map((account) => {
                     const matchedVendor = vendorsList.find(
-                      (v) => v.id === account.id || v.userId === account.id
+                      (v) =>
+                        v.id === account.id ||
+                        (v.userId && v.userId === account.id) ||
+                        (account.restaurantName &&
+                          v.storeName &&
+                          account.restaurantName.toLowerCase() === v.storeName.toLowerCase()) ||
+                        (account.detail &&
+                          v.storeName &&
+                          account.detail.toLowerCase() === v.storeName.toLowerCase())
                     )
                     const isXPStore =
                       account.vendorType === 'XP Store' ||

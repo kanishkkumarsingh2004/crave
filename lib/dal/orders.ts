@@ -33,6 +33,7 @@ export async function listOrders(filters?: {
   riderId?: string
   status?: OrderStatus
   onlyApprovedForVendor?: boolean
+  includeAvailableForRider?: boolean
   limit?: number
 }) {
   const cacheKey = JSON.stringify(filters || {})
@@ -49,8 +50,25 @@ export async function listOrders(filters?: {
 
   if (filters?.driverId || filters?.riderId) {
     const driverId = filters.driverId || filters.riderId
-    // Only match rider_id — matching customer_id for a driver ID risks leaking other users' orders
-    where.rider_id = driverId
+    if (filters?.includeAvailableForRider) {
+      where.OR = [
+        { rider_id: driverId },
+        {
+          rider_id: null,
+          status: {
+            in: [
+              'ready_for_pickup',
+              'sent_to_vendor',
+              'preparing',
+              'packing',
+            ] as OrderStatus[],
+          },
+          payment_status: 'verified',
+        },
+      ]
+    } else {
+      where.rider_id = driverId
+    }
   }
 
   if (filters?.status) {
@@ -572,3 +590,50 @@ export async function getOrdersRevenue(restaurantId?: string) {
     return { totalRevenue, foodRevenue, orderCount: orders.length }
   }
 }
+
+export async function deleteOrder(
+  orderId: string,
+  actorId?: string,
+  actorRole?: string
+): Promise<{ success: boolean; error?: string; deletedOrder?: any }> {
+  try {
+    const existing = await prisma.order.findUnique({
+      where: { id: orderId },
+    })
+
+    if (!existing) {
+      return { success: false, error: 'Order not found' }
+    }
+
+    if (actorRole && actorRole !== 'admin') {
+      if (actorRole === 'user' || actorRole === 'customer') {
+        if (existing.customer_id && existing.customer_id !== actorId) {
+          return { success: false, error: 'Unauthorized to delete this order' }
+        }
+      }
+    }
+
+    // Clean up related non-cascading or outbox records in transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.paymentReview.deleteMany({
+        where: { order_id: orderId },
+      })
+      await tx.orderOutbox.deleteMany({
+        where: { order_id: orderId },
+      })
+      await tx.adminOverrideLog.deleteMany({
+        where: { order_id: orderId },
+      })
+      await tx.order.delete({
+        where: { id: orderId },
+      })
+    })
+
+    listOrdersCache.clear()
+    return { success: true, deletedOrder: existing }
+  } catch (err: any) {
+    console.error('[deleteOrder] Error deleting order:', err)
+    return { success: false, error: err?.message || 'Failed to delete order' }
+  }
+}
+

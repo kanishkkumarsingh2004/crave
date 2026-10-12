@@ -1282,6 +1282,25 @@ export default function CustomerDashboard({
     toast(clean, isError ? 'error' : 'success')
   }
 
+  const handleCancelOrRemoveOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel and remove this order?')) return
+    try {
+      const res = await fetch(`/api/orders?orderId=${orderId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setOrdersData((prev) => prev.filter((o) => o.id !== orderId))
+        setActiveOrder(null)
+        triggerToast('Order removed successfully')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        triggerToast(data.error || 'Failed to remove order')
+      }
+    } catch {
+      triggerToast('Network error removing order')
+    }
+  }
+
   function handleCopyCompanyUpi() {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(companyUpiId)
@@ -3511,6 +3530,14 @@ export default function CustomerDashboard({
                               Payment Pending
                             </span>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-rose-300 shadow-xs transition cursor-pointer shrink-0"
+                            title="Cancel / Remove order"
+                          >
+                            <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order
+                          </button>
                           {(activeOrder.statusStep === 4 ||
                             activeOrder.rawStatus === 'delivered' ||
                             activeOrder.rawStatus === 'completed') && (

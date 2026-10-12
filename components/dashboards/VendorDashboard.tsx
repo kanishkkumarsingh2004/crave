@@ -40,6 +40,7 @@ export default function VendorDashboard() {
   const router = useRouter()
   const pathname = usePathname()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
+  const [resolvedRestaurantId, setResolvedRestaurantId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [liveBanner, setLiveBanner] = useState<{
     id: string
@@ -49,12 +50,35 @@ export default function VendorDashboard() {
   const [pendingOrders, setPendingOrders] = useState<Record<string, boolean>>({})
   const pendingOrdersRef = useRef<Record<string, boolean>>({})
 
+  // Resolve this vendor's linked restaurant ID from the database if not cached in auth context
+  useEffect(() => {
+    async function resolveVendorRestaurant() {
+      if (!user?.id) return
+      if (user.restaurantId) {
+        setResolvedRestaurantId(user.restaurantId)
+        return
+      }
+      try {
+        const res = await fetch(`/api/restaurants?ownerId=${encodeURIComponent(user.id)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.restaurants?.length > 0) {
+            setResolvedRestaurantId(data.restaurants[0].id)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to resolve vendor restaurant:', e)
+      }
+    }
+    resolveVendorRestaurant()
+  }, [user?.id, user?.restaurantId])
+
   const loadLiveKitchenOrders = async () => {
     try {
       let ordersData: any[] = []
-      const vendorId = user?.restaurantId || user?.id
-      const query = vendorId
-        ? `vendorId=${encodeURIComponent(vendorId)}`
+      const targetRestId = resolvedRestaurantId || user?.restaurantId || user?.id
+      const query = targetRestId
+        ? `vendorId=${encodeURIComponent(targetRestId)}`
         : user?.restaurantName
           ? `vendorName=${encodeURIComponent(user.restaurantName)}`
           : ''
@@ -64,22 +88,44 @@ export default function VendorDashboard() {
         ordersData = json.orders
       }
 
-      if (vendorId && ordersData.length > 0) {
-        const vendorFiltered = ordersData.filter(
-          (o) =>
-            o.restaurant_id === vendorId ||
-            o.vendor_id === vendorId ||
-            (user?.restaurantName && o.restaurant_name === user.restaurantName)
-        )
-        if (vendorFiltered.length > 0) {
-          ordersData = vendorFiltered
+      // Filter orders belonging to this vendor
+      const vendorFiltered = ordersData.filter((o) => {
+        if (resolvedRestaurantId && o.restaurant_id === resolvedRestaurantId) return true
+        if (user?.restaurantId && o.restaurant_id === user.restaurantId) return true
+        if (user?.id && (o.restaurant_id === user.id || o.vendor_id === user.id)) return true
+        if (
+          user?.restaurantName &&
+          o.restaurant_name &&
+          o.restaurant_name.trim().toLowerCase() === user.restaurantName.trim().toLowerCase()
+        ) {
+          return true
         }
+        return false
+      })
+
+      if (vendorFiltered.length > 0 || (ordersData.length > 0 && (resolvedRestaurantId || user?.restaurantId))) {
+        ordersData = vendorFiltered
       }
 
+      // Show verified orders and orders active in kitchen queue
       const approvedOrders = ordersData.filter(
         (o) =>
           o.payment_status === 'verified' ||
-          !['payment_pending', 'payment_submitted'].includes(o.status)
+          [
+            'sent_to_vendor',
+            'new',
+            'accepted',
+            'preparing',
+            'cooking',
+            'packing',
+            'ready',
+            'ready_for_pickup',
+            'rider_assigned',
+            'picked_up',
+            'out_for_delivery',
+            'delivered',
+            'completed',
+          ].includes(o.status)
       )
 
       const parsed: KitchenOrder[] = approvedOrders.map((o: any) => {
@@ -122,23 +168,25 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     loadLiveKitchenOrders()
-  }, [user?.id, user?.restaurantId, user?.restaurantName])
+  }, [user?.id, user?.restaurantId, user?.restaurantName, resolvedRestaurantId])
 
-  // Live WebSocket order update listener for instant kitchen popups (triggered only on admin approval)
+  // Live WebSocket order update listener for instant kitchen popups
   useVendorOrderUpdates((data) => {
     const o = data.order || data
     if (!o || !o.id) return
 
-    const vendorId = user?.restaurantId || user?.id
     const isMatch =
-      !vendorId ||
-      o.restaurant_id === vendorId ||
-      o.vendor_id === vendorId ||
-      (user?.restaurantName && o.restaurant_name === user.restaurantName)
+      (!resolvedRestaurantId && !user?.restaurantId && !user?.restaurantName) ||
+      (resolvedRestaurantId && o.restaurant_id === resolvedRestaurantId) ||
+      (user?.restaurantId && o.restaurant_id === user.restaurantId) ||
+      (user?.id && (o.restaurant_id === user.id || o.vendor_id === user.id)) ||
+      (user?.restaurantName &&
+        o.restaurant_name &&
+        o.restaurant_name.trim().toLowerCase() === user.restaurantName.trim().toLowerCase())
 
     const isApproved =
       o.payment_status === 'verified' ||
-      (o.status && !['payment_pending', 'payment_submitted'].includes(o.status))
+      !['payment_pending', 'payment_submitted'].includes(o.status)
 
     if (isMatch && isApproved) {
       playChimeSound()
@@ -182,7 +230,13 @@ export default function VendorDashboard() {
   }
 
   const openCount = kitchenOrders.filter(
-    (o) => o.status === 'new' || o.status === 'preparing'
+    (o) =>
+      o.status === 'new' ||
+      o.status === 'sent_to_vendor' ||
+      o.status === 'accepted' ||
+      o.status === 'preparing' ||
+      o.status === 'cooking' ||
+      o.status === 'packing'
   ).length
   const readyCount = kitchenOrders.filter((o) => o.status === 'ready').length
   const completedDropsCount = kitchenOrders.filter(

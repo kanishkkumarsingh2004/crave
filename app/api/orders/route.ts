@@ -260,12 +260,15 @@ export async function GET(request: Request) {
         }
       }
 
+      const isRiderActor = actor?.role === 'rider' || (actor?.role as string) === 'driver'
+
       const orders = await listOrders({
         customerId: scopedCustomerId,
         restaurantId: scopedRestaurantId,
         restaurantName: vendorName ?? undefined,
         driverId: scopedDriverId,
         onlyApprovedForVendor: isVendorActor ? true : undefined,
+        includeAvailableForRider: isRiderActor || Boolean(searchParams.get('available')),
       })
 
       return NextResponse.json({ success: true, orders })
@@ -1054,14 +1057,22 @@ export async function POST(request: Request) {
           // Never mark order paid/verified solely because frontend claims so
           const initialStatus: OrderStatus = utr_ref ? 'payment_submitted' : 'payment_pending'
 
+          // Check if customer and restaurant exist in DB before connecting relations
+          const customerRecord = finalCustomerId
+            ? await tx.user.findUnique({ where: { id: finalCustomerId }, select: { id: true } }).catch(() => null)
+            : null
+          const restaurantRecord = finalRestaurantId
+            ? await tx.restaurant.findUnique({ where: { id: finalRestaurantId }, select: { id: true } }).catch(() => null)
+            : null
+
           const createdOrder = await tx.order.create({
             data: {
               id: orderId,
-              customer_id: finalCustomerId,
+              customer: customerRecord ? { connect: { id: customerRecord.id } } : undefined,
               customer_name: customer_name || (actor as any)?.name || 'Customer',
               customer_phone: customer_phone || undefined,
               customer_address: canonicalAddressText,
-              restaurant_id: finalRestaurantId || undefined,
+              restaurant: restaurantRecord ? { connect: { id: restaurantRecord.id } } : undefined,
               restaurant_name: finalRestaurantName,
               items: itemsForStorage,
               subtotal: foodSubtotal,
@@ -1084,7 +1095,6 @@ export async function POST(request: Request) {
               restaurant_payout: vendorNetPayout,
               platform_revenue: platformProfit,
               utr_ref: utr_ref ? String(utr_ref).trim() : undefined,
-              customer_vpa: customer_vpa || (actor as any)?.email || 'customer@upi',
               financial_snapshot: canonicalResult as any,
               idempotency_key: idempotencyKey || undefined,
             },
@@ -1138,7 +1148,7 @@ export async function POST(request: Request) {
             create: {
               id: `set_${orderId}`,
               restaurant_name: finalRestaurantName,
-              restaurant_id: finalRestaurantId,
+              restaurant_id: restaurantRecord?.id || null,
               gross_sales: foodSubtotal,
               commission_rate: Number(
                 restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
@@ -1688,3 +1698,46 @@ export async function PATCH(request: Request) {
     }
   })
 }
+
+export async function DELETE(request: Request) {
+  return withTiming('DELETE /api/orders', async () => {
+    try {
+      const actor = await requireAuth(request)
+      const { searchParams } = new URL(request.url)
+      const orderId = searchParams.get('orderId') || searchParams.get('id')
+
+      if (!orderId) {
+        return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
+      }
+
+      const { deleteOrder } = await import('@/lib/dal')
+      const result = await deleteOrder(orderId, actor.id, actor.role)
+
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || 'Failed to delete order' },
+          { status: 400 }
+        )
+      }
+
+      await broadcast('order_update', {
+        orderId,
+        type: 'order_deleted',
+        status: 'cancelled',
+        deleted: true,
+      }).catch(() => {})
+
+      await broadcast('admin_orders', {
+        orderId,
+        type: 'order_deleted',
+        status: 'cancelled',
+        deleted: true,
+      }).catch(() => {})
+
+      return NextResponse.json({ success: true, message: 'Order successfully deleted' })
+    } catch (error) {
+      return handleAuthError(error)
+    }
+  })
+}
+

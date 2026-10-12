@@ -30,15 +30,51 @@ export async function POST(request: Request) {
     let targetUserId = userId
     let targetVendorId = vendorId
 
+    // If vendorId starts with usr_, it's a user ID
+    if (targetVendorId && targetVendorId.startsWith('usr_') && !targetUserId) {
+      targetUserId = targetVendorId
+      targetVendorId = undefined
+    }
+
     // Resolve user from email if only email provided
     if (!targetUserId && email) {
-      const user = await findUserByEmail(email)
-      if (user) {
-        targetUserId = user.id
+      try {
+        const user = await findUserByEmail(email)
+        if (user) {
+          targetUserId = user.id
+        }
+      } catch (dbErr: any) {
+        console.warn('[delete-vendor] DB check skipped (database unreachable):', dbErr?.message)
       }
     }
 
     const { prisma } = await import('@/lib/prisma')
+
+    // If we have targetUserId but not targetVendorId, resolve restaurant by owner_id
+    if (targetUserId && !targetVendorId && typeof prisma?.restaurant?.findFirst === 'function') {
+      const rest = await prisma.restaurant
+        .findFirst({
+          where: { owner_id: targetUserId },
+          select: { id: true },
+        })
+        .catch(() => null)
+      if (rest?.id) {
+        targetVendorId = rest.id
+      }
+    }
+
+    // If we have targetVendorId but not targetUserId, resolve owner from restaurant
+    if (targetVendorId && !targetUserId && typeof prisma?.restaurant?.findUnique === 'function') {
+      const rest = await prisma.restaurant
+        .findUnique({
+          where: { id: targetVendorId },
+          select: { owner_id: true },
+        })
+        .catch(() => null)
+      if (rest?.owner_id) {
+        targetUserId = rest.owner_id
+      }
+    }
 
     // 1. Check if orders exist for this vendor to prevent foreign key violations
     let hasOrders = false

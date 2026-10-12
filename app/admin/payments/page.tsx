@@ -89,18 +89,37 @@ export default function AdminPaymentsPage() {
     loadPayments()
   }, [])
 
-  async function updatePayment(orderId: string, newStatus: 'verified' | 'rejected') {
+  async function updatePayment(
+    orderId: string,
+    newStatus: 'verified' | 'rejected',
+    reviewId?: string
+  ) {
     try {
-      await fetch('/api/admin/payment-reviews', {
+      const res = await fetch('/api/admin/payment-reviews', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: orderId, orderId, status: newStatus }),
+        body: JSON.stringify({
+          id: reviewId || orderId,
+          orderId,
+          status: newStatus,
+        }),
       })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to update payment status')
+      }
+
       setPayments((prev) =>
-        prev.map((p) => (p.order_id === orderId ? { ...p, status: newStatus } : p))
+        prev.map((p) =>
+          p.order_id === orderId || (reviewId && p.id === reviewId)
+            ? { ...p, status: newStatus }
+            : p
+        )
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update payment status:', err)
+      setError(err?.message || 'Payment update failed. Please retry.')
     }
   }
 
@@ -243,7 +262,7 @@ export default function AdminPaymentsPage() {
               </div>
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-[#27342d]">
                 <button
-                  onClick={() => updatePayment(p.order_id, 'verified')}
+                  onClick={() => updatePayment(p.order_id, 'verified', p.id)}
                   disabled={p.status === 'verified'}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
                     p.status === 'verified'
@@ -254,7 +273,7 @@ export default function AdminPaymentsPage() {
                   {p.status === 'verified' ? 'Approved' : 'Approve Payment'}
                 </button>
                 <button
-                  onClick={() => updatePayment(p.order_id, 'rejected')}
+                  onClick={() => updatePayment(p.order_id, 'rejected', p.id)}
                   disabled={p.status === 'rejected'}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold transition shadow-sm ${
                     p.status === 'rejected'
@@ -311,7 +330,7 @@ export default function AdminPaymentsPage() {
                   <td className="px-5 py-4 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => updatePayment(p.order_id, 'verified')}
+                        onClick={() => updatePayment(p.order_id, 'verified', p.id)}
                         disabled={p.status === 'verified'}
                         className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
                           p.status === 'verified'
@@ -322,7 +341,7 @@ export default function AdminPaymentsPage() {
                         {p.status === 'verified' ? 'Approved' : 'Approve Payment'}
                       </button>
                       <button
-                        onClick={() => updatePayment(p.order_id, 'rejected')}
+                        onClick={() => updatePayment(p.order_id, 'rejected', p.id)}
                         disabled={p.status === 'rejected'}
                         className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
                           p.status === 'rejected'

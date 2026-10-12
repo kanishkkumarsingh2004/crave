@@ -390,7 +390,7 @@ model LedgerEntry {
   notes            String?
   created_at       DateTime @default(now()) @db.Timestamptz(6)
 
-  order            Order    @relation(fields: [order_id], references: [id])
+  order            Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@index([event_type, created_at])
