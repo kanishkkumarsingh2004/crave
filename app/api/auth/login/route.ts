@@ -7,16 +7,28 @@ import { promisify } from 'util'
 
 const scrypt = promisify(crypto.scrypt)
 
-function setCookies(response: ReturnType<typeof NextResponse.json>, token: string) {
+function isSecureCookie(request?: Request): boolean {
+  if (process.env.NODE_ENV !== 'production') return false
+  if (!request) return false
+  const host = request.headers.get('host') || ''
+  if (host.includes('localhost') || host.includes('127.0.0.1')) return false
+  const proto = request.headers.get('x-forwarded-proto')
+  if (proto === 'https') return true
+  return request.url.startsWith('https:')
+}
+
+function setCookies(response: ReturnType<typeof NextResponse.json>, token: string, request?: Request) {
+  const isSecure = isSecureCookie(request)
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecure,
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   }
   response.cookies.set('crave_auth_token', token, cookieOptions)
   response.cookies.set('drop_auth_token', token, cookieOptions)
+  response.cookies.set('crave_token', token, cookieOptions)
   return response
 }
 
@@ -183,7 +195,7 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token)
+    return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token, request)
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json(

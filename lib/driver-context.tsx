@@ -801,11 +801,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       customerLng: broadcastOffer.customerLng ?? 77.469493,
     }
 
-    setActiveTask(task)
-
     try {
-      // 1. Post to dedicated driver accept endpoint
-      await fetch('/api/driver/accept', {
+      // 1. Post to dedicated driver accept endpoint with atomic concurrency guard
+      const acceptRes = await fetch('/api/driver/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -817,7 +815,21 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           lat: currentLat,
           lng: currentLng,
         }),
-      }).catch(() => {})
+      }).catch(() => null)
+
+      if (!acceptRes || !acceptRes.ok) {
+        const errJson = await acceptRes?.json().catch(() => ({}))
+        console.warn(
+          '[DriverContext] Offer claim conflict or error:',
+          errJson?.error || 'Order no longer available'
+        )
+        setActiveTask(null)
+        setBroadcastOffer(null)
+        return
+      }
+
+      // Assignment confirmed authoritatively by PostgreSQL
+      setActiveTask(task)
 
       // 2. Patch orders API for standard order status sync
       await fetch('/api/orders', {
@@ -833,22 +845,24 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           driver_lng: currentLng,
         }),
       }).catch(() => {})
+
+      // Immediately publish driver live GPS position to WebSocket broadcast
+      publishLiveEvent('driver_location', {
+        driverId: user?.id || 'driver_partner',
+        orderId: realId,
+        lat: currentLat,
+        lng: currentLng,
+        status: 'ONLINE',
+      })
+
+      setBroadcastOffer(null)
     } catch (e) {
       console.error('Failed to update driver assignment:', e)
+      setActiveTask(null)
+      setBroadcastOffer(null)
     } finally {
       isAcceptingOfferRef.current = false
     }
-
-    // Immediately publish driver live GPS position to WebSocket broadcast
-    publishLiveEvent('driver_location', {
-      driverId: user?.id || 'driver_partner',
-      orderId: realId,
-      lat: currentLat,
-      lng: currentLng,
-      status: 'ONLINE',
-    })
-
-    setBroadcastOffer(null)
   }
 
   async function advanceStep() {

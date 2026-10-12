@@ -1073,6 +1073,7 @@ export default function CustomerDashboard({
   const [selectedOrderId, setSelectedOrderId] = useState(initialOrderId)
   const [activeOrder, setActiveOrder] = useState<any>(null)
   const [liveDriverPos, setLiveDriverPos] = useState<LatLngCoords | null>(null)
+  const [isDriverGpsStale, setIsDriverGpsStale] = useState<boolean>(false)
   const [invoiceModalOrder, setInvoiceModalOrder] = useState<InvoiceOrderData | null>(null)
 
   useEffect(() => {
@@ -1110,6 +1111,7 @@ export default function CustomerDashboard({
   // Subscribe to live driver location updates via WebSocket
   useDriverLocation(activeOrder?.id, (data: any) => {
     setLiveDriverPos({ lat: data.lat, lng: data.lng })
+    setIsDriverGpsStale(Boolean(data.isStale))
   })
 
   // Set active order from WebSocket stream
@@ -1117,6 +1119,7 @@ export default function CustomerDashboard({
     if (!user?.id || !ordersData.length) {
       setActiveOrder(null)
       setLiveDriverPos(null)
+      setIsDriverGpsStale(false)
       return
     }
 
@@ -3787,6 +3790,7 @@ export default function CustomerDashboard({
                             ? Number(activeOrder.customerLng)
                             : (selectedMapPin?.lng ?? undefined)
                         }
+                        isStale={isDriverGpsStale}
                       />
                     ) : (
                       <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-2.5 sm:gap-3 shadow-xs">

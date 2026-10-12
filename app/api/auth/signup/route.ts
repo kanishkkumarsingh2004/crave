@@ -137,9 +137,14 @@ export async function POST(request: Request) {
       message: 'Account created successfully!',
     })
 
+    const host = request.headers.get('host') || ''
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1')
+    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https:')
+    const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost && isHttps
+
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax' as const,
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
@@ -147,6 +152,7 @@ export async function POST(request: Request) {
 
     response.cookies.set('crave_auth_token', token, cookieOptions)
     response.cookies.set('drop_auth_token', token, cookieOptions)
+    response.cookies.set('crave_token', token, cookieOptions)
     return response
   } catch (error: any) {
     console.error('Signup endpoint error:', error)

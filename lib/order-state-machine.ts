@@ -97,25 +97,86 @@ export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
     OrderStatus.PAYMENT_PENDING,
     OrderStatus.CANCELLED,
   ],
-  [OrderStatus.PAYMENT_VERIFIED]: [OrderStatus.SENT_TO_VENDOR, OrderStatus.CANCELLED],
-  [OrderStatus.SENT_TO_VENDOR]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
-  [OrderStatus.PREPARING]: [OrderStatus.PACKING, OrderStatus.CANCELLED],
-  [OrderStatus.PACKING]: [OrderStatus.READY_FOR_PICKUP, OrderStatus.CANCELLED],
-  [OrderStatus.READY_FOR_PICKUP]: [OrderStatus.RIDER_ASSIGNED, OrderStatus.CANCELLED],
-  [OrderStatus.RIDER_ASSIGNED]: [OrderStatus.PICKED_UP, OrderStatus.CANCELLED],
-  [OrderStatus.PICKED_UP]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.CANCELLED],
+  [OrderStatus.PAYMENT_VERIFIED]: [
+    OrderStatus.SENT_TO_VENDOR,
+    OrderStatus.PREPARING,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.SENT_TO_VENDOR]: [
+    OrderStatus.PREPARING,
+    OrderStatus.PACKING,
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.RIDER_ASSIGNED,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.PREPARING]: [
+    OrderStatus.PACKING,
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.RIDER_ASSIGNED,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.PACKING]: [
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.RIDER_ASSIGNED,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.READY_FOR_PICKUP]: [
+    OrderStatus.RIDER_ASSIGNED,
+    OrderStatus.PICKED_UP,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.RIDER_ASSIGNED]: [
+    OrderStatus.PICKED_UP,
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.OUT_FOR_DELIVERY,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.PICKED_UP]: [
+    OrderStatus.OUT_FOR_DELIVERY,
+    OrderStatus.DELIVERED,
+    OrderStatus.CANCELLED,
+  ],
   [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
   [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED],
   [OrderStatus.COMPLETED]: [],
   [OrderStatus.CANCELLED]: [],
 }
 
+export class OrderStateTransitionError extends Error {
+  code = 'ILLEGAL_STATE_TRANSITION'
+  statusCode = 400
+  from: OrderStatus
+  to: OrderStatus
+  allowedTransitions: OrderStatus[]
+
+  constructor(from: OrderStatus, to: OrderStatus) {
+    const allowed = VALID_TRANSITIONS[from] || []
+    super(
+      `Illegal order status transition: "${from}" → "${to}". Allowed transitions from "${from}": [${allowed.join(', ')}]`
+    )
+    this.name = 'OrderStateTransitionError'
+    this.from = from
+    this.to = to
+    this.allowedTransitions = allowed
+  }
+}
+
 /**
  * Check if a transition is valid
  */
 export function isValidTransition(from: OrderStatus, to: OrderStatus): boolean {
+  if (from === to) return true // Idempotent same-state transition
   const allowed = VALID_TRANSITIONS[from]
   return allowed ? allowed.includes(to) : false
+}
+
+/**
+ * Assert that a transition is valid; throws OrderStateTransitionError if illegal
+ */
+export function assertValidTransition(from: OrderStatus, to: OrderStatus): void {
+  if (!isValidTransition(from, to)) {
+    throw new OrderStateTransitionError(from, to)
+  }
 }
 
 /**

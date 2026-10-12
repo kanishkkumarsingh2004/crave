@@ -5,7 +5,7 @@ import {
   acquireDriverOfferLock,
 } from '@/lib/dispatch/atomic-lock'
 import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
-import { updateOrder, findOrderById } from '@/lib/dal'
+import { updateOrder, findOrderById, claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
 import { broadcast } from '@/lib/ws-server'
 import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -48,24 +48,40 @@ export async function POST(request: Request) {
       )
     }
 
-    // CR-018: Atomic distributed lock for offer acceptance
-    // Use distributed lock to prevent race conditions across instances
-    const lockAcquired = await acquireDriverOfferLock(driverId, requestId)
-    if (!lockAcquired) {
-      return NextResponse.json(
-        { error: 'Offer no longer available or already accepted by another driver' },
-        { status: 409 }
-      )
-    }
+    // Distributed advisory lock for offer acceptance
+    await acquireDriverOfferLock(driverId, requestId).catch(() => true)
 
     try {
-      // Release offer lock and mark driver ON_TRIP
-      await releaseDriverLock(driverId, requestId)
-
       const currentLocation = getDriverLocation(driverId)
       const lat = typeof body.lat === 'number' ? body.lat : currentLocation?.lat
       const lng = typeof body.lng === 'number' ? body.lng : currentLocation?.lng
 
+      // Authoritative PostgreSQL conditional atomic claim
+      const claimResult = await claimOrderForDriverAtomic({
+        orderId: requestId,
+        driverId,
+        driverName,
+        driverPhone,
+        lat: typeof lat === 'number' ? lat : undefined,
+        lng: typeof lng === 'number' ? lng : undefined,
+      })
+
+      if (!claimResult.success) {
+        if (claimResult.conflict) {
+          return NextResponse.json(
+            { error: claimResult.error || 'Order has already been assigned to another driver' },
+            { status: 409 }
+          )
+        }
+        return NextResponse.json(
+          { error: claimResult.error || 'Failed to accept dispatch offer' },
+          { status: 500 }
+        )
+      }
+
+      const updatedOrder = claimResult.order
+
+      // Update in-memory & Redis spatial index to ON_TRIP
       if (typeof lat === 'number' && typeof lng === 'number') {
         await updateDriverLocation({
           driverId,
@@ -77,51 +93,11 @@ export async function POST(request: Request) {
         })
       }
 
-      // P0-D FIX: Persist order update in DB with atomic conditional check
-      let updatedOrder = null
-      try {
-        const assigned = await prisma.order.updateMany({
-          where: {
-            id: requestId,
-            OR: [
-              { rider_id: null },
-              { rider_id: driverId }, // allow idempotent retry by same driver
-            ],
-            status: {
-              in: [
-                'sent_to_vendor',
-                'preparing',
-                'packing',
-                'ready_for_pickup',
-                'rider_assigned',
-              ] as any[],
-            },
-          },
-          data: {
-            status: 'rider_assigned',
-            rider_id: driverId,
-            driver_name: driverName,
-            driver_phone: driverPhone,
-          },
-        })
-
-        if (assigned.count === 0) {
-          return NextResponse.json(
-            { error: 'Order has already been assigned to another driver' },
-            { status: 409 }
-          )
-        }
-
-        updatedOrder = await findOrderById(requestId)
-      } catch (dbErr) {
-        console.warn('[POST /api/driver/accept] DB update notice:', dbErr)
-      }
-
       // Register driver assignment with internal WebSocket server
       await broadcast('__internal_assign_driver', {
         driverId,
         orderId: requestId,
-      })
+      }).catch(() => {})
 
       // Broadcast driver acceptance to order and driver WebSocket channels
       await broadcast('order_update', {
@@ -132,7 +108,7 @@ export async function POST(request: Request) {
         driver_phone: driverPhone,
         status: 'rider_assigned',
         timestamp: new Date().toISOString(),
-      })
+      }).catch(() => {})
 
       await broadcast('driver_location', {
         orderId: requestId,
@@ -142,6 +118,11 @@ export async function POST(request: Request) {
         status: 'ON_TRIP',
         available: false,
         timestamp: new Date().toISOString(),
+      }).catch(() => {})
+
+      // Flush transactional outbox events asynchronously
+      dispatchPendingOutboxEvents().catch((outboxErr) => {
+        console.warn('[POST /api/driver/accept] Outbox dispatch notice:', outboxErr)
       })
 
       return NextResponse.json({
@@ -153,8 +134,8 @@ export async function POST(request: Request) {
         assignedAt: new Date().toISOString(),
       })
     } finally {
-      // Ensure lock is released even if an error occurs
-      await releaseDriverLock(driverId, requestId)
+      // Ensure advisory lock is released
+      await releaseDriverLock(driverId, requestId).catch(() => {})
     }
   } catch (err: any) {
     const authRes = handleApiAuthError(err)

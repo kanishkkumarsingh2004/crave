@@ -16,6 +16,7 @@ interface LiveDriverMapProps {
   driverLng?: number | null
   driverName?: string | null
   statusStep?: number
+  isStale?: boolean
 }
 
 export default function LiveDriverMap({
@@ -29,6 +30,7 @@ export default function LiveDriverMap({
   driverLng = null,
   driverName = null,
   statusStep = 1,
+  isStale = false,
 }: LiveDriverMapProps) {
   const [routePoints, setRoutePoints] = useState<[number, number][]>([])
   const [routeIndex, setRouteIndex] = useState<number>(0)
@@ -222,21 +224,31 @@ export default function LiveDriverMap({
         <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#18181b]/95 border border-[#27272a] px-2 py-1 sm:px-3.5 sm:py-1.5 shadow-xl backdrop-blur-md max-w-full">
           <span className="relative flex size-2 sm:size-2.5 shrink-0">
             {hasLiveGps ? (
-              <>
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-emerald-400"></span>
-              </>
+              isStale ? (
+                <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-amber-400"></span>
+              ) : (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-emerald-400"></span>
+                </>
+              )
             ) : (
               <span className="relative inline-flex rounded-full size-2 sm:size-2.5 bg-amber-400"></span>
             )}
           </span>
           <span
             className={`text-[8px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 truncate ${
-              hasLiveGps ? 'text-emerald-400' : 'text-amber-400'
+              hasLiveGps
+                ? isStale
+                  ? 'text-amber-400'
+                  : 'text-emerald-400'
+                : 'text-amber-400'
             }`}
           >
             {hasLiveGps
-              ? `Live Driver GPS • ${lastGpsUpdate ? lastGpsUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Active'}`
+              ? isStale
+                ? 'GPS Signal Delayed • Last Known Location'
+                : `Live Driver GPS • ${lastGpsUpdate ? lastGpsUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Active'}`
               : 'Awaiting Driver GPS Signal'}
             {isLoadingRoute && (
               <RefreshCw className="size-2.5 sm:size-3 animate-spin text-gray-400 shrink-0" />

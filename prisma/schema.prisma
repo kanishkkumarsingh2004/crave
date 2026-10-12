@@ -507,3 +507,21 @@ model AdminOverrideLog {
   @@index([created_at])
   @@map("admin_override_logs")
 }
+
+/// Transactional outbox for durable order event delivery.
+/// Events are written in the same database transaction as order state changes.
+model OrderOutbox {
+  id           String    @id @default(cuid())
+  order_id     String
+  event_type   String    // ORDER_CREATED | ORDER_ASSIGNED | STATUS_CHANGED | DELIVERY_CONFIRMED
+  payload      Json
+  status       String    @default("pending") // pending | processed | failed
+  attempts     Int       @default(0)
+  last_error   String?
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  processed_at DateTime? @db.Timestamptz(6)
+
+  @@index([status, created_at])
+  @@index([order_id, created_at])
+  @@map("order_outbox")
+}

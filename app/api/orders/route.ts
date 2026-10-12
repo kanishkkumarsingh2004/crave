@@ -1,4 +1,4 @@
-import { findOrderById, listOrders, updateOrder } from '@/lib/dal'
+import { findOrderById, listOrders, updateOrder, dispatchPendingOutboxEvents } from '@/lib/dal'
 import {
   updatePaymentReviewStatus,
   createDriverPayout,
@@ -174,10 +174,57 @@ export async function GET(request: Request) {
             })
           }
         }
+        // For single-order recovery, fetch driverLocation and missed outbox events
+        const sinceParam = searchParams.get('since')
+        let missedEvents: any[] = []
+        if (sinceParam) {
+          const parsedSince = isNaN(Number(sinceParam)) ? new Date(sinceParam) : new Date(Number(sinceParam))
+          if (!isNaN(parsedSince.getTime())) {
+            try {
+              missedEvents = await prisma.orderOutbox.findMany({
+                where: { order_id: orderId, created_at: { gt: parsedSince } },
+                orderBy: { created_at: 'asc' },
+                take: 50,
+              })
+            } catch (e) {}
+          }
+        }
+
+        const { getDriverLocation } = await import('@/lib/dispatch/driver-tracker')
+        let driverLocation = order.rider_id ? getDriverLocation(order.rider_id) : undefined
+
+        if (!driverLocation && order.delivery_latitude && order.delivery_longitude) {
+          const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
+          const ageMs = Date.now() - lastUpdated
+          driverLocation = {
+            driverId: order.rider_id || 'unknown',
+            name: order.driver_name || 'Assigned Driver',
+            phone: order.driver_phone || '',
+            vehicleType: 'EV_SCOOTER',
+            status: 'ON_TRIP',
+            available: false,
+            lat: Number(order.delivery_latitude),
+            lng: Number(order.delivery_longitude),
+            h3Cell: '',
+            resolution: 8,
+            lastUpdated,
+            isStale: ageMs > 45000,
+            staleDurationSeconds: Math.floor(ageMs / 1000),
+          }
+        }
+
         return NextResponse.json({
           success: true,
+          serverTime: new Date().toISOString(),
           order,
           orders: [order],
+          driverLocation: driverLocation || null,
+          missedEvents: missedEvents.map((evt) => ({
+            id: evt.id,
+            eventType: evt.event_type,
+            payload: typeof evt.payload === 'string' ? JSON.parse(evt.payload) : evt.payload,
+            createdAt: evt.created_at.toISOString(),
+          })),
         })
       }
 
@@ -1352,8 +1399,30 @@ export async function PATCH(request: Request) {
           })
         }
 
+        // Write durable transactional outbox event for state transition
+        if (hasStatusChange && tx?.orderOutbox) {
+          await tx.orderOutbox.create({
+            data: {
+              order_id: orderId,
+              event_type: 'order_update',
+              payload: {
+                orderId,
+                status,
+                previousStatus: existing.status,
+                actorId: actor.id,
+                actorRole: actor.role,
+                timestamp: new Date().toISOString(),
+              },
+              status: 'pending',
+            },
+          })
+        }
+
         return dalResult && Object.keys(dalResult).length > 0 ? dalResult : orderUpdate
       })
+
+      // Dispatch pending outbox events across WebSocket & Redis Pub/Sub
+      dispatchPendingOutboxEvents().catch(() => {})
 
       // Sync payment status to payment_reviews (separate table — not on Order).
       const newPaymentStatus = payment_status || paymentStatus

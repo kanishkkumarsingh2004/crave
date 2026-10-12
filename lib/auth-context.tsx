@@ -69,6 +69,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
+  const syncClientCookies = (rawToken: string | null) => {
+    if (typeof document === 'undefined') return
+    if (!rawToken || rawToken === 'local-token') return
+    const maxAge = 60 * 60 * 24 * 7 // 7 days
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
+    const secureFlag = isHttps ? '; Secure' : ''
+    const cookieVal = `${encodeURIComponent(rawToken)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`
+    document.cookie = `crave_auth_token=${cookieVal}`
+    document.cookie = `drop_auth_token=${cookieVal}`
+    document.cookie = `crave_token=${cookieVal}`
+  }
+
+  const clearClientCookies = () => {
+    if (typeof document === 'undefined') return
+    const expired = '; path=/; max-age=0; SameSite=Lax'
+    document.cookie = `crave_auth_token=${expired}`
+    document.cookie = `drop_auth_token=${expired}`
+    document.cookie = `crave_token=${expired}`
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -79,12 +99,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedToken =
           typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
 
+        if (savedToken && savedToken !== 'local-token') {
+          syncClientCookies(savedToken)
+        }
+
+        // Validate session with server to verify token isn't expired/revoked
+        try {
+          const headers: HeadersInit = {}
+          if (savedToken && savedToken !== 'local-token') {
+            headers['Authorization'] = `Bearer ${savedToken}`
+          }
+          const res = await fetch('/api/auth/me', { headers })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.authenticated && data.user && !cancelled) {
+              setUser(data.user)
+              const activeToken = savedToken || 'cookie-session'
+              setToken(activeToken)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('crave_user', JSON.stringify(data.user))
+                if (savedToken) localStorage.setItem('crave_token', savedToken)
+              }
+              syncClientCookies(savedToken)
+              setIsLoading(false)
+              return
+            }
+          } else if (res.status === 401) {
+            // Token rejected by server: clear local state to prevent broken redirect loops
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('crave_user')
+              localStorage.removeItem('crave_token')
+            }
+            clearClientCookies()
+            if (!cancelled) {
+              setUser(null)
+              setToken(null)
+              setIsLoading(false)
+            }
+            return
+          }
+        } catch {
+          // If network error/offline, fall back gracefully to local storage
+        }
+
         if (savedUserStr) {
           try {
             const parsed = JSON.parse(savedUserStr)
             if (parsed && parsed.id && !cancelled) {
               setUser(parsed)
               setToken(savedToken ?? 'local-token')
+              if (savedToken) syncClientCookies(savedToken)
               setIsLoading(false)
               return
             }
@@ -94,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               localStorage.removeItem('crave_user')
               localStorage.removeItem('crave_token')
             }
+            clearClientCookies()
           }
         }
       } catch (err) {
@@ -131,6 +196,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('crave_user', JSON.stringify(result.user))
           localStorage.setItem('crave_token', result.token ?? '')
         }
+        if (result.token) {
+          syncClientCookies(result.token)
+        }
         setIsLoading(false)
         return result.user as UserProfile
       }
@@ -164,6 +232,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('crave_user', JSON.stringify(result.user))
           localStorage.setItem('crave_token', result.token ?? '')
         }
+        if (result.token) {
+          syncClientCookies(result.token)
+        }
       }
       return {
         success: true,
@@ -182,7 +253,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('crave_user')
         localStorage.removeItem('crave_token')
       }
-      await fetch('/api/auth/logout', { method: 'POST' })
+      clearClientCookies()
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     } catch (err) {
       console.error('Logout error:', err)
     }

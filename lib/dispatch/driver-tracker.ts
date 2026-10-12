@@ -14,6 +14,8 @@ export interface DriverLocationState {
   h3Cell: string
   resolution: number
   lastUpdated: number // Unix timestamp (ms)
+  isStale?: boolean
+  staleDurationSeconds?: number
 }
 
 // GPS Capacity Configuration
@@ -54,7 +56,8 @@ const positionHistoryBuffer = new Map<
 let historyFlushTimer: NodeJS.Timeout | null = null
 
 export const DEFAULT_H3_RESOLUTION = 8 // ~0.737 km² per cell, ~461m edge length
-export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold
+export const DEFAULT_STALE_LOCATION_MS = 45 * 1000 // 45 seconds threshold for stale signal
+export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold for expiry/offline
 
 /**
  * Update a driver's GPS location and re-index into H3 Spatial Cell
@@ -64,6 +67,8 @@ export async function updateDriverLocation(params: {
   driverId: string
   lat: number
   lng: number
+  timestamp?: number | string | Date
+  orderId?: string
   status?: 'ONLINE' | 'OFFLINE' | 'ON_TRIP'
   available?: boolean
   vehicleType?: string
@@ -73,12 +78,16 @@ export async function updateDriverLocation(params: {
   cellChanged: boolean
   previousCell?: string
   coalesced: boolean
+  stale?: boolean
+  outOfOrder?: boolean
   reason?: string
 }> {
   const {
     driverId,
     lat,
     lng,
+    timestamp,
+    orderId,
     status = 'ONLINE',
     available = true,
     vehicleType = 'EV_SCOOTER',
@@ -86,10 +95,45 @@ export async function updateDriverLocation(params: {
   } = params
 
   const now = Date.now()
-  const newH3Cell = h3.latLngToCell(lat, lng, resolution)
+  let clientTs = now
+  if (timestamp) {
+    const parsed =
+      typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime()
+    if (!isNaN(parsed) && parsed > 0) {
+      clientTs = parsed
+    }
+  }
+
+  // Prevent excessive future clock drift (> 15 seconds)
+  if (clientTs > now + 15000) {
+    clientTs = now
+  }
 
   const existingState = driverSpatialIndex.get(driverId)
   const previousCell = existingState?.h3Cell
+
+  // OUT-OF-ORDER PACKET DETECTION:
+  // If an update arrives with a timestamp older than the existing state's last update,
+  // reject updating the authoritative position cache to prevent erratic track jumping.
+  if (existingState && clientTs < existingState.lastUpdated) {
+    const ageFromExisting = now - existingState.lastUpdated
+    return {
+      state: {
+        ...existingState,
+        isStale: ageFromExisting > DEFAULT_STALE_LOCATION_MS,
+        staleDurationSeconds: Math.floor(ageFromExisting / 1000),
+      },
+      cellChanged: false,
+      previousCell,
+      coalesced: true,
+      stale: true,
+      outOfOrder: true,
+      reason: `Out-of-order GPS packet: packet timestamp (${clientTs}) is older than last update (${existingState.lastUpdated})`,
+    }
+  }
+
+  const isStalePacket = now - clientTs > 60000 // Packet took > 60s to arrive
+  const newH3Cell = h3.latLngToCell(lat, lng, resolution)
   const cellChanged = previousCell !== newH3Cell
 
   // POSITION COALESCING: Check if driver moved enough to warrant an update
@@ -113,10 +157,15 @@ export async function updateDriverLocation(params: {
 
     if (coalesced) {
       return {
-        state: existingState,
+        state: {
+          ...existingState,
+          isStale: (now - existingState.lastUpdated) > DEFAULT_STALE_LOCATION_MS,
+          staleDurationSeconds: Math.floor((now - existingState.lastUpdated) / 1000),
+        },
         cellChanged: false,
         previousCell,
         coalesced: true,
+        stale: isStalePacket,
         reason,
       }
     }
@@ -137,6 +186,7 @@ export async function updateDriverLocation(params: {
   }
   cellToDriverMap.get(newH3Cell)!.add(driverId)
 
+  const effectiveTimestamp = clientTs
   const updatedState: DriverLocationState = {
     driverId,
     name: existingState?.name || `Driver ${driverId.slice(0, 6)}`,
@@ -148,14 +198,31 @@ export async function updateDriverLocation(params: {
     lng,
     h3Cell: newH3Cell,
     resolution,
-    lastUpdated: now,
+    lastUpdated: effectiveTimestamp,
+    isStale: isStalePacket,
+    staleDurationSeconds: isStalePacket ? Math.floor((now - clientTs) / 1000) : 0,
   }
 
   // Update primary spatial cache
   driverSpatialIndex.set(driverId, updatedState)
 
+  // Persist authoritative driver coordinates on Order in PostgreSQL when on trip
+  if (orderId) {
+    prisma.order
+      .updateMany({
+        where: { id: orderId, rider_id: driverId },
+        data: {
+          delivery_latitude: lat,
+          delivery_longitude: lng,
+        },
+      })
+      .catch((dbErr) => {
+        console.warn('[driver-tracker] PostgreSQL location sync notice:', dbErr)
+      })
+  }
+
   // Buffer position for history (async, non-blocking)
-  bufferPositionHistory(driverId, { lat, lng, ts: now, h3Cell: newH3Cell })
+  bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })
 
   // Replicate to Redis distributed cache with TTL if available
   if (isRedisAvailable() && redis) {
@@ -180,6 +247,7 @@ export async function updateDriverLocation(params: {
     cellChanged,
     previousCell,
     coalesced: false,
+    stale: isStalePacket,
   }
 }
 
@@ -332,12 +400,19 @@ export function getCapacityMetrics(): {
 export function getDriverLocation(driverId: string): DriverLocationState | undefined {
   const loc = driverSpatialIndex.get(driverId)
   if (!loc) return undefined
+  const now = Date.now()
+  const ageMs = now - loc.lastUpdated
   // Return undefined if location is stale (> 2 minutes)
-  if (Date.now() - loc.lastUpdated > DEFAULT_MAX_LOCATION_AGE_MS) {
+  if (ageMs > DEFAULT_MAX_LOCATION_AGE_MS) {
     removeDriverLocation(driverId)
     return undefined
   }
-  return loc
+  const isStale = ageMs > DEFAULT_STALE_LOCATION_MS
+  return {
+    ...loc,
+    isStale,
+    staleDurationSeconds: Math.floor(ageMs / 1000),
+  }
 }
 
 /**
@@ -379,8 +454,13 @@ export function getAllDriverLocations(
   const staleIds: string[] = []
 
   driverSpatialIndex.forEach((loc, id) => {
-    if (now - loc.lastUpdated <= maxAgeMs) {
-      activeLocations.push(loc)
+    const ageMs = now - loc.lastUpdated
+    if (ageMs <= maxAgeMs) {
+      activeLocations.push({
+        ...loc,
+        isStale: ageMs > DEFAULT_STALE_LOCATION_MS,
+        staleDurationSeconds: Math.floor(ageMs / 1000),
+      })
     } else {
       staleIds.push(id)
     }

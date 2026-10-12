@@ -55,6 +55,8 @@ export async function POST(request: Request) {
       driverId,
       lat,
       lng,
+      timestamp: body.timestamp || body.ts,
+      orderId: orderId || body.orderId,
       status: status || 'ONLINE',
       available: available !== undefined ? Boolean(available) : true,
       vehicleType: vehicleType || 'EV_SCOOTER',
@@ -65,20 +67,26 @@ export async function POST(request: Request) {
     await broadcast('driver_location', {
       driverId,
       orderId: orderId || body.orderId,
-      lat,
-      lng,
-      status: status || 'ONLINE',
-      available: available !== undefined ? Boolean(available) : true,
-      vehicleType: vehicleType || 'EV_SCOOTER',
+      lat: result.state.lat,
+      lng: result.state.lng,
+      status: result.state.status,
+      available: result.state.available,
+      vehicleType: result.state.vehicleType,
       h3Cell: result.state.h3Cell,
-      timestamp: new Date().toISOString(),
-    })
+      isStale: result.state.isStale || false,
+      staleDurationSeconds: result.state.staleDurationSeconds || 0,
+      timestamp: new Date(result.state.lastUpdated).toISOString(),
+    }).catch(() => {})
 
     return NextResponse.json({
       success: true,
       data: result.state,
       h3CellChanged: result.cellChanged,
       previousCell: result.previousCell,
+      coalesced: result.coalesced,
+      outOfOrder: result.outOfOrder || false,
+      stale: result.stale || false,
+      reason: result.reason,
     })
   } catch (err: any) {
     console.error('[POST /api/driver/location]', err)
@@ -86,5 +94,72 @@ export async function POST(request: Request) {
       { error: err?.message || 'Failed to update location' },
       { status: 500 }
     )
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url)
+    const driverId = url.searchParams.get('driverId')
+    const orderId = url.searchParams.get('orderId')
+
+    if (!driverId && !orderId) {
+      return NextResponse.json(
+        { error: 'driverId or orderId parameter required' },
+        { status: 400 }
+      )
+    }
+
+    const { getDriverLocation } = await import('@/lib/dispatch/driver-tracker')
+    let location = driverId ? getDriverLocation(driverId) : undefined
+
+    // If not found in spatial cache or orderId provided, recover from authoritative PostgreSQL
+    if (!location && (orderId || driverId)) {
+      const { prisma } = await import('@/lib/prisma')
+      const order = await prisma.order.findFirst({
+        where: {
+          ...(orderId && { id: orderId }),
+          ...(driverId && { rider_id: driverId }),
+        },
+        select: {
+          id: true,
+          rider_id: true,
+          driver_name: true,
+          driver_phone: true,
+          delivery_latitude: true,
+          delivery_longitude: true,
+          created_at: true,
+          status: true,
+        },
+      })
+
+      if (order && order.delivery_latitude && order.delivery_longitude) {
+        const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
+        const ageMs = Date.now() - lastUpdated
+        location = {
+          driverId: order.rider_id || 'unknown',
+          name: order.driver_name || 'Assigned Driver',
+          phone: order.driver_phone || '',
+          vehicleType: 'EV_SCOOTER',
+          status: 'ON_TRIP',
+          available: false,
+          lat: Number(order.delivery_latitude),
+          lng: Number(order.delivery_longitude),
+          h3Cell: '',
+          resolution: 8,
+          lastUpdated,
+          isStale: ageMs > 45000,
+          staleDurationSeconds: Math.floor(ageMs / 1000),
+        }
+      }
+    }
+
+    if (!location) {
+      return NextResponse.json({ success: false, error: 'Driver location unavailable' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, data: location })
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Failed to get location' }, { status: 500 })
   }
 }

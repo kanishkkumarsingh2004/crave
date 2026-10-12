@@ -13,7 +13,10 @@ export async function GET(request: Request) {
 
     if (!token) {
       const cookieStore = await cookies()
-      const craveCookie = cookieStore.get('crave_auth_token') || cookieStore.get('drop_auth_token')
+      const craveCookie =
+        cookieStore.get('crave_auth_token') ||
+        cookieStore.get('drop_auth_token') ||
+        cookieStore.get('crave_token')
       if (craveCookie) {
         token = craveCookie.value
       }

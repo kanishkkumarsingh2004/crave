@@ -13,6 +13,7 @@ export type UseWebSocketOptions = {
   orderId?: string
   onMessage?: (msg: WSMessage) => void
   onConnect?: () => void
+  onReconnect?: () => void
   onDisconnect?: () => void
   autoReconnect?: boolean
   reconnectInterval?: number
@@ -40,6 +41,7 @@ export function useWebSocket({
   orderId,
   onMessage,
   onConnect,
+  onReconnect,
   onDisconnect,
   autoReconnect = true,
   reconnectInterval = 5000,
@@ -47,6 +49,7 @@ export function useWebSocket({
   const [connected, setConnected] = useState(false)
   const wsRef: any = useRef(null)
   const reconnectRef: any = useRef(null)
+  const hasConnectedOnceRef = useRef(false)
 
   useEffect(() => {
     if (!channels.length) return
@@ -81,8 +84,13 @@ export function useWebSocket({
 
         ws.onopen = () => {
           setConnected(true)
+          const isReconnect = hasConnectedOnceRef.current
+          hasConnectedOnceRef.current = true
           attemptCount = 0
           onConnect?.()
+          if (isReconnect) {
+            onReconnect?.()
+          }
           try {
             ws.send(
               JSON.stringify({
@@ -154,7 +162,7 @@ export function useWebSocket({
         }
       }
     }
-  }, [channels.join(','), customerId, driverId, autoReconnect, reconnectInterval])
+  }, [channels.join(','), customerId, driverId, orderId, autoReconnect, reconnectInterval])
 
   const sendMessage = (type: string, data: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -166,27 +174,83 @@ export function useWebSocket({
   return { connected, sendMessage }
 }
 
-export function useOrderUpdates(customerId: string | undefined, onOrders: (orders: any[]) => void) {
+export function useOrderUpdates(
+  customerId: string | undefined,
+  onOrders: (orders: any[]) => void,
+  orderId?: string
+) {
+  const lastSyncTimeRef = useRef<string | null>(null)
+
+  const syncState = () => {
+    if (typeof window === 'undefined') return
+    const sinceParam = lastSyncTimeRef.current
+      ? `&since=${encodeURIComponent(lastSyncTimeRef.current)}`
+      : ''
+
+    if (orderId) {
+      fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}${sinceParam}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.serverTime) lastSyncTimeRef.current = data.serverTime
+          if (data?.order) {
+            const o = data.order
+            const statusMap: Record<string, string> = {
+              completed: 'Delivered',
+              delivered: 'Delivered',
+              cancelled: 'Cancelled',
+              new: 'In Progress',
+              preparing: 'In Progress',
+              ready: 'In Progress',
+              accepted: 'In Progress',
+              out_for_delivery: 'In Progress',
+            }
+            onOrders([
+              {
+                id: o.id,
+                restaurantName: o.restaurant_name || 'Crave Kitchen Store',
+                items: (() => {
+                  try {
+                    const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+                    return Array.isArray(raw)
+                      ? raw.map((i: any) => ({ name: i.name, qty: i.qty ?? 1, price: i.price ?? 0 }))
+                      : []
+                  } catch {
+                    return []
+                  }
+                })(),
+                subtotal: Number(o.subtotal || 0),
+                discount: Number(o.discount_amount || 0),
+                total: Number(o.total_amount || 0),
+                status: statusMap[o.status] || 'In Progress',
+                deliveryTime: '',
+                driverName: o.driver_name || undefined,
+                driverPhone: o.driver_phone || undefined,
+              },
+            ])
+          }
+        })
+        .catch(() => {})
+    } else if (customerId) {
+      fetch(`/api/orders?customerId=${encodeURIComponent(customerId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.orders && Array.isArray(data.orders)) {
+            onOrders(data.orders)
+          }
+        })
+        .catch(() => {})
+    }
+  }
+
   return useWebSocket({
     channels: ['order_update'],
     customerId,
-    onConnect: () => {
-      // P2-C: Reconcile current order state on initial connect or WebSocket reconnect
-      if (customerId && typeof window !== 'undefined') {
-        fetch(`/api/orders?customerId=${encodeURIComponent(customerId)}`)
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            if (data?.orders && Array.isArray(data.orders)) {
-              onOrders(data.orders)
-            }
-          })
-          .catch(() => {})
-      }
-    },
+    orderId,
+    onConnect: syncState,
+    onReconnect: syncState,
     onMessage: (msg) => {
       if (msg.channel === 'order_update') {
         const data = msg.data as any
-        // Verify customer ownership if customerId is provided
         if (
           customerId &&
           data.order &&
@@ -245,12 +309,27 @@ export function useApprovalUpdates(
   orderId: string | undefined,
   onStatus: (status: string) => void
 ) {
+  const syncApprovalState = () => {
+    if (orderId && typeof window !== 'undefined') {
+      fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.order?.status) {
+            onStatus(data.order.status)
+          }
+        })
+        .catch(() => {})
+    }
+  }
+
   return useWebSocket({
     channels: ['approval_update'],
+    orderId,
+    onConnect: syncApprovalState,
+    onReconnect: syncApprovalState,
     onMessage: (msg) => {
       if (msg.channel === 'approval_update') {
         const data = msg.data as any
-        // Check matching orderId if provided
         if (orderId && data.orderId && data.orderId !== orderId && data.targetOrderId !== orderId) {
           return
         }
@@ -261,9 +340,34 @@ export function useApprovalUpdates(
 }
 
 export function useDriverLocation(orderId: string | undefined, onLocation: (data: any) => void) {
+  const syncLocation = () => {
+    if (orderId && typeof window !== 'undefined') {
+      fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.driverLocation) {
+            onLocation({
+              orderId,
+              driverId: data.driverLocation.driverId,
+              lat: data.driverLocation.lat,
+              lng: data.driverLocation.lng,
+              status: data.driverLocation.status,
+              isStale: data.driverLocation.isStale || false,
+              staleDurationSeconds: data.driverLocation.staleDurationSeconds || 0,
+              timestamp: new Date(data.driverLocation.lastUpdated).toISOString(),
+            })
+          }
+        })
+        .catch(() => {})
+    }
+  }
+
   return useWebSocket({
     channels: ['driver_location'],
     customerId: orderId,
+    orderId,
+    onConnect: syncLocation,
+    onReconnect: syncLocation,
     onMessage: (msg) => {
       if (msg.channel === 'driver_location') {
         const data = msg.data as any

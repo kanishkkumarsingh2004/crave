@@ -15,17 +15,46 @@ import {
   Sparkles,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
+function getTargetDashboard(u: { role?: string; email?: string } | null): string {
+  if (!u) return '/user/dashboard'
+  const isCraveXPStore =
+    u.email === 'cravexp@crave.com' || u.email === 'store@crave.com'
+  if (isCraveXPStore || u.role === 'cravexp_store_vendor') {
+    return '/vendor/crave-ep'
+  }
+  switch (u.role) {
+    case 'admin':
+      return '/admin/dashboard'
+    case 'restaurant_vendor':
+    case 'vendor':
+      return '/vendor/dashboard'
+    case 'rider':
+    case 'driver':
+      return '/driver/dashboard'
+    case 'user':
+    case 'customer':
+    default:
+      return '/user/dashboard'
+  }
+}
+
 export default function LoginPage() {
-  const { login } = useAuth()
-  const router = useRouter()
+  const { login, user, role, isLoading, logout } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      const destination = getTargetDashboard(user)
+      window.location.href = destination
+    }
+  }, [user, isLoading])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,23 +69,8 @@ export default function LoginPage() {
     try {
       const authenticatedUser = await login(email.trim(), password)
       if (authenticatedUser) {
-        const isCraveXPStore =
-          authenticatedUser.email === 'cravexp@crave.com' ||
-          authenticatedUser.email === 'store@crave.com'
-        const targetPath =
-          isCraveXPStore || authenticatedUser.role === 'cravexp_store_vendor'
-            ? '/vendor/crave-ep'
-            : authenticatedUser.role === 'user' || authenticatedUser.role === 'customer'
-              ? '/user/dashboard'
-              : authenticatedUser.role === 'restaurant_vendor' ||
-                  authenticatedUser.role === 'vendor'
-                ? '/vendor/dashboard'
-                : authenticatedUser.role === 'rider' || authenticatedUser.role === 'driver'
-                  ? '/driver/dashboard'
-                  : authenticatedUser.role === 'admin'
-                    ? '/admin/dashboard'
-                    : '/dashboard'
-        router.push(targetPath)
+        const targetPath = getTargetDashboard(authenticatedUser)
+        window.location.href = targetPath
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Email or password is incorrect.')
@@ -118,79 +132,119 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Login Form */}
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                {errorMsg && (
-                  <div className="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2.5 backdrop-blur-md">
-                    <ShieldAlert className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                    <span>{errorMsg}</span>
+              {/* Already Authenticated State */}
+              {user ? (
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-2xl border border-[#d9f447]/30 bg-[#d9f447]/10 dark:bg-[#d9f447]/5 p-5 backdrop-blur-md space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#5e8210] dark:text-[#d9f447]">
+                      <ShieldCheck className="size-4" />
+                      <span>Active Session Detected</span>
+                    </div>
+                    <p className="text-sm font-bold text-[#121815] dark:text-white">
+                      {user.name || 'User'}
+                    </p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 font-mono">
+                      {user.email} • <span className="capitalize font-sans font-bold">{role}</span>
+                    </p>
+                    <p className="text-xs text-stone-600 dark:text-stone-300 pt-1">
+                      You are already signed in. Redirecting to your dashboard...
+                    </p>
                   </div>
-                )}
 
-                {/* Email Input */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
-                    <Mail className="size-3.5 text-[#5e8210] dark:text-[#d9f447]" />
-                    <span>Email Address</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. user@crave.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.href = getTargetDashboard(user)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-3.5 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-[0.99] shadow-md hover:shadow-xl"
+                  >
+                    <span>Go to Dashboard</span>
+                    <ArrowRight className="size-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl border border-black/10 dark:border-white/10 py-3 px-6 text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                  >
+                    <span>Sign Out / Switch Account</span>
+                  </button>
                 </div>
-
-                {/* Password Input */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
-                    <Lock className="size-3.5 text-[#5e8210] dark:text-[#d9f447]" />
-                    <span>Password</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      placeholder="••••••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 pr-11 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full mt-2 flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-3.5 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-[0.99] shadow-md hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      <span>Authenticating Credentials...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Enter Crave Workspace</span>
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </>
+              ) : (
+                /* Login Form */
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                  {errorMsg && (
+                    <div className="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2.5 backdrop-blur-md">
+                      <ShieldAlert className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <span>{errorMsg}</span>
+                    </div>
                   )}
-                </button>
-              </form>
+
+                  {/* Email Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-[#5e8210] dark:text-[#d9f447]" />
+                      <span>Email Address</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. user@crave.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                      <Lock className="size-3.5 text-[#5e8210] dark:text-[#d9f447]" />
+                      <span>Password</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="••••••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-4 py-3 pr-11 text-xs font-semibold text-[#121815] dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none transition-all focus:border-[#121815] dark:focus:border-[#d9f447] focus:ring-4 focus:ring-black/5 dark:focus:ring-[#d9f447]/15"
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full mt-2 flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-3.5 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-[0.99] shadow-md hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        <span>Authenticating Credentials...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Enter Crave Workspace</span>
+                        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
 
               {/* Registration Link */}
               <div className="mt-5 pt-4 border-t border-black/5 dark:border-white/10 text-center text-xs text-stone-500 dark:text-stone-400">
