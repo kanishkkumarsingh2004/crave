@@ -123,11 +123,26 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     } catch {}
 
     // 4. Record/Update PaymentTransaction
-    const txIdempotencyKey = `tx_${orderId}_${gatewayPaymentId || 'success'}`
-    try {
-      await tx.paymentTransaction.upsert({
-        where: { idempotency_key: txIdempotencyKey },
-        create: {
+    const existingTx = await tx.paymentTransaction.findFirst({
+      where: { order_id: orderId },
+    })
+
+    if (existingTx) {
+      await tx.paymentTransaction.update({
+        where: { id: existingTx.id },
+        data: {
+          status: 'verified',
+          verified_at: new Date(),
+          gateway,
+          ...(gatewayPaymentId ? { gateway_payment_id: gatewayPaymentId } : {}),
+          ...(rawPayload ? { raw_payload: rawPayload as any } : {}),
+        },
+      })
+    } else {
+      const txIdempotencyKey = `tx_${orderId}_${gatewayPaymentId || 'success'}`
+      await tx.paymentTransaction.create({
+        data: {
+          id: `tx_${orderId}`,
           order_id: orderId,
           idempotency_key: txIdempotencyKey,
           gateway,
@@ -137,14 +152,7 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
           raw_payload: rawPayload || {},
           verified_at: new Date(),
         },
-        update: {
-          status: 'verified',
-          gateway_payment_id: gatewayPaymentId || null,
-          verified_at: new Date(),
-        },
       })
-    } catch (e) {
-      console.warn('[payment-service] PaymentTransaction upsert notice:', e)
     }
 
     // 5. Ensure Vendor Settlement is scheduled (strictly once per order)

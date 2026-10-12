@@ -552,7 +552,7 @@ model PaymentTransaction {
   order_id           String
   idempotency_key    String          @unique
   gateway            String          // "UPI_MANUAL" | "RAZORPAY" | "CASHFREE" | "STRIPE" | "MOCK"
-  gateway_payment_id String?         @unique
+  gateway_payment_id String?
   amount             Int             // in rupees
   currency           String          @default("INR")
   status             PaymentTxStatus @default(pending)
@@ -566,6 +566,7 @@ model PaymentTransaction {
 
   @@index([order_id])
   @@index([status])
+  @@index([gateway_payment_id])
   @@map("payment_transactions")
 }
 

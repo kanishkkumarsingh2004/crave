@@ -610,6 +610,18 @@ export async function deleteOrder(
         if (existing.customer_id && existing.customer_id !== actorId) {
           return { success: false, error: 'Unauthorized to delete this order' }
         }
+
+        // Strict 30-second cancellation window restriction
+        if (existing.created_at) {
+          const orderAgeMs = Date.now() - new Date(existing.created_at).getTime()
+          const MAX_CANCELLATION_WINDOW_MS = 30 * 1000 // 30 seconds
+          if (orderAgeMs > MAX_CANCELLATION_WINDOW_MS) {
+            return {
+              success: false,
+              error: 'Order cancellation window expired. Orders can only be cancelled within 30 seconds of placement.',
+            }
+          }
+        }
       }
     }
 

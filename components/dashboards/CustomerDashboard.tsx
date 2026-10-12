@@ -1235,6 +1235,7 @@ export default function CustomerDashboard({
         customerLat: active.customer_lat ?? active.delivery_lat ?? active.latitude ?? null,
         customerLng: active.customer_lng ?? active.delivery_lng ?? active.longitude ?? null,
         timestamp: formattedTime,
+        rawDate: rawDateVal || active.created_at || active.createdAt || new Date().toISOString(),
         paymentStatus: active.payment_status || 'pending',
       })
     } else {
@@ -1282,8 +1283,46 @@ export default function CustomerDashboard({
     toast(clean, isError ? 'error' : 'success')
   }
 
+  // 30-second cancellation window countdown
+  const [cancelTimeRemaining, setCancelTimeRemaining] = useState<number>(0)
+
+  useEffect(() => {
+    if (!activeOrder?.rawDate) {
+      setCancelTimeRemaining(0)
+      return
+    }
+
+    const checkRemaining = () => {
+      const orderCreatedTime = new Date(activeOrder.rawDate).getTime()
+      if (isNaN(orderCreatedTime)) return 0
+      const elapsedSeconds = Math.floor((Date.now() - orderCreatedTime) / 1000)
+      return Math.max(0, 30 - elapsedSeconds)
+    }
+
+    setCancelTimeRemaining(checkRemaining())
+
+    const interval = setInterval(() => {
+      const rem = checkRemaining()
+      setCancelTimeRemaining(rem)
+      if (rem <= 0) {
+        clearInterval(interval)
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [activeOrder?.rawDate, activeOrder?.id])
+
   const handleCancelOrRemoveOrder = async (orderId: string) => {
-    if (!window.confirm('Are you sure you want to cancel and remove this order?')) return
+    if (cancelTimeRemaining <= 0) {
+      triggerToast('Cancellation window expired. Orders can only be cancelled within 30 seconds.')
+      return
+    }
+    if (
+      !window.confirm(
+        `Are you sure you want to cancel this order? (${cancelTimeRemaining}s remaining to cancel)`
+      )
+    )
+      return
     try {
       const res = await fetch(`/api/orders?orderId=${orderId}`, {
         method: 'DELETE',
@@ -1291,13 +1330,13 @@ export default function CustomerDashboard({
       if (res.ok) {
         setOrdersData((prev) => prev.filter((o) => o.id !== orderId))
         setActiveOrder(null)
-        triggerToast('Order removed successfully')
+        triggerToast('Order cancelled successfully')
       } else {
         const data = await res.json().catch(() => ({}))
-        triggerToast(data.error || 'Failed to remove order')
+        triggerToast(data.error || 'Failed to cancel order')
       }
     } catch {
-      triggerToast('Network error removing order')
+      triggerToast('Network error cancelling order')
     }
   }
 
@@ -3530,14 +3569,16 @@ export default function CustomerDashboard({
                               Payment Pending
                             </span>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-rose-300 shadow-xs transition cursor-pointer shrink-0"
-                            title="Cancel / Remove order"
-                          >
-                            <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order
-                          </button>
+                          {cancelTimeRemaining > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-rose-300 shadow-xs transition cursor-pointer shrink-0 animate-pulse"
+                              title={`Order can be cancelled within 30 seconds of placement (${cancelTimeRemaining}s remaining)`}
+                            >
+                              <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order ({cancelTimeRemaining}s)
+                            </button>
+                          )}
                           {(activeOrder.statusStep === 4 ||
                             activeOrder.rawStatus === 'delivered' ||
                             activeOrder.rawStatus === 'completed') && (
