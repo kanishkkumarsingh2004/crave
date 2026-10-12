@@ -28,3 +28,4 @@ load-test-results.json
 load-test-summary.local.json
 load-tests/results/
 *.local.json
+junit.xml

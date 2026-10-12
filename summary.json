@@ -1,44 +1,28 @@
 {
-  "benchmark": "crave-checkout-load-test",
-  "version": "2.0.0",
-  "timestamp": "2026-10-11T20:23:13.755Z",
+  "testType": "load",
+  "testName": "Load Test (Average Traffic)",
+  "description": "Normal production traffic simulation",
+  "timestamp": "2026-10-12T00:56:26.009Z",
   "environment": "staging",
-  "commitSha": "unspecified",
+  "commitSha": "local",
+  "baseUrl": "https://crave.apexonestudio.com",
   "concurrency": {
-    "configuredPeakVUs": 1000,
-    "observedPeakVUs": 6,
     "stages": [
       {
-        "duration": "30s",
-        "target": 10
-      },
-      {
-        "duration": "1m",
+        "duration": "2m",
         "target": 50
       },
       {
-        "duration": "1m",
+        "duration": "5m",
         "target": 100
       },
       {
-        "duration": "1m",
+        "duration": "5m",
         "target": 150
       },
       {
-        "duration": "1m",
-        "target": 200
-      },
-      {
-        "duration": "1m",
-        "target": 500
-      },
-      {
-        "duration": "1m",
-        "target": 1000
-      },
-      {
-        "duration": "1m",
-        "target": 100
+        "duration": "2m",
+        "target": 50
       },
       {
         "duration": "1m",
@@ -46,68 +30,23 @@
       }
     ]
   },
-  "authCoverage": {
-    "userScenarioAvailable": false,
-    "adminScenarioAvailable": true,
-    "vendorScenarioAvailable": false,
-    "riderScenarioAvailable": false,
-    "allCredentialsAvailable": false
+  "results": {
+    "totalRequests": 7,
+    "failedRequests": 3,
+    "failureRatePct": 42.86,
+    "avgResponseTimeMs": 856.71,
+    "p95ResponseTimeMs": 1254.83,
+    "maxResponseTimeMs": 1266.11,
+    "throughputRps": 0.92,
+    "wsConnectAvgMs": null,
+    "wsErrorRatePct": "0.00",
+    "checksPassRatePct": 100,
+    "checksPassed": 3,
+    "checksFailed": 0
   },
-  "execution": {
-    "testRunDurationMs": 18177.730992,
-    "totalRequests": 176,
-    "failedRequests": 77,
-    "requestFailureRatePct": 43.75,
-    "requestsPerSecond": 9.68,
-    "checksPassRatePct": 69.77,
-    "checksPassed": 270,
-    "checksFailed": 117
-  },
-  "metrics": {
-    "http_req_duration": {
-      "p(90)": 155.5023425,
-      "p(95)": 166.46556725,
-      "avg": 71.30817171022727,
-      "min": 0,
-      "med": 70.60523,
-      "max": 745.127796
-    },
-    "http_req_failed": {
-      "rate": 0.4375,
-      "passes": 77,
-      "fails": 99
-    },
-    "checks": {
-      "rate": 0.6976744186046512,
-      "passes": 270,
-      "fails": 117
-    },
-    "http_reqs": {
-      "count": 176,
-      "rate": 9.682176509128526
-    },
-    "ws_connecting": {
-      "p(90)": 0,
-      "p(95)": 0,
-      "avg": 0,
-      "min": 0,
-      "med": 0,
-      "max": 0
-    }
-  },
-  "thresholds": {
-    "http_req_duration:p(95)<5000": {
-      "pass": true,
-      "valueMs": 166.47
-    },
-    "http_req_failed:rate<0.10": {
-      "pass": false,
-      "failPct": 43.75
-    },
-    "checks:rate>0.90": {
-      "pass": false,
-      "passPct": 69.77
-    }
-  },
-  "overallPassed": false
+  "customMetrics": {
+    "restErrors": 0,
+    "authErrors": 0.75,
+    "totalOrdersCreated": 0
+  }
 }
