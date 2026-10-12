@@ -14,6 +14,15 @@ export async function findOrderById(id: string) {
   })
 }
 
+// In-memory short-lived cache to deduplicate simultaneous requests and cache owner mappings
+const restOwnerCache = new Map<string, { ids: string[]; expiresAt: number }>()
+const listOrdersCache = new Map<string, { data: any[]; expiresAt: number }>()
+
+export function invalidateOrdersCache() {
+  listOrdersCache.clear()
+  restOwnerCache.clear()
+}
+
 export async function listOrders(filters?: {
   customerId?: string
   restaurantId?: string
@@ -24,6 +33,12 @@ export async function listOrders(filters?: {
   onlyApprovedForVendor?: boolean
   limit?: number
 }) {
+  const cacheKey = JSON.stringify(filters || {})
+  const cached = listOrdersCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data
+  }
+
   const where: any = {}
 
   if (filters?.customerId) {
@@ -42,7 +57,12 @@ export async function listOrders(filters?: {
 
   if (filters?.restaurantId || filters?.restaurantName) {
     let restIds: string[] = filters?.restaurantId ? [filters.restaurantId] : []
-    if (filters?.restaurantId) {
+    const ownerCacheKey = `${filters?.restaurantId || ''}_${filters?.restaurantName || ''}`
+    const cachedOwner = restOwnerCache.get(ownerCacheKey)
+
+    if (cachedOwner && cachedOwner.expiresAt > Date.now()) {
+      restIds = cachedOwner.ids
+    } else if (filters?.restaurantId) {
       try {
         const owned = await prisma.restaurant.findMany({
           where: {
@@ -56,7 +76,16 @@ export async function listOrders(filters?: {
         })
         const found = owned.map((r) => r.id)
         restIds = Array.from(new Set([...restIds, ...found]))
-      } catch (e) {}
+        restOwnerCache.set(ownerCacheKey, { ids: restIds, expiresAt: Date.now() + 60000 })
+      } catch (e) {
+        // P1.3 FIX: Log the DB error rather than silently swallowing it.
+        // We fall through with the original restaurantId so the orders
+        // query is still scoped correctly even if owner-expansion fails.
+        console.error(
+          '[listOrders] restaurant owner expansion failed:',
+          e instanceof Error ? e.message : e
+        )
+      }
     }
 
     const vendorConditions: any[] = []
@@ -111,11 +140,14 @@ export async function listOrders(filters?: {
     }
   }
 
-  return prisma.order.findMany({
+  const orders = await prisma.order.findMany({
     where,
     orderBy: { created_at: 'desc' },
     take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
+
+  listOrdersCache.set(cacheKey, { data: orders, expiresAt: Date.now() + 3000 })
+  return orders
 }
 
 export async function countOrders(filters?: {
@@ -172,14 +204,18 @@ export async function createOrder(data: {
   financial_snapshot?: any
 }) {
   const { utr_ref, customer_vpa, ...prismaData } = data
-  return prisma.order.create({ data: prismaData as any })
+  const created = await prisma.order.create({ data: prismaData as any })
+  invalidateOrdersCache()
+  return created
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  return prisma.order.update({
+  const updated = await prisma.order.update({
     where: { id },
     data: { status, ...(status === 'completed' ? { delivered_at: new Date() } : {}) },
   })
+  invalidateOrdersCache()
+  return updated
 }
 
 export async function updateOrder(
@@ -196,7 +232,9 @@ export async function updateOrder(
     items?: any
   }
 ) {
-  return prisma.order.update({ where: { id }, data })
+  const updated = await prisma.order.update({ where: { id }, data })
+  invalidateOrdersCache()
+  return updated
 }
 
 // ─── Aggregations ────────────────────────────────────────

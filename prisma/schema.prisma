@@ -185,12 +185,16 @@ model Order {
 
   ledger_entries        LedgerEntry[]
 
+  // Idempotency key for preventing duplicate order creation under network retries
+  idempotency_key       String?
+
   delivery_latitude     Decimal?    @db.Decimal
   delivery_longitude    Decimal?    @db.Decimal
   delivered_at          DateTime?   @db.Timestamptz(6)
   customer              User?       @relation(fields: [customer_id], references: [id])
   restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id])
 
+  @@unique([customer_id, idempotency_key], name: "order_customer_idempotency")
   @@index([customer_id])
   @@index([restaurant_id])
   @@index([status])

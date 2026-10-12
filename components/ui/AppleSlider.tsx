@@ -1,11 +1,6 @@
 'use client'
 
-import {
-  GripVertical,
-  IndianRupee,
-  Navigation,
-  Percent,
-} from 'lucide-react'
+import { GripVertical, IndianRupee, Navigation, Percent } from 'lucide-react'
 import React, { useId } from 'react'
 
 export interface AppleSliderProps {
@@ -89,11 +84,7 @@ export default function AppleSlider({
       case 'percent':
         return <Percent className={`size-3 stroke-[2.5] ${accent.thumbIconColor}`} />
       case 'distance':
-        return (
-          <Navigation
-            className="size-3 fill-current stroke-[2] text-blue-600 -rotate-45"
-          />
-        )
+        return <Navigation className="size-3 fill-current stroke-[2] text-blue-600 -rotate-45" />
       case 'currency':
         return <IndianRupee className="size-3 stroke-[2.5] text-amber-600" />
       case 'grip':

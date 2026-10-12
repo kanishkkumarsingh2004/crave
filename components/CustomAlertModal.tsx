@@ -25,6 +25,18 @@ export default function CustomAlertModal({
 }: AlertModalConfig) {
   const router = useRouter()
 
+  // Keyboard Escape listener for accessibility compliance (UIX-006)
+  React.useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const handleAction = () => {
@@ -35,11 +47,17 @@ export default function CustomAlertModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-[#121815]/75 backdrop-blur-md animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-[#121815]/75 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-md rounded-3xl border border-gray-200 dark:border-[#2d3b32] bg-white dark:bg-[#121815] p-6 text-[#18201c] dark:text-white shadow-2xl relative overflow-hidden transition-all transform scale-100"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="custom-alert-title"
+        aria-describedby="custom-alert-message"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Subtle Background Glow Accent */}
         <div className="pointer-events-none absolute -top-16 -right-16 size-44 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-3xl" />
@@ -73,8 +91,16 @@ export default function CustomAlertModal({
             {variant === 'info' && <Info className="size-8 stroke-[2.5]" />}
           </div>
 
-          <h3 className="text-xl font-bold tracking-tight text-[#18201c] dark:text-white">{title}</h3>
-          <p className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-white/80 leading-relaxed max-w-sm">
+          <h3
+            id="custom-alert-title"
+            className="text-xl font-bold tracking-tight text-[#18201c] dark:text-white"
+          >
+            {title}
+          </h3>
+          <p
+            id="custom-alert-message"
+            className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-white/80 leading-relaxed max-w-sm"
+          >
             {message}
           </p>
         </div>

@@ -94,7 +94,9 @@ export default function AdminDashboardPage() {
         `LIVE STREAM: New ${role} onboarded (${data.user?.name || 'User'}) — Counts synchronized!`
       )
     } else if (data.type === 'order_created') {
-      setLiveNotice('LIVE STREAM: New customer order placed — Revenue and order metrics updated live!')
+      setLiveNotice(
+        'LIVE STREAM: New customer order placed — Revenue and order metrics updated live!'
+      )
     } else if (data.type === 'db_wiped') {
       setLiveNotice('LIVE STREAM: Database resynced — Metrics refreshed!')
     }
@@ -130,7 +132,8 @@ export default function AdminDashboardPage() {
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Real-time platform throughput, commission margins, fulfillment rates, and fleet health.
+              Real-time platform throughput, commission margins, fulfillment rates, and fleet
+              health.
             </p>
           </div>
         </div>
@@ -285,8 +288,8 @@ export default function AdminDashboardPage() {
                             order.status === 'DELIVERED'
                               ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                               : order.status === 'OUT_FOR_DELIVERY'
-                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                           }`}
                         >
                           {order.status || 'PROCESSING'}

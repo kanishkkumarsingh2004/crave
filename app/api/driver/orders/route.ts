@@ -12,10 +12,7 @@ export async function GET(request: Request) {
     if (!token) {
       try {
         const c = await cookies()
-        token =
-          c.get('crave_auth_token')?.value ||
-          c.get('drop_auth_token')?.value ||
-          ''
+        token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
       } catch {}
     }
     let actor = token ? await verifyToken(token) : null

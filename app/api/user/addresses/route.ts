@@ -109,7 +109,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    if (action === 'set_default' || is_default === true && !address && !label) {
+    if (action === 'set_default' || (is_default === true && !address && !label)) {
       const ok = await setDefaultAddress(id, userId)
       if (!ok) {
         return NextResponse.json({ error: 'Address not found or unauthorized' }, { status: 404 })
@@ -196,4 +196,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Failed to delete address' }, { status: 500 })
   }
 }
-

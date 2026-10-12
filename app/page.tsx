@@ -40,7 +40,8 @@ const FEATURED_KITCHENS = [
     deliveryTime: '22 min',
     distance: '1.8 km',
     offer: 'Complimentary Garlic Bread with Order',
-    image: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=600&q=80',
+    image:
+      'https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=600&q=80',
     tag: 'Artisan Woodfired Hearth',
     path: '/user/explore',
   },
@@ -53,7 +54,8 @@ const FEATURED_KITCHENS = [
     deliveryTime: '24 min',
     distance: '2.4 km',
     offer: 'Flat 20% Off Code CRAVENAWAB',
-    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80',
+    image:
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80',
     tag: 'Slow-Cooked Royal Awadh',
     path: '/user/explore',
   },
@@ -66,7 +68,8 @@ const FEATURED_KITCHENS = [
     deliveryTime: '12 min',
     distance: '0.9 km',
     offer: 'Complimentary Express Delivery',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
+    image:
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
     tag: 'Hyper-Local Dark Store Hub',
     path: '/user/cravexp',
   },
@@ -79,62 +82,97 @@ const FEATURED_KITCHENS = [
     deliveryTime: '20 min',
     distance: '2.1 km',
     offer: 'Calorie Counted • 100% Organic',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
+    image:
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
     tag: 'Organic Farm-to-Table',
     path: '/user/explore',
   },
 ]
 
-const SEARCH_PLACEHOLDERS = [
-  'Search for "Hyderabadi Dum Biryani"',
-  'Search for "Woodfired Neapolitan Pizza"',
-  'Search for "Specialty Cold Brew Coffee"',
-  'Search for "Fresh Farm Milk & Eggs in 12 min"',
-  'Search for "Crispy Kathi Rolls & Shawarma"',
-  'Search for "Artisanal Gelato & Desserts"',
+const POPULAR_SEARCH_CHIPS = [
+  'Hyderabadi Dum Biryani',
+  'Woodfired Neapolitan Pizza',
+  'Cold Brew Coffee',
+  '15-Min Groceries',
+  'Crispy Kathi Rolls',
+  'Artisanal Gelato',
 ]
 
 export default function HomePage() {
-  const { user, role, isLoading } = useAuth()
+  const { user, role, isLoading, logout } = useAuth()
   const router = useRouter()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('Kanakapura Road, Bengaluru')
-  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
 
-  // Animated cycling placeholder text (Swiggy / Zomato signature experience)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length)
-    }, 2800)
-    return () => clearInterval(interval)
-  }, [])
+  // Compute target dashboard URL based on user role or URL redirect param
+  const getTargetDashboard = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirectParam = urlParams.get('redirect') || urlParams.get('next')
+      if (redirectParam && redirectParam.startsWith('/')) {
+        return redirectParam
+      }
+    }
+    return role === 'admin'
+      ? '/admin/dashboard'
+      : role === 'rider' || (role as string) === 'driver'
+        ? '/driver/dashboard'
+        : role === 'restaurant_vendor' || (role as string) === 'vendor'
+          ? '/vendor/dashboard'
+          : role === 'cravexp_store_vendor'
+            ? '/vendor/crave-ep'
+            : '/user/dashboard'
+  }
 
   // Preserve authentication redirects to designated operational cockpits
   useEffect(() => {
     if (!isLoading && user) {
-      const targetDashboard =
-        role === 'admin'
-          ? '/admin/dashboard'
-          : role === 'rider' || (role as string) === 'driver'
-            ? '/driver/dashboard'
-            : role === 'restaurant_vendor' || (role as string) === 'vendor'
-              ? '/vendor/dashboard'
-              : role === 'cravexp_store_vendor'
-                ? '/vendor/crave-ep'
-                : '/user/dashboard'
+      const targetDashboard = getTargetDashboard()
       router.replace(targetDashboard)
+
+      // Safety timeout: prevent indefinite spinner if routing delays or hits edge case (UIX-004)
+      const timer = setTimeout(() => {
+        setRedirectTimeoutExceeded(true)
+      }, 3500)
+
+      return () => clearTimeout(timer)
     }
   }, [user, role, isLoading, router])
 
   if (!isLoading && user) {
+    const targetDashboard = getTargetDashboard()
     return (
-      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#0c120e] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#0c120e] flex flex-col items-center justify-center p-4">
         <CravePagePreloader
           title="Loading Crave..."
           subtitle="Directing you to your personalized dashboard"
-          minHeight="min-h-screen"
+          minHeight="min-h-[280px]"
         />
+        {redirectTimeoutExceeded && (
+          <div className="mt-6 flex flex-col items-center gap-3 text-center animate-in fade-in duration-300">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              Taking longer than expected to redirect?
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => router.push(targetDashboard)}
+                className="px-4 py-2 rounded-xl bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] text-xs font-bold hover:opacity-90 transition"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => logout && logout()}
+                className="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5 transition"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -144,6 +182,15 @@ export default function HomePage() {
       router.push(path)
     } else {
       router.push(path.startsWith('/user') ? path : '/login')
+    }
+  }
+
+  const handleSearchSubmit = (query?: string) => {
+    const term = (query !== undefined ? query : searchQuery).trim()
+    if (term) {
+      handleNavigate(`/user/explore?q=${encodeURIComponent(term)}`)
+    } else {
+      handleNavigate('/user/explore')
     }
   }
 
@@ -170,12 +217,12 @@ export default function HomePage() {
             </h1>
 
             <p className="text-sm sm:text-base lg:text-lg text-stone-600 dark:text-stone-300 font-medium leading-relaxed max-w-2xl mx-auto">
-              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store essentials.
-              Zero artificial markups. Transparent culinary craft.
+              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store
+              essentials. Zero artificial markups. Transparent culinary craft.
             </p>
 
             {/* Architectural Search Console */}
-            <div className="pt-2 max-w-2xl mx-auto">
+            <div className="pt-2 max-w-2xl mx-auto space-y-3">
               <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#111714]/95 p-2 shadow-[0_16px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all hover:border-black/20 dark:hover:border-white/20">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   {/* Location Selector */}
@@ -183,21 +230,23 @@ export default function HomePage() {
                     <MapPin className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                     <input
                       type="text"
+                      aria-label="Delivery location"
                       value={selectedLocation}
                       onChange={(e) => setSelectedLocation(e.target.value)}
                       className="w-full bg-transparent text-xs font-bold text-[#121815] dark:text-white outline-none truncate"
                     />
                   </div>
 
-                  {/* Cycling Search Field */}
+                  {/* Stable Descriptive Search Field (UIX-014) */}
                   <div className="flex-1 flex items-center gap-2.5 rounded-xl bg-gray-50 dark:bg-white/5 px-3.5 py-3 border border-black/5 dark:border-white/5 min-w-0">
                     <Search className="size-4 text-gray-400 dark:text-gray-500 shrink-0" />
                     <input
                       type="text"
+                      aria-label="Search dishes, restaurants, groceries, or essentials"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleNavigate('/user/explore')}
-                      placeholder={SEARCH_PLACEHOLDERS[placeholderIndex]}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                      placeholder="Search dishes, restaurants, groceries, or essentials..."
                       className="w-full bg-transparent text-xs font-semibold text-[#121815] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition-all"
                     />
                   </div>
@@ -205,13 +254,33 @@ export default function HomePage() {
                   {/* High-Contrast Action Button */}
                   <button
                     type="button"
-                    onClick={() => handleNavigate('/user/explore')}
+                    onClick={() => handleSearchSubmit()}
                     className="flex items-center justify-center gap-2 rounded-xl bg-[#121815] dark:bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-98 shrink-0 shadow-xs"
                   >
                     <span>Explore Curation</span>
                     <ArrowRight className="size-3.5" />
                   </button>
                 </div>
+              </div>
+
+              {/* Clickable Popular Searches Pills (UIX-014 Accessible Replacement for Cycling Placeholders) */}
+              <div className="flex items-center justify-center flex-wrap gap-1.5 pt-1 text-[11px]">
+                <span className="text-stone-400 dark:text-stone-500 font-medium mr-1 hidden sm:inline">
+                  Popular:
+                </span>
+                {POPULAR_SEARCH_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(chip)
+                      handleSearchSubmit(chip)
+                    }}
+                    className="rounded-full bg-black/[0.04] dark:bg-white/[0.06] hover:bg-[#d9f447]/20 hover:text-[#5e8210] dark:hover:text-[#d9f447] text-stone-600 dark:text-stone-400 px-2.5 py-1 font-medium transition cursor-pointer"
+                  >
+                    {chip}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -220,20 +289,23 @@ export default function HomePage() {
           <div className="mt-8 sm:mt-16 pt-5 sm:pt-8 border-t border-black/5 dark:border-white/10">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-center lg:text-left text-[11px] sm:text-xs font-mono tracking-wider uppercase text-gray-500 dark:text-gray-400">
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">25 MIN</span> AVERAGE DISPATCH
+                <span className="text-[#121815] dark:text-white font-extrabold">25 MIN</span>{' '}
+                AVERAGE DISPATCH
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">120+</span> VERIFIED HEARTHS
+                <span className="text-[#121815] dark:text-white font-extrabold">120+</span> VERIFIED
+                HEARTHS
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CLIENT SATISFACTION
+                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CLIENT
+                SATISFACTION
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span> CONVENIENCE SURCHARGE
+                <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span>{' '}
+                CONVENIENCE SURCHARGE
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -297,8 +369,8 @@ export default function HomePage() {
                     CraveXP Instamart
                   </h3>
                   <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
-                    Hyper-local dark-store essentials. Fresh dairy, cold beverages, gelato tubs,
-                    and snacks packed in 120s with IoT cold-chain protection.
+                    Hyper-local dark-store essentials. Fresh dairy, cold beverages, gelato tubs, and
+                    snacks packed in 120s with IoT cold-chain protection.
                   </p>
                 </div>
               </div>
@@ -355,20 +427,27 @@ export default function HomePage() {
         <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-8 gap-2.5">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                <Star className="size-3.5 text-amber-500 fill-amber-500" />
-                <span>Verified Neighbourhood Kitchens</span>
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">
+                  <Star className="size-2.5 fill-current" />
+                  Editorial Selection
+                </span>
+                <span>Verified Kitchen Partners</span>
               </div>
               <h2 className="text-xl sm:text-3xl font-black tracking-tight text-[#121815] dark:text-white">
                 Top Rated Culinary Partners
               </h2>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                Curated spotlight from South Bengaluru hearths. Delivery times represent average
+                kitchen prep and dispatch windows.
+              </p>
             </div>
             <button
               type="button"
               onClick={() => handleNavigate('/user/explore')}
-              className="text-xs font-black text-[#5e8210] dark:text-[#d9f447] hover:underline flex items-center gap-1 self-start sm:self-auto"
+              className="text-xs font-black text-[#5e8210] dark:text-[#d9f447] hover:underline flex items-center gap-1 self-start sm:self-auto shrink-0"
             >
-              <span>Explore All Restaurants</span>
+              <span>Explore Live Catalog</span>
               <ChevronRight className="size-3.5" />
             </button>
           </div>
@@ -393,7 +472,7 @@ export default function HomePage() {
                       <Star className="size-2.5 fill-current" />
                     </div>
                     <div className="absolute bottom-2.5 left-2.5 rounded-md bg-[#121815]/90 text-white px-2 py-0.5 text-[10px] font-bold backdrop-blur-md">
-                      {k.deliveryTime} • {k.distance}
+                      Est. {k.deliveryTime} • {k.distance}
                     </div>
                   </div>
 
@@ -401,7 +480,9 @@ export default function HomePage() {
                     <h3 className="text-sm font-black text-[#121815] dark:text-white group-hover:text-[#5e8210] dark:group-hover:text-[#d9f447] transition-colors truncate">
                       {k.name}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{k.cuisine}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {k.cuisine}
+                    </p>
                     <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 dark:text-gray-500 truncate">
                       {k.tag}
                     </p>

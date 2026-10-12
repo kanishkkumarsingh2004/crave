@@ -31,7 +31,6 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
   ssr: false,
 })
 
-
 export interface AddressItem {
   id: string
   label: string
@@ -41,7 +40,6 @@ export interface AddressItem {
   longitude?: number | null
   created_at?: string | Date
 }
-
 
 interface AddressModalProps {
   isOpen: boolean
@@ -189,6 +187,18 @@ export default function AddressModal({
     }
   }, [isOpen, fetchAddresses])
 
+  // Keyboard Escape listener for WCAG 2.2 Level AA accessibility compliance (UIX-006)
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   // Debounced forward geocoding search
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
@@ -206,10 +216,9 @@ export default function AddressModal({
     setIsSearching(true)
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/geocode/search?q=${encodeURIComponent(searchQuery.trim())}`,
-          { signal: controller.signal }
-        )
+        const res = await fetch(`/api/geocode/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+          signal: controller.signal,
+        })
         if (res.ok) {
           const data = await res.json()
           if (data && Array.isArray(data.results)) {
@@ -300,9 +309,7 @@ export default function AddressModal({
     if (addr.latitude != null && addr.longitude != null) {
       setPinCoords({ lat: Number(addr.latitude), lng: Number(addr.longitude) })
     }
-    setAddressLabel(
-      addr.label === 'Home' || addr.label === 'Work' ? addr.label : 'Other'
-    )
+    setAddressLabel(addr.label === 'Home' || addr.label === 'Work' ? addr.label : 'Other')
     if (addr.label !== 'Home' && addr.label !== 'Work') {
       setCustomLabel(addr.label)
     } else {
@@ -521,7 +528,10 @@ export default function AddressModal({
               <MapPin className="size-5" />
             </div>
             <div>
-              <h2 id="address-modal-title" className="font-extrabold text-base tracking-tight text-white">
+              <h2
+                id="address-modal-title"
+                className="font-extrabold text-base tracking-tight text-white"
+              >
                 {currentView === 'list'
                   ? 'Saved Addresses'
                   : currentView === 'map'
@@ -593,7 +603,9 @@ export default function AddressModal({
                 <div className="size-12 rounded-2xl bg-black/5 dark:bg-white/5 grid place-items-center mx-auto mb-3 text-stone-400">
                   <MapPin className="size-6" />
                 </div>
-                <h4 className="font-bold text-sm text-[#121815] dark:text-white">No saved addresses found</h4>
+                <h4 className="font-bold text-sm text-[#121815] dark:text-white">
+                  No saved addresses found
+                </h4>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto">
                   Add your home, office, or other locations for 1-click checkout.
                 </p>
@@ -923,7 +935,10 @@ export default function AddressModal({
 
         {/* Modal Body: View 3 (Doorstep Details Form) */}
         {currentView === 'form' && (
-          <form onSubmit={handleSaveAddress} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+          <form
+            onSubmit={handleSaveAddress}
+            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4"
+          >
             {/* Confirmed Location Summary Bar */}
             <div className="flex items-center justify-between rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/10 dark:border-white/10 p-3.5">
               <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">

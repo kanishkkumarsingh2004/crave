@@ -48,7 +48,8 @@ export default function LoginPage() {
             ? '/vendor/crave-ep'
             : authenticatedUser.role === 'user' || authenticatedUser.role === 'customer'
               ? '/user/dashboard'
-              : authenticatedUser.role === 'restaurant_vendor' || authenticatedUser.role === 'vendor'
+              : authenticatedUser.role === 'restaurant_vendor' ||
+                  authenticatedUser.role === 'vendor'
                 ? '/vendor/dashboard'
                 : authenticatedUser.role === 'rider' || authenticatedUser.role === 'driver'
                   ? '/driver/dashboard'
@@ -84,7 +85,8 @@ export default function LoginPage() {
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Sign in to orchestrate artisan culinary deliveries, inspect live hearth queues, or manage South Bengaluru&apos;s finest kitchens.
+              Sign in to orchestrate artisan culinary deliveries, inspect live hearth queues, or
+              manage South Bengaluru&apos;s finest kitchens.
             </p>
 
             {/* Editorial Provenance Accents */}
@@ -189,44 +191,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </form>
-
-              {/* Quick Demo Test Accounts Bar */}
-              <div className="mt-5 pt-4 border-t border-black/5 dark:border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                    Quick Demo Credentials
-                  </span>
-                  <span className="text-[10px] font-mono text-stone-400 dark:text-stone-500">
-                    Pass: Password123!
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { label: '👑 Admin', email: 'admin@crave.com' },
-                    { label: '👨‍🍳 Vendor', email: 'vendor@crave.com' },
-                    { label: '🛍️ Dark Store', email: 'darkstore@crave.com' },
-                    { label: '🛵 Rider', email: 'rider@crave.com' },
-                    { label: '👤 Customer', email: 'user@crave.com' },
-                  ].map((demo) => (
-                    <button
-                      key={demo.email}
-                      type="button"
-                      onClick={() => {
-                        setEmail(demo.email)
-                        setPassword('Password123!')
-                        setErrorMsg('')
-                      }}
-                      className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
-                        email === demo.email
-                          ? 'bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] border-transparent shadow-sm'
-                          : 'bg-black/[0.03] dark:bg-white/[0.05] border-black/5 dark:border-white/10 text-stone-700 dark:text-stone-300 hover:bg-black/[0.07] dark:hover:bg-white/[0.1]'
-                      }`}
-                    >
-                      {demo.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Registration Link */}
               <div className="mt-5 pt-4 border-t border-black/5 dark:border-white/10 text-center text-xs text-stone-500 dark:text-stone-400">

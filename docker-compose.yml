@@ -1,46 +1,19 @@
 name: crave-food-delivery
 
 services:
-  # ─── 1. Redis In-Memory Cache & Pub/Sub (isolated for crave) ───────────────
-  redis:
-    image: redis:7-alpine
-    container_name: crave-redis
-    restart: unless-stopped
-    command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
-    networks:
-      crave-network:
-        aliases:
-          - redis
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '10m'
-        max-file: '3'
-
-  # ─── 2. Backend WebSocket Real-Time Server ─────────────────────────────────
+  # ─── 1. Backend WebSocket Real-Time Server ─────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: crave-backend
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
     env_file:
       - .env
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      REDIS_URL: redis://redis:6379
+      REDIS_DISABLED: 'true'
     command: ['node', 'ws-server.js']
     expose:
       - '8000'
@@ -64,7 +37,7 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # ─── 3. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
+  # ─── 2. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
   frontend:
     build:
       context: .
@@ -73,8 +46,6 @@ services:
     restart: unless-stopped
     depends_on:
       backend:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     env_file:
       - .env
@@ -85,7 +56,7 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      REDIS_URL: redis://redis:6379
+      REDIS_DISABLED: 'true'
     command: ['node', 'server.js']
     ports:
       - '${PORT:-3000}:3000'
@@ -109,12 +80,8 @@ services:
         max-size: '10m'
         max-file: '3'
 
-# ─── Networks & Persistent Volumes ──────────────────────────────────────────
+# ─── Networks ─────────────────────────────────────────────────────────────
 networks:
   crave-network:
     name: crave-network
     driver: bridge
-
-volumes:
-  redis_data:
-    name: crave_redis_data

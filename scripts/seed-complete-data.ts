@@ -94,7 +94,8 @@ async function seedCompleteData() {
       id: 'addr_home_01',
       customer_id: 'usr_customer_01',
       label: 'Home',
-      address: '124, 4th Cross, Koramangala 4th Block, Near Wipro Park, Bengaluru, Karnataka 560034',
+      address:
+        '124, 4th Cross, Koramangala 4th Block, Near Wipro Park, Bengaluru, Karnataka 560034',
       latitude: 12.9352,
       longitude: 77.6245,
       is_default: true,
@@ -337,7 +338,8 @@ async function seedCompleteData() {
       id: 'item_mp_02',
       restaurant_id: 'rest_02',
       name: 'Truffle Mushroom Fettuccine',
-      description: 'Hand-rolled fresh egg pasta with wild forest mushrooms and black truffle cream.',
+      description:
+        'Hand-rolled fresh egg pasta with wild forest mushrooms and black truffle cream.',
       price: 420,
       category: 'Italian Pasta',
       is_veg: true,
@@ -349,7 +351,8 @@ async function seedCompleteData() {
       id: 'item_mb_01',
       restaurant_id: 'rest_03',
       name: 'Meghana Special Chicken Biryani',
-      description: 'Andhra-style spicy marinated boneless chicken served over fragrant dum ghee rice.',
+      description:
+        'Andhra-style spicy marinated boneless chicken served over fragrant dum ghee rice.',
       price: 360,
       category: 'Dum Biryani',
       is_veg: false,
@@ -360,7 +363,8 @@ async function seedCompleteData() {
       id: 'item_mb_02',
       restaurant_id: 'rest_03',
       name: 'Paneer Sholay Kebab',
-      description: 'Crispy fried cottage cheese tossed in spicy Guntur red chilli and curry leaves.',
+      description:
+        'Crispy fried cottage cheese tossed in spicy Guntur red chilli and curry leaves.',
       price: 290,
       category: 'Starters',
       is_veg: true,
@@ -372,7 +376,8 @@ async function seedCompleteData() {
       id: 'item_rt_01',
       restaurant_id: 'rest_04',
       name: 'Ghee Podi Thatte Idli (2 pcs)',
-      description: 'Steaming hot thick South Indian rice cakes drenched in pure cow ghee and gunpowder chutney podi.',
+      description:
+        'Steaming hot thick South Indian rice cakes drenched in pure cow ghee and gunpowder chutney podi.',
       price: 110,
       category: 'South Indian',
       is_veg: true,
@@ -383,7 +388,8 @@ async function seedCompleteData() {
       id: 'item_rt_02',
       restaurant_id: 'rest_04',
       name: 'Crispy Butter Masala Dosa',
-      description: 'Golden crunchy crepe roasted with butter, spiced potato mash, coconut & tomato chutneys.',
+      description:
+        'Golden crunchy crepe roasted with butter, spiced potato mash, coconut & tomato chutneys.',
       price: 140,
       category: 'South Indian',
       is_veg: true,
@@ -395,7 +401,8 @@ async function seedCompleteData() {
       id: 'item_zd_01',
       restaurant_id: 'rest_05',
       name: 'Steamed Edamame & Truffle Dimsum (4 pcs)',
-      description: 'Crystal wrappers stuffed with mashed edamame beans and aromatic white truffle oil.',
+      description:
+        'Crystal wrappers stuffed with mashed edamame beans and aromatic white truffle oil.',
       price: 310,
       category: 'Asian Momos',
       is_veg: true,
@@ -406,7 +413,8 @@ async function seedCompleteData() {
       id: 'item_zd_02',
       restaurant_id: 'rest_05',
       name: 'Hakka Chilli Garlic Noodles',
-      description: 'Wok-tossed wheat noodles with crunchy spring greens, charred scallions, and roasted garlic.',
+      description:
+        'Wok-tossed wheat noodles with crunchy spring greens, charred scallions, and roasted garlic.',
       price: 260,
       category: 'Wok & Chinese',
       is_veg: true,
@@ -418,7 +426,8 @@ async function seedCompleteData() {
       id: 'item_gh_01',
       restaurant_id: 'rest_06',
       name: 'Mediterranean Quinoa Glow Bowl',
-      description: 'Warm organic quinoa, Hass avocado, cherry tomatoes, Kalamata olives, hummus, and lemon tahini dressing.',
+      description:
+        'Warm organic quinoa, Hass avocado, cherry tomatoes, Kalamata olives, hummus, and lemon tahini dressing.',
       price: 340,
       category: 'Healthy Bowls',
       is_veg: true,

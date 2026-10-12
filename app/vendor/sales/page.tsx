@@ -220,7 +220,9 @@ export default function VendorSalesPage() {
               </h2>
               <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 truncate">
                 Financial performance for{' '}
-                <strong className="text-stone-800 dark:text-white">{user?.restaurantName || 'Your restaurant'}</strong>
+                <strong className="text-stone-800 dark:text-white">
+                  {user?.restaurantName || 'Your restaurant'}
+                </strong>
               </p>
             </div>
             <Link
@@ -265,7 +267,9 @@ export default function VendorSalesPage() {
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
               -₹{totalCommission.toLocaleString()}
             </p>
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">Commission cut</p>
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
+              Commission cut
+            </p>
           </div>
 
           {/* Card 3: Net Vendor Payout */}
@@ -281,7 +285,9 @@ export default function VendorSalesPage() {
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400 truncate">
               ₹{totalNetEarnings.toLocaleString()}
             </p>
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">Total net earnings</p>
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
+              Total net earnings
+            </p>
           </div>
 
           {/* Card 4: Settled Price (Disbursed Payout) */}
@@ -315,7 +321,9 @@ export default function VendorSalesPage() {
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
               ₹{remainingSettlementBalance.toLocaleString()}
             </p>
-            <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-1 truncate">Awaiting payout release</p>
+            <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-1 truncate">
+              Awaiting payout release
+            </p>
           </div>
         </div>
       </div>

@@ -6,7 +6,9 @@ import Link from 'next/link'
 
 export default function Footer({ className = '' }: { className?: string }) {
   return (
-    <footer className={`bg-[#0b100d] text-stone-400 text-xs py-10 md:py-14 border-t border-stone-800/80 font-sans selection:bg-[#d9f447] selection:text-[#121815] ${className}`}>
+    <footer
+      className={`bg-[#0b100d] text-stone-400 text-xs py-10 md:py-14 border-t border-stone-800/80 font-sans selection:bg-[#d9f447] selection:text-[#121815] ${className}`}
+    >
       <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-12 pb-10 border-b border-stone-800/80">
           {/* Column 1: Brand & Operational Status (5 cols on lg) */}
@@ -15,8 +17,8 @@ export default function Footer({ className = '' }: { className?: string }) {
               <CraveLogo variant="full" size="lg" theme="light" />
             </Link>
             <p className="text-xs text-stone-400 max-w-sm leading-relaxed font-medium">
-              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store essentials.
-              Dispatched with temperature-controlled precision in 25 minutes.
+              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store
+              essentials. Dispatched with temperature-controlled precision in 25 minutes.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-mono tracking-wider text-stone-500 pt-1">
               <span className="size-1.5 rounded-full bg-[#d9f447]" />
@@ -94,7 +96,10 @@ export default function Footer({ className = '' }: { className?: string }) {
                 </Link>
               </li>
               <li>
-                <Link href="/policies/terms-of-service" className="hover:text-white transition-colors">
+                <Link
+                  href="/policies/terms-of-service"
+                  className="hover:text-white transition-colors"
+                >
                   Terms of Service
                 </Link>
               </li>

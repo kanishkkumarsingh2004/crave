@@ -45,7 +45,6 @@ export const broadcast = async (
   }
 
   try {
-
     return new Promise<boolean>((resolve) => {
       const req = http.request(
         {

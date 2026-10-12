@@ -121,6 +121,16 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
     }
   }, [order?.id])
 
+  // Keyboard Escape listener for accessibility compliance (UIX-006)
+  useEffect(() => {
+    if (!order) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [order, onClose])
+
   if (!order) return null
 
   // Resolve items from DB record or passed order object
@@ -412,7 +422,10 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
               c.
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="font-extrabold text-sm sm:text-lg text-[#18201c] dark:text-white flex items-center gap-1.5 truncate">
+              <h3
+                id="invoice-modal-title"
+                className="font-extrabold text-sm sm:text-lg text-[#18201c] dark:text-white flex items-center gap-1.5 truncate"
+              >
                 <FileText className="size-4 sm:size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 OFFICIAL GST TAX INVOICE
               </h3>

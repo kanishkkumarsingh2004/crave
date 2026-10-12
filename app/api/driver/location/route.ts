@@ -3,6 +3,7 @@ import { updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +24,21 @@ export async function POST(request: Request) {
         { error: 'Missing required parameters: driverId, lat, lng' },
         { status: 400 }
       )
+    }
+
+    // P1-A FIX: Validate coordinate ranges
+    const LAT_MIN = -90,
+      LAT_MAX = 90,
+      LNG_MIN = -180,
+      LNG_MAX = 180
+    if (lat < LAT_MIN || lat > LAT_MAX || lng < LNG_MIN || lng > LNG_MAX) {
+      return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
+    }
+
+    // P1-A FIX: Per-driver rate limit (max 60 updates/minute)
+    const rlResult = await checkRateLimit(`gps_${driverId}`, 'GPS_UPDATE')
+    if (!rlResult.allowed) {
+      return rateLimitResponse(rlResult.resetTime, rlResult.retryAfter)
     }
 
     // Authorization check: Ensure requesting user is updating their own location or is admin

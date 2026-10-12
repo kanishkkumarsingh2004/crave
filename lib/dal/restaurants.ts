@@ -2,6 +2,64 @@ import { prisma } from '@/lib/prisma'
 import type { Restaurant } from '@prisma/client'
 import { cacheGet, cacheSet, cacheDel, CacheKeys, CacheTTL } from '@/lib/cache'
 
+// ─── Listing fields ───────────────────────────────────────
+// Only the columns required by the restaurant discovery / store-front UI.
+// Menu items are NOT eagerly loaded here — fetch them via
+//   GET /api/menu-items?restaurantId=<id>
+// which has its own Redis cache (CacheTTL.MENU_ITEMS).
+const RESTAURANT_LISTING_SELECT = {
+  id: true,
+  name: true,
+  cuisine: true,
+  rating: true,
+  rating_count: true,
+  delivery_minutes: true,
+  image: true,
+  is_open: true,
+  is_dark_store: true,
+  address: true,
+  latitude: true,
+  longitude: true,
+  phone: true,
+  fssai_license: true,
+} as const
+
+// All scalar columns needed for order pricing / vendor logic.
+const RESTAURANT_DETAIL_SELECT = {
+  id: true,
+  name: true,
+  cuisine: true,
+  rating: true,
+  rating_count: true,
+  delivery_minutes: true,
+  image: true,
+  is_open: true,
+  is_dark_store: true,
+  address: true,
+  latitude: true,
+  longitude: true,
+  phone: true,
+  owner_id: true,
+  commercial_model: true,
+  commission_rate: true,
+  markup_rate: true,
+  fixed_commission: true,
+  fixed_markup: true,
+  payment_model: true,
+  bank_account_name: true,
+  bank_name: true,
+  bank_account_number: true,
+  bank_ifsc: true,
+  payout_vpa: true,
+  fssai_license: true,
+  gstin: true,
+  gst_status: true,
+  supplier_state: true,
+  price_tax_mode: true,
+  contract_number: true,
+  gst_rate_percent: true,
+} as const
+
 // ─── Queries ─────────────────────────────────────────────
 
 export async function findRestaurantById(id: string) {
@@ -9,8 +67,7 @@ export async function findRestaurantById(id: string) {
     where: { id },
     include: { owner: true },
   })
-  if (r) return r
-  return null
+  return r ?? null
 }
 
 export async function listRestaurants(options?: {
@@ -39,10 +96,13 @@ export async function listRestaurants(options?: {
       ...(options?.isOpen !== undefined && { is_open: options.isOpen }),
       ...(options?.ownerId && { owner_id: options.ownerId }),
     },
-    include: { menu_items: true },
+    // P0.2 FIX: Do NOT include menu_items here — menus are unbounded and can be
+    // very large.  The discovery UI fetches them separately via /api/menu-items.
+    select: RESTAURANT_LISTING_SELECT,
     orderBy: { created_at: 'desc' },
     take,
   })
+
   if (list && list.length > 0) {
     if (isCommonQuery) await cacheSet(cacheKey, list, { ttlSeconds: CacheTTL.RESTAURANTS })
     return list

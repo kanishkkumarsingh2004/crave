@@ -449,7 +449,9 @@ export default function VendorMenuPage() {
                       ₹{item.price}
                     </span>
                   </div>
-                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>
+                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-stone-100 dark:border-[#202b24] flex items-center justify-between">
@@ -540,11 +542,36 @@ export default function VendorMenuPage() {
                     onChange={(e) => setCategoryInput(e.target.value)}
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-medium text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   >
-                    <option value="Bowls" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Bowls</option>
-                    <option value="Wraps" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Wraps</option>
-                    <option value="Starters" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Starters</option>
-                    <option value="Beverages" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Beverages</option>
-                    <option value="Desserts" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">Desserts</option>
+                    <option
+                      value="Bowls"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      Bowls
+                    </option>
+                    <option
+                      value="Wraps"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      Wraps
+                    </option>
+                    <option
+                      value="Starters"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      Starters
+                    </option>
+                    <option
+                      value="Beverages"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      Beverages
+                    </option>
+                    <option
+                      value="Desserts"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      Desserts
+                    </option>
                   </select>
                 </div>
 
@@ -564,7 +591,9 @@ export default function VendorMenuPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Description / Ingredients</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Description / Ingredients
+                </label>
                 <textarea
                   rows={2}
                   placeholder="e.g. Organic quinoa topped with wild basil pesto & roasted cherry tomatoes"
@@ -576,7 +605,9 @@ export default function VendorMenuPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">HSN/SAC Code</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">
+                    HSN/SAC Code
+                  </label>
                   <input
                     type="text"
                     value={hsnSacInput}
@@ -587,7 +618,9 @@ export default function VendorMenuPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">MRP (Optional)</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">
+                    MRP (Optional)
+                  </label>
                   <input
                     type="number"
                     value={mrpInput}
@@ -599,20 +632,34 @@ export default function VendorMenuPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">GST Tax Mode</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">
+                    GST Tax Mode
+                  </label>
                   <select
                     value={priceTaxModeInput}
                     onChange={(e) => setPriceTaxModeInput(e.target.value as any)}
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   >
-                    <option value="TAX_INCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">TAX INCLUSIVE</option>
-                    <option value="TAX_EXCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">TAX EXCLUSIVE</option>
+                    <option
+                      value="TAX_INCLUSIVE"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      TAX INCLUSIVE
+                    </option>
+                    <option
+                      value="TAX_EXCLUSIVE"
+                      className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    >
+                      TAX EXCLUSIVE
+                    </option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Dish Image URL</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Dish Image URL
+                </label>
                 <input
                   type="url"
                   value={imageInput}
@@ -622,7 +669,9 @@ export default function VendorMenuPage() {
               </div>
 
               <div className="flex items-center justify-between rounded-2xl bg-stone-50 dark:bg-[#171f1b] p-4 border border-stone-200 dark:border-[#233027]">
-                <span className="font-bold text-[#121815] dark:text-white">In-Stock Availability</span>
+                <span className="font-bold text-[#121815] dark:text-white">
+                  In-Stock Availability
+                </span>
                 <button
                   type="button"
                   onClick={() => setInStockInput(!inStockInput)}

@@ -245,4 +245,3 @@ export async function deleteCustomerAddress(id: string, customerId: string): Pro
     return false
   }
 }
-

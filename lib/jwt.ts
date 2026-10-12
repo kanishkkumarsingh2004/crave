@@ -63,7 +63,11 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     // - If Redis was configured but is currently down: fail closed in production so that
     //   revoked tokens are never silently accepted.  In non-production environments,
     //   log a warning and pass through to avoid blocking development workflows.
-    const redisWasConfigured = !!process.env.REDIS_URL
+    const redisWasConfigured = Boolean(
+      process.env.REDIS_URL &&
+      process.env.REDIS_URL.trim() !== '' &&
+      process.env.REDIS_DISABLED !== 'true'
+    )
     const redisCurrentlyUp = isRedisAvailable() && !!redis
 
     if (redisWasConfigured && !redisCurrentlyUp) {

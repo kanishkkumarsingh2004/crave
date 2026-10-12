@@ -431,9 +431,7 @@ async function verifyWSToken(token) {
             if (tokenRevoked) return null
           }
           if (payload.id) {
-            const userRevoked = await redisBlacklist.get(
-              `crave:jwt:blacklist:user:${payload.id}`
-            )
+            const userRevoked = await redisBlacklist.get(`crave:jwt:blacklist:user:${payload.id}`)
             if (userRevoked) return null
           }
         } catch (redisErr) {

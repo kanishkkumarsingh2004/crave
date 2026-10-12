@@ -367,7 +367,9 @@ export default function CalculatorPlaygroundPage() {
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">DB Restaurant:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">
+                      DB Restaurant:
+                    </label>
                     <select
                       value={selectedRestaurantId}
                       onChange={(e) => handleSelectDbRestaurant(e.target.value)}
@@ -383,7 +385,9 @@ export default function CalculatorPlaygroundPage() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">DB Coupon:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1.5">
+                      DB Coupon:
+                    </label>
                     <select
                       value={selectedCouponCode}
                       onChange={(e) => setSelectedCouponCode(e.target.value)}
@@ -405,7 +409,9 @@ export default function CalculatorPlaygroundPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-gray-700 dark:text-gray-300 font-bold">Select DB Recent Order:</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold">
+                      Select DB Recent Order:
+                    </label>
                     {!selectedRestaurantId && (
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
                         Select restaurant first
@@ -446,7 +452,8 @@ export default function CalculatorPlaygroundPage() {
             <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#202923] pb-3 gap-2">
                 <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Sliders className="size-4 text-emerald-600 dark:text-[#d9f447]" /> Financial Simulation Parameters
+                  <Sliders className="size-4 text-emerald-600 dark:text-[#d9f447]" /> Financial
+                  Simulation Parameters
                 </h3>
                 <button
                   onClick={resetToSystemDefaults}
@@ -567,7 +574,9 @@ export default function CalculatorPlaygroundPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">Platform Fee (₹)</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">
+                      Platform Fee (₹)
+                    </label>
                     <input
                       type="number"
                       value={platformFee}
@@ -587,7 +596,9 @@ export default function CalculatorPlaygroundPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">Customer Tip (₹)</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-bold mb-1">
+                      Customer Tip (₹)
+                    </label>
                     <input
                       type="number"
                       value={tip}
@@ -612,7 +623,9 @@ export default function CalculatorPlaygroundPage() {
                         className={`size-4 ${isRainModeActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
                       />
                       <div>
-                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">Rain Surge</p>
+                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">
+                          Rain Surge
+                        </p>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">+₹{rainFee}</p>
                       </div>
                     </div>
@@ -636,8 +649,12 @@ export default function CalculatorPlaygroundPage() {
                         className={`size-4 ${isNightSurgeActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500'}`}
                       />
                       <div>
-                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">Night Surge</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400">+₹{nightSurgeFee}</p>
+                        <p className="font-extrabold text-xs text-[#18201c] dark:text-white">
+                          Night Surge
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                          +₹{nightSurgeFee}
+                        </p>
                       </div>
                     </div>
                     <span
@@ -659,7 +676,8 @@ export default function CalculatorPlaygroundPage() {
               <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <DollarSign className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Customer Bill
+                    <DollarSign className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Customer
+                    Bill
                   </span>
                   <span className="text-xs font-mono font-black text-[#18201c] bg-gray-100 border border-gray-200 dark:text-[#d9f447] dark:bg-[#d9f447]/10 dark:border-[#d9f447]/20 px-2.5 py-1 rounded-lg">
                     ₹{customerBilling.grandTotal}
@@ -669,15 +687,23 @@ export default function CalculatorPlaygroundPage() {
                 <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Food Subtotal</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">₹{customerBilling.subtotal}</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">
+                      ₹{customerBilling.subtotal}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Packaging Charge</span>
-                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.packagingFee}</span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{customerBilling.packagingFee}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Delivery Fee ({distanceKm}km)</span>
-                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.netDeliveryFee}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Delivery Fee ({distanceKm}km)
+                    </span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{customerBilling.netDeliveryFee}
+                    </span>
                   </div>
                   {customerBilling.couponDiscount > 0 && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
@@ -686,12 +712,18 @@ export default function CalculatorPlaygroundPage() {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Platform &amp; Handling</span>
-                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.platformFee + customerBilling.handlingFee}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Platform &amp; Handling
+                    </span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{customerBilling.platformFee + customerBilling.handlingFee}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">GST (18%)</span>
-                    <span className="text-[#18201c] dark:text-white">₹{customerBilling.gstAmount}</span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{customerBilling.gstAmount}
+                    </span>
                   </div>
                   {customerBilling.tip > 0 && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
@@ -701,7 +733,9 @@ export default function CalculatorPlaygroundPage() {
                   )}
                   <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Total Paid</span>
-                    <span className="text-[#18201c] dark:text-[#d9f447]">₹{customerBilling.grandTotal}</span>
+                    <span className="text-[#18201c] dark:text-[#d9f447]">
+                      ₹{customerBilling.grandTotal}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -720,11 +754,15 @@ export default function CalculatorPlaygroundPage() {
                 <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Gross Food Sales</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">₹{vendorSettlement.grossSales}</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">
+                      ₹{vendorSettlement.grossSales}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Commission Rate</span>
-                    <span className="text-[#18201c] dark:text-white">{vendorSettlement.commissionRatePercent}%</span>
+                    <span className="text-[#18201c] dark:text-white">
+                      {vendorSettlement.commissionRatePercent}%
+                    </span>
                   </div>
                   <div className="flex justify-between text-rose-600 dark:text-rose-400 font-bold">
                     <span>Commission Deducted</span>
@@ -732,7 +770,9 @@ export default function CalculatorPlaygroundPage() {
                   </div>
                   <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Net Vendor Payout</span>
-                    <span className="text-orange-600 dark:text-orange-400">₹{vendorSettlement.netVendorPayout}</span>
+                    <span className="text-orange-600 dark:text-orange-400">
+                      ₹{vendorSettlement.netVendorPayout}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -741,7 +781,8 @@ export default function CalculatorPlaygroundPage() {
               <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Truck className="size-4 text-emerald-500 dark:text-emerald-400" /> Driver Earnings
+                    <Truck className="size-4 text-emerald-500 dark:text-emerald-400" /> Driver
+                    Earnings
                   </span>
                   <span className="text-xs font-mono font-black text-emerald-600 bg-emerald-50 border border-emerald-200 dark:text-emerald-400 dark:bg-emerald-400/10 dark:border-emerald-400/20 px-2.5 py-1 rounded-lg">
                     ₹{driverEarnings.totalDriverEarnings}
@@ -751,15 +792,21 @@ export default function CalculatorPlaygroundPage() {
                 <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Base Distance Share</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">₹{driverEarnings.baseDistanceShare}</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">
+                      ₹{driverEarnings.baseDistanceShare}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Extra KM Share</span>
-                    <span className="text-[#18201c] dark:text-white">₹{driverEarnings.extraDistanceShare}</span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{driverEarnings.extraDistanceShare}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Surge/Rain Share</span>
-                    <span className="text-[#18201c] dark:text-white">₹{driverEarnings.surgeRainShare}</span>
+                    <span className="text-[#18201c] dark:text-white">
+                      ₹{driverEarnings.surgeRainShare}
+                    </span>
                   </div>
                   {driverEarnings.tip > 0 && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
@@ -769,7 +816,9 @@ export default function CalculatorPlaygroundPage() {
                   )}
                   <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
                     <span>Total Driver Payout</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">₹{driverEarnings.totalDriverEarnings}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      ₹{driverEarnings.totalDriverEarnings}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -795,7 +844,9 @@ export default function CalculatorPlaygroundPage() {
                 <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Total Customer Paid</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">₹{platformEconomics.totalCollectedFromCustomer}</span>
+                    <span className="text-[#18201c] dark:text-white font-bold">
+                      ₹{platformEconomics.totalCollectedFromCustomer}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Less: Vendor Payout</span>
@@ -829,9 +880,12 @@ export default function CalculatorPlaygroundPage() {
             <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl">
               <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-3">
                 <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics Summary Table
+                  <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics
+                  Summary Table
                 </h3>
-                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Real-time Computation</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
+                  Real-time Computation
+                </span>
               </div>
 
               <div className="overflow-x-auto text-xs font-mono">
@@ -846,15 +900,21 @@ export default function CalculatorPlaygroundPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-[#1c241f] text-gray-700 dark:text-gray-300">
                     <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Customer</td>
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
+                        Customer
+                      </td>
                       <td className="py-3 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">
                         ₹{customerBilling.grandTotal}
                       </td>
                       <td className="py-3 px-3 text-gray-400">-</td>
-                      <td className="py-3 px-3 text-gray-500 dark:text-gray-400">Order Fulfilled</td>
+                      <td className="py-3 px-3 text-gray-500 dark:text-gray-400">
+                        Order Fulfilled
+                      </td>
                     </tr>
                     <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Restaurant Vendor</td>
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
+                        Restaurant Vendor
+                      </td>
                       <td className="py-3 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
                       <td className="py-3 px-3 text-rose-600 dark:text-rose-400 font-bold">
                         -₹{vendorSettlement.commissionDeducted} (Commission)
@@ -864,7 +924,9 @@ export default function CalculatorPlaygroundPage() {
                       </td>
                     </tr>
                     <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Delivery Driver</td>
+                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
+                        Delivery Driver
+                      </td>
                       <td className="py-3 px-3">
                         ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
                       </td>
@@ -874,7 +936,9 @@ export default function CalculatorPlaygroundPage() {
                       </td>
                     </tr>
                     <tr className="bg-gray-50 dark:bg-[#17211b] border-t-2 border-gray-200 dark:border-[#202923]">
-                      <td className="py-3 px-3 font-black text-[#18201c] dark:text-[#d9f447]">Platform (Crave)</td>
+                      <td className="py-3 px-3 font-black text-[#18201c] dark:text-[#d9f447]">
+                        Platform (Crave)
+                      </td>
                       <td className="py-3 px-3 text-amber-700 dark:text-yellow-400 font-bold">
                         ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
                       </td>
@@ -911,8 +975,8 @@ export default function CalculatorPlaygroundPage() {
       {activeTab === 'db_restaurants' && (
         <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
           <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <Store className="size-4 text-orange-500 dark:text-orange-400" /> Loaded DB Restaurants (
-            {dbData?.restaurants?.length || 0})
+            <Store className="size-4 text-orange-500 dark:text-orange-400" /> Loaded DB Restaurants
+            ({dbData?.restaurants?.length || 0})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {dbData?.restaurants?.map((rest) => (
@@ -924,7 +988,9 @@ export default function CalculatorPlaygroundPage() {
                 <p className="text-gray-500 dark:text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
                 <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-[#1f2923] text-gray-600 dark:text-gray-300 font-mono">
                   <span>Commission Rate:</span>
-                  <span className="text-[#18201c] dark:text-[#d9f447] font-bold">{rest.commission_rate ?? 15}%</span>
+                  <span className="text-[#18201c] dark:text-[#d9f447] font-bold">
+                    {rest.commission_rate ?? 15}%
+                  </span>
                 </div>
               </div>
             ))}
@@ -967,8 +1033,8 @@ export default function CalculatorPlaygroundPage() {
       {activeTab === 'db_orders' && (
         <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
           <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database Orders (
-            {dbData?.orders?.length || 0})
+            <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database
+            Orders ({dbData?.orders?.length || 0})
           </h3>
           <div className="overflow-x-auto text-xs font-mono">
             <table className="w-full text-left border-collapse">
@@ -985,11 +1051,19 @@ export default function CalculatorPlaygroundPage() {
               <tbody className="divide-y divide-gray-100 dark:divide-[#1e2722] text-gray-700 dark:text-gray-300">
                 {dbData?.orders?.map((ord) => (
                   <tr key={ord.id} className="hover:bg-gray-50 dark:hover:bg-[#1b241f] transition">
-                    <td className="py-2.5 px-3 text-gray-500 dark:text-gray-400">{ord.id.slice(0, 10)}...</td>
-                    <td className="py-2.5 px-3 font-semibold text-[#18201c] dark:text-white">{ord.customer_name}</td>
-                    <td className="py-2.5 px-3 text-gray-600 dark:text-gray-300">{ord.restaurant_name}</td>
+                    <td className="py-2.5 px-3 text-gray-500 dark:text-gray-400">
+                      {ord.id.slice(0, 10)}...
+                    </td>
+                    <td className="py-2.5 px-3 font-semibold text-[#18201c] dark:text-white">
+                      {ord.customer_name}
+                    </td>
+                    <td className="py-2.5 px-3 text-gray-600 dark:text-gray-300">
+                      {ord.restaurant_name}
+                    </td>
                     <td className="py-2.5 px-3 font-medium">₹{ord.subtotal}</td>
-                    <td className="py-2.5 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">₹{ord.total_amount}</td>
+                    <td className="py-2.5 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">
+                      ₹{ord.total_amount}
+                    </td>
                     <td className="py-2.5 px-3">
                       <span className="bg-gray-100 dark:bg-[#242f29] px-2 py-0.5 rounded text-gray-700 dark:text-gray-300 text-[10px]">
                         {ord.status}

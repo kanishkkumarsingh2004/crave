@@ -16,6 +16,7 @@ export const RateLimitTier = {
   ORDER_CREATE: { limit: 10, windowMs: 60000 }, // 10 req/min
   PAYMENT_VERIFY: { limit: 20, windowMs: 60000 }, // 20 req/min
   DISPATCH_ACCEPT: { limit: 30, windowMs: 60000 }, // 30 req/min
+  GPS_UPDATE: { limit: 60, windowMs: 60000 }, // 1 update/second max
 
   // Admin endpoints - moderate limits
   ADMIN: { limit: 120, windowMs: 60000 }, // 120 req/min
@@ -45,8 +46,7 @@ export async function checkRateLimit(
   tier: RateLimitTierKey = 'USER'
 ): Promise<{ allowed: boolean; remaining: number; resetTime: number; retryAfter?: number }> {
   const { limit, windowMs } = RateLimitTier[tier]
-  const isLocalhost =
-    key.includes('127.0.0.1') || key.includes('::1') || key.includes('localhost')
+  const isLocalhost = key.includes('127.0.0.1') || key.includes('::1') || key.includes('localhost')
   const effectiveLimit =
     process.env.NODE_ENV === 'development' && isLocalhost ? Math.max(limit, 100) : limit
   const now = Date.now()
@@ -86,8 +86,22 @@ export async function checkRateLimit(
           resetTime,
         }
       }
-    } catch {
-      // Fall through to memory store
+    } catch (redisErr) {
+      console.error(
+        `[rate-limit] Redis error on tier ${tier} for key ${key}:`,
+        redisErr instanceof Error ? redisErr.message : redisErr
+      )
+      // For security-critical tiers, fail closed
+      const criticalTiers: RateLimitTierKey[] = ['AUTH_LOGIN', 'AUTH_SIGNUP', 'ORDER_CREATE']
+      if (criticalTiers.includes(tier)) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetTime: now + windowMs,
+          retryAfter: Math.ceil(windowMs / 1000),
+        }
+      }
+      // For non-critical tiers, fall through to memory store
     }
   }
 

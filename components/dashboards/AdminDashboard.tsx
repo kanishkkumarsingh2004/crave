@@ -980,8 +980,8 @@ export default function AdminDashboard() {
           <div className="space-y-3 sm:hidden">
             {vendorAccounts.length === 0 ? (
               <div className="rounded-2xl border border-gray-200 dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-6 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                No vendor stores currently registered in database. Click &apos;+ Onboard
-                New Store&apos; to add one.
+                No vendor stores currently registered in database. Click &apos;+ Onboard New
+                Store&apos; to add one.
               </div>
             ) : (
               vendorAccounts.map((account) => {
@@ -1061,7 +1061,8 @@ export default function AdminDashboard() {
                           onClick={() => openMenuDrawerForVendor(matchedVendor)}
                           className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-2.5 py-1.5 text-[11px] font-extrabold shadow-xs hover:bg-[#2e3a32] dark:hover:bg-[#c2dc3a] transition"
                         >
-                          <Utensils className="size-3 text-white dark:text-[#121815]" /> Menu &amp; Prices
+                          <Utensils className="size-3 text-white dark:text-[#121815]" /> Menu &amp;
+                          Prices
                         </button>
                       )}
                       <button
@@ -1111,9 +1112,12 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-gray-200 dark:divide-[#25332a] bg-white dark:bg-[#1c2620]">
                 {vendorAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
-                      No vendor stores currently registered in database. Click &apos;+
-                      Onboard New Store&apos; to add one.
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                    >
+                      No vendor stores currently registered in database. Click &apos;+ Onboard New
+                      Store&apos; to add one.
                     </td>
                   </tr>
                 ) : (
@@ -1126,7 +1130,10 @@ export default function AdminDashboard() {
                       account.detail?.toLowerCase().includes('xp')
 
                     return (
-                      <tr key={account.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                      <tr
+                        key={account.id}
+                        className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                      >
                         <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
                           <div className="flex items-center gap-3">
                             <div
@@ -1204,8 +1211,8 @@ export default function AdminDashboard() {
                                 onClick={() => openMenuDrawerForVendor(matchedVendor)}
                                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-3 py-1.5 text-[11px] font-extrabold shadow-sm hover:bg-[#2e3a32] dark:hover:bg-[#c2dc3a] transition whitespace-nowrap"
                               >
-                                <Utensils className="size-3.5 text-white dark:text-[#121815]" /> Manage Menu &amp;
-                                Prices
+                                <Utensils className="size-3.5 text-white dark:text-[#121815]" />{' '}
+                                Manage Menu &amp; Prices
                               </button>
                             )}
                             <button
@@ -1261,7 +1268,9 @@ export default function AdminDashboard() {
                     <Crown className="size-5" />
                   </span>
                   <div>
-                    <h4 className="text-base font-extrabold text-[#18201c] dark:text-white">VIP Spending Customers</h4>
+                    <h4 className="text-base font-extrabold text-[#18201c] dark:text-white">
+                      VIP Spending Customers
+                    </h4>
                     <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
                       Real customer accounts ordered by lifetime spend
                     </p>
@@ -1286,8 +1295,12 @@ export default function AdminDashboard() {
                         {cust.totalOrders} Orders
                       </span>
                     </div>
-                    <p className="mt-2 font-bold text-sm text-[#18201c] dark:text-white truncate">{cust.name}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">{cust.email}</p>
+                    <p className="mt-2 font-bold text-sm text-[#18201c] dark:text-white truncate">
+                      {cust.name}
+                    </p>
+                    <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">
+                      {cust.email}
+                    </p>
                     <p className="mt-1.5 text-lg font-extrabold text-[#18201c] dark:text-[#d9f447]">
                       ₹{cust.totalSpent?.toLocaleString('en-IN')}
                     </p>
@@ -1313,20 +1326,28 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-gray-200 dark:divide-[#25332a] bg-white dark:bg-[#1c2620]">
                 {customerAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                    >
                       No customer accounts currently stored in database users table.
                     </td>
                   </tr>
                 ) : (
                   customerAccounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                    <tr
+                      key={account.id}
+                      className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                    >
                       <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
                         <div className="flex items-center gap-2.5">
                           <div className="grid size-8 place-items-center rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold shrink-0 border border-emerald-200 dark:border-emerald-500/40">
                             <Users className="size-4" />
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-[#18201c] dark:text-white">{account.name}</p>
+                            <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                              {account.name}
+                            </p>
                             <p className="text-[11px] font-normal text-gray-500 dark:text-[#9eb3a4]">
                               Joined: {account.joinedDate}
                             </p>
@@ -1335,8 +1356,12 @@ export default function AdminDashboard() {
                       </td>
 
                       <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4]">
-                        <p className="font-semibold text-[#18201c] dark:text-white">{account.email}</p>
-                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">{account.phone || 'Phone N/A'}</p>
+                        <p className="font-semibold text-[#18201c] dark:text-white">
+                          {account.email}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                          {account.phone || 'Phone N/A'}
+                        </p>
                       </td>
 
                       <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4] truncate max-w-[200px]">
@@ -1431,7 +1456,9 @@ export default function AdminDashboard() {
                         <Zap className="size-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm text-[#18201c] dark:text-white truncate">{driver.name}</p>
+                        <p className="font-bold text-sm text-[#18201c] dark:text-white truncate">
+                          {driver.name}
+                        </p>
                         <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">
                           {driver.email} · {driver.phone || 'Phone N/A'}
                         </p>
@@ -1499,21 +1526,29 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-gray-200 dark:divide-[#25332a] bg-white dark:bg-[#1c2620]">
                 {driverAccounts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                    <td
+                      colSpan={5}
+                      className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                    >
                       No driver accounts found in database users table. Click &apos;+ Add
                       Driver&apos; to onboard one.
                     </td>
                   </tr>
                 ) : (
                   driverAccounts.map((driver) => (
-                    <tr key={driver.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                    <tr
+                      key={driver.id}
+                      className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                    >
                       <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
                         <div className="flex items-center gap-2.5">
                           <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold shrink-0 border border-cyan-200 dark:border-cyan-500/40">
                             <Zap className="size-4" />
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-[#18201c] dark:text-white">{driver.name}</p>
+                            <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                              {driver.name}
+                            </p>
                             <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] font-normal">
                               Joined: {driver.joinedDate}
                             </p>
@@ -1521,8 +1556,12 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4]">
-                        <p className="font-semibold text-[#18201c] dark:text-white">{driver.email}</p>
-                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">{driver.phone || 'Phone N/A'}</p>
+                        <p className="font-semibold text-[#18201c] dark:text-white">
+                          {driver.email}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                          {driver.phone || 'Phone N/A'}
+                        </p>
                       </td>
                       <td className="px-4 py-3.5 text-[#18201c] dark:text-white font-semibold">
                         <span className="inline-block rounded-md bg-gray-100 dark:bg-[#121815] px-2 py-0.5 text-xs text-gray-800 dark:text-emerald-300 font-medium border border-gray-200 dark:border-[#25332a]">
@@ -1539,7 +1578,9 @@ export default function AdminDashboard() {
                         >
                           <span
                             className={`size-1.5 rounded-full ${
-                              driver.status === 'active' ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-rose-500 dark:bg-rose-400'
+                              driver.status === 'active'
+                                ? 'bg-emerald-500 dark:bg-emerald-400'
+                                : 'bg-rose-500 dark:bg-rose-400'
                             }`}
                           />
                           {driver.status === 'active' ? 'Active Partner' : driver.status}
@@ -1604,16 +1645,26 @@ export default function AdminDashboard() {
             <tbody className="divide-y divide-gray-200 dark:divide-[#25332a] bg-white dark:bg-[#1c2620]">
               {adminAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                  <td
+                    colSpan={5}
+                    className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                  >
                     No admin records found in database users table.
                   </td>
                 </tr>
               ) : (
                 adminAccounts.map((adm) => (
-                  <tr key={adm.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
-                    <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">{adm.name}</td>
+                  <tr
+                    key={adm.id}
+                    className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                  >
+                    <td className="px-4 py-3.5 font-bold text-[#18201c] dark:text-white">
+                      {adm.name}
+                    </td>
                     <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4]">{adm.email}</td>
-                    <td className="px-4 py-3.5 font-bold text-purple-700 dark:text-purple-300">Super Administrator</td>
+                    <td className="px-4 py-3.5 font-bold text-purple-700 dark:text-purple-300">
+                      Super Administrator
+                    </td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span className="rounded-full bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/40 px-2.5 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
                         Active Admin
@@ -1673,7 +1724,9 @@ export default function AdminDashboard() {
                         {vendor.commissionRate}% Cut
                       </span>
                     </div>
-                    <h4 className="font-bold text-base text-[#18201c] dark:text-white">{vendor.storeName}</h4>
+                    <h4 className="font-bold text-base text-[#18201c] dark:text-white">
+                      {vendor.storeName}
+                    </h4>
                     <p className="text-xs text-gray-500 dark:text-[#9eb3a4] mt-0.5 truncate">
                       {vendor.address || 'Bengaluru, India'}
                     </p>
@@ -1684,7 +1737,8 @@ export default function AdminDashboard() {
                       onClick={() => openMenuDrawerForVendor(vendor)}
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-3 py-2 text-xs font-bold hover:bg-[#2e3a32] dark:hover:bg-[#cbe338] transition"
                     >
-                      <Utensils className="size-4 text-white dark:text-[#121815]" /> Menu &amp; Prices
+                      <Utensils className="size-4 text-white dark:text-[#121815]" /> Menu &amp;
+                      Prices
                     </button>
                     <button
                       onClick={() =>
@@ -1700,8 +1754,8 @@ export default function AdminDashboard() {
               ))}
               {vendorsList.length === 0 && (
                 <div className="col-span-full p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4] border border-dashed border-gray-300 dark:border-[#2d3b32] rounded-2xl bg-gray-50 dark:bg-[#121815]">
-                  No stores in database. Click &apos;+ Onboard Restaurant Vendor&apos; to
-                  add a new Restaurant or XP Store.
+                  No stores in database. Click &apos;+ Onboard Restaurant Vendor&apos; to add a new
+                  Restaurant or XP Store.
                 </div>
               )}
             </div>

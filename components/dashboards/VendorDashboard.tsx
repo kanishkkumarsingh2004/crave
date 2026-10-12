@@ -223,7 +223,10 @@ export default function VendorDashboard() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs font-extrabold truncate">
-                  Order placed by <span className="text-emerald-600 dark:text-emerald-400">{liveBanner.customerName}</span>{' '}
+                  Order placed by{' '}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {liveBanner.customerName}
+                  </span>{' '}
                   · Total: ₹{liveBanner.totalAmount}
                 </p>
               </div>
@@ -250,11 +253,16 @@ export default function VendorDashboard() {
                 </span>
               </div>
               <h2 className="mt-1.5 text-xl sm:text-2xl font-black text-[#121815] dark:text-white tracking-tight truncate">
-                Welcome back, <span className="text-emerald-600 dark:text-emerald-400">{user?.name || 'Chef'}</span>
+                Welcome back,{' '}
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {user?.name || 'Chef'}
+                </span>
               </h2>
               <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-0.5 truncate">
                 Managing kitchen operations for{' '}
-                <strong className="text-stone-800 dark:text-white">{user?.restaurantName || 'The Green Table'}</strong>
+                <strong className="text-stone-800 dark:text-white">
+                  {user?.restaurantName || 'The Green Table'}
+                </strong>
               </p>
             </div>
             <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
@@ -310,7 +318,9 @@ export default function VendorDashboard() {
           <div className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-4 sm:p-6 shadow-sm dark:shadow-xl space-y-4 w-full min-w-0 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 dark:border-[#202b24] pb-4 min-w-0">
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-black text-[#121815] dark:text-white truncate">Live Kitchen Orders</h3>
+                <h3 className="text-lg font-black text-[#121815] dark:text-white truncate">
+                  Live Kitchen Orders
+                </h3>
                 <p className="text-xs text-stone-500 dark:text-gray-400 leading-normal">
                   Customer orders requiring food preparation &amp; dispatch
                 </p>
@@ -348,7 +358,9 @@ export default function VendorDashboard() {
                         </h4>
                         <p className="text-[10px] text-stone-500 dark:text-gray-400 truncate">
                           {order.address} ·{' '}
-                          <span className="font-semibold text-stone-700 dark:text-gray-300">{order.time}</span>
+                          <span className="font-semibold text-stone-700 dark:text-gray-300">
+                            {order.time}
+                          </span>
                         </p>
                         {order.utrRef && (
                           <p className="text-[9px] font-mono text-stone-500 dark:text-gray-500 mt-0.5 truncate">
@@ -411,7 +423,8 @@ export default function VendorDashboard() {
                             order.status === 'ready_for_pickup' ||
                             order.status === 'rider_assigned') && (
                             <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" /> Ready
+                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" />{' '}
+                              Ready
                             </span>
                           )}
 
@@ -425,7 +438,8 @@ export default function VendorDashboard() {
 
                           {(order.status === 'delivered' || order.status === 'completed') && (
                             <span className="rounded-full bg-stone-100 dark:bg-[#243028] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#304036] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" /> Delivered
+                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" />{' '}
+                              Delivered
                             </span>
                           )}
 
@@ -449,7 +463,9 @@ export default function VendorDashboard() {
 
           {/* Kitchen Performance Card */}
           <div className="rounded-2xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-4 shadow-sm dark:shadow-xl space-y-3 w-full min-w-0 overflow-hidden">
-            <h3 className="text-base font-black text-[#121815] dark:text-white">Kitchen Performance</h3>
+            <h3 className="text-base font-black text-[#121815] dark:text-white">
+              Kitchen Performance
+            </h3>
             <div className="overflow-x-auto rounded-xl border border-stone-200 dark:border-[#222e27] bg-stone-50 dark:bg-[#171f1b] w-full min-w-0 custom-scrollbar">
               <table className="w-full text-left text-[10px] text-stone-700 dark:text-gray-300 min-w-full">
                 <thead>
@@ -460,13 +476,17 @@ export default function VendorDashboard() {
                 </thead>
                 <tbody className="divide-y divide-stone-200 dark:divide-[#222e27] bg-white dark:bg-[#171f1b]">
                   <tr className="hover:bg-stone-50 dark:hover:bg-[#1c2620] transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-stone-700 dark:text-gray-300">Gross Orders Revenue</td>
+                    <td className="py-2.5 px-3 font-medium text-stone-700 dark:text-gray-300">
+                      Gross Orders Revenue
+                    </td>
                     <td className="py-2.5 px-3 text-right font-black text-[#5e700a] dark:text-[#d9f447] whitespace-nowrap">
                       ₹{totalDailyRevenue}
                     </td>
                   </tr>
                   <tr className="hover:bg-stone-50 dark:hover:bg-[#1c2620] transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-stone-700 dark:text-gray-300">Order Completion Rate</td>
+                    <td className="py-2.5 px-3 font-medium text-stone-700 dark:text-gray-300">
+                      Order Completion Rate
+                    </td>
                     <td className="py-2.5 px-3 text-right font-black text-[#121815] dark:text-white whitespace-nowrap">
                       {completionRate}%
                     </td>

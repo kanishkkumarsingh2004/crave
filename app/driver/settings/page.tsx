@@ -39,7 +39,9 @@ export default function DriverSettingsPage() {
             <Palette className="size-5" />
           </div>
           <div>
-            <h3 className="font-bold text-base text-[#18201c] dark:text-white">Display &amp; Theme Mode</h3>
+            <h3 className="font-bold text-base text-[#18201c] dark:text-white">
+              Display &amp; Theme Mode
+            </h3>
             <p className="text-xs text-stone-500 dark:text-[#a0ab9f]">
               Select your preferred mobile cockpit theme (Light, Dark, or System Sync).
             </p>
@@ -53,14 +55,16 @@ export default function DriverSettingsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 dark:border-[#2d3b32] pb-4">
           <div>
             <h3 className="text-xl font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-              <QrCode className="size-6 text-[#86a018] dark:text-[#d9f447]" /> UPI Payout &amp; Bank Account Setup
+              <QrCode className="size-6 text-[#86a018] dark:text-[#d9f447]" /> UPI Payout &amp; Bank
+              Account Setup
             </h3>
             <p className="text-xs text-stone-500 dark:text-[#a0ab9f] mt-1">
               Configure NPCI-verified UPI IDs for 1-click instant earnings settlement.
             </p>
           </div>
           <span className="mt-2 sm:mt-0 text-xs font-extrabold text-[#5e700a] dark:text-[#d9f447] bg-emerald-500/15 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1 self-start sm:self-auto">
-            <ShieldCheck className="size-4 text-emerald-600 dark:text-[#d9f447]" /> NPCI Instant Transfer Active
+            <ShieldCheck className="size-4 text-emerald-600 dark:text-[#d9f447]" /> NPCI Instant
+            Transfer Active
           </span>
         </div>
 
@@ -103,11 +107,36 @@ export default function DriverSettingsPage() {
                 onChange={(e) => setNewUpiProvider(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] px-3.5 py-2.5 text-xs font-bold text-[#18201c] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447] shadow-xs"
               >
-                <option value="Google Pay / PhonePe UPI" className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white">Google Pay / PhonePe (GPay / YBL)</option>
-                <option value="Paytm Payments Bank" className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white">Paytm Payments Bank (@paytm)</option>
-                <option value="BHIM NPCI UPI" className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white">BHIM NPCI UPI (@upi)</option>
-                <option value="ICICI Bank iMobile" className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white">ICICI Bank (@okicici)</option>
-                <option value="HDFC / Axis Bank" className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white">HDFC / Axis Bank (@ybl / @okhdfcbank)</option>
+                <option
+                  value="Google Pay / PhonePe UPI"
+                  className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white"
+                >
+                  Google Pay / PhonePe (GPay / YBL)
+                </option>
+                <option
+                  value="Paytm Payments Bank"
+                  className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white"
+                >
+                  Paytm Payments Bank (@paytm)
+                </option>
+                <option
+                  value="BHIM NPCI UPI"
+                  className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white"
+                >
+                  BHIM NPCI UPI (@upi)
+                </option>
+                <option
+                  value="ICICI Bank iMobile"
+                  className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white"
+                >
+                  ICICI Bank (@okicici)
+                </option>
+                <option
+                  value="HDFC / Axis Bank"
+                  className="bg-white dark:bg-[#1c2620] text-[#18201c] dark:text-white"
+                >
+                  HDFC / Axis Bank (@ybl / @okhdfcbank)
+                </option>
               </select>
             </div>
           </div>
@@ -125,7 +154,9 @@ export default function DriverSettingsPage() {
 
       {/* Saved Registered UPI Accounts */}
       <div className="rounded-3xl border border-stone-200 dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-6 shadow-sm dark:shadow-xl space-y-4">
-        <h3 className="text-lg font-bold text-[#18201c] dark:text-white mb-4">Saved UPI Payout Destinations</h3>
+        <h3 className="text-lg font-bold text-[#18201c] dark:text-white mb-4">
+          Saved UPI Payout Destinations
+        </h3>
 
         {savedUpiList.length > 0 ? (
           <div className="flex flex-col gap-3">
@@ -148,7 +179,9 @@ export default function DriverSettingsPage() {
                   />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-[#18201c] dark:text-white">{upi.vpa}</span>
+                      <span className="font-extrabold text-sm text-[#18201c] dark:text-white">
+                        {upi.vpa}
+                      </span>
                       {upi.isPrimary && (
                         <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                           Default Payout
@@ -160,7 +193,9 @@ export default function DriverSettingsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-stone-500 dark:text-[#a0ab9f] mt-0.5">{upi.bankName}</p>
+                    <p className="text-xs text-stone-500 dark:text-[#a0ab9f] mt-0.5">
+                      {upi.bankName}
+                    </p>
                   </div>
                 </div>
 

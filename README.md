@@ -41,12 +41,12 @@ API mutations broadcast live events by publishing to Redis (`crave:ws:events`) a
 
 Role pages are gated in `proxy.ts` (JWT cookie `crave_auth_token`). APIs use `lib/api-auth.ts` / `lib/auth-helpers.ts`.
 
-| Portal | Routes | Role(s) |
-| --- | --- | --- |
-| Customer | `/user/*` | `user` |
+| Portal               | Routes      | Role(s)                                     |
+| -------------------- | ----------- | ------------------------------------------- |
+| Customer             | `/user/*`   | `user`                                      |
 | Kitchen / dark store | `/vendor/*` | `restaurant_vendor`, `cravexp_store_vendor` |
-| Rider | `/driver/*` | `rider` |
-| Admin | `/admin/*` | `admin` |
+| Rider                | `/driver/*` | `rider`                                     |
+| Admin                | `/admin/*`  | `admin`                                     |
 
 Public: `/`, `/login`, `/signup`, `/policies/*`.
 
@@ -85,12 +85,12 @@ Checkout is **UPI + UTR**, not a card PSP. The customer submits a UTR; admin ver
 
 Authoritative math is `lib/finance/` (integer **paise**):
 
-| Module | Role |
-| --- | --- |
-| `money.ts` | Integer paise `Money` type |
-| `tax-engine.ts` | GST (food 5%, platform/commission 18%, grocery HSN) |
-| `pricing-engine.ts` | Canonical order quote (`calculateOrderPrice`) |
-| `ledger-service.ts` | Double-entry `LedgerEntry` journals |
+| Module              | Role                                                |
+| ------------------- | --------------------------------------------------- |
+| `money.ts`          | Integer paise `Money` type                          |
+| `tax-engine.ts`     | GST (food 5%, platform/commission 18%, grocery HSN) |
+| `pricing-engine.ts` | Canonical order quote (`calculateOrderPrice`)       |
+| `ledger-service.ts` | Double-entry `LedgerEntry` journals                 |
 
 `/api/calculator` is a **preview** endpoint. It returns both a legacy `breakdown` and a `canonical` quote. It must not authorize payment.
 
@@ -143,17 +143,17 @@ Data access should go through `lib/dal/` rather than scattering Prisma calls in 
 
 ## Stack
 
-| Area | Choice |
-| --- | --- |
-| App | Next.js 16, React 19, TypeScript (strict) |
-| UI | Tailwind 4, Base UI / shadcn, Lucide, MapLibre GL |
-| ORM | Prisma 7 with `pg` adapter |
-| Cache / locks / pub-sub | Redis 7 (`ioredis`) |
-| Geo | `h3-js`, Haversine + 1.30× road factor (`lib/distance-pricing.ts`) |
-| Auth | `jose` JWT |
-| Task runner | Turborepo (single package: `build`, `typecheck`, `test`) |
-| Package manager | pnpm 12.3.4 (pinned) |
-| Node | 20+ |
+| Area                    | Choice                                                             |
+| ----------------------- | ------------------------------------------------------------------ |
+| App                     | Next.js 16, React 19, TypeScript (strict)                          |
+| UI                      | Tailwind 4, Base UI / shadcn, Lucide, MapLibre GL                  |
+| ORM                     | Prisma 7 with `pg` adapter                                         |
+| Cache / locks / pub-sub | Redis 7 (`ioredis`)                                                |
+| Geo                     | `h3-js`, Haversine + 1.30× road factor (`lib/distance-pricing.ts`) |
+| Auth                    | `jose` JWT                                                         |
+| Task runner             | Turborepo (single package: `build`, `typecheck`, `test`)           |
+| Package manager         | pnpm 12.3.4 (pinned)                                               |
+| Node                    | 20+                                                                |
 
 ---
 
@@ -196,15 +196,15 @@ For local WS without Compose, set `WS_HOST=localhost` so `server.js` proxies upg
 
 See `.env.example`. Required in production:
 
-| Variable | Purpose |
-| --- | --- |
-| `DATABASE_URL` | Prisma / Postgres (pooled Neon URL is fine) |
-| `JWT_SECRET` | Token signing |
-| `REDIS_URL` | Cache, locks, JWT blacklist, WS fan-out |
-| `WS_INTERNAL_SECRET` | Auth for `/__ws/broadcast` |
-| `WS_PORT` / `WS_HOST` | WS listen address and frontend proxy target |
-| `WS_BROADCAST_PORT` / `WS_BROADCAST_HOST` | HTTP broadcast fallback from Next → WS |
-| `NEON_BUCKET_UPLOADS` | Object storage bucket name (optional) |
+| Variable                                  | Purpose                                     |
+| ----------------------------------------- | ------------------------------------------- |
+| `DATABASE_URL`                            | Prisma / Postgres (pooled Neon URL is fine) |
+| `JWT_SECRET`                              | Token signing                               |
+| `REDIS_URL`                               | Cache, locks, JWT blacklist, WS fan-out     |
+| `WS_INTERNAL_SECRET`                      | Auth for `/__ws/broadcast`                  |
+| `WS_PORT` / `WS_HOST`                     | WS listen address and frontend proxy target |
+| `WS_BROADCAST_PORT` / `WS_BROADCAST_HOST` | HTTP broadcast fallback from Next → WS      |
+| `NEON_BUCKET_UPLOADS`                     | Object storage bucket name (optional)       |
 
 `REDIS_REQUIRED=true` makes `/api/health` return 503 if Redis is down.
 
@@ -278,21 +278,21 @@ pnpm dc:clean                # down -v (wipes Redis volume)
 
 ## Documentation
 
-| Doc | Contents |
-| --- | --- |
-| [docs/API_REVIEW_REPORT.md](docs/API_REVIEW_REPORT.md) | API inventory, smoke-test analysis (12 Oct 2026), optimized flows |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System topology (some diagrams still show an in-Compose Postgres service; Compose itself uses Neon) |
-| [docs/PRD.md](docs/PRD.md) | Product / roles |
-| [docs/app_flow_documentation/APP_FLOW_AND_RULES.md](docs/app_flow_documentation/APP_FLOW_AND_RULES.md) | Page catalog and order rules |
-| [docs/REALTIME_API_ARCHITECTURE.md](docs/REALTIME_API_ARCHITECTURE.md) | HTTP + WS channel matrix |
-| [docs/commercial-engine.md](docs/commercial-engine.md) | Vendor commercial contracts |
-| [docs/billing/BILLING_ARCHITECTURE.md](docs/billing/BILLING_ARCHITECTURE.md) | Finance module map |
-| [docs/billing/PRICING_AND_FEE_SPECIFICATION.md](docs/billing/PRICING_AND_FEE_SPECIFICATION.md) | Fees and GST |
-| [docs/billing/FINANCIAL_LEDGER_SPECIFICATION.md](docs/billing/FINANCIAL_LEDGER_SPECIFICATION.md) | Ledger accounts |
-| [docs/billing/PAYMENT_AND_REFUND_STATE_MACHINE.md](docs/billing/PAYMENT_AND_REFUND_STATE_MACHINE.md) | Payment states |
-| [docs/billing/SETTLEMENT_AND_RECONCILIATION.md](docs/billing/SETTLEMENT_AND_RECONCILIATION.md) | Vendor / rider settlement |
-| [docs/billing/TAX_RULE_MATRIX.md](docs/billing/TAX_RULE_MATRIX.md) | Tax matrix |
-| [docs/financial-integrity.md](docs/financial-integrity.md) | Money invariants |
+| Doc                                                                                                    | Contents                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| [docs/API_REVIEW_REPORT.md](docs/API_REVIEW_REPORT.md)                                                 | API inventory, smoke-test analysis (12 Oct 2026), optimized flows                                   |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                                                           | System topology (some diagrams still show an in-Compose Postgres service; Compose itself uses Neon) |
+| [docs/PRD.md](docs/PRD.md)                                                                             | Product / roles                                                                                     |
+| [docs/app_flow_documentation/APP_FLOW_AND_RULES.md](docs/app_flow_documentation/APP_FLOW_AND_RULES.md) | Page catalog and order rules                                                                        |
+| [docs/REALTIME_API_ARCHITECTURE.md](docs/REALTIME_API_ARCHITECTURE.md)                                 | HTTP + WS channel matrix                                                                            |
+| [docs/commercial-engine.md](docs/commercial-engine.md)                                                 | Vendor commercial contracts                                                                         |
+| [docs/billing/BILLING_ARCHITECTURE.md](docs/billing/BILLING_ARCHITECTURE.md)                           | Finance module map                                                                                  |
+| [docs/billing/PRICING_AND_FEE_SPECIFICATION.md](docs/billing/PRICING_AND_FEE_SPECIFICATION.md)         | Fees and GST                                                                                        |
+| [docs/billing/FINANCIAL_LEDGER_SPECIFICATION.md](docs/billing/FINANCIAL_LEDGER_SPECIFICATION.md)       | Ledger accounts                                                                                     |
+| [docs/billing/PAYMENT_AND_REFUND_STATE_MACHINE.md](docs/billing/PAYMENT_AND_REFUND_STATE_MACHINE.md)   | Payment states                                                                                      |
+| [docs/billing/SETTLEMENT_AND_RECONCILIATION.md](docs/billing/SETTLEMENT_AND_RECONCILIATION.md)         | Vendor / rider settlement                                                                           |
+| [docs/billing/TAX_RULE_MATRIX.md](docs/billing/TAX_RULE_MATRIX.md)                                     | Tax matrix                                                                                          |
+| [docs/financial-integrity.md](docs/financial-integrity.md)                                             | Money invariants                                                                                    |
 
 ---
 

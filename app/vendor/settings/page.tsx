@@ -179,7 +179,9 @@ export default function VendorSettingsPage() {
             </div>
 
             <div className="flex items-center gap-3 bg-stone-100 dark:bg-[#18201c] p-3 rounded-2xl border border-stone-200 dark:border-[#27342d]">
-              <span className="text-xs font-bold text-stone-700 dark:text-gray-300">Accepting Orders:</span>
+              <span className="text-xs font-bold text-stone-700 dark:text-gray-300">
+                Accepting Orders:
+              </span>
               <AppleToggle
                 checked={kitchenOpen}
                 onChange={() => void handleToggleKitchen()}
@@ -215,7 +217,9 @@ export default function VendorSettingsPage() {
               <Palette className="size-5" />
             </div>
             <div>
-              <h3 className="font-black text-base text-[#121815] dark:text-white">Appearance &amp; Theme Mode</h3>
+              <h3 className="font-black text-base text-[#121815] dark:text-white">
+                Appearance &amp; Theme Mode
+              </h3>
               <p className="text-xs text-stone-500 dark:text-gray-400">
                 Choose your preferred store portal display mode (Light, Dark, or System Sync).
               </p>
@@ -233,7 +237,9 @@ export default function VendorSettingsPage() {
                 <Building2 className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">Payout Bank Account</h3>
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                  Payout Bank Account
+                </h3>
                 <p className="text-xs text-stone-500 dark:text-gray-400">
                   Bank details stored on your restaurant profile
                 </p>
@@ -242,7 +248,9 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Account Holder Name</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Account Holder Name
+                </label>
                 <input
                   type="text"
                   required
@@ -266,7 +274,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Bank Account Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Bank Account Number
+                </label>
                 <input
                   type="text"
                   required
@@ -290,7 +300,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 dark:text-gray-200">Primary Payout UPI VPA (Optional)</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Primary Payout UPI VPA (Optional)
+                </label>
                 <input
                   type="text"
                   value={payoutUpi}
@@ -323,14 +335,20 @@ export default function VendorSettingsPage() {
                 <FileText className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">FSSAI License &amp; Store Details</h3>
-                <p className="text-xs text-stone-500 dark:text-gray-400">Government compliance and pickup address</p>
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                  FSSAI License &amp; Store Details
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-gray-400">
+                  Government compliance and pickup address
+                </p>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">FSSAI Registration License #</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  FSSAI Registration License #
+                </label>
                 <input
                   type="text"
                   required
@@ -342,7 +360,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Manager Phone Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Manager Phone Number
+                </label>
                 <input
                   type="text"
                   required
@@ -354,7 +374,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 dark:text-gray-200">Kitchen Pickup Address</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Kitchen Pickup Address
+                </label>
                 <textarea
                   rows={2}
                   required
@@ -385,7 +407,9 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">GSTIN Registration Number</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  GSTIN Registration Number
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. 29AAAAA0000A1Z5"
@@ -396,29 +420,45 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">GST Registration Status</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  GST Registration Status
+                </label>
                 <select
                   value={gstStatus}
                   onChange={(e) => setGstStatus(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 >
-                  <option value="REGISTERED" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="REGISTERED"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     REGISTERED (Regular Taxable)
                   </option>
-                  <option value="UNREGISTERED" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="UNREGISTERED"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     UNREGISTERED
                   </option>
-                  <option value="COMPOSITION" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="COMPOSITION"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     COMPOSITION SCHEME
                   </option>
-                  <option value="EXEMPT" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="EXEMPT"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     EXEMPT
                   </option>
                 </select>
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Supplier Registration State</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Supplier Registration State
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Karnataka"
@@ -429,16 +469,24 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Default Menu Price Tax Mode</label>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Default Menu Price Tax Mode
+                </label>
                 <select
                   value={priceTaxMode}
                   onChange={(e) => setPriceTaxMode(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                 >
-                  <option value="TAX_INCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="TAX_INCLUSIVE"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     TAX INCLUSIVE (Displayed price includes 5% GST)
                   </option>
-                  <option value="TAX_EXCLUSIVE" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
+                  <option
+                    value="TAX_EXCLUSIVE"
+                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                  >
                     TAX EXCLUSIVE (5% GST added at checkout)
                   </option>
                 </select>

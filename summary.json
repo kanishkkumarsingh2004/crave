@@ -1,24 +1,28 @@
 {
-  "testType": "load",
-  "testName": "Load Test (Average Traffic)",
-  "description": "Normal production traffic simulation",
-  "timestamp": "2026-10-12T00:56:26.009Z",
+  "testType": "spike",
+  "testName": "Spike Test (Flash Sale Simulation)",
+  "description": "Survive sudden viral traffic surge",
+  "timestamp": "2026-10-12T13:47:40.261Z",
   "environment": "staging",
   "commitSha": "local",
-  "baseUrl": "https://crave.apexonestudio.com",
+  "baseUrl": "http://localhost:3000",
   "concurrency": {
     "stages": [
       {
-        "duration": "2m",
+        "duration": "1m",
         "target": 50
       },
       {
-        "duration": "5m",
-        "target": 100
+        "duration": "10s",
+        "target": 1000
       },
       {
-        "duration": "5m",
-        "target": 150
+        "duration": "30s",
+        "target": 1000
+      },
+      {
+        "duration": "10s",
+        "target": 50
       },
       {
         "duration": "2m",
@@ -31,21 +35,21 @@
     ]
   },
   "results": {
-    "totalRequests": 7,
-    "failedRequests": 3,
-    "failureRatePct": 42.86,
-    "avgResponseTimeMs": 856.71,
-    "p95ResponseTimeMs": 1254.83,
-    "maxResponseTimeMs": 1266.11,
-    "throughputRps": 0.92,
+    "totalRequests": 37656,
+    "failedRequests": 158,
+    "failureRatePct": 0.42,
+    "avgResponseTimeMs": 875.32,
+    "p95ResponseTimeMs": 3611.03,
+    "maxResponseTimeMs": 5226.26,
+    "throughputRps": 129.58,
     "wsConnectAvgMs": null,
     "wsErrorRatePct": "0.00",
-    "checksPassRatePct": 100,
-    "checksPassed": 3,
-    "checksFailed": 0
+    "checksPassRatePct": 99.59,
+    "checksPassed": 37497,
+    "checksFailed": 155
   },
   "customMetrics": {
-    "restErrors": 0,
+    "restErrors": 0.004116647190056305,
     "authErrors": 0.75,
     "totalOrdersCreated": 0
   }

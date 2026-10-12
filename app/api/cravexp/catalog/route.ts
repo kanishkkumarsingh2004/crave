@@ -9,6 +9,16 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+/**
+ * ensureStore is now WRITE-ONLY — called exclusively from the POST handler or
+ * from a migration/seed script, never from the GET path.
+ *
+ * P0.3 FIX: Previously, every catalog GET executed an upsert, which is a write
+ * operation.  Under concurrent reads this creates unnecessary database write
+ * contention.  GET requests are now pure reads; store initialization is the
+ * responsibility of POST /api/cravexp/catalog (called once on setup) or a DB
+ * seed script.
+ */
 async function ensureStore() {
   await prisma.restaurant.upsert({
     where: { id: CRAVEXP_DARK_STORE_ID },
@@ -53,9 +63,16 @@ function mapItem(item: any): CraveXPGroceryItem {
   }
 }
 
+/**
+ * GET /api/cravexp/catalog
+ *
+ * Pure read — does NOT run ensureStore().
+ * If the dark store record does not exist yet, seed the database via
+ *   POST /api/cravexp/catalog
+ * or run the DB seed script before serving traffic.
+ */
 export async function GET() {
   try {
-    await ensureStore()
     const items = await prisma.menuItem.findMany({
       where: { restaurant_id: CRAVEXP_DARK_STORE_ID },
       orderBy: { name: 'asc' },
@@ -69,6 +86,12 @@ export async function GET() {
   }
 }
 
+/**
+ * POST /api/cravexp/catalog
+ *
+ * Idempotent setup/seed endpoint.  Call once to initialize the dark-store
+ * record.  Safe to call again (upsert is idempotent).
+ */
 export async function POST() {
   try {
     await ensureStore()

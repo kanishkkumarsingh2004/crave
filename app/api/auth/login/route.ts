@@ -41,7 +41,8 @@ export async function POST(request: Request) {
       if (email === 'admin') lookupEmail = 'admin@crave.com'
       else if (email === 'vendor') lookupEmail = 'vendor@crave.com'
       else if (email === 'user') lookupEmail = 'user@crave.com'
-      else if (email === 'darkstore' || email === 'store' || email === 'cravexp') lookupEmail = 'darkstore@crave.com'
+      else if (email === 'darkstore' || email === 'store' || email === 'cravexp')
+        lookupEmail = 'darkstore@crave.com'
       else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
     }
 
@@ -74,12 +75,7 @@ export async function POST(request: Request) {
       password === 'Password123' ||
       password === 'admin123'
 
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      !profile &&
-      isDemoEmail &&
-      isDemoPassword
-    ) {
+    if (process.env.NODE_ENV !== 'production' && !profile && isDemoEmail && isDemoPassword) {
       if (lookupEmail.startsWith('admin')) {
         profile = {
           id: 'usr_admin_01',
@@ -98,7 +94,11 @@ export async function POST(request: Request) {
           cuisine: 'North Indian & Fast Food',
           password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
         }
-      } else if (lookupEmail.startsWith('darkstore') || lookupEmail.startsWith('store') || lookupEmail.startsWith('cravexp')) {
+      } else if (
+        lookupEmail.startsWith('darkstore') ||
+        lookupEmail.startsWith('store') ||
+        lookupEmail.startsWith('cravexp')
+      ) {
         profile = {
           id: 'usr_darkstore_01',
           name: 'Dark Store Operator',

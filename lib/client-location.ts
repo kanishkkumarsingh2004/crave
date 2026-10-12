@@ -36,7 +36,10 @@ export async function getDeviceCoordinates(): Promise<{ lat: number; lng: number
         })
       },
       (err) => {
-        console.warn('[GPS] High-accuracy detection failed, falling back to network location:', err.message)
+        console.warn(
+          '[GPS] High-accuracy detection failed, falling back to network location:',
+          err.message
+        )
         // Attempt 2: Fallback to cached or network geolocation
         navigator.geolocation.getCurrentPosition(
           (posFallback) => {
@@ -90,7 +93,9 @@ export async function reverseGeocode(lat: number, lng: number): Promise<Geocoded
 /**
  * Check if the browser currently allows geolocation without prompting
  */
-export async function checkGeolocationPermission(): Promise<'granted' | 'prompt' | 'denied' | 'unknown'> {
+export async function checkGeolocationPermission(): Promise<
+  'granted' | 'prompt' | 'denied' | 'unknown'
+> {
   if (typeof window === 'undefined' || !navigator.permissions) return 'unknown'
   try {
     const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName })

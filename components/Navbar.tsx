@@ -27,6 +27,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState, useRef } from 'react'
+import { cn } from '@/lib/utils'
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
@@ -105,10 +106,37 @@ export default function Navbar() {
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [navVisible, setNavVisible] = useState(true)
+  const lastScrollYRef = useRef(0)
   const mobileMenuRef = useRef<HTMLElement>(null)
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const pathname = usePathname()
   const router = useRouter()
+
+  // Auto-hide mobile top navbar on scroll down, show on scroll up
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY
+          if (currentY < 30) {
+            setNavVisible(true)
+          } else if (currentY > lastScrollYRef.current + 10) {
+            setNavVisible(false)
+          } else if (currentY < lastScrollYRef.current - 10) {
+            setNavVisible(true)
+          }
+          lastScrollYRef.current = currentY
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -122,11 +150,13 @@ export default function Navbar() {
   }, [user?.address])
 
   const normalizedRole = (user?.role || role || '').toString().toLowerCase().trim()
-  const isCustomerRoute = pathname.startsWith('/user') || pathname === '/' || pathname.startsWith('/track') || pathname.startsWith('/checkout')
-  const isCustomer = Boolean(
-    user && (normalizedRole === 'customer' || normalizedRole === 'user')
-  )
-  const showCustomerNav = isCustomer || isCustomerRoute || !user
+  const isCustomerRoute =
+    pathname.startsWith('/user') ||
+    pathname === '/' ||
+    pathname.startsWith('/track') ||
+    pathname.startsWith('/checkout')
+  const isCustomer = Boolean(user && (normalizedRole === 'customer' || normalizedRole === 'user'))
+  const showCustomerNav = Boolean(user && (isCustomer || isCustomerRoute))
 
   // Focus trap for mobile menu
   useEffect(() => {
@@ -166,24 +196,23 @@ export default function Navbar() {
     }
   }, [showMobileMenu])
 
-  const currentDashboardLink =
-    isCustomer
-      ? '/user/dashboard'
-      : normalizedRole === 'rider' || normalizedRole === 'driver'
-        ? '/driver/dashboard'
-        : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'
-          ? '/vendor/dashboard'
-          : normalizedRole === 'cravexp_store_vendor'
-            ? '/vendor/crave-ep'
-            : normalizedRole === 'admin'
-              ? '/admin/dashboard'
-              : '/'
+  const currentDashboardLink = isCustomer
+    ? '/user/dashboard'
+    : normalizedRole === 'rider' || normalizedRole === 'driver'
+      ? '/driver/dashboard'
+      : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'
+        ? '/vendor/dashboard'
+        : normalizedRole === 'cravexp_store_vendor'
+          ? '/vendor/crave-ep'
+          : normalizedRole === 'admin'
+            ? '/admin/dashboard'
+            : '/'
   const logoTargetLink = user ? currentDashboardLink : '/'
 
   if (!mounted) {
     return (
       <>
-        <header className="sticky top-0 z-50 border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
+        <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
           <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
@@ -216,55 +245,20 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl transition-colors duration-200">
+      <header
+        className={cn(
+          'sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl transition-all duration-300',
+          navVisible ? 'translate-y-0' : '-translate-y-full lg:translate-y-0'
+        )}
+      >
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-3 py-2 sm:px-6 sm:py-2.5 gap-2">
-          {/* Logo & Deliver-To Location */}
+          {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link href={logoTargetLink} className="flex items-center gap-1.5 group shrink-0">
               <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white hover:opacity-90 transition">
                 crave<span className="text-[#86a018]">.</span>
               </span>
             </Link>
-
-            {showCustomerNav && (
-              <>
-                {/* Desktop Deliver-To Pill */}
-                <button
-                  type="button"
-                  onClick={() => setShowAddressModal(true)}
-                  className="hidden sm:flex items-center gap-2 rounded-full border border-gray-200/80 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.04] px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-white/10 transition cursor-pointer max-w-[210px] lg:max-w-[280px]"
-                  title="Change delivery location"
-                >
-                  <div className="grid size-6 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-[#d9f447] shrink-0">
-                    <MapPin className="size-3.5" />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <div className="flex items-center gap-1 leading-none text-[8px] font-black uppercase tracking-wider text-gray-400">
-                      <span>DELIVER TO</span>
-                      <span className="text-[#86a018] dark:text-[#d9f447] font-bold group-hover:underline">(Change)</span>
-                    </div>
-                    <div className="flex items-center gap-0.5 text-xs font-bold text-[#18201c] dark:text-white truncate mt-0.5">
-                      <span className="truncate">{deliveryAddress?.split(',')[0] || user?.address?.split(',')[0] || 'Select Location'}</span>
-                      <ChevronDown className="size-3 text-gray-400 shrink-0" />
-                    </div>
-                  </div>
-                </button>
-
-                {/* Mobile Deliver-To Pill */}
-                <button
-                  type="button"
-                  onClick={() => setShowAddressModal(true)}
-                  className="sm:hidden flex items-center gap-1.5 rounded-full bg-gray-100/90 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 px-2.5 py-1 text-left min-w-0 max-w-[155px] xs:max-w-[190px] hover:bg-gray-200 dark:hover:bg-white/10 transition cursor-pointer"
-                  title="Change delivery location"
-                >
-                  <MapPin className="size-3 text-emerald-600 dark:text-[#d9f447] shrink-0" />
-                  <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">
-                    {deliveryAddress?.split(',')[0] || user?.address?.split(',')[0] || 'Select location'}
-                  </span>
-                  <ChevronDown className="size-2.5 text-gray-400 shrink-0" />
-                </button>
-              </>
-            )}
           </div>
 
           {/* Center navigation links (Desktop) */}
@@ -276,7 +270,9 @@ export default function Navbar() {
                     <Link
                       href="/user/explore"
                       className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
-                        pathname.includes('/user/explore') || (pathname.includes('/user/dashboard') && !pathname.includes('/user/cravexp'))
+                        pathname.includes('/user/explore') ||
+                        (pathname.includes('/user/dashboard') &&
+                          !pathname.includes('/user/cravexp'))
                           ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
                           : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
@@ -331,7 +327,10 @@ export default function Navbar() {
                     }`}
                   >
                     <LayoutDashboard className="size-3.5 text-[#b5de28]" />
-                    <span>Dashboard ({roleDetails[normalizedRole as UserRole]?.title || user?.role || role})</span>
+                    <span>
+                      Dashboard (
+                      {roleDetails[normalizedRole as UserRole]?.title || user?.role || role})
+                    </span>
                   </Link>
                 )}
               </>
@@ -340,6 +339,54 @@ export default function Navbar() {
 
           {/* Right side — auth & profile */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {user && showCustomerNav && (
+              <>
+                {/* Desktop Deliver-To Pill */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  className="hidden sm:flex items-center gap-2 rounded-full border border-gray-200/80 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.04] px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-white/10 transition cursor-pointer max-w-[210px] lg:max-w-[280px]"
+                  title="Change delivery location"
+                >
+                  <div className="grid size-6 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-[#d9f447] shrink-0">
+                    <MapPin className="size-3.5" />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="flex items-center gap-1 leading-none text-[8px] font-black uppercase tracking-wider text-gray-400">
+                      <span>DELIVER TO</span>
+                      <span className="text-[#86a018] dark:text-[#d9f447] font-bold group-hover:underline">
+                        (Change)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-xs font-bold text-[#18201c] dark:text-white truncate mt-0.5">
+                      <span className="truncate">
+                        {deliveryAddress?.split(',')[0] ||
+                          user?.address?.split(',')[0] ||
+                          'Select Location'}
+                      </span>
+                      <ChevronDown className="size-3 text-gray-400 shrink-0" />
+                    </div>
+                  </div>
+                </button>
+
+                {/* Mobile Deliver-To Pill */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  className="sm:hidden flex items-center gap-1.5 rounded-full bg-gray-100/90 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 px-2.5 py-1 text-left min-w-0 max-w-[155px] xs:max-w-[190px] hover:bg-gray-200 dark:hover:bg-white/10 transition cursor-pointer"
+                  title="Change delivery location"
+                >
+                  <MapPin className="size-3 text-emerald-600 dark:text-[#d9f447] shrink-0" />
+                  <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">
+                    {deliveryAddress?.split(',')[0] ||
+                      user?.address?.split(',')[0] ||
+                      'Select location'}
+                  </span>
+                  <ChevronDown className="size-2.5 text-gray-400 shrink-0" />
+                </button>
+              </>
+            )}
+
             <div className="hidden sm:flex items-center">
               <ThemeToggle />
             </div>
@@ -416,7 +463,9 @@ export default function Navbar() {
                         className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
                           isCustomer
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                            : (roleDetails[user.role]?.bg || 'bg-gray-100') + ' ' + (roleDetails[user.role]?.color || 'text-gray-700')
+                            : (roleDetails[user.role]?.bg || 'bg-gray-100') +
+                              ' ' +
+                              (roleDetails[user.role]?.color || 'text-gray-700')
                         }`}
                       >
                         {isCustomer ? 'Customer View' : `${user.role} Account`}
@@ -477,7 +526,8 @@ export default function Navbar() {
                           <LayoutDashboard className="size-4 text-[#b5de28]" />
                           Go to Dashboard
                         </Link>
-                        {(normalizedRole === 'cravexp_store_vendor' || normalizedRole === 'admin') && (
+                        {(normalizedRole === 'cravexp_store_vendor' ||
+                          normalizedRole === 'admin') && (
                           <Link
                             href="/vendor/crave-ep"
                             onClick={() => setShowUserDropdown(false)}
@@ -598,15 +648,23 @@ export default function Navbar() {
               <div className="rounded-2xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200/80 dark:border-white/10 p-3 mb-2">
                 <div className="flex items-center gap-2.5">
                   {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="size-9 rounded-full object-cover" />
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="size-9 rounded-full object-cover"
+                    />
                   ) : (
                     <span className="grid size-9 place-items-center rounded-full bg-[#d9f447] text-xs font-black text-[#18201c]">
                       {user.name.charAt(0)}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black text-[#18201c] dark:text-white truncate">{user.name}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    <p className="text-xs font-black text-[#18201c] dark:text-white truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                      {user.email}
+                    </p>
                   </div>
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400">
                     {isCustomer ? 'Customer' : user?.role || role}
@@ -620,7 +678,9 @@ export default function Navbar() {
                   <div className="flex items-center gap-2 min-w-0">
                     <MapPin className="size-4 text-emerald-600 dark:text-[#d9f447] shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">DELIVER TO</p>
+                      <p className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">
+                        DELIVER TO
+                      </p>
                       <p className="text-xs font-bold text-[#18201c] dark:text-white truncate">
                         {deliveryAddress || user?.address || 'Select Delivery Location'}
                       </p>

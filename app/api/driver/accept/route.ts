@@ -9,6 +9,7 @@ import { updateOrder, findOrderById } from '@/lib/dal'
 import { broadcast } from '@/lib/ws-server'
 import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: Request) {
   try {
@@ -76,29 +77,42 @@ export async function POST(request: Request) {
         })
       }
 
-      // Persist order update in DB with conditional check
+      // P0-D FIX: Persist order update in DB with atomic conditional check
       let updatedOrder = null
       try {
-        const existing = await findOrderById(requestId)
-        if (existing) {
-          if (
-            (existing.rider_id && existing.rider_id !== driverId) ||
-            (existing.driver_name &&
-              existing.driver_name !== 'Unassigned' &&
-              existing.driver_name !== driverName)
-          ) {
-            return NextResponse.json(
-              { error: 'Order has already been assigned to another driver' },
-              { status: 409 }
-            )
-          }
-          updatedOrder = await updateOrder(requestId, {
+        const assigned = await prisma.order.updateMany({
+          where: {
+            id: requestId,
+            OR: [
+              { rider_id: null },
+              { rider_id: driverId }, // allow idempotent retry by same driver
+            ],
+            status: {
+              in: [
+                'sent_to_vendor',
+                'preparing',
+                'packing',
+                'ready_for_pickup',
+                'rider_assigned',
+              ] as any[],
+            },
+          },
+          data: {
             status: 'rider_assigned',
             rider_id: driverId,
             driver_name: driverName,
             driver_phone: driverPhone,
-          })
+          },
+        })
+
+        if (assigned.count === 0) {
+          return NextResponse.json(
+            { error: 'Order has already been assigned to another driver' },
+            { status: 409 }
+          )
         }
+
+        updatedOrder = await findOrderById(requestId)
       } catch (dbErr) {
         console.warn('[POST /api/driver/accept] DB update notice:', dbErr)
       }

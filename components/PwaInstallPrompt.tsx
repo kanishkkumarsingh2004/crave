@@ -157,9 +157,7 @@ export default function PwaInstallPrompt() {
 
           {/* Text Details */}
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-sm tracking-tight text-white">
-              Install Crave App
-            </h4>
+            <h4 className="font-bold text-sm tracking-tight text-white">Install Crave App</h4>
             <p className="text-xs text-white/70 truncate mt-0.5">
               {isIos
                 ? 'Add to Home Screen for 1-tap food delivery'

@@ -45,11 +45,47 @@ export async function GET(request?: Request) {
       }
     }
 
-    const settlements = await prisma.vendorSettlement.findMany({
+    const cursor = request
+      ? new URL(request.url || 'http://localhost').searchParams.get('cursor') || undefined
+      : undefined
+    const limitParam = request
+      ? parseInt(new URL(request.url || 'http://localhost').searchParams.get('limit') || '50', 10)
+      : 50
+    const take = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 200)
+
+    const rawSettlements = await prisma.vendorSettlement.findMany({
       where: restaurantId ? { restaurant_id: restaurantId } : undefined,
       orderBy: { payout_date: 'desc' },
-      include: { restaurant: true },
+      take: take + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select: {
+        id: true,
+        restaurant_id: true,
+        restaurant_name: true,
+        gross_sales: true,
+        commercial_model: true,
+        commission_rate: true,
+        commission_amount: true,
+        markup_amount: true,
+        net_payout: true,
+        status: true,
+        payout_date: true,
+        period_start: true,
+        period_end: true,
+        transaction_ref: true,
+        restaurant: {
+          select: {
+            name: true,
+            cuisine: true,
+            is_open: true,
+          },
+        },
+      },
     })
+
+    const hasNextPage = rawSettlements.length > take
+    const settlements = hasNextPage ? rawSettlements.slice(0, take) : rawSettlements
+    const nextCursor = hasNextPage ? settlements[settlements.length - 1]?.id : null
 
     const totalGrossSales = settlements.reduce(
       (acc: number, s: any) => acc + Number(s.gross_sales ?? 0),
@@ -71,6 +107,11 @@ export async function GET(request?: Request) {
     return NextResponse.json({
       success: true,
       settlements,
+      pagination: {
+        nextCursor,
+        hasNextPage,
+        limit: take,
+      },
       summary: {
         total_gross_sales: totalGrossSales,
         total_commission: totalCommission,
@@ -121,7 +162,13 @@ export async function POST(request: Request) {
           where: { id: restaurant_id },
           data: { commission_rate: Number(commission_rate) },
         })
-      } catch (e) {}
+      } catch (e) {
+        console.error(
+          '[settlements] commission_rate update failed:',
+          e instanceof Error ? e.message : e
+        )
+        throw e
+      }
     }
 
     let settlementRecord: any = null
@@ -129,7 +176,7 @@ export async function POST(request: Request) {
       const settleStatus =
         status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
       settlementRecord = await createVendorSettlement({
-        id: id && !id.startsWith('rest_') ? id : `set_${Date.now()}`,
+        id: id && !id.startsWith('rest_') ? id : `set_${crypto.randomUUID()}`,
         restaurant_id,
         restaurant_name: restaurant_name || 'Restaurant Store',
         gross_sales: Number(gross_sales || net_payout),

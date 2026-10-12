@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
+  // P1-F: Rate limit per IP
+  const clientIp = getClientIp(request)
+  const rl = await checkRateLimit(clientIp, 'PUBLIC')
+  if (!rl.allowed) return rateLimitResponse(rl.resetTime, rl.retryAfter)
+
   const { searchParams } = new URL(request.url)
   const latStr = searchParams.get('lat')
   const lngStr = searchParams.get('lng')
@@ -22,10 +28,10 @@ export async function GET(request: Request) {
     )
   }
 
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 6000)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5000)
 
+  try {
     const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
 
     const response = await fetch(nominatimUrl, {
@@ -49,7 +55,8 @@ export async function GET(request: Request) {
         const houseNumber = addr.house_number || ''
         const building = addr.building || addr.amenity || addr.shop || ''
         const neighbourhood = addr.neighbourhood || addr.suburb || addr.residential || ''
-        const city = addr.city || addr.town || addr.village || addr.city_district || addr.county || 'Bengaluru'
+        const city =
+          addr.city || addr.town || addr.village || addr.city_district || addr.county || 'Bengaluru'
         const state = addr.state || 'Karnataka'
         const postcode = addr.postcode || ''
 
@@ -65,14 +72,15 @@ export async function GET(request: Request) {
         const formattedAddress =
           addressLines.length > 0
             ? addressLines.join(', ')
-            : data.display_name?.split(', ').slice(0, 5).join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+            : data.display_name?.split(', ').slice(0, 5).join(', ') ||
+              `${lat.toFixed(4)}, ${lng.toFixed(4)}`
 
         const shortAddress =
           neighbourhood && city
             ? `${neighbourhood}, ${city}`
             : road && city
-            ? `${road}, ${city}`
-            : city || 'Bengaluru'
+              ? `${road}, ${city}`
+              : city || 'Bengaluru'
 
         return NextResponse.json({
           success: true,
@@ -91,7 +99,11 @@ export async function GET(request: Request) {
       }
     }
   } catch (err: any) {
-    console.warn('[Reverse Geocode API] Nominatim lookup timed out or failed:', err?.message)
+    clearTimeout(timeoutId)
+    if (err?.name === 'AbortError') {
+      return NextResponse.json({ error: 'Geocoding service timeout' }, { status: 504 })
+    }
+    console.warn('[Reverse Geocode API] Nominatim lookup failed:', err?.message)
   }
 
   // Graceful fallback if external geocoding service is unreachable

@@ -170,6 +170,19 @@ export function useOrderUpdates(customerId: string | undefined, onOrders: (order
   return useWebSocket({
     channels: ['order_update'],
     customerId,
+    onConnect: () => {
+      // P2-C: Reconcile current order state on initial connect or WebSocket reconnect
+      if (customerId && typeof window !== 'undefined') {
+        fetch(`/api/orders?customerId=${encodeURIComponent(customerId)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.orders && Array.isArray(data.orders)) {
+              onOrders(data.orders)
+            }
+          })
+          .catch(() => {})
+      }
+    },
     onMessage: (msg) => {
       if (msg.channel === 'order_update') {
         const data = msg.data as any

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 interface NominatimSearchResult {
   place_id: number
@@ -26,6 +27,11 @@ interface NominatimSearchResult {
 }
 
 export async function GET(request: Request) {
+  // P1-F: Rate limit per IP
+  const clientIp = getClientIp(request)
+  const rl = await checkRateLimit(clientIp, 'PUBLIC')
+  if (!rl.allowed) return rateLimitResponse(rl.resetTime, rl.retryAfter)
+
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim()
 
@@ -36,10 +42,10 @@ export async function GET(request: Request) {
     )
   }
 
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 4500)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5000)
 
+  try {
     // Bias search towards Bengaluru and Karnataka, India
     const encodedQuery = encodeURIComponent(query)
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodedQuery}&countrycodes=in&viewbox=77.2,13.35,77.95,12.6&bounded=0&limit=7&addressdetails=1`
@@ -72,8 +78,7 @@ export async function GET(request: Request) {
             addr.suburb ||
             item.display_name.split(',')[0]
 
-          const locality =
-            addr.neighbourhood || addr.suburb || addr.residential || addr.road || ''
+          const locality = addr.neighbourhood || addr.suburb || addr.residential || addr.road || ''
           const city = addr.city || addr.town || addr.village || 'Bengaluru'
           const state = addr.state || 'Karnataka'
 
@@ -101,7 +106,11 @@ export async function GET(request: Request) {
       }
     }
   } catch (err: any) {
-    console.warn('[Geocode Search API] Nominatim search timed out or failed:', err?.message)
+    clearTimeout(timeoutId)
+    if (err?.name === 'AbortError') {
+      return NextResponse.json({ error: 'Geocoding service timeout' }, { status: 504 })
+    }
+    console.warn('[Geocode Search API] Nominatim search failed:', err?.message)
   }
 
   // Graceful fallback with empty results

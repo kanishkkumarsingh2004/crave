@@ -102,7 +102,8 @@ export default function SignupPage() {
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Create your complimentary patron profile to access secret menu drops, direct kitchen dispatching, and doorstep delivery in under 25 minutes.
+              Create your complimentary patron profile to access secret menu drops, direct kitchen
+              dispatching, and doorstep delivery in under 25 minutes.
             </p>
 
             {/* Value Pillars */}
@@ -110,16 +111,24 @@ export default function SignupPage() {
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/5">
                 <Clock className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
-                  <p className="font-bold text-[#121815] dark:text-white">25-Minute Priority Dispatch</p>
-                  <p className="text-stone-500 dark:text-stone-400">Strict temperature-controlled delivery</p>
+                  <p className="font-bold text-[#121815] dark:text-white">
+                    25-Minute Priority Dispatch
+                  </p>
+                  <p className="text-stone-500 dark:text-stone-400">
+                    Strict temperature-controlled delivery
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/5">
                 <Flame className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
-                  <p className="font-bold text-[#121815] dark:text-white">Verified Artisan Hearths</p>
-                  <p className="text-stone-500 dark:text-stone-400">Award-winning sourdough, biryani &amp; grills</p>
+                  <p className="font-bold text-[#121815] dark:text-white">
+                    Verified Artisan Hearths
+                  </p>
+                  <p className="text-stone-500 dark:text-stone-400">
+                    Award-winning sourdough, biryani &amp; grills
+                  </p>
                 </div>
               </div>
 
@@ -127,7 +136,9 @@ export default function SignupPage() {
                 <Sparkles className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
                   <p className="font-bold text-[#121815] dark:text-white">Zero Inflated Markups</p>
-                  <p className="text-stone-500 dark:text-stone-400">Original restaurant dine-in pricing</p>
+                  <p className="text-stone-500 dark:text-stone-400">
+                    Original restaurant dine-in pricing
+                  </p>
                 </div>
               </div>
             </div>
@@ -300,7 +311,11 @@ export default function SignupPage() {
                         className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
                         aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
                       </button>
                     </div>
                   </div>

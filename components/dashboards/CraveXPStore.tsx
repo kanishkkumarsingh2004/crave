@@ -45,22 +45,53 @@ export type GroceryItem = CraveXPGroceryItem
 /** Map arbitrary category string to a modern Lucide vector icon */
 function getCategoryIcon(category: string): React.ElementType {
   const c = (category || '').toLowerCase()
-  if (c.includes('dairy') || c.includes('milk') || c.includes('egg') || c.includes('butter') || c.includes('cheese')) {
+  if (
+    c.includes('dairy') ||
+    c.includes('milk') ||
+    c.includes('egg') ||
+    c.includes('butter') ||
+    c.includes('cheese')
+  ) {
     return Milk
   }
-  if (c.includes('fruit') || c.includes('veggie') || c.includes('vegetable') || c.includes('fresh')) {
+  if (
+    c.includes('fruit') ||
+    c.includes('veggie') ||
+    c.includes('vegetable') ||
+    c.includes('fresh')
+  ) {
     return Apple
   }
   if (c.includes('snack') || c.includes('munch') || c.includes('biscuit') || c.includes('chips')) {
     return Cookie
   }
-  if (c.includes('drink') || c.includes('juice') || c.includes('beverage') || c.includes('coffee') || c.includes('tea') || c.includes('soda')) {
+  if (
+    c.includes('drink') ||
+    c.includes('juice') ||
+    c.includes('beverage') ||
+    c.includes('coffee') ||
+    c.includes('tea') ||
+    c.includes('soda')
+  ) {
     return Coffee
   }
-  if (c.includes('bakery') || c.includes('bread') || c.includes('cake') || c.includes('toast') || c.includes('breakfast')) {
+  if (
+    c.includes('bakery') ||
+    c.includes('bread') ||
+    c.includes('cake') ||
+    c.includes('toast') ||
+    c.includes('breakfast')
+  ) {
     return Wheat
   }
-  if (c.includes('instant') || c.includes('staple') || c.includes('atta') || c.includes('rice') || c.includes('dal') || c.includes('oil')) {
+  if (
+    c.includes('instant') ||
+    c.includes('staple') ||
+    c.includes('atta') ||
+    c.includes('rice') ||
+    c.includes('dal') ||
+    c.includes('oil')
+  ) {
     return Package
   }
   if (c.includes('clean') || c.includes('household') || c.includes('care') || c.includes('wash')) {
@@ -81,7 +112,9 @@ export default function CraveXPStore() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All Items')
   const [searchQuery, setSearchQuery] = useState('')
   const [inStockOnly, setInStockOnly] = useState(false)
-  const [sortBy, setSortBy] = useState<'featured' | 'price_low' | 'price_high' | 'discount'>('featured')
+  const [sortBy, setSortBy] = useState<'featured' | 'price_low' | 'price_high' | 'discount'>(
+    'featured'
+  )
   const [groceryItems, setGroceryItems] = useState<CraveXPGroceryItem[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(true)
 
@@ -248,7 +281,8 @@ export default function CraveXPStore() {
                 Fresh Groceries &amp; Daily Essentials in 10 Minutes
               </h1>
               <p className="mt-1 sm:mt-1.5 text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
-                Direct fulfillment from our automated micro-warehouse. Chilled, packed, and delivered to your doorstep.
+                Direct fulfillment from our automated micro-warehouse. Chilled, packed, and
+                delivered to your doorstep.
               </p>
 
               {/* Dark Store Hub Location Pill */}
@@ -429,7 +463,8 @@ export default function CraveXPStore() {
                   No products found for &ldquo;{searchQuery}&rdquo;
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
-                  Try searching for a different product or clear your search to explore all groceries.
+                  Try searching for a different product or clear your search to explore all
+                  groceries.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
@@ -451,7 +486,8 @@ export default function CraveXPStore() {
                   Fresh Inventory Arriving Shortly
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 max-w-md mx-auto leading-relaxed">
-                  Our fulfillment center is actively restocking fresh groceries and daily essentials.
+                  Our fulfillment center is actively restocking fresh groceries and daily
+                  essentials.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <Link
@@ -469,7 +505,8 @@ export default function CraveXPStore() {
                   No items in &ldquo;{selectedCategory}&rdquo;
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
-                  We are restocking this section. Switch to another category or browse all available products.
+                  We are restocking this section. Switch to another category or browse all available
+                  products.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button

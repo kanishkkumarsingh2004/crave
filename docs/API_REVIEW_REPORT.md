@@ -8,15 +8,15 @@
 
 ## 1. Executive status
 
-| Area | Status | Evidence |
-| --- | --- | --- |
-| Public GET (`/api/health`, `/api/restaurants`) | **Healthy** | `rest_errors = 0`; checks 240/240; p95 **186 ms** |
-| Latency at 1–2 VUs | **Healthy** | avg **126 ms**, max **599 ms**, well under `p(95)<3000` |
-| Smoke threshold `http_req_failed < 1%` | **Failed** | 3/244 = **1.23%** → k6 exit **99** |
-| Auth under staging/Docker | **Broken for tests** | `auth_errors` rate **0.75** (3 of 4 setup logins) |
-| Order create | **Not measured** | `total_orders_created = 0`; smoke scenario never POSTs `/api/orders` |
-| WebSocket | **Not measured** | `wsConnectAvg = N/A`; smoke does not open WS |
-| Checkout / dispatch / UTR | **Code-reviewed only** | Hot path is large, sequential, and DB-heavy |
+| Area                                           | Status                 | Evidence                                                             |
+| ---------------------------------------------- | ---------------------- | -------------------------------------------------------------------- |
+| Public GET (`/api/health`, `/api/restaurants`) | **Healthy**            | `rest_errors = 0`; checks 240/240; p95 **186 ms**                    |
+| Latency at 1–2 VUs                             | **Healthy**            | avg **126 ms**, max **599 ms**, well under `p(95)<3000`              |
+| Smoke threshold `http_req_failed < 1%`         | **Failed**             | 3/244 = **1.23%** → k6 exit **99**                                   |
+| Auth under staging/Docker                      | **Broken for tests**   | `auth_errors` rate **0.75** (3 of 4 setup logins)                    |
+| Order create                                   | **Not measured**       | `total_orders_created = 0`; smoke scenario never POSTs `/api/orders` |
+| WebSocket                                      | **Not measured**       | `wsConnectAvg = N/A`; smoke does not open WS                         |
+| Checkout / dispatch / UTR                      | **Code-reviewed only** | Hot path is large, sequential, and DB-heavy                          |
 
 Overall: **conditional pass on performance of public reads**, **fail on smoke gate**, **incomplete coverage of the money path**.
 
@@ -26,18 +26,18 @@ Overall: **conditional pass on performance of public reads**, **fail on smoke ga
 
 Source: `summary.json` + `load-tests/comprehensive-load-test.js` (`TEST_TYPE=smoke`).
 
-| Metric | Value | Gate |
-| --- | --- | --- |
-| Duration | 2m 00.8s | — |
-| VUs | 1 → 2 → 1 → 0 (30s each) | — |
-| Total HTTP | 244 | — |
-| Failed HTTP | 3 (1.23%) | `rate<0.01` **FAIL** |
-| Throughput | 2.02 req/s | — |
-| avg / p95 / max | 126 / 186 / 599 ms | `p(95)<3000` **PASS** |
-| Checks | 240 passed, 0 failed | `rate>0.99` **PASS** |
-| `rest_errors` | 0 | public APIs returned 200 |
-| `auth_errors` | 0.75 | 3 of 4 role logins failed |
-| Orders created | 0 | smoke does not create orders |
+| Metric          | Value                    | Gate                         |
+| --------------- | ------------------------ | ---------------------------- |
+| Duration        | 2m 00.8s                 | —                            |
+| VUs             | 1 → 2 → 1 → 0 (30s each) | —                            |
+| Total HTTP      | 244                      | —                            |
+| Failed HTTP     | 3 (1.23%)                | `rate<0.01` **FAIL**         |
+| Throughput      | 2.02 req/s               | —                            |
+| avg / p95 / max | 126 / 186 / 599 ms       | `p(95)<3000` **PASS**        |
+| Checks          | 240 passed, 0 failed     | `rate>0.99` **PASS**         |
+| `rest_errors`   | 0                        | public APIs returned 200     |
+| `auth_errors`   | 0.75                     | 3 of 4 role logins failed    |
+| Orders created  | 0                        | smoke does not create orders |
 
 ### Why the numbers add up
 
@@ -65,10 +65,10 @@ rider@crave.com / 1234567890
 
 What the repo actually seeds:
 
-| Script | File | Users | Password |
-| --- | --- | --- | --- |
-| `pnpm db:seed` / `db:admin` | `scripts/seed-local-db.ts` | **admin only** | `1234567890` |
-| `pnpm db:seed:full` | `scripts/seed-complete-data.ts` | all five roles | **`Password123!`** (not `1234567890`) |
+| Script                      | File                            | Users          | Password                              |
+| --------------------------- | ------------------------------- | -------------- | ------------------------------------- |
+| `pnpm db:seed` / `db:admin` | `scripts/seed-local-db.ts`      | **admin only** | `1234567890`                          |
+| `pnpm db:seed:full`         | `scripts/seed-complete-data.ts` | all five roles | **`Password123!`** (not `1234567890`) |
 
 Demo login that accepts `1234567890` without a DB row lives in `app/api/auth/login/route.ts` and is **disabled when `NODE_ENV === 'production'`** (Docker frontend).
 
@@ -92,73 +92,73 @@ Handlers live only as `app/api/**/route.ts`. There is no `/api/orders/[id]` dyna
 
 ### Auth
 
-| Method | Path | File | Auth | Rate limit | Status |
-| --- | --- | --- | --- | --- | --- |
-| POST | `/api/auth/login` | `app/api/auth/login/route.ts` | public | `AUTH_LOGIN` 5 / 5 min | **Fragile** — demo bypass, dual hash formats, extra Gmail/Crave lookup |
-| POST | `/api/auth/signup` | `app/api/auth/signup/route.ts` | public | `AUTH_SIGNUP` 3 / 5 min | OK |
-| GET | `/api/auth/me` | `app/api/auth/me/route.ts` | JWT | none | Extra restaurant lookup for vendors |
-| POST | `/api/auth/logout` | `app/api/auth/logout/route.ts` | cookie | none | Redis JTI blacklist `lib/jwt.ts` |
-| POST | `/api/auth/logout-all` | `app/api/auth/logout-all/route.ts` | cookie | none | User-level blacklist |
+| Method | Path                   | File                               | Auth   | Rate limit              | Status                                                                 |
+| ------ | ---------------------- | ---------------------------------- | ------ | ----------------------- | ---------------------------------------------------------------------- |
+| POST   | `/api/auth/login`      | `app/api/auth/login/route.ts`      | public | `AUTH_LOGIN` 5 / 5 min  | **Fragile** — demo bypass, dual hash formats, extra Gmail/Crave lookup |
+| POST   | `/api/auth/signup`     | `app/api/auth/signup/route.ts`     | public | `AUTH_SIGNUP` 3 / 5 min | OK                                                                     |
+| GET    | `/api/auth/me`         | `app/api/auth/me/route.ts`         | JWT    | none                    | Extra restaurant lookup for vendors                                    |
+| POST   | `/api/auth/logout`     | `app/api/auth/logout/route.ts`     | cookie | none                    | Redis JTI blacklist `lib/jwt.ts`                                       |
+| POST   | `/api/auth/logout-all` | `app/api/auth/logout-all/route.ts` | cookie | none                    | User-level blacklist                                                   |
 
 Page routes also gated by `proxy.ts` (cookie JWT).
 
 ### Catalog / public
 
-| Method | Path | File | Notes | Perf |
-| --- | --- | --- | --- | --- |
-| GET | `/api/health` | `app/api/health/route.ts` | `SELECT 1` + Redis probe every call | Fine at 2 rps; will dominate if probed too often |
-| GET/POST/PATCH | `/api/restaurants` | `app/api/restaurants/route.ts` | GET uses `listRestaurants()` | **Hot:** `include: { menu_items: true }`, cap 50, Redis cache in `lib/dal/restaurants.ts` |
-| GET/POST/PATCH/DELETE | `/api/menu-items` | `app/api/menu-items/route.ts` | GET requires `restaurantId` | OK; mutations broadcast WS |
-| GET/POST | `/api/cravexp/catalog` | `app/api/cravexp/catalog/route.ts` | **upsert store on every GET** | **Hot** |
-| GET/POST | `/api/calculator` | `app/api/calculator/route.ts` | Preview only; dual legacy + canonical | OK if not called per keystroke without debounce |
-| GET | `/api/admin/calculator` | `app/api/admin/calculator/route.ts` | Admin playground | — |
-| GET/POST | `/api/distance-pricing` | `app/api/distance-pricing/route.ts` | Haversine + 1.30× | CPU cheap |
-| GET | `/api/geocode/search` | `app/api/geocode/search/route.ts` | Nominatim, 4.5s abort | External latency / rate limits |
-| GET | `/api/geocode/reverse` | `app/api/geocode/reverse/route.ts` | Nominatim | Same |
-| GET/POST | `/api/payment-config` | `app/api/payment-config/route.ts` | GET used at checkout; POST admin | Cache if hot |
+| Method                | Path                    | File                                | Notes                                 | Perf                                                                                      |
+| --------------------- | ----------------------- | ----------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| GET                   | `/api/health`           | `app/api/health/route.ts`           | `SELECT 1` + Redis probe every call   | Fine at 2 rps; will dominate if probed too often                                          |
+| GET/POST/PATCH        | `/api/restaurants`      | `app/api/restaurants/route.ts`      | GET uses `listRestaurants()`          | **Hot:** `include: { menu_items: true }`, cap 50, Redis cache in `lib/dal/restaurants.ts` |
+| GET/POST/PATCH/DELETE | `/api/menu-items`       | `app/api/menu-items/route.ts`       | GET requires `restaurantId`           | OK; mutations broadcast WS                                                                |
+| GET/POST              | `/api/cravexp/catalog`  | `app/api/cravexp/catalog/route.ts`  | **upsert store on every GET**         | **Hot**                                                                                   |
+| GET/POST              | `/api/calculator`       | `app/api/calculator/route.ts`       | Preview only; dual legacy + canonical | OK if not called per keystroke without debounce                                           |
+| GET                   | `/api/admin/calculator` | `app/api/admin/calculator/route.ts` | Admin playground                      | —                                                                                         |
+| GET/POST              | `/api/distance-pricing` | `app/api/distance-pricing/route.ts` | Haversine + 1.30×                     | CPU cheap                                                                                 |
+| GET                   | `/api/geocode/search`   | `app/api/geocode/search/route.ts`   | Nominatim, 4.5s abort                 | External latency / rate limits                                                            |
+| GET                   | `/api/geocode/reverse`  | `app/api/geocode/reverse/route.ts`  | Nominatim                             | Same                                                                                      |
+| GET/POST              | `/api/payment-config`   | `app/api/payment-config/route.ts`   | GET used at checkout; POST admin      | Cache if hot                                                                              |
 
 ### Orders / money
 
-| Method | Path | File | Auth | Notes |
-| --- | --- | --- | --- | --- |
-| GET | `/api/orders` | `app/api/orders/route.ts` (~1349 lines) | JWT; scoped by role | `?orderId=` not a nested route |
-| POST | `/api/orders` | same | `user` + `ORDER_CREATE` 10/min | Canonical snapshot; N+1 menu fetches |
-| PATCH | `/api/orders` | same | JWT + state machine | Kitchen / UTR / OTP |
-| GET/PATCH | `/api/admin/payment-reviews` | `app/api/admin/payment-reviews/route.ts` | admin | PATCH posts ledger `lib/finance` |
-| GET/POST | `/api/admin/settlements` | `app/api/admin/settlements/route.ts` | admin | Vendor payouts |
+| Method    | Path                         | File                                     | Auth                           | Notes                                |
+| --------- | ---------------------------- | ---------------------------------------- | ------------------------------ | ------------------------------------ |
+| GET       | `/api/orders`                | `app/api/orders/route.ts` (~1349 lines)  | JWT; scoped by role            | `?orderId=` not a nested route       |
+| POST      | `/api/orders`                | same                                     | `user` + `ORDER_CREATE` 10/min | Canonical snapshot; N+1 menu fetches |
+| PATCH     | `/api/orders`                | same                                     | JWT + state machine            | Kitchen / UTR / OTP                  |
+| GET/PATCH | `/api/admin/payment-reviews` | `app/api/admin/payment-reviews/route.ts` | admin                          | PATCH posts ledger `lib/finance`     |
+| GET/POST  | `/api/admin/settlements`     | `app/api/admin/settlements/route.ts`     | admin                          | Vendor payouts                       |
 
 ### Dispatch / driver
 
-| Method | Path | File | Notes |
-| --- | --- | --- | --- |
-| POST | `/api/dispatch/request` | `app/api/dispatch/request/route.ts` | Vendor/admin; H3 k-ring + Redis locks |
-| GET | `/api/dispatch/candidates` | `app/api/dispatch/candidates/route.ts` | Read-only candidate search |
-| POST | `/api/driver/accept` | `app/api/driver/accept/route.ts` | Atomic lock + order update + WS |
-| POST | `/api/driver/location` | `app/api/driver/location/route.ts` | Redis H3 index + WS broadcast **every ping** |
-| POST | `/api/driver/status` | `app/api/driver/status/route.ts` | Online/offline |
-| GET | `/api/driver/orders` | `app/api/driver/orders/route.ts` | Assigned orders |
-| GET/PUT | `/api/driver/profile` | `app/api/driver/profile/route.ts` | — |
-| GET/POST | `/api/driver/payouts` | `app/api/driver/payouts/route.ts` | — |
-| GET | `/api/driver/incentives` | `app/api/driver/incentives/route.ts` | — |
-| GET/POST/DELETE | `/api/driver/upi` | `app/api/driver/upi/route.ts` | — |
-| GET | `/api/drivers` | `app/api/drivers/route.ts` | Admin list |
+| Method          | Path                       | File                                   | Notes                                        |
+| --------------- | -------------------------- | -------------------------------------- | -------------------------------------------- |
+| POST            | `/api/dispatch/request`    | `app/api/dispatch/request/route.ts`    | Vendor/admin; H3 k-ring + Redis locks        |
+| GET             | `/api/dispatch/candidates` | `app/api/dispatch/candidates/route.ts` | Read-only candidate search                   |
+| POST            | `/api/driver/accept`       | `app/api/driver/accept/route.ts`       | Atomic lock + order update + WS              |
+| POST            | `/api/driver/location`     | `app/api/driver/location/route.ts`     | Redis H3 index + WS broadcast **every ping** |
+| POST            | `/api/driver/status`       | `app/api/driver/status/route.ts`       | Online/offline                               |
+| GET             | `/api/driver/orders`       | `app/api/driver/orders/route.ts`       | Assigned orders                              |
+| GET/PUT         | `/api/driver/profile`      | `app/api/driver/profile/route.ts`      | —                                            |
+| GET/POST        | `/api/driver/payouts`      | `app/api/driver/payouts/route.ts`      | —                                            |
+| GET             | `/api/driver/incentives`   | `app/api/driver/incentives/route.ts`   | —                                            |
+| GET/POST/DELETE | `/api/driver/upi`          | `app/api/driver/upi/route.ts`          | —                                            |
+| GET             | `/api/drivers`             | `app/api/drivers/route.ts`             | Admin list                                   |
 
 ### User / admin
 
-| Method | Path | File |
-| --- | --- | --- |
-| GET/POST/PUT/PATCH/DELETE | `/api/user/addresses` | `app/api/user/addresses/route.ts` |
-| PATCH | `/api/user/update` | `app/api/user/update/route.ts` |
-| POST | `/api/user/change-password` | `app/api/user/change-password/route.ts` |
-| GET/PATCH | `/api/user/language` | `app/api/user/language/route.ts` |
-| GET | `/api/admin/stats` | `app/api/admin/stats/route.ts` |
-| GET | `/api/admin/users` | `app/api/admin/users/route.ts` |
-| GET | `/api/admin/map-live-analytics` | `app/api/admin/map-live-analytics/route.ts` |
-| GET/POST/PATCH/DELETE | `/api/admin/coupons` | `app/api/admin/coupons/route.ts` |
-| POST | `/api/admin/create-vendor` | `app/api/admin/create-vendor/route.ts` |
-| POST | `/api/admin/create-driver` | `app/api/admin/create-driver/route.ts` |
-| POST | `/api/admin/delete-vendor` | `app/api/admin/delete-vendor/route.ts` |
-| POST | `/api/admin/edit-account` | `app/api/admin/edit-account/route.ts` |
+| Method                    | Path                            | File                                        |
+| ------------------------- | ------------------------------- | ------------------------------------------- |
+| GET/POST/PUT/PATCH/DELETE | `/api/user/addresses`           | `app/api/user/addresses/route.ts`           |
+| PATCH                     | `/api/user/update`              | `app/api/user/update/route.ts`              |
+| POST                      | `/api/user/change-password`     | `app/api/user/change-password/route.ts`     |
+| GET/PATCH                 | `/api/user/language`            | `app/api/user/language/route.ts`            |
+| GET                       | `/api/admin/stats`              | `app/api/admin/stats/route.ts`              |
+| GET                       | `/api/admin/users`              | `app/api/admin/users/route.ts`              |
+| GET                       | `/api/admin/map-live-analytics` | `app/api/admin/map-live-analytics/route.ts` |
+| GET/POST/PATCH/DELETE     | `/api/admin/coupons`            | `app/api/admin/coupons/route.ts`            |
+| POST                      | `/api/admin/create-vendor`      | `app/api/admin/create-vendor/route.ts`      |
+| POST                      | `/api/admin/create-driver`      | `app/api/admin/create-driver/route.ts`      |
+| POST                      | `/api/admin/delete-vendor`      | `app/api/admin/delete-vendor/route.ts`      |
+| POST                      | `/api/admin/edit-account`       | `app/api/admin/edit-account/route.ts`       |
 
 Realtime fan-out: `lib/ws-server.ts` → Redis `crave:ws:events` or `POST /__ws/broadcast` on `ws-server.js`. JWT verify on every authenticated call: `lib/jwt.ts` (Redis blacklist GET).
 
@@ -202,17 +202,17 @@ sequenceDiagram
   API->>DAL: persistJournalTransaction (lib/finance/ledger-service.ts)
 ```
 
-| Step | File |
-| --- | --- |
-| Login | `app/api/auth/login/route.ts`, `lib/dal/users.ts`, `lib/jwt.ts`, `lib/rate-limit.ts` |
-| Catalog | `app/api/restaurants/route.ts`, `lib/dal/restaurants.ts`, `lib/cache.ts` |
-| Menu | `app/api/menu-items/route.ts` |
-| Quote | `app/api/calculator/route.ts`, `lib/finance/pricing-engine.ts`, `lib/finance/tax-engine.ts` |
-| Address | `app/api/user/addresses/route.ts`, `lib/dal/addresses.ts` |
-| Place order | `app/api/orders/route.ts` `POST`, `lib/dal/menu-items.ts`, `lib/dal/coupons.ts`, `lib/order-state-machine.ts` |
-| UTR / kitchen / OTP | `app/api/orders/route.ts` `PATCH` |
-| Verify pay + ledger | `app/api/admin/payment-reviews/route.ts`, `lib/finance/ledger-service.ts` |
-| Live UI | `lib/websocket.tsx`, `ws-server.js` |
+| Step                | File                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Login               | `app/api/auth/login/route.ts`, `lib/dal/users.ts`, `lib/jwt.ts`, `lib/rate-limit.ts`                          |
+| Catalog             | `app/api/restaurants/route.ts`, `lib/dal/restaurants.ts`, `lib/cache.ts`                                      |
+| Menu                | `app/api/menu-items/route.ts`                                                                                 |
+| Quote               | `app/api/calculator/route.ts`, `lib/finance/pricing-engine.ts`, `lib/finance/tax-engine.ts`                   |
+| Address             | `app/api/user/addresses/route.ts`, `lib/dal/addresses.ts`                                                     |
+| Place order         | `app/api/orders/route.ts` `POST`, `lib/dal/menu-items.ts`, `lib/dal/coupons.ts`, `lib/order-state-machine.ts` |
+| UTR / kitchen / OTP | `app/api/orders/route.ts` `PATCH`                                                                             |
+| Verify pay + ledger | `app/api/admin/payment-reviews/route.ts`, `lib/finance/ledger-service.ts`                                     |
+| Live UI             | `lib/websocket.tsx`, `ws-server.js`                                                                           |
 
 **Checkout optimizations (code, not yet done):**
 
@@ -266,27 +266,27 @@ POST /api/admin/settlements
 
 ### P0 — will fail the next real load test
 
-| ID | Issue | Location | Fix |
-| --- | --- | --- | --- |
-| P0.1 | Smoke/auth seed/password mismatch | `scripts/seed-*.ts`, `load-tests/*.js`, login demo gate | Align passwords; seed all roles before k6; or use `NODE_ENV=development` only for demo login |
-| P0.2 | `POST /api/orders` N+1 menu reads | `app/api/orders/route.ts` (~362–390) | Batch `findMany` by IDs |
-| P0.3 | Restaurant list hydrates every menu row | `lib/dal/restaurants.ts` `include: { menu_items: true }` | Select store fields only; menus via `/api/menu-items` |
-| P0.4 | CraveXP catalog upserts on every GET | `app/api/cravexp/catalog/route.ts` `ensureStore()` | Upsert once at seed; GET is select-only |
-| P0.5 | `orders/route.ts` is ~1349 lines (GET+POST+PATCH) | `app/api/orders/route.ts` | Split into `get.ts` / `create.ts` / `patch.ts` modules |
+| ID   | Issue                                             | Location                                                 | Fix                                                                                          |
+| ---- | ------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| P0.1 | Smoke/auth seed/password mismatch                 | `scripts/seed-*.ts`, `load-tests/*.js`, login demo gate  | Align passwords; seed all roles before k6; or use `NODE_ENV=development` only for demo login |
+| P0.2 | `POST /api/orders` N+1 menu reads                 | `app/api/orders/route.ts` (~362–390)                     | Batch `findMany` by IDs                                                                      |
+| P0.3 | Restaurant list hydrates every menu row           | `lib/dal/restaurants.ts` `include: { menu_items: true }` | Select store fields only; menus via `/api/menu-items`                                        |
+| P0.4 | CraveXP catalog upserts on every GET              | `app/api/cravexp/catalog/route.ts` `ensureStore()`       | Upsert once at seed; GET is select-only                                                      |
+| P0.5 | `orders/route.ts` is ~1349 lines (GET+POST+PATCH) | `app/api/orders/route.ts`                                | Split into `get.ts` / `create.ts` / `patch.ts` modules                                       |
 
 ### P1 — cost and correctness under growth
 
-| ID | Issue | Location |
-| --- | --- | --- |
-| P1.1 | JWT verify hits Redis twice (JTI + user blacklist) on **every** authenticated request | `lib/jwt.ts` |
-| P1.2 | Health `SELECT 1` on every probe; 120 smoke iterations = 120 extra DB round-trips | `app/api/health/route.ts` |
-| P1.3 | Admin stats serializes settlements + restaurants + orders in one payload | `app/api/admin/stats/route.ts` |
-| P1.4 | Coupons **GET is unauthenticated** | `app/api/admin/coupons/route.ts` |
+| ID   | Issue                                                                                                                                                           | Location                                                 |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| P1.1 | JWT verify hits Redis twice (JTI + user blacklist) on **every** authenticated request                                                                           | `lib/jwt.ts`                                             |
+| P1.2 | Health `SELECT 1` on every probe; 120 smoke iterations = 120 extra DB round-trips                                                                               | `app/api/health/route.ts`                                |
+| P1.3 | Admin stats serializes settlements + restaurants + orders in one payload                                                                                        | `app/api/admin/stats/route.ts`                           |
+| P1.4 | Coupons **GET is unauthenticated**                                                                                                                              | `app/api/admin/coupons/route.ts`                         |
 | P1.5 | Calculator POST accepts client `subtotal` / `distanceKm` for preview (OK) but must never be copied into `POST /api/orders` (already ignored — keep it that way) | `app/api/calculator/route.ts`, `app/api/orders/route.ts` |
-| P1.6 | Geocode depends on public Nominatim (no cache, 4.5s timeout) | `app/api/geocode/*` |
-| P1.7 | Rate limits missing on most GETs and on `POST /api/driver/location` (GPS flood) | `lib/rate-limit.ts` usage |
-| P1.8 | Duplicate auth helpers (`getActor` copied in restaurants/menu-items vs `lib/api-auth.ts`) | several routes |
-| P1.9 | `findRestaurantById` includes `owner` (password_hash risk if serialized) | `lib/dal/restaurants.ts` — confirm responses strip hash |
+| P1.6 | Geocode depends on public Nominatim (no cache, 4.5s timeout)                                                                                                    | `app/api/geocode/*`                                      |
+| P1.7 | Rate limits missing on most GETs and on `POST /api/driver/location` (GPS flood)                                                                                 | `lib/rate-limit.ts` usage                                |
+| P1.8 | Duplicate auth helpers (`getActor` copied in restaurants/menu-items vs `lib/api-auth.ts`)                                                                       | several routes                                           |
+| P1.9 | `findRestaurantById` includes `owner` (password_hash risk if serialized)                                                                                        | `lib/dal/restaurants.ts` — confirm responses strip hash  |
 
 ### P2 — hardening already present (keep)
 
@@ -329,32 +329,32 @@ Suggested smoke gates after auth is fixed: `http_req_failed < 1%`, `p(95)<500` f
 
 ## 7. Auth and tenancy notes (API status)
 
-| Check | Result |
-| --- | --- |
-| Customer cannot set prices on POST order | Pass — body financial fields ignored |
-| Customer scoped to own orders | Pass — `GET` forces `customer_id = actor.id` |
-| Vendor cannot see unpaid orders | Pass — `onlyApprovedForVendor` |
-| Driver location spoof | Pass — `actor.id === driverId` unless admin |
-| Coupons list public | **Fail / gap** — GET has no JWT |
-| Restaurant POST `owner_id` from body | **Gap** — should force `actor.id` for vendors |
-| Test headers in production | Pass — `lib/api-auth.ts` throws unless `CI` |
+| Check                                    | Result                                        |
+| ---------------------------------------- | --------------------------------------------- |
+| Customer cannot set prices on POST order | Pass — body financial fields ignored          |
+| Customer scoped to own orders            | Pass — `GET` forces `customer_id = actor.id`  |
+| Vendor cannot see unpaid orders          | Pass — `onlyApprovedForVendor`                |
+| Driver location spoof                    | Pass — `actor.id === driverId` unless admin   |
+| Coupons list public                      | **Fail / gap** — GET has no JWT               |
+| Restaurant POST `owner_id` from body     | **Gap** — should force `actor.id` for vendors |
+| Test headers in production               | Pass — `lib/api-auth.ts` throws unless `CI`   |
 
 ---
 
 ## 8. Scorecard
 
-| Capability | Implementation | Runtime (this smoke) | Grade |
-| --- | --- | --- | --- |
-| Health | `app/api/health/route.ts` | 200, ~100ms class | A |
-| Restaurant list | `app/api/restaurants/route.ts` | 200, over-fetch menus | B |
-| Login | `app/api/auth/login/route.ts` | 3/4 failed in staging | D (env/seed) |
-| Order create | `app/api/orders/route.ts` POST | not hit | B− (N+1, 1.3k LOC) |
-| Calculator | `app/api/calculator/route.ts` | not hit | B+ (preview vs canonical split is correct) |
-| Dispatch | `app/api/dispatch/*`, `lib/dispatch/*` | not hit | B+ design |
-| Driver GPS | `app/api/driver/location/route.ts` | not hit | B (needs rate limit) |
-| Payment review | `app/api/admin/payment-reviews/route.ts` | not hit | B+ |
-| Geocode | `app/api/geocode/*` | not hit | C (third party, no cache) |
-| Load-test harness | `load-tests/comprehensive-load-test.js` | wrong JSON, wrong passwords, missing routes | D |
+| Capability        | Implementation                           | Runtime (this smoke)                        | Grade                                      |
+| ----------------- | ---------------------------------------- | ------------------------------------------- | ------------------------------------------ |
+| Health            | `app/api/health/route.ts`                | 200, ~100ms class                           | A                                          |
+| Restaurant list   | `app/api/restaurants/route.ts`           | 200, over-fetch menus                       | B                                          |
+| Login             | `app/api/auth/login/route.ts`            | 3/4 failed in staging                       | D (env/seed)                               |
+| Order create      | `app/api/orders/route.ts` POST           | not hit                                     | B− (N+1, 1.3k LOC)                         |
+| Calculator        | `app/api/calculator/route.ts`            | not hit                                     | B+ (preview vs canonical split is correct) |
+| Dispatch          | `app/api/dispatch/*`, `lib/dispatch/*`   | not hit                                     | B+ design                                  |
+| Driver GPS        | `app/api/driver/location/route.ts`       | not hit                                     | B (needs rate limit)                       |
+| Payment review    | `app/api/admin/payment-reviews/route.ts` | not hit                                     | B+                                         |
+| Geocode           | `app/api/geocode/*`                      | not hit                                     | C (third party, no cache)                  |
+| Load-test harness | `load-tests/comprehensive-load-test.js`  | wrong JSON, wrong passwords, missing routes | D                                          |
 
 **Platform API grade after this review: B−** for code quality of the money path, **C** for production-readiness of automated performance evidence.
 

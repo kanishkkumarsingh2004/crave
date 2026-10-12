@@ -32,8 +32,7 @@ export async function GET(request: Request) {
     const isDarkStore = searchParams.get('isDarkStore')
 
     // CR-009: Prevent cross-tenant data leak - derive owner from session for vendors querying ownerId
-    const isVendor =
-      actor?.role === 'restaurant_vendor' || actor?.role === 'cravexp_store_vendor'
+    const isVendor = actor?.role === 'restaurant_vendor' || actor?.role === 'cravexp_store_vendor'
 
     let effectiveOwnerId: string | null = null
     if (ownerId) {

@@ -51,6 +51,8 @@ export default function MapLiveAnalyticsPage() {
   const [filterType, setFilterType] = useState<'all' | 'driver' | 'restaurant' | 'order'>('all')
   const [selectedPin, setSelectedPin] = useState<LiveTelemetryPin | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showAddressDrawer, setShowAddressDrawer] = useState(true)
@@ -86,6 +88,12 @@ export default function MapLiveAnalyticsPage() {
   }, [])
 
   const isMountedRef = useRef(true)
+  // P1.4 FIX: Track in-flight request so manual refresh and auto-poll cannot
+  // run concurrently.  setInterval was replaced with a self-scheduling
+  // setTimeout that only arms itself AFTER the previous response returns.
+  const inFlightRef = useRef(false)
+  // Hold the current timeout ID so the effect cleanup can cancel it.
+  const autoSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -95,6 +103,10 @@ export default function MapLiveAnalyticsPage() {
   }, [])
 
   const fetchLiveTelemetry = useCallback(async (signal?: AbortSignal) => {
+    // P1.4 FIX: Bail out if a request is already in flight.
+    // This prevents the auto-timer AND a manual click from overlapping.
+    if (inFlightRef.current) return
+    inFlightRef.current = true
     try {
       if (isMountedRef.current) setIsRefreshing(true)
       const res = await fetch('/api/admin/map-live-analytics', {
@@ -105,15 +117,23 @@ export default function MapLiveAnalyticsPage() {
         const data = await res.json()
         if (data.pins && Array.isArray(data.pins) && isMountedRef.current) {
           setPins(data.pins)
-          setSelectedPin((prev) => prev || (data.pins.length > 0 ? data.pins[0] : null))
+          setSelectedPin((prev) => {
+            if (!prev) return data.pins.length > 0 ? data.pins[0] : null
+            const updated = data.pins.find((p: any) => p.id === prev.id)
+            return updated || prev
+          })
+          setLastSyncedAt(new Date())
+          setSyncError(null)
         }
       }
     } catch (err: any) {
       if (err?.name === 'AbortError') return
       if (isMountedRef.current) {
         console.warn('Live map telemetry fetch deferred:', err?.message || err)
+        setSyncError('Sync deferred')
       }
     } finally {
+      inFlightRef.current = false
       if (isMountedRef.current) {
         setIsRefreshing(false)
       }
@@ -126,17 +146,28 @@ export default function MapLiveAnalyticsPage() {
     return () => controller.abort()
   }, [fetchLiveTelemetry])
 
-  // Auto-sync interval handler
+  // P1.4 FIX: Self-scheduling timeout instead of setInterval.
+  // The next poll only arms after the previous response is fully received,
+  // so a slow server response never causes overlapping requests.
   useEffect(() => {
     if (autoSyncInterval <= 0) return
+
     const controller = new AbortController()
-    const timer = setInterval(() => {
-      fetchLiveTelemetry(controller.signal)
-    }, autoSyncInterval * 1000)
+
+    const scheduleNext = () => {
+      autoSyncTimerRef.current = setTimeout(async () => {
+        if (!isMountedRef.current) return
+        await fetchLiveTelemetry(controller.signal)
+        // Re-arm only if still mounted and interval unchanged
+        if (isMountedRef.current) scheduleNext()
+      }, autoSyncInterval * 1000)
+    }
+
+    scheduleNext()
 
     return () => {
-      clearInterval(timer)
       controller.abort()
+      if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current)
     }
   }, [autoSyncInterval, fetchLiveTelemetry])
 
@@ -243,7 +274,7 @@ export default function MapLiveAnalyticsPage() {
               <MapPin className="size-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center flex-wrap gap-2">
                 <h3 className="font-extrabold text-lg text-[#18201c] dark:text-white">
                   Live Map & Address Analytics
                 </h3>
@@ -251,6 +282,21 @@ export default function MapLiveAnalyticsPage() {
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {autoSyncInterval === 1 ? 'Real-Time Live (1s)' : `Auto ${autoSyncInterval}s`}
+                  </span>
+                )}
+                {lastSyncedAt && !syncError && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400">
+                    Synced{' '}
+                    {lastSyncedAt.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
+                  </span>
+                )}
+                {syncError && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                    Stale Telemetry ({syncError})
                   </span>
                 )}
               </div>
@@ -388,7 +434,9 @@ export default function MapLiveAnalyticsPage() {
                         {h3GridEnabled && (
                           <div className="pl-2 space-y-2 pt-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-600 dark:text-gray-400 font-medium">Grid Resolution</span>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">
+                                Grid Resolution
+                              </span>
                               <div className="flex flex-wrap gap-1">
                                 {[5, 6, 7, 8, 9].map((res) => (
                                   <button

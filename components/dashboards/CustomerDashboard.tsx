@@ -90,7 +90,6 @@ const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
 })
 
-
 import { Coupon, fetchCoupons, validateCoupon } from '@/lib/coupons'
 import { loadPaymentConfig } from '@/lib/payment-config'
 import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
@@ -398,6 +397,34 @@ export default function CustomerDashboard({
     else if (tab === 'profile') router.push('/user/profile')
   }
 
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const lastScrollYRef = useRef(0)
+
+  // Auto-hide top header banner on scroll down, show on scroll up
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY
+          if (currentY < 30) {
+            setHeaderVisible(true)
+          } else if (currentY > lastScrollYRef.current + 10) {
+            setHeaderVisible(false)
+          } else if (currentY < lastScrollYRef.current - 10) {
+            setHeaderVisible(true)
+          }
+          lastScrollYRef.current = currentY
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState('All')
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
@@ -514,8 +541,7 @@ export default function CustomerDashboard({
               name: r.name,
               cuisine: r.cuisine ?? '',
               rating: r.rating != null ? String(r.rating) : '4.5',
-              ratingCount:
-                r.rating_count != null ? Number(r.rating_count).toLocaleString() : '',
+              ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '',
               eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
               distance: r.distance ? String(r.distance) : '',
               costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
@@ -785,7 +811,9 @@ export default function CustomerDashboard({
       }
     } catch (err: any) {
       if (!isAutoMount) {
-        triggerToast('Could not access precise GPS. Please enable location permissions or select on the map.')
+        triggerToast(
+          'Could not access precise GPS. Please enable location permissions or select on the map.'
+        )
       }
     } finally {
       setGpsDetecting(false)
@@ -936,7 +964,10 @@ export default function CustomerDashboard({
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
-  const [passwordFeedback, setPasswordFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [passwordFeedback, setPasswordFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
 
   async function handleChangePassword(e?: React.FormEvent) {
     if (e) e.preventDefault()
@@ -947,7 +978,10 @@ export default function CustomerDashboard({
       return
     }
     if (!newPassword || newPassword.length < 8) {
-      setPasswordFeedback({ type: 'error', message: 'New password must be at least 8 characters long.' })
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password must be at least 8 characters long.',
+      })
       return
     }
     if (newPassword !== confirmPassword) {
@@ -955,7 +989,10 @@ export default function CustomerDashboard({
       return
     }
     if (currentPassword === newPassword) {
-      setPasswordFeedback({ type: 'error', message: 'New password cannot be the same as your current password.' })
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password cannot be the same as your current password.',
+      })
       return
     }
 
@@ -975,7 +1012,10 @@ export default function CustomerDashboard({
         throw new Error(data.error || 'Failed to update password')
       }
 
-      setPasswordFeedback({ type: 'success', message: 'Password updated successfully in database!' })
+      setPasswordFeedback({
+        type: 'success',
+        message: 'Password updated successfully in database!',
+      })
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -1292,14 +1332,14 @@ export default function CustomerDashboard({
       selectedRestaurant?.latitude != null
         ? Number(selectedRestaurant.latitude)
         : (item as any)?.restaurantLat != null
-        ? Number((item as any).restaurantLat)
-        : undefined
+          ? Number((item as any).restaurantLat)
+          : undefined
     const itemRestLng =
       selectedRestaurant?.longitude != null
         ? Number(selectedRestaurant.longitude)
         : (item as any)?.restaurantLng != null
-        ? Number((item as any).restaurantLng)
-        : undefined
+          ? Number((item as any).restaurantLng)
+          : undefined
 
     if (cart.length > 0) {
       const currentRest = cart[0].restaurantName || selectedRestaurant?.name || 'Kitchen Store'
@@ -1348,14 +1388,14 @@ export default function CustomerDashboard({
       selectedRestaurant?.latitude != null
         ? Number(selectedRestaurant.latitude)
         : (item as any)?.restaurantLat != null
-        ? Number((item as any).restaurantLat)
-        : undefined
+          ? Number((item as any).restaurantLat)
+          : undefined
     const itemRestLng =
       selectedRestaurant?.longitude != null
         ? Number(selectedRestaurant.longitude)
         : (item as any)?.restaurantLng != null
-        ? Number((item as any).restaurantLng)
-        : undefined
+          ? Number((item as any).restaurantLng)
+          : undefined
 
     setCart([
       {
@@ -1439,14 +1479,14 @@ export default function CustomerDashboard({
     currentCartRestaurant?.latitude != null
       ? Number(currentCartRestaurant.latitude)
       : (cart[0] as any)?.restaurantLat != null
-      ? Number((cart[0] as any).restaurantLat)
-      : null
+        ? Number((cart[0] as any).restaurantLat)
+        : null
   const activeRestaurantLng =
     currentCartRestaurant?.longitude != null
       ? Number(currentCartRestaurant.longitude)
       : (cart[0] as any)?.restaurantLng != null
-      ? Number((cart[0] as any).restaurantLng)
-      : null
+        ? Number((cart[0] as any).restaurantLng)
+        : null
   const activeDestLat = selectedMapPin?.lat ?? null
   const activeDestLng = selectedMapPin?.lng ?? null
 
@@ -1797,43 +1837,20 @@ export default function CustomerDashboard({
   return (
     <div className="min-h-screen bg-[#fafbf9] dark:bg-[#0c100e] pb-32 sm:pb-36 lg:pb-12 text-[#18201c] dark:text-white transition-colors duration-200">
       {/* Top Header Navigation Banner */}
-      <div className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-3 py-2.5 sm:px-6 sm:py-3 shadow-2xs">
+      <div
+        className={`sticky top-0 z-40 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-3 py-2.5 sm:px-6 sm:py-3 shadow-2xs transition-all duration-300 ${
+          headerVisible ? 'translate-y-0' : '-translate-y-full lg:translate-y-0'
+        }`}
+      >
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-1.5 sm:gap-4">
-          {/* Left Block: Logo + Location Selector */}
-          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
+          {/* Left Block: Logo */}
+          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
             <Link
               href="/"
               className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] dark:text-white shrink-0 hover:opacity-90 transition"
             >
               crave<span className="text-[#86a018]">.</span>
             </Link>
-
-            <div className="hidden lg:block h-7 w-px bg-gray-200 dark:bg-white/10 mx-1 shrink-0" />
-
-            <button
-              onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-1.5 sm:gap-2 text-left group min-w-0 flex-1 max-w-[150px] xs:max-w-[200px] sm:max-w-[280px] lg:max-w-[340px] rounded-2xl p-1 sm:p-1.5 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
-            >
-              <div className="grid size-7 xs:size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
-                <MapPin className="size-3.5 sm:size-4 lg:size-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1 leading-none">
-                  <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                    DELIVER TO
-                  </span>
-                  <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-[#86a018] group-hover:underline">
-                    (Change)
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate mt-0.5">
-                  <span className="truncate">
-                    {deliveryAddress || user?.address || 'Select Delivery Location'}
-                  </span>
-                  <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
-                </div>
-              </div>
-            </button>
           </div>
 
           {/* Center Block: Desktop Page Navigation Tabs (Apple Segmented Glass Control) */}
@@ -1848,9 +1865,7 @@ export default function CustomerDashboard({
             >
               <Compass
                 className={`size-4 ${
-                  activeTab === 'explore'
-                    ? 'text-[#86a018] dark:text-[#d9f447]'
-                    : 'text-gray-400'
+                  activeTab === 'explore' ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
                 }`}
               />
               <span>Explore</span>
@@ -1896,8 +1911,35 @@ export default function CustomerDashboard({
             </button>
           </div>
 
-          {/* Right Block: Cart + ThemeToggle + Mobile Hamburger */}
+          {/* Right Block: Address + Cart + ThemeToggle + Mobile Hamburger */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {user && (
+              <button
+                onClick={() => setShowLocationModal(true)}
+                className="flex items-center gap-1.5 sm:gap-2 text-left group min-w-0 max-w-[150px] xs:max-w-[190px] sm:max-w-[240px] lg:max-w-[280px] rounded-2xl p-1 sm:p-1.5 hover:bg-gray-100/80 dark:hover:bg-white/5 transition cursor-pointer"
+              >
+                <div className="grid size-7 xs:size-8 sm:size-9 lg:size-10 place-items-center rounded-xl bg-[#18201c] dark:bg-white/10 text-[#d9f447] shrink-0 shadow-xs">
+                  <MapPin className="size-3.5 sm:size-4 lg:size-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 leading-none">
+                    <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                      DELIVER TO
+                    </span>
+                    <span className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-[#86a018] group-hover:underline">
+                      (Change)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white truncate mt-0.5">
+                    <span className="truncate">
+                      {deliveryAddress || user?.address || 'Select Delivery Location'}
+                    </span>
+                    <ChevronDown className="size-3.5 text-gray-500 shrink-0 group-hover:translate-y-0.5 transition" />
+                  </div>
+                </div>
+              </button>
+            )}
+
             <div className="hidden sm:flex items-center">
               <ThemeToggle />
             </div>
@@ -2173,7 +2215,8 @@ export default function CustomerDashboard({
                   Ultra-Fast Grocery &amp; Daily Essentials
                 </h2>
                 <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-300 font-normal leading-relaxed">
-                  Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks delivered to your doorstep in 10 minutes.
+                  Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks
+                  delivered to your doorstep in 10 minutes.
                 </p>
 
                 {/* Direct Action Button */}
@@ -2395,83 +2438,83 @@ export default function CustomerDashboard({
                     </p>
                   ) : (
                     menuItemsList.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg transition duration-300"
-                    >
-                      <div>
-                        <div className="relative h-44 w-full overflow-hidden rounded-2xl">
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
-                            />
-                          ) : (
-                            <div className="grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
-                              <ShoppingBag className="size-8" />
-                            </div>
-                          )}
-
-                          {/* Veg / Non-Veg culinary indicator dot badge */}
-                          <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1">
-                            <div
-                              className={`size-3 rounded-sm border flex items-center justify-center ${
-                                item.veg ? 'border-emerald-600' : 'border-rose-600'
-                              }`}
-                            >
-                              <div
-                                className={`size-1.5 rounded-full ${
-                                  item.veg ? 'bg-emerald-600' : 'bg-rose-600'
-                                }`}
+                      <div
+                        key={item.id}
+                        className="group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg transition duration-300"
+                      >
+                        <div>
+                          <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
                               />
+                            ) : (
+                              <div className="grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+                                <ShoppingBag className="size-8" />
+                              </div>
+                            )}
+
+                            {/* Veg / Non-Veg culinary indicator dot badge */}
+                            <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1">
+                              <div
+                                className={`size-3 rounded-sm border flex items-center justify-center ${
+                                  item.veg ? 'border-emerald-600' : 'border-rose-600'
+                                }`}
+                              >
+                                <div
+                                  className={`size-1.5 rounded-full ${
+                                    item.veg ? 'bg-emerald-600' : 'bg-rose-600'
+                                  }`}
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
+                                {item.veg ? 'Veg' : 'Non-Veg'}
+                              </span>
                             </div>
-                            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
-                              {item.veg ? 'Veg' : 'Non-Veg'}
+
+                            {/* Restaurant tag */}
+                            <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90">
+                              {item.restaurantName || 'Partner Kitchen'}
+                            </div>
+                          </div>
+
+                          <div className="mt-3.5">
+                            <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white group-hover:text-[#86a018] transition line-clamp-1">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                              Price
+                            </span>
+                            <span className="font-black text-base text-[#18201c] dark:text-white">
+                              ₹{item.price}
                             </span>
                           </div>
-
-                          {/* Restaurant tag */}
-                          <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90">
-                            {item.restaurantName || 'Partner Kitchen'}
-                          </div>
-                        </div>
-
-                        <div className="mt-3.5">
-                          <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white group-hover:text-[#86a018] transition line-clamp-1">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                            {item.detail}
-                          </p>
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Plus className="size-3.5 stroke-[3]" />
+                            <span>Add to Cart</span>
+                          </button>
                         </div>
                       </div>
-
-                      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                            Price
-                          </span>
-                          <span className="font-black text-base text-[#18201c] dark:text-white">
-                            ₹{item.price}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Plus className="size-3.5 stroke-[3]" />
-                          <span>Add to Cart</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Featured Restaurant Card Grid */}
+            {/* Featured Restaurant Card Grid */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -2512,7 +2555,8 @@ export default function CustomerDashboard({
                       No restaurants match these filters.
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
-                      Try broadening your search query or clear selected cuisine filters to view all available kitchens.
+                      Try broadening your search query or clear selected cuisine filters to view all
+                      available kitchens.
                     </p>
                     <button
                       onClick={() => {
@@ -2654,7 +2698,8 @@ export default function CustomerDashboard({
                     </p>
                   </div>
                   <p className="text-xs text-gray-300 mt-1 max-w-xl">
-                    Daily essentials, fresh milk, chilled beverages, farm eggs, chips &amp; munchies dispatched instantly from our local dark store.
+                    Daily essentials, fresh milk, chilled beverages, farm eggs, chips &amp; munchies
+                    dispatched instantly from our local dark store.
                   </p>
                 </div>
               </div>
@@ -2853,7 +2898,9 @@ export default function CustomerDashboard({
                           {user.phone}
                         </span>
                       ) : (
-                        <span className="text-gray-400 dark:text-gray-500 italic">No phone added</span>
+                        <span className="text-gray-400 dark:text-gray-500 italic">
+                          No phone added
+                        </span>
                       )}
                     </div>
                   </div>
@@ -3027,7 +3074,8 @@ export default function CustomerDashboard({
                       <span>Password &amp; Security</span>
                     </h3>
                     <p className="text-xs text-[#55635a] dark:text-gray-400 mt-0.5 font-medium">
-                      Update your account password securely. Changes are encrypted and saved directly to the database.
+                      Update your account password securely. Changes are encrypted and saved
+                      directly to the database.
                     </p>
                   </div>
                 </div>
@@ -3091,7 +3139,11 @@ export default function CustomerDashboard({
                         className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         title={showCurrentPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showCurrentPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        {showCurrentPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -3119,7 +3171,11 @@ export default function CustomerDashboard({
                         className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         title={showNewPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showNewPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        {showNewPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -3147,7 +3203,11 @@ export default function CustomerDashboard({
                         className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         title={showConfirmPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showConfirmPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -3157,12 +3217,16 @@ export default function CustomerDashboard({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#66756c] dark:text-gray-400 font-medium">
                     <span className="flex items-center gap-1">
-                      <span className={`inline-block size-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                      <span
+                        className={`inline-block size-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      />
                       At least 8 characters
                     </span>
                     <span>&bull;</span>
                     <span className="flex items-center gap-1">
-                      <span className={`inline-block size-1.5 rounded-full ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                      <span
+                        className={`inline-block size-1.5 rounded-full ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      />
                       Passwords match
                     </span>
                   </div>
@@ -3184,7 +3248,9 @@ export default function CustomerDashboard({
                     )}
                     <button
                       type="submit"
-                      disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                      disabled={
+                        isChangingPassword || !currentPassword || !newPassword || !confirmPassword
+                      }
                       className="inline-flex items-center gap-2 rounded-xl bg-[#18201c] dark:bg-[#d9f447] px-5 py-2 text-xs font-black text-white dark:text-[#18201c] hover:bg-[#2a3831] dark:hover:bg-[#e4fc62] transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {isChangingPassword ? (
@@ -3328,11 +3394,7 @@ export default function CustomerDashboard({
                           type="button"
                           onClick={() => {
                             updateDeliveryAddress(addr.address)
-                            setSelectedMapPin(
-                              hasCoords
-                                ? { lat: addr.lat!, lng: addr.lng! }
-                                : null
-                            )
+                            setSelectedMapPin(hasCoords ? { lat: addr.lat!, lng: addr.lng! } : null)
                             triggerToast(`Switched active delivery location to ${addr.label}!`)
                           }}
                           className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
@@ -4384,7 +4446,6 @@ export default function CustomerDashboard({
           triggerToast(`Switched delivery address to ${addr.label}!`)
         }}
       />
-
 
       {/* Cart Store Conflict Modal */}
       {conflictModal.open && (

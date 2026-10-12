@@ -44,7 +44,10 @@ export async function POST(request: Request) {
   try {
     const userId = await resolveUserId(request)
     if (!userId) {
-      return NextResponse.json({ error: 'Authentication required. Please sign in.' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in.' },
+        { status: 401 }
+      )
     }
 
     // Rate limiting to prevent brute force attacks
@@ -109,9 +112,9 @@ export async function POST(request: Request) {
             crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
         }
       } else {
-        const passwordHash = (
-          (await scrypt(currentPassword, user.email, 64)) as Buffer
-        ).toString('hex')
+        const passwordHash = ((await scrypt(currentPassword, user.email, 64)) as Buffer).toString(
+          'hex'
+        )
         isCurrentPasswordValid =
           passwordHash.length === user.password_hash.length &&
           crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(user.password_hash))
@@ -119,7 +122,9 @@ export async function POST(request: Request) {
         if (!isCurrentPasswordValid) {
           // Check clean email fallback
           const cleanEmail = user.email.trim().toLowerCase()
-          const altHash = ((await scrypt(currentPassword, cleanEmail, 64)) as Buffer).toString('hex')
+          const altHash = ((await scrypt(currentPassword, cleanEmail, 64)) as Buffer).toString(
+            'hex'
+          )
           isCurrentPasswordValid =
             altHash.length === user.password_hash.length &&
             crypto.timingSafeEqual(Buffer.from(altHash), Buffer.from(user.password_hash))

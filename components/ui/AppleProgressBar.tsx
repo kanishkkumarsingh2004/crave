@@ -77,7 +77,9 @@ export default function AppleProgressBar({
           <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-200">
             {icon && <span className="shrink-0">{icon}</span>}
             {label && <span>{label}</span>}
-            {sublabel && <span className="text-[10px] font-normal text-gray-400">({sublabel})</span>}
+            {sublabel && (
+              <span className="text-[10px] font-normal text-gray-400">({sublabel})</span>
+            )}
           </div>
 
           {showValue && (
@@ -100,7 +102,9 @@ export default function AppleProgressBar({
       >
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out ${colorConfig.fill} ${colorConfig.glow} ${
-            showStripes ? 'bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]' : ''
+            showStripes
+              ? 'bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]'
+              : ''
           }`}
           style={{ width: `${percentage}%` }}
         />

@@ -43,30 +43,6 @@
       ],
       "outputs": []
     },
-    "test:jest": {
-      "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "workers/**",
-        "__tests__/**",
-        "jest.config.js",
-        "babel.config.js"
-      ],
-      "outputs": []
-    },
-    "test:coverage": {
-      "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "workers/**",
-        "__tests__/**",
-        "jest.config.js",
-        "babel.config.js"
-      ],
-      "outputs": ["coverage/**"]
-    },
     "format:check:prettier": {
       "inputs": [
         "app/**",

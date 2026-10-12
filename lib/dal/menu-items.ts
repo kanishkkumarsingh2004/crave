@@ -13,6 +13,28 @@ export async function findMenuItemById(id: string) {
   return null
 }
 
+/**
+ * Batch-fetch menu items by ID in a single database round-trip.
+ * Returns a Map<id, item> so callers can look up items in O(1) per item.
+ *
+ * P0.1 FIX: replaces the per-item findMenuItemById loop in POST /api/orders,
+ * reducing N database queries (one per cart item) to a single findMany.
+ */
+export async function findMenuItemsByIds(ids: string[]): Promise<Map<string, any>> {
+  if (ids.length === 0) return new Map()
+
+  const uniqueIds = Array.from(new Set(ids))
+  const items = await prisma.menuItem.findMany({
+    where: { id: { in: uniqueIds } },
+  })
+
+  const map = new Map<string, any>()
+  for (const item of items) {
+    map.set(item.id, item)
+  }
+  return map
+}
+
 export async function listMenuItems(restaurantId: string) {
   const cacheKey = CacheKeys.menus.byRestaurant(restaurantId)
 

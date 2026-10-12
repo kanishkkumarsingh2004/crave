@@ -18,14 +18,7 @@ export default function CraveXPDeliveryIllustration({
     >
       <defs>
         {/* Soft Chartreuse Ambient Glow */}
-        <radialGradient
-          id="xpGlow"
-          cx="60%"
-          cy="50%"
-          r="50%"
-          fx="60%"
-          fy="50%"
-        >
+        <radialGradient id="xpGlow" cx="60%" cy="50%" r="50%" fx="60%" fy="50%">
           <stop offset="0%" stopColor="#d9f447" stopOpacity="0.25" />
           <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
           <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
@@ -110,11 +103,7 @@ export default function CraveXPDeliveryIllustration({
       />
 
       {/* Headlight Forward Cone */}
-      <polygon
-        points="248,126 315,115 315,145"
-        fill="url(#headlightBeam)"
-        opacity="0.45"
-      />
+      <polygon points="248,126 315,115 315,145" fill="url(#headlightBeam)" opacity="0.45" />
 
       {/* --- DELIVERY E-SCOOTER & RIDER GROUP --- */}
       <g transform="translate(10, 0)">
@@ -153,10 +142,7 @@ export default function CraveXPDeliveryIllustration({
         />
         <circle cx="228" cy="106" r="3.5" fill="#d9f447" />
         {/* LED Headlamp */}
-        <path
-          d="M242 122 L248 126 L242 130 Z"
-          fill="#d9f447"
-        />
+        <path d="M242 122 L248 126 L242 130 Z" fill="#d9f447" />
 
         {/* Courier Trunk / Insulated Grocery Cargo Box */}
         <g transform="translate(105, 95)">
@@ -172,14 +158,7 @@ export default function CraveXPDeliveryIllustration({
             strokeWidth="2"
           />
           {/* Box Glass Top Shimmer */}
-          <rect
-            x="3"
-            y="13"
-            width="40"
-            height="16"
-            rx="5"
-            fill="url(#glassReflect)"
-          />
+          <rect x="3" y="13" width="40" height="16" rx="5" fill="url(#glassReflect)" />
           {/* CraveXP Brandmark on Cargo Box */}
           <rect
             x="8"
@@ -218,33 +197,12 @@ export default function CraveXPDeliveryIllustration({
           <line x1="14" y1="23" x2="18" y2="20" stroke="#966730" strokeWidth="1" />
 
           {/* Farm Green Leaves / Fresh Produce */}
-          <path
-            d="M26 28 C26 18, 33 12, 36 14 C38 18, 34 26, 31 28 Z"
-            fill="#10b981"
-          />
-          <path
-            d="M20 28 C18 20, 24 16, 27 18 C28 22, 24 28, 22 28 Z"
-            fill="#34d399"
-          />
+          <path d="M26 28 C26 18, 33 12, 36 14 C38 18, 34 26, 31 28 Z" fill="#10b981" />
+          <path d="M20 28 C18 20, 24 16, 27 18 C28 22, 24 28, 22 28 Z" fill="#34d399" />
 
           {/* Glass Milk Bottle Silhouette */}
-          <rect
-            x="0"
-            y="16"
-            width="8"
-            height="16"
-            rx="2"
-            fill="#f0fdf4"
-            opacity="0.9"
-          />
-          <rect
-            x="2"
-            y="13"
-            width="4"
-            height="4"
-            rx="1"
-            fill="#d9f447"
-          />
+          <rect x="0" y="16" width="8" height="16" rx="2" fill="#f0fdf4" opacity="0.9" />
+          <rect x="2" y="13" width="4" height="4" rx="1" fill="#d9f447" />
         </g>
 
         {/* Rider Body & Torso */}
@@ -264,10 +222,7 @@ export default function CraveXPDeliveryIllustration({
         {/* Rider Sleek Dark Helmet */}
         <circle cx="178" cy="98" r="14" fill="#0d1410" stroke="#2a3d32" strokeWidth="2.5" />
         {/* Neon Aerodynamic Helmet Visor */}
-        <path
-          d="M182 92 C190 92, 194 98, 192 104 L180 102 Z"
-          fill="#d9f447"
-        />
+        <path d="M182 92 C190 92, 194 98, 192 104 L180 102 Z" fill="#d9f447" />
       </g>
 
       {/* Floating Speed & Freshness Badges */}
@@ -309,17 +264,11 @@ export default function CraveXPDeliveryIllustration({
       {/* Sparkles / Electric Stars */}
       {/* Sparkle 1 */}
       <g transform="translate(85, 42)">
-        <path
-          d="M6 0 L7.5 4.5 L12 6 L7.5 7.5 L6 12 L4.5 7.5 L0 6 L4.5 4.5 Z"
-          fill="#d9f447"
-        />
+        <path d="M6 0 L7.5 4.5 L12 6 L7.5 7.5 L6 12 L4.5 7.5 L0 6 L4.5 4.5 Z" fill="#d9f447" />
       </g>
       {/* Sparkle 2 */}
       <g transform="translate(295, 78)">
-        <path
-          d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z"
-          fill="#34d399"
-        />
+        <path d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z" fill="#34d399" />
       </g>
       {/* Sparkle 3 */}
       <g transform="translate(60, 135)">

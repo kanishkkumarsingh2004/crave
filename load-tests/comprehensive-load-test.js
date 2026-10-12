@@ -158,9 +158,9 @@ export const TEST_CONFIGS = {
       { duration: '2m', target: 0 },
     ],
     thresholds: {
-      'browser_web_vital_lcp': ['p(95)<4000'],
-      'browser_web_vital_fid': ['p(95)<100'],
-      'browser_web_vital_cls': ['p(95)<0.1'],
+      browser_web_vital_lcp: ['p(95)<4000'],
+      browser_web_vital_fid: ['p(95)<100'],
+      browser_web_vital_cls: ['p(95)<0.1'],
       checks: ['rate>0.95'],
     },
     description: 'Real browser performance metrics',
@@ -504,15 +504,19 @@ function runStressTests(data) {
 
     // Multiple rapid orders
     for (let i = 0; i < 3; i++) {
-      const res = http.post(`${BASE_URL}${ENDPOINTS.orders}`, JSON.stringify({
-        restaurantId: 'rest_01',
-        items: [{ id: 'mi_01', quantity: 1 }],
-        address: `Stress ${__VU}-${__ITER}-${i}`,
-        paymentMethod: 'cod',
-      }), {
-        headers: authHeaders(data.userToken),
-        timeout: '15s',
-      })
+      const res = http.post(
+        `${BASE_URL}${ENDPOINTS.orders}`,
+        JSON.stringify({
+          restaurantId: 'rest_01',
+          items: [{ id: 'mi_01', quantity: 1 }],
+          address: `Stress ${__VU}-${__ITER}-${i}`,
+          paymentMethod: 'cod',
+        }),
+        {
+          headers: authHeaders(data.userToken),
+          timeout: '15s',
+        }
+      )
       restErrors.add(!(res.status === 200 || res.status === 201))
       check(res, { 'rapid order: 200/201': (r) => r.status === 200 || r.status === 201 })
     }
@@ -573,7 +577,12 @@ function runWebSocketTests(data) {
         check(socket, { 'ws: connected': () => true })
 
         // Subscribe to multiple channels
-        socket.send(JSON.stringify({ type: 'subscribe', channels: ['order_update', 'driver_location', 'notifications'] }))
+        socket.send(
+          JSON.stringify({
+            type: 'subscribe',
+            channels: ['order_update', 'driver_location', 'notifications'],
+          })
+        )
 
         // Send periodic pings
         const pingInterval = setInterval(() => {
@@ -610,12 +619,14 @@ function runWebSocketTests(data) {
       socket.on('open', () => {
         // Simulate location updates every 2 seconds
         const locInterval = setInterval(() => {
-          socket.send(JSON.stringify({
-            type: 'location_update',
-            lat: 12.9716 + (Math.random() - 0.5) * 0.01,
-            lng: 77.5946 + (Math.random() - 0.5) * 0.01,
-            heading: Math.random() * 360,
-          }))
+          socket.send(
+            JSON.stringify({
+              type: 'location_update',
+              lat: 12.9716 + (Math.random() - 0.5) * 0.01,
+              lng: 77.5946 + (Math.random() - 0.5) * 0.01,
+              heading: Math.random() * 360,
+            })
+          )
         }, 2000)
 
         socket.setTimeout(() => {
@@ -698,7 +709,9 @@ Results:
   Checks Pass Rate:    ${checkRate}% (${checkPasses} passed, ${checkFails} failed)
 
 Threshold Gates:
-  ${Object.entries(config.thresholds).map(([key, val]) => `${key}: ${val}`).join('\n  ')}
+  ${Object.entries(config.thresholds)
+    .map(([key, val]) => `${key}: ${val}`)
+    .join('\n  ')}
 
 ===========================================
 `

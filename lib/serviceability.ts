@@ -14,9 +14,9 @@ export interface ServiceabilityCheckResult {
 
 // Greater Bengaluru Metropolitan Service Boundary
 export const BENGALURU_SERVICE_BOUNDS = {
-  minLat: 12.60,
+  minLat: 12.6,
   maxLat: 13.35,
-  minLng: 77.20,
+  minLng: 77.2,
   maxLng: 77.95,
 }
 
@@ -71,18 +71,14 @@ export function checkDeliveryServiceability(params: {
   if (!isWithinCityServiceBounds(cLat, cLng)) {
     return {
       isServiceable: false,
-      reason: 'Delivery is currently not available at this location. Crave currently serves the Bengaluru region.',
+      reason:
+        'Delivery is currently not available at this location. Crave currently serves the Bengaluru region.',
     }
   }
 
   // 2. If a specific restaurant is provided, check delivery radius
   if (isValidCoordinate(restaurantLat, restaurantLng)) {
-    const distanceKm = calculateRoadTravelDistanceKm(
-      restaurantLat,
-      restaurantLng,
-      cLat,
-      cLng
-    )
+    const distanceKm = calculateRoadTravelDistanceKm(restaurantLat, restaurantLng, cLat, cLng)
 
     if (distanceKm > MAX_RESTAURANT_DELIVERY_RADIUS_KM) {
       return {

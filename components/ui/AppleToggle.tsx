@@ -24,16 +24,7 @@ export interface AppleToggleProps {
   size?: 'sm' | 'md' | 'lg'
   activeColor?: string
   iconVariant?:
-    | 'check'
-    | 'power'
-    | 'rain'
-    | 'moon'
-    | 'sound'
-    | 'shield'
-    | 'lock'
-    | 'bell'
-    | 'truck'
-    | 'none'
+    'check' | 'power' | 'rain' | 'moon' | 'sound' | 'shield' | 'lock' | 'bell' | 'truck' | 'none'
   customActiveIcon?: React.ReactNode
   customInactiveIcon?: React.ReactNode
   showTrackGlyphs?: boolean

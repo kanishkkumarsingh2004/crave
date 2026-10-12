@@ -440,13 +440,27 @@ export function buildRefundInitiatedJournal(
  * During migration period, catch and log the error rather than blocking the order.
  */
 export async function persistJournalTransaction(transaction: JournalTransaction): Promise<void> {
+  // P0-C FIX: Enforce double-entry invariant: sum(debits) === sum(credits)
+  const totalDebits = transaction.lines.reduce((sum, l) => sum + (l.debitPaise || 0), 0)
+  const totalCredits = transaction.lines.reduce((sum, l) => sum + (l.creditPaise || 0), 0)
+  if (totalDebits !== totalCredits) {
+    throw new Error(
+      `[Ledger] Unbalanced journal transaction ${transaction.idempotencyKey}: sum(debits)=${totalDebits} !== sum(credits)=${totalCredits}`
+    )
+  }
+
   // Check if already persisted (idempotency)
   try {
     const existingCount = await (prisma as any).ledgerEntry.count({
       where: {
         OR: [
           { idempotency_key: transaction.idempotencyKey },
+          { idempotency_key: { startsWith: `${transaction.idempotencyKey}:` } },
           { idempotency_key: { startsWith: `${transaction.idempotencyKey}_line_` } },
+          {
+            order_id: transaction.orderId,
+            event_type: transaction.eventType,
+          },
         ],
       },
     })
@@ -458,24 +472,33 @@ export async function persistJournalTransaction(transaction: JournalTransaction)
       return
     }
 
-    // Persist all lines atomically
-    await prisma.$transaction(
-      transaction.lines.map((line, index) =>
-        (prisma as any).ledgerEntry.create({
-          data: {
-            idempotency_key: `${transaction.idempotencyKey}_line_${index}`,
-            event_type: transaction.eventType,
-            order_id: transaction.orderId,
-            reference_id: transaction.referenceId || null,
-            account_code: line.accountCode,
-            debit_paise: line.debitPaise,
-            credit_paise: line.creditPaise,
-            description: line.description,
-            notes: transaction.notes || null,
-          },
-        })
+    // Persist all lines atomically with duplicate protection
+    const entriesData = transaction.lines.map((line, index) => ({
+      idempotency_key: `${transaction.orderId}:${transaction.eventType}:${line.accountCode}:${index}`,
+      event_type: transaction.eventType,
+      order_id: transaction.orderId,
+      reference_id: transaction.referenceId || null,
+      account_code: line.accountCode,
+      debit_paise: line.debitPaise,
+      credit_paise: line.creditPaise,
+      description: line.description,
+      notes: transaction.notes || null,
+    }))
+
+    if (typeof (prisma as any).ledgerEntry.createMany === 'function') {
+      await (prisma as any).ledgerEntry.createMany({
+        data: entriesData,
+        skipDuplicates: true,
+      })
+    } else {
+      await prisma.$transaction(
+        entriesData.map((data) =>
+          (prisma as any).ledgerEntry.create({
+            data,
+          })
+        )
       )
-    )
+    }
 
     console.log(
       `[Ledger] Posted ${transaction.lines.length}-line journal: ${transaction.idempotencyKey}`
@@ -491,7 +514,7 @@ export async function persistJournalTransaction(transaction: JournalTransaction)
     // Log prominently but do not block the business flow
     console.error(
       `[Ledger] WARNING: Could not persist ledger entry ${transaction.idempotencyKey}. ` +
-        `Run Prisma migration to add LedgerEntry model. Error: ${(err as Error).message}`
+        `Error: ${(err as Error).message}`
     )
   }
 }

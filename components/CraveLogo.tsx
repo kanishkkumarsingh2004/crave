@@ -17,12 +17,7 @@ export default function CraveLogo({
   // 'light' => crisp white (#ffffff) for dark backgrounds (e.g. hero banners, dark footer)
   // 'dark'  => obsidian black (#18201c) for light backgrounds
   // 'auto'  => inherits currentColor with automatic light/dark mode support
-  const craveColor =
-    theme === 'light'
-      ? '#ffffff'
-      : theme === 'dark'
-        ? '#18201c'
-        : 'currentColor'
+  const craveColor = theme === 'light' ? '#ffffff' : theme === 'dark' ? '#18201c' : 'currentColor'
 
   const xpColor = '#d9f447'
   const dotColor = '#d9f447'
@@ -34,8 +29,7 @@ export default function CraveLogo({
     xl: 'h-10 sm:h-11 w-auto',
   }[size]
 
-  const wrapperTextClass =
-    theme === 'auto' ? 'text-[#18201c] dark:text-white' : ''
+  const wrapperTextClass = theme === 'auto' ? 'text-[#18201c] dark:text-white' : ''
 
   if (variant === 'small') {
     return (
@@ -58,14 +52,7 @@ export default function CraveLogo({
         >
           c
         </text>
-        <rect
-          x="17"
-          y="18.5"
-          width="5.5"
-          height="5.5"
-          rx="1.2"
-          fill={dotColor}
-        />
+        <rect x="17" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
       </svg>
     )
   }
@@ -91,14 +78,7 @@ export default function CraveLogo({
           <tspan fill={craveColor}>crave</tspan>
           <tspan fill={xpColor}>XP</tspan>
         </text>
-        <rect
-          x="124"
-          y="18.5"
-          width="5.5"
-          height="5.5"
-          rx="1.2"
-          fill={dotColor}
-        />
+        <rect x="124" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
       </svg>
     )
   }
@@ -124,14 +104,7 @@ export default function CraveLogo({
       >
         crave
       </text>
-      <rect
-        x="81"
-        y="18.5"
-        width="5.5"
-        height="5.5"
-        rx="1.2"
-        fill={dotColor}
-      />
+      <rect x="81" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
     </svg>
   )
 }
