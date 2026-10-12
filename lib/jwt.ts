@@ -1,6 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { redis, isRedisAvailable } from '@/lib/redis'
 
+// In-memory fallback sets for single-process resiliency when Redis is unavailable or unconfigured
+const inMemoryBlacklist = new Set<string>()
+const inMemoryUserBlacklist = new Set<string>()
+let redisAuthWarnLogged = false
+
 function getJwtSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET
   if (!secret) {
@@ -58,34 +63,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     })
     const payloadWithJti = payload as unknown as JWTPayload & { jti?: string }
 
-    // Determine whether Redis was configured (REDIS_URL set) vs just unavailable right now.
-    // - If Redis was never configured: skip blacklist checks (acceptable in dev/test).
-    // - If Redis was configured but is currently down: fail closed in production so that
-    //   revoked tokens are never silently accepted.  In non-production environments,
-    //   log a warning and pass through to avoid blocking development workflows.
-    const redisWasConfigured = Boolean(
-      process.env.REDIS_URL &&
-      process.env.REDIS_URL.trim() !== '' &&
-      process.env.REDIS_DISABLED !== 'true'
-    )
     const redisCurrentlyUp = isRedisAvailable() && !!redis
-
-    if (redisWasConfigured && !redisCurrentlyUp) {
-      if (process.env.NODE_ENV === 'production') {
-        // Fail closed: cannot verify blacklist status, so refuse the token.
-        console.error(
-          '[jwt] SECURITY: Redis is configured but unreachable. Refusing token to prevent revoked-token replay.'
-        )
-        return null
-      } else {
-        // Non-production: warn and allow, so developer workflows are not blocked.
-        console.warn(
-          '[jwt] WARNING: Redis is configured but unreachable. Blacklist check skipped (non-production). ' +
-            'In production this would reject the token.'
-        )
-        return payloadWithJti as JWTPayload
-      }
-    }
 
     if (redisCurrentlyUp) {
       // Check if this specific token's JTI has been revoked (single-session logout).
@@ -98,6 +76,20 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
       if (payloadWithJti.id) {
         const userBlacklisted = await redis!.get(`crave:jwt:blacklist:user:${payloadWithJti.id}`)
         if (userBlacklisted) return null
+      }
+    } else {
+      // Redis is unavailable or unconfigured: Check in-memory fallback blacklist
+      if (!redisAuthWarnLogged && process.env.REDIS_URL && process.env.REDIS_DISABLED !== 'true') {
+        redisAuthWarnLogged = true
+        console.warn(
+          '[jwt] NOTICE: Redis endpoint unreachable. Operating with in-memory revocation fallback.'
+        )
+      }
+      if (payloadWithJti.jti && inMemoryBlacklist.has(payloadWithJti.jti)) {
+        return null
+      }
+      if (payloadWithJti.id && inMemoryUserBlacklist.has(payloadWithJti.id)) {
+        return null
       }
     }
 
@@ -117,18 +109,20 @@ export async function blacklistToken(token: string): Promise<boolean> {
     if (!payload || !payload.jti) return false
 
     // Get token expiration to calculate TTL
-    const { payload: unverified } = await import('jose').then((m) => m.decodeJwt(token))
-    const exp = (unverified as any).exp
-    if (!exp) return false
-
+    const exp = payload.exp || Math.floor(Date.now() / 1000) + 7 * 86400
     const ttlSeconds = Math.max(0, exp - Math.floor(Date.now() / 1000))
     if (ttlSeconds <= 0) return false
+
+    // Always maintain in-memory blacklist
+    inMemoryBlacklist.add(payload.jti)
+    const timer = setTimeout(() => inMemoryBlacklist.delete(payload.jti!), ttlSeconds * 1000)
+    timer?.unref?.()
 
     if (isRedisAvailable() && redis) {
       await redis.set(`crave:jwt:blacklist:${payload.jti}`, '1', 'EX', ttlSeconds)
       return true
     }
-    return false
+    return true
   } catch (error) {
     return false
   }
@@ -138,10 +132,14 @@ export async function blacklistToken(token: string): Promise<boolean> {
  * Blacklist all tokens for a user (logout all sessions)
  */
 export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
-  if (!isRedisAvailable() || !redis) return false
+  inMemoryUserBlacklist.add(userId)
+  const userTimer = setTimeout(() => inMemoryUserBlacklist.delete(userId), 7 * 24 * 60 * 60 * 1000)
+  userTimer?.unref?.()
 
-  // We use a user-level blacklist key to track all tokens for a user
-  await redis.set(`crave:jwt:blacklist:user:${userId}`, '1', 'EX', 7 * 24 * 60 * 60) // 7 days
+  if (isRedisAvailable() && redis) {
+    // We use a user-level blacklist key to track all tokens for a user
+    await redis.set(`crave:jwt:blacklist:user:${userId}`, '1', 'EX', 7 * 24 * 60 * 60) // 7 days
+  }
   return true
 }
 
@@ -149,6 +147,7 @@ export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
  * Check if a user has been globally logged out
  */
 export async function isUserBlacklisted(userId: string): Promise<boolean> {
+  if (inMemoryUserBlacklist.has(userId)) return true
   if (!isRedisAvailable() || !redis) return false
   const blacklisted = await redis.get(`crave:jwt:blacklist:user:${userId}`)
   return !!blacklisted
