@@ -152,12 +152,27 @@ export async function PATCH(request: Request) {
     if (body.name !== undefined) updateData.name = body.name
     if (body.cuisine !== undefined) updateData.cuisine = body.cuisine
     if (body.phone !== undefined) updateData.phone = body.phone
-    if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
-    if (body.commission_rate !== undefined) updateData.commission_rate = body.commission_rate
-    if (body.markup_rate !== undefined) updateData.markup_rate = body.markup_rate
-    if (body.fixed_commission !== undefined) updateData.fixed_commission = body.fixed_commission
-    if (body.fixed_markup !== undefined) updateData.fixed_markup = body.fixed_markup
-    if (body.payment_model !== undefined) updateData.payment_model = body.payment_model
+
+    // XP-06 FIX: Commercial rate fields are admin-only. Vendors CANNOT self-set their own
+    // commission/markup rates, commercial model, or payment model — doing so bypasses platform
+    // revenue entirely. Non-admin callers attempting to set these fields receive 403.
+    const commercialFields = ['commercial_model', 'commission_rate', 'markup_rate', 'fixed_commission', 'fixed_markup', 'payment_model'] as const
+    const attemptedCommercialChange = commercialFields.some((f) => body[f] !== undefined)
+    if (attemptedCommercialChange && actor.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Commercial rate settings can only be changed by platform admins.' },
+        { status: 403 }
+      )
+    }
+    if (actor.role === 'admin') {
+      if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
+      if (body.commission_rate !== undefined) updateData.commission_rate = body.commission_rate
+      if (body.markup_rate !== undefined) updateData.markup_rate = body.markup_rate
+      if (body.fixed_commission !== undefined) updateData.fixed_commission = body.fixed_commission
+      if (body.fixed_markup !== undefined) updateData.fixed_markup = body.fixed_markup
+      if (body.payment_model !== undefined) updateData.payment_model = body.payment_model
+    }
+
     if (body.bank_account_name !== undefined) updateData.bank_account_name = body.bank_account_name
     if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
     if (body.bank_account_number !== undefined)

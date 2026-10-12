@@ -128,14 +128,24 @@ export default function CraveXPStoreConsole() {
           const restRes = await fetch('/api/restaurants', { cache: 'no-store' })
           const restJson = await restRes.json()
           if (restJson.success && Array.isArray(restJson.restaurants)) {
-            const matched = restJson.restaurants.find(
+            let matched = restJson.restaurants.find(
               (r: any) =>
-                r.owner_id === user?.id ||
-                r.id === user?.restaurantId ||
-                r.is_dark_store === true ||
-                r.name?.toLowerCase().includes('cravexp') ||
-                r.cuisine?.toLowerCase().includes('cravexp')
+                (user?.id && r.owner_id === user.id) ||
+                (user?.restaurantId && r.id === user.restaurantId)
             )
+            if (!matched && user?.restaurantName) {
+              matched = restJson.restaurants.find(
+                (r: any) =>
+                  r.name?.toLowerCase() === user.restaurantName?.toLowerCase()
+              )
+            }
+            if (!matched && user?.role === 'admin') {
+              matched = restJson.restaurants.find(
+                (r: any) =>
+                  r.is_dark_store === true ||
+                  r.name?.toLowerCase().includes('cravexp')
+              )
+            }
             if (matched) {
               vendorId = matched.id
               name = matched.name
@@ -643,13 +653,13 @@ export default function CraveXPStoreConsole() {
           </div>
 
           <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
-            {/* Dashboard Navigation */}
+            {/* Dashboard / Storefront Navigation */}
             <Link
-              href={user?.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+              href={user?.role === 'admin' ? '/admin/dashboard' : '/user/cravexp'}
               className="flex items-center gap-1.5 rounded-2xl border border-[#dfe4dc] bg-[#f8f9f7] px-3.5 py-2.5 text-xs font-bold text-[#18201c] hover:bg-[#e2e7dc] transition shrink-0"
             >
               <ArrowLeft className="size-3.5 text-[#7e9619]" />
-              <span>Dashboard</span>
+              <span>{user?.role === 'admin' ? 'Admin Dashboard' : 'View Storefront'}</span>
             </Link>
 
             {/* Online Status Toggle */}

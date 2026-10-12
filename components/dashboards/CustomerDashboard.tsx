@@ -150,6 +150,10 @@ type MenuItem = {
   vendorId?: string
   restaurantLat?: number
   restaurantLng?: number
+  in_stock?: boolean
+  inStock?: boolean
+  stock_count?: number
+  stockCount?: number
 }
 
 type CartItem = MenuItem & {
@@ -492,6 +496,10 @@ export default function CustomerDashboard({
           vendorId: item.vendorId,
           restaurantLat: item.restaurantLat,
           restaurantLng: item.restaurantLng,
+          in_stock: item.in_stock,
+          inStock: item.inStock,
+          stock_count: item.stock_count,
+          stockCount: item.stockCount,
         }))
       )
     }
@@ -553,17 +561,26 @@ export default function CustomerDashboard({
         const menuData = json.items || []
 
         if (menuData.length > 0) {
-          const parsed: Array<MenuItem> = menuData.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            detail: item.description || '',
-            price: Number(item.price) || 0,
-            image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
-            veg: Boolean(item.is_veg ?? true),
-            restaurantName: selectedRestaurant?.name || 'Partner Kitchen',
-            restaurantId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
-            vendorId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
-          }))
+          const parsed: Array<MenuItem> = menuData.map((item: any) => {
+            const isOutOfStock =
+              item.in_stock === false ||
+              (item.stock_count !== undefined && item.stock_count !== null && Number(item.stock_count) <= 0)
+            return {
+              id: item.id,
+              name: item.name,
+              detail: item.description || '',
+              price: Number(item.price) || 0,
+              image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
+              veg: Boolean(item.is_veg ?? true),
+              restaurantName: selectedRestaurant?.name || 'Partner Kitchen',
+              restaurantId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
+              vendorId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
+              in_stock: !isOutOfStock,
+              inStock: !isOutOfStock,
+              stock_count: Number(item.stock_count ?? 0),
+              stockCount: Number(item.stock_count ?? 0),
+            }
+          })
           setMenuItemsList(parsed)
         } else {
           setMenuItemsList([])
@@ -882,14 +899,20 @@ export default function CustomerDashboard({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: profileNameInput.trim() || undefined,
-          phone: profilePhoneInput.trim() || undefined,
-          address: deliveryAddress.trim() || undefined,
+          name: profileNameInput.trim() || user?.name || '',
+          phone: profilePhoneInput.trim(),
+          address: deliveryAddress.trim(),
         }),
       })
       const json = await res.json()
       if (!res.ok || !json.success) {
         throw new Error(json.error || 'Failed to update profile')
+      }
+
+      if (json.token && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('crave_token', json.token)
+        } catch {}
       }
 
       if (typeof window !== 'undefined') {
@@ -911,8 +934,8 @@ export default function CustomerDashboard({
       if (updateUser) {
         updateUser({
           name: profileNameInput.trim() || user?.name,
-          phone: profilePhoneInput.trim() || user?.phone,
-          address: deliveryAddress.trim() || user?.address,
+          phone: profilePhoneInput.trim(),
+          address: deliveryAddress.trim(),
         })
       }
 
@@ -1232,11 +1255,11 @@ export default function CustomerDashboard({
     })
   }, [])
 
-  function triggerToast(msg: string) {
+  function triggerToast(msg: string, variant?: 'success' | 'error' | 'info') {
     // Strip leading emoji/special chars for cleaner display; variant is auto-detected below.
     const clean = msg.replace(/^[^\w\s₹]+\s*/, '')
-    const isError = /could not|failed|error|unable|invalid/i.test(clean)
-    toast(clean, isError ? 'error' : 'success')
+    const isError = variant === 'error' || /could not|failed|error|unable|invalid|out of stock/i.test(clean)
+    toast(clean, variant || (isError ? 'error' : 'success'))
   }
 
   function handleCopyCompanyUpi() {
@@ -1286,6 +1309,17 @@ export default function CustomerDashboard({
 
   // Cart Handlers
   function addToCart(item: MenuItem) {
+    const isOutOfStock =
+      item.in_stock === false ||
+      item.inStock === false ||
+      (item.stock_count !== undefined && item.stock_count !== null && Number(item.stock_count) <= 0) ||
+      (item.stockCount !== undefined && item.stockCount !== null && Number(item.stockCount) <= 0)
+
+    if (isOutOfStock) {
+      triggerToast(`Sorry, ${item.name} is currently out of stock.`, 'error')
+      return
+    }
+
     const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
     const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id
     const itemRestLat =
@@ -2394,78 +2428,115 @@ export default function CustomerDashboard({
                       No signature dishes listed for {selectedRestaurant?.name}.
                     </p>
                   ) : (
-                    menuItemsList.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg transition duration-300"
-                    >
-                      <div>
-                        <div className="relative h-44 w-full overflow-hidden rounded-2xl">
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
-                            />
-                          ) : (
-                            <div className="grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
-                              <ShoppingBag className="size-8" />
-                            </div>
-                          )}
+                    menuItemsList.map((item) => {
+                      const isOutOfStock =
+                        item.in_stock === false ||
+                        item.inStock === false ||
+                        (item.stock_count !== undefined && item.stock_count !== null && Number(item.stock_count) <= 0) ||
+                        (item.stockCount !== undefined && item.stockCount !== null && Number(item.stockCount) <= 0)
 
-                          {/* Veg / Non-Veg culinary indicator dot badge */}
-                          <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1">
-                            <div
-                              className={`size-3 rounded-sm border flex items-center justify-center ${
-                                item.veg ? 'border-emerald-600' : 'border-rose-600'
-                              }`}
-                            >
-                              <div
-                                className={`size-1.5 rounded-full ${
-                                  item.veg ? 'bg-emerald-600' : 'bg-rose-600'
-                                }`}
-                              />
-                            </div>
-                            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
-                              {item.veg ? 'Veg' : 'Non-Veg'}
-                            </span>
-                          </div>
-
-                          {/* Restaurant tag */}
-                          <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90">
-                            {item.restaurantName || 'Partner Kitchen'}
-                          </div>
-                        </div>
-
-                        <div className="mt-3.5">
-                          <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white group-hover:text-[#86a018] transition line-clamp-1">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                            {item.detail}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                            Price
-                          </span>
-                          <span className="font-black text-base text-[#18201c] dark:text-white">
-                            ₹{item.price}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      return (
+                        <div
+                          key={item.id}
+                          className={`group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs transition duration-300 ${
+                            isOutOfStock
+                              ? 'opacity-80'
+                              : 'hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg'
+                          }`}
                         >
-                          <Plus className="size-3.5 stroke-[3]" />
-                          <span>Add to Cart</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                          <div>
+                            <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
+                              {item.image ? (
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  style={isOutOfStock ? { filter: 'grayscale(100%) contrast(80%)' } : undefined}
+                                  className={`h-full w-full object-cover transition duration-500 ${
+                                    isOutOfStock
+                                      ? 'grayscale opacity-60 contrast-75'
+                                      : 'group-hover:scale-105'
+                                  }`}
+                                />
+                              ) : (
+                                <div className={`grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}>
+                                  <ShoppingBag className="size-8" />
+                                </div>
+                              )}
+
+                              {/* Out of Stock Overlay Badge */}
+                              {isOutOfStock && (
+                                <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex items-center justify-center p-2 z-10 pointer-events-none">
+                                  <span className="rounded-full bg-rose-600/95 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider px-3.5 py-1.5 shadow-lg border border-white/20">
+                                    Out of Stock
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Veg / Non-Veg culinary indicator dot badge */}
+                              <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1 z-10">
+                                <div
+                                  className={`size-3 rounded-sm border flex items-center justify-center ${
+                                    item.veg ? 'border-emerald-600' : 'border-rose-600'
+                                  }`}
+                                >
+                                  <div
+                                    className={`size-1.5 rounded-full ${
+                                      item.veg ? 'bg-emerald-600' : 'bg-rose-600'
+                                    }`}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
+                                  {item.veg ? 'Veg' : 'Non-Veg'}
+                                </span>
+                              </div>
+
+                              {/* Restaurant tag */}
+                              <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90 z-10">
+                                {item.restaurantName || 'Partner Kitchen'}
+                              </div>
+                            </div>
+
+                            <div className="mt-3.5">
+                              <p className={`font-extrabold text-sm sm:text-base transition line-clamp-1 ${isOutOfStock ? 'text-gray-500 dark:text-gray-400' : 'text-[#18201c] dark:text-white group-hover:text-[#86a018]'}`}>
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                                {item.detail}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                                Price
+                              </span>
+                              <span className={`font-black text-base ${isOutOfStock ? 'text-gray-400 dark:text-gray-500' : 'text-[#18201c] dark:text-white'}`}>
+                                ₹{item.price}
+                              </span>
+                            </div>
+                            {isOutOfStock ? (
+                              <button
+                                disabled
+                                className="rounded-full bg-gray-100 dark:bg-white/10 px-4 py-2 text-xs font-bold text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60 flex items-center gap-1.5 shadow-none pointer-events-none"
+                                title="This item is out of stock"
+                              >
+                                <span className="size-1.5 rounded-full bg-rose-500" />
+                                <span>Out of Stock</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => addToCart(item)}
+                                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Plus className="size-3.5 stroke-[3]" />
+                                <span>Add to Cart</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
                 )}
               </div>
             </div>
@@ -3334,6 +3405,11 @@ export default function CustomerDashboard({
                                 : null
                             )
                             triggerToast(`Switched active delivery location to ${addr.label}!`)
+                            fetch('/api/user/addresses', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: addr.id, action: 'set_default' }),
+                            }).catch(() => {})
                           }}
                           className={`w-full py-1.5 rounded-xl text-xs font-bold transition ${
                             isSelected
@@ -3979,34 +4055,70 @@ export default function CustomerDashboard({
                 </div>
               ) : (
                 menuItemsList.map((item) => {
+                  const isOutOfStock =
+                    item.in_stock === false ||
+                    item.inStock === false ||
+                    (item.stock_count !== undefined && item.stock_count !== null && Number(item.stock_count) <= 0) ||
+                    (item.stockCount !== undefined && item.stockCount !== null && Number(item.stockCount) <= 0)
                   const inCart = cart.find((i) => i.id === item.id)
+
                   return (
                     <div
                       key={item.id}
-                      className="flex items-center gap-4 rounded-2xl border border-[#25332a] bg-[#121815] p-3 text-white transition hover:border-[#d9f447]/50"
+                      className={`flex items-center gap-4 rounded-2xl border border-[#25332a] bg-[#121815] p-3 text-white transition ${
+                        isOutOfStock ? 'opacity-80' : 'hover:border-[#d9f447]/50'
+                      }`}
                     >
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="size-20 rounded-xl object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="size-20 rounded-xl bg-[#1c2620] border border-[#25332a] shrink-0 flex items-center justify-center text-[10px] text-[#9eb3a4]">
-                          No image
-                        </div>
-                      )}
+                      <div className="relative size-20 rounded-xl overflow-hidden shrink-0 bg-[#1c2620]">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            style={isOutOfStock ? { filter: 'grayscale(100%) contrast(80%)' } : undefined}
+                            className={`size-20 rounded-xl object-cover shrink-0 ${
+                              isOutOfStock ? 'grayscale opacity-60 contrast-75' : ''
+                            }`}
+                          />
+                        ) : (
+                          <div className="size-20 rounded-xl bg-[#1c2620] border border-[#25332a] shrink-0 flex items-center justify-center text-[10px] text-[#9eb3a4]">
+                            No image
+                          </div>
+                        )}
+                        {isOutOfStock && (
+                          <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center pointer-events-none p-1">
+                            <span className="rounded bg-rose-600/95 text-white font-black text-[8px] uppercase tracking-wider px-1.5 py-0.5 text-center leading-none">
+                              Out of Stock
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm text-white">{item.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className={`font-bold text-sm ${isOutOfStock ? 'text-gray-400' : 'text-white'}`}>{item.name}</h4>
+                          {isOutOfStock && (
+                            <span className="rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 text-[8px] font-black uppercase">
+                              Out of stock
+                            </span>
+                          )}
+                        </div>
                         {item.detail && (
                           <p className="text-xs text-[#9eb3a4] line-clamp-2 mt-0.5">
                             {item.detail}
                           </p>
                         )}
-                        <p className="mt-2 text-sm font-bold text-[#d9f447]">₹{item.price}</p>
+                        <p className={`mt-2 text-sm font-bold ${isOutOfStock ? 'text-gray-500' : 'text-[#d9f447]'}`}>₹{item.price}</p>
                       </div>
 
-                      {inCart ? (
+                      {isOutOfStock ? (
+                        <button
+                          disabled
+                          className="rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-bold text-gray-400 cursor-not-allowed opacity-60 shrink-0 pointer-events-none"
+                          title="This item is out of stock"
+                        >
+                          Out of Stock
+                        </button>
+                      ) : inCart ? (
                         <div className="flex items-center gap-2 rounded-full bg-[#1c2620] border border-[#25332a] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
                           <button
                             onClick={() => updateItemQty(item.id, -1)}
@@ -4306,7 +4418,11 @@ export default function CustomerDashboard({
                     isApprovingPaymentRef.current = true
                     setIsApprovingPayment(true)
                     try {
-                      await fetch('/api/orders', {
+                      // XP-01 FIX: Check res.ok before updating local state.
+                      // The API restricts payment_status:'verified' to admin role (HTTP 403).
+                      // Previously this silently "approved" in the UI while the DB remained
+                      // in payment_submitted, leaving the vendor and kitchen unaware.
+                      const res = await fetch('/api/orders', {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -4315,9 +4431,20 @@ export default function CustomerDashboard({
                           payment_status: 'verified',
                         }),
                       })
-                      setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
+                      if (res.ok) {
+                        setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
+                      } else {
+                        const errBody = await res.json().catch(() => ({}))
+                        const isPermissionErr = res.status === 403
+                        alert(
+                          isPermissionErr
+                            ? 'Payment approval is processed by our support team. Your UTR has been submitted and will be verified shortly. No action needed from you!'
+                            : `Approval failed: ${errBody?.error || 'Unknown error'}. Please contact support.`
+                        )
+                      }
                     } catch (e) {
                       console.error('Instant approve error:', e)
+                      alert('Network error during approval. Please check your connection.')
                     } finally {
                       setIsApprovingPayment(false)
                       isApprovingPaymentRef.current = false

@@ -5,6 +5,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
+import { getRoleDashboardPath, isCustomerRole } from '@/lib/role-routing'
 import {
   Bike,
   ChevronDown,
@@ -122,11 +123,23 @@ export default function Navbar() {
   }, [user?.address])
 
   const normalizedRole = (user?.role || role || '').toString().toLowerCase().trim()
-  const isCustomerRoute = pathname.startsWith('/user') || pathname === '/' || pathname.startsWith('/track') || pathname.startsWith('/checkout')
-  const isCustomer = Boolean(
-    user && (normalizedRole === 'customer' || normalizedRole === 'user')
-  )
-  const showCustomerNav = isCustomer || isCustomerRoute || !user
+  const isCustomer = Boolean(user && isCustomerRole(normalizedRole))
+  const showAddressPicker =
+    isCustomer || !user || pathname.startsWith('/user') || pathname === '/' || pathname.startsWith('/checkout')
+  const isConsoleRoute =
+    pathname.startsWith('/vendor') ||
+    pathname.startsWith('/driver') ||
+    pathname.startsWith('/admin')
+  const currentDashboardLink = getRoleDashboardPath(normalizedRole)
+  const logoTargetLink = !user
+    ? '/'
+    : isCustomer
+      ? '/user/dashboard'
+      : isConsoleRoute
+        ? currentDashboardLink
+        : normalizedRole === 'cravexp_store_vendor'
+          ? '/user/cravexp'
+          : '/'
 
   // Focus trap for mobile menu
   useEffect(() => {
@@ -165,20 +178,6 @@ export default function Navbar() {
       }
     }
   }, [showMobileMenu])
-
-  const currentDashboardLink =
-    isCustomer
-      ? '/user/dashboard'
-      : normalizedRole === 'rider' || normalizedRole === 'driver'
-        ? '/driver/dashboard'
-        : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'
-          ? '/vendor/dashboard'
-          : normalizedRole === 'cravexp_store_vendor'
-            ? '/vendor/crave-ep'
-            : normalizedRole === 'admin'
-              ? '/admin/dashboard'
-              : '/'
-  const logoTargetLink = user ? currentDashboardLink : '/'
 
   if (!mounted) {
     return (
@@ -226,7 +225,7 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {showCustomerNav && (
+            {showAddressPicker && (
               <>
                 {/* Desktop Deliver-To Pill */}
                 <button
@@ -271,7 +270,7 @@ export default function Navbar() {
           <div className="hidden items-center gap-1 text-xs font-bold justify-center bg-gray-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-gray-200/60 dark:border-white/10 backdrop-blur-xl lg:flex">
             {user ? (
               <>
-                {showCustomerNav ? (
+                {isCustomer ? (
                   <>
                     <Link
                       href="/user/explore"
@@ -322,20 +321,64 @@ export default function Navbar() {
                     </Link>
                   </>
                 ) : (
-                  <Link
-                    href={currentDashboardLink}
-                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
-                      pathname.includes('dashboard')
-                        ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
-                    }`}
-                  >
-                    <LayoutDashboard className="size-3.5 text-[#b5de28]" />
-                    <span>Dashboard ({roleDetails[normalizedRole as UserRole]?.title || user?.role || role})</span>
-                  </Link>
+                  <>
+                    <Link
+                      href={currentDashboardLink}
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.startsWith('/vendor') || pathname.startsWith('/driver') || pathname.startsWith('/admin')
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                      }`}
+                    >
+                      <LayoutDashboard className="size-3.5 text-[#b5de28]" />
+                      <span>{roleDetails[normalizedRole as UserRole]?.title || 'Console'}</span>
+                    </Link>
+                    <Link
+                      href="/user/cravexp"
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.includes('/user/cravexp')
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                      }`}
+                    >
+                      <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                      <span>Storefront</span>
+                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-black uppercase">
+                        Live
+                      </span>
+                    </Link>
+                  </>
                 )}
               </>
-            ) : null}
+            ) : (
+              <>
+                <Link
+                  href="/"
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                    pathname === '/'
+                      ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                  }`}
+                >
+                  <Compass className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                  <span>Explore</span>
+                </Link>
+                <Link
+                  href="/user/cravexp"
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                    pathname.includes('/user/cravexp')
+                      ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                  }`}
+                >
+                  <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                  <span>craveXP</span>
+                  <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-black uppercase">
+                    10m
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Right side — auth & profile */}
@@ -475,18 +518,16 @@ export default function Navbar() {
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
                         >
                           <LayoutDashboard className="size-4 text-[#b5de28]" />
-                          Go to Dashboard
+                          Go to Console
                         </Link>
-                        {(normalizedRole === 'cravexp_store_vendor' || normalizedRole === 'admin') && (
-                          <Link
-                            href="/vendor/crave-ep"
-                            onClick={() => setShowUserDropdown(false)}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
-                          >
-                            <Store className="size-4 text-emerald-600" />
-                            craveXP. Console
-                          </Link>
-                        )}
+                        <Link
+                          href="/user/cravexp"
+                          onClick={() => setShowUserDropdown(false)}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+                        >
+                          <Zap className="size-4 text-emerald-600 fill-emerald-600" />
+                          craveXP Storefront
+                        </Link>
                       </>
                     )}
 
@@ -615,7 +656,7 @@ export default function Navbar() {
               </div>
 
               {/* Mobile Address Selector Card */}
-              {showCustomerNav && (
+              {showAddressPicker && (
                 <div className="rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-500/20 p-3 mb-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <MapPin className="size-4 text-emerald-600 dark:text-[#d9f447] shrink-0" />
@@ -638,71 +679,107 @@ export default function Navbar() {
                 </div>
               )}
 
-              <Link
-                href={currentDashboardLink}
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <span>Dashboard</span>
-                <span className="rounded-md bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-300 capitalize">
-                  Overview
-                </span>
-              </Link>
+              {isCustomer ? (
+                <>
+                  <Link
+                    href={currentDashboardLink}
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center justify-between rounded-xl px-4 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <span>Dashboard</span>
+                    <span className="rounded-md bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-300 capitalize">
+                      Overview
+                    </span>
+                  </Link>
 
-              <div className="my-1 border-t border-[#e5e9e1] dark:border-[#27342d]" />
+                  <div className="my-1 border-t border-[#e5e9e1] dark:border-[#27342d]" />
+
+                  <Link
+                    href="/user/explore"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <Compass className="size-5 text-[#b5de28]" />
+                    Explore
+                  </Link>
+
+                  <Link
+                    href="/user/cravexp"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+                      <span>craveXP Instamart</span>
+                    </span>
+                    <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                      10 MIN
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/user/track"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <Bike className="size-5 text-[#b5de28]" />
+                    Track Drop
+                  </Link>
+
+                  <Link
+                    href="/user/orders"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <ShoppingBag className="size-5 text-[#b5de28]" />
+                    Orders
+                  </Link>
+
+                  <Link
+                    href="/user/profile"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <User className="size-5 text-[#b5de28]" />
+                    Profile
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={currentDashboardLink}
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center justify-between rounded-xl px-4 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <LayoutDashboard className="size-4 text-[#b5de28]" />
+                      <span>Console Dashboard</span>
+                    </span>
+                    <span className="rounded-md bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 capitalize">
+                      {roleDetails[normalizedRole as UserRole]?.title || 'Console'}
+                    </span>
+                  </Link>
+
+                  <div className="my-1 border-t border-[#e5e9e1] dark:border-[#27342d]" />
+
+                  <Link
+                    href="/user/cravexp"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+                      <span>craveXP Instamart</span>
+                    </span>
+                    <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                      Storefront
+                    </span>
+                  </Link>
+                </>
+              )}
 
               <Link
-                href="/user/explore"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <Compass className="size-5 text-[#b5de28]" />
-                Explore
-              </Link>
-
-              <Link
-                href="/user/cravexp"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <span className="flex items-center gap-3">
-                  <Zap className="size-5 text-emerald-600 fill-emerald-600" />
-                  <span>craveXP Instamart</span>
-                </span>
-                <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
-                  10 MIN
-                </span>
-              </Link>
-
-              <Link
-                href="/user/track"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <Bike className="size-5 text-[#b5de28]" />
-                Track Drop
-              </Link>
-
-              <Link
-                href="/user/orders"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <ShoppingBag className="size-5 text-[#b5de28]" />
-                Orders
-              </Link>
-
-              <Link
-                href="/user/profile"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
-              >
-                <User className="size-5 text-[#b5de28]" />
-                Profile
-              </Link>
-
-              <Link
-                href="/user/dashboard"
+                href="/user/cart"
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
@@ -751,10 +828,42 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                className="flex items-center gap-3 rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
+                <Compass className="size-5 text-[#b5de28]" />
                 Explore
               </Link>
+
+              <Link
+                href="/user/cravexp"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+              >
+                <span className="flex items-center gap-3">
+                  <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+                  <span>craveXP Instamart</span>
+                </span>
+                <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                  10 MIN
+                </span>
+              </Link>
+
+              <Link
+                href="/user/cart"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+              >
+                <span className="flex items-center gap-3">
+                  <ShoppingCart className="size-5 text-[#b5de28]" />
+                  Cart
+                </span>
+                {cartCount > 0 && (
+                  <span className="rounded-full bg-[#b5de28] px-2 py-0.5 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
               {/* Language switcher for guests too */}
               <div className="px-1 py-1 flex flex-col gap-2">
                 <LanguageSwitcher variant="menu" />

@@ -167,6 +167,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
+    let restaurantId: string | undefined = undefined
+    if (profile.role === 'restaurant_vendor' || profile.role === 'cravexp_store_vendor') {
+      try {
+        const { prisma } = await import('@/lib/prisma')
+        const rest = await prisma.restaurant.findFirst({
+          where: {
+            OR: [
+              { owner_id: profile.id },
+              ...(profile.restaurant_name ? [{ name: profile.restaurant_name }] : []),
+            ],
+          },
+        })
+        if (rest) {
+          restaurantId = rest.id
+          if (!profile.restaurant_name) profile.restaurant_name = rest.name
+        }
+      } catch (e) {}
+    }
+
     const userPayload: JWTPayload = {
       id: profile.id,
       name: profile?.name || profile?.email?.split('@')[0] || 'User',
@@ -176,6 +195,7 @@ export async function POST(request: Request) {
       address: profile?.address ?? undefined,
       avatar: profile?.avatar ?? undefined,
       restaurantName: profile?.restaurant_name ?? undefined,
+      restaurantId,
       cuisine: profile?.cuisine ?? undefined,
       vehicleType: profile?.vehicle_type ?? undefined,
       licensePlate: profile?.license_plate ?? undefined,

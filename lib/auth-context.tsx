@@ -86,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setUser(parsed)
               setToken(savedToken ?? 'local-token')
               setIsLoading(false)
-              return
             }
           } catch (e) {
             console.warn('Stored session data was invalid, clearing it.')
@@ -95,6 +94,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               localStorage.removeItem('crave_token')
             }
           }
+        }
+
+        // Revalidate against /api/auth/me to sync fresh DB profile
+        if (savedToken || (typeof document !== 'undefined' && document.cookie.includes('auth_token'))) {
+          try {
+            const res = await fetch('/api/auth/me', {
+              headers: savedToken ? { Authorization: `Bearer ${savedToken}` } : {},
+            })
+            if (res.ok) {
+              const data = await res.json()
+              if (data.authenticated && data.user && !cancelled) {
+                setUser(data.user)
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('crave_user', JSON.stringify(data.user))
+                }
+              }
+            } else if (res.status === 401 && savedUserStr) {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('crave_user')
+                localStorage.removeItem('crave_token')
+              }
+              if (!cancelled) {
+                setUser(null)
+                setToken(null)
+              }
+            }
+          } catch (apiErr) {}
         }
       } catch (err) {
         console.error('Failed to restore local session:', err)

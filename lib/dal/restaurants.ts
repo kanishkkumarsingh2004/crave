@@ -92,7 +92,6 @@ export async function createRestaurant(data: {
   supplier_state?: string
   price_tax_mode?: string
   contract_number?: string
-  gst_rate_percent?: number
 }) {
   const created = await prisma.restaurant.create({ data: data as any })
   await invalidateRestaurantCache()

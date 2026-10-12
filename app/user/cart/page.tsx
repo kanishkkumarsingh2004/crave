@@ -161,6 +161,69 @@ export default function CartPage() {
     }
   }, [cart])
 
+  const [outOfStockItemIds, setOutOfStockItemIds] = useState<Set<string>>(new Set())
+
+  // Live stock verification for all items currently in cart
+  useEffect(() => {
+    const restId = cart[0]?.restaurantId || (cart[0] as any)?.vendorId
+    if (!restId || cart.length === 0) {
+      setOutOfStockItemIds(new Set())
+      return
+    }
+
+    let isMounted = true
+    const isDarkStore = restId === 'cravexp_dark_store_01'
+    const url = isDarkStore
+      ? '/api/cravexp/catalog'
+      : `/api/menu-items?restaurantId=${encodeURIComponent(restId)}`
+
+    fetch(url, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return
+        const liveItems = data.items || []
+        const outIds = new Set<string>()
+
+        cart.forEach((cartItem) => {
+          const live = liveItems.find((li: any) => li.id === cartItem.id)
+          if (live) {
+            const isOOS =
+              live.in_stock === false ||
+              live.inStock === false ||
+              (live.stock_count !== undefined && live.stock_count !== null && Number(live.stock_count) <= 0) ||
+              (live.stockCount !== undefined && live.stockCount !== null && Number(live.stockCount) <= 0)
+            if (isOOS) {
+              outIds.add(cartItem.id)
+            }
+          } else if (
+            cartItem.in_stock === false ||
+            cartItem.inStock === false ||
+            (cartItem.stock_count !== undefined && cartItem.stock_count !== null && Number(cartItem.stock_count) <= 0) ||
+            (cartItem.stockCount !== undefined && cartItem.stockCount !== null && Number(cartItem.stockCount) <= 0)
+          ) {
+            outIds.add(cartItem.id)
+          }
+        })
+        setOutOfStockItemIds(outIds)
+      })
+      .catch(() => {})
+
+    return () => {
+      isMounted = false
+    }
+  }, [cart])
+
+  const hasOutOfStockItems = useMemo(() => {
+    return cart.some(
+      (item) =>
+        outOfStockItemIds.has(item.id) ||
+        item.in_stock === false ||
+        item.inStock === false ||
+        (item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0) ||
+        (item.stockCount !== undefined && item.stockCount !== null && item.stockCount <= 0)
+    )
+  }, [cart, outOfStockItemIds])
+
   const deliveryServiceability = useMemo(() => {
     if (!detectedCoords?.lat || !detectedCoords?.lng) return null
     return checkDeliveryServiceability({
@@ -632,6 +695,13 @@ export default function CartPage() {
       return
     }
 
+    if (hasOutOfStockItems) {
+      toast('Cannot place order: Please remove out of stock items from your cart.', 'error')
+      setIsSubmittingOrder(false)
+      isSubmittingRef.current = false
+      return
+    }
+
     setIsSubmittingOrder(true)
     isSubmittingRef.current = true
 
@@ -917,75 +987,120 @@ export default function CartPage() {
                       </div>
                     </div>
 
+                    {hasOutOfStockItems && (
+                      <div className="mb-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 p-4 flex items-center gap-3 text-rose-800 dark:text-rose-300 animate-in fade-in duration-200">
+                        <AlertTriangle className="size-5 shrink-0 text-rose-600 dark:text-rose-400" />
+                        <div className="text-xs">
+                          <span className="font-black">Items Out of Stock: </span>
+                          <span>One or more items in your cart are currently out of stock. Please remove them to proceed with checkout.</span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Dish Items List */}
                     <div className="divide-y divide-black/[0.05] dark:divide-white/[0.07]">
-                      {cart.map((item) => (
-                        <div
-                          key={item.id}
-                          className="py-4.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                        >
-                          <div className="flex items-center gap-4 min-w-0 flex-1">
-                            {item.image ? (
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null
-                                  e.currentTarget.src =
-                                    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'
-                                }}
-                                className="size-16 sm:size-18 rounded-2xl object-cover shrink-0 border border-black/5 dark:border-white/10 shadow-sm"
-                              />
-                            ) : (
-                              <div className="grid size-16 sm:size-18 place-items-center rounded-2xl bg-[#121815]/5 dark:bg-white/5 text-[#5e8210] dark:text-[#d9f447] shrink-0 font-black text-xs border border-black/5 dark:border-white/10">
-                                CRAVE
+                      {cart.map((item) => {
+                        const isOutOfStock =
+                          outOfStockItemIds.has(item.id) ||
+                          item.in_stock === false ||
+                          item.inStock === false ||
+                          (item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0) ||
+                          (item.stockCount !== undefined && item.stockCount !== null && item.stockCount <= 0)
+
+                        return (
+                          <div
+                            key={item.id}
+                            className={`py-4.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                              isOutOfStock ? 'opacity-85' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="relative size-16 sm:size-18 shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-white/5">
+                                {item.image ? (
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    style={isOutOfStock ? { filter: 'grayscale(100%) contrast(80%)' } : undefined}
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null
+                                      e.currentTarget.src =
+                                        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'
+                                    }}
+                                    className={`size-full object-cover border border-black/5 dark:border-white/10 shadow-sm ${
+                                      isOutOfStock ? 'grayscale opacity-60 contrast-75' : ''
+                                    }`}
+                                  />
+                                ) : (
+                                  <div className="grid size-full place-items-center bg-[#121815]/5 dark:bg-white/5 text-[#5e8210] dark:text-[#d9f447] font-black text-xs border border-black/5 dark:border-white/10">
+                                    CRAVE
+                                  </div>
+                                )}
+                                {isOutOfStock && (
+                                  <div className="absolute inset-0 bg-black/45 rounded-2xl flex items-center justify-center p-1 pointer-events-none">
+                                    <span className="text-[9px] font-black uppercase text-white bg-rose-600/95 px-1.5 py-0.5 rounded leading-none text-center shadow-xs">
+                                      Out of stock
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                            )}
 
-                            <div className="min-w-0 flex-1">
-                              <h3 className="text-sm sm:text-base font-extrabold text-[#121815] dark:text-white truncate">
-                                {item.name}
-                              </h3>
-                              <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mt-0.5">
-                                ₹{item.price} <span className="text-[10px] font-normal text-stone-400">each</span>
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Stepper + Subtotal */}
-                          <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t border-black/[0.03] dark:border-white/[0.04] sm:border-t-0">
-                            <div className="flex items-center gap-2 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/10 px-3 py-1.5 text-xs font-black text-[#121815] dark:text-white">
-                              <button
-                                onClick={() => updateItemQty(item.id, -1)}
-                                className="p-1 text-stone-500 hover:text-black dark:text-stone-400 dark:hover:text-white transition active:scale-90"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus className="size-3.5" />
-                              </button>
-                              <span className="w-5 text-center font-mono">{item.qty}</span>
-                              <button
-                                onClick={() => updateItemQty(item.id, 1)}
-                                className="p-1 text-stone-500 hover:text-black dark:text-stone-400 dark:hover:text-white transition active:scale-90"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus className="size-3.5" />
-                              </button>
+                              <div className="min-w-0 flex-1">
+                                <h3 className={`text-sm sm:text-base font-extrabold truncate ${isOutOfStock ? 'text-gray-500 dark:text-gray-400' : 'text-[#121815] dark:text-white'}`}>
+                                  {item.name}
+                                </h3>
+                                <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mt-0.5">
+                                  ₹{item.price} <span className="text-[10px] font-normal text-stone-400">each</span>
+                                </p>
+                                {isOutOfStock && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full mt-1">
+                                    Item is currently out of stock
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            <span className="text-sm font-black text-[#121815] dark:text-white font-mono min-w-[65px] text-right">
-                              ₹{item.price * item.qty}
-                            </span>
+                            {/* Stepper + Subtotal */}
+                            <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t border-black/[0.03] dark:border-white/[0.04] sm:border-t-0">
+                              <div className="flex items-center gap-2 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/10 px-3 py-1.5 text-xs font-black text-[#121815] dark:text-white">
+                                <button
+                                  onClick={() => updateItemQty(item.id, -1)}
+                                  className="p-1 text-stone-500 hover:text-black dark:text-stone-400 dark:hover:text-white transition active:scale-90 cursor-pointer"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus className="size-3.5" />
+                                </button>
+                                <span className="w-5 text-center font-mono">{item.qty}</span>
+                                <button
+                                  disabled={isOutOfStock}
+                                  onClick={() => !isOutOfStock && updateItemQty(item.id, 1)}
+                                  className={`p-1 transition active:scale-90 ${
+                                    isOutOfStock
+                                      ? 'opacity-30 cursor-not-allowed text-stone-400 pointer-events-none'
+                                      : 'text-stone-500 hover:text-black dark:text-stone-400 dark:hover:text-white cursor-pointer'
+                                  }`}
+                                  aria-label="Increase quantity"
+                                  title={isOutOfStock ? 'Item is out of stock' : 'Increase quantity'}
+                                >
+                                  <Plus className="size-3.5" />
+                                </button>
+                              </div>
 
-                            <button
-                              onClick={() => removeItem(item.id)}
-                              className="size-8 rounded-xl bg-black/5 dark:bg-white/5 grid place-items-center text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition active:scale-90 shrink-0"
-                              aria-label="Remove item"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                              <span className={`text-sm font-black font-mono min-w-[65px] text-right ${isOutOfStock ? 'text-gray-400 dark:text-gray-500' : 'text-[#121815] dark:text-white'}`}>
+                                ₹{item.price * item.qty}
+                              </span>
+
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="size-8 rounded-xl bg-black/5 dark:bg-white/5 grid place-items-center text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition active:scale-90 shrink-0 cursor-pointer"
+                                aria-label="Remove item"
+                                title="Remove from cart"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
 
                     <div className="mt-5 pt-4 border-t border-black/[0.05] dark:border-white/[0.07] flex justify-end">
@@ -1616,8 +1731,8 @@ export default function CartPage() {
                     <form onSubmit={handlePlaceOrder} id="checkout-action-section">
                       <button
                         type="submit"
-                        disabled={isSubmittingOrder || utrRef.trim().length < 10}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isSubmittingOrder || utrRef.trim().length < 10 || hasOutOfStockItems}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         {isSubmittingOrder ? (
                           <CraveButtonLoader
@@ -1626,6 +1741,11 @@ export default function CartPage() {
                             variant="dark"
                             size="md"
                           />
+                        ) : hasOutOfStockItems ? (
+                          <>
+                            <AlertTriangle className="size-3.5 text-rose-500" />
+                            <span>Remove Out of Stock Items to Order</span>
+                          </>
                         ) : (
                           <>
                             <Lock className="size-3.5" />

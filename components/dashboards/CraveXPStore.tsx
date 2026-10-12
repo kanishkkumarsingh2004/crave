@@ -201,6 +201,14 @@ export default function CraveXPStore() {
   }
 
   const updateItemQty = (item: CraveXPGroceryItem, delta: number) => {
+    const isOutOfStock =
+      !item.inStock ||
+      (item.stockCount !== undefined && item.stockCount !== null && item.stockCount <= 0)
+
+    if (isOutOfStock && delta > 0) {
+      return
+    }
+
     const currentQty = getItemQty(item.id)
     if (currentQty === 0 && delta > 0) {
       addItem({
@@ -213,6 +221,10 @@ export default function CraveXPStore() {
         restaurantName: CRAVEXP_DARK_STORE_INFO.name,
         restaurantId: CRAVEXP_DARK_STORE_ID,
         vendorId: CRAVEXP_DARK_STORE_ID,
+        in_stock: !isOutOfStock,
+        inStock: !isOutOfStock,
+        stock_count: item.stockCount,
+        stockCount: item.stockCount,
       })
     } else {
       updateGlobalQty(item.id, delta)
@@ -489,18 +501,31 @@ export default function CraveXPStore() {
             {filteredItems.map((item) => {
               const qty = getItemQty(item.id)
               const hasDiscount = item.mrp > item.price
+              const isOutOfStock =
+                !item.inStock ||
+                (item.stockCount !== undefined && item.stockCount !== null && item.stockCount <= 0)
 
               return (
                 <div
                   key={item.id}
-                  className="group relative flex flex-col justify-between rounded-3xl bg-white dark:bg-[#141b17] p-3.5 sm:p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 border border-gray-200/80 dark:border-white/10 hover:border-[#86a018]/50 dark:hover:border-[#d9f447]/40"
+                  className={`group relative flex flex-col justify-between rounded-3xl bg-white dark:bg-[#141b17] p-3.5 sm:p-4 shadow-sm transition-all duration-200 border border-gray-200/80 dark:border-white/10 ${
+                    isOutOfStock
+                      ? 'opacity-80'
+                      : 'hover:shadow-xl hover:-translate-y-0.5 hover:border-[#86a018]/50 dark:hover:border-[#d9f447]/40'
+                  }`}
                 >
                   {/* Top Badges Row */}
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wider">
-                      <Zap className="size-2.5 fill-current text-emerald-600 dark:text-emerald-400" />
-                      10 MINS
-                    </span>
+                    {isOutOfStock ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 text-[9px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">
+                        OUT OF STOCK
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wider">
+                        <Zap className="size-2.5 fill-current text-emerald-600 dark:text-emerald-400" />
+                        10 MINS
+                      </span>
+                    )}
                     {item.discount ? (
                       <span className="rounded-full bg-[#d9f447] px-2 py-0.5 text-[9px] font-black uppercase text-[#18201c] shadow-xs">
                         {item.discount}
@@ -518,7 +543,10 @@ export default function CraveXPStore() {
                       src={item.image}
                       alt={item.name}
                       loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={isOutOfStock ? { filter: 'grayscale(100%) contrast(80%)' } : undefined}
+                      className={`h-full w-full object-cover transition-transform duration-300 ${
+                        isOutOfStock ? 'grayscale opacity-60 contrast-75' : 'group-hover:scale-105'
+                      }`}
                       onError={(e) => {
                         // Fallback image if broken
                         const target = e.target as HTMLImageElement
@@ -526,6 +554,13 @@ export default function CraveXPStore() {
                           'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500'
                       }}
                     />
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex items-center justify-center p-2 z-10 pointer-events-none">
+                        <span className="rounded-full bg-rose-600/95 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider px-3 py-1 shadow-md border border-white/20">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Details */}
@@ -544,7 +579,7 @@ export default function CraveXPStore() {
                       )}
                     </div>
 
-                    <h3 className="mt-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white line-clamp-2 leading-snug min-h-[34px]">
+                    <h3 className={`mt-1 text-xs sm:text-sm font-bold line-clamp-2 leading-snug min-h-[34px] ${isOutOfStock ? 'text-gray-500 dark:text-gray-400' : 'text-[#18201c] dark:text-white'}`}>
                       {item.name}
                     </h3>
                   </div>
@@ -557,12 +592,20 @@ export default function CraveXPStore() {
                           ₹{item.mrp}
                         </span>
                       )}
-                      <span className="text-sm sm:text-base font-black text-[#18201c] dark:text-white">
+                      <span className={`text-sm sm:text-base font-black ${isOutOfStock ? 'text-gray-400 dark:text-gray-500' : 'text-[#18201c] dark:text-white'}`}>
                         ₹{item.price}
                       </span>
                     </div>
 
-                    {qty === 0 ? (
+                    {isOutOfStock ? (
+                      <button
+                        disabled
+                        className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 px-3 py-1.5 text-xs font-black text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60 shadow-none pointer-events-none"
+                        title="This item is out of stock"
+                      >
+                        Out of Stock
+                      </button>
+                    ) : qty === 0 ? (
                       <button
                         onClick={() => updateItemQty(item, 1)}
                         className="rounded-xl border-2 border-[#18201c] dark:border-[#d9f447] bg-white dark:bg-[#141b17] px-3.5 py-1.5 text-xs font-black text-[#18201c] dark:text-[#d9f447] shadow-xs hover:bg-[#18201c] hover:text-[#d9f447] dark:hover:bg-[#d9f447] dark:hover:text-[#18201c] active:scale-95 transition-all duration-150 cursor-pointer"

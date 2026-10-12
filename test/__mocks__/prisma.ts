@@ -88,6 +88,31 @@ const mockPrisma: any = {
     delete: jest.fn(),
     deleteMany: jest.fn(),
   },
+  orderItem: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    createMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+    count: jest.fn(),
+  },
+  couponRestaurant: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    delete: jest.fn(),
+  },
+  commercialContract: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
   $connect: jest.fn(),
   $transaction: jest.fn(async (arg: any) => {
     if (typeof arg === 'function') {

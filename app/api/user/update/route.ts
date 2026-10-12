@@ -41,18 +41,9 @@ export async function PATCH(request: Request) {
 
   if (body && typeof body === 'object') {
     const b = body as Record<string, unknown>
-    if ('name' in b) updates.name = String(b.name)
-    if ('phone' in b) updates.phone = b.phone ? String(b.phone) : null
-    if ('address' in b) updates.address = b.address ? String(b.address) : null
-    if ('password' in b || 'newPassword' in b) {
-      const pwd = String(b.password || b.newPassword)
-      if (pwd.length >= 8) {
-        const crypto = require('crypto')
-        const salt = crypto.randomBytes(16).toString('hex')
-        const hash = crypto.scryptSync(pwd, salt, 64).toString('hex')
-        updates.password_hash = `${salt}:${hash}`
-      }
-    }
+    if ('name' in b && b.name !== undefined && String(b.name).trim()) updates.name = String(b.name).trim()
+    if ('phone' in b) updates.phone = b.phone && String(b.phone).trim() ? String(b.phone).trim() : null
+    if ('address' in b) updates.address = b.address && String(b.address).trim() ? String(b.address).trim() : null
   }
 
   if (Object.keys(updates).length === 0) {
@@ -82,7 +73,34 @@ export async function PATCH(request: Request) {
       timestamp: new Date().toISOString(),
     })
 
-    return NextResponse.json({ success: true, user: updated })
+    const { createToken } = await import('@/lib/jwt')
+    const userPayload = {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      phone: updated.phone || undefined,
+      address: updated.address || undefined,
+      avatar: updated.avatar || undefined,
+      restaurantName: updated.restaurant_name || undefined,
+      cuisine: updated.cuisine || undefined,
+      vehicleType: updated.vehicle_type || undefined,
+      licensePlate: updated.license_plate || undefined,
+      locale: updated.locale || 'en',
+    }
+    const token = await createToken(userPayload as any)
+
+    const response = NextResponse.json({ success: true, user: updated, token })
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    }
+    response.cookies.set('crave_auth_token', token, cookieOptions)
+    response.cookies.set('drop_auth_token', token, cookieOptions)
+    return response
   } catch (err) {
     console.error('[PATCH /api/user/update]', err)
     return NextResponse.json({ error: 'Failed to update user profile' }, { status: 500 })

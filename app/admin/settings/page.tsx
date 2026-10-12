@@ -25,22 +25,6 @@ export default function AdminSettingsPage() {
     'general' | 'security' | 'notifications' | 'onboarding'
   >('general')
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedSettingsTab = localStorage.getItem('crave_admin_settings_tab')
-      if (savedSettingsTab) {
-        setActiveTabState(savedSettingsTab as any)
-      }
-    }
-  }, [])
-
-  const setActiveTab = (tab: 'general' | 'security' | 'notifications' | 'onboarding') => {
-    setActiveTabState(tab)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('crave_admin_settings_tab', tab)
-    }
-  }
-
   // 1. General & Operations Settings
   const [appName, setAppName] = useState('crave. Food Delivery')
   const [supportEmail, setSupportEmail] = useState('support@crave.com')
@@ -79,14 +63,131 @@ export default function AdminSettingsPage() {
 
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false)
 
-  function handleSave(e: React.FormEvent) {
+  React.useEffect(() => {
+    // XP-09 FIX: Load settings from server-side API (Redis) instead of localStorage.
+    // localStorage is read as a one-time migration fallback so settings saved before this
+    // fix are not lost on the first upgrade.
+    const applySettings = (s: Record<string, unknown>) => {
+      if (s.appName) setAppName(s.appName as string)
+      if (s.supportEmail) setSupportEmail(s.supportEmail as string)
+      if (s.supportPhone) setSupportPhone(s.supportPhone as string)
+      if (s.deliveryRadius !== undefined) setDeliveryRadius(s.deliveryRadius as number)
+      if (s.maxPreparationTime !== undefined) setMaxPreparationTime(s.maxPreparationTime as number)
+      if (s.autoAssignDrivers !== undefined) setAutoAssignDrivers(s.autoAssignDrivers as boolean)
+      if (s.isMaintenanceMode !== undefined) setIsMaintenanceMode(s.isMaintenanceMode as boolean)
+      if (s.maintenanceNotice) setMaintenanceNotice(s.maintenanceNotice as string)
+      if (s.jwtExpiryDays !== undefined) setJwtExpiryDays(s.jwtExpiryDays as number)
+      if (s.requireAdmin2FA !== undefined) setRequireAdmin2FA(s.requireAdmin2FA as boolean)
+      if (s.sessionTimeoutMins !== undefined) setSessionTimeoutMins(s.sessionTimeoutMins as number)
+      if (s.rateLimitPerMin !== undefined) setRateLimitPerMin(s.rateLimitPerMin as number)
+      if (s.enforceStrongPassword !== undefined) setEnforceStrongPassword(s.enforceStrongPassword as boolean)
+      if (s.sendSmsAlerts !== undefined) setSendSmsAlerts(s.sendSmsAlerts as boolean)
+      if (s.sendWhatsappAlerts !== undefined) setSendWhatsappAlerts(s.sendWhatsappAlerts as boolean)
+      if (s.sendEmailReceipts !== undefined) setSendEmailReceipts(s.sendEmailReceipts as boolean)
+      if (s.enableSoundAlerts !== undefined) setEnableSoundAlerts(s.enableSoundAlerts as boolean)
+      if (s.smsProvider) setSmsProvider(s.smsProvider as string)
+      if (s.autoApproveVendors !== undefined) setAutoApproveVendors(s.autoApproveVendors as boolean)
+      if (s.requireFssaiLicense !== undefined) setRequireFssaiLicense(s.requireFssaiLicense as boolean)
+      if (s.requireDriverLicense !== undefined) setRequireDriverLicense(s.requireDriverLicense as boolean)
+      if (s.requireGstin !== undefined) setRequireGstin(s.requireGstin as boolean)
+    }
+
+    // Tab preference stays local — it is a UI preference, not a system setting.
+    if (typeof window !== 'undefined') {
+      const savedSettingsTab = localStorage.getItem('crave_admin_settings_tab')
+      if (savedSettingsTab) setActiveTabState(savedSettingsTab as any)
+    }
+
+    // Load from API (server-side Redis store)
+    fetch('/api/admin/config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.config && Object.keys(data.config).length > 0) {
+          applySettings(data.config)
+        } else if (typeof window !== 'undefined') {
+          // Migration fallback: read from localStorage if server has no config yet
+          try {
+            const savedRaw = localStorage.getItem('crave_admin_settings')
+            if (savedRaw) applySettings(JSON.parse(savedRaw))
+          } catch {}
+        }
+      })
+      .catch(() => {
+        // Network error: fall back to localStorage so the page still shows something useful
+        if (typeof window !== 'undefined') {
+          try {
+            const savedRaw = localStorage.getItem('crave_admin_settings')
+            if (savedRaw) applySettings(JSON.parse(savedRaw))
+          } catch {}
+        }
+      })
+  }, [])
+
+  const setActiveTab = (tab: 'general' | 'security' | 'notifications' | 'onboarding') => {
+    setActiveTabState(tab)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crave_admin_settings_tab', tab)
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    // XP-09 FIX: Persist settings to the server (Redis via /api/admin/config) rather than
+    // only to localStorage. This ensures settings survive page reloads and apply across all
+    // admin sessions and server-side middleware.
+    const payload = {
+      appName,
+      supportEmail,
+      supportPhone,
+      deliveryRadius,
+      maxPreparationTime,
+      autoAssignDrivers,
+      isMaintenanceMode,
+      maintenanceNotice,
+      jwtExpiryDays,
+      requireAdmin2FA,
+      sessionTimeoutMins,
+      rateLimitPerMin,
+      enforceStrongPassword,
+      sendSmsAlerts,
+      sendWhatsappAlerts,
+      sendEmailReceipts,
+      enableSoundAlerts,
+      smsProvider,
+      autoApproveVendors,
+      requireFssaiLicense,
+      requireDriverLicense,
+      requireGstin,
+    }
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error('Server save failed')
+      // Also mirror to localStorage for quick local reads and offline fallback
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('crave_admin_settings', JSON.stringify(payload)) } catch {}
+      }
+    } catch (err) {
+      console.error('[AdminSettings] Failed to persist to server:', err)
+      // Save to localStorage so the admin doesn't lose unsaved work
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('crave_admin_settings', JSON.stringify(payload)) } catch {}
+      }
+    }
     setSavedSuccess(true)
     toast('Admin Master Settings Saved & Applied!', 'success')
     setTimeout(() => setSavedSuccess(false), 3500)
   }
 
   function handleReset() {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('crave_admin_settings')
+      } catch {}
+    }
     setAppName('crave. Food Delivery')
     setSupportEmail('support@crave.com')
     setSupportPhone('+91 98765 43210')

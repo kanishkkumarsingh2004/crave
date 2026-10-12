@@ -248,9 +248,11 @@ export function useApprovalUpdates(
 }
 
 export function useDriverLocation(orderId: string | undefined, onLocation: (data: any) => void) {
+  // XP-05 FIX: Pass `orderId` (not `customerId`) so the ws-server ownership check on
+  // driver_location channel correctly validates the subscriber against msg.orderId.
   return useWebSocket({
     channels: ['driver_location'],
-    customerId: orderId,
+    orderId,
     onMessage: (msg) => {
       if (msg.channel === 'driver_location') {
         const data = msg.data as any

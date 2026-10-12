@@ -69,16 +69,10 @@ export async function POST(request: Request) {
     if (finalLicensePlate !== undefined)
       userUpdateData.license_plate = finalLicensePlate ? String(finalLicensePlate).trim() : null
 
-    if (password && String(password).trim().length > 0) {
-      let targetEmail = cleanEmail
-      if (!targetEmail) {
-        targetEmail = targetUser.email
-      }
-      if (targetEmail) {
-        userUpdateData.password_hash = crypto
-          .scryptSync(String(password), targetEmail, 64)
-          .toString('hex')
-      }
+    if (password && String(password).trim().length >= 8) {
+      const salt = crypto.randomBytes(16).toString('hex')
+      const hash = crypto.scryptSync(String(password), salt, 64).toString('hex')
+      userUpdateData.password_hash = `${salt}:${hash}`
     }
 
     // Determine if restaurant update is needed

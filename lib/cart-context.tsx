@@ -15,6 +15,10 @@ export interface CartItem {
   vendorId?: string
   restaurantLat?: number
   restaurantLng?: number
+  in_stock?: boolean
+  inStock?: boolean
+  stock_count?: number
+  stockCount?: number
 }
 
 interface CartContextType {
@@ -63,6 +67,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, isLoaded])
 
   const addItem = (item: CartItem) => {
+    const isOutOfStock =
+      item.in_stock === false ||
+      item.inStock === false ||
+      (item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0) ||
+      (item.stockCount !== undefined && item.stockCount !== null && item.stockCount <= 0)
+
+    if (isOutOfStock) {
+      return
+    }
+
     setItems((prev) => {
       if (prev.length > 0 && item.restaurantId) {
         const existingRestaurantId = prev[0].restaurantId
@@ -88,6 +102,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         prev
           .map((i) => {
             if (i.id === id) {
+              const isOutOfStock =
+                i.in_stock === false ||
+                i.inStock === false ||
+                (i.stock_count !== undefined && i.stock_count !== null && i.stock_count <= 0) ||
+                (i.stockCount !== undefined && i.stockCount !== null && i.stockCount <= 0)
+
+              if (isOutOfStock && delta > 0) {
+                return i
+              }
+
               const newQty = i.qty + delta
               return newQty > 0 ? { ...i, qty: newQty } : null
             }

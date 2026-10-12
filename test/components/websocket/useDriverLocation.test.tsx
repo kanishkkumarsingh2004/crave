@@ -43,7 +43,10 @@ describe('WebSocket Hooks - useDriverLocation', () => {
     global.WebSocket = jest.fn().mockImplementation(() => mockWsInstance) as any
   })
 
-  it('subscribes to driver_location channel with orderId as customerId', async () => {
+  it('subscribes to driver_location channel with correct orderId (not customerId)', async () => {
+    // XP-05 FIX validation: useDriverLocation must pass `orderId` in the subscribe payload.
+    // Previously it passed `customerId: orderId` which caused ws-server ownership check to fail,
+    // silently dropping all live GPS updates on the customer tracking screen.
     const { useDriverLocation } = await import('@/lib/websocket')
 
     renderHook(() => useDriverLocation('ord_1', jest.fn()))
@@ -56,7 +59,7 @@ describe('WebSocket Hooks - useDriverLocation', () => {
       JSON.stringify({
         type: 'subscribe',
         channels: ['driver_location'],
-        customerId: 'ord_1',
+        orderId: 'ord_1',
       })
     )
   })

@@ -53,24 +53,22 @@ export async function POST(request: Request) {
     }
 
     const driverUserId = `usr_driver_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hash = crypto.scryptSync(String(password), salt, 64).toString('hex')
+    const passwordHash = `${salt}:${hash}`
 
     // Insert rider user record via Prisma DAL
-    try {
-      await createUser({
-        id: driverUserId,
-        name: String(name).trim(),
-        email: cleanEmail,
-        role: 'rider',
-        password_hash: passwordHash,
-        phone: phone ? String(phone).trim() : null,
-        address: address ? String(address).trim() : null,
-        vehicle_type: String(finalVehicleType).trim(),
-        license_plate: finalLicensePlate ? String(finalLicensePlate).trim() : null,
-      })
-    } catch (err: any) {
-      console.warn('Could not insert driver user via Prisma:', err?.message)
-    }
+    await createUser({
+      id: driverUserId,
+      name: String(name).trim(),
+      email: cleanEmail,
+      role: 'rider',
+      password_hash: passwordHash,
+      phone: phone ? String(phone).trim() : null,
+      address: address ? String(address).trim() : null,
+      vehicle_type: String(finalVehicleType).trim(),
+      license_plate: finalLicensePlate ? String(finalLicensePlate).trim() : null,
+    })
 
     // Broadcast real-time driver onboarding to WebSocket listeners
     broadcast('admin_stats', {

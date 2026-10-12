@@ -28,6 +28,12 @@ export async function GET(request: Request) {
             total_amount: true,
           },
         },
+        owned_restaurants: {
+          select: {
+            commission_rate: true,
+            commercial_model: true,
+          },
+        },
       },
       orderBy: { created_at: 'desc' },
     })
@@ -38,6 +44,10 @@ export async function GET(request: Request) {
         (sum: number, o: any) => sum + Number(o.total_amount || 0),
         0
       )
+      const rest = u.owned_restaurants?.[0]
+      const commissionRate = rest?.commission_rate != null ? Number(rest.commission_rate) : 15
+      const commercialModel = rest?.commercial_model || 'commission'
+
       return {
         id: u.id,
         name: u.name,
@@ -54,16 +64,17 @@ export async function GET(request: Request) {
         created_at: u.created_at,
         total_spent: totalSpent,
         total_orders: orders.length,
-        commission_rate: u.commission_rate,
-        payment_model: 'commission',
+        commission_rate: commissionRate,
+        payment_model: commercialModel,
       }
     })
 
     return NextResponse.json({ success: true, users: formatted })
   } catch (error: any) {
+    console.error('[GET /api/admin/users]', error)
     return NextResponse.json(
-      { success: true, users: [], error: error?.message || 'Failed to load users' },
-      { status: 200 }
+      { success: false, error: error?.message || 'Failed to load users' },
+      { status: 500 }
     )
   }
 }

@@ -31,28 +31,55 @@ export async function GET(request: Request) {
       )
     }
 
+    let freshUser: any = null
+    try {
+      const { findUserById } = await import('@/lib/dal/users')
+      freshUser = await findUserById(payload.id)
+    } catch (e) {}
+
+    const resolved = freshUser || payload
+    let restaurantId = payload.restaurantId || resolved.restaurantId
+    let restaurantName = resolved.restaurant_name || resolved.restaurantName || payload.restaurantName
+
     if (
-      !payload.restaurantId &&
-      (payload.role === 'restaurant_vendor' || payload.role === 'cravexp_store_vendor')
+      !restaurantId &&
+      (resolved.role === 'restaurant_vendor' || resolved.role === 'cravexp_store_vendor')
     ) {
       try {
         const { prisma } = await import('@/lib/prisma')
         const rest = await prisma.restaurant.findFirst({
           where: {
             OR: [
-              { owner_id: payload.id },
-              ...(payload.restaurantName ? [{ name: payload.restaurantName }] : []),
+              { owner_id: resolved.id },
+              ...(restaurantName ? [{ name: restaurantName }] : []),
             ],
           },
         })
         if (rest) {
-          payload.restaurantId = rest.id
-          if (!payload.restaurantName) payload.restaurantName = rest.name
+          restaurantId = rest.id
+          if (!restaurantName) restaurantName = rest.name
         }
       } catch (e) {}
     }
 
-    return NextResponse.json({ authenticated: true, user: payload })
+    const userProfile = {
+      id: resolved.id,
+      name: resolved.name,
+      email: resolved.email,
+      role: resolved.role,
+      phone: resolved.phone || undefined,
+      address: resolved.address || undefined,
+      avatar: resolved.avatar || undefined,
+      restaurantName: restaurantName || undefined,
+      restaurantId,
+      cuisine: resolved.cuisine || undefined,
+      vehicleType: resolved.vehicle_type || resolved.vehicleType || undefined,
+      licensePlate: resolved.license_plate || resolved.licensePlate || undefined,
+      vehicleNo: resolved.license_plate || resolved.licensePlate || resolved.vehicleNo || undefined,
+      locale: resolved.locale || 'en',
+    }
+
+    return NextResponse.json({ authenticated: true, user: userProfile })
   } catch (error) {
     return NextResponse.json(
       { authenticated: false, error: 'Internal server error' },

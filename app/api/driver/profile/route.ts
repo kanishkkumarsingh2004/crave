@@ -13,6 +13,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Driver ID is required' }, { status: 400 })
     }
 
+    if (actor.role !== 'admin' && actor.id !== driverId) {
+      return NextResponse.json({ error: 'Unauthorized to view this driver profile' }, { status: 403 })
+    }
+
     const user = await findUserById(driverId)
     if (!user) {
       return NextResponse.json({ error: 'Driver user profile not found' }, { status: 404 })
@@ -56,14 +60,18 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Driver ID required' }, { status: 400 })
     }
 
+    if (actor.role !== 'admin' && actor.id !== driverId) {
+      return NextResponse.json({ error: 'Unauthorized to update this driver profile' }, { status: 403 })
+    }
+
     const { name, phone, address, vehicleType, licensePlate } = body
 
     const updated = await updateUser(driverId, {
-      ...(name && { name }),
-      ...(phone && { phone }),
-      ...(address && { address }),
-      ...(vehicleType && { vehicle_type: vehicleType }),
-      ...(licensePlate && { license_plate: licensePlate }),
+      ...(name && { name: String(name).trim() }),
+      ...(phone !== undefined && { phone: phone ? String(phone).trim() : null }),
+      ...(address !== undefined && { address: address ? String(address).trim() : null }),
+      ...(vehicleType && { vehicle_type: String(vehicleType).trim() }),
+      ...(licensePlate && { license_plate: String(licensePlate).trim() }),
     })
 
     return NextResponse.json({

@@ -2,6 +2,7 @@
 
 import VendorDashboard from '@/components/dashboards/VendorDashboard'
 import { useAuth } from '@/lib/auth-context'
+import { getRoleDashboardPath } from '@/lib/role-routing'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -16,17 +17,7 @@ export default function VendorDashboardPage() {
     if (!user) {
       router.replace('/login')
     } else if (role !== 'vendor' && role !== 'restaurant_vendor') {
-      const redirectPath =
-        role === 'user' || role === 'customer'
-          ? '/user/dashboard'
-          : role === 'rider' || role === 'driver'
-            ? '/driver/dashboard'
-            : role === 'cravexp_store_vendor'
-              ? '/vendor/crave-ep'
-              : role === 'admin'
-                ? '/admin/dashboard'
-                : '/login'
-      router.replace(redirectPath)
+      router.replace(getRoleDashboardPath(role))
     }
   }, [user, role, isLoading, router])
 
@@ -56,9 +47,7 @@ export default function VendorDashboardPage() {
             Console is restricted to kitchen owners.
           </p>
           <button
-            onClick={() =>
-              router.push(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
-            }
+            onClick={() => router.push(getRoleDashboardPath(role))}
             className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
           >
             Go to Your {role} Dashboard

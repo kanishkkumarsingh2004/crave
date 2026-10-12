@@ -878,7 +878,9 @@ export async function POST(request: Request) {
             restaurant_payout: vendorNetPayout,
             platform_revenue: platformProfit,
             utr_ref,
-            customer_vpa: customer_vpa || (actor as any)?.email || 'customer@upi',
+            // XP-10 FIX: `customer_vpa` does NOT exist on the Order model — it belongs only
+            // on PaymentReview (see the block below). Passing it here causes a Prisma runtime
+            // error. The field is correctly written to paymentReview.create below.
             financial_snapshot: canonicalResult as any,
           },
         })
@@ -1299,9 +1301,11 @@ export async function PATCH(request: Request) {
     }
 
     // Broadcast order status update to subscribed clients.
+    // XP-03 FIX: Include `type` field — ws-server.js schema validator requires data.type to be
+    // a non-empty string or the broadcast is rejected with 400 and dropped silently.
     if (status) {
-      await broadcast('order_update', { order: updated, orderId })
-      await broadcast('admin_orders', { order: updated, orderId })
+      await broadcast('order_update', { type: 'order_status_update', order: updated, orderId })
+      await broadcast('admin_orders', { type: 'order_status_update', order: updated, orderId })
     }
 
     // Broadcast driver location update if coordinates changed.

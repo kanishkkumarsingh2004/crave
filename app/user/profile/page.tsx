@@ -2,24 +2,10 @@
 
 import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
 import { useAuth } from '@/lib/auth-context'
+import { getRoleDashboardPath } from '@/lib/role-routing'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-
-const getDashboardPath = (role: string) => {
-  switch (role) {
-    case 'restaurant_vendor':
-    case 'cravexp_store_vendor':
-      return 'vendor/dashboard'
-    case 'rider':
-    case 'driver':
-      return 'driver/dashboard'
-    case 'admin':
-      return 'admin/dashboard'
-    default:
-      return 'login'
-  }
-}
 
 export default function UserProfilePage() {
   const { user, role, isLoading } = useAuth()
@@ -31,7 +17,7 @@ export default function UserProfilePage() {
     if (!user) {
       router.replace('/login')
     } else if (role !== 'user' && role !== 'customer') {
-      router.replace(`/${getDashboardPath(role)}`)
+      router.replace(getRoleDashboardPath(role))
     }
   }, [user, role, isLoading, router])
 
@@ -60,7 +46,7 @@ export default function UserProfilePage() {
             You are logged in as a <span className="font-bold capitalize">{role}</span>.
           </p>
           <button
-            onClick={() => router.push(`/${getDashboardPath(role)}`)}
+            onClick={() => router.push(getRoleDashboardPath(role))}
             className="mt-6 rounded-full bg-[#18201c] px-6 py-2.5 text-xs font-bold text-white"
           >
             Go to {role} Dashboard

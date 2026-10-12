@@ -132,8 +132,9 @@ export async function PATCH(request: Request) {
     // 3. Broadcast real-time WebSocket events across all dashboards
     await broadcast('approval_update', { status, orderId: targetOrderId })
     if (updatedOrder) {
-      await broadcast('order_update', { order: updatedOrder, orderId: targetOrderId })
-      await broadcast('admin_orders', { order: updatedOrder, orderId: targetOrderId })
+      // XP-03 FIX: Include `type` field so ws-server.js schema validator accepts the payload.
+      await broadcast('order_update', { type: 'order_status_update', order: updatedOrder, orderId: targetOrderId })
+      await broadcast('admin_orders', { type: 'order_status_update', order: updatedOrder, orderId: targetOrderId })
     }
     await broadcast('admin_stats', {
       type: 'payment_review_updated',

@@ -414,7 +414,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     },
   })
 
-  // Poll /api/orders for live orders matching driver queue
+  // XP-04 FIX: Poll /api/orders on a recurring interval while driver is online and idle.
+  // The one-shot call on mount was insufficient — drivers never received offers after the
+  // initial mount. Now polls every 8 seconds so they continuously see available pickups.
   useEffect(() => {
     if (!isOnline || activeTask || broadcastOffer) return
 
@@ -447,7 +449,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Run once immediately, then every 8 seconds
     checkLiveOrders()
+    const pollInterval = setInterval(checkLiveOrders, 8000)
+    return () => clearInterval(pollInterval)
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
   // Query Browser Geolocation Permissions API
@@ -958,23 +963,26 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      fetch('/api/orders', {
+      // XP-02 FIX: Include delivery_otp in payload — the API enforces OTP verification server-side.
+      // Awaiting ensures we surface rejection (wrong OTP, replay, etc.) before updating local state.
+      const deliveryRes = await fetch('/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: activeTask.id,
           status: 'delivered',
+          delivery_otp: providedOtp,
+          otp: providedOtp,
         }),
-      }).catch(() => {})
+      })
 
-      fetch('/api/orders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: activeTask.id,
-          status: 'completed',
-        }),
-      }).catch(() => {})
+      if (!deliveryRes.ok) {
+        const errBody = await deliveryRes.json().catch(() => ({}))
+        return {
+          success: false,
+          message: errBody?.error || `Delivery confirmation failed (${deliveryRes.status}). Please retry.`,
+        }
+      }
 
       publishLiveEvent('order_update', {
         orderId: activeTask.id,
@@ -986,7 +994,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       setActiveTask(null)
       return { success: true, message: 'Delivery completed successfully with OTP handshake!' }
     } catch (e) {
-      return { success: false, message: 'Failed to complete delivery' }
+      return { success: false, message: 'Failed to complete delivery. Check your connection and retry.' }
     }
   }
 
@@ -1015,13 +1023,20 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {}
   }
 
-  function setPrimaryUpi(id: string) {
+  async function setPrimaryUpi(id: string) {
     setSavedUpiList((prev) =>
       prev.map((item) => ({
         ...item,
         isPrimary: item.id === id,
       }))
     )
+    try {
+      await fetch('/api/driver/upi', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isPrimary: true }),
+      })
+    } catch (e) {}
   }
 
   async function deleteUpiId(id: string) {

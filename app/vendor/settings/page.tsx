@@ -40,21 +40,23 @@ export default function VendorSettingsPage() {
     if (isLoading) return
     if (!user) {
       router.replace('/login')
-    } else if (role !== 'vendor' && role !== 'restaurant_vendor') {
+    } else if (role !== 'vendor' && role !== 'restaurant_vendor' && role !== 'cravexp_store_vendor') {
+      // XP-07 FIX: cravexp_store_vendor was redirected away from settings entirely,
+      // leaving dark store operators with no way to configure bank details or FSSAI.
+      // All vendor roles are now permitted on this page.
       router.replace(
         role === 'user' || role === 'customer'
           ? '/user/dashboard'
-          : role === 'cravexp_store_vendor'
-            ? '/vendor/crave-ep'
-            : role === 'rider' || role === 'driver'
-              ? '/driver/dashboard'
-              : '/dashboard'
+          : role === 'rider' || role === 'driver'
+            ? '/driver/dashboard'
+            : '/dashboard'
       )
     }
   }, [user, role, isLoading, router])
 
   useEffect(() => {
-    if (!user?.id || (role !== 'vendor' && role !== 'restaurant_vendor')) return
+    // XP-07 FIX: Include cravexp_store_vendor so dark store owners can load their profile
+    if (!user?.id || (role !== 'vendor' && role !== 'restaurant_vendor' && role !== 'cravexp_store_vendor')) return
     const loadSettings = async () => {
       setSettingsLoading(true)
       try {
@@ -99,7 +101,7 @@ export default function VendorSettingsPage() {
     loadSettings()
   }, [user?.id, role])
 
-  if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
+  if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor' && role !== 'cravexp_store_vendor')) {
     return (
       <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
         <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
@@ -116,6 +118,7 @@ export default function VendorSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: restaurantId,
+          phone: phone ? phone.trim() : null,
           bank_account_name: accountHolder || null,
           bank_name: bankName || null,
           bank_account_number: accountNumber || null,
@@ -130,7 +133,18 @@ export default function VendorSettingsPage() {
         }),
       })
       if (!res.ok) throw new Error('Save failed')
-      setToastMsg('Bank account details & store settings saved successfully!')
+
+      // Also sync user phone/address
+      await fetch('/api/user/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phone ? phone.trim() : null,
+          address: address ? address.trim() : null,
+        }),
+      }).catch(() => {})
+
+      setToastMsg('Bank account details, contact info & store settings saved successfully!')
     } catch (err) {
       setToastMsg('Could not save settings to the database.')
     } finally {
@@ -410,9 +424,6 @@ export default function VendorSettingsPage() {
                   </option>
                   <option value="COMPOSITION" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
                     COMPOSITION SCHEME
-                  </option>
-                  <option value="EXEMPT" className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white">
-                    EXEMPT
                   </option>
                 </select>
               </div>

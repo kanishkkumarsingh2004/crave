@@ -6,7 +6,7 @@ import { Bike, CheckCircle2, Save, ShieldCheck, User } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
 export default function DriverProfilePage() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { showCustomAlert } = useDriver()
   const [name, setName] = useState(user?.name || '')
   const [phone, setPhone] = useState(user?.phone || '')
@@ -34,7 +34,7 @@ export default function DriverProfilePage() {
       } catch (e) {}
     }
     loadProfile()
-  }, [user?.id, user?.name, user?.phone, user?.address, user?.vehicleType, user?.licensePlate])
+  }, [user?.id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -54,6 +54,34 @@ export default function DriverProfilePage() {
       })
       const json = await res.json()
       if (json.success) {
+        if (updateUser) {
+          updateUser({
+            name,
+            phone,
+            address,
+            vehicleType,
+            licensePlate,
+            vehicleNo: licensePlate,
+          })
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('crave_user')
+            if (raw) {
+              const current = JSON.parse(raw)
+              const updated = {
+                ...current,
+                name,
+                phone,
+                address,
+                vehicleType,
+                licensePlate,
+                vehicleNo: licensePlate,
+              }
+              localStorage.setItem('crave_user', JSON.stringify(updated))
+            }
+          } catch {}
+        }
         setSaveSuccess('Driver vehicle details & profile updated successfully in system database!')
         setTimeout(() => setSaveSuccess(''), 3000)
       } else {

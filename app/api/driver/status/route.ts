@@ -9,7 +9,11 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const { driverId: bodyDriverId, isOnline, status } = body
-    const driverId = bodyDriverId || actor.id || 'driver_partner'
+    const driverId = bodyDriverId || actor.id
+
+    if (actor.role !== 'admin' && actor.id !== driverId) {
+      return NextResponse.json({ error: 'Unauthorized to update this driver status' }, { status: 403 })
+    }
 
     const currentLoc = getDriverLocation(driverId)
     const dutyStatus = status || (isOnline ? 'ONLINE' : 'OFFLINE')
