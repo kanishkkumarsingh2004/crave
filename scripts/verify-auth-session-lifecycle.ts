@@ -1,4 +1,4 @@
-import { createToken, verifyToken, blacklistToken, blacklistAllUserTokens, JWTPayload } from '../lib/jwt'
+import { createToken, verifyToken, blacklistToken, blacklistAllUserTokens, unblacklistUser, JWTPayload } from '../lib/jwt'
 import { NextRequest } from 'next/server'
 import { proxy } from '../proxy'
 import { POST as logoutPost } from '../app/api/auth/logout/route'
@@ -65,7 +65,15 @@ async function runAuthVerification() {
   if (verifyDevice1After !== null || verifyDevice2After !== null) {
     throw new Error('TEST 3 FAILED: User-level revoked tokens were not rejected.')
   }
-  console.log('✅ TEST 3 PASSED: All user session tokens revoked synchronously.\n')
+
+  // Restore user via unblacklistUser (simulating new login)
+  await unblacklistUser(userTokenPayload.id)
+  const freshToken = await createToken(userTokenPayload)
+  const verifyFreshToken = await verifyToken(freshToken)
+  if (!verifyFreshToken) {
+    throw new Error('TEST 3 FAILED: Unblacklisted user fresh token was rejected.')
+  }
+  console.log('✅ TEST 3 PASSED: All user session tokens revoked synchronously and restored upon unblacklist.\n')
 
   // TEST 4: /api/auth/logout Purges All 3 Auth Cookies
   console.log('--- TEST 4: /api/auth/logout Cookie Deletion ---')

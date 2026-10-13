@@ -1,4 +1,4 @@
-import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
+import { createToken, unblacklistUser, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -49,14 +49,12 @@ export async function POST(request: Request) {
     }
 
     let lookupEmail = email
-    if (process.env.NODE_ENV !== 'production') {
-      if (email === 'admin') lookupEmail = 'admin@crave.com'
-      else if (email === 'vendor') lookupEmail = 'vendor@crave.com'
-      else if (email === 'user') lookupEmail = 'user@crave.com'
-      else if (email === 'darkstore' || email === 'store' || email === 'cravexp')
-        lookupEmail = 'darkstore@crave.com'
-      else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
-    }
+    if (email === 'admin') lookupEmail = 'admin@crave.com'
+    else if (email === 'vendor') lookupEmail = 'vendor@crave.com'
+    else if (email === 'user') lookupEmail = 'user@crave.com'
+    else if (email === 'darkstore' || email === 'store' || email === 'cravexp')
+      lookupEmail = 'darkstore@crave.com'
+    else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
 
     let profile: any = null
     try {
@@ -234,6 +232,9 @@ export async function POST(request: Request) {
       userPayload.restaurantId = restaurantId
       userPayload.restaurant_id = restaurantId
     }
+
+    // Unblacklist user upon valid credentials authentication to ensure session is immediately valid
+    await unblacklistUser(userPayload.id).catch(() => {})
 
     const token = await createToken(userPayload)
     return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token, request)

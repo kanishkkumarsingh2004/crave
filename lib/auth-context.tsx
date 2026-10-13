@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const maxAge = 60 * 60 * 24 * 7 // 7 days
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
     const secureFlag = isHttps ? '; Secure' : ''
-    const cookieVal = `${encodeURIComponent(rawToken)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`
+    const cookieVal = `${rawToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`
     document.cookie = `crave_auth_token=${cookieVal}`
     document.cookie = `drop_auth_token=${cookieVal}`
     document.cookie = `crave_token=${cookieVal}`

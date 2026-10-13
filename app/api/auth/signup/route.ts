@@ -1,4 +1,4 @@
-import { createToken, JWTPayload } from '@/lib/jwt'
+import { createToken, unblacklistUser, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail, createCustomerAddress } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
@@ -134,6 +134,8 @@ export async function POST(request: Request) {
       user: userPayload,
       timestamp: new Date().toISOString(),
     })
+
+    await unblacklistUser(userPayload.id).catch(() => {})
 
     const token = await createToken(userPayload)
     const response = NextResponse.json({

@@ -169,6 +169,22 @@ export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
 }
 
 /**
+ * Remove user-level blacklist when a user successfully authenticates afresh
+ */
+export async function unblacklistUser(userId: string): Promise<boolean> {
+  inMemoryUserBlacklist.delete(userId)
+  if (isRedisAvailable() && redis) {
+    try {
+      await Promise.race([
+        redis.del(`crave:jwt:blacklist:user:${userId}`),
+        new Promise((resolve) => setTimeout(resolve, 500)),
+      ])
+    } catch {}
+  }
+  return true
+}
+
+/**
  * Check if a user has been globally logged out
  */
 export async function isUserBlacklisted(userId: string): Promise<boolean> {
