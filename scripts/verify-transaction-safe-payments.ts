@@ -11,11 +11,7 @@
 
 import 'dotenv/config'
 import { prisma } from '../lib/prisma'
-import {
-  acquireIdempotency,
-  completeIdempotency,
-  releaseIdempotency,
-} from '../lib/idempotency'
+import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '../lib/idempotency'
 import {
   processPaymentVerificationTx,
   processPaymentRejectionTx,
@@ -46,20 +42,38 @@ async function runVerification() {
     console.log('  ✓ 1.1 Fresh lock acquired successfully (status: new)')
 
     // 1.2 Concurrent acquisition while processing should yield 'processing'
-    const acquireConcurrent = await acquireIdempotency(testKey1, 'order_checkout', { cartTotal: 500 })
-    console.assert(acquireConcurrent.status === 'processing', `Expected status 'processing', got ${acquireConcurrent.status}`)
+    const acquireConcurrent = await acquireIdempotency(testKey1, 'order_checkout', {
+      cartTotal: 500,
+    })
+    console.assert(
+      acquireConcurrent.status === 'processing',
+      `Expected status 'processing', got ${acquireConcurrent.status}`
+    )
     console.log('  ✓ 1.2 Concurrent duplicate request blocked (status: processing)')
 
     // 1.3 Complete idempotency
-    const mockOrderPayload = { orderId: `ord_${testIdPrefix}`, grandTotal: 500, status: 'payment_submitted' }
+    const mockOrderPayload = {
+      orderId: `ord_${testIdPrefix}`,
+      grandTotal: 500,
+      status: 'payment_submitted',
+    }
     await completeIdempotency(testKey1, 'order_checkout', 201, mockOrderPayload)
     console.log('  ✓ 1.3 Completed idempotency record saved with response payload')
 
     // 1.4 Subsequent request with identical key returns cached completed response
     const acquireReplay = await acquireIdempotency(testKey1, 'order_checkout', { cartTotal: 500 })
-    console.assert(acquireReplay.status === 'completed', `Expected status 'completed', got ${acquireReplay.status}`)
-    console.assert(acquireReplay.statusCode === 201, `Expected statusCode 201, got ${acquireReplay.statusCode}`)
-    console.assert(acquireReplay.body?.orderId === mockOrderPayload.orderId, 'Expected matching cached payload')
+    console.assert(
+      acquireReplay.status === 'completed',
+      `Expected status 'completed', got ${acquireReplay.status}`
+    )
+    console.assert(
+      acquireReplay.statusCode === 201,
+      `Expected statusCode 201, got ${acquireReplay.statusCode}`
+    )
+    console.assert(
+      acquireReplay.body?.orderId === mockOrderPayload.orderId,
+      'Expected matching cached payload'
+    )
     console.log('  ✓ 1.4 Exact replay returned cached response (no duplicate execution)\n')
 
     // ─────────────────────────────────────────────────────────────
@@ -89,7 +103,10 @@ async function runVerification() {
     })
     console.assert(successResult === 1, 'Expected 1 item updated')
     const itemAfterFirst = await prisma.menuItem.findUnique({ where: { id: testItemId } })
-    console.assert(itemAfterFirst?.stock_count === 1, `Expected stock 1, got ${itemAfterFirst?.stock_count}`)
+    console.assert(
+      itemAfterFirst?.stock_count === 1,
+      `Expected stock 1, got ${itemAfterFirst?.stock_count}`
+    )
     console.log('  ✓ 2.1 Successfully reserved 2 items, remaining stock: 1')
 
     // Step 2.2: Try to order 2 more items (should fail atomically because only 1 remains)
@@ -107,7 +124,10 @@ async function runVerification() {
     }
     console.assert(failedAtomically, 'Expected transaction to abort due to insufficient stock')
     const itemAfterFailed = await prisma.menuItem.findUnique({ where: { id: testItemId } })
-    console.assert(itemAfterFailed?.stock_count === 1, `Expected stock to remain 1, got ${itemAfterFailed?.stock_count}`)
+    console.assert(
+      itemAfterFailed?.stock_count === 1,
+      `Expected stock to remain 1, got ${itemAfterFailed?.stock_count}`
+    )
     console.log('  ✓ 2.2 Oversell blocked atomically; stock remained unchanged at 1\n')
 
     // ─────────────────────────────────────────────────────────────
@@ -139,21 +159,40 @@ async function runVerification() {
       actorId: 'admin_audit_01',
     })
     console.assert(verifyResult1.success, 'Verification should succeed')
-    console.assert(verifyResult1.alreadyVerified === false, 'First verification should not be marked alreadyVerified')
+    console.assert(
+      verifyResult1.alreadyVerified === false,
+      'First verification should not be marked alreadyVerified'
+    )
 
     const verifiedOrder = await prisma.order.findUnique({ where: { id: testOrderId } })
-    console.assert(verifiedOrder?.payment_status === 'verified', 'Order payment_status should be verified')
-    console.assert(verifiedOrder?.status === 'sent_to_vendor', 'Order status should be sent_to_vendor')
+    console.assert(
+      verifiedOrder?.payment_status === 'verified',
+      'Order payment_status should be verified'
+    )
+    console.assert(
+      verifiedOrder?.status === 'sent_to_vendor',
+      'Order status should be sent_to_vendor'
+    )
     console.log('  ✓ 3.1 Order transitioned to verified / sent_to_vendor')
 
     // Check PaymentTransaction record
-    const paymentTx = await prisma.paymentTransaction.findFirst({ where: { order_id: testOrderId } })
-    console.assert(paymentTx?.status === 'verified', `Expected paymentTx status verified, got ${paymentTx?.status}`)
+    const paymentTx = await prisma.paymentTransaction.findFirst({
+      where: { order_id: testOrderId },
+    })
+    console.assert(
+      paymentTx?.status === 'verified',
+      `Expected paymentTx status verified, got ${paymentTx?.status}`
+    )
     console.log('  ✓ 3.2 PaymentTransaction record created with status: verified')
 
     // Check VendorSettlement record
-    const settlements = await prisma.vendorSettlement.findMany({ where: { id: `set_${testOrderId}` } })
-    console.assert(settlements.length === 1, `Expected exactly 1 settlement, found ${settlements.length}`)
+    const settlements = await prisma.vendorSettlement.findMany({
+      where: { id: `set_${testOrderId}` },
+    })
+    console.assert(
+      settlements.length === 1,
+      `Expected exactly 1 settlement, found ${settlements.length}`
+    )
     console.log('  ✓ 3.3 Single VendorSettlement generated (id: set_${orderId})')
 
     // Check Double-Entry Subledger balance
@@ -161,8 +200,13 @@ async function runVerification() {
     console.assert(ledgerEntries.length > 0, 'Expected ledger entries to be created')
     const totalDebits = ledgerEntries.reduce((sum, e) => sum + e.debit_paise, 0)
     const totalCredits = ledgerEntries.reduce((sum, e) => sum + e.credit_paise, 0)
-    console.assert(totalDebits === totalCredits, `Ledger unbalanced! Debits: ${totalDebits}, Credits: ${totalCredits}`)
-    console.log(`  ✓ 3.4 Double-entry ledger balanced: Debits = ${totalDebits} paise, Credits = ${totalCredits} paise`)
+    console.assert(
+      totalDebits === totalCredits,
+      `Ledger unbalanced! Debits: ${totalDebits}, Credits: ${totalCredits}`
+    )
+    console.log(
+      `  ✓ 3.4 Double-entry ledger balanced: Debits = ${totalDebits} paise, Credits = ${totalCredits} paise`
+    )
 
     // 3.5 Duplicate Webhook / Review Replay Protection
     const verifyResult2 = await processPaymentVerificationTx({
@@ -172,10 +216,20 @@ async function runVerification() {
       amount: 750,
       actorId: 'webhook_retry',
     })
-    console.assert(verifyResult2.alreadyVerified === true, 'Duplicate call should be detected as alreadyVerified')
-    const settlementsAfterReplay = await prisma.vendorSettlement.findMany({ where: { id: `set_${testOrderId}` } })
-    console.assert(settlementsAfterReplay.length === 1, 'Duplicate settlements must never be created on retry')
-    console.log('  ✓ 3.5 Duplicate webhook / review safely returned idempotent success (no extra records)\n')
+    console.assert(
+      verifyResult2.alreadyVerified === true,
+      'Duplicate call should be detected as alreadyVerified'
+    )
+    const settlementsAfterReplay = await prisma.vendorSettlement.findMany({
+      where: { id: `set_${testOrderId}` },
+    })
+    console.assert(
+      settlementsAfterReplay.length === 1,
+      'Duplicate settlements must never be created on retry'
+    )
+    console.log(
+      '  ✓ 3.5 Duplicate webhook / review safely returned idempotent success (no extra records)\n'
+    )
 
     // ─────────────────────────────────────────────────────────────
     // TEST 4: Refund Safety & Duplicate Prevention
@@ -204,7 +258,10 @@ async function runVerification() {
       reason: 'Partial cancellation',
       idempotencyKey: refundKey,
     })
-    console.assert(refundResult1.success && !refundResult1.alreadyProcessed, 'Expected refund 1 to succeed')
+    console.assert(
+      refundResult1.success && !refundResult1.alreadyProcessed,
+      'Expected refund 1 to succeed'
+    )
     console.log('  ✓ 4.2 Partial refund of ₹300 processed successfully')
 
     // 4.3 Replay identical refund with same idempotency key
@@ -214,9 +271,15 @@ async function runVerification() {
       reason: 'Partial cancellation',
       idempotencyKey: refundKey,
     })
-    console.assert(refundResult2.alreadyProcessed === true, 'Duplicate refund should return alreadyProcessed: true')
+    console.assert(
+      refundResult2.alreadyProcessed === true,
+      'Duplicate refund should return alreadyProcessed: true'
+    )
     const allRefunds = await prisma.refund.findMany({ where: { order_id: testOrderId } })
-    console.assert(allRefunds.length === 1, `Expected only 1 refund record, found ${allRefunds.length}`)
+    console.assert(
+      allRefunds.length === 1,
+      `Expected only 1 refund record, found ${allRefunds.length}`
+    )
     console.log('  ✓ 4.3 Duplicate refund attempt safely deduplicated by idempotency key\n')
 
     // ─────────────────────────────────────────────────────────────
@@ -240,25 +303,44 @@ async function runVerification() {
       },
     })
 
-    const stockBeforeReconcile = (await prisma.menuItem.findUnique({ where: { id: testItemId } }))?.stock_count || 0
+    const stockBeforeReconcile =
+      (await prisma.menuItem.findUnique({ where: { id: testItemId } }))?.stock_count || 0
 
     // Run reconciliation
     const { reconciledCount } = await reconcilePendingOrders(30)
-    console.assert(reconciledCount >= 1, `Expected at least 1 order reconciled, got ${reconciledCount}`)
+    console.assert(
+      reconciledCount >= 1,
+      `Expected at least 1 order reconciled, got ${reconciledCount}`
+    )
 
     const staleOrderAfter = await prisma.order.findUnique({ where: { id: staleOrderId } })
-    console.assert(staleOrderAfter?.status === 'cancelled', `Expected stale order cancelled, got ${staleOrderAfter?.status}`)
+    console.assert(
+      staleOrderAfter?.status === 'cancelled',
+      `Expected stale order cancelled, got ${staleOrderAfter?.status}`
+    )
 
-    const stockAfterReconcile = (await prisma.menuItem.findUnique({ where: { id: testItemId } }))?.stock_count || 0
-    console.assert(stockAfterReconcile === stockBeforeReconcile + 1, `Expected stock restored by 1, before=${stockBeforeReconcile}, after=${stockAfterReconcile}`)
+    const stockAfterReconcile =
+      (await prisma.menuItem.findUnique({ where: { id: testItemId } }))?.stock_count || 0
+    console.assert(
+      stockAfterReconcile === stockBeforeReconcile + 1,
+      `Expected stock restored by 1, before=${stockBeforeReconcile}, after=${stockAfterReconcile}`
+    )
     console.log(`  ✓ 5.1 Stale order cancelled and reserved stock restored (+1 item)`)
 
     // Cleanup test artifacts
     await prisma.refund.deleteMany({ where: { order_id: { in: [testOrderId, staleOrderId] } } })
-    await prisma.ledgerEntry.deleteMany({ where: { order_id: { in: [testOrderId, staleOrderId] } } })
-    await prisma.vendorSettlement.deleteMany({ where: { transaction_ref: { in: [testOrderId, staleOrderId] } } })
-    await prisma.paymentTransaction.deleteMany({ where: { order_id: { in: [testOrderId, staleOrderId] } } })
-    await prisma.orderOutbox.deleteMany({ where: { order_id: { in: [testOrderId, staleOrderId] } } })
+    await prisma.ledgerEntry.deleteMany({
+      where: { order_id: { in: [testOrderId, staleOrderId] } },
+    })
+    await prisma.vendorSettlement.deleteMany({
+      where: { transaction_ref: { in: [testOrderId, staleOrderId] } },
+    })
+    await prisma.paymentTransaction.deleteMany({
+      where: { order_id: { in: [testOrderId, staleOrderId] } },
+    })
+    await prisma.orderOutbox.deleteMany({
+      where: { order_id: { in: [testOrderId, staleOrderId] } },
+    })
     await prisma.order.deleteMany({ where: { id: { in: [testOrderId, staleOrderId] } } })
     await prisma.menuItem.deleteMany({ where: { id: testItemId } })
     await prisma.idempotencyRecord.deleteMany({ where: { key: { in: [testKey1] } } })

@@ -57,22 +57,19 @@ The three failures are almost certainly **three 401s on login**, not health or r
 Load-test credentials (`load-tests/comprehensive-load-test.js`):
 
 ```
-admin@crave.com / 1234567890
-user@crave.com  / 1234567890
-vendor@crave.com / 1234567890
-rider@crave.com / 1234567890
+Load-test identities and credentials are injected through environment variables.
 ```
 
 What the repo actually seeds:
 
-| Script                      | File                            | Users          | Password                              |
-| --------------------------- | ------------------------------- | -------------- | ------------------------------------- |
-| `pnpm db:seed` / `db:admin` | `scripts/seed-local-db.ts`      | **admin only** | `1234567890`                          |
-| `pnpm db:seed:full`         | `scripts/seed-complete-data.ts` | all five roles | **`Password123!`** (not `1234567890`) |
+| Script                      | File                            | Users          | Password                       |
+| --------------------------- | ------------------------------- | -------------- | ------------------------------ |
+| `pnpm db:seed` / `db:admin` | `scripts/seed-local-db.ts`      | **admin only** | Required environment variables |
+| `pnpm db:seed:full`         | `scripts/seed-complete-data.ts` | all five roles | Required environment variables |
 
-Demo login that accepts `1234567890` without a DB row lives in `app/api/auth/login/route.ts` and is **disabled when `NODE_ENV === 'production'`** (Docker frontend).
+The demo-login bypass has been removed; all logins require a database row and stored hash.
 
-Likely local staging: only admin exists with `1234567890` → admin login OK, other three 401 → `auth_errors = 0.75`. Matches the run.
+The historical run used incomplete staging identities, which explains the recorded authentication error rate.
 
 ### Load-test client bugs (false negatives later)
 
@@ -304,7 +301,7 @@ POST /api/admin/settlements
 
 Use this instead of phantom `/api/vendor/*` and `/api/rider/*` paths.
 
-**Setup (once):** `pnpm db:seed:full` **and** set k6 passwords to `Password123!`, **or** extend `seed-local-db.ts` to all roles with `1234567890`. Confirm `NODE_ENV` vs demo login.
+**Setup (once):** provide the required `SEED_*` environment variables, run `pnpm db:seed:full`, and pass those same variables to k6.
 
 Per VU, checkout:
 
@@ -362,7 +359,7 @@ Suggested smoke gates after auth is fixed: `http_req_failed < 1%`, `p(95)<500` f
 
 ## 9. Action list (priority)
 
-1. Seed all four k6 users with the password the test uses, or change k6 to `Password123!` after `pnpm db:seed:full`. Re-run smoke; expect `http_req_failed = 0` if public GETs stay green.
+1. Seed all four k6 users using the same environment-injected identities used by the test. Re-run smoke; expect `http_req_failed = 0` if public GETs stay green.
 2. Fix k6 parse of `{ restaurants }` / `{ items }` / `{ order }` and drop URLs that do not exist.
 3. Batch menu-item reads in `POST /api/orders`.
 4. Drop `menu_items` from `listRestaurants`; add a slim select.

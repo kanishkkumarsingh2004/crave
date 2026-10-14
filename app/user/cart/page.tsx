@@ -253,13 +253,7 @@ export default function CartPage() {
         })
         if (res.ok) {
           const json = await res.json()
-          const combined = Array.isArray(json.addresses) ? json.addresses : []
-          const merged: SavedAddress[] = [...combined]
-          localAddrs.forEach((la) => {
-            if (!merged.some((m) => m.address === la.address)) {
-              merged.push(la)
-            }
-          })
+          const merged: SavedAddress[] = Array.isArray(json.addresses) ? json.addresses : []
           if (merged.length > 0) {
             setSavedAddresses(merged)
             const def = merged.find((a: SavedAddress) => a.is_default) || merged[0]
@@ -561,9 +555,17 @@ export default function CartPage() {
           if (json.success && json.address) {
             savedAddressItem = json.address
           }
+        } else if (user) {
+          const error = await res.json().catch(() => ({}))
+          throw new Error(error.error || 'Could not save the address in the database.')
         }
       } catch (apiErr) {
-        console.warn('API address save failed, falling back to local storage:', apiErr)
+        if (user) throw apiErr
+        console.warn('Guest address save failed; keeping it locally:', apiErr)
+      }
+
+      if (!savedAddressItem && user) {
+        throw new Error('The address was not saved to the database. Please try again.')
       }
 
       if (!savedAddressItem) {
@@ -662,6 +664,18 @@ export default function CartPage() {
       return
     }
 
+    if (!user?.id) {
+      toast('Please sign in before placing an order', 'error')
+      return
+    }
+
+    const restaurantId =
+      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id
+    if (!restaurantId) {
+      toast('The cart item is not linked to a valid restaurant', 'error')
+      return
+    }
+
     setIsSubmittingOrder(true)
     isSubmittingRef.current = true
 
@@ -673,23 +687,18 @@ export default function CartPage() {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
 
-      const restId =
-        cart[0]?.restaurantId ||
-        cart[0]?.vendorId ||
-        (cart[0] as any)?.restaurant_id ||
-        'rest_spice_garden'
-      const restName = cart[0]?.restaurantName || 'Spice Garden'
+      const restName = cart[0]?.restaurantName || 'Restaurant'
 
       const orderData = {
         idempotency_key: idempotencyKey,
-        customer_id: user?.id || 'usr_guest',
-        customer_name: user?.name || 'Customer',
-        customer_phone: customerPhone.trim() || user?.phone || '+910000000000',
+        customer_id: user.id,
+        customer_name: user.name || 'Customer',
+        customer_phone: customerPhone.trim() || user.phone || null,
         customer_address: deliveryAddress.trim(),
         address_id: selectedAddressId || undefined,
         delivery_latitude: detectedCoords?.lat,
         delivery_longitude: detectedCoords?.lng,
-        restaurant_id: restId,
+        restaurant_id: restaurantId,
         restaurant_name: restName,
         items: cart.map((i) => ({
           id: i.id,

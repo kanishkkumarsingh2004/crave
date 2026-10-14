@@ -1,12 +1,11 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
-import { createUser, findUserByEmail, createCustomerAddress } from '@/lib/dal'
+import { createUser, findUserByEmail, createCustomerAddress, deleteUser } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
+import { normalizeEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
+import { hashPassword } from '@/lib/password'
 
 export async function POST(request: Request) {
   try {
@@ -17,10 +16,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, email, password, role, phone, address } = body
+    const { name, password, role, phone, address } = body
+    const cleanEmail = normalizeEmail(body.email)
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
+    if (!name || !cleanEmail || !password) {
+      return NextResponse.json(
+        { error: 'Name, a valid email address, and password are required' },
+        { status: 400 }
+      )
     }
 
     if (typeof password !== 'string' || password.length < 8) {
@@ -44,16 +47,10 @@ export async function POST(request: Request) {
       )
     }
 
-    const cleanEmail = String(email).trim().toLowerCase()
     const finalRole = 'user' as const
 
     // Check if email already exists via Prisma
-    let existingUser = null
-    try {
-      existingUser = await findUserByEmail(cleanEmail)
-    } catch (dbErr: any) {
-      console.warn('[Signup] DB check skipped (database unreachable):', dbErr?.message)
-    }
+    const existingUser = await findUserByEmail(cleanEmail)
 
     if (existingUser) {
       return NextResponse.json(
@@ -65,9 +62,7 @@ export async function POST(request: Request) {
     }
 
     const finalUserId = crypto.randomUUID()
-    const passwordHash = ((await scrypt(String(password), cleanEmail, 64)) as Buffer).toString(
-      'hex'
-    )
+    const passwordHash = hashPassword(password)
 
     // Insert user profile via configured database backend.
     try {
@@ -83,18 +78,15 @@ export async function POST(request: Request) {
 
       // Register default customer address in DB if address provided
       if (address && typeof address === 'string' && address.trim()) {
-        try {
-          await createCustomerAddress({
-            customer_id: finalUserId,
-            label: 'Home',
-            address: address.trim(),
-            is_default: true,
-          })
-        } catch (addrErr) {
-          console.warn('[Signup] Could not auto-create customer_address:', addrErr)
-        }
+        await createCustomerAddress({
+          customer_id: finalUserId,
+          label: 'Home',
+          address: address.trim(),
+          is_default: true,
+        })
       }
     } catch (err: unknown) {
+      await deleteUser(finalUserId).catch(() => {})
       console.error('User profile creation failed:', err)
       const isDatabaseConfigured = Boolean(process.env.DATABASE_URL)
       return NextResponse.json(
@@ -145,7 +137,8 @@ export async function POST(request: Request) {
 
     const host = request.headers.get('host') || ''
     const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1')
-    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https:')
+    const isHttps =
+      request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https:')
     const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost && isHttps
 
     const cookieOptions = {
@@ -162,6 +155,14 @@ export async function POST(request: Request) {
     return response
   } catch (error: any) {
     console.error('Signup endpoint error:', error)
-    return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json(
+      {
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Unable to create an account at this time.'
+            : error?.message || 'Internal Server Error',
+      },
+      { status: 500 }
+    )
   }
 }

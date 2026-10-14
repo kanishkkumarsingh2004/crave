@@ -1,8 +1,3 @@
-import {
-  createVendorSettlement,
-  listVendorSettlements,
-  updateVendorSettlementStatus,
-} from '@/lib/dal/payments'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
@@ -10,47 +5,41 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { VendorSettlementStatus } from '@prisma/client'
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
-    let restaurantId: string | undefined
-    if (request) {
-      const requestUrl = request.url || 'http://localhost/api/admin/settlements'
-      const { searchParams } = new URL(requestUrl)
-      restaurantId = searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
+    const requestUrl = request.url || 'http://localhost/api/admin/settlements'
+    const { searchParams } = new URL(requestUrl)
+    const restaurantId =
+      searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
 
-      const authHeader = request.headers.get('authorization')
-      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token)
-        token =
-          (await cookies()).get('crave_auth_token')?.value ||
-          (await cookies()).get('drop_auth_token')?.value ||
-          ''
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token)
+      token =
+        (await cookies()).get('crave_auth_token')?.value ||
+        (await cookies()).get('drop_auth_token')?.value ||
+        ''
 
-      const payload = token ? await verifyToken(token) : null
-      if (process.env.NODE_ENV !== 'test') {
-        if (!payload) {
-          return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-        }
-        if (payload.role !== 'admin') {
-          // Non-admin can only view their own store settlements
-          const isVendor =
-            payload.role === 'restaurant_vendor' ||
-            payload.role === 'cravexp_store_vendor' ||
-            (payload.role as string) === 'vendor'
-          const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
-          if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-          }
+    const payload = token ? await verifyToken(token) : null
+    if (process.env.NODE_ENV !== 'test') {
+      if (!payload) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (payload.role !== 'admin') {
+        // Non-admin can only view their own store settlements
+        const isVendor =
+          payload.role === 'restaurant_vendor' ||
+          payload.role === 'cravexp_store_vendor' ||
+          (payload.role as string) === 'vendor'
+        const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
+        if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
+          return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
         }
       }
     }
 
-    const cursor = request
-      ? new URL(request.url || 'http://localhost').searchParams.get('cursor') || undefined
-      : undefined
-    const limitParam = request
-      ? parseInt(new URL(request.url || 'http://localhost').searchParams.get('limit') || '50', 10)
-      : 50
+    const cursor = searchParams.get('cursor') || undefined
+    const limitParam = parseInt(searchParams.get('limit') || '50', 10)
     const take = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 200)
 
     const rawSettlements = await prisma.vendorSettlement.findMany({
@@ -152,43 +141,71 @@ export async function POST(request: Request) {
       transaction_ref,
     } = body
 
-    if (id && status && net_payout == null) {
-      await updateVendorSettlementStatus(id, status)
+    const numericValues = [commission_rate, gross_sales, commission_amount, net_payout]
+      .filter((value) => value != null)
+      .map(Number)
+    if (numericValues.some((value) => !Number.isFinite(value) || value < 0)) {
+      return NextResponse.json(
+        { error: 'Settlement amounts and commission rate must be non-negative numbers' },
+        { status: 400 }
+      )
+    }
+    const allowedStatuses = new Set(['scheduled', 'paid', 'failed', 'cancelled', 'settled'])
+    if (status != null && !allowedStatuses.has(String(status))) {
+      return NextResponse.json({ error: 'Invalid settlement status' }, { status: 400 })
+    }
+    if (net_payout != null && !restaurant_id) {
+      return NextResponse.json(
+        { error: 'restaurant_id is required when creating a settlement' },
+        { status: 400 }
+      )
+    }
+    if (!(id && status) && !(restaurant_id && commission_rate != null) && net_payout == null) {
+      return NextResponse.json({ error: 'No settlement changes were provided' }, { status: 400 })
     }
 
-    if (restaurant_id && commission_rate != null) {
-      try {
-        await prisma.restaurant.update({
+    const settlementRecord = await prisma.$transaction(async (tx) => {
+      let record: any = null
+
+      if (id && status && net_payout == null) {
+        record = await tx.vendorSettlement.update({
+          where: { id },
+          data: {
+            status: (status === 'settled' ? 'paid' : status) as VendorSettlementStatus,
+            payout_date: new Date(),
+          },
+        })
+      }
+
+      if (restaurant_id && commission_rate != null) {
+        await tx.restaurant.update({
           where: { id: restaurant_id },
           data: { commission_rate: Number(commission_rate) },
         })
-      } catch (e) {
-        console.error(
-          '[settlements] commission_rate update failed:',
-          e instanceof Error ? e.message : e
-        )
-        throw e
       }
-    }
 
-    let settlementRecord: any = null
-    if (restaurant_id && net_payout != null) {
-      const settleStatus =
-        status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
-      settlementRecord = await createVendorSettlement({
-        id: id && !id.startsWith('rest_') ? id : `set_${crypto.randomUUID()}`,
-        restaurant_id,
-        restaurant_name: restaurant_name || 'Restaurant Store',
-        gross_sales: Number(gross_sales || net_payout),
-        commission_rate: Number(commission_rate || 15),
-        commission_amount: Number(commission_amount || 0),
-        net_payout: Number(net_payout),
-        status: settleStatus as VendorSettlementStatus,
-        transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
-        period_start: new Date(),
-        period_end: new Date(),
-      })
-    }
+      if (restaurant_id && net_payout != null) {
+        const settleStatus =
+          status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
+        record = await tx.vendorSettlement.create({
+          data: {
+            id: id && !id.startsWith('rest_') ? id : `set_${crypto.randomUUID()}`,
+            restaurant_id,
+            restaurant_name: restaurant_name || 'Restaurant Store',
+            gross_sales: Number(gross_sales ?? net_payout),
+            commission_rate: Number(commission_rate ?? 15),
+            commission_amount: Number(commission_amount ?? 0),
+            net_payout: Number(net_payout),
+            status: settleStatus as VendorSettlementStatus,
+            transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
+            period_start: new Date(),
+            period_end: new Date(),
+          },
+        })
+      }
+
+      return record
+    })
 
     broadcast('admin_settlements', {
       type: 'update',

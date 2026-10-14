@@ -1,12 +1,11 @@
 import 'dotenv/config'
 import { prisma } from '../lib/prisma'
-import crypto from 'crypto'
+import { hashPassword, validatePassword } from '../lib/password'
 
-function hashPassword(password: string): string {
-  // Use 16-byte random salt format matching app/api/auth/signup/route.ts
-  const salt = crypto.randomBytes(16).toString('hex')
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex')
-  return `${salt}:${hash}`
+function requiredEnvironmentValue(name: string): string {
+  const value = process.env[name]?.trim()
+  if (!value) throw new Error(`${name} must be set explicitly for test-data seeding`)
+  return value
 }
 
 async function seedCompleteData() {
@@ -19,8 +18,14 @@ async function seedCompleteData() {
   console.log('🌱 CRAVE Complete Test Database Seeder')
   console.log('========================================================\n')
 
-  const defaultPassword = 'Password123!'
-  const defaultHash = hashPassword(defaultPassword)
+  const seedPassword = validatePassword(requiredEnvironmentValue('SEED_PASSWORD'))
+  const seedEmails = {
+    admin: requiredEnvironmentValue('SEED_ADMIN_EMAIL').toLowerCase(),
+    customer: requiredEnvironmentValue('SEED_CUSTOMER_EMAIL').toLowerCase(),
+    vendor: requiredEnvironmentValue('SEED_VENDOR_EMAIL').toLowerCase(),
+    store: requiredEnvironmentValue('SEED_STORE_EMAIL').toLowerCase(),
+    rider: requiredEnvironmentValue('SEED_RIDER_EMAIL').toLowerCase(),
+  }
 
   // 1. Seed Core Users Across All 5 Roles
   console.log('👥 Seeding Users for All 5 Roles...')
@@ -28,25 +33,25 @@ async function seedCompleteData() {
     {
       id: 'usr_admin_01',
       name: 'System Administrator',
-      email: 'admin@crave.com',
+      email: seedEmails.admin,
       role: 'admin' as const,
-      password_hash: defaultHash,
+      password_hash: hashPassword(seedPassword),
       phone: '+919876543210',
     },
     {
       id: 'usr_customer_01',
       name: 'Priya Sharma (Customer)',
-      email: 'user@crave.com',
+      email: seedEmails.customer,
       role: 'user' as const,
-      password_hash: defaultHash,
+      password_hash: hashPassword(seedPassword),
       phone: '+919876543211',
     },
     {
       id: 'usr_vendor_01',
       name: 'Chef Marco (Kitchen Vendor)',
-      email: 'vendor@crave.com',
+      email: seedEmails.vendor,
       role: 'restaurant_vendor' as const,
-      password_hash: defaultHash,
+      password_hash: hashPassword(seedPassword),
       restaurant_name: 'Spice Garden',
       cuisine: 'North Indian & Mughlai',
       phone: '+919876543212',
@@ -54,9 +59,9 @@ async function seedCompleteData() {
     {
       id: 'usr_darkstore_01',
       name: 'Dark Store Operator',
-      email: 'darkstore@crave.com',
+      email: seedEmails.store,
       role: 'cravexp_store_vendor' as const,
-      password_hash: defaultHash,
+      password_hash: hashPassword(seedPassword),
       restaurant_name: 'craveXP 10 Store Hub',
       cuisine: 'Instant Groceries & Daily Needs',
       phone: '+919876543213',
@@ -64,9 +69,9 @@ async function seedCompleteData() {
     {
       id: 'usr_rider_01',
       name: 'Rider Rahul (Fleet Driver)',
-      email: 'rider@crave.com',
+      email: seedEmails.rider,
       role: 'rider' as const,
-      password_hash: defaultHash,
+      password_hash: hashPassword(seedPassword),
       vehicle_type: 'Electric Scooter',
       license_plate: 'KA-01-EQ-9988',
       phone: '+919876543214',
@@ -84,7 +89,7 @@ async function seedCompleteData() {
       },
       create: u,
     })
-    console.log(`  ✓ User: ${u.email} (${u.role}) — Password: ${defaultPassword}`)
+    console.log(`  ✓ User: ${u.email} (${u.role})`)
   }
 
   // 2. Seed Customer Delivery Addresses

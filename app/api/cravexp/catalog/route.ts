@@ -5,6 +5,7 @@ import {
   type CraveXPGroceryItem,
 } from '@/lib/cravexp-grocery-catalog'
 import { NextResponse } from 'next/server'
+import { requireRole, handleAuthError } from '@/lib/auth-helpers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -79,10 +80,8 @@ export async function GET() {
     })
     return NextResponse.json({ success: true, items: items.map(mapItem) })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load CraveXP catalog' },
-      { status: 500 }
-    )
+    console.error('[cravexp/catalog] Failed to load catalog:', error)
+    return NextResponse.json({ error: 'Failed to load CraveXP catalog' }, { status: 500 })
   }
 }
 
@@ -92,14 +91,17 @@ export async function GET() {
  * Idempotent setup/seed endpoint.  Call once to initialize the dark-store
  * record.  Safe to call again (upsert is idempotent).
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    await requireRole(request, 'admin')
     await ensureStore()
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to initialize CraveXP store' },
-      { status: 500 }
-    )
+    const authResponse = handleAuthError(error)
+    if ((authResponse.status === 401 || authResponse.status === 403) && error instanceof Error) {
+      return authResponse
+    }
+    console.error('[cravexp/catalog] Failed to initialize store:', error)
+    return NextResponse.json({ error: 'Failed to initialize CraveXP store' }, { status: 500 })
   }
 }

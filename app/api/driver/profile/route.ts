@@ -5,9 +5,12 @@ import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 export async function GET(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
-    const driverId = searchParams.get('driverId') || actor.id
+    const driverId = actor.role === 'admin' ? searchParams.get('driverId') || actor.id : actor.id
 
     if (!driverId) {
       return NextResponse.json({ error: 'Driver ID is required' }, { status: 400 })
@@ -48,9 +51,12 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const body = await request.json()
-    const driverId = body.driverId || actor.id
+    const driverId = actor.role === 'admin' ? body.driverId || actor.id : actor.id
 
     if (!driverId) {
       return NextResponse.json({ error: 'Driver ID required' }, { status: 400 })

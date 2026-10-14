@@ -71,6 +71,7 @@ export default function AdminPaymentConfigPage() {
   const [requireUtrNumber, setRequireUtrNumber] = useState(true)
 
   const [savedSuccess, setSavedSuccess] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   // 5. Playground Calculator State
   const [testOrderValue, setTestOrderValue] = useState<number>(400)
@@ -202,7 +203,13 @@ export default function AdminPaymentConfigPage() {
       enableUpiDeepLink,
       requireUtrNumber,
     }
-    await savePaymentConfig(fullConfig)
+    setSaveError('')
+    const saved = await savePaymentConfig(fullConfig)
+    if (!saved) {
+      setSavedSuccess(false)
+      setSaveError('The configuration was not saved to the database. Please try again.')
+      return
+    }
     setSavedSuccess(true)
     setTimeout(() => {
       setSavedSuccess(false)
@@ -232,6 +239,11 @@ export default function AdminPaymentConfigPage() {
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 px-4 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50">
             <CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-400" /> All UPI
             Credentials, Thank You Message & Playground Saved!
+          </div>
+        )}
+        {saveError && (
+          <div className="rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-800 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+            {saveError}
           </div>
         )}
       </div>

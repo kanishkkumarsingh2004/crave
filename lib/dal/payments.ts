@@ -176,7 +176,15 @@ export async function createDriverUpiAccount(data: {
   bank_name?: string
   is_primary?: boolean
 }) {
-  return await prisma.driverUpiAccount.create({ data })
+  return prisma.$transaction(async (tx) => {
+    if (data.is_primary) {
+      await tx.driverUpiAccount.updateMany({
+        where: { driver_id: data.driver_id },
+        data: { is_primary: false },
+      })
+    }
+    return tx.driverUpiAccount.create({ data })
+  })
 }
 
 // ─── Driver Payouts ──────────────────────────────────────

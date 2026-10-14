@@ -392,7 +392,7 @@ Remove all `localStorage.setItem('crave_token', ...)` calls. Store only the non-
 | **Severity** | 🟡 MEDIUM                     |
 
 **What's wrong:**
-A block of hardcoded demo accounts (`admin@crave.com`, `vendor@crave.com`, etc.) with password `1234567890` exists in the login route, guarded by `NODE_ENV !== 'production'`. The well-known credentials are visible in source code.
+The former hardcoded demo-account login bypass has been removed. Authentication now requires a database-backed user and a valid stored password hash in every environment.
 
 **How to fix:**
 Remove the in-code demo user block. Seed demo users into the database using `scripts/seed-local-db.ts`. This keeps the login route clean and demo accounts manageable.

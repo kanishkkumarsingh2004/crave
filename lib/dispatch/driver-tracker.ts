@@ -97,8 +97,7 @@ export async function updateDriverLocation(params: {
   const now = Date.now()
   let clientTs = now
   if (timestamp) {
-    const parsed =
-      typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime()
+    const parsed = typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime()
     if (!isNaN(parsed) && parsed > 0) {
       clientTs = parsed
     }
@@ -159,7 +158,7 @@ export async function updateDriverLocation(params: {
       return {
         state: {
           ...existingState,
-          isStale: (now - existingState.lastUpdated) > DEFAULT_STALE_LOCATION_MS,
+          isStale: now - existingState.lastUpdated > DEFAULT_STALE_LOCATION_MS,
           staleDurationSeconds: Math.floor((now - existingState.lastUpdated) / 1000),
         },
         cellChanged: false,

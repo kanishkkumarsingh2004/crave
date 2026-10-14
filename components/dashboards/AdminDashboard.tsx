@@ -283,7 +283,9 @@ export default function AdminDashboard() {
             (v) =>
               (v.userId && v.userId === u.id) ||
               v.id === u.id ||
-              (u.restaurant_name && v.storeName && u.restaurant_name.toLowerCase() === v.storeName.toLowerCase()) ||
+              (u.restaurant_name &&
+                v.storeName &&
+                u.restaurant_name.toLowerCase() === v.storeName.toLowerCase()) ||
               (u.name && v.storeName && u.name.toLowerCase() === v.storeName.toLowerCase())
           )
           const isXP =
@@ -350,7 +352,9 @@ export default function AdminDashboard() {
             (a) =>
               a.id === v.id ||
               (v.userId && a.id === v.userId) ||
-              (a.restaurantName && v.storeName && a.restaurantName.toLowerCase() === v.storeName.toLowerCase()) ||
+              (a.restaurantName &&
+                v.storeName &&
+                a.restaurantName.toLowerCase() === v.storeName.toLowerCase()) ||
               (a.detail && v.storeName && a.detail.toLowerCase() === v.storeName.toLowerCase()) ||
               (a.name && v.storeName && a.name.toLowerCase() === v.storeName.toLowerCase())
           )

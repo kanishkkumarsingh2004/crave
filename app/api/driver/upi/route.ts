@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createDriverUpiAccount, listDriverUpiAccounts } from '@/lib/dal/payments'
 import { prisma } from '@/lib/prisma'
-import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import crypto from 'crypto'
 
 export async function GET(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
-    const driverId = searchParams.get('driverId') || actor.id || 'driver_partner'
+    const driverId = actor.role === 'admin' ? searchParams.get('driverId') || actor.id : actor.id
 
     const accounts = await listDriverUpiAccounts(driverId)
     const formatted = (accounts || []).map((acc: any) => ({
@@ -32,10 +35,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const body = await request.json()
     const { vpa, bankName, driverId: bodyDriverId, isPrimary } = body
-    const driverId = bodyDriverId || actor.id || 'driver_partner'
+    const driverId = actor.role === 'admin' ? bodyDriverId || actor.id : actor.id
 
     if (!vpa || !vpa.includes('@')) {
       return NextResponse.json({ error: 'Valid UPI VPA required' }, { status: 400 })
@@ -74,6 +80,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -88,7 +97,10 @@ export async function DELETE(request: Request) {
         where: { id },
         select: { driver_id: true },
       })
-      if (existingAccount && existingAccount.driver_id !== actor.id) {
+      if (!existingAccount) {
+        return NextResponse.json({ error: 'UPI account not found' }, { status: 404 })
+      }
+      if (existingAccount.driver_id !== actor.id) {
         return NextResponse.json({ error: 'Unauthorized to delete this account' }, { status: 403 })
       }
     }

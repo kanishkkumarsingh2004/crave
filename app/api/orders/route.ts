@@ -1,14 +1,9 @@
 import { findOrderById, listOrders, updateOrder, dispatchPendingOutboxEvents } from '@/lib/dal'
-import {
-  updatePaymentReviewStatus,
-  createDriverPayout,
-  getActivePaymentConfig,
-} from '@/lib/dal/payments'
+import { updatePaymentReviewStatus, getActivePaymentConfig } from '@/lib/dal/payments'
 import { prisma } from '@/lib/prisma'
 import { findRestaurantById } from '@/lib/dal/restaurants'
 import { findMenuItemsByIds, findMenuItemById } from '@/lib/dal/menu-items'
-import { validateAndApplyCoupon, checkAndIncrementCouponUsage } from '@/lib/dal/coupons'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { validateAndApplyCoupon } from '@/lib/dal/coupons'
 import { withTiming } from '@/lib/instrumentation'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import {
@@ -31,87 +26,76 @@ import {
   getAuthActor,
 } from '@/lib/auth-helpers'
 import { isValidTransition, getPhaseName, VALID_TRANSITIONS } from '@/lib/order-state-machine'
-import {
-  acquireIdempotency,
-  completeIdempotency,
-  releaseIdempotency,
-} from '@/lib/idempotency'
+import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
 import {
   processPaymentVerificationTx,
   processPaymentRejectionTx,
 } from '@/lib/finance/payment-service'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
-  try {
-    const dbConfig: any = await getActivePaymentConfig().catch(() => null)
-    if (!dbConfig) {
-      return DEFAULT_PAYMENT_CONFIG
-    }
-    return {
-      ...DEFAULT_PAYMENT_CONFIG,
-      upiVpa: dbConfig.merchant_vpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
-      merchantName: dbConfig.merchant_name || DEFAULT_PAYMENT_CONFIG.merchantName,
-      thankYouMessage: dbConfig.thank_you_message || DEFAULT_PAYMENT_CONFIG.thankYouMessage,
-      mccCode: dbConfig.merchant_category_code || DEFAULT_PAYMENT_CONFIG.mccCode,
-      ifscCode: dbConfig.ifsc_code || DEFAULT_PAYMENT_CONFIG.ifscCode,
-      accountNumber: dbConfig.account_number || DEFAULT_PAYMENT_CONFIG.accountNumber,
-      platformFee:
-        dbConfig.platform_fee != null
-          ? Number(dbConfig.platform_fee)
-          : DEFAULT_PAYMENT_CONFIG.platformFee,
-      handlingFee:
-        dbConfig.handling_fee != null
-          ? Number(dbConfig.handling_fee)
-          : DEFAULT_PAYMENT_CONFIG.handlingFee,
-      vendorCommission:
-        dbConfig.vendor_commission != null
-          ? Number(dbConfig.vendor_commission)
-          : DEFAULT_PAYMENT_CONFIG.vendorCommission,
-      packagingCap:
-        dbConfig.packaging_cap != null
-          ? Number(dbConfig.packaging_cap)
-          : DEFAULT_PAYMENT_CONFIG.packagingCap,
-      baseDeliveryFee:
-        dbConfig.delivery_fee != null
-          ? Number(dbConfig.delivery_fee)
-          : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
-      baseDistanceKm:
-        dbConfig.base_distance_km != null
-          ? Number(dbConfig.base_distance_km)
-          : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
-      perKmRate:
-        dbConfig.per_km_rate != null
-          ? Number(dbConfig.per_km_rate)
-          : DEFAULT_PAYMENT_CONFIG.perKmRate,
-      freeDeliveryThreshold:
-        dbConfig.free_delivery_threshold != null
-          ? Number(dbConfig.free_delivery_threshold)
-          : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
-      driverPayoutShare:
-        dbConfig.driver_payout_share != null
-          ? Number(dbConfig.driver_payout_share)
-          : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
-      surgeMultiplier:
-        dbConfig.surge_multiplier != null
-          ? Number(dbConfig.surge_multiplier)
-          : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
-      rainFee:
-        dbConfig.rain_fee != null ? Number(dbConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
-      nightSurgeFee:
-        dbConfig.night_surge_fee != null
-          ? Number(dbConfig.night_surge_fee)
-          : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
-      isRainModeActive: dbConfig.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
-      isNightSurgeActive:
-        dbConfig.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
-      enableCashOnDelivery:
-        dbConfig.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
-      enableUpiDeepLink: dbConfig.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
-      requireUtrNumber: dbConfig.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
-    }
-  } catch (error) {
-    console.warn('Notice: Using default payment configuration fallback:', error)
+  const dbConfig: any = await getActivePaymentConfig()
+  if (!dbConfig) {
     return DEFAULT_PAYMENT_CONFIG
+  }
+  return {
+    ...DEFAULT_PAYMENT_CONFIG,
+    upiVpa: dbConfig.merchant_vpa || DEFAULT_PAYMENT_CONFIG.upiVpa,
+    merchantName: dbConfig.merchant_name || DEFAULT_PAYMENT_CONFIG.merchantName,
+    thankYouMessage: dbConfig.thank_you_message || DEFAULT_PAYMENT_CONFIG.thankYouMessage,
+    mccCode: dbConfig.merchant_category_code || DEFAULT_PAYMENT_CONFIG.mccCode,
+    ifscCode: dbConfig.ifsc_code || DEFAULT_PAYMENT_CONFIG.ifscCode,
+    accountNumber: dbConfig.account_number || DEFAULT_PAYMENT_CONFIG.accountNumber,
+    platformFee:
+      dbConfig.platform_fee != null
+        ? Number(dbConfig.platform_fee)
+        : DEFAULT_PAYMENT_CONFIG.platformFee,
+    handlingFee:
+      dbConfig.handling_fee != null
+        ? Number(dbConfig.handling_fee)
+        : DEFAULT_PAYMENT_CONFIG.handlingFee,
+    vendorCommission:
+      dbConfig.vendor_commission != null
+        ? Number(dbConfig.vendor_commission)
+        : DEFAULT_PAYMENT_CONFIG.vendorCommission,
+    packagingCap:
+      dbConfig.packaging_cap != null
+        ? Number(dbConfig.packaging_cap)
+        : DEFAULT_PAYMENT_CONFIG.packagingCap,
+    baseDeliveryFee:
+      dbConfig.delivery_fee != null
+        ? Number(dbConfig.delivery_fee)
+        : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
+    baseDistanceKm:
+      dbConfig.base_distance_km != null
+        ? Number(dbConfig.base_distance_km)
+        : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
+    perKmRate:
+      dbConfig.per_km_rate != null
+        ? Number(dbConfig.per_km_rate)
+        : DEFAULT_PAYMENT_CONFIG.perKmRate,
+    freeDeliveryThreshold:
+      dbConfig.free_delivery_threshold != null
+        ? Number(dbConfig.free_delivery_threshold)
+        : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
+    driverPayoutShare:
+      dbConfig.driver_payout_share != null
+        ? Number(dbConfig.driver_payout_share)
+        : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
+    surgeMultiplier:
+      dbConfig.surge_multiplier != null
+        ? Number(dbConfig.surge_multiplier)
+        : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
+    rainFee: dbConfig.rain_fee != null ? Number(dbConfig.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
+    nightSurgeFee:
+      dbConfig.night_surge_fee != null
+        ? Number(dbConfig.night_surge_fee)
+        : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
+    isRainModeActive: dbConfig.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
+    isNightSurgeActive: dbConfig.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
+    enableCashOnDelivery:
+      dbConfig.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
+    enableUpiDeepLink: dbConfig.enable_upi_deep_link ?? DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
+    requireUtrNumber: dbConfig.require_utr_number ?? DEFAULT_PAYMENT_CONFIG.requireUtrNumber,
   }
 }
 
@@ -184,7 +168,9 @@ export async function GET(request: Request) {
         const sinceParam = searchParams.get('since')
         let missedEvents: any[] = []
         if (sinceParam) {
-          const parsedSince = isNaN(Number(sinceParam)) ? new Date(sinceParam) : new Date(Number(sinceParam))
+          const parsedSince = isNaN(Number(sinceParam))
+            ? new Date(sinceParam)
+            : new Date(Number(sinceParam))
           if (!isNaN(parsedSince.getTime())) {
             try {
               missedEvents = await prisma.orderOutbox.findMany({
@@ -557,11 +543,9 @@ export async function POST(request: Request) {
         }
 
         // Check stock
-        const hasStockTracking = typeof menuItem.stock_count === 'number' && menuItem.stock_count > 0
-        if (
-          menuItem.in_stock === false ||
-          (hasStockTracking && menuItem.stock_count < quantity)
-        ) {
+        const hasStockTracking =
+          typeof menuItem.stock_count === 'number' && menuItem.stock_count > 0
+        if (menuItem.in_stock === false || (hasStockTracking && menuItem.stock_count < quantity)) {
           if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout')
           return NextResponse.json(
             { error: `Item ${menuItem.name} is out of stock` },
@@ -653,7 +637,10 @@ export async function POST(request: Request) {
             longitude: 77.475,
           }
         } else {
-          return NextResponse.json({ error: 'Restaurant not found or unavailable' }, { status: 404 })
+          return NextResponse.json(
+            { error: 'Restaurant not found or unavailable' },
+            { status: 404 }
+          )
         }
       }
 
@@ -663,16 +650,11 @@ export async function POST(request: Request) {
       const itemsForStorage: any[] = itemsList.map(({ _menuItem, ...item }) => item)
 
       // ─── Validate Coupon (if provided) ─────────────────────────────────
-      // CR-03 FIX: Two-phase coupon gate.
-      //   Phase 1 (here): validateAndApplyCoupon checks eligibility and computes the discount
-      //                   but does NOT increment the counter.
-      //   Phase 2 (below): checkAndIncrementCouponUsage atomically claims the slot in Redis
-      //                   (INCR with DECR-on-overshoot) before the DB transaction opens.
-      //                   If the transaction rolls back, compensateCouponIncrement() releases
-      //                   the Redis slot so it is not permanently consumed.
+      // Coupon eligibility is checked here. The usage slot is claimed atomically
+      // inside the order transaction below so a failed checkout never consumes a
+      // coupon and a successful checkout increments the database exactly once.
       let couponDiscountAmount = 0
       let couponResult: any = null
-      let couponIncrementClaimed = false // tracks whether we must compensate on failure
       if (coupon_code) {
         couponResult = await validateAndApplyCoupon(coupon_code, foodSubtotal, finalRestaurantId)
         if (!couponResult.valid) {
@@ -682,15 +664,6 @@ export async function POST(request: Request) {
           )
         }
         couponDiscountAmount = couponResult.discount
-
-        // Atomically claim one usage slot (Redis INCR + limit guard)
-        if (couponResult.coupon?.id) {
-          const usageCheck = await checkAndIncrementCouponUsage(couponResult.coupon.id)
-          if (!usageCheck.allowed) {
-            return NextResponse.json({ error: 'Coupon usage limit exceeded' }, { status: 400 })
-          }
-          couponIncrementClaimed = true
-        }
       }
 
       const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
@@ -747,8 +720,7 @@ export async function POST(request: Request) {
         }
 
         let addrLat = requestedAddress.latitude != null ? Number(requestedAddress.latitude) : null
-        let addrLng =
-          requestedAddress.longitude != null ? Number(requestedAddress.longitude) : null
+        let addrLng = requestedAddress.longitude != null ? Number(requestedAddress.longitude) : null
         if (
           addrLat === null ||
           addrLng === null ||
@@ -964,8 +936,13 @@ export async function POST(request: Request) {
         smallCartFeePaise: 0,
         smallCartThresholdPaise: 0,
         couponDiscountPaise: Math.round(couponDiscountAmount * 100),
-        couponFundingSource: 'SHARED',
-        restaurantDiscountSharePercent: 50,
+        couponFundingSource:
+          couponResult?.coupon?.funding_source === 'RESTAURANT' ||
+          couponResult?.coupon?.funding_source === 'PLATFORM' ||
+          couponResult?.coupon?.funding_source === 'BANK'
+            ? couponResult.coupon.funding_source
+            : 'SHARED',
+        restaurantDiscountSharePercent: Number(couponResult?.coupon?.restaurant_share ?? 50),
         tipPaise: Math.round((tip || 0) * 100),
         contract: {
           contractNumber: restaurantDetails.contract_number || 'DEFAULT',
@@ -1073,10 +1050,14 @@ export async function POST(request: Request) {
 
           // Check if customer and restaurant exist in DB before connecting relations
           const customerRecord = finalCustomerId
-            ? await tx.user.findUnique({ where: { id: finalCustomerId }, select: { id: true } }).catch(() => null)
+            ? await tx.user
+                .findUnique({ where: { id: finalCustomerId }, select: { id: true } })
+                .catch(() => null)
             : null
           const restaurantRecord = finalRestaurantId
-            ? await tx.restaurant.findUnique({ where: { id: finalRestaurantId }, select: { id: true } }).catch(() => null)
+            ? await tx.restaurant
+                .findUnique({ where: { id: finalRestaurantId }, select: { id: true } })
+                .catch(() => null)
             : null
 
           const createdOrder = await tx.order.create({
@@ -1117,10 +1098,17 @@ export async function POST(request: Request) {
           // 3. Increment coupon usage in DB (Redis slot was already claimed atomically above;
           //    this keeps the DB used_count in sync inside the same transaction).
           if (coupon_code && couponResult?.coupon?.id) {
-            await tx.coupon.update({
-              where: { id: couponResult.coupon.id },
-              data: { used_count: { increment: 1 } },
-            })
+            const claimed = await tx.$queryRaw<Array<{ id: string }>>`
+              UPDATE coupons
+              SET used_count = COALESCE(used_count, 0) + 1
+              WHERE id = ${couponResult.coupon.id}
+                AND is_active IS NOT FALSE
+                AND (usage_limit IS NULL OR COALESCE(used_count, 0) < usage_limit)
+              RETURNING id
+            `
+            if (claimed.length !== 1) {
+              throw new Error('COUPON_USAGE_LIMIT_EXCEEDED')
+            }
           }
 
           // 4. Create initial PaymentTransaction with pending status
@@ -1186,13 +1174,6 @@ export async function POST(request: Request) {
           await releaseIdempotency(idempotencyKey, 'order_checkout')
         }
 
-        // Release the Redis coupon slot if the DB transaction failed
-        if (couponIncrementClaimed && couponResult?.coupon?.id) {
-          if (isRedisAvailable() && redis) {
-            redis.decr(`crave:coupon:usage:${couponResult.coupon.id}`).catch(() => {})
-          }
-        }
-
         // Explicit insufficient stock error
         if (txErr?.message?.startsWith('INSUFFICIENT_STOCK:')) {
           const itemName = txErr.message.split(':')[1]
@@ -1200,6 +1181,10 @@ export async function POST(request: Request) {
             { error: `Item ${itemName} is out of stock or insufficient quantity available` },
             { status: 400 }
           )
+        }
+
+        if (txErr?.message === 'COUPON_USAGE_LIMIT_EXCEEDED') {
+          return NextResponse.json({ error: 'Coupon usage limit exceeded' }, { status: 400 })
         }
 
         // Anti-concurrency collision recovery using database constraint violation (P2002)
@@ -1455,6 +1440,13 @@ export async function PATCH(request: Request) {
       const hasCoordinateChange = !!(driver_lat != null || driver_lng != null)
       const hasItemsChange = !!items
 
+      if (hasStatusChange && hasPaymentStatusChange) {
+        return NextResponse.json(
+          { error: 'Update payment status and fulfillment status in separate requests' },
+          { status: 400 }
+        )
+      }
+
       const anyChangeRequested =
         hasStatusChange ||
         hasPaymentStatusChange ||
@@ -1625,6 +1617,35 @@ export async function PATCH(request: Request) {
           })
         }
 
+        if (status === 'completed') {
+          const targetDriverId = driver_id || (existing as any).rider_id
+          if (targetDriverId) {
+            const breakdown = (existing.items as any[])?.[0]?.billing_breakdown
+            const driverPayoutAmount =
+              breakdown?.driver_payout != null
+                ? Number(breakdown.driver_payout)
+                : Math.round((Number(existing.delivery_fee) || 30) * 0.8) +
+                  (Number((existing as any).tip) || 0)
+
+            await tx.driverPayout.upsert({
+              where: { id: `payout_${orderId}` },
+              create: {
+                id: `payout_${orderId}`,
+                driver_id: targetDriverId,
+                amount: driverPayoutAmount,
+                status: 'paid',
+                transaction_ref: orderId,
+              },
+              update: {
+                driver_id: targetDriverId,
+                amount: driverPayoutAmount,
+                status: 'paid',
+                transaction_ref: orderId,
+              },
+            })
+          }
+        }
+
         return dalResult && Object.keys(dalResult).length > 0 ? dalResult : orderUpdate
       })
 
@@ -1635,29 +1656,19 @@ export async function PATCH(request: Request) {
       const newPaymentStatus = payment_status || paymentStatus
       if (newPaymentStatus) {
         if (newPaymentStatus === 'verified') {
-          try {
-            await processPaymentVerificationTx({
-              orderId,
-              actorId: actor.id,
-              gateway: 'admin_manual',
-            })
-          } catch (e: any) {
-            console.warn('[PATCH /api/orders] Verification notice:', e)
-          }
+          await processPaymentVerificationTx({
+            orderId,
+            actorId: actor.id,
+            gateway: 'admin_manual',
+          })
         } else if (newPaymentStatus === 'rejected') {
-          try {
-            await processPaymentRejectionTx({
-              orderId,
-              actorId: actor.id,
-              reason: body.rejection_reason || 'Payment rejected by admin',
-            })
-          } catch (e: any) {
-            console.warn('[PATCH /api/orders] Rejection notice:', e)
-          }
+          await processPaymentRejectionTx({
+            orderId,
+            actorId: actor.id,
+            reason: body.rejection_reason || 'Payment rejected by admin',
+          })
         } else {
-          try {
-            await updatePaymentReviewStatus(orderId, newPaymentStatus)
-          } catch (e) {}
+          await updatePaymentReviewStatus(orderId, newPaymentStatus)
         }
         await broadcast('approval_update', { status: newPaymentStatus, orderId })
       }
@@ -1679,31 +1690,6 @@ export async function PATCH(request: Request) {
           driverName: driver_name || null,
           driverPhone: driver_phone || null,
         })
-      }
-
-      // If order completed, record driver payout.
-      if (status === 'completed') {
-        try {
-          const targetDriverId = driver_id || (existing as any).rider_id
-          if (targetDriverId) {
-            const breakdown = (existing.items as any[])?.[0]?.billing_breakdown
-            const driverPayoutAmount =
-              breakdown?.driver_payout != null
-                ? Number(breakdown.driver_payout)
-                : Math.round((Number(existing.delivery_fee) || 30) * 0.8) +
-                  (Number((existing as any).tip) || 0)
-
-            await createDriverPayout({
-              id: `payout_${orderId}`,
-              driver_id: targetDriverId,
-              amount: driverPayoutAmount,
-              status: 'paid',
-              transaction_ref: orderId,
-            })
-          }
-        } catch (e) {
-          console.warn('Driver payout creation notice:', e)
-        }
       }
 
       return NextResponse.json({ success: true, order: updated })
@@ -1754,4 +1740,3 @@ export async function DELETE(request: Request) {
     }
   })
 }
-

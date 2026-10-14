@@ -1,8 +1,11 @@
-import { updateUser, findUserById, createCustomerAddress } from '@/lib/dal'
+import { updateUser } from '@/lib/dal'
+import { resolveCoordinates } from '@/lib/dal/addresses'
+import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 
 async function resolveUserId(request: Request): Promise<string | null> {
   let token = ''
@@ -60,19 +63,46 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const updated = await updateUser(userId, updates)
-
+    let updated
     if (updates.address && typeof updates.address === 'string' && updates.address.trim()) {
-      try {
-        await createCustomerAddress({
-          customer_id: userId,
-          label: 'Home',
-          address: updates.address.trim(),
-          is_default: true,
+      const address = updates.address.trim()
+      const coordinates = await resolveCoordinates(address)
+      updated = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.update({ where: { id: userId }, data: updates })
+        const currentDefault = await tx.customerAddress.findFirst({
+          where: { customer_id: userId, is_default: true },
+          select: { id: true },
         })
-      } catch (addrErr) {
-        console.warn('[PATCH /api/user/update] Could not sync customer_address:', addrErr)
-      }
+        if (currentDefault) {
+          await tx.customerAddress.update({
+            where: { id: currentDefault.id },
+            data: {
+              address,
+              latitude: new Prisma.Decimal(coordinates.lat),
+              longitude: new Prisma.Decimal(coordinates.lng),
+            },
+          })
+        } else {
+          await tx.customerAddress.updateMany({
+            where: { customer_id: userId },
+            data: { is_default: false },
+          })
+          await tx.customerAddress.create({
+            data: {
+              id: crypto.randomUUID(),
+              customer_id: userId,
+              label: 'Home',
+              address,
+              is_default: true,
+              latitude: new Prisma.Decimal(coordinates.lat),
+              longitude: new Prisma.Decimal(coordinates.lng),
+            },
+          })
+        }
+        return user
+      })
+    } else {
+      updated = await updateUser(userId, updates)
     }
 
     broadcast('user_profile', {

@@ -182,7 +182,8 @@ async function runVerification() {
       expectedFromStatus: 'picked_up',
     })
     assert(
-      outForDeliveryResult.success === true && outForDeliveryResult.order.status === 'out_for_delivery',
+      outForDeliveryResult.success === true &&
+        outForDeliveryResult.order.status === 'out_for_delivery',
       'Legal transition picked_up → out_for_delivery succeeds'
     )
 
@@ -203,13 +204,16 @@ async function runVerification() {
       timestamp: now - 5000,
       status: 'ON_TRIP',
     })
-    assert(pos1.state.lastUpdated === now - 5000, 'Initial GPS position indexed with client timestamp')
+    assert(
+      pos1.state.lastUpdated === now - 5000,
+      'Initial GPS position indexed with client timestamp'
+    )
 
     // 2. Out-of-order delayed packet arriving from the past (T = now - 15000ms)
     const outOfOrderResult = await updateDriverLocation({
       driverId: testDriverId,
-      lat: 12.9100, // old wrong location
-      lng: 77.5100,
+      lat: 12.91, // old wrong location
+      lng: 77.51,
       timestamp: now - 15000, // older than last updated!
       status: 'ON_TRIP',
     })
@@ -226,8 +230,8 @@ async function runVerification() {
     // 3. Stale packet arrival (packet generated > 60s ago)
     const stalePacketResult = await updateDriverLocation({
       driverId: testDriverId,
-      lat: 12.9800,
-      lng: 77.6000,
+      lat: 12.98,
+      lng: 77.6,
       timestamp: now - 70000, // > 60s ago
       status: 'ON_TRIP',
     })

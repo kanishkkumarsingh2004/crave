@@ -7,20 +7,18 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { AdminStatsCache } from '@/lib/cache'
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
-    if (request) {
-      const authHeader = request.headers.get('authorization')
-      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
 
-      const payload = token ? await verifyToken(token) : null
-      if (!payload) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-      }
-      if (payload.role !== 'admin') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-      }
+    const payload = token ? await verifyToken(token) : null
+    if (!payload) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    if (payload.role !== 'admin') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     // Try to get cached stats first

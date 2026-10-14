@@ -82,7 +82,9 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
             if (blacklisted) return true
           }
           if (payloadWithJti.id) {
-            const userBlacklisted = await redis!.get(`crave:jwt:blacklist:user:${payloadWithJti.id}`)
+            const userBlacklisted = await redis!.get(
+              `crave:jwt:blacklist:user:${payloadWithJti.id}`
+            )
             if (userBlacklisted) return true
           }
           return false

@@ -1,32 +1,44 @@
 {
-  "testType": "spike",
-  "testName": "Spike Test (Flash Sale Simulation)",
-  "description": "Survive sudden viral traffic surge",
-  "timestamp": "2026-10-12T18:01:15.941Z",
+  "benchmark": "crave-checkout-load-test",
+  "version": "2.0.0",
+  "timestamp": "2026-10-14T18:32:27.829Z",
   "environment": "staging",
-  "commitSha": "local",
-  "baseUrl": "http://localhost:3000",
+  "commitSha": "unspecified",
   "concurrency": {
+    "configuredPeakVUs": 1000,
+    "observedPeakVUs": 440,
     "stages": [
+      {
+        "duration": "30s",
+        "target": 10
+      },
       {
         "duration": "1m",
         "target": 50
       },
       {
-        "duration": "10s",
+        "duration": "1m",
+        "target": 100
+      },
+      {
+        "duration": "1m",
+        "target": 150
+      },
+      {
+        "duration": "1m",
+        "target": 200
+      },
+      {
+        "duration": "1m",
+        "target": 500
+      },
+      {
+        "duration": "1m",
         "target": 1000
       },
       {
-        "duration": "30s",
-        "target": 1000
-      },
-      {
-        "duration": "10s",
-        "target": 50
-      },
-      {
-        "duration": "2m",
-        "target": 50
+        "duration": "1m",
+        "target": 100
       },
       {
         "duration": "1m",
@@ -34,23 +46,68 @@
       }
     ]
   },
-  "results": {
-    "totalRequests": 35370,
-    "failedRequests": 206,
-    "failureRatePct": 0.58,
-    "avgResponseTimeMs": 950.74,
-    "p95ResponseTimeMs": 4714.63,
-    "maxResponseTimeMs": 5380.06,
-    "throughputRps": 120.47,
-    "wsConnectAvgMs": null,
-    "wsErrorRatePct": "0.00",
-    "checksPassRatePct": 99.43,
-    "checksPassed": 35163,
-    "checksFailed": 203
+  "authCoverage": {
+    "userScenarioAvailable": false,
+    "adminScenarioAvailable": false,
+    "vendorScenarioAvailable": false,
+    "riderScenarioAvailable": false,
+    "allCredentialsAvailable": false
   },
-  "customMetrics": {
-    "restErrors": 0.005739976248374145,
-    "authErrors": 0.75,
-    "totalOrdersCreated": 0
-  }
+  "execution": {
+    "testRunDurationMs": 319143.889231,
+    "totalRequests": 34361,
+    "failedRequests": 8643,
+    "requestFailureRatePct": 25.15,
+    "requestsPerSecond": 107.67,
+    "checksPassRatePct": 69.15,
+    "checksPassed": 55294,
+    "checksFailed": 24666
+  },
+  "metrics": {
+    "http_req_duration": {
+      "p(95)": 5001.873265,
+      "avg": 791.1070755360178,
+      "min": 0,
+      "med": 128.756426,
+      "max": 12086.558973,
+      "p(90)": 3097.489505
+    },
+    "http_req_failed": {
+      "fails": 25718,
+      "rate": 0.25153517068769826,
+      "passes": 8643
+    },
+    "checks": {
+      "rate": 0.6915207603801901,
+      "passes": 55294,
+      "fails": 24666
+    },
+    "http_reqs": {
+      "count": 34361,
+      "rate": 107.66616927178296
+    },
+    "ws_connecting": {
+      "avg": 0,
+      "min": 0,
+      "med": 0,
+      "max": 0,
+      "p(90)": 0,
+      "p(95)": 0
+    }
+  },
+  "thresholds": {
+    "http_req_duration:p(95)<5000": {
+      "pass": false,
+      "valueMs": 5001.87
+    },
+    "http_req_failed:rate<0.10": {
+      "pass": false,
+      "failPct": 25.15
+    },
+    "checks:rate>0.90": {
+      "pass": false,
+      "passPct": 69.15
+    }
+  },
+  "overallPassed": false
 }

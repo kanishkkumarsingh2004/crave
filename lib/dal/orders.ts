@@ -56,12 +56,7 @@ export async function listOrders(filters?: {
         {
           rider_id: null,
           status: {
-            in: [
-              'ready_for_pickup',
-              'sent_to_vendor',
-              'preparing',
-              'packing',
-            ] as OrderStatus[],
+            in: ['ready_for_pickup', 'sent_to_vendor', 'preparing', 'packing'] as OrderStatus[],
           },
           payment_status: 'verified',
         },
@@ -458,7 +453,9 @@ export async function transitionOrderStatusAtomic(params: {
 
       const updateData: any = {
         status: toStatus,
-        ...(toStatus === 'completed' || toStatus === 'delivered' ? { delivered_at: new Date() } : {}),
+        ...(toStatus === 'completed' || toStatus === 'delivered'
+          ? { delivered_at: new Date() }
+          : {}),
         ...(extraData || {}),
       }
 
@@ -618,7 +615,8 @@ export async function deleteOrder(
           if (orderAgeMs > MAX_CANCELLATION_WINDOW_MS) {
             return {
               success: false,
-              error: 'Order cancellation window expired. Orders can only be cancelled within 30 seconds of placement.',
+              error:
+                'Order cancellation window expired. Orders can only be cancelled within 30 seconds of placement.',
             }
           }
         }
@@ -648,4 +646,3 @@ export async function deleteOrder(
     return { success: false, error: err?.message || 'Failed to delete order' }
   }
 }
-

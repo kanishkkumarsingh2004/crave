@@ -71,8 +71,10 @@ model Restaurant {
   supplier_state      String?              @default("Karnataka")
   price_tax_mode      PriceTaxMode         @default(TAX_INCLUSIVE)
   contract_number     String?
+  gst_rate_percent    Decimal?             @db.Decimal(5, 2)
 
   commercial_contracts CommercialContract[]
+  applicable_coupons   CouponRestaurant[]
   coupons              Coupon[]
   menu_items           MenuItem[]
   orders               Order[]
@@ -223,9 +225,21 @@ model Coupon {
   created_at       DateTime?    @default(now()) @db.Timestamptz(6)
   restaurant_id    String?
   restaurant       Restaurant?  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  applicable_restaurants CouponRestaurant[]
 
   @@index([code])
   @@map("coupons")
+}
+
+model CouponRestaurant {
+  coupon_id     String
+  restaurant_id String
+  coupon        Coupon     @relation(fields: [coupon_id], references: [id], onDelete: Cascade)
+  restaurant    Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+
+  @@id([coupon_id, restaurant_id])
+  @@index([restaurant_id])
+  @@map("coupon_restaurants")
 }
 
 model VendorSettlement {
@@ -602,4 +616,3 @@ enum RefundStatus {
   completed
   failed
 }
-

@@ -6,10 +6,13 @@ import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 export async function POST(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const body = await request.json()
     const { driverId: bodyDriverId, isOnline, status } = body
-    const driverId = bodyDriverId || actor.id || 'driver_partner'
+    const driverId = actor.role === 'admin' ? bodyDriverId || actor.id : actor.id
 
     const currentLoc = getDriverLocation(driverId)
     const dutyStatus = status || (isOnline ? 'ONLINE' : 'OFFLINE')

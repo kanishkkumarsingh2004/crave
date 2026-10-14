@@ -98,7 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If the URL has an explicit logout flag, purge local state and do not restore
         if (
           typeof window !== 'undefined' &&
-          (window.location.search.includes('logout=') || window.location.search.includes('signout='))
+          (window.location.search.includes('logout=') ||
+            window.location.search.includes('signout='))
         ) {
           localStorage.removeItem('crave_user')
           localStorage.removeItem('crave_token')

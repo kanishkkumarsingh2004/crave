@@ -5,19 +5,33 @@ import http from 'k6/http'
 import ws from 'k6/ws'
 import { check, sleep } from 'k6'
 
+const env = typeof __ENV !== 'undefined' ? __ENV : typeof process !== 'undefined' ? process.env : {}
+const IS_CI_SMOKE = env.CI_SMOKE === 'true'
+
+function requiredTestSetting(name) {
+  const value = env[name]
+  if (!value) throw new Error(`${name} must be provided for authenticated load tests`)
+  return value
+}
+
 export const CONFIG = {
   // Target VUs per stage
-  stages: [
-    { duration: '30s', target: 10 },
-    { duration: '1m', target: 50 },
-    { duration: '1m', target: 100 },
-    { duration: '1m', target: 150 },
-    { duration: '1m', target: 200 },
-    { duration: '1m', target: 500 },
-    { duration: '1m', target: 1000 },
-    { duration: '1m', target: 100 },
-    { duration: '1m', target: 0 },
-  ],
+  stages: IS_CI_SMOKE
+    ? [
+        { duration: '5s', target: 3 },
+        { duration: '5s', target: 0 },
+      ]
+    : [
+        { duration: '30s', target: 10 },
+        { duration: '1m', target: 50 },
+        { duration: '1m', target: 100 },
+        { duration: '1m', target: 150 },
+        { duration: '1m', target: 200 },
+        { duration: '1m', target: 500 },
+        { duration: '1m', target: 1000 },
+        { duration: '1m', target: 100 },
+        { duration: '1m', target: 0 },
+      ],
 
   // Thresholds
   thresholds: {
@@ -37,12 +51,24 @@ export const CONFIG = {
     vendorCoupons: '/api/admin/coupons',
   },
 
-  // Demo credentials (used strictly in test environments)
+  // Isolated test identities are injected by CI or the test operator.
   users: {
-    admin: { email: 'admin@crave.com', password: '1234567890' },
-    user: { email: 'user@crave.com', password: '1234567890' },
-    vendor: { email: 'vendor@crave.com', password: '1234567890' },
-    rider: { email: 'rider@crave.com', password: '1234567890' },
+    admin: {
+      email: requiredTestSetting('SEED_ADMIN_EMAIL'),
+      password: requiredTestSetting('SEED_PASSWORD'),
+    },
+    user: {
+      email: requiredTestSetting('SEED_CUSTOMER_EMAIL'),
+      password: requiredTestSetting('SEED_PASSWORD'),
+    },
+    vendor: {
+      email: requiredTestSetting('SEED_VENDOR_EMAIL'),
+      password: requiredTestSetting('SEED_PASSWORD'),
+    },
+    rider: {
+      email: requiredTestSetting('SEED_RIDER_EMAIL'),
+      password: requiredTestSetting('SEED_PASSWORD'),
+    },
   },
 
   // Timing expectations (ms)
@@ -61,7 +87,6 @@ export const options = {
   thresholds: CONFIG.thresholds,
 }
 
-const env = typeof __ENV !== 'undefined' ? __ENV : typeof process !== 'undefined' ? process.env : {}
 const BASE_URL = env.BASE_URL || 'http://localhost:3000'
 const WS_URL = env.WS_URL || 'ws://localhost:8000/api/ws'
 const COMMIT_SHA = env.COMMIT_SHA || 'unspecified'

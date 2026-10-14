@@ -1,11 +1,9 @@
 import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
-import { findUserByEmail as findUserInDb } from '@/lib/dal'
+import { findUserByEmail as findUserInDb, updateUser } from '@/lib/dal'
+import { normalizeEmail } from '@/lib/email'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { hashPassword, verifyPassword } from '@/lib/password'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
 
 function isSecureCookie(request?: Request): boolean {
   if (process.env.NODE_ENV !== 'production') return false
@@ -17,7 +15,11 @@ function isSecureCookie(request?: Request): boolean {
   return request.url.startsWith('https:')
 }
 
-function setCookies(response: ReturnType<typeof NextResponse.json>, token: string, request?: Request) {
+function setCookies(
+  response: ReturnType<typeof NextResponse.json>,
+  token: string,
+  request?: Request
+) {
   const isSecure = isSecureCookie(request)
   const cookieOptions = {
     httpOnly: true,
@@ -41,151 +43,42 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const email = normalizeEmail(body.email)
     const password = typeof body.password === 'string' ? body.password : ''
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'A valid email address and password are required' },
+        { status: 400 }
+      )
     }
 
-    let lookupEmail = email
-    if (process.env.NODE_ENV !== 'production') {
-      if (email === 'admin') lookupEmail = 'admin@crave.com'
-      else if (email === 'vendor') lookupEmail = 'vendor@crave.com'
-      else if (email === 'user') lookupEmail = 'user@crave.com'
-      else if (email === 'darkstore' || email === 'store' || email === 'cravexp')
-        lookupEmail = 'darkstore@crave.com'
-      else if (email === 'rider' || email === 'driver') lookupEmail = 'rider@crave.com'
-    }
-
-    let profile: any = null
+    let profile: any
     try {
-      profile = await findUserInDb(lookupEmail)
-      if (!profile && lookupEmail.endsWith('@gmail.com')) {
-        profile = await findUserInDb(lookupEmail.replace('@gmail.com', '@crave.com'))
-      }
-      if (!profile && lookupEmail.endsWith('@crave.com')) {
-        profile = await findUserInDb(lookupEmail.replace('@crave.com', '@gmail.com'))
-      }
+      profile = await findUserInDb(email)
     } catch (dbErr: any) {
-      console.warn('[login] Database lookup unavailable, falling back to demo profiles if applicable:', dbErr?.message || dbErr)
-    }
-
-    const isDemoEmail =
-      lookupEmail === 'admin' ||
-      lookupEmail === 'admin@gmail.com' ||
-      lookupEmail === 'admin@crave.com' ||
-      lookupEmail === 'user@gmail.com' ||
-      lookupEmail === 'user@crave.com' ||
-      lookupEmail === 'vendor@gmail.com' ||
-      lookupEmail === 'vendor@crave.com' ||
-      lookupEmail === 'darkstore@crave.com' ||
-      lookupEmail === 'darkstore@gmail.com' ||
-      lookupEmail === 'store@crave.com' ||
-      lookupEmail === 'cravexp@crave.com' ||
-      lookupEmail === 'rider@crave.com' ||
-      lookupEmail === 'rider@gmail.com' ||
-      lookupEmail === 'driver@crave.com'
-
-    const isDemoPassword =
-      password === 'admin' ||
-      password === 'admin123' ||
-      password === '1234567890' ||
-      password === 'Password123!' ||
-      password === 'Password123' ||
-      password === '123456' ||
-      password === 'password'
-
-    if (process.env.NODE_ENV !== 'production' && !profile && isDemoEmail && isDemoPassword) {
-      if (lookupEmail.startsWith('admin')) {
-        profile = {
-          id: 'usr_admin_01',
-          name: 'System Administrator',
-          email: lookupEmail,
-          role: 'admin',
-          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
-        }
-      } else if (lookupEmail.startsWith('vendor')) {
-        profile = {
-          id: 'usr_vendor_01',
-          name: 'Chef Marco',
-          email: lookupEmail,
-          role: 'restaurant_vendor',
-          restaurant_name: 'Spice Garden',
-          cuisine: 'North Indian & Fast Food',
-          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
-        }
-      } else if (
-        lookupEmail.startsWith('darkstore') ||
-        lookupEmail.startsWith('store') ||
-        lookupEmail.startsWith('cravexp')
-      ) {
-        profile = {
-          id: 'usr_darkstore_01',
-          name: 'Dark Store Operator',
-          email: lookupEmail,
-          role: 'cravexp_store_vendor',
-          restaurant_name: 'CraveXP 10-Min Dark Store',
-          cuisine: 'Instant Groceries & Snacks',
-          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
-        }
-      } else if (lookupEmail.startsWith('rider') || lookupEmail.startsWith('driver')) {
-        profile = {
-          id: 'usr_rider_01',
-          name: 'Rider Rahul',
-          email: lookupEmail,
-          role: 'rider',
-          vehicle_type: 'Electric Scooter',
-          license_plate: 'KA-01-CR-2026',
-          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
-        }
-      } else if (lookupEmail.startsWith('user')) {
-        profile = {
-          id: 'usr_customer_01',
-          name: 'Crave Customer',
-          email: lookupEmail,
-          role: 'user',
-          password_hash: ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex'),
-        }
-      }
+      console.error('[login] Database lookup failed:', dbErr?.message || dbErr)
+      return NextResponse.json(
+        { error: 'Authentication service is temporarily unavailable' },
+        { status: 503 }
+      )
     }
 
     if (!profile?.password_hash) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    let passwordMatches = false
-
-    if (process.env.NODE_ENV !== 'production' && isDemoEmail && isDemoPassword) {
-      passwordMatches = true
-    } else if (typeof profile.password_hash === 'string' && profile.password_hash.includes(':')) {
-      const [salt, expectedHash] = profile.password_hash.split(':')
-      if (salt && expectedHash) {
-        const computed = ((await scrypt(password, salt, 64)) as Buffer).toString('hex')
-        passwordMatches =
-          computed.length === expectedHash.length &&
-          crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
-      }
-    } else if (profile.password_hash) {
-      const passwordHash = (
-        (await scrypt(password, profile.email || lookupEmail, 64)) as Buffer
-      ).toString('hex')
-      const matchesPrimary =
-        passwordHash.length === profile.password_hash.length &&
-        crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(profile.password_hash))
-
-      let matchesFallback = false
-      if (!matchesPrimary) {
-        const fallbackHash = ((await scrypt(password, lookupEmail, 64)) as Buffer).toString('hex')
-        matchesFallback =
-          fallbackHash.length === profile.password_hash.length &&
-          crypto.timingSafeEqual(Buffer.from(fallbackHash), Buffer.from(profile.password_hash))
-      }
-      passwordMatches = matchesPrimary || matchesFallback
+    if (!verifyPassword(password, profile.password_hash, profile.email)) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    if (!passwordMatches) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    // Transparently migrate legacy email-salted hashes after a successful login.
+    if (!profile.password_hash.includes(':')) {
+      try {
+        await updateUser(profile.id, { password_hash: hashPassword(password) })
+      } catch (migrationError) {
+        console.error('[login] Failed to upgrade legacy password hash:', migrationError)
+      }
     }
 
     const userPayload: JWTPayload = {
@@ -236,12 +129,13 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token, request)
+    return setCookies(
+      NextResponse.json({ success: true, token, user: userPayload }),
+      token,
+      request
+    )
   } catch (error) {
     console.error('Login failed:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unable to sign in at this time' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Unable to sign in at this time' }, { status: 500 })
   }
 }

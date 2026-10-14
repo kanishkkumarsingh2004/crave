@@ -6,9 +6,12 @@ import crypto from 'crypto'
 export async function GET(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
-    const driverId = searchParams.get('driverId') || actor.id
+    const driverId = actor.role === 'admin' ? searchParams.get('driverId') || actor.id : actor.id
 
     const payouts = await listDriverPayouts(driverId)
     const formatted = (payouts || []).map((p: any) => ({
@@ -40,10 +43,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
 
     const body = await request.json()
     const { amount, vpa, driverId: bodyDriverId } = body
-    const driverId = bodyDriverId || actor.id || 'driver_partner'
+    const driverId = actor.role === 'admin' ? bodyDriverId || actor.id : actor.id
 
     if (!amount || Number(amount) <= 0) {
       return NextResponse.json({ error: 'Valid payout amount required' }, { status: 400 })
@@ -54,8 +60,8 @@ export async function POST(request: Request) {
       id,
       driver_id: driverId,
       amount: Number(amount),
-      status: 'paid',
-      transaction_ref: `UPI_${Date.now()}`,
+      status: actor.role === 'admin' ? 'paid' : 'pending',
+      transaction_ref: actor.role === 'admin' ? `UPI_${Date.now()}` : undefined,
     })
 
     return NextResponse.json({

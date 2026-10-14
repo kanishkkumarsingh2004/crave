@@ -456,8 +456,6 @@ export default function CustomerDashboard({
   const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false)
   const isSubmittingCheckoutRef = useRef(false)
   const checkoutIdempotencyKeyRef = useRef<string | null>(null)
-  const [isApprovingPayment, setIsApprovingPayment] = useState(false)
-  const isApprovingPaymentRef = useRef(false)
 
   useEffect(() => {
     if (showMobileSideMenu) {
@@ -1252,7 +1250,7 @@ export default function CustomerDashboard({
         deliveryFee: cfg.baseDeliveryFee,
         handlingFee: cfg.handlingFee,
         freeDeliveryThreshold: cfg.freeDeliveryThreshold,
-        gstRate: 5,
+        gstRate: cfg.gstRatePercent,
       })
       setCompanyUpiId(cfg.upiVpa)
       setCompanyMerchantName(cfg.merchantName)
@@ -1735,18 +1733,15 @@ export default function CustomerDashboard({
 
     const cleanUtr = utrRef.trim()
 
-    const targetAddress = (deliveryAddress || user?.address || 'Kanakapura Road, Bengaluru').trim()
+    const targetAddress = (deliveryAddress || user?.address || '').trim()
     const targetRestaurantId =
       selectedRestaurant?.id ||
       (cart[0] as any)?.restaurantId ||
       (cart[0] as any)?.vendorId ||
       restaurantsList[0]?.id ||
-      'vnd_default'
+      ''
     const targetRestaurantName =
-      selectedRestaurant?.name ||
-      cart[0]?.restaurantName ||
-      restaurantsList[0]?.name ||
-      'Crave Kitchen Store'
+      selectedRestaurant?.name || cart[0]?.restaurantName || restaurantsList[0]?.name || ''
 
     if (!user?.id) {
       setUtrError('Please sign in with a customer account to place an order.')
@@ -1755,6 +1750,11 @@ export default function CustomerDashboard({
 
     if (!targetAddress) {
       setUtrError('Please enter or select a delivery address.')
+      return
+    }
+
+    if (cart.length === 0 || !targetRestaurantId || !targetRestaurantName) {
+      setUtrError('Your cart does not contain a valid restaurant item.')
       return
     }
 
@@ -1854,45 +1854,25 @@ export default function CustomerDashboard({
         driverPhone: null,
         timestamp: nowTime,
       })
+
+      setShowCheckoutModal(false)
+      setPaymentDone(true)
+      setVerifyingModal({
+        open: true,
+        timer: 180,
+        orderId: savedOrder.id,
+        status: 'verifying',
+      })
+      navigateToTab('live-order')
     } catch (err: any) {
-      const errorMsg =
-        err?.message || (typeof err === 'string' ? err : 'Order creation fallback activated')
-      console.warn('Order submission notice, using client fallback:', errorMsg)
-
-      const nowTime = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      })
-
-      setActiveOrder({
-        id: orderId,
-        restaurantName: restName,
-        items: cartWithOtp,
-        subtotal: Number(cartSubtotal),
-        total: Number(grandTotal),
-        statusStep: 1,
-        otp: generatedOtp,
-        driverName: null,
-        driverPhone: null,
-        timestamp: nowTime,
-      })
+      const errorMsg = err?.message || (typeof err === 'string' ? err : 'Failed to submit order.')
+      console.error('Order submission failed:', errorMsg)
+      setUtrError(errorMsg)
+      toast(errorMsg, 'error')
     } finally {
       setIsSubmittingCheckout(false)
       isSubmittingCheckoutRef.current = false
     }
-
-    setShowCheckoutModal(false)
-    setPaymentDone(true)
-
-    setVerifyingModal({
-      open: true,
-      timer: 180,
-      orderId,
-      status: 'verifying',
-    })
-
-    navigateToTab('live-order')
   }
 
   function handleMarkDelivered() {
@@ -3576,7 +3556,8 @@ export default function CustomerDashboard({
                               className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-rose-300 shadow-xs transition cursor-pointer shrink-0 animate-pulse"
                               title={`Order can be cancelled within 30 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
-                              <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order ({cancelTimeRemaining}s)
+                              <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order (
+                              {cancelTimeRemaining}s)
                             </button>
                           )}
                           {(activeOrder.statusStep === 4 ||
@@ -4431,47 +4412,9 @@ export default function CustomerDashboard({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isApprovingPayment}
-                  onClick={async () => {
-                    if (
-                      !verifyingModal.orderId ||
-                      isApprovingPaymentRef.current ||
-                      isApprovingPayment
-                    )
-                      return
-                    isApprovingPaymentRef.current = true
-                    setIsApprovingPayment(true)
-                    try {
-                      await fetch('/api/orders', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          orderId: verifyingModal.orderId,
-                          status: 'preparing',
-                          payment_status: 'verified',
-                        }),
-                      })
-                      setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
-                    } catch (e) {
-                      console.error('Instant approve error:', e)
-                    } finally {
-                      setIsApprovingPayment(false)
-                      isApprovingPaymentRef.current = false
-                    }
-                  }}
-                  className="w-full rounded-full bg-[#d9f447] py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isApprovingPayment ? (
-                    <CraveButtonLoader label="Approving Order..." variant="dark" size="sm" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="size-4" /> Instant Approve Payment &amp; Send to
-                      Kitchen
-                    </>
-                  )}
-                </button>
+                <p className="text-center text-xs text-[#9eb3a4]">
+                  Payment status updates automatically after an administrator verifies the UTR.
+                </p>
               </div>
             )}
 

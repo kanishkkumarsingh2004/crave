@@ -37,7 +37,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   handlingFee: 5,
   vendorCommission: 15,
   packagingCap: 20,
-  gstRatePercent: 5,
+  gstRatePercent: 18,
   baseDeliveryFee: 30,
   baseDistanceKm: 3,
   perKmRate: 10,
@@ -67,15 +67,6 @@ export function getLocalPaymentConfig(): PaymentConfig {
 }
 
 export async function savePaymentConfig(config: PaymentConfig): Promise<boolean> {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-      window.dispatchEvent(new Event('crave_payment_config_updated'))
-    } catch (e) {
-      console.error('Failed to save payment config to localStorage:', e)
-    }
-  }
-
   try {
     const token =
       typeof window !== 'undefined'
@@ -91,10 +82,15 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
       headers,
       body: JSON.stringify(config),
     })
-    return res.ok
+    if (!res.ok) return false
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+      window.dispatchEvent(new Event('crave_payment_config_updated'))
+    }
+    return true
   } catch (e) {
     console.warn('API payment config save error:', e)
-    return true
+    return false
   }
 }
 

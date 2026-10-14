@@ -18,6 +18,7 @@ node_modules
 .turbo/
 .DS_Store
 *.tsbuildinfo
+.vscode
 
 # Neon
 .neon

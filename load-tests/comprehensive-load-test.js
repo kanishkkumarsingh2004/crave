@@ -185,14 +185,36 @@ const WS_URL = __ENV.WS_URL || 'ws://localhost:8000/api/ws'
 const COMMIT_SHA = __ENV.COMMIT_SHA || 'local'
 const APP_ENV = __ENV.APP_ENV || 'staging'
 
+function requiredTestSetting(name) {
+  const value = __ENV[name]
+  if (!value) throw new Error(`${name} must be provided for authenticated load tests`)
+  return value
+}
+
 // ============================================
 // AUTH & USER MANAGEMENT
 // ============================================
 const USERS = {
-  admin: { email: 'admin@crave.com', password: '1234567890', role: 'admin' },
-  user: { email: 'user@crave.com', password: '1234567890', role: 'user' },
-  vendor: { email: 'vendor@crave.com', password: '1234567890', role: 'vendor' },
-  rider: { email: 'rider@crave.com', password: '1234567890', role: 'rider' },
+  admin: {
+    email: requiredTestSetting('SEED_ADMIN_EMAIL'),
+    password: requiredTestSetting('SEED_PASSWORD'),
+    role: 'admin',
+  },
+  user: {
+    email: requiredTestSetting('SEED_CUSTOMER_EMAIL'),
+    password: requiredTestSetting('SEED_PASSWORD'),
+    role: 'user',
+  },
+  vendor: {
+    email: requiredTestSetting('SEED_VENDOR_EMAIL'),
+    password: requiredTestSetting('SEED_PASSWORD'),
+    role: 'vendor',
+  },
+  rider: {
+    email: requiredTestSetting('SEED_RIDER_EMAIL'),
+    password: requiredTestSetting('SEED_PASSWORD'),
+    role: 'rider',
+  },
 }
 
 const ENDPOINTS = {

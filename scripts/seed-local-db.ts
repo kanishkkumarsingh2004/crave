@@ -1,9 +1,12 @@
 import 'dotenv/config'
+import { randomUUID } from 'node:crypto'
 import { prisma } from '../lib/prisma'
-import crypto from 'crypto'
+import { hashPassword, validatePassword } from '../lib/password'
 
-function hashPassword(password: string, email: string): string {
-  return crypto.scryptSync(password, email.trim().toLowerCase(), 64).toString('hex')
+function requiredEnvironmentValue(name: string): string {
+  const value = process.env[name]?.trim()
+  if (!value) throw new Error(`${name} must be set explicitly`)
+  return value
 }
 
 export async function seedAdminOnly() {
@@ -12,19 +15,20 @@ export async function seedAdminOnly() {
     process.exit(1)
   }
 
-  const defaultPassword = process.env.ADMIN_PASSWORD || '1234567890'
+  const adminEmail = requiredEnvironmentValue('ADMIN_EMAIL').toLowerCase()
+  const adminPassword = validatePassword(requiredEnvironmentValue('ADMIN_PASSWORD'))
 
   const admin = {
-    id: 'usr_admin_01',
-    name: 'System Administrator',
-    email: 'admin@crave.com',
+    id: process.env.ADMIN_USER_ID?.trim() || randomUUID(),
+    name: process.env.ADMIN_NAME?.trim() || 'System Administrator',
+    email: adminEmail,
     role: 'admin' as const,
-    password: defaultPassword,
+    password: adminPassword,
   }
 
   console.log('🌱 Seeding admin user into database...')
 
-  const password_hash = hashPassword(admin.password, admin.email)
+  const password_hash = hashPassword(admin.password)
   const existing = await prisma.user.findUnique({ where: { email: admin.email } })
 
   if (existing) {

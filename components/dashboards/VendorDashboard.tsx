@@ -103,7 +103,10 @@ export default function VendorDashboard() {
         return false
       })
 
-      if (vendorFiltered.length > 0 || (ordersData.length > 0 && (resolvedRestaurantId || user?.restaurantId))) {
+      if (
+        vendorFiltered.length > 0 ||
+        (ordersData.length > 0 && (resolvedRestaurantId || user?.restaurantId))
+      ) {
         ordersData = vendorFiltered
       }
 

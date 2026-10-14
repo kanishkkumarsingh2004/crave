@@ -11,7 +11,7 @@ async function check() {
     const count = await prisma.user.count()
     console.log('✅ Connection Successful! TOTAL USERS:', count)
     const users = await prisma.user.findMany({
-      select: { id: true, email: true, role: true }
+      select: { id: true, email: true, role: true },
     })
     console.log('USERS FOUND:', JSON.stringify(users, null, 2))
   } catch (err: any) {
