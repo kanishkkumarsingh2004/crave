@@ -5,11 +5,12 @@ import { after, test } from 'node:test'
 
 import { checkAndIncrementCouponUsage, createCoupon } from '../lib/dal/coupons'
 import { createCustomerAddress, setDefaultAddress } from '../lib/dal/addresses'
+import { normalizeEmail } from '../lib/email'
 import { calculateOrderPrice } from '../lib/finance/pricing-engine'
 import { Money } from '../lib/finance/money'
 import { processPaymentVerificationTx } from '../lib/finance/payment-service'
 import { OrderStatus, assertValidTransition, isValidTransition } from '../lib/order-state-machine'
-import { hashPassword, validatePassword } from '../lib/password'
+import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
 import { prisma } from '../lib/prisma'
 
 after(async () => {
@@ -69,6 +70,16 @@ test('password hashing uses a fresh salt and enforces minimum length', () => {
   const second = hashPassword('long-enough')
   assert.notEqual(first, second)
   assert.match(first, /^[a-f0-9]{32}:[a-f0-9]{128}$/)
+  assert.equal(verifyPassword('long-enough', first), true)
+  assert.equal(verifyPassword('incorrect-password', first), false)
+  assert.equal(verifyPassword('long-enough', 'malformed'), false)
+})
+
+test('email normalization only accepts complete email addresses', () => {
+  assert.equal(normalizeEmail('  Person@Example.COM '), 'person@example.com')
+  assert.equal(normalizeEmail('admin'), null)
+  assert.equal(normalizeEmail('missing-domain@'), null)
+  assert.equal(normalizeEmail(null), null)
 })
 
 test(

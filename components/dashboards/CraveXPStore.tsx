@@ -34,7 +34,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import {
   CRAVEXP_DARK_STORE_ID,
   CRAVEXP_DARK_STORE_INFO,
-  ensureCraveXPDarkStore,
   fetchCraveXPGroceryItems,
   CraveXPGroceryItem,
 } from '@/lib/cravexp-grocery-catalog'
@@ -118,12 +117,7 @@ export default function CraveXPStore() {
   const [groceryItems, setGroceryItems] = useState<CraveXPGroceryItem[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(true)
 
-  // Ensure store record exists in database
-  useEffect(() => {
-    ensureCraveXPDarkStore()
-  }, [])
-
-  // Load catalog directly from PostgreSQL database
+  // Load the database-backed catalog through the server API.
   const loadCatalog = async () => {
     try {
       setIsLoadingItems(true)

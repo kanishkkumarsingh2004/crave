@@ -36,7 +36,7 @@ export interface MenuItemRecord {
   expiry_date?: string | null
 }
 
-export const MENU_CATEGORY_GROUPS = [
+const MENU_CATEGORY_GROUPS = [
   {
     group: 'Main Course & Meals',
     categories: [
@@ -94,7 +94,7 @@ export const MENU_CATEGORY_GROUPS = [
   },
 ]
 
-export const ALL_PRESET_CATEGORIES = MENU_CATEGORY_GROUPS.flatMap((g) => g.categories)
+const ALL_PRESET_CATEGORIES = MENU_CATEGORY_GROUPS.flatMap((g) => g.categories)
 
 const PORTION_PRESETS = [
   'Serves 1',

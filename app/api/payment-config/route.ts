@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server'
 import { getApiActor, requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 import { DEFAULT_PAYMENT_CONFIG, type PaymentConfig } from '@/lib/payment-config'
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
-    const actor = await getApiActor(request || new Request('http://localhost'))
+    const actor = await getApiActor(request)
     const isAdmin = actor?.role === 'admin'
 
     const dbConfig: any = await getActivePaymentConfig()
@@ -106,10 +106,8 @@ export async function GET(request?: Request) {
 
     return NextResponse.json({ success: true, config: merged })
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || 'Failed to load payment configuration' },
-      { status: 503 }
-    )
+    console.error('[payment-config] Failed to load configuration:', error)
+    return NextResponse.json({ error: 'Failed to load payment configuration' }, { status: 503 })
   }
 }
 
@@ -179,9 +177,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     const authRes = handleApiAuthError(error)
     if (authRes) return authRes
-    return NextResponse.json(
-      { error: error?.message || 'Failed to save payment configuration' },
-      { status: 500 }
-    )
+    console.error('[payment-config] Failed to save configuration:', error)
+    return NextResponse.json({ error: 'Failed to save payment configuration' }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@ import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail, createCustomerAddress, deleteUser } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
+import { normalizeEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { hashPassword } from '@/lib/password'
@@ -15,10 +16,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, email, password, role, phone, address } = body
+    const { name, password, role, phone, address } = body
+    const cleanEmail = normalizeEmail(body.email)
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
+    if (!name || !cleanEmail || !password) {
+      return NextResponse.json(
+        { error: 'Name, a valid email address, and password are required' },
+        { status: 400 }
+      )
     }
 
     if (typeof password !== 'string' || password.length < 8) {
@@ -42,7 +47,6 @@ export async function POST(request: Request) {
       )
     }
 
-    const cleanEmail = String(email).trim().toLowerCase()
     const finalRole = 'user' as const
 
     // Check if email already exists via Prisma
@@ -151,6 +155,14 @@ export async function POST(request: Request) {
     return response
   } catch (error: any) {
     console.error('Signup endpoint error:', error)
-    return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json(
+      {
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Unable to create an account at this time.'
+            : error?.message || 'Internal Server Error',
+      },
+      { status: 500 }
+    )
   }
 }

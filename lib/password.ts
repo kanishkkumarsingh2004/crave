@@ -15,3 +15,30 @@ export function hashPassword(password: unknown): string {
   const hash = crypto.scryptSync(validPassword, salt, 64).toString('hex')
   return `${salt}:${hash}`
 }
+
+export function verifyPassword(
+  password: unknown,
+  storedHash: unknown,
+  legacySalt?: string
+): boolean {
+  if (typeof password !== 'string' || typeof storedHash !== 'string' || !storedHash) return false
+
+  let salt = legacySalt
+  let expectedHash = storedHash
+  if (storedHash.includes(':')) {
+    const parts = storedHash.split(':')
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return false
+    ;[salt, expectedHash] = parts
+  }
+  if (!salt) return false
+
+  try {
+    const computed = crypto.scryptSync(password, salt, 64).toString('hex')
+    return (
+      computed.length === expectedHash.length &&
+      crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
+    )
+  } catch {
+    return false
+  }
+}

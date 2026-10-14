@@ -1,12 +1,12 @@
 {
   "benchmark": "crave-checkout-load-test",
   "version": "2.0.0",
-  "timestamp": "2026-10-14T18:21:37.393Z",
+  "timestamp": "2026-10-14T18:32:27.829Z",
   "environment": "staging",
   "commitSha": "unspecified",
   "concurrency": {
     "configuredPeakVUs": 1000,
-    "observedPeakVUs": 1000,
+    "observedPeakVUs": 440,
     "stages": [
       {
         "duration": "30s",
@@ -54,37 +54,37 @@
     "allCredentialsAvailable": false
   },
   "execution": {
-    "testRunDurationMs": 511822.272251,
-    "totalRequests": 101845,
-    "failedRequests": 25,
-    "requestFailureRatePct": 0.02,
-    "requestsPerSecond": 198.99,
-    "checksPassRatePct": 77.41,
-    "checksPassed": 183947,
-    "checksFailed": 53682
+    "testRunDurationMs": 319143.889231,
+    "totalRequests": 34361,
+    "failedRequests": 8643,
+    "requestFailureRatePct": 25.15,
+    "requestsPerSecond": 107.67,
+    "checksPassRatePct": 69.15,
+    "checksPassed": 55294,
+    "checksFailed": 24666
   },
   "metrics": {
     "http_req_duration": {
-      "min": 0.328167,
-      "med": 203.128098,
-      "max": 5142.03327,
-      "p(90)": 3389.6794158000002,
-      "p(95)": 4363.872033999998,
-      "avg": 936.8328772033102
+      "p(95)": 5001.873265,
+      "avg": 791.1070755360178,
+      "min": 0,
+      "med": 128.756426,
+      "max": 12086.558973,
+      "p(90)": 3097.489505
     },
     "http_req_failed": {
-      "rate": 0.00024547105896214835,
-      "passes": 25,
-      "fails": 101820
+      "fails": 25718,
+      "rate": 0.25153517068769826,
+      "passes": 8643
     },
     "checks": {
-      "rate": 0.7740932293617362,
-      "passes": 183947,
-      "fails": 53682
+      "rate": 0.6915207603801901,
+      "passes": 55294,
+      "fails": 24666
     },
     "http_reqs": {
-      "count": 101845,
-      "rate": 198.98508822620119
+      "count": 34361,
+      "rate": 107.66616927178296
     },
     "ws_connecting": {
       "avg": 0,
@@ -97,16 +97,16 @@
   },
   "thresholds": {
     "http_req_duration:p(95)<5000": {
-      "pass": true,
-      "valueMs": 4363.87
+      "pass": false,
+      "valueMs": 5001.87
     },
     "http_req_failed:rate<0.10": {
-      "pass": true,
-      "failPct": 0.02
+      "pass": false,
+      "failPct": 25.15
     },
     "checks:rate>0.90": {
       "pass": false,
-      "passPct": 77.41
+      "passPct": 69.15
     }
   },
   "overallPassed": false

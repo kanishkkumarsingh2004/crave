@@ -7,9 +7,9 @@ import { cookies } from 'next/headers'
 
 export const revalidate = 0
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
-    const authHeader = request?.headers?.get ? request.headers.get('authorization') : null
+    const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
     if (!token) {
       try {

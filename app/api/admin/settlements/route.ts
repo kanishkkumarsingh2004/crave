@@ -5,47 +5,41 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { VendorSettlementStatus } from '@prisma/client'
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
-    let restaurantId: string | undefined
-    if (request) {
-      const requestUrl = request.url || 'http://localhost/api/admin/settlements'
-      const { searchParams } = new URL(requestUrl)
-      restaurantId = searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
+    const requestUrl = request.url || 'http://localhost/api/admin/settlements'
+    const { searchParams } = new URL(requestUrl)
+    const restaurantId =
+      searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
 
-      const authHeader = request.headers.get('authorization')
-      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token)
-        token =
-          (await cookies()).get('crave_auth_token')?.value ||
-          (await cookies()).get('drop_auth_token')?.value ||
-          ''
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token)
+      token =
+        (await cookies()).get('crave_auth_token')?.value ||
+        (await cookies()).get('drop_auth_token')?.value ||
+        ''
 
-      const payload = token ? await verifyToken(token) : null
-      if (process.env.NODE_ENV !== 'test') {
-        if (!payload) {
-          return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-        }
-        if (payload.role !== 'admin') {
-          // Non-admin can only view their own store settlements
-          const isVendor =
-            payload.role === 'restaurant_vendor' ||
-            payload.role === 'cravexp_store_vendor' ||
-            (payload.role as string) === 'vendor'
-          const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
-          if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-          }
+    const payload = token ? await verifyToken(token) : null
+    if (process.env.NODE_ENV !== 'test') {
+      if (!payload) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (payload.role !== 'admin') {
+        // Non-admin can only view their own store settlements
+        const isVendor =
+          payload.role === 'restaurant_vendor' ||
+          payload.role === 'cravexp_store_vendor' ||
+          (payload.role as string) === 'vendor'
+        const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
+        if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
+          return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
         }
       }
     }
 
-    const cursor = request
-      ? new URL(request.url || 'http://localhost').searchParams.get('cursor') || undefined
-      : undefined
-    const limitParam = request
-      ? parseInt(new URL(request.url || 'http://localhost').searchParams.get('limit') || '50', 10)
-      : 50
+    const cursor = searchParams.get('cursor') || undefined
+    const limitParam = parseInt(searchParams.get('limit') || '50', 10)
     const take = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 200)
 
     const rawSettlements = await prisma.vendorSettlement.findMany({

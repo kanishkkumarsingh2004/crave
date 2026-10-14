@@ -121,6 +121,13 @@ jobs:
     name: Load Test (Concurrent Users)
     runs-on: ubuntu-latest
     needs: [build]
+    env:
+      SEED_PASSWORD: 'ci-${{ github.run_id }}-${{ github.run_attempt }}-A9x!'
+      SEED_ADMIN_EMAIL: 'load-admin-${{ github.run_id }}@example.test'
+      SEED_CUSTOMER_EMAIL: 'load-customer-${{ github.run_id }}@example.test'
+      SEED_VENDOR_EMAIL: 'load-vendor-${{ github.run_id }}@example.test'
+      SEED_STORE_EMAIL: 'load-store-${{ github.run_id }}@example.test'
+      SEED_RIDER_EMAIL: 'load-rider-${{ github.run_id }}@example.test'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -246,7 +253,7 @@ jobs:
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load-tests/checkout-load-test.js
-          env: BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000 CI_SMOKE=true
+          env: BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000 CI_SMOKE=true SEED_ADMIN_EMAIL=${{ env.SEED_ADMIN_EMAIL }} SEED_CUSTOMER_EMAIL=${{ env.SEED_CUSTOMER_EMAIL }} SEED_VENDOR_EMAIL=${{ env.SEED_VENDOR_EMAIL }} SEED_RIDER_EMAIL=${{ env.SEED_RIDER_EMAIL }} SEED_PASSWORD=${{ env.SEED_PASSWORD }}
 
       - name: Upload load test results
         uses: actions/upload-artifact@v4

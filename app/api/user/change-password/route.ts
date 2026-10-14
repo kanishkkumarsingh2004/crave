@@ -1,12 +1,9 @@
 import { findUserById, updateUser } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { hashPassword, verifyPassword } from '@/lib/password'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
 
 async function resolveUserId(request: Request): Promise<string | null> {
   let token = ''
@@ -99,59 +96,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 })
     }
 
-    // Verify current password against stored hash
-    let isCurrentPasswordValid = false
-
-    if (user.password_hash) {
-      if (typeof user.password_hash === 'string' && user.password_hash.includes(':')) {
-        const [salt, expectedHash] = user.password_hash.split(':')
-        if (salt && expectedHash) {
-          const computed = ((await scrypt(currentPassword, salt, 64)) as Buffer).toString('hex')
-          isCurrentPasswordValid =
-            computed.length === expectedHash.length &&
-            crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expectedHash))
-        }
-      } else {
-        const passwordHash = ((await scrypt(currentPassword, user.email, 64)) as Buffer).toString(
-          'hex'
-        )
-        isCurrentPasswordValid =
-          passwordHash.length === user.password_hash.length &&
-          crypto.timingSafeEqual(Buffer.from(passwordHash), Buffer.from(user.password_hash))
-
-        if (!isCurrentPasswordValid) {
-          // Check clean email fallback
-          const cleanEmail = user.email.trim().toLowerCase()
-          const altHash = ((await scrypt(currentPassword, cleanEmail, 64)) as Buffer).toString(
-            'hex'
-          )
-          isCurrentPasswordValid =
-            altHash.length === user.password_hash.length &&
-            crypto.timingSafeEqual(Buffer.from(altHash), Buffer.from(user.password_hash))
-        }
-      }
-    } else {
-      // Demo account fallback in development without initial hash
-      if (currentPassword === '1234567890') {
-        isCurrentPasswordValid = true
-      }
-    }
-
-    if (!isCurrentPasswordValid) {
+    if (!verifyPassword(currentPassword, user.password_hash, user.email)) {
       return NextResponse.json(
         { error: 'The current password you entered is incorrect.' },
         { status: 400 }
       )
     }
 
-    // Generate secure salted scrypt hash
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = ((await scrypt(newPassword, salt, 64)) as Buffer).toString('hex')
-    const finalPasswordHash = `${salt}:${hash}`
-
     // Update password in database
     await updateUser(userId, {
-      password_hash: finalPasswordHash,
+      password_hash: hashPassword(newPassword),
     })
 
     return NextResponse.json({

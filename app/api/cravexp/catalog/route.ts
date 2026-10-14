@@ -80,10 +80,8 @@ export async function GET() {
     })
     return NextResponse.json({ success: true, items: items.map(mapItem) })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load CraveXP catalog' },
-      { status: 500 }
-    )
+    console.error('[cravexp/catalog] Failed to load catalog:', error)
+    return NextResponse.json({ error: 'Failed to load CraveXP catalog' }, { status: 500 })
   }
 }
 
@@ -103,9 +101,7 @@ export async function POST(request: Request) {
     if ((authResponse.status === 401 || authResponse.status === 403) && error instanceof Error) {
       return authResponse
     }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to initialize CraveXP store' },
-      { status: 500 }
-    )
+    console.error('[cravexp/catalog] Failed to initialize store:', error)
+    return NextResponse.json({ error: 'Failed to initialize CraveXP store' }, { status: 500 })
   }
 }
