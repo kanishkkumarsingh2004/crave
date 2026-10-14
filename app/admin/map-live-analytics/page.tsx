@@ -442,7 +442,7 @@ export default function MapLiveAnalyticsPage() {
                                   <button
                                     key={res}
                                     onClick={() => setH3Resolution(res)}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    className={`compact-control px-2 py-0.5 rounded text-[10px] font-bold ${
                                       h3Resolution === res
                                         ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815]'
                                         : 'bg-gray-100 dark:bg-[#1c241f] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#253229]'
@@ -510,7 +510,7 @@ export default function MapLiveAnalyticsPage() {
                                     [layer.key]: e.target.checked,
                                   }))
                                 }
-                                className="rounded text-[#18201c] dark:text-[#b5de28] focus:ring-[#b5de28]"
+                                className="size-4 rounded accent-[#18201c] dark:accent-[#b5de28] focus:ring-[#b5de28]"
                               />
                             </label>
                           ))}

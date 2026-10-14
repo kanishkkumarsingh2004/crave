@@ -347,6 +347,26 @@ select,
   min-width: 44px;
 }
 
+/*
+ * Compact controls provide their touch target through the surrounding label or
+ * control row. Keep their visual size from inheriting the universal 44px rule.
+ */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+  min-height: 1rem;
+  flex: 0 0 1rem;
+  cursor: pointer;
+}
+
+button[role='switch'],
+.compact-control {
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Base Select Styling — Theme-Aware */
 select {
   -webkit-appearance: none;
