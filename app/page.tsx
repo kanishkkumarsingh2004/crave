@@ -12,6 +12,7 @@ import {
   Clock,
   Compass,
   CreditCard,
+  LogOut,
   MapPin,
   Package,
   Search,
@@ -144,31 +145,37 @@ export default function HomePage() {
   if (!isLoading && user) {
     const targetDashboard = getTargetDashboard()
     return (
-      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#0c120e] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#d9f447] selection:text-[#121815]">
+        {/* Ambient High-Fashion Glow */}
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 size-[520px] bg-gradient-to-b from-[#d9f447]/15 via-[#d9f447]/5 to-transparent blur-[140px]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.03] dark:opacity-[0.04]" />
+
         <CravePagePreloader
-          title="Loading Crave..."
-          subtitle="Directing you to your personalized dashboard"
-          minHeight="min-h-[280px]"
+          title="Directing to Workspace"
+          subtitle="Routing you safely to your personalized Crave dashboard"
+          minHeight="min-h-[260px]"
         />
         {redirectTimeoutExceeded && (
-          <div className="mt-6 flex flex-col items-center gap-3 text-center animate-in fade-in duration-300">
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+          <div className="mt-8 flex flex-col items-center gap-3.5 text-center animate-in fade-in duration-300 max-w-sm">
+            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
               Taking longer than expected to redirect?
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => router.push(targetDashboard)}
-                className="px-4 py-2 rounded-xl bg-[#121815] text-[#d9f447] dark:bg-[#d9f447] dark:text-[#121815] text-xs font-bold hover:opacity-90 transition"
+                className="px-5 py-2.5 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] text-xs font-black shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5"
               >
-                Go to Dashboard
+                <span>Go to Dashboard</span>
+                <ArrowRight className="size-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => logout && logout()}
-                className="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5 transition"
+                className="px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-stone-700 dark:text-stone-300 text-xs font-bold hover:bg-black/5 dark:hover:bg-white/10 backdrop-blur-sm active:scale-95 transition-all flex items-center gap-1.5"
               >
-                Sign Out
+                <LogOut className="size-3.5" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>

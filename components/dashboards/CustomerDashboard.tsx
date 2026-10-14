@@ -476,7 +476,12 @@ export default function CustomerDashboard({
     return () => window.removeEventListener('toggle-mobile-sidebar', handleToggleSidebar)
   }, [])
 
-  const { items: globalCartItems, setItems: setGlobalItems, isLoaded: globalCartLoaded } = useCart()
+  const {
+    items: globalCartItems,
+    setItems: setGlobalItems,
+    clearCart: clearGlobalCart,
+    isLoaded: globalCartLoaded,
+  } = useCart()
   const [isCartInitialized, setIsCartInitialized] = useState(false)
 
   // Sync initial cart state from CartProvider / localStorage on mount
@@ -1077,8 +1082,10 @@ export default function CustomerDashboard({
   useEffect(() => {
     if (initialOrderId) {
       setSelectedOrderId(initialOrderId)
+    } else if (pathname === '/user/track' || pathname === '/user/dashboard') {
+      setSelectedOrderId(undefined)
     }
-  }, [initialOrderId])
+  }, [initialOrderId, pathname])
 
   // Single order direct sync when navigating with selected/initial order ID
   useEffect(() => {
@@ -1492,6 +1499,9 @@ export default function CustomerDashboard({
 
   function clearCart() {
     setCart([])
+    if (typeof clearGlobalCart === 'function') {
+      clearGlobalCart()
+    }
     setAppliedCoupon(null)
     setCouponDiscount(0)
     setCouponMessage(null)
@@ -1767,10 +1777,9 @@ export default function CustomerDashboard({
     isSubmittingCheckoutRef.current = true
     setIsSubmittingCheckout(true)
 
-    if (!checkoutIdempotencyKeyRef.current) {
-      checkoutIdempotencyKeyRef.current = crypto.randomUUID()
-    }
-    const orderId = checkoutIdempotencyKeyRef.current
+    // Always generate a fresh unique order ID per checkout attempt
+    const orderId = crypto.randomUUID()
+    checkoutIdempotencyKeyRef.current = null
 
     const otpBytes = new Uint32Array(1)
     crypto.getRandomValues(otpBytes)
@@ -1782,6 +1791,8 @@ export default function CustomerDashboard({
       menu_item_id: item.id,
       otp: generatedOtp,
     }))
+
+    let finalOrderId = orderId
 
     try {
       const orderPayload = {
@@ -1829,10 +1840,18 @@ export default function CustomerDashboard({
         throw new Error(resData.error || 'Failed to submit order.')
       }
 
-      checkoutIdempotencyKeyRef.current = null
       const savedOrder = resData.order
+      finalOrderId = savedOrder?.id || orderId
 
-      const rawDateVal = savedOrder.created_at || savedOrder.createdAt || savedOrder.timestamp
+      // 1. Immediately inject the new order into ordersData
+      if (savedOrder) {
+        setOrdersData((prev) => [savedOrder, ...prev.filter((o: any) => o.id !== savedOrder.id)])
+      }
+
+      // 2. Select this new order
+      setSelectedOrderId(finalOrderId)
+
+      const rawDateVal = savedOrder?.created_at || savedOrder?.createdAt || savedOrder?.timestamp
       const nowTime =
         rawDateVal && !isNaN(new Date(rawDateVal).getTime())
           ? new Date(rawDateVal).toLocaleTimeString([], {
@@ -1843,11 +1862,11 @@ export default function CustomerDashboard({
           : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
 
       setActiveOrder({
-        id: savedOrder.id,
-        restaurantName: savedOrder.restaurant_name,
+        id: finalOrderId,
+        restaurantName: savedOrder?.restaurant_name || restName,
         items: cartWithOtp,
-        subtotal: Number(savedOrder.subtotal),
-        total: Number(savedOrder.total_amount),
+        subtotal: Number(savedOrder?.subtotal || cartSubtotal),
+        total: Number(savedOrder?.total_amount || grandTotal),
         statusStep: 1,
         otp: generatedOtp,
         driverName: null,
@@ -1860,7 +1879,7 @@ export default function CustomerDashboard({
       setVerifyingModal({
         open: true,
         timer: 180,
-        orderId: savedOrder.id,
+        orderId: finalOrderId,
         status: 'verifying',
       })
       navigateToTab('live-order')
@@ -1870,6 +1889,7 @@ export default function CustomerDashboard({
       setUtrError(errorMsg)
       toast(errorMsg, 'error')
     } finally {
+      checkoutIdempotencyKeyRef.current = null
       setIsSubmittingCheckout(false)
       isSubmittingCheckoutRef.current = false
     }
@@ -3502,10 +3522,20 @@ export default function CustomerDashboard({
                       setSelectedOrderId(undefined)
                       router.push('/user/track')
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-600 hover:text-[#18201c] transition"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white transition"
                   >
                     <ArrowLeft className="size-4" />
                     <span>All Active Orders</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedOrderId(undefined)
+                      navigateToTab('explore')
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline transition"
+                  >
+                    <UtensilsCrossed className="size-3.5" />
+                    <span>Browse Kitchens</span>
                   </button>
                 </div>
 
@@ -3914,6 +3944,48 @@ export default function CustomerDashboard({
                       <span className="font-mono font-bold text-base sm:text-lg text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#121815] border border-emerald-500/30 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
                         {activeOrder.otp}
                       </span>
+                    </div>
+                  )}
+
+                  {/* Order Delivered Action Card: Prompt customer to easily order again */}
+                  {(activeOrder.statusStep >= 4 ||
+                    activeOrder.status === 'delivered' ||
+                    activeOrder.status === 'completed') && (
+                    <div className="p-5 sm:p-6 border-t border-gray-100 dark:border-[#27342d] bg-[#f8f9f6] dark:bg-[#151c18] flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-b-3xl">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="size-2 rounded-full bg-emerald-500" />
+                          <h4 className="text-sm font-black text-[#18201c] dark:text-white">
+                            Order Delivered Successfully
+                          </h4>
+                        </div>
+                        <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                          Hope you enjoyed your meal! Craving something else?
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOrderId(undefined)
+                            navigateToTab('explore')
+                          }}
+                          className="px-5 py-2.5 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] text-xs font-black shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5"
+                        >
+                          <UtensilsCrossed className="size-3.5" />
+                          <span>Explore Kitchens & Order Again</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOrderId(undefined)
+                            navigateToTab('orders')
+                          }}
+                          className="px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-stone-700 dark:text-stone-300 text-xs font-bold hover:bg-black/5 dark:hover:bg-white/10 backdrop-blur-sm active:scale-95 transition-all"
+                        >
+                          <span>All Orders</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

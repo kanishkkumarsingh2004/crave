@@ -1,4 +1,4 @@
-import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
+import { createToken, unblacklistUser, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb, updateUser } from '@/lib/dal'
 import { normalizeEmail } from '@/lib/email'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -127,6 +127,9 @@ export async function POST(request: Request) {
       userPayload.restaurantId = restaurantId
       userPayload.restaurant_id = restaurantId
     }
+
+    // Unblacklist user upon valid credentials authentication to ensure session is immediately valid
+    await unblacklistUser(userPayload.id).catch(() => {})
 
     const token = await createToken(userPayload)
     return setCookies(

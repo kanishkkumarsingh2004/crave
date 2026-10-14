@@ -93,12 +93,6 @@ async function processLogout(request: Request) {
 
   for (const token of allTokens) {
     await blacklistToken(token).catch(() => {})
-    try {
-      const decoded = await decodeToken(token)
-      if (decoded?.id) {
-        await blacklistAllUserTokens(decoded.id).catch(() => {})
-      }
-    } catch {}
   }
 }
 
