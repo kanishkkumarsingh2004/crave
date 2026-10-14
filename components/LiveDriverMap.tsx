@@ -238,11 +238,7 @@ export default function LiveDriverMap({
           </span>
           <span
             className={`text-[8px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 truncate ${
-              hasLiveGps
-                ? isStale
-                  ? 'text-amber-400'
-                  : 'text-emerald-400'
-                : 'text-amber-400'
+              hasLiveGps ? (isStale ? 'text-amber-400' : 'text-emerald-400') : 'text-amber-400'
             }`}
           >
             {hasLiveGps

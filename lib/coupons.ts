@@ -12,6 +12,8 @@ export interface Coupon {
   isActive: boolean
   restaurantId?: string
   restaurantIds?: string[]
+  fundingSource: 'RESTAURANT' | 'PLATFORM' | 'SHARED' | 'BANK'
+  restaurantContributionPct: number
 }
 
 export async function fetchCoupons(restaurantId?: string): Promise<Coupon[]> {
@@ -43,6 +45,8 @@ export async function fetchCoupons(restaurantId?: string): Promise<Coupon[]> {
               : item.restaurant_id
                 ? [item.restaurant_id]
                 : [],
+          fundingSource: item.funding_source || 'SHARED',
+          restaurantContributionPct: Number(item.restaurant_share ?? 50),
         }))
       }
     }

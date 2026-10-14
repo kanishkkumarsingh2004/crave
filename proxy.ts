@@ -64,15 +64,12 @@ export async function proxy(request: NextRequest) {
     request.cookies.get('crave_token')?.value
 
   const isHttps =
-    request.nextUrl.protocol === 'https:' ||
-    request.headers.get('x-forwarded-proto') === 'https'
+    request.nextUrl.protocol === 'https:' || request.headers.get('x-forwarded-proto') === 'https'
   const isSecure = process.env.NODE_ENV === 'production' && isHttps
 
   const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isExplicitLogout =
-    searchParams.has('logout') ||
-    searchParams.has('signout') ||
-    searchParams.has('switch')
+    searchParams.has('logout') || searchParams.has('signout') || searchParams.has('switch')
 
   // If user explicitly navigated with logout/switch intent, do NOT redirect to dashboard!
   // Instead, wipe any lingering cookies on response and serve login/signup cleanly.
@@ -150,5 +147,12 @@ export const middleware = proxy
 export default proxy
 
 export const config = {
-  matcher: ['/admin/:path*', '/vendor/:path*', '/driver/:path*', '/user/:path*', '/login', '/signup'],
+  matcher: [
+    '/admin/:path*',
+    '/vendor/:path*',
+    '/driver/:path*',
+    '/user/:path*',
+    '/login',
+    '/signup',
+  ],
 }

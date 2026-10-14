@@ -22,7 +22,10 @@ export async function POST(request: Request) {
 
       const numericAmount = Number(amount)
       if (isNaN(numericAmount) || numericAmount <= 0) {
-        return NextResponse.json({ error: 'Valid positive refund amount is required' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Valid positive refund amount is required' },
+          { status: 400 }
+        )
       }
 
       const result = await processRefundTx({
@@ -36,12 +39,17 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: result.alreadyProcessed ? 'Refund already processed (idempotent)' : 'Refund processed successfully',
+        message: result.alreadyProcessed
+          ? 'Refund already processed (idempotent)'
+          : 'Refund processed successfully',
         refund: result.refund,
         alreadyProcessed: result.alreadyProcessed || false,
       })
     } catch (error: any) {
-      if (error?.message?.includes('exceeds order total') || error?.message?.includes('not found')) {
+      if (
+        error?.message?.includes('exceeds order total') ||
+        error?.message?.includes('not found')
+      ) {
         return NextResponse.json({ error: error.message }, { status: 400 })
       }
       return handleAuthError(error)

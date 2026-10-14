@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
-import { getTestUser, isTestRequest, MOCK_TEST_USER, MOCK_TEST_ADMIN } from '@/lib/test-auth'
+import { getTestUser, isTestRequest, MOCK_TEST_USER } from '@/lib/test-auth'
 
 async function getActor(request: Request) {
   // Check for test mode first
@@ -80,22 +80,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
     }
     const body = await request.json()
+    const isAdmin = actor.role === 'admin'
+    const ownerId = isAdmin ? body.owner_id || null : actor.id
+    const percentage = (value: unknown, fallback: number) => {
+      const number = value === undefined ? fallback : Number(value)
+      if (!Number.isFinite(number) || number < 0 || number > 100) {
+        throw new Error('Commercial percentage must be between 0 and 100')
+      }
+      return number
+    }
     const restaurant = await prisma.restaurant.create({
       data: {
         id: body.id || crypto.randomUUID(),
         name: body.name || 'My Kitchen Store',
         cuisine: body.cuisine || 'Multi-Cuisine',
         address: body.address || 'Bengaluru, India',
-        owner_id: body.owner_id,
+        owner_id: ownerId,
         is_open: body.is_open ?? true,
-        is_dark_store: body.is_dark_store ?? false,
+        is_dark_store: isAdmin
+          ? (body.is_dark_store ?? false)
+          : actor.role === 'cravexp_store_vendor',
         rating: 4.8,
-        commercial_model: body.commercial_model || 'commission',
-        commission_rate: body.commission_rate !== undefined ? Number(body.commission_rate) : 15,
-        markup_rate: body.markup_rate !== undefined ? Number(body.markup_rate) : 0,
-        fixed_commission: body.fixed_commission !== undefined ? Number(body.fixed_commission) : 0,
-        fixed_markup: body.fixed_markup !== undefined ? Number(body.fixed_markup) : 0,
-        payment_model: body.payment_model || 'commission',
+        commercial_model: isAdmin ? body.commercial_model || 'commission' : 'commission',
+        commission_rate: isAdmin ? percentage(body.commission_rate, 15) : 15,
+        markup_rate: isAdmin ? percentage(body.markup_rate, 0) : 0,
+        fixed_commission: isAdmin ? Number(body.fixed_commission ?? 0) : 0,
+        fixed_markup: isAdmin ? Number(body.fixed_markup ?? 0) : 0,
+        payment_model: isAdmin ? body.payment_model || 'commission' : 'commission',
       },
     })
 
@@ -139,7 +150,10 @@ export async function PATCH(request: Request) {
         select: { owner_id: true, id: true },
       })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
-      if (existing && existing.owner_id !== actor.id && existing.id !== vendorRestaurantId) {
+      if (!existing) {
+        return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+      }
+      if (existing.owner_id !== actor.id && existing.id !== vendorRestaurantId) {
         return NextResponse.json(
           { error: 'Forbidden: You do not own this restaurant' },
           { status: 403 }
@@ -151,12 +165,24 @@ export async function PATCH(request: Request) {
     if (body.name !== undefined) updateData.name = body.name
     if (body.cuisine !== undefined) updateData.cuisine = body.cuisine
     if (body.phone !== undefined) updateData.phone = body.phone
-    if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
-    if (body.commission_rate !== undefined) updateData.commission_rate = body.commission_rate
-    if (body.markup_rate !== undefined) updateData.markup_rate = body.markup_rate
-    if (body.fixed_commission !== undefined) updateData.fixed_commission = body.fixed_commission
-    if (body.fixed_markup !== undefined) updateData.fixed_markup = body.fixed_markup
-    if (body.payment_model !== undefined) updateData.payment_model = body.payment_model
+    if (actor.role === 'admin') {
+      if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
+      if (body.commission_rate !== undefined)
+        updateData.commission_rate = Number(body.commission_rate)
+      if (body.markup_rate !== undefined) updateData.markup_rate = Number(body.markup_rate)
+      if (body.fixed_commission !== undefined)
+        updateData.fixed_commission = Number(body.fixed_commission)
+      if (body.fixed_markup !== undefined) updateData.fixed_markup = Number(body.fixed_markup)
+      if (body.payment_model !== undefined) updateData.payment_model = body.payment_model
+      for (const field of ['commission_rate', 'markup_rate'] as const) {
+        if (
+          updateData[field] !== undefined &&
+          (!Number.isFinite(updateData[field]) || updateData[field] < 0 || updateData[field] > 100)
+        ) {
+          return NextResponse.json({ error: `${field} must be between 0 and 100` }, { status: 400 })
+        }
+      }
+    }
     if (body.bank_account_name !== undefined) updateData.bank_account_name = body.bank_account_name
     if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
     if (body.bank_account_number !== undefined)

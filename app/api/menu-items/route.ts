@@ -55,19 +55,35 @@ export async function POST(request: Request) {
       }
     }
     const body = await request.json()
+    if (!body.restaurant_id || typeof body.restaurant_id !== 'string') {
+      return NextResponse.json({ error: 'restaurant_id is required' }, { status: 400 })
+    }
 
-    if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin' && body.restaurant_id) {
+    if (process.env.NODE_ENV !== 'test' && actor) {
       const rest = await prisma.restaurant.findUnique({
         where: { id: body.restaurant_id },
         select: { owner_id: true, id: true },
       })
+      if (!rest) return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
-      if (rest && rest.owner_id !== actor.id && rest.id !== vendorRestaurantId) {
+      if (actor.role !== 'admin' && rest.owner_id !== actor.id && rest.id !== vendorRestaurantId) {
         return NextResponse.json(
           { error: 'Forbidden: You do not own this restaurant' },
           { status: 403 }
         )
       }
+    }
+
+    const price = Number(body.price)
+    const stockCount = Number(body.stock_count ?? 0)
+    if (!body.name || !body.category || !Number.isFinite(price) || price < 0) {
+      return NextResponse.json(
+        { error: 'name, category, and a non-negative price are required' },
+        { status: 400 }
+      )
+    }
+    if (!Number.isFinite(stockCount) || stockCount < 0) {
+      return NextResponse.json({ error: 'stock_count must be non-negative' }, { status: 400 })
     }
 
     const item = await prisma.menuItem.create({
@@ -76,14 +92,14 @@ export async function POST(request: Request) {
         restaurant_id: body.restaurant_id,
         name: body.name,
         category: body.category,
-        price: Number(body.price),
+        price,
         description: body.description || null,
         in_stock: body.in_stock ?? true,
         image: body.image || null,
         is_veg: body.is_veg ?? null,
         unit: body.unit || null,
         mrp: body.mrp != null && body.mrp !== '' ? Number(body.mrp) : null,
-        stock_count: Number(body.stock_count ?? 0),
+        stock_count: stockCount,
         sku_code: body.sku_code || null,
         hsn_sac_code: body.hsn_sac_code || '996331',
         price_tax_mode: body.price_tax_mode || 'TAX_INCLUSIVE',
@@ -133,17 +149,21 @@ export async function PATCH(request: Request) {
       }
     }
     const body = await request.json()
-    const { id, ...data } = body
+    const { id } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
     }
 
+    const existingItem = await prisma.menuItem.findUnique({
+      where: { id },
+      select: { restaurant: { select: { owner_id: true, id: true } } },
+    })
+    if (!existingItem) {
+      return NextResponse.json({ error: 'Menu item not found' }, { status: 404 })
+    }
+
     if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
-      const existingItem = await prisma.menuItem.findUnique({
-        where: { id },
-        select: { restaurant: { select: { owner_id: true, id: true } } },
-      })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
       if (
         existingItem?.restaurant &&
@@ -157,9 +177,33 @@ export async function PATCH(request: Request) {
       }
     }
 
+    const allowedFields = [
+      'name',
+      'category',
+      'price',
+      'description',
+      'in_stock',
+      'image',
+      'is_veg',
+      'unit',
+      'mrp',
+      'stock_count',
+      'sku_code',
+      'hsn_sac_code',
+      'price_tax_mode',
+      'custom_commission_rate',
+      'custom_markup_rate',
+      'expiry_date',
+    ] as const
+    const data: Record<string, any> = {}
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) data[field] = body[field]
+    }
+
     // Normalize numeric and date fields
     if (data.price != null) data.price = Number(data.price)
-    if (data.mrp !== undefined) data.mrp = data.mrp != null && data.mrp !== '' ? Number(data.mrp) : null
+    if (data.mrp !== undefined)
+      data.mrp = data.mrp != null && data.mrp !== '' ? Number(data.mrp) : null
     if (data.stock_count != null) data.stock_count = Number(data.stock_count)
     if (data.custom_commission_rate !== undefined) {
       data.custom_commission_rate =
@@ -175,6 +219,20 @@ export async function PATCH(request: Request) {
     }
     if (data.expiry_date !== undefined) {
       data.expiry_date = data.expiry_date ? new Date(data.expiry_date) : null
+    }
+    for (const field of [
+      'price',
+      'mrp',
+      'stock_count',
+      'custom_commission_rate',
+      'custom_markup_rate',
+    ]) {
+      if (data[field] != null && (!Number.isFinite(data[field]) || data[field] < 0)) {
+        return NextResponse.json(
+          { error: `${field} must be a non-negative number` },
+          { status: 400 }
+        )
+      }
     }
 
     const item = await prisma.menuItem.update({ where: { id }, data })
@@ -219,11 +277,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
     }
 
+    const existingItem = await prisma.menuItem.findUnique({
+      where: { id },
+      select: { restaurant: { select: { owner_id: true, id: true } } },
+    })
+    if (!existingItem) {
+      return NextResponse.json({ error: 'Menu item not found' }, { status: 404 })
+    }
+
     if (process.env.NODE_ENV !== 'test' && actor && actor.role !== 'admin') {
-      const existingItem = await prisma.menuItem.findUnique({
-        where: { id },
-        select: { restaurant: { select: { owner_id: true, id: true } } },
-      })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
       if (
         existingItem?.restaurant &&

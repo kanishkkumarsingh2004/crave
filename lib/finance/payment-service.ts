@@ -14,7 +14,6 @@
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
 import {
-  calculateOrderPrice,
   type CanonicalPriceResult,
   buildOrderConfirmedJournal,
   buildRefundInitiatedJournal,
@@ -115,12 +114,10 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     })
 
     // 3. Update associated PaymentReview if one exists
-    try {
-      await tx.paymentReview.updateMany({
-        where: { order_id: orderId },
-        data: { status: 'verified' },
-      })
-    } catch {}
+    await tx.paymentReview.updateMany({
+      where: { order_id: orderId },
+      data: { status: 'verified' },
+    })
 
     // 4. Record/Update PaymentTransaction
     const existingTx = await tx.paymentTransaction.findFirst({
@@ -157,110 +154,82 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
 
     // 5. Ensure Vendor Settlement is scheduled (strictly once per order)
     const settlementId = `set_${orderId}`
-    try {
-      const existingSettlement = await tx.vendorSettlement.findUnique({
-        where: { id: settlementId },
-      })
+    const existingSettlement = await tx.vendorSettlement.findUnique({
+      where: { id: settlementId },
+    })
 
-      if (!existingSettlement) {
-        await tx.vendorSettlement.create({
-          data: {
-            id: settlementId,
-            restaurant_name: order.restaurant_name,
-            restaurant_id: order.restaurant_id,
-            gross_sales: order.subtotal,
-            commission_rate: Math.round(
-              ((order.commission_amount || 0) / Math.max(order.subtotal, 1)) * 100
-            ),
-            commission_amount: order.commission_amount || 0,
-            markup_amount: order.markup_amount || 0,
-            net_payout: order.restaurant_payout || 0,
-            status: 'scheduled',
-            period_start: new Date(),
-            period_end: new Date(),
-            transaction_ref: orderId,
-          },
-        })
-      } else if (existingSettlement.status === 'cancelled' || existingSettlement.status === 'failed') {
-        await tx.vendorSettlement.update({
-          where: { id: settlementId },
-          data: { status: 'scheduled' },
-        })
-      }
-    } catch (settleErr) {
-      console.warn('[payment-service] Vendor settlement guarantee notice:', settleErr)
+    if (!existingSettlement) {
+      await tx.vendorSettlement.create({
+        data: {
+          id: settlementId,
+          restaurant_name: order.restaurant_name,
+          restaurant_id: order.restaurant_id,
+          gross_sales: order.subtotal,
+          commission_rate: Math.round(
+            ((order.commission_amount || 0) / Math.max(order.subtotal, 1)) * 100
+          ),
+          commission_amount: order.commission_amount || 0,
+          markup_amount: order.markup_amount || 0,
+          net_payout: order.restaurant_payout || 0,
+          status: 'scheduled',
+          period_start: new Date(),
+          period_end: new Date(),
+          transaction_ref: orderId,
+        },
+      })
+    } else if (
+      existingSettlement.status === 'cancelled' ||
+      existingSettlement.status === 'failed'
+    ) {
+      await tx.vendorSettlement.update({
+        where: { id: settlementId },
+        data: { status: 'scheduled' },
+      })
     }
 
     // 6. Post Double-Entry Ledger Journal (ORDER_CONFIRMED)
-    try {
-      let snapshot: CanonicalPriceResult | null = order.financial_snapshot as any
+    const snapshot: CanonicalPriceResult | null = order.financial_snapshot as any
+    if (!snapshot) {
+      throw new Error(`Financial snapshot missing for order ${orderId}`)
+    }
 
-      if (!snapshot) {
-        // Fallback snapshot calculation if not present
-        snapshot = calculateOrderPrice({
-          orderType: (order.order_type as any) || 'restaurant_food',
-          restaurantId: order.restaurant_id || 'rest_01',
-          restaurantName: order.restaurant_name,
-          items: (Array.isArray(order.items) ? (order.items as any[]) : []).map((i: any) => ({
-            name: i.name || 'Food Item',
-            quantity: Number(i.quantity || i.qty || 1),
-            unitPricePaise: Math.round(Number(i.price || 0) * 100),
-          })),
-          delivery: {
-            baseDeliveryFeePaise: (order.delivery_fee || 30) * 100,
-            baseDistanceKm: 2.5,
-            perKmRatePaise: 1000,
-            roadDistanceKm: 2.5,
-          },
-          tipPaise: (order.tip || 0) * 100,
-          couponDiscountPaise: (order.discount_amount || 0) * 100,
-        })
-      }
-
-      if (snapshot) {
-        const journal = buildOrderConfirmedJournal(orderId, snapshot, `order_confirmed_${orderId}`)
-        // Write each line with its own sub-key to guarantee atomic double-entry
-        for (let i = 0; i < journal.lines.length; i++) {
-          const line = journal.lines[i]
-          const lineKey = `${journal.idempotencyKey}_line_${i}`
-          await tx.ledgerEntry.upsert({
-            where: { idempotency_key: lineKey },
-            create: {
-              idempotency_key: lineKey,
-              event_type: journal.eventType,
-              order_id: orderId,
-              reference_id: gatewayPaymentId || orderId,
-              account_code: line.accountCode,
-              debit_paise: line.debitPaise,
-              credit_paise: line.creditPaise,
-              description: line.description,
-              notes: journal.notes,
-            },
-            update: {}, // Immutable: do not change on duplicate replay
-          })
-        }
-      }
-    } catch (ledgerErr) {
-      console.error('[payment-service] Ledger posting in transaction notice:', ledgerErr)
+    const journal = buildOrderConfirmedJournal(orderId, snapshot, `order_confirmed_${orderId}`)
+    // Write each line with its own sub-key to guarantee atomic double-entry
+    for (let i = 0; i < journal.lines.length; i++) {
+      const line = journal.lines[i]
+      const lineKey = `${journal.idempotencyKey}_line_${i}`
+      await tx.ledgerEntry.upsert({
+        where: { idempotency_key: lineKey },
+        create: {
+          idempotency_key: lineKey,
+          event_type: journal.eventType,
+          order_id: orderId,
+          reference_id: gatewayPaymentId || orderId,
+          account_code: line.accountCode,
+          debit_paise: line.debitPaise,
+          credit_paise: line.creditPaise,
+          description: line.description,
+          notes: journal.notes,
+        },
+        update: {}, // Immutable: do not change on duplicate replay
+      })
     }
 
     // 7. Write to Transactional Outbox for reliable messaging
-    try {
-      await tx.orderOutbox.create({
-        data: {
-          order_id: orderId,
-          event_type: 'PAYMENT_VERIFIED',
-          payload: {
-            orderId,
-            status: 'sent_to_vendor',
-            paymentStatus: 'verified',
-            gateway,
-            gatewayPaymentId,
-            verifiedAt: new Date().toISOString(),
-          },
+    await tx.orderOutbox.create({
+      data: {
+        order_id: orderId,
+        event_type: 'PAYMENT_VERIFIED',
+        payload: {
+          orderId,
+          status: 'sent_to_vendor',
+          paymentStatus: 'verified',
+          gateway,
+          gatewayPaymentId,
+          verifiedAt: new Date().toISOString(),
         },
-      })
-    } catch {}
+      },
+    })
 
     return {
       success: true,
@@ -292,6 +261,10 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
       throw new Error(`Cannot reject payment for an already completed order: ${orderId}`)
     }
 
+    if (order.payment_status === 'rejected' && order.status === 'cancelled') {
+      return { success: true, order, alreadyRejected: true }
+    }
+
     // 1. Update Order
     const updatedOrder = await tx.order.update({
       where: { id: orderId },
@@ -304,37 +277,31 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
     })
 
     // 2. Update PaymentReview if exists
-    try {
-      await tx.paymentReview.updateMany({
-        where: { order_id: orderId },
-        data: { status: 'rejected' },
-      })
-    } catch {}
+    await tx.paymentReview.updateMany({
+      where: { order_id: orderId },
+      data: { status: 'rejected' },
+    })
 
     // 3. Record failed PaymentTransaction
-    try {
-      await tx.paymentTransaction.create({
-        data: {
-          order_id: orderId,
-          idempotency_key: `tx_failed_${orderId}_${Date.now()}`,
-          gateway: 'UPI_MANUAL',
-          amount: order.total_amount,
-          status: 'failed',
-          failure_reason: reason,
-        },
-      })
-    } catch {}
+    await tx.paymentTransaction.create({
+      data: {
+        order_id: orderId,
+        idempotency_key: `tx_failed_${orderId}`,
+        gateway: 'UPI_MANUAL',
+        amount: order.total_amount,
+        status: 'failed',
+        failure_reason: reason,
+      },
+    })
 
     // 4. Cancel any scheduled vendor settlement
-    try {
-      await tx.vendorSettlement.updateMany({
-        where: {
-          transaction_ref: orderId,
-          status: 'scheduled',
-        },
-        data: { status: 'cancelled' },
-      })
-    } catch {}
+    await tx.vendorSettlement.updateMany({
+      where: {
+        transaction_ref: orderId,
+        status: 'scheduled',
+      },
+      data: { status: 'cancelled' },
+    })
 
     // 5. Restore Inventory for items that were deducted
     const rawItems: any[] = Array.isArray(order.items) ? (order.items as any[]) : []
@@ -342,28 +309,24 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
       const itemId = item.id || item.itemId
       const qty = Number(item.quantity || item.qty || 1)
       if (itemId && qty > 0) {
-        try {
-          await tx.menuItem.update({
-            where: { id: itemId },
-            data: {
-              stock_count: { increment: qty },
-              in_stock: true,
-            },
-          })
-        } catch {}
+        await tx.menuItem.update({
+          where: { id: itemId },
+          data: {
+            stock_count: { increment: qty },
+            in_stock: true,
+          },
+        })
       }
     }
 
     // 6. Record outbox event
-    try {
-      await tx.orderOutbox.create({
-        data: {
-          order_id: orderId,
-          event_type: 'PAYMENT_REJECTED',
-          payload: { orderId, reason, rejectedAt: new Date().toISOString() },
-        },
-      })
-    } catch {}
+    await tx.orderOutbox.create({
+      data: {
+        order_id: orderId,
+        event_type: 'PAYMENT_REJECTED',
+        payload: { orderId, reason, rejectedAt: new Date().toISOString() },
+      },
+    })
 
     return { success: true, order: updatedOrder }
   })

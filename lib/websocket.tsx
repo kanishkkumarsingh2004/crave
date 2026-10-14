@@ -212,7 +212,11 @@ export function useOrderUpdates(
                   try {
                     const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
                     return Array.isArray(raw)
-                      ? raw.map((i: any) => ({ name: i.name, qty: i.qty ?? 1, price: i.price ?? 0 }))
+                      ? raw.map((i: any) => ({
+                          name: i.name,
+                          qty: i.qty ?? 1,
+                          price: i.price ?? 0,
+                        }))
                       : []
                   } catch {
                     return []

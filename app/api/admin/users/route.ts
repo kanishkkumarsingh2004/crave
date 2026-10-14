@@ -109,66 +109,6 @@ export async function GET(request: Request) {
     })
   } catch (error: any) {
     console.error('[GET /api/admin/users] Database error:', error?.message)
-    if (process.env.NODE_ENV !== 'production') {
-      return NextResponse.json({
-        success: true,
-        users: [
-          {
-            id: 'admin_1',
-            name: 'System Admin',
-            email: 'admin@crave.com',
-            role: 'admin',
-            phone: '+91 99999 00001',
-            address: 'Headquarters, Bengaluru',
-            total_spent: 0,
-            total_orders: 0,
-            payment_model: 'commission',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 'vendor_1',
-            name: 'Spice Garden Owner',
-            email: 'vendor@crave.com',
-            role: 'restaurant_vendor',
-            restaurant_name: 'Spice Garden',
-            cuisine: 'North Indian',
-            phone: '+91 99999 00002',
-            address: 'Indiranagar, Bengaluru',
-            total_spent: 0,
-            total_orders: 12,
-            payment_model: 'commission',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 'rider_1',
-            name: 'Speedy Rider',
-            email: 'rider@crave.com',
-            role: 'rider',
-            vehicle_type: 'Electric Bike',
-            license_plate: 'KA 01 AB 1234',
-            phone: '+91 99999 00003',
-            address: 'Koramangala, Bengaluru',
-            total_spent: 0,
-            total_orders: 45,
-            payment_model: 'commission',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 'user_1',
-            name: 'Demo Customer',
-            email: 'user@crave.com',
-            role: 'user',
-            phone: '+91 99999 00004',
-            address: 'HSR Layout, Bengaluru',
-            total_spent: 1250,
-            total_orders: 5,
-            payment_model: 'commission',
-            created_at: new Date().toISOString(),
-          },
-        ],
-        pagination: { take: 50, nextCursor: null, hasNextPage: false },
-      })
-    }
     return NextResponse.json({ success: false, error: 'Failed to load users' }, { status: 500 })
   }
 }

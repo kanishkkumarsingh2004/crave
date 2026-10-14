@@ -10,17 +10,33 @@ import { redis, isRedisAvailable } from '@/lib/redis'
 
 export async function listCoupons(restaurantId?: string) {
   const list = await prisma.coupon.findMany({
-    where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+    where: restaurantId
+      ? {
+          OR: [
+            { restaurant_id: restaurantId },
+            { applicable_restaurants: { some: { restaurant_id: restaurantId } } },
+            { restaurant_id: null, applicable_restaurants: { none: {} } },
+          ],
+        }
+      : undefined,
+    include: {
+      applicable_restaurants: { select: { restaurant_id: true } },
+    },
     orderBy: { created_at: 'desc' },
   })
-  if (list && list.length > 0) return list
-  return []
+  return list.map(({ applicable_restaurants, ...coupon }) => ({
+    ...coupon,
+    restaurant_ids: applicable_restaurants.map((item) => item.restaurant_id),
+  }))
 }
 
 export async function findCouponByCode(code: string) {
   const clean = code.trim().toUpperCase()
   const c = await prisma.coupon.findFirst({
     where: { code: { equals: clean, mode: 'insensitive' } },
+    include: {
+      applicable_restaurants: { select: { restaurant_id: true } },
+    },
   })
   if (c) return c
   return null
@@ -83,8 +99,16 @@ export async function validateAndApplyCoupon(
   }
 
   // Restaurant restriction
-  if (restaurantId && coupon.restaurant_id && coupon.restaurant_id !== restaurantId) {
-    return { valid: false, discount: 0, error: 'Coupon not valid for this restaurant' }
+  if (restaurantId) {
+    const applicableRestaurantIds = coupon.applicable_restaurants.map((item) => item.restaurant_id)
+    if (
+      (applicableRestaurantIds.length > 0 && !applicableRestaurantIds.includes(restaurantId)) ||
+      (applicableRestaurantIds.length === 0 &&
+        coupon.restaurant_id &&
+        coupon.restaurant_id !== restaurantId)
+    ) {
+      return { valid: false, discount: 0, error: 'Coupon not valid for this restaurant' }
+    }
   }
 
   // Calculate discount
@@ -114,11 +138,32 @@ export async function createCoupon(data: {
   usage_limit?: number
   expiry_date?: Date
   is_active?: boolean
+  funding_source?: string
+  restaurant_share?: number
   restaurant_id?: string
   restaurant_ids?: string[]
 }) {
   const { restaurant_ids, ...prismaData } = data
-  return await prisma.coupon.create({ data: prismaData })
+  const restaurantIds = [...new Set((restaurant_ids || []).filter(Boolean))]
+  const primaryRestaurantId = restaurantIds.length === 1 ? restaurantIds[0] : null
+
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.coupon.create({
+      data: {
+        ...prismaData,
+        restaurant_id: primaryRestaurantId,
+      },
+    })
+    if (restaurantIds.length > 0) {
+      await tx.couponRestaurant.createMany({
+        data: restaurantIds.map((restaurant_id) => ({
+          coupon_id: created.id,
+          restaurant_id,
+        })),
+      })
+    }
+    return { ...created, restaurant_ids: restaurantIds }
+  })
 }
 
 export async function updateCoupon(
@@ -127,39 +172,53 @@ export async function updateCoupon(
     is_active?: boolean
     used_count?: number
     description?: string
+    code?: string
+    discount_type?: DiscountType
     discount_value?: number
+    min_order_amount?: number
+    max_discount?: number | null
+    usage_limit?: number | null
     expiry_date?: Date
-    restaurant_id?: string
+    funding_source?: string
+    restaurant_share?: number
+    restaurant_id?: string | null
     restaurant_ids?: string[]
   }
 ) {
   const { restaurant_ids, ...prismaData } = data
-  return await prisma.coupon.update({ where: { id }, data: prismaData })
+  const restaurantIds =
+    restaurant_ids === undefined
+      ? undefined
+      : [...new Set(restaurant_ids.filter((restaurantId) => Boolean(restaurantId)))]
+
+  return prisma.$transaction(async (tx) => {
+    if (restaurantIds !== undefined) {
+      await tx.couponRestaurant.deleteMany({ where: { coupon_id: id } })
+      if (restaurantIds.length > 0) {
+        await tx.couponRestaurant.createMany({
+          data: restaurantIds.map((restaurant_id) => ({ coupon_id: id, restaurant_id })),
+        })
+      }
+    }
+
+    const updated = await tx.coupon.update({
+      where: { id },
+      data: {
+        ...prismaData,
+        ...(restaurantIds !== undefined && {
+          restaurant_id: restaurantIds.length === 1 ? restaurantIds[0] : null,
+        }),
+      },
+    })
+    const links = await tx.couponRestaurant.findMany({
+      where: { coupon_id: id },
+      select: { restaurant_id: true },
+    })
+    return { ...updated, restaurant_ids: links.map((item) => item.restaurant_id) }
+  })
 }
 
 export async function incrementCouponUsage(id: string) {
-  // Try Redis atomic increment first for concurrency safety
-  if (isRedisAvailable() && redis) {
-    const key = `crave:coupon:usage:${id}`
-    const currentUsage = await redis.incr(key)
-
-    // Set TTL on first increment (30 days default)
-    if (currentUsage === 1) {
-      await redis.expire(key, 30 * 24 * 60 * 60) // 30 days
-    }
-
-    // Also update DB asynchronously (fire and forget)
-    prisma.coupon
-      .update({
-        where: { id },
-        data: { used_count: { increment: 1 } },
-      })
-      .catch(() => {})
-
-    return { id, currentUsage }
-  }
-
-  // Fallback to DB-only increment
   return await prisma.coupon.update({
     where: { id },
     data: { used_count: { increment: 1 } },
@@ -176,50 +235,31 @@ export async function checkAndIncrementCouponUsage(couponId: string): Promise<{
   currentUsage: number
   limit: number | null
 }> {
-  let coupon: any = null
-  coupon = await prisma.coupon.findUnique({ where: { id: couponId } })
-
-  const limit = coupon?.usage_limit ?? null
-
-  if (!isRedisAvailable() || !redis) {
-    const currentUsage = (coupon?.used_count || 0) + 1
-    if (limit != null && currentUsage > limit) {
-      return { allowed: false, currentUsage: coupon?.used_count || 0, limit }
+  const rows = await prisma.$queryRaw<Array<{ used_count: number; usage_limit: number | null }>>`
+    UPDATE coupons
+    SET used_count = COALESCE(used_count, 0) + 1
+    WHERE id = ${couponId}
+      AND is_active IS NOT FALSE
+      AND (usage_limit IS NULL OR COALESCE(used_count, 0) < usage_limit)
+    RETURNING used_count, usage_limit
+  `
+  if (rows.length === 1) {
+    return {
+      allowed: true,
+      currentUsage: Number(rows[0].used_count),
+      limit: rows[0].usage_limit == null ? null : Number(rows[0].usage_limit),
     }
-
-    // Persist usage count increment in DB
-    await prisma.coupon.update({
-      where: { id: couponId },
-      data: { used_count: { increment: 1 } },
-    })
-
-    return { allowed: true, currentUsage, limit }
   }
 
-  const key = `crave:coupon:usage:${couponId}`
-
-  // Seed Redis from DB if key does not exist yet
-  const exists = await redis.exists(key)
-  if (!exists && coupon) {
-    await redis.set(key, coupon.used_count || 0, 'EX', 30 * 24 * 60 * 60)
+  const coupon = await prisma.coupon.findUnique({
+    where: { id: couponId },
+    select: { used_count: true, usage_limit: true },
+  })
+  return {
+    allowed: false,
+    currentUsage: Number(coupon?.used_count || 0),
+    limit: coupon?.usage_limit == null ? null : Number(coupon.usage_limit),
   }
-
-  const currentUsage = await redis.incr(key)
-
-  if (limit != null && currentUsage > limit) {
-    await redis.decr(key).catch(() => {})
-    return { allowed: false, currentUsage: currentUsage - 1, limit }
-  }
-
-  // Asynchronously sync usage increment to DB
-  prisma.coupon
-    .update({
-      where: { id: couponId },
-      data: { used_count: { increment: 1 } },
-    })
-    .catch(() => {})
-
-  return { allowed: true, currentUsage, limit }
 }
 
 export async function deleteCoupon(id: string) {

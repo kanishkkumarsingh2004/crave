@@ -111,6 +111,7 @@ jobs:
       - name: Run tests
         run: pnpm test
         env:
+          ALLOW_DATABASE_TESTS: 'true'
           DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-for-ci
@@ -140,9 +141,6 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm db:generate
-
-      - name: Build application
-        run: pnpm build
 
       - name: Create CI environment file
         run: |
@@ -212,15 +210,22 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
 
-      - name: Start application stack
+      - name: Seed load-test data
+        run: pnpm db:seed:full
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Start application services
         run: |
-          docker compose up -d
+          pnpm start > /tmp/crave-app.log 2>&1 &
+          pnpm start:ws > /tmp/crave-ws.log 2>&1 &
 
       - name: Wait for application services readiness
         run: |
           services_ready=false
           for i in {1..60}; do
-            if curl -sf http://localhost:3000/api/health > /dev/null && curl -sf http://localhost:8000/__ws/broadcast > /dev/null; then
+            if curl -sf http://localhost:3000/api/health > /dev/null && curl -sf http://localhost:8000/health > /dev/null; then
               echo "All services ready"
               services_ready=true
               break
@@ -230,8 +235,10 @@ jobs:
           done
           if [ "$services_ready" != "true" ]; then
             echo "❌ Application services did not become ready after 60 attempts (180 s)"
-            echo "--- docker compose logs (last 80 lines) ---"
-            docker compose logs --tail=80 || true
+            echo "--- application log (last 80 lines) ---"
+            tail -80 /tmp/crave-app.log || true
+            echo "--- websocket log (last 80 lines) ---"
+            tail -80 /tmp/crave-ws.log || true
             exit 1
           fi
 
@@ -239,7 +246,7 @@ jobs:
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load-tests/checkout-load-test.js
-          env: BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000
+          env: BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000 CI_SMOKE=true
 
       - name: Upload load test results
         uses: actions/upload-artifact@v4
@@ -392,7 +399,7 @@ jobs:
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [build, security-scan, dependency-scan, load-test]
+    needs: [lint-and-format, typecheck, test, build, security-scan, dependency-scan, load-test]
     if: always()
     steps:
       - name: Print CI status

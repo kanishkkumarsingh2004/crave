@@ -99,30 +99,82 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization')
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
+    const actor = token ? await verifyToken(token) : null
+    if (!actor) {
+      return NextResponse.json({ error: 'Authentication token required' }, { status: 401 })
+    }
+
     const url = new URL(request.url)
     const driverId = url.searchParams.get('driverId')
     const orderId = url.searchParams.get('orderId')
 
     if (!driverId && !orderId) {
+      return NextResponse.json({ error: 'driverId or orderId parameter required' }, { status: 400 })
+    }
+
+    const { prisma } = await import('@/lib/prisma')
+    let order = orderId
+      ? await prisma.order.findUnique({
+          where: { id: orderId },
+          select: {
+            id: true,
+            customer_id: true,
+            rider_id: true,
+            driver_name: true,
+            driver_phone: true,
+            delivery_latitude: true,
+            delivery_longitude: true,
+            created_at: true,
+            status: true,
+            restaurant: { select: { owner_id: true } },
+          },
+        })
+      : null
+
+    if (orderId && !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
+
+    if (order) {
+      const canRead =
+        actor.role === 'admin' ||
+        (actor.role === 'rider' && order.rider_id === actor.id) ||
+        (actor.role === 'user' && order.customer_id === actor.id) ||
+        ((actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
+          order.restaurant?.owner_id === actor.id)
+      if (!canRead) {
+        return NextResponse.json({ error: 'Forbidden: order access denied' }, { status: 403 })
+      }
+    } else if (actor.role !== 'admin' && (actor.role !== 'rider' || driverId !== actor.id)) {
       return NextResponse.json(
-        { error: 'driverId or orderId parameter required' },
-        { status: 400 }
+        { error: 'Forbidden: driver location access denied' },
+        { status: 403 }
+      )
+    }
+
+    const effectiveDriverId = order?.rider_id || driverId
+    if (driverId && order?.rider_id && driverId !== order.rider_id && actor.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: driver does not match this order' },
+        { status: 403 }
       )
     }
 
     const { getDriverLocation } = await import('@/lib/dispatch/driver-tracker')
-    let location = driverId ? getDriverLocation(driverId) : undefined
+    let location = effectiveDriverId ? getDriverLocation(effectiveDriverId) : undefined
 
     // If not found in spatial cache or orderId provided, recover from authoritative PostgreSQL
-    if (!location && (orderId || driverId)) {
-      const { prisma } = await import('@/lib/prisma')
-      const order = await prisma.order.findFirst({
+    if (!location && !order && effectiveDriverId) {
+      order = await prisma.order.findFirst({
         where: {
-          ...(orderId && { id: orderId }),
-          ...(driverId && { rider_id: driverId }),
+          rider_id: effectiveDriverId,
         },
         select: {
           id: true,
+          customer_id: true,
           rider_id: true,
           driver_name: true,
           driver_phone: true,
@@ -130,32 +182,44 @@ export async function GET(request: Request) {
           delivery_longitude: true,
           created_at: true,
           status: true,
+          restaurant: { select: { owner_id: true } },
         },
       })
+    }
 
-      if (order && order.delivery_latitude && order.delivery_longitude) {
-        const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
-        const ageMs = Date.now() - lastUpdated
-        location = {
-          driverId: order.rider_id || 'unknown',
-          name: order.driver_name || 'Assigned Driver',
-          phone: order.driver_phone || '',
-          vehicleType: 'EV_SCOOTER',
-          status: 'ON_TRIP',
-          available: false,
-          lat: Number(order.delivery_latitude),
-          lng: Number(order.delivery_longitude),
-          h3Cell: '',
-          resolution: 8,
-          lastUpdated,
-          isStale: ageMs > 45000,
-          staleDurationSeconds: Math.floor(ageMs / 1000),
-        }
+    const persistedLocation =
+      !location && effectiveDriverId
+        ? await prisma.driverLocationHistory.findFirst({
+            where: { driver_id: effectiveDriverId },
+            orderBy: { timestamp: 'desc' },
+          })
+        : null
+
+    if (!location && persistedLocation) {
+      const lastUpdated = persistedLocation.timestamp.getTime()
+      const ageMs = Date.now() - lastUpdated
+      location = {
+        driverId: effectiveDriverId || 'unknown',
+        name: order?.driver_name || 'Assigned Driver',
+        phone: order?.driver_phone || '',
+        vehicleType: 'EV_SCOOTER',
+        status: 'ON_TRIP',
+        available: false,
+        lat: Number(persistedLocation.latitude),
+        lng: Number(persistedLocation.longitude),
+        h3Cell: persistedLocation.h3_cell,
+        resolution: 8,
+        lastUpdated,
+        isStale: ageMs > 45000,
+        staleDurationSeconds: Math.floor(ageMs / 1000),
       }
     }
 
     if (!location) {
-      return NextResponse.json({ success: false, error: 'Driver location unavailable' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Driver location unavailable' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({ success: true, data: location })

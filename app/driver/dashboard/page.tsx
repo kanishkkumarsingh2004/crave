@@ -226,9 +226,7 @@ export default function DriverDashboardPage() {
                       placeholder="xxxxxx"
                     />
                   </div>
-                  {otpError && (
-                    <p className="mt-2 text-xs font-bold text-rose-400">{otpError}</p>
-                  )}
+                  {otpError && <p className="mt-2 text-xs font-bold text-rose-400">{otpError}</p>}
                 </div>
               )}
             </div>
@@ -270,7 +268,9 @@ export default function DriverDashboardPage() {
                 onClick={async () => {
                   const trimmed = otpInput.trim()
                   if (!trimmed || trimmed.length !== 6 || !/^\d{6}$/.test(trimmed)) {
-                    setOtpError('Please enter the valid 6-digit Delivery OTP provided by the customer.')
+                    setOtpError(
+                      'Please enter the valid 6-digit Delivery OTP provided by the customer.'
+                    )
                     return
                   }
                   setIsVerifyingOtp(true)
@@ -291,11 +291,13 @@ export default function DriverDashboardPage() {
               >
                 {isVerifyingOtp ? (
                   <>
-                    <Loader2 className="size-4 animate-spin text-[#121815]" /> Verifying OTP with Server...
+                    <Loader2 className="size-4 animate-spin text-[#121815]" /> Verifying OTP with
+                    Server...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="size-4 text-[#121815]" /> Verify OTP &amp; Complete Delivery
+                    <CheckCircle2 className="size-4 text-[#121815]" /> Verify OTP &amp; Complete
+                    Delivery
                   </>
                 )}
               </button>

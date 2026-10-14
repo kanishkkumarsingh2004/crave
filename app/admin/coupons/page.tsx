@@ -124,6 +124,8 @@ export default function AdminCouponsPage() {
         is_active: isActive,
         restaurant_id: primaryRestId,
         restaurant_ids: rIds,
+        funding_source: fundingSource,
+        restaurant_share: restaurantContributionPct,
       }
       try {
         const res = await fetch('/api/admin/coupons', {
@@ -176,6 +178,8 @@ export default function AdminCouponsPage() {
         expiry_date: expiryDate || null,
         restaurant_id: primaryRestId,
         restaurant_ids: rIds,
+        funding_source: fundingSource,
+        restaurant_share: restaurantContributionPct,
       }
 
       try {
@@ -205,6 +209,8 @@ export default function AdminCouponsPage() {
         isActive: true,
         restaurantId: primaryRestId || undefined,
         restaurantIds: rIds,
+        fundingSource,
+        restaurantContributionPct,
       }
       updated = [newCoupon, ...coupons]
       showToast(`New Coupon '${formattedCode}' created and published!`)
@@ -263,6 +269,8 @@ export default function AdminCouponsPage() {
     setUsageLimit('')
     setIsActive(true)
     setSelectedRestaurantIds([])
+    setFundingSource('SHARED')
+    setRestaurantContributionPct(50)
     setShowModal(true)
   }
 
@@ -284,6 +292,8 @@ export default function AdminCouponsPage() {
           ? [c.restaurantId]
           : []
     )
+    setFundingSource(c.fundingSource)
+    setRestaurantContributionPct(c.restaurantContributionPct)
     setShowModal(true)
   }
 

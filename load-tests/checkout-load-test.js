@@ -5,19 +5,26 @@ import http from 'k6/http'
 import ws from 'k6/ws'
 import { check, sleep } from 'k6'
 
+const IS_CI_SMOKE = typeof __ENV !== 'undefined' && __ENV.CI_SMOKE === 'true'
+
 export const CONFIG = {
   // Target VUs per stage
-  stages: [
-    { duration: '30s', target: 10 },
-    { duration: '1m', target: 50 },
-    { duration: '1m', target: 100 },
-    { duration: '1m', target: 150 },
-    { duration: '1m', target: 200 },
-    { duration: '1m', target: 500 },
-    { duration: '1m', target: 1000 },
-    { duration: '1m', target: 100 },
-    { duration: '1m', target: 0 },
-  ],
+  stages: IS_CI_SMOKE
+    ? [
+        { duration: '5s', target: 3 },
+        { duration: '5s', target: 0 },
+      ]
+    : [
+        { duration: '30s', target: 10 },
+        { duration: '1m', target: 50 },
+        { duration: '1m', target: 100 },
+        { duration: '1m', target: 150 },
+        { duration: '1m', target: 200 },
+        { duration: '1m', target: 500 },
+        { duration: '1m', target: 1000 },
+        { duration: '1m', target: 100 },
+        { duration: '1m', target: 0 },
+      ],
 
   // Thresholds
   thresholds: {
@@ -39,10 +46,10 @@ export const CONFIG = {
 
   // Demo credentials (used strictly in test environments)
   users: {
-    admin: { email: 'admin@crave.com', password: '1234567890' },
-    user: { email: 'user@crave.com', password: '1234567890' },
-    vendor: { email: 'vendor@crave.com', password: '1234567890' },
-    rider: { email: 'rider@crave.com', password: '1234567890' },
+    admin: { email: 'admin@crave.com', password: 'Password123!' },
+    user: { email: 'user@crave.com', password: 'Password123!' },
+    vendor: { email: 'vendor@crave.com', password: 'Password123!' },
+    rider: { email: 'rider@crave.com', password: 'Password123!' },
   },
 
   // Timing expectations (ms)

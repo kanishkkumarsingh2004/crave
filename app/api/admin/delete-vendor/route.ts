@@ -1,6 +1,6 @@
-import { findUserByEmail, deleteUser } from '@/lib/dal'
-import { deleteRestaurant, deleteRestaurantsByOwner } from '@/lib/dal/restaurants'
-import { deleteMenuItemsByRestaurant } from '@/lib/dal/menu-items'
+import { findUserByEmail } from '@/lib/dal'
+import { invalidateRestaurantCache } from '@/lib/dal/restaurants'
+import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
@@ -36,143 +36,81 @@ export async function POST(request: Request) {
       targetVendorId = undefined
     }
 
-    // Resolve user from email if only email provided
+    // Resolve exact database records before mutating anything.
     if (!targetUserId && email) {
-      try {
-        const user = await findUserByEmail(email)
-        if (user) {
-          targetUserId = user.id
-        }
-      } catch (dbErr: any) {
-        console.warn('[delete-vendor] DB check skipped (database unreachable):', dbErr?.message)
-      }
+      const user = await findUserByEmail(email)
+      if (user) targetUserId = user.id
     }
 
-    const { prisma } = await import('@/lib/prisma')
-
-    // If we have targetUserId but not targetVendorId, resolve restaurant by owner_id
-    if (targetUserId && !targetVendorId && typeof prisma?.restaurant?.findFirst === 'function') {
-      const rest = await prisma.restaurant
-        .findFirst({
-          where: { owner_id: targetUserId },
-          select: { id: true },
-        })
-        .catch(() => null)
-      if (rest?.id) {
-        targetVendorId = rest.id
-      }
+    if (targetUserId && !targetVendorId) {
+      const rest = await prisma.restaurant.findFirst({
+        where: { owner_id: targetUserId },
+        select: { id: true },
+      })
+      if (rest) targetVendorId = rest.id
     }
 
-    // If we have targetVendorId but not targetUserId, resolve owner from restaurant
-    if (targetVendorId && !targetUserId && typeof prisma?.restaurant?.findUnique === 'function') {
-      const rest = await prisma.restaurant
-        .findUnique({
-          where: { id: targetVendorId },
-          select: { owner_id: true },
-        })
-        .catch(() => null)
-      if (rest?.owner_id) {
-        targetUserId = rest.owner_id
-      }
+    if (targetVendorId && !targetUserId) {
+      const rest = await prisma.restaurant.findUnique({
+        where: { id: targetVendorId },
+        select: { owner_id: true },
+      })
+      if (rest?.owner_id) targetUserId = rest.owner_id
     }
 
-    // 1. Check if orders exist for this vendor to prevent foreign key violations
-    let hasOrders = false
-    if (targetVendorId && typeof prisma?.order?.count === 'function') {
-      const orderCount = await prisma.order
-        .count({
-          where: { restaurant_id: targetVendorId },
-        })
-        .catch(() => 0)
-      hasOrders = orderCount > 0
+    if (!targetVendorId && !targetUserId) {
+      return NextResponse.json({ error: 'Vendor account not found.' }, { status: 404 })
     }
 
-    if (hasOrders && targetVendorId && typeof prisma?.restaurant?.update === 'function') {
-      // Soft-deactivate to preserve financial/order integrity
-      await prisma.restaurant
-        .update({
+    const [vendorOrderCount, userOrderCount] = await Promise.all([
+      targetVendorId
+        ? prisma.order.count({ where: { restaurant_id: targetVendorId } })
+        : Promise.resolve(0),
+      targetUserId
+        ? prisma.order.count({ where: { customer_id: targetUserId } })
+        : Promise.resolve(0),
+    ])
+    const mustPreserveHistory = vendorOrderCount > 0 || userOrderCount > 0
+
+    if (mustPreserveHistory && targetVendorId) {
+      await prisma.$transaction([
+        prisma.restaurant.update({
           where: { id: targetVendorId },
           data: { is_open: false },
-        })
-        .catch(() => {})
-
-      if (typeof prisma?.menuItem?.updateMany === 'function') {
-        await prisma.menuItem
-          .updateMany({
-            where: { restaurant_id: targetVendorId },
-            data: { in_stock: false },
-          })
-          .catch(() => {})
-      }
+        }),
+        prisma.menuItem.updateMany({
+          where: { restaurant_id: targetVendorId },
+          data: { in_stock: false },
+        }),
+      ])
     } else {
-      // 1. Delete associated menu items
-      if (targetVendorId) {
-        try {
-          await deleteMenuItemsByRestaurant(targetVendorId)
-        } catch (e: any) {
-          console.warn('Menu items deletion notice:', e?.message)
-        }
-      }
-
-      // 2. Delete from restaurants table
-      if (targetVendorId) {
-        try {
-          await deleteRestaurant(targetVendorId)
-        } catch (e: any) {
-          console.warn('Restaurant deletion notice:', e?.message)
-        }
-      }
       if (targetUserId) {
-        try {
-          await deleteRestaurantsByOwner(targetUserId)
-        } catch (e: any) {
-          console.warn('Owner restaurants deletion notice:', e?.message)
-        }
+        await prisma.user.delete({ where: { id: targetUserId } })
+      } else if (targetVendorId) {
+        await prisma.restaurant.delete({ where: { id: targetVendorId } })
       }
     }
-
-    // 3. Delete user profile if no orders attached
-    let userHasOrders = false
-    if (targetUserId && typeof prisma?.order?.count === 'function') {
-      const uCount = await prisma.order
-        .count({
-          where: { customer_id: targetUserId },
-        })
-        .catch(() => 0)
-      userHasOrders = uCount > 0
-    }
-
-    if (!userHasOrders && targetUserId) {
-      try {
-        await deleteUser(targetUserId)
-      } catch (e: any) {
-        console.warn('User deletion notice:', e?.message)
-      }
-    }
-    if (!userHasOrders && targetVendorId && targetVendorId !== targetUserId) {
-      try {
-        await deleteUser(targetVendorId)
-      } catch (e: any) {
-        // May not exist as user
-      }
-    }
+    await invalidateRestaurantCache()
 
     // Broadcast vendor deletion event to Admin WebSocket channels
     broadcast('admin_stats', {
-      type: 'vendor_deleted',
+      type: mustPreserveHistory ? 'vendor_deactivated' : 'vendor_deleted',
       vendorId: targetVendorId,
       userId: targetUserId,
       timestamp: new Date().toISOString(),
     })
     broadcast('admin_users', {
-      type: 'user_deleted',
+      type: mustPreserveHistory ? 'user_deactivated' : 'user_deleted',
       userId: targetUserId,
       timestamp: new Date().toISOString(),
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Restaurant/Vendor successfully deleted from platform.',
+      action: mustPreserveHistory ? 'deactivated' : 'deleted',
+      message: mustPreserveHistory
+        ? 'Vendor was deactivated; historical orders and financial records were preserved.'
+        : 'Restaurant and vendor account were deleted.',
       deletedVendorId: targetVendorId,
     })
   } catch (error: any) {

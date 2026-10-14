@@ -105,7 +105,10 @@ export async function PATCH(request: Request) {
       })
 
       if (!review && !targetOrder) {
-        return NextResponse.json({ error: 'Payment review and Order record not found' }, { status: 404 })
+        return NextResponse.json(
+          { error: 'Payment review and Order record not found' },
+          { status: 404 }
+        )
       }
 
       const finalOrderId = targetOrder?.id || review?.order_id || targetOrderId

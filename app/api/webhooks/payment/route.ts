@@ -72,34 +72,28 @@ export async function POST(request: Request) {
       )
     }
     if (lock.status === 'processing') {
-      return NextResponse.json(
-        { error: 'Webhook event currently processing' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Webhook event currently processing' }, { status: 409 })
     }
 
     // Extract Order & Payment metadata
     const data = payload.payload?.payment?.entity || payload.data || payload
     const orderId =
-      data.order_id ||
-      data.orderId ||
-      data.notes?.order_id ||
-      payload.order_id ||
-      payload.orderId
+      data.order_id || data.orderId || data.notes?.order_id || payload.order_id || payload.orderId
 
     if (!orderId) {
       await releaseIdempotency(idempotencyKey, 'payment_webhook')
-      return NextResponse.json(
-        { error: 'order_id missing from webhook payload' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'order_id missing from webhook payload' }, { status: 400 })
     }
 
     const gatewayPaymentId = data.id || data.payment_id || data.transaction_id || eventId
     // Convert paise to rupees if amount is large (typical gateway convention: 100 paise = 1 INR)
     const rawAmount = data.amount != null ? Number(data.amount) : undefined
     const amountInRupees =
-      rawAmount != null ? (rawAmount > 10000 && rawAmount % 100 === 0 ? rawAmount / 100 : rawAmount) : undefined
+      rawAmount != null
+        ? rawAmount > 10000 && rawAmount % 100 === 0
+          ? rawAmount / 100
+          : rawAmount
+        : undefined
 
     let resultResponse: any = {}
 

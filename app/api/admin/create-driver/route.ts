@@ -1,7 +1,7 @@
 import { createUser, findUserByEmail } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
-import crypto from 'crypto'
+import { hashPassword } from '@/lib/password'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -42,12 +42,7 @@ export async function POST(request: Request) {
     const cleanEmail = String(email).trim().toLowerCase()
 
     // Pre-check for existing account email
-    let existingUser = null
-    try {
-      existingUser = await findUserByEmail(cleanEmail)
-    } catch (dbErr: any) {
-      console.warn('[create-driver] DB check skipped (database unreachable):', dbErr?.message)
-    }
+    const existingUser = await findUserByEmail(cleanEmail)
 
     if (existingUser) {
       return NextResponse.json(
@@ -59,24 +54,20 @@ export async function POST(request: Request) {
     }
 
     const driverUserId = `usr_driver_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
+    const passwordHash = hashPassword(password)
 
     // Insert rider user record via Prisma DAL
-    try {
-      await createUser({
-        id: driverUserId,
-        name: String(name).trim(),
-        email: cleanEmail,
-        role: 'rider',
-        password_hash: passwordHash,
-        phone: phone ? String(phone).trim() : null,
-        address: address ? String(address).trim() : null,
-        vehicle_type: String(finalVehicleType).trim(),
-        license_plate: finalLicensePlate ? String(finalLicensePlate).trim() : null,
-      })
-    } catch (err: any) {
-      console.warn('Could not insert driver user via Prisma:', err?.message)
-    }
+    await createUser({
+      id: driverUserId,
+      name: String(name).trim(),
+      email: cleanEmail,
+      role: 'rider',
+      password_hash: passwordHash,
+      phone: phone ? String(phone).trim() : null,
+      address: address ? String(address).trim() : null,
+      vehicle_type: String(finalVehicleType).trim(),
+      license_plate: finalLicensePlate ? String(finalLicensePlate).trim() : null,
+    })
 
     // Broadcast real-time driver onboarding to WebSocket listeners
     broadcast('admin_stats', {

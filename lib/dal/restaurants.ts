@@ -139,6 +139,12 @@ const VALID_RESTAURANT_FIELDS = new Set([
   'latitude',
   'longitude',
   'phone',
+  'commercial_model',
+  'commission_rate',
+  'markup_rate',
+  'fixed_commission',
+  'fixed_markup',
+  'payment_model',
   'fssai_license',
   'gstin',
   'gst_status',
@@ -150,6 +156,7 @@ const VALID_RESTAURANT_FIELDS = new Set([
   'bank_account_number',
   'bank_ifsc',
   'payout_vpa',
+  'gst_rate_percent',
 ])
 
 export async function createRestaurant(data: {
@@ -201,7 +208,7 @@ export async function createRestaurant(data: {
   return created
 }
 
-async function invalidateRestaurantCache(): Promise<void> {
+export async function invalidateRestaurantCache(): Promise<void> {
   await Promise.all([
     cacheDel(CacheKeys.restaurants.all()),
     cacheDel(CacheKeys.restaurants.open()),

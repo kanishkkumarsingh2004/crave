@@ -19,8 +19,7 @@ import React, { useEffect, useState } from 'react'
 
 function getTargetDashboard(u: { role?: string; email?: string } | null): string {
   if (!u) return '/user/dashboard'
-  const isCraveXPStore =
-    u.email === 'cravexp@crave.com' || u.email === 'store@crave.com'
+  const isCraveXPStore = u.email === 'cravexp@crave.com' || u.email === 'store@crave.com'
   if (isCraveXPStore || u.role === 'cravexp_store_vendor') {
     return '/vendor/crave-ep'
   }
@@ -50,7 +49,10 @@ export default function LoginPage() {
 
   // Auto-redirect if already authenticated (unless explicit logout requested)
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window.location.search.includes('logout') || window.location.search.includes('switch'))) {
+    if (
+      typeof window !== 'undefined' &&
+      (window.location.search.includes('logout') || window.location.search.includes('switch'))
+    ) {
       return
     }
     if (!isLoading && user) {

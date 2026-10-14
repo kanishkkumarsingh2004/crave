@@ -1,8 +1,3 @@
-import {
-  createVendorSettlement,
-  listVendorSettlements,
-  updateVendorSettlementStatus,
-} from '@/lib/dal/payments'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
@@ -152,43 +147,71 @@ export async function POST(request: Request) {
       transaction_ref,
     } = body
 
-    if (id && status && net_payout == null) {
-      await updateVendorSettlementStatus(id, status)
+    const numericValues = [commission_rate, gross_sales, commission_amount, net_payout]
+      .filter((value) => value != null)
+      .map(Number)
+    if (numericValues.some((value) => !Number.isFinite(value) || value < 0)) {
+      return NextResponse.json(
+        { error: 'Settlement amounts and commission rate must be non-negative numbers' },
+        { status: 400 }
+      )
+    }
+    const allowedStatuses = new Set(['scheduled', 'paid', 'failed', 'cancelled', 'settled'])
+    if (status != null && !allowedStatuses.has(String(status))) {
+      return NextResponse.json({ error: 'Invalid settlement status' }, { status: 400 })
+    }
+    if (net_payout != null && !restaurant_id) {
+      return NextResponse.json(
+        { error: 'restaurant_id is required when creating a settlement' },
+        { status: 400 }
+      )
+    }
+    if (!(id && status) && !(restaurant_id && commission_rate != null) && net_payout == null) {
+      return NextResponse.json({ error: 'No settlement changes were provided' }, { status: 400 })
     }
 
-    if (restaurant_id && commission_rate != null) {
-      try {
-        await prisma.restaurant.update({
+    const settlementRecord = await prisma.$transaction(async (tx) => {
+      let record: any = null
+
+      if (id && status && net_payout == null) {
+        record = await tx.vendorSettlement.update({
+          where: { id },
+          data: {
+            status: (status === 'settled' ? 'paid' : status) as VendorSettlementStatus,
+            payout_date: new Date(),
+          },
+        })
+      }
+
+      if (restaurant_id && commission_rate != null) {
+        await tx.restaurant.update({
           where: { id: restaurant_id },
           data: { commission_rate: Number(commission_rate) },
         })
-      } catch (e) {
-        console.error(
-          '[settlements] commission_rate update failed:',
-          e instanceof Error ? e.message : e
-        )
-        throw e
       }
-    }
 
-    let settlementRecord: any = null
-    if (restaurant_id && net_payout != null) {
-      const settleStatus =
-        status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
-      settlementRecord = await createVendorSettlement({
-        id: id && !id.startsWith('rest_') ? id : `set_${crypto.randomUUID()}`,
-        restaurant_id,
-        restaurant_name: restaurant_name || 'Restaurant Store',
-        gross_sales: Number(gross_sales || net_payout),
-        commission_rate: Number(commission_rate || 15),
-        commission_amount: Number(commission_amount || 0),
-        net_payout: Number(net_payout),
-        status: settleStatus as VendorSettlementStatus,
-        transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
-        period_start: new Date(),
-        period_end: new Date(),
-      })
-    }
+      if (restaurant_id && net_payout != null) {
+        const settleStatus =
+          status === 'settled' || status === 'paid' ? 'paid' : status || 'scheduled'
+        record = await tx.vendorSettlement.create({
+          data: {
+            id: id && !id.startsWith('rest_') ? id : `set_${crypto.randomUUID()}`,
+            restaurant_id,
+            restaurant_name: restaurant_name || 'Restaurant Store',
+            gross_sales: Number(gross_sales ?? net_payout),
+            commission_rate: Number(commission_rate ?? 15),
+            commission_amount: Number(commission_amount ?? 0),
+            net_payout: Number(net_payout),
+            status: settleStatus as VendorSettlementStatus,
+            transaction_ref: transaction_ref || `UTR${Date.now().toString().slice(-8)}`,
+            period_start: new Date(),
+            period_end: new Date(),
+          },
+        })
+      }
+
+      return record
+    })
 
     broadcast('admin_settlements', {
       type: 'update',

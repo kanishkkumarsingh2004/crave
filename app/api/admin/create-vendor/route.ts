@@ -1,10 +1,11 @@
-import { createUser, findUserByEmail } from '@/lib/dal'
-import { createRestaurant } from '@/lib/dal/restaurants'
+import { findUserByEmail } from '@/lib/dal'
+import { invalidateRestaurantCache } from '@/lib/dal/restaurants'
+import { prisma } from '@/lib/prisma'
+import { hashPassword } from '@/lib/password'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
@@ -60,12 +61,7 @@ export async function POST(request: Request) {
     const cleanEmail = String(email).trim().toLowerCase()
 
     // Pre-check for existing account email
-    let existingUser = null
-    try {
-      existingUser = await findUserByEmail(cleanEmail)
-    } catch (dbErr: any) {
-      console.warn('[create-vendor] DB check skipped (database unreachable):', dbErr?.message)
-    }
+    const existingUser = await findUserByEmail(cleanEmail)
 
     if (existingUser) {
       return NextResponse.json(
@@ -85,68 +81,80 @@ export async function POST(request: Request) {
     const vendorRole =
       vendorType === 'CraveXP Store Vendor' ? 'cravexp_store_vendor' : 'restaurant_vendor'
 
-    const passwordHash = crypto.scryptSync(String(password), cleanEmail, 64).toString('hex')
+    const passwordHash = hashPassword(password)
     const isDarkStore = vendorRole === 'cravexp_store_vendor'
 
-    // Insert user record via Prisma
-    try {
-      await createUser({
-        id: finalUserId,
-        name: String(name).trim(),
-        email: cleanEmail,
-        role: vendorRole,
-        password_hash: passwordHash,
-        phone: phone || null,
-        address: address || null,
-        restaurant_name: String(storeName).trim(),
-        cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : vendorType),
-      })
-    } catch (err: any) {
-      console.warn('Could not insert user profile:', err?.message)
+    const percentageFields = { commissionRate, markupRate, gstRatePercent }
+    for (const [field, value] of Object.entries(percentageFields)) {
+      const number = Number(value)
+      if (!Number.isFinite(number) || number < 0 || number > 100) {
+        return NextResponse.json({ error: `${field} must be between 0 and 100` }, { status: 400 })
+      }
+    }
+    const lat = latitude == null || latitude === '' ? null : Number(latitude)
+    const lng = longitude == null || longitude === '' ? null : Number(longitude)
+    if (lat != null && (!Number.isFinite(lat) || lat < -90 || lat > 90)) {
+      return NextResponse.json({ error: 'latitude must be between -90 and 90' }, { status: 400 })
+    }
+    if (lng != null && (!Number.isFinite(lng) || lng < -180 || lng > 180)) {
+      return NextResponse.json({ error: 'longitude must be between -180 and 180' }, { status: 400 })
     }
 
-    // Insert restaurant record via Prisma (for both standard restaurants and dark stores)
-    try {
-      await createRestaurant({
-        id: vendorId,
-        name: String(storeName).trim(),
-        cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : 'Multi-Cuisine'),
-        rating: 4.8,
-        delivery_minutes: isDarkStore ? 10 : 25,
-        image:
-          bannerUrl ||
-          (isDarkStore
-            ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80'
-            : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'),
-        is_open: true,
-        is_dark_store: isDarkStore,
-        address: address || 'Bengaluru',
-        owner_id: finalUserId,
-        commercial_model: String(commercialModel),
-        commission_rate: Number(commissionRate),
-        markup_rate: Number(markupRate),
-        fixed_commission: Number(fixedCommission),
-        fixed_markup: Number(fixedMarkup),
-        payment_model: paymentModel,
-        phone: phone || null,
-        latitude: latitude ? Number(latitude) : undefined,
-        longitude: longitude ? Number(longitude) : undefined,
-        fssai_license: fssaiLicense || null,
-        gstin: gstin || null,
-        gst_status: gstStatus || 'REGISTERED',
-        gst_rate_percent: Number(gstRatePercent),
-        supplier_state: supplierState || 'Karnataka',
-        price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
-        contract_number: generatedContractNum,
-        bank_account_name: bankAccountName || null,
-        bank_name: bankName || null,
-        bank_account_number: bankAccountNumber || null,
-        bank_ifsc: bankIfsc || null,
-        payout_vpa: payoutVpa || null,
+    await prisma.$transaction(async (tx) => {
+      await tx.user.create({
+        data: {
+          id: finalUserId,
+          name: String(name).trim(),
+          email: cleanEmail,
+          role: vendorRole,
+          password_hash: passwordHash,
+          phone: phone || null,
+          address: address || null,
+          restaurant_name: String(storeName).trim(),
+          cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : vendorType),
+        },
       })
-    } catch (err: any) {
-      console.warn('Could not insert restaurant record:', err?.message)
-    }
+      await tx.restaurant.create({
+        data: {
+          id: vendorId,
+          name: String(storeName).trim(),
+          cuisine: cuisine || (isDarkStore ? 'Dark Store Grocery' : 'Multi-Cuisine'),
+          rating: 4.8,
+          delivery_minutes: isDarkStore ? 10 : 25,
+          image:
+            bannerUrl ||
+            (isDarkStore
+              ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80'
+              : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'),
+          is_open: true,
+          is_dark_store: isDarkStore,
+          address: address || 'Bengaluru',
+          owner_id: finalUserId,
+          commercial_model: commercialModel,
+          commission_rate: Number(commissionRate),
+          markup_rate: Number(markupRate),
+          fixed_commission: Number(fixedCommission),
+          fixed_markup: Number(fixedMarkup),
+          payment_model: paymentModel,
+          phone: phone || null,
+          latitude: lat,
+          longitude: lng,
+          fssai_license: fssaiLicense || null,
+          gstin: gstin || null,
+          gst_status: gstStatus || 'REGISTERED',
+          gst_rate_percent: Number(gstRatePercent),
+          supplier_state: supplierState || 'Karnataka',
+          price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
+          contract_number: generatedContractNum,
+          bank_account_name: bankAccountName || null,
+          bank_name: bankName || null,
+          bank_account_number: bankAccountNumber || null,
+          bank_ifsc: bankIfsc || null,
+          payout_vpa: payoutVpa || null,
+        },
+      })
+    })
+    await invalidateRestaurantCache()
 
     // Broadcast real-time vendor creation to Admin WebSocket channels
     broadcast('admin_stats', {

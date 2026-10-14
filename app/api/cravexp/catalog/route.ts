@@ -5,6 +5,7 @@ import {
   type CraveXPGroceryItem,
 } from '@/lib/cravexp-grocery-catalog'
 import { NextResponse } from 'next/server'
+import { requireRole, handleAuthError } from '@/lib/auth-helpers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -92,11 +93,16 @@ export async function GET() {
  * Idempotent setup/seed endpoint.  Call once to initialize the dark-store
  * record.  Safe to call again (upsert is idempotent).
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    await requireRole(request, 'admin')
     await ensureStore()
     return NextResponse.json({ success: true })
   } catch (error) {
+    const authResponse = handleAuthError(error)
+    if ((authResponse.status === 401 || authResponse.status === 403) && error instanceof Error) {
+      return authResponse
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to initialize CraveXP store' },
       { status: 500 }

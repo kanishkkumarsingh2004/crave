@@ -189,16 +189,16 @@ export function buildOrderConfirmedJournal(
     snapshot.restaurantServiceTaxBreakdown.totalGstPaise +
     snapshot.platformServiceTaxBreakdown.totalGstPaise
 
-  const riderPayableExTipPaise = Math.max(0, (snapshot.riderPayablePaise || 0) - (snapshot.riderTipPaise || 0))
+  const riderPayableExTipPaise = Math.max(
+    0,
+    (snapshot.riderPayablePaise || 0) - (snapshot.riderTipPaise || 0)
+  )
   const tipPaise = snapshot.riderTipPaise || 0
   const vendorPayablePaise = snapshot.vendorPayableNetPaise || 0
 
   // Total liabilities to external parties (vendor, driver, government GST)
   const externalLiabilitiesPaise =
-    vendorPayablePaise +
-    riderPayableExTipPaise +
-    tipPaise +
-    totalGstPaise
+    vendorPayablePaise + riderPayableExTipPaise + tipPaise + totalGstPaise
 
   // Net platform revenue ensures double-entry balance: Debits === Credits exactly
   const platformRetainedRevenuePaise = Math.max(

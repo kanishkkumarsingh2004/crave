@@ -17,7 +17,11 @@ function isSecureCookie(request?: Request): boolean {
   return request.url.startsWith('https:')
 }
 
-function setCookies(response: ReturnType<typeof NextResponse.json>, token: string, request?: Request) {
+function setCookies(
+  response: ReturnType<typeof NextResponse.json>,
+  token: string,
+  request?: Request
+) {
   const isSecure = isSecureCookie(request)
   const cookieOptions = {
     httpOnly: true,
@@ -68,7 +72,10 @@ export async function POST(request: Request) {
         profile = await findUserInDb(lookupEmail.replace('@crave.com', '@gmail.com'))
       }
     } catch (dbErr: any) {
-      console.warn('[login] Database lookup unavailable, falling back to demo profiles if applicable:', dbErr?.message || dbErr)
+      console.warn(
+        '[login] Database lookup unavailable, falling back to demo profiles if applicable:',
+        dbErr?.message || dbErr
+      )
     }
 
     const isDemoEmail =
@@ -236,7 +243,11 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    return setCookies(NextResponse.json({ success: true, token, user: userPayload }), token, request)
+    return setCookies(
+      NextResponse.json({ success: true, token, user: userPayload }),
+      token,
+      request
+    )
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json(

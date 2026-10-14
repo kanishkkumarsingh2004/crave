@@ -3,7 +3,17 @@
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import { Check, Edit, Image as ImageIcon, Plus, Search, Sparkles, Trash2, Utensils, X } from 'lucide-react'
+import {
+  Check,
+  Edit,
+  Image as ImageIcon,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  Utensils,
+  X,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
@@ -52,12 +62,7 @@ export const MENU_CATEGORY_GROUPS = [
   },
   {
     group: 'Fast Food & Continental',
-    categories: [
-      'Burgers & Sandwiches',
-      'Pizzas & Pasta',
-      'Bowls',
-      'Snacks & Finger Food',
-    ],
+    categories: ['Burgers & Sandwiches', 'Pizzas & Pasta', 'Bowls', 'Snacks & Finger Food'],
   },
   {
     group: 'Desserts & Bakes',
@@ -530,7 +535,8 @@ export default function VendorMenuPage() {
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
               <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-                Manage dishes, categories, dietary types, portion sizes, pricing & live kitchen inventory.
+                Manage dishes, categories, dietary types, portion sizes, pricing & live kitchen
+                inventory.
               </p>
             </div>
 
@@ -629,12 +635,16 @@ export default function VendorMenuPage() {
                       {item.veg !== false ? (
                         <>
                           <span className="inline-block size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30" />
-                          <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">VEG</span>
+                          <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">
+                            VEG
+                          </span>
                         </>
                       ) : (
                         <>
                           <span className="inline-block size-2 rounded-full bg-rose-500 ring-2 ring-rose-500/30" />
-                          <span className="text-rose-700 dark:text-rose-400 font-extrabold">NON-VEG</span>
+                          <span className="text-rose-700 dark:text-rose-400 font-extrabold">
+                            NON-VEG
+                          </span>
                         </>
                       )}
                     </span>
@@ -944,7 +954,9 @@ export default function VendorMenuPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">GST Tax Mode</label>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">
+                    GST Tax Mode
+                  </label>
                   <select
                     value={priceTaxModeInput}
                     onChange={(e) => setPriceTaxModeInput(e.target.value as any)}
@@ -979,7 +991,9 @@ export default function VendorMenuPage() {
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                     placeholder="996331"
                   />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">Restaurant service code</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">
+                    Restaurant service code
+                  </span>
                 </div>
 
                 <div>
@@ -996,7 +1010,9 @@ export default function VendorMenuPage() {
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                     placeholder="50"
                   />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">Daily kitchen inventory</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">
+                    Daily kitchen inventory
+                  </span>
                 </div>
 
                 <div>
@@ -1010,7 +1026,9 @@ export default function VendorMenuPage() {
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                     placeholder="e.g. BRY-101"
                   />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">Internal tracking code</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">
+                    Internal tracking code
+                  </span>
                 </div>
               </div>
 

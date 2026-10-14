@@ -3,7 +3,7 @@ import { updateRestaurant } from '@/lib/dal/restaurants'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
+import { hashPassword } from '@/lib/password'
 import { broadcast } from '@/lib/ws-server'
 import { prisma } from '@/lib/prisma'
 
@@ -46,15 +46,7 @@ export async function POST(request: Request) {
     }
 
     // CR-14 FIX: Validate target account exists before attempting updates
-    let targetUser: any = null
-    try {
-      targetUser = await findUserById(id)
-    } catch (err: any) {
-      console.warn('[edit-account] DB check skipped (database unreachable):', err?.message)
-      if (process.env.NODE_ENV !== 'production') {
-        targetUser = { id, email: email || 'demo@crave.com', role: 'vendor' }
-      }
-    }
+    const targetUser = await findUserById(id)
     if (!targetUser) {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 })
     }
@@ -78,15 +70,7 @@ export async function POST(request: Request) {
       userUpdateData.license_plate = finalLicensePlate ? String(finalLicensePlate).trim() : null
 
     if (password && String(password).trim().length > 0) {
-      let targetEmail = cleanEmail
-      if (!targetEmail) {
-        targetEmail = targetUser.email
-      }
-      if (targetEmail) {
-        userUpdateData.password_hash = crypto
-          .scryptSync(String(password), targetEmail, 64)
-          .toString('hex')
-      }
+      userUpdateData.password_hash = hashPassword(String(password))
     }
 
     // Determine if restaurant update is needed
@@ -157,7 +141,8 @@ export async function POST(request: Request) {
             if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
             if (address) restUpdateData.address = String(address).trim()
             if (phone) restUpdateData.phone = String(phone).trim()
-            if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
+            if (commissionRate !== undefined)
+              restUpdateData.commission_rate = Number(commissionRate)
             if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
             if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
             if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
@@ -216,10 +201,7 @@ export async function POST(request: Request) {
         }
       }
     } catch (dbErr: any) {
-      console.warn('[edit-account] DB mutation failed (offline/unreachable):', dbErr?.message)
-      if (process.env.NODE_ENV === 'production') {
-        throw dbErr
-      }
+      throw dbErr
     }
 
     // Broadcast WebSocket updates

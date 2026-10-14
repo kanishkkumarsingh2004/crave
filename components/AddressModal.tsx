@@ -152,11 +152,11 @@ export default function AddressModal({
         const json = await res.json()
         const apiAddrs: AddressItem[] = Array.isArray(json.addresses) ? json.addresses : []
         const merged: AddressItem[] = [...apiAddrs]
-        localAddrs.forEach((la) => {
-          if (!merged.some((m) => m.address === la.address)) {
-            merged.push(la)
-          }
-        })
+        if (!token) {
+          localAddrs.forEach((la) => {
+            if (!merged.some((m) => m.address === la.address)) merged.push(la)
+          })
+        }
         setAddresses(merged)
         if (merged.length === 0) {
           setCurrentView('map')
@@ -429,6 +429,9 @@ export default function AddressModal({
           if (json.success && json.address) {
             savedResult = json.address
           }
+        } else if (token) {
+          const error = await res.json().catch(() => ({}))
+          throw new Error(error.error || 'Could not update the address in the database.')
         }
       } else {
         // POST create
@@ -451,10 +454,17 @@ export default function AddressModal({
           if (json.success && json.address) {
             savedResult = json.address
           }
+        } else if (token) {
+          const error = await res.json().catch(() => ({}))
+          throw new Error(error.error || 'Could not save the address in the database.')
         }
       }
 
-      // Local storage fallback for guests or offline
+      if (!savedResult && token) {
+        throw new Error('The address was not saved to the database. Please try again.')
+      }
+
+      // Guests can keep an address locally until they sign in.
       if (!savedResult) {
         savedResult = {
           id: editingAddressId || `addr_${Date.now()}`,
