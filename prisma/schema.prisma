@@ -24,6 +24,7 @@ model User {
   customer_addresses CustomerAddress[]
   driver_incentives  DriverIncentive[]
   driver_payouts     DriverPayout[]
+  driver_push_tokens DriverPushToken[]
   driver_upi         DriverUpiAccount[]
   orders             Order[]
   owned_restaurants  Restaurant[]
@@ -370,7 +371,20 @@ model DriverIncentive {
   @@map("driver_incentives")
 }
 
+model DriverPushToken {
+  id           String   @id @default(cuid())
+  driver_id    String
+  token        String   @unique
+  platform     String
+  device_id    String?
+  is_active    Boolean  @default(true)
+  last_seen_at DateTime @default(now()) @db.Timestamptz(6)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  driver       User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
+  @@index([driver_id, is_active])
+  @@map("driver_push_tokens")
+}
 
 model PickerMetric {
   id                   String     @id

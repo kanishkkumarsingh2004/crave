@@ -1,5 +1,9 @@
 pmOnFail: ignore
 
+packages:
+  - driver_app
+  - admin_app
+
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
@@ -23,6 +27,7 @@ allowBuilds:
   core-js: false
   esbuild: true
   prisma: true
+  sharp: true
   unrs-resolver: true
   workerd: true
 

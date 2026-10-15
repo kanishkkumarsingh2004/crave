@@ -5,6 +5,12 @@ import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { calculateHaversineDistanceKm } from '@/lib/utils'
 import CustomAlertModal from '@/components/CustomAlertModal'
+import {
+  getDriverLocationPermission,
+  requestCurrentDriverPosition,
+  subscribeToDriverPosition,
+  type DriverPosition,
+} from '@/lib/native-driver'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 // Default coordinates for fallback (Koramangala, Bengaluru)
@@ -461,12 +467,24 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
-  // Query Browser Geolocation Permissions API
+  // Query native permission first, then fall back to the browser Permissions API.
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'permissions' in navigator) {
+    let cancelled = false
+
+    const checkPermission = async () => {
+      const nativePermission = await getDriverLocationPermission()
+      if (cancelled) return
+      if (nativePermission !== 'unknown') {
+        setGpsPermissionState(nativePermission)
+        if (nativePermission === 'denied') setGpsStatus('denied')
+        return
+      }
+
+      if (typeof window === 'undefined' || !('permissions' in navigator)) return
       navigator.permissions
         .query({ name: 'geolocation' })
         .then((result) => {
+          if (cancelled) return
           setGpsPermissionState(result.state as any)
           if (result.state === 'denied') {
             setGpsStatus('denied')
@@ -481,6 +499,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch(() => {})
+    }
+
+    void checkPermission()
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -568,85 +591,108 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
   // Continuous Driver Mobile Device GPS Location Watcher
   useEffect(() => {
-    if (typeof window === 'undefined' || !('geolocation' in navigator) || !isOnline) {
-      return
-    }
+    if (typeof window === 'undefined' || !isOnline) return
 
     setGpsStatus('acquiring')
 
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const lat = parseFloat(position.coords.latitude.toFixed(6))
-        const lng = parseFloat(position.coords.longitude.toFixed(6))
-        setDriverGpsCoords([lat, lng])
-        setGpsAccuracy(Math.round(position.coords.accuracy))
-        setGpsStatus('connected')
-        setGpsPermissionState('granted')
-        setLastGpsUpdate(
-          new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        )
+    let cancelled = false
+    let stopWatching: (() => void) | null = null
 
-        // Broadcast driver's actual mobile location to system and customer track map
-        const activeDriverId = user?.id
-        if (!activeDriverId) return
-        publishLiveEvent('driver_location', {
+    const onPosition = (position: DriverPosition) => {
+      if (cancelled) return
+      const lat = parseFloat(position.coords.latitude.toFixed(6))
+      const lng = parseFloat(position.coords.longitude.toFixed(6))
+      setDriverGpsCoords([lat, lng])
+      setGpsAccuracy(Math.round(position.coords.accuracy))
+      setGpsStatus('connected')
+      setGpsPermissionState('granted')
+      setLastGpsUpdate(
+        new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      )
+
+      const activeDriverId = user?.id
+      if (!activeDriverId) return
+      publishLiveEvent('driver_location', {
+        driverId: activeDriverId,
+        orderId: activeTask?.id || undefined,
+        lat,
+        lng,
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      })
+      fetch('/api/driver/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           driverId: activeDriverId,
           orderId: activeTask?.id || undefined,
           lat,
           lng,
           status: isOnline ? 'ONLINE' : 'OFFLINE',
-        })
-        fetch('/api/driver/location', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        }),
+      }).catch(() => {})
+
+      if (workerRef.current) {
+        workerRef.current.postMessage({
+          type: 'EVENT_GPS_UPDATE',
+          payload: {
             driverId: activeDriverId,
             orderId: activeTask?.id || undefined,
             lat,
             lng,
-            status: isOnline ? 'ONLINE' : 'OFFLINE',
-          }),
-        }).catch(() => {})
+            accuracy: position.coords.accuracy,
+            speed: position.coords.speed,
+            heading: position.coords.heading,
+            isOnline,
+          },
+        })
+      }
+    }
 
-        // Relay live position event to dedicated location stream Web Worker
-        if (workerRef.current) {
-          workerRef.current.postMessage({
-            type: 'EVENT_GPS_UPDATE',
-            payload: {
-              driverId: activeDriverId,
-              orderId: activeTask?.id || undefined,
-              lat,
-              lng,
-              accuracy: position.coords.accuracy,
-              speed: position.coords.speed,
-              heading: position.coords.heading,
-              isOnline,
-            },
-          })
-        }
-      },
-      (err) => {
-        console.warn('Driver mobile GPS watch warning:', err)
-        if (err.code === err.PERMISSION_DENIED) {
-          setGpsStatus('denied')
-          setGpsPermissionState('denied')
-        } else {
-          setGpsStatus('error')
-        }
-      },
-      {
+    const onError = (error: GeolocationPositionError | Error) => {
+      if (cancelled) return
+      console.warn('Driver mobile GPS watch warning:', error)
+      const denied =
+        ('code' in error && error.code === 1) || error.message.toLowerCase().includes('denied')
+      if (denied) {
+        setGpsStatus('denied')
+        setGpsPermissionState('denied')
+      } else {
+        setGpsStatus('error')
+      }
+    }
+
+    const startWatching = async () => {
+      const nativeCleanup = await subscribeToDriverPosition(onPosition, onError)
+      if (cancelled) {
+        nativeCleanup?.()
+        return
+      }
+      if (nativeCleanup) {
+        stopWatching = nativeCleanup
+        return
+      }
+      if (!('geolocation' in navigator)) {
+        onError(new Error('Geolocation is unavailable on this device'))
+        return
+      }
+
+      const browserWatchId = navigator.geolocation.watchPosition(onPosition, onError, {
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 2000,
-      }
-    )
+      })
+      stopWatching = () => navigator.geolocation.clearWatch(browserWatchId)
+    }
+
+    void startWatching()
 
     return () => {
-      navigator.geolocation.clearWatch(watchId)
+      cancelled = true
+      stopWatching?.()
     }
   }, [isOnline, user?.id, activeTask?.id])
 
@@ -674,8 +720,74 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  function requestMobileGps() {
-    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+  async function requestMobileGps() {
+    if (typeof window === 'undefined') return
+
+    const onSuccess = (position: DriverPosition) => {
+      const lat = parseFloat(position.coords.latitude.toFixed(6))
+      const lng = parseFloat(position.coords.longitude.toFixed(6))
+      setDriverGpsCoords([lat, lng])
+      setGpsAccuracy(Math.round(position.coords.accuracy))
+      setGpsStatus('connected')
+      setGpsPermissionState('granted')
+      setLastGpsUpdate(
+        new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      )
+
+      const activeDriverId = user?.id
+      if (!activeDriverId) return
+      publishLiveEvent('driver_location', {
+        driverId: activeDriverId,
+        orderId: activeTask?.id || undefined,
+        lat,
+        lng,
+        status: 'ONLINE',
+      })
+      fetch('/api/driver/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: activeDriverId,
+          orderId: activeTask?.id || undefined,
+          lat,
+          lng,
+          status: 'ONLINE',
+        }),
+      }).catch(() => {})
+    }
+
+    const onError = (error: GeolocationPositionError | Error) => {
+      const denied =
+        ('code' in error && error.code === 1) || error.message.toLowerCase().includes('denied')
+      if (denied) {
+        setGpsStatus('denied')
+        setGpsPermissionState('denied')
+        showCustomAlert({
+          title: 'GPS Permission Access Blocked',
+          message:
+            'Location permission was denied. Open the Crave Driver app settings and allow precise location so orders can be dispatched to your cockpit.',
+          variant: 'error',
+        })
+      } else {
+        setGpsStatus('error')
+        showCustomAlert({
+          title: 'GPS Position Unavailable',
+          message:
+            'Unable to acquire high accuracy location. Please ensure device location / GPS services are enabled on your device.',
+          variant: 'warning',
+        })
+      }
+    }
+
+    setGpsStatus('acquiring')
+    const handledNatively = await requestCurrentDriverPosition(onSuccess, onError)
+    if (handledNatively) return
+
+    if (!('geolocation' in navigator)) {
       showCustomAlert({
         title: 'Geolocation Unsupported',
         message: 'Geolocation is not supported on this browser or mobile device.',
@@ -683,66 +795,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       })
       return
     }
-    setGpsStatus('acquiring')
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = parseFloat(position.coords.latitude.toFixed(6))
-        const lng = parseFloat(position.coords.longitude.toFixed(6))
-        setDriverGpsCoords([lat, lng])
-        setGpsAccuracy(Math.round(position.coords.accuracy))
-        setGpsStatus('connected')
-        setGpsPermissionState('granted')
-        setLastGpsUpdate(
-          new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        )
-
-        const activeDriverId = user?.id
-        if (!activeDriverId) return
-        publishLiveEvent('driver_location', {
-          driverId: activeDriverId,
-          orderId: activeTask?.id || undefined,
-          lat,
-          lng,
-          status: 'ONLINE',
-        })
-        fetch('/api/driver/location', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            driverId: activeDriverId,
-            orderId: activeTask?.id || undefined,
-            lat,
-            lng,
-            status: 'ONLINE',
-          }),
-        }).catch(() => {})
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setGpsStatus('denied')
-          setGpsPermissionState('denied')
-          showCustomAlert({
-            title: 'GPS Permission Access Blocked',
-            message:
-              'Location permission was denied. Please tap the lock icon next to the browser URL to allow location permissions so orders can be dispatched to your cockpit.',
-            variant: 'error',
-          })
-        } else {
-          setGpsStatus('error')
-          showCustomAlert({
-            title: 'GPS Position Unavailable',
-            message:
-              'Unable to acquire high accuracy location. Please ensure device location / GPS services are enabled on your device.',
-            variant: 'warning',
-          })
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    })
   }
 
   async function triggerSimulatedOffer() {

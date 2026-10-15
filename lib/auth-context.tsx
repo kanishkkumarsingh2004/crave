@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { unregisterNativePushToken } from '@/lib/native-driver'
 
 export type UserRole =
   | 'user'
@@ -280,6 +281,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const activeToken =
         token || (typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null)
+
+      await unregisterNativePushToken(activeToken)
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('crave_user')

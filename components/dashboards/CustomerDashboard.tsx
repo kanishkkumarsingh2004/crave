@@ -1908,7 +1908,7 @@ export default function CustomerDashboard({
           headerVisible ? 'translate-y-0' : '-translate-y-full lg:translate-y-0'
         }`}
       >
-        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-1.5 sm:gap-4">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-1.5 sm:gap-4">
           {/* Left Block: Logo */}
           <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
             <Link
@@ -2257,29 +2257,29 @@ export default function CustomerDashboard({
         </div>
       </aside>
 
-      <div className="mx-auto max-w-[1240px] px-3.5 pt-4 sm:pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px] px-3.5 pt-4 sm:px-6 sm:pt-6 lg:px-8 2xl:px-10">
         {activeTab === 'explore' && (
           <div className="flex flex-col gap-6 sm:gap-8">
             {/* craveXP 10-Min Dark Store Hero Banner (Clean & Aesthetic with Vector Illustration) */}
             <div
               onClick={() => router.push('/user/cravexp')}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-5 sm:p-8 lg:p-9 text-white shadow-2xl border border-white/[0.12] hover:border-[#d9f447]/40 flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 group cursor-pointer transition-all duration-300"
+              className="group relative grid cursor-pointer grid-cols-1 items-center gap-6 overflow-hidden rounded-3xl border border-white/[0.12] bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-5 text-white shadow-2xl transition-all duration-300 hover:border-[#d9f447]/40 sm:p-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] lg:min-h-[280px] lg:gap-10 lg:p-10 xl:grid-cols-[minmax(0,1fr)_minmax(340px,40%)] 2xl:min-h-[300px] 2xl:px-12"
             >
               {/* Luxury Ambient Lighting Glows */}
               <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/18 transition duration-700" />
               <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
               {/* Left Content Column */}
-              <div className="relative z-10 flex-1 w-full max-w-xl">
+              <div className="relative z-10 min-w-0 w-full max-w-[680px]">
                 {/* Branding Header Bar */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3">
                   <CraveLogo variant="cravexp" size="lg" theme="light" />
                 </div>
 
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
+                <h2 className="text-xl font-black leading-tight tracking-tight text-white sm:text-2xl lg:text-3xl xl:text-4xl">
                   Ultra-Fast Grocery &amp; Daily Essentials
                 </h2>
-                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-300 font-normal leading-relaxed">
+                <p className="mt-1.5 max-w-2xl text-xs font-normal leading-relaxed text-gray-300 sm:mt-2 sm:text-sm lg:text-base">
                   Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks
                   delivered to your doorstep in 10 minutes.
                 </p>
@@ -2298,8 +2298,8 @@ export default function CustomerDashboard({
               </div>
 
               {/* Right Column: Custom Express Delivery Illustration */}
-              <div className="relative z-10 w-full sm:w-[260px] md:w-[280px] lg:w-[320px] shrink-0 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-500">
-                <CraveXPDeliveryIllustration className="w-full max-w-[240px] sm:max-w-[280px] h-auto max-h-[150px] sm:max-h-[175px]" />
+              <div className="relative z-10 flex min-w-0 w-full items-center justify-center transition-transform duration-500 group-hover:scale-[1.03]">
+                <CraveXPDeliveryIllustration className="h-auto w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[380px] xl:max-w-[430px]" />
               </div>
             </div>
 
