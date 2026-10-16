@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function UserCraveXPPage() {
-  const { user, role, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {

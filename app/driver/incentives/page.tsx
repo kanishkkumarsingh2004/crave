@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { Award, Clock3, Flame, ShieldAlert, Sparkles, Target, Zap } from 'lucide-react'
+import { Clock3, Flame, Target, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface IncentiveItem {

@@ -1,37 +1,37 @@
-import { findOrderById, listOrders, updateOrder, dispatchPendingOutboxEvents } from '@/lib/dal'
-import { updatePaymentReviewStatus, getActivePaymentConfig } from '@/lib/dal/payments'
-import { prisma } from '@/lib/prisma'
-import { findRestaurantById } from '@/lib/dal/restaurants'
-import { findMenuItemsByIds, findMenuItemById } from '@/lib/dal/menu-items'
+import {
+  AuthError,
+  getAuthActor,
+  handleAuthError,
+  requireAuth,
+  requireRole,
+} from '@/lib/auth-helpers'
+import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
+import { dispatchPendingOutboxEvents, findOrderById, listOrders, updateOrder } from '@/lib/dal'
 import { validateAndApplyCoupon } from '@/lib/dal/coupons'
-import { withTiming } from '@/lib/instrumentation'
-import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
+import { findMenuItemById, findMenuItemsByIds } from '@/lib/dal/menu-items'
+import { getActivePaymentConfig, updatePaymentReviewStatus } from '@/lib/dal/payments'
+import { findRestaurantById } from '@/lib/dal/restaurants'
+import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
+import {
+  processPaymentRejectionTx,
+  processPaymentVerificationTx,
+} from '@/lib/finance/payment-service'
 import {
   calculateOrderPrice,
   tolegacyCalculatorResult,
   type OrderPriceInput,
 } from '@/lib/finance/pricing-engine'
 import type { PriceTaxMode } from '@/lib/finance/tax-engine'
-import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
+import { withTiming } from '@/lib/instrumentation'
+import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
+import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
+import { prisma } from '@/lib/prisma'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
-import { NextResponse } from 'next/server'
 import { Prisma, type OrderStatus } from '@prisma/client'
 import crypto from 'crypto'
-import {
-  requireAuth,
-  requireRole,
-  AuthError,
-  handleAuthError,
-  getAuthActor,
-} from '@/lib/auth-helpers'
-import { isValidTransition, getPhaseName, VALID_TRANSITIONS } from '@/lib/order-state-machine'
-import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
-import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
-import {
-  processPaymentVerificationTx,
-  processPaymentRejectionTx,
-} from '@/lib/finance/payment-service'
+import { NextResponse } from 'next/server'
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   const dbConfig: any = await getActivePaymentConfig()
@@ -101,7 +101,7 @@ async function getActiveConfig(): Promise<PaymentConfig> {
 }
 
 export async function GET(request: Request) {
-  return withTiming('GET /api/orders', async (mark) => {
+  return withTiming('GET /api/orders', async () => {
     try {
       const { searchParams } = new URL(request.url)
       const orderId = searchParams.get('orderId')
@@ -300,7 +300,6 @@ export async function POST(request: Request) {
         id,
         customer_name,
         customer_phone,
-        customer_address,
         restaurant_id,
         restaurant_name,
         items,
@@ -1353,7 +1352,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  return withTiming('PATCH /api/orders', async (mark) => {
+  return withTiming('PATCH /api/orders', async () => {
     try {
       const actor = await requireAuth(request)
       const body = await request.json()

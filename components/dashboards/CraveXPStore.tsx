@@ -3,11 +3,17 @@
 import CraveLogo from '@/components/CraveLogo'
 import { useCart } from '@/lib/cart-context'
 import {
+  CRAVEXP_DARK_STORE_ID,
+  CRAVEXP_DARK_STORE_INFO,
+  CraveXPGroceryItem,
+  fetchCraveXPGroceryItems,
+} from '@/lib/cravexp-grocery-catalog'
+import { useWebSocket } from '@/lib/websocket'
+import {
   Apple,
   ArrowRight,
   Check,
   CheckCircle2,
-  Clock,
   Coffee,
   Cookie,
   Flame,
@@ -31,13 +37,6 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  CRAVEXP_DARK_STORE_ID,
-  CRAVEXP_DARK_STORE_INFO,
-  fetchCraveXPGroceryItems,
-  CraveXPGroceryItem,
-} from '@/lib/cravexp-grocery-catalog'
-import { useWebSocket } from '@/lib/websocket'
 
 export type GroceryItem = CraveXPGroceryItem
 

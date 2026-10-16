@@ -11,7 +11,6 @@ interface LiveDriverMapProps {
   restaurantName?: string
   customerLat?: number
   customerLng?: number
-  customerAddress?: string
   driverLat?: number | null
   driverLng?: number | null
   driverName?: string | null
@@ -25,7 +24,6 @@ export default function LiveDriverMap({
   restaurantName = 'Crave Kitchen Store',
   customerLat = 12.679898,
   customerLng = 77.469493,
-  customerAddress = 'Bengaluru',
   driverLat = null,
   driverLng = null,
   driverName = null,
@@ -33,7 +31,6 @@ export default function LiveDriverMap({
   isStale = false,
 }: LiveDriverMapProps) {
   const [routePoints, setRoutePoints] = useState<[number, number][]>([])
-  const [routeIndex, setRouteIndex] = useState<number>(0)
   const [driverPos, setDriverPos] = useState<[number, number]>([restaurantLng, restaurantLat])
   const [headingAngle, setHeadingAngle] = useState<number>(45)
   const [distanceText, setDistanceText] = useState<string>('Calculating road route...')

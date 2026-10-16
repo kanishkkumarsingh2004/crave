@@ -1,17 +1,15 @@
 'use client'
 
 import {
-  Bike,
+  calculateOrderPriceSnapshot,
+  ImmutablePriceSnapshot,
+  PriceTaxMode,
+} from '@/lib/commercial-engine'
+import {
   Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Coins,
-  Download,
   FileText,
   Loader2,
   MapPin,
-  Percent,
   Phone,
   Printer,
   ShieldCheck,
@@ -21,11 +19,6 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import {
-  calculateOrderPriceSnapshot,
-  ImmutablePriceSnapshot,
-  PriceTaxMode,
-} from '@/lib/commercial-engine'
 
 export interface InvoiceOrderData {
   id: string
@@ -72,9 +65,7 @@ interface InvoiceModalProps {
 export default function InvoiceModal({ order, onClose, showVendorTab = false }: InvoiceModalProps) {
   const [dbData, setDbData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'tax_invoice' | 'commission_invoice'>('tax_invoice')
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [gstRatePercent, setGstRatePercent] = useState<number | null>(null)
 
   useEffect(() => {
@@ -82,7 +73,6 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
 
     let isMounted = true
     setLoading(true)
-    setError('')
 
     const cleanId = order.id.replace('#', '')
     fetch(`/api/orders?orderId=${encodeURIComponent(cleanId)}`)
@@ -96,7 +86,6 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
       .catch((err) => {
         if (isMounted) {
           console.error('Invoice DB fetch error:', err)
-          setError('Could not fetch latest live DB record; displaying fallback order summary.')
         }
       })
       .finally(() => {
@@ -186,19 +175,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
     'Indiranagar 100ft Rd, Bengaluru, Karnataka'
   const customerState = 'Karnataka'
 
-  const driverName = dbData?.driver_name || order.driverName || 'Verified Rider Partner'
-  const driverPhone = dbData?.driver_phone
-
-  const orderStatus = dbData?.status || order.status || 'delivered'
-  const paymentStatus = dbData?.payment_status || 'verified'
-  const paymentMethod = dbData?.payment_method || order.paymentMethod || 'UPI Online'
   const couponCode = dbData?.coupon_code || order.couponCode
-  const deliveryOtp = dbData?.delivery_otp || order.otp
-  const utrRef =
-    dbData?.payment_review?.utr_number ||
-    dbData?.utr_number ||
-    order.utrRef ||
-    `UTR${String(order.id).slice(0, 8).toUpperCase()}`
 
   const discountAmount =
     storedBreakdown?.discount_amount != null
@@ -283,48 +260,6 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print()
-    }
-  }
-
-  const exportPdfInvoice = async () => {
-    if (typeof window === 'undefined') return
-    setDownloadingPdf(true)
-    try {
-      const element = document.getElementById('printable-invoice-modal-content')
-      if (!element) {
-        window.print()
-        return
-      }
-
-      if (!(window as any).html2pdf) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script')
-          script.src =
-            'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
-          script.onload = () => resolve()
-          script.onerror = () => reject(new Error('Failed to load html2pdf'))
-          document.head.appendChild(script)
-        })
-      }
-
-      const html2pdf = (window as any).html2pdf
-      if (html2pdf) {
-        const opt = {
-          margin: [8, 8, 8, 8],
-          filename: `Invoice_${order.id.replace('#', '')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        }
-        await html2pdf().set(opt).from(element).save()
-      } else {
-        window.print()
-      }
-    } catch (e) {
-      console.warn('HTML to PDF download failed, falling back to window.print()', e)
-      window.print()
-    } finally {
-      setDownloadingPdf(false)
     }
   }
 

@@ -13,7 +13,6 @@ import {
   Palette,
   RotateCcw,
   Save,
-  ShieldCheck,
   Truck,
   Volume2,
 } from 'lucide-react'

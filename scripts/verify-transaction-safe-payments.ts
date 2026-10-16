@@ -10,14 +10,13 @@
  */
 
 import 'dotenv/config'
-import { prisma } from '../lib/prisma'
-import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '../lib/idempotency'
 import {
   processPaymentVerificationTx,
-  processPaymentRejectionTx,
   processRefundTx,
   reconcilePendingOrders,
 } from '../lib/finance/payment-service'
+import { acquireIdempotency, completeIdempotency } from '../lib/idempotency'
+import { prisma } from '../lib/prisma'
 
 async function runVerification() {
   console.log('🧪 Starting Transaction-Safe Order & Payment Processing Verification...\n')

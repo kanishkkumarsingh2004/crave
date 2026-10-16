@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface CraveLogoProps {
   className?: string
   variant?: 'full' | 'small' | 'cravexp' // 'full' = crave. | 'small' = c. | 'cravexp' = craveXP.

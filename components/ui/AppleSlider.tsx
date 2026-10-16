@@ -1,6 +1,6 @@
 'use client'
 
-import { GripVertical, IndianRupee, Navigation, Percent } from 'lucide-react'
+import { IndianRupee, Navigation, Percent } from 'lucide-react'
 import React, { useId } from 'react'
 
 export interface AppleSliderProps {

@@ -313,7 +313,7 @@ export default function VendorSettlementsPage() {
     const fin = getVendorFinancials(disburseModalVendor)
 
     try {
-      const res = await fetch('/api/admin/settlements', {
+      await fetch('/api/admin/settlements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

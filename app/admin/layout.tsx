@@ -37,7 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [showRoleMenu, setShowRoleMenu] = useState(false)
 
   useEffect(() => {
     let disposed = false

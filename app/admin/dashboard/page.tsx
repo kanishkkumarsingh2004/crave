@@ -6,9 +6,6 @@ import { useAdminStatsUpdates } from '@/lib/websocket'
 import {
   Activity,
   ArrowUpRight,
-  BarChart3,
-  CheckCircle2,
-  Clock,
   CreditCard,
   Database,
   DollarSign,
@@ -26,7 +23,6 @@ import {
   Truck,
   Users,
   Wifi,
-  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
+import { getTestUser, isTestRequest, MOCK_TEST_USER } from '@/lib/test-auth'
 import { cookies } from 'next/headers'
-import { getTestUser, isTestRequest, MOCK_TEST_USER, MOCK_TEST_ADMIN } from '@/lib/test-auth'
+import { NextResponse } from 'next/server'
 
 export type UserRole = JWTPayload['role']
 
@@ -111,7 +111,7 @@ export function handleApiAuthError(error: any): NextResponse | null {
 /**
  * Wrapper for API routes with standardized auth handling
  */
-export function withAuthApi<T extends any[]>(
+export function withAuthApi(
   handler: (actor: JWTPayload, ...args: unknown[]) => Promise<NextResponse>,
   options?: { roles?: string | string[]; requireAdmin?: boolean }
 ) {

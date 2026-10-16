@@ -1,7 +1,7 @@
 'use client'
 
+import { LogIn, UtensilsCrossed } from 'lucide-react'
 import Link from 'next/link'
-import { Lock, LogIn, UtensilsCrossed } from 'lucide-react'
 
 export default function Forbidden() {
   return (

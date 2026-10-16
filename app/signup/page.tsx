@@ -15,7 +15,6 @@ import {
   Mail,
   Phone,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   User,
 } from 'lucide-react'

@@ -1,24 +1,24 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { useState, useEffect, useCallback, useRef } from 'react'
 import AppleToggle from '@/components/ui/AppleToggle'
 import { useWebSocket } from '@/lib/websocket'
 import {
-  MapPin,
-  RefreshCw,
-  Settings,
-  Search,
-  Home,
-  X,
-  Hexagon,
-  Layers,
-  SlidersHorizontal,
-  Compass,
   Building,
-  Navigation,
   ChevronDown,
+  Compass,
+  Hexagon,
+  Home,
+  Layers,
+  MapPin,
+  Navigation,
+  RefreshCw,
+  Search,
+  Settings,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
   ssr: false,
@@ -584,7 +584,6 @@ export default function MapLiveAnalyticsPage() {
           >
             <LocationPickerMap
               showMarker={false}
-              enableH3Grid={h3GridEnabled}
               gridVisible={h3GridEnabled}
               h3Resolution={h3Resolution}
               showH3Heatmap={h3HeatmapEnabled}
@@ -594,7 +593,7 @@ export default function MapLiveAnalyticsPage() {
               className="relative w-full rounded-2xl overflow-hidden border border-gray-300 shadow-inner bg-[#f0f3ec] h-[400px] sm:h-[500px] lg:h-[calc(100vh-250px)] lg:min-h-[550px]"
               initialLat={mapCenter.lat}
               initialLng={mapCenter.lng}
-              onLocationSelect={(lat, lng) => {}}
+              onLocationSelect={() => {}}
             />
           </div>
 

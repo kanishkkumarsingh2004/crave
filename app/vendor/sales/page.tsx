@@ -2,17 +2,7 @@
 
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import {
-  ArrowUpRight,
-  CheckCircle2,
-  Clock3,
-  DollarSign,
-  Landmark,
-  Percent,
-  Search,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, Clock3, DollarSign, Percent, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -48,16 +38,13 @@ interface SettlementSummary {
 }
 
 export default function VendorSalesPage() {
-  const { user, role, isLoading, logout } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [settlementsHistory, setSettlementsHistory] = useState<SettlementRecord[]>([])
   const [summaryData, setSummaryData] = useState<SettlementSummary | null>(null)
-  const [restaurantId, setRestaurantId] = useState<string | null>(null)
   const [commissionRate, setCommissionRate] = useState(0)
-  const [salesError, setSalesError] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (isLoading) return
@@ -84,14 +71,12 @@ export default function VendorSalesPage() {
         const resData = await resResp.json()
         const restaurant = resData.restaurants?.[0]
         if (!restaurant) {
-          setRestaurantId(null)
           setOrders([])
           setSettlementsHistory([])
           setSummaryData(null)
           return
         }
 
-        setRestaurantId(restaurant.id)
         setCommissionRate(Number(restaurant.commission_rate ?? 0))
 
         const [orderResp, settlementResp] = await Promise.all([
@@ -136,7 +121,6 @@ export default function VendorSalesPage() {
         )
       } catch (err) {
         console.error('Failed to load orders for sales:', err)
-        setSalesError('Sales records could not be loaded from the database.')
         setOrders([])
         setSettlementsHistory([])
         setSummaryData(null)
@@ -196,12 +180,6 @@ export default function VendorSalesPage() {
   const remainingSettlementBalance = Math.max(0, totalNetEarnings - totalSettledAmount)
 
   const totalRecordCount = orders.length > 0 ? orders.length : settlementsHistory.length
-
-  const filteredOrders = orders.filter(
-    (o) =>
-      o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (o.customer_name && o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  )
 
   return (
     <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full transition-colors duration-200">

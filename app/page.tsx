@@ -6,29 +6,17 @@ import { CravePagePreloader } from '@/components/ui/ModernPreloader'
 import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
-  Bike,
-  CheckCircle2,
   ChevronRight,
-  Clock,
-  Compass,
-  CreditCard,
   LogOut,
   MapPin,
-  Package,
   Search,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
   Star,
-  Store,
   Tag,
-  TrendingUp,
-  Truck,
   UtensilsCrossed,
   Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ── Featured Kitchen Collections (Zomato/Swiggy Curated Partners) ────────────
 const FEATURED_KITCHENS = [

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import { blacklistToken, blacklistAllUserTokens, decodeToken } from '@/lib/jwt'
+import { blacklistToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 function getIsSecure(request: Request): boolean {
   if (process.env.NODE_ENV !== 'production') return false

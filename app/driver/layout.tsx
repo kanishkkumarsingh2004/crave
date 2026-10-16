@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   DollarSign,
   History,
   LogOut,
@@ -22,7 +21,6 @@ import {
   Radio,
   Settings,
   Target,
-  TrendingUp,
   User,
   Wallet,
   X,
@@ -37,7 +35,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [sosModalOpen, setSosModalOpen] = useState(false)
 
   const {
     isOnline,
@@ -128,9 +125,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   const totalEarningsToday = completedTrips.reduce((acc, t) => acc + t.total, 0)
-  const activeDutyTimeText =
-    completedTrips.length > 0 ? `${(completedTrips.length * 1.2).toFixed(1)} hrs` : '0.0 hrs'
-  const avgPaceText = completedTrips.length > 0 ? '18 mins' : '0 mins'
   const driverInitials = user?.name
     ? user.name
         .split(' ')

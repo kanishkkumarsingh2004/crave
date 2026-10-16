@@ -14,17 +14,16 @@
  * on the Order record before authorising payment.
  */
 
-import { NextResponse } from 'next/server'
-import { getActivePaymentConfig } from '@/lib/dal/payments'
-import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
-import { prisma } from '@/lib/prisma'
+import { getActivePaymentConfig } from '@/lib/dal/payments'
 import {
   calculateOrderPrice,
-  tolegacyCalculatorResult,
-  type OrderPriceInput,
   type CommercialContractInput,
+  type OrderPriceInput,
 } from '@/lib/finance'
+import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
 export const revalidate = 0
 

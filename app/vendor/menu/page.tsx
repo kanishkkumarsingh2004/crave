@@ -145,7 +145,7 @@ const QUICK_IMAGE_PRESETS = [
 ]
 
 export default function VendorMenuPage() {
-  const { user, role, isLoading, logout } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
 

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
-import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { acquireDriverOfferLock } from '@/lib/dispatch/atomic-lock'
+import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
@@ -42,14 +42,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const {
-      pickupLat,
-      pickupLng,
-      serviceType,
-      vehicleType,
-      batchSize = 3,
-      offerTtlSeconds = 15,
-    } = body
+    const { pickupLat, pickupLng, vehicleType, batchSize = 3, offerTtlSeconds = 15 } = body
 
     if (typeof pickupLat !== 'number' || typeof pickupLng !== 'number') {
       return NextResponse.json(

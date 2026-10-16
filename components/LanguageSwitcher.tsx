@@ -17,12 +17,12 @@
  *  2. Persists to DB if the user is logged in (via auth token).
  */
 
-import { SUPPORTED_LANGUAGES } from '@/dictionary'
 import type { SupportedLocale } from '@/dictionary'
+import { SUPPORTED_LANGUAGES } from '@/dictionary'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
 import { Check, ChevronDown, Globe } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // ── Types ──────────────────────────────────────────────────────
 

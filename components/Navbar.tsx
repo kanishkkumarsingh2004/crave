@@ -1,10 +1,10 @@
 'use client'
 
-import CraveLogo from '@/components/CraveLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
+import { cn } from '@/lib/utils'
 import {
   Bike,
   ChevronDown,
@@ -18,16 +18,15 @@ import {
   ShoppingBag,
   ShoppingCart,
   Store,
-  UtensilsCrossed,
   User,
+  UtensilsCrossed,
   X,
   Zap,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useState, useRef } from 'react'
-import { cn } from '@/lib/utils'
+import { usePathname } from 'next/navigation'
+import React, { useEffect, useRef, useState } from 'react'
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
@@ -111,7 +110,6 @@ export default function Navbar() {
   const mobileMenuRef = useRef<HTMLElement>(null)
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const pathname = usePathname()
-  const router = useRouter()
 
   // Auto-hide mobile top navbar on scroll down, show on scroll up
   useEffect(() => {

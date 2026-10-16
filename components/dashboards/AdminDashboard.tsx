@@ -1,9 +1,8 @@
 'use client'
 
-import AdminAnalyticsPage from '@/app/admin/analytics/page'
-import AdminSettingsPage from '@/app/admin/settings/page'
-import { useAuth, UserRole } from '@/lib/auth-context'
+import { UserRole } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
+import { useAdminStatsUpdates } from '@/lib/websocket'
 import {
   CheckCircle2,
   Crown,
@@ -12,7 +11,6 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  Sparkles,
   Store,
   Tag,
   Trash2,
@@ -21,10 +19,8 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useLanguage } from '@/lib/language-context'
-import { useAdminStatsUpdates } from '@/lib/websocket'
-import { FormEvent, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { FormEvent, useEffect, useState } from 'react'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { ssr: false })
 
@@ -91,8 +87,6 @@ interface VendorStore {
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth()
-  const { t } = useLanguage()
   const [activeTab, setActiveTabState] = useState<
     'overview' | 'analytics' | 'users' | 'menu-pricing' | 'payments' | 'system' | 'settings'
   >('users')
@@ -136,8 +130,8 @@ export default function AdminDashboard() {
   // Data States
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
   const [vendorsList, setVendorsList] = useState<VendorStore[]>([])
-  const [accountsLoading, setAccountsLoading] = useState(true)
-  const [payments, setPayments] = useState<PaymentReference[]>([])
+  const [, setAccountsLoading] = useState(true)
+  const [, setPayments] = useState<PaymentReference[]>([])
 
   // Vendor Onboarding Modal State
   const [isAddVendorOpen, setIsAddVendorOpen] = useState(false)

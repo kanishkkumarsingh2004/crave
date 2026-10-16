@@ -1,11 +1,11 @@
+import { AdminStatsCache } from '@/lib/cache'
+import { countOrders, listOrders } from '@/lib/dal/orders'
 import { listVendorSettlements } from '@/lib/dal/payments'
 import { listRestaurants } from '@/lib/dal/restaurants'
 import { listUsersByRole } from '@/lib/dal/users'
-import { countOrders, listOrders } from '@/lib/dal/orders'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { AdminStatsCache } from '@/lib/cache'
 
 export async function GET(request: Request) {
   try {
@@ -55,20 +55,6 @@ export async function GET(request: Request) {
       (sum: number, row: any) => sum + Number(row.total_amount ?? 0),
       0
     )
-
-    const stats = {
-      weeklyGross,
-      weeklyRevenue: weeklyOrderRevenue,
-      orderCount: totalCount,
-      totalCommission,
-      netVendorPay,
-      customerCount: customers.length,
-      vendorCount: vendors.length,
-      driverCount: drivers.length,
-      totalUsers: customers.length + vendors.length + drivers.length,
-      restaurantCount: restaurants.length,
-      liveDevices: Math.max(1, customers.length + vendors.length + drivers.length),
-    }
 
     // Cache the stats for the day
     await AdminStatsCache.setDailyStats(new Date().toISOString().split('T')[0], {

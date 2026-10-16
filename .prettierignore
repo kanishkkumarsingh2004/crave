@@ -4,5 +4,7 @@ node_modules
 dist
 build
 public
+**/android/app/src/main/assets/*.json
+**/ios/App/App/*.json
 pnpm-lock.yaml
 *.tsbuildinfo

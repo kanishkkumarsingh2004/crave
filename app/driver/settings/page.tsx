@@ -1,13 +1,11 @@
 'use client'
 
 import ThemeSelector from '@/components/ThemeSelector'
-import { useAuth } from '@/lib/auth-context'
 import { useDriver } from '@/lib/driver-context'
 import { Palette, Plus, QrCode, ShieldCheck, Trash2 } from 'lucide-react'
 import React, { useState } from 'react'
 
 export default function DriverSettingsPage() {
-  const { user } = useAuth()
   const { savedUpiList, handleAddUpiId, setPrimaryUpi, deleteUpiId, showCustomAlert } = useDriver()
 
   const [newUpiVpa, setNewUpiVpa] = useState('')

@@ -1,8 +1,8 @@
 'use client'
 
+import AppleToggle from '@/components/ui/AppleToggle'
 import { Coupon, fetchCoupons } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
-import AppleToggle from '@/components/ui/AppleToggle'
 import {
   Building2,
   Check,
@@ -110,7 +110,6 @@ export default function AdminCouponsPage() {
     const rIds = selectedRestaurantIds
     const primaryRestId = rIds.length === 1 ? rIds[0] : rIds.length > 0 ? rIds[0] : null
 
-    let updated: Coupon[]
     if (editingCoupon) {
       const dbRecord = {
         code: formattedCode,
@@ -140,24 +139,6 @@ export default function AdminCouponsPage() {
         return
       }
 
-      updated = coupons.map((c) =>
-        c.id === editingCoupon.id
-          ? {
-              ...c,
-              code: formattedCode,
-              description,
-              discountType,
-              discountValue: dVal,
-              minOrderAmount: mOrder,
-              maxDiscount: mMax,
-              expiryDate,
-              usageLimit: uLimit,
-              isActive,
-              restaurantId: primaryRestId || undefined,
-              restaurantIds: rIds,
-            }
-          : c
-      )
       showToast(`Coupon '${formattedCode}' updated successfully!`)
     } else {
       const newId = crypto.randomUUID()
@@ -195,24 +176,6 @@ export default function AdminCouponsPage() {
         return
       }
 
-      const newCoupon: Coupon = {
-        id: newId,
-        code: formattedCode,
-        description: descStr,
-        discountType,
-        discountValue: dVal,
-        minOrderAmount: mOrder,
-        maxDiscount: mMax,
-        expiryDate,
-        usageLimit: uLimit,
-        usedCount: 0,
-        isActive: true,
-        restaurantId: primaryRestId || undefined,
-        restaurantIds: rIds,
-        fundingSource,
-        restaurantContributionPct,
-      }
-      updated = [newCoupon, ...coupons]
       showToast(`New Coupon '${formattedCode}' created and published!`)
     }
 

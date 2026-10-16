@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Download, Share, PlusSquare, X, Smartphone, CheckCircle } from 'lucide-react'
-import Image from 'next/image'
+import { CheckCircle, Download, PlusSquare, Share, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>

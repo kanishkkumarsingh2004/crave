@@ -1,15 +1,14 @@
-import {
-  createToken,
-  verifyToken,
-  blacklistToken,
-  blacklistAllUserTokens,
-  unblacklistUser,
-  JWTPayload,
-} from '../lib/jwt'
 import { NextRequest } from 'next/server'
-import { proxy } from '../proxy'
 import { POST as logoutPost } from '../app/api/auth/logout/route'
-import { GET as meGet } from '../app/api/auth/me/route'
+import {
+  blacklistAllUserTokens,
+  blacklistToken,
+  createToken,
+  JWTPayload,
+  unblacklistUser,
+  verifyToken,
+} from '../lib/jwt'
+import { proxy } from '../proxy'
 
 async function runAuthVerification() {
   console.log('🧪 Starting Auth & Session Lifecycle Verification Suite...\n')

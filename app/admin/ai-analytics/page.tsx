@@ -1,5 +1,6 @@
 'use client'
 
+import AppleProgressBar from '@/components/ui/AppleProgressBar'
 import { useToast } from '@/lib/toast-context'
 import {
   ArrowRight,
@@ -7,7 +8,6 @@ import {
   Brain,
   Check,
   Cpu,
-  Flame,
   LineChart,
   MapPin,
   Sparkles,
@@ -15,7 +15,6 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useState } from 'react'
-import AppleProgressBar from '@/components/ui/AppleProgressBar'
 
 export default function AIAnalyticsPage() {
   const [email, setEmail] = useState('')

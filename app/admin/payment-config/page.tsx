@@ -1,5 +1,9 @@
 'use client'
 
+import AppleSlider from '@/components/ui/AppleSlider'
+import AppleToggle from '@/components/ui/AppleToggle'
+import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
+import { loadPaymentConfig, PaymentConfig, savePaymentConfig } from '@/lib/payment-config'
 import {
   CheckCircle2,
   CloudRain,
@@ -13,10 +17,6 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
-import AppleToggle from '@/components/ui/AppleToggle'
-import AppleSlider from '@/components/ui/AppleSlider'
-import { loadPaymentConfig, savePaymentConfig, PaymentConfig } from '@/lib/payment-config'
-import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 
 function handleNumInput(val: string): number | '' {
   if (val === '') return ''
@@ -215,8 +215,6 @@ export default function AdminPaymentConfigPage() {
       setSavedSuccess(false)
     }, 3000)
   }
-
-  const sampleUpiLink = `upi://pay?pa=${encodeURIComponent(upiVpa)}&pn=${encodeURIComponent(merchantName)}&mc=${mccCode}&am=${playgroundCalc.customerTotal}&cu=INR&tn=Order%20CRV-9021`
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl pb-16">

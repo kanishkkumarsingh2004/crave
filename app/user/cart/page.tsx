@@ -1,10 +1,16 @@
 'use client'
 
+import type { AddressItem } from '@/components/AddressModal'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
+import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
+import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-location'
+import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
+import { calculateCheckoutPricing, calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { getLocalPaymentConfig, PaymentConfig } from '@/lib/payment-config'
+import { checkDeliveryServiceability } from '@/lib/serviceability'
 import { useToast } from '@/lib/toast-context'
 import {
   AlertTriangle,
@@ -14,9 +20,7 @@ import {
   Building,
   Check,
   CheckCircle2,
-  ChevronRight,
   Copy,
-  ExternalLink,
   Home,
   LocateFixed,
   Lock,
@@ -34,16 +38,10 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
-import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-location'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
-import dynamic from 'next/dynamic'
-import type { AddressItem } from '@/components/AddressModal'
-import { checkDeliveryServiceability } from '@/lib/serviceability'
-import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,

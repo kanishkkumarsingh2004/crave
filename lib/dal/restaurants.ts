@@ -1,6 +1,6 @@
+import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/cache'
 import { prisma } from '@/lib/prisma'
 import type { Restaurant } from '@prisma/client'
-import { cacheGet, cacheSet, cacheDel, CacheKeys, CacheTTL } from '@/lib/cache'
 
 // ─── Listing fields ───────────────────────────────────────
 // Only the columns required by the restaurant discovery / store-front UI.
@@ -23,42 +23,6 @@ const RESTAURANT_LISTING_SELECT = {
   phone: true,
   fssai_license: true,
   owner_id: true,
-} as const
-
-// All scalar columns needed for order pricing / vendor logic.
-const RESTAURANT_DETAIL_SELECT = {
-  id: true,
-  name: true,
-  cuisine: true,
-  rating: true,
-  rating_count: true,
-  delivery_minutes: true,
-  image: true,
-  is_open: true,
-  is_dark_store: true,
-  address: true,
-  latitude: true,
-  longitude: true,
-  phone: true,
-  owner_id: true,
-  commercial_model: true,
-  commission_rate: true,
-  markup_rate: true,
-  fixed_commission: true,
-  fixed_markup: true,
-  payment_model: true,
-  bank_account_name: true,
-  bank_name: true,
-  bank_account_number: true,
-  bank_ifsc: true,
-  payout_vpa: true,
-  fssai_license: true,
-  gstin: true,
-  gst_status: true,
-  supplier_state: true,
-  price_tax_mode: true,
-  contract_number: true,
-  gst_rate_percent: true,
 } as const
 
 // ─── Queries ─────────────────────────────────────────────

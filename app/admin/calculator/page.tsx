@@ -1,31 +1,25 @@
 'use client'
 
+import AppleSlider from '@/components/ui/AppleSlider'
+import { calculateFullBreakdown, CalculatorInput, FullCalculatorResult } from '@/lib/calculator'
 import {
-  ArrowDownRight,
-  ArrowUpRight,
   Calculator,
   CheckCircle2,
   CloudRain,
   Coins,
   Database,
   DollarSign,
-  Flame,
-  HelpCircle,
   Layers,
   Moon,
-  Percent,
   RefreshCw,
   Sliders,
   Sparkles,
   Store,
   Tag,
   Truck,
-  UserCheck,
   Zap,
 } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
-import AppleSlider from '@/components/ui/AppleSlider'
-import { calculateFullBreakdown, CalculatorInput, FullCalculatorResult } from '@/lib/calculator'
+import { useEffect, useMemo, useState } from 'react'
 
 interface DbData {
   paymentConfig: any

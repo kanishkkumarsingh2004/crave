@@ -1,20 +1,10 @@
-import { NextResponse } from 'next/server'
-import {
-  isDriverLocked,
-  releaseDriverLock,
-  acquireDriverOfferLock,
-} from '@/lib/dispatch/atomic-lock'
-import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
-import {
-  updateOrder,
-  findOrderById,
-  claimOrderForDriverAtomic,
-  dispatchPendingOutboxEvents,
-} from '@/lib/dal'
+import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
+import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
+import { getDriverLocation, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
-import { getApiActor, requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {

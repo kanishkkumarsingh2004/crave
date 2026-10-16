@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { blacklistAllUserTokens, decodeToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function POST() {
   try {
@@ -8,8 +8,6 @@ export async function POST() {
     const token =
       cookieStore.get('crave_auth_token')?.value || cookieStore.get('drop_auth_token')?.value || ''
 
-    // Get user ID from token if possible
-    let userId: string | null = null
     try {
       const decoded = await decodeToken(token)
       if (decoded?.id) {

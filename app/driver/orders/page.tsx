@@ -1,17 +1,11 @@
 'use client'
 
-import { useDriver, getDriverPayoutDetails } from '@/lib/driver-context'
-import {
-  calculateCheckoutPricing,
-  calculateRoadTravelDistanceKm,
-  fetchOSRMDrivingDistanceKm,
-} from '@/lib/distance-pricing'
+import { calculateRoadTravelDistanceKm, fetchOSRMDrivingDistanceKm } from '@/lib/distance-pricing'
+import { getDriverPayoutDetails, useDriver } from '@/lib/driver-context'
 import {
   ArrowRight,
   Bike,
   CheckCircle2,
-  Clock3,
-  DollarSign,
   KeyRound,
   LayoutGrid,
   Loader2,
@@ -23,7 +17,6 @@ import {
   ShieldCheck,
   Sparkles,
   Table,
-  TrendingUp,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -51,11 +44,9 @@ interface ManagedOrder {
 
 export default function DriverAcceptedOrdersPage() {
   const {
-    isOnline,
     activeTask,
     advanceStep,
     completeDelivery,
-    acceptBroadcastOffer,
     triggerSimulatedOffer,
     setBroadcastOffer,
     setOfferTimer,

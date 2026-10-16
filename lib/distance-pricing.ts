@@ -2,11 +2,11 @@
  * Distance Calculation & Admin-Configured Pricing Engine
  * Computes road travel distance (via OSRM road network routing) and customer checkout billing.
  */
-import { PaymentConfig, DEFAULT_PAYMENT_CONFIG } from './payment-config'
-import { calculateHaversineDistanceKm, calculateEstimatedEtaMinutes } from './utils'
+import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from './payment-config'
+import { calculateHaversineDistanceKm } from './utils'
 
 // Re-export for backward compatibility with tests and other modules
-export { calculateHaversineDistanceKm, calculateEstimatedEtaMinutes } from './utils'
+export { calculateEstimatedEtaMinutes, calculateHaversineDistanceKm } from './utils'
 
 export interface CheckoutPricingBreakdown {
   cartSubtotal: number

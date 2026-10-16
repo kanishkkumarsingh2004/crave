@@ -1,11 +1,10 @@
 'use client'
 
+import { CraveSpinner } from '@/components/ui/ModernPreloader'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { useLanguage } from '@/lib/language-context'
-import { useVendorOrderUpdates, playChimeSound } from '@/lib/websocket'
+import { playChimeSound, useVendorOrderUpdates } from '@/lib/websocket'
 import {
-  ArrowUpRight,
   Bell,
   ChartColumn,
   CheckCircle2,
@@ -15,9 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { CraveSpinner } from '@/components/ui/ModernPreloader'
 
 interface KitchenOrder {
   id: string
@@ -35,13 +32,9 @@ interface KitchenOrder {
 }
 
 export default function VendorDashboard() {
-  const { user, logout } = useAuth()
-  const { t } = useLanguage()
-  const router = useRouter()
-  const pathname = usePathname()
+  const { user } = useAuth()
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>([])
   const [resolvedRestaurantId, setResolvedRestaurantId] = useState<string | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [liveBanner, setLiveBanner] = useState<{
     id: string
     customerName: string

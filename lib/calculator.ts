@@ -1,4 +1,4 @@
-import { PaymentConfig, DEFAULT_PAYMENT_CONFIG } from './payment-config'
+import { DEFAULT_PAYMENT_CONFIG } from './payment-config'
 
 export interface CalculatorInput {
   subtotal: number

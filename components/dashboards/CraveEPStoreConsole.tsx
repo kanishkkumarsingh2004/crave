@@ -22,7 +22,6 @@ import {
   QrCode,
   ScanLine,
   Search,
-  Sparkles,
   Thermometer,
   TrendingUp,
   Zap,
@@ -465,7 +464,6 @@ export default function CraveXPStoreConsole() {
     if (!item) return
     const nextStock = !item.inStock
     const nextCount = nextStock ? Math.max(item.stockCount, 1) : 0
-    const nextStatus = nextStock ? 'ACTIVE' : 'OUT_OF_STOCK'
 
     const response = await fetch('/api/menu-items', {
       method: 'PATCH',
@@ -489,7 +487,6 @@ export default function CraveXPStoreConsole() {
     const item = inventory.find((entry) => entry.id === itemId)
     if (!item) return
     const newCount = Math.max(0, item.stockCount + delta)
-    const nextStatus = newCount > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
 
     const response = await fetch('/api/menu-items', {
       method: 'PATCH',
@@ -532,22 +529,6 @@ export default function CraveXPStoreConsole() {
         newItemMrp && Number(newItemMrp) > Number(newItemPrice)
           ? `${Math.round(((Number(newItemMrp) - Number(newItemPrice)) / Number(newItemMrp)) * 100)}% OFF`
           : undefined,
-    }
-
-    const productRecord = {
-      id: newItem.id,
-      vendorId: restaurantId || 'cmur2n46c000lg1dkpbvcyg83',
-      categoryId: 'cmuq0vdea0008g1u0lgo5z2af',
-      name: newItem.name,
-      description: `${newItem.category} · ${newItem.unit}`,
-      sku: newItem.skuCode,
-      price: newItem.price,
-      comparePrice: newItem.mrp,
-      currency: 'INR',
-      imageUrl: newItem.image || null,
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     }
 
     const response = await fetch('/api/menu-items', {

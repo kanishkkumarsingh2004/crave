@@ -8,8 +8,8 @@ import {
   MarkerTooltip,
   type MapRef,
 } from '@/components/ui/map'
-import { generateH3GridGeoJSON, type TelemetryPin, H3_RESOLUTIONS } from '@/lib/h3-grid'
-import { Bike, Hexagon, Layers, Locate, MapPin, Package, Utensils, X } from 'lucide-react'
+import { generateH3GridGeoJSON, type TelemetryPin } from '@/lib/h3-grid'
+import { Bike, Hexagon, Locate, MapPin, Utensils, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 interface LocationPickerMapProps {
@@ -19,14 +19,10 @@ interface LocationPickerMapProps {
   className?: string
   showMarker?: boolean
   pins?: TelemetryPin[]
-  enableH3Grid?: boolean
   defaultGridVisible?: boolean
   gridVisible?: boolean
-  onGridVisibleChange?: (visible: boolean) => void
   h3Resolution?: number
-  onResolutionChange?: (res: number) => void
   showH3Heatmap?: boolean
-  onHeatmapEnabledChange?: (enabled: boolean) => void
   onPinSelect?: (pin: TelemetryPin) => void
   selectedPinId?: string
 }
@@ -38,14 +34,10 @@ export default function LocationPickerMap({
   className,
   showMarker = true,
   pins = [],
-  enableH3Grid = false,
   defaultGridVisible = false,
   gridVisible: controlledGridVisible,
-  onGridVisibleChange,
   h3Resolution = 7,
-  onResolutionChange,
   showH3Heatmap = true,
-  onHeatmapEnabledChange,
   onPinSelect,
   selectedPinId,
 }: LocationPickerMapProps) {
@@ -58,31 +50,12 @@ export default function LocationPickerMap({
   const [isLocating, setIsLocating] = useState<boolean>(false)
 
   // H3 Grid State (OFF by default or controlled)
-  const [internalGridVisible, setInternalGridVisible] = useState<boolean>(defaultGridVisible)
-  const [internalResolution, setInternalResolution] = useState<number>(h3Resolution)
-  const [internalHeatmap, setInternalHeatmap] = useState<boolean>(showH3Heatmap)
   const [selectedCell, setSelectedCell] = useState<any | null>(null)
 
   const gridVisible =
-    controlledGridVisible !== undefined ? controlledGridVisible : internalGridVisible
-  const activeResolution = h3Resolution !== undefined ? h3Resolution : internalResolution
-  const heatmapEnabled = showH3Heatmap !== undefined ? showH3Heatmap : internalHeatmap
-
-  const handleToggleGrid = (val: boolean) => {
-    setInternalGridVisible(val)
-    onGridVisibleChange?.(val)
-    if (!val) setSelectedCell(null)
-  }
-
-  const handleResolutionChange = (res: number) => {
-    setInternalResolution(res)
-    onResolutionChange?.(res)
-  }
-
-  const handleToggleHeatmap = (val: boolean) => {
-    setInternalHeatmap(val)
-    onHeatmapEnabledChange?.(val)
-  }
+    controlledGridVisible !== undefined ? controlledGridVisible : defaultGridVisible
+  const activeResolution = h3Resolution
+  const heatmapEnabled = showH3Heatmap
 
   // Reverse Geocoding helper via server API
   const fetchReverseGeocode = async (lat: number, lng: number) => {

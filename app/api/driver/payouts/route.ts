@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
 import { createDriverPayout, listDriverPayouts } from '@/lib/dal/payments'
-import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 import crypto from 'crypto'
+import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { amount, vpa, driverId: bodyDriverId } = body
+    const { amount, driverId: bodyDriverId } = body
     const driverId = actor.role === 'admin' ? bodyDriverId || actor.id : actor.id
 
     if (!amount || Number(amount) <= 0) {

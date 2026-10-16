@@ -11,13 +11,12 @@
  * 5. Strict rejection of client-claimed payments — verified only by webhook or authorized reviewer.
  */
 
-import { prisma } from '@/lib/prisma'
-import { broadcast } from '@/lib/ws-server'
 import {
-  type CanonicalPriceResult,
   buildOrderConfirmedJournal,
   buildRefundInitiatedJournal,
+  type CanonicalPriceResult,
 } from '@/lib/finance'
+import { prisma } from '@/lib/prisma'
 import { PaymentStatus, type OrderStatus } from '@prisma/client'
 
 export interface PaymentVerificationInput {
@@ -60,7 +59,6 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     gateway = 'UPI_MANUAL',
     amount,
     actorId = 'SYSTEM_PAYMENT_PROCESSOR',
-    idempotencyKey = `pay_verify_${orderId}_${gatewayPaymentId || Date.now()}`,
     rawPayload,
   } = input
 
@@ -469,7 +467,7 @@ export async function reconcilePendingOrders(staleMinutes = 30) {
 
   for (const order of staleOrders) {
     try {
-      const outcome = await processPaymentRejectionTx({
+      await processPaymentRejectionTx({
         orderId: order.id,
         reason: `Automated reconciliation timeout: No payment received within ${staleMinutes} minutes`,
         actorId: 'RECONCILIATION_WORKER',

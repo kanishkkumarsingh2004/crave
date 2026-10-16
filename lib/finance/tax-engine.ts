@@ -14,8 +14,6 @@
  * This engine is fail-closed: unknown classifications throw rather than assume 0%.
  */
 
-import { Money } from './money'
-
 // ─── GST Component Types ──────────────────────────────────────────────────────
 
 export type TaxMode = 'CGST_SGST' | 'IGST' | 'EXEMPT'

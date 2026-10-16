@@ -4,12 +4,12 @@ import ThemeSelector from '@/components/ThemeSelector'
 import AppleToggle from '@/components/ui/AppleToggle'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
-import { Building2, FileText, Palette, Save, ShieldCheck, Sparkles } from 'lucide-react'
+import { Building2, FileText, Palette, Save, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 
 export default function VendorSettingsPage() {
-  const { user, role, isLoading, logout } = useAuth()
+  const { user, role, isLoading } = useAuth()
   const router = useRouter()
 
   const [toastMsg, setToastMsg] = useState('')
@@ -32,9 +32,9 @@ export default function VendorSettingsPage() {
   const [gstStatus, setGstStatus] = useState('REGISTERED')
   const [supplierState, setSupplierState] = useState('Karnataka')
   const [priceTaxMode, setPriceTaxMode] = useState('TAX_INCLUSIVE')
-  const [commercialModel, setCommercialModel] = useState('commission')
-  const [commissionRate, setCommissionRate] = useState(15)
-  const [markupRate, setMarkupRate] = useState(0)
+  const [, setCommercialModel] = useState('commission')
+  const [, setCommissionRate] = useState(15)
+  const [, setMarkupRate] = useState(0)
 
   useEffect(() => {
     if (isLoading) return

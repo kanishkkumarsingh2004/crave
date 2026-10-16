@@ -10,7 +10,7 @@ export interface ThemeSelectorProps {
 }
 
 export default function ThemeSelector({ className = '', variant = 'cards' }: ThemeSelectorProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   const options: Array<{
     id: Theme

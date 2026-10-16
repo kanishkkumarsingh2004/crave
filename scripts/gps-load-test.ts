@@ -7,12 +7,7 @@
  * Validates: coalescing, update intervals, history buffering, flush performance
  */
 
-import {
-  updateDriverLocation,
-  getCapacityMetrics,
-  GPS_CONFIG,
-  cleanupOldHistory,
-} from '@/lib/dispatch/driver-tracker'
+import { getCapacityMetrics, GPS_CONFIG, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 
 interface LoadTestConfig {
   driverCount: number
@@ -186,4 +181,4 @@ if (require.main === module) {
     })
 }
 
-export { runGpsLoadTest, GPS_CONFIG }
+export { GPS_CONFIG, runGpsLoadTest }

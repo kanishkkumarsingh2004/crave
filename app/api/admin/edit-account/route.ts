@@ -1,11 +1,11 @@
-import { updateUser, findUserById } from '@/lib/dal/users'
 import { updateRestaurant } from '@/lib/dal/restaurants'
+import { findUserById, updateUser } from '@/lib/dal/users'
 import { verifyToken } from '@/lib/jwt'
+import { hashPassword } from '@/lib/password'
+import { prisma } from '@/lib/prisma'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { hashPassword } from '@/lib/password'
-import { broadcast } from '@/lib/ws-server'
-import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -117,21 +117,16 @@ export async function POST(request: Request) {
     // Both user and restaurant updates must succeed or both roll back
     const needsTransaction = Object.keys(userUpdateData).length > 0 && needsRestaurantUpdate
 
-    let userResult: any = null
-    let restaurantResult: any = null
-
     try {
       if (needsTransaction) {
         // Use transaction for atomicity
         await prisma.$transaction(async (tx) => {
           // Update User
           if (Object.keys(userUpdateData).length > 0) {
-            userResult = await tx.user.update({
+            await tx.user.update({
               where: { id },
               data: userUpdateData,
             })
-          } else {
-            userResult = targetUser
           }
 
           // Update Restaurant (if needed)
@@ -160,7 +155,7 @@ export async function POST(request: Request) {
               }
             }
 
-            restaurantResult = await tx.restaurant.update({
+            await tx.restaurant.update({
               where: { id: targetRestId },
               data: restUpdateData,
             })
@@ -169,9 +164,7 @@ export async function POST(request: Request) {
       } else {
         // Single table updates (no transaction needed for single table)
         if (Object.keys(userUpdateData).length > 0) {
-          userResult = await updateUser(id, userUpdateData)
-        } else {
-          userResult = targetUser
+          await updateUser(id, userUpdateData)
         }
         if (needsRestaurantUpdate) {
           const restUpdateData: Record<string, any> = {}
@@ -197,7 +190,7 @@ export async function POST(request: Request) {
             }
           }
 
-          restaurantResult = await updateRestaurant(targetRestId, restUpdateData)
+          await updateRestaurant(targetRestId, restUpdateData)
         }
       }
     } catch (dbErr: any) {

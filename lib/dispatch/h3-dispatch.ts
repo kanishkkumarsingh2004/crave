@@ -1,13 +1,12 @@
 import * as h3 from 'h3-js'
+import { calculateEstimatedEtaMinutes, calculateHaversineDistanceKm } from '../utils'
+import { acquireDriverOfferLock, isDriverLockedAsync } from './atomic-lock'
 import {
-  getDriversInH3Cell,
-  getDriversInH3CellDistributed,
   DEFAULT_H3_RESOLUTION,
   DEFAULT_MAX_LOCATION_AGE_MS,
+  getDriversInH3CellDistributed,
   type DriverLocationState,
 } from './driver-tracker'
-import { isDriverLocked, isDriverLockedAsync, acquireDriverOfferLock } from './atomic-lock'
-import { calculateHaversineDistanceKm, calculateEstimatedEtaMinutes } from '../utils'
 
 export interface DispatchRequest {
   requestId: string

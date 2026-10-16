@@ -1,18 +1,21 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
+import CraveXPDeliveryIllustration from '@/components/illustrations/CraveXPDeliveryIllustration'
+import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 import ThemeSelector from '@/components/ThemeSelector'
 import ThemeToggle from '@/components/ThemeToggle'
+import { CraveButtonLoader, CraveSpinner } from '@/components/ui/ModernPreloader'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
+import { getCachedLocation } from '@/lib/client-location'
 import { useToast } from '@/lib/toast-context'
-import { useOrderUpdates, useApprovalUpdates, useDriverLocation } from '@/lib/websocket'
+import { useApprovalUpdates, useDriverLocation, useOrderUpdates } from '@/lib/websocket'
 import {
   AlertTriangle,
-  Apple,
   ArrowLeft,
   ArrowRight,
   Award,
-  Bell,
   Bike,
   Building2,
   Check,
@@ -20,21 +23,14 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleDot,
   Clock,
-  Coffee,
   Compass,
   Copy,
-  CreditCard,
   Crown,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
-  Filter,
-  Flame,
-  Gift,
-  Heart,
   HelpCircle,
   History,
   Home,
@@ -47,64 +43,34 @@ import {
   Mail,
   MapPin,
   Menu,
-  Milk,
   Minus,
-  Moon,
-  Package,
   PhoneCall,
   Plus,
-  RefreshCw,
   Search,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
-  Smartphone,
   Sparkles,
   Store,
   Sun,
   Tag,
   Trash2,
   User,
-  Utensils,
   UtensilsCrossed,
-  Wallet,
-  Wheat,
   X,
   Zap,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
-import CraveLogo from '@/components/CraveLogo'
-import CraveXPDeliveryIllustration from '@/components/illustrations/CraveXPDeliveryIllustration'
-import {
-  autoDetectAndGeocodeLocation,
-  checkGeolocationPermission,
-  getCachedLocation,
-  getDeviceCoordinates,
-} from '@/lib/client-location'
 import { usePathname, useRouter } from 'next/navigation'
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CraveSpinner, CraveButtonLoader } from '@/components/ui/ModernPreloader'
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
 })
 
 import { Coupon, fetchCoupons, validateCoupon } from '@/lib/coupons'
+import { calculateCheckoutPricing, calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { loadPaymentConfig } from '@/lib/payment-config'
-import { calculateRoadTravelDistanceKm, calculateCheckoutPricing } from '@/lib/distance-pricing'
-
-const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-64 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
-      <CraveSpinner size="md" variant="crave" />
-      <span className="tracking-wider uppercase text-[11px] text-white">
-        Loading Live Interactive Map...
-      </span>
-    </div>
-  ),
-})
 
 const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
   ssr: false,
@@ -167,11 +133,6 @@ type CustomerAddress = {
 interface LatLngCoords {
   lat: number
   lng: number
-}
-
-interface CouponMessageState {
-  type: 'success' | 'error'
-  text: string
 }
 
 interface ConflictModalState {
@@ -361,8 +322,6 @@ const CATEGORY_SYNONYMS: Record<string, string[]> = {
   Thali: ['thali', 'combo', 'meal', 'meals', 'platter', 'indian'],
 }
 
-type CustomerTab = 'explore' | 'live-order' | 'orders' | 'profile'
-
 export default function CustomerDashboard({
   initialTab = 'explore',
   initialOrderId,
@@ -442,14 +401,10 @@ export default function CustomerDashboard({
   const [offersOnly, setOffersOnly] = useState(false)
   const [fastDeliveryOnly, setFastDeliveryOnly] = useState(false)
 
-  // Track Order modal
-  const [trackingOrder, setTrackingOrder] = useState<PastOrder | null>(null)
-
   // Cart & Menu State
   const [cart, setCart] = useState<Array<CartItem>>([])
   const [menuItemsList, setMenuItemsList] = useState<Array<MenuItem>>([])
   const [restaurantsList, setRestaurantsList] = useState<Array<Restaurant>>([])
-  const [showCartDrawer, setShowCartDrawer] = useState(false)
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<Array<PastOrder>>([])
@@ -476,12 +431,7 @@ export default function CustomerDashboard({
     return () => window.removeEventListener('toggle-mobile-sidebar', handleToggleSidebar)
   }, [])
 
-  const {
-    items: globalCartItems,
-    setItems: setGlobalItems,
-    clearCart: clearGlobalCart,
-    isLoaded: globalCartLoaded,
-  } = useCart()
+  const { items: globalCartItems, setItems: setGlobalItems, isLoaded: globalCartLoaded } = useCart()
   const [isCartInitialized, setIsCartInitialized] = useState(false)
 
   // Sync initial cart state from CartProvider / localStorage on mount
@@ -687,15 +637,7 @@ export default function CustomerDashboard({
   // Saved Addresses State & GPS Map Picker
   const [savedAddresses, setSavedAddresses] = useState<Array<CustomerAddress>>([])
   const [showLocationModal, setShowLocationModal] = useState(false)
-  const [gpsDetecting, setGpsDetecting] = useState(false)
   const [selectedMapPin, setSelectedMapPin] = useState<LatLngCoords | null>(null)
-  const [newAddressInput, setNewAddressInput] = useState('')
-  const [newAddressLabel, setNewAddressLabel] = useState('Home')
-  const [dietaryPref, setDietaryPref] = useState<'all' | 'veg' | 'non-veg'>('all')
-  const [optCutlery, setOptCutlery] = useState(false)
-  const [optContactless, setOptContactless] = useState(false)
-  const [optNotifications, setOptNotifications] = useState(true)
-  const [walletBalance, setWalletBalance] = useState(150)
 
   const loadAddresses = useCallback(async () => {
     if (!user?.id) {
@@ -769,120 +711,6 @@ export default function CustomerDashboard({
   useEffect(() => {
     loadAddresses()
   }, [loadAddresses])
-
-  async function handleDetectGpsLocation(isAutoMount = false) {
-    setGpsDetecting(true)
-    try {
-      const geocoded = await autoDetectAndGeocodeLocation()
-      setSelectedMapPin({ lat: geocoded.lat, lng: geocoded.lng })
-      setNewAddressInput(geocoded.formattedAddress)
-      updateDeliveryAddress(geocoded.formattedAddress)
-
-      if (isAutoMount) {
-        // If auto-detected on mount and user has no saved addresses, automatically register it
-        if (user?.id && savedAddresses.length === 0) {
-          try {
-            const res = await fetch('/api/user/addresses', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                label: 'Current Location',
-                address: geocoded.formattedAddress,
-                latitude: geocoded.lat,
-                longitude: geocoded.lng,
-                is_default: true,
-              }),
-            })
-            if (res.ok) {
-              const json = await res.json()
-              if (json.address) {
-                const newEntry: CustomerAddress = {
-                  id: json.address.id,
-                  label: json.address.label,
-                  address: json.address.address,
-                  tag: 'Primary',
-                  lat: Number(json.address.latitude),
-                  lng: Number(json.address.longitude),
-                }
-                setSavedAddresses([newEntry])
-              }
-            }
-          } catch {}
-        }
-      } else {
-        triggerToast(`📍 Located: ${geocoded.shortAddress || geocoded.formattedAddress}`)
-      }
-    } catch (err: any) {
-      if (!isAutoMount) {
-        triggerToast(
-          'Could not access precise GPS. Please enable location permissions or select on the map.'
-        )
-      }
-    } finally {
-      setGpsDetecting(false)
-    }
-  }
-
-  async function handleAddNewAddress() {
-    if (!newAddressInput.trim()) {
-      triggerToast('Please enter an address or drop a pin on the map!')
-      return
-    }
-
-    let lat = selectedMapPin?.lat ?? null
-    let lng = selectedMapPin?.lng ?? null
-
-    // If coordinates are missing, fallback to cached location or Bangalore center
-    if (lat == null || lng == null) {
-      const cached = getCachedLocation()
-      if (cached?.lat != null && cached?.lng != null) {
-        lat = cached.lat
-        lng = cached.lng
-      } else {
-        lat = 12.9716
-        lng = 77.5946
-      }
-    }
-
-    try {
-      const res = await fetch('/api/user/addresses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          label: newAddressLabel,
-          address: newAddressInput.trim(),
-          latitude: lat,
-          longitude: lng,
-          is_default: true,
-        }),
-      })
-
-      const json = await res.json()
-      if (!res.ok || !json.address) {
-        triggerToast(json.error || 'Could not save this address to your account.')
-        return
-      }
-
-      const data = json.address
-      const newEntry: CustomerAddress = {
-        id: data.id,
-        label: data.label,
-        address: data.address,
-        tag: data.is_default ? 'Primary' : data.label,
-        lat: data.latitude == null ? null : Number(data.latitude),
-        lng: data.longitude == null ? null : Number(data.longitude),
-      }
-
-      setSavedAddresses((prev) => [newEntry, ...prev.filter((a) => a.id !== newEntry.id)])
-      setSelectedMapPin({ lat, lng })
-      updateDeliveryAddress(data.address)
-      setNewAddressInput('')
-      setShowLocationModal(false)
-      triggerToast(`Address & GPS coordinates saved & set as current delivery location!`)
-    } catch (err) {
-      triggerToast('Could not save this address to your account.')
-    }
-  }
 
   // Profile editing
   const [editAddress, setEditAddress] = useState(false)
@@ -1059,18 +887,14 @@ export default function CustomerDashboard({
 
   // Coupon Engine State
   const [availableCoupons, setAvailableCoupons] = useState<Array<Coupon>>([])
-  const [couponCodeInput, setCouponCodeInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState<CouponMessageState | null>(null)
 
   // Payment State & Company UPI ID
   const [companyUpiId, setCompanyUpiId] = useState('')
   const [companyMerchantName, setCompanyMerchantName] = useState('')
   const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig | null>(null)
-  const [upiId, setUpiId] = useState('')
   const [utrRef, setUtrRef] = useState('')
-  const [upiError, setUpiError] = useState('')
   const [utrError, setUtrError] = useState('')
   const [paymentDone, setPaymentDone] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState(initialOrderId)
@@ -1370,7 +1194,6 @@ export default function CustomerDashboard({
     } else {
       setAppliedCoupon(null)
       setCouponDiscount(0)
-      setCouponMessage({ type: 'error', text: res.message })
     }
   }, [cartSubtotal, appliedCoupon, cart, selectedRestaurant])
 
@@ -1493,43 +1316,6 @@ export default function CustomerDashboard({
     )
   }
 
-  function removeFromCart(id: string) {
-    setCart((prev) => prev.filter((item) => item.id !== id))
-  }
-
-  function clearCart() {
-    setCart([])
-    if (typeof clearGlobalCart === 'function') {
-      clearGlobalCart()
-    }
-    setAppliedCoupon(null)
-    setCouponDiscount(0)
-    setCouponMessage(null)
-  }
-
-  // Coupon Handlers
-  function handleApplyCouponCode(codeToApply?: string) {
-    const targetCode = codeToApply || couponCodeInput
-    if (!targetCode.trim()) return
-
-    const currentRestId = (cart[0] as any)?.restaurantId || (selectedRestaurant as any)?.id
-    const res = validateCoupon(targetCode, cartSubtotal, availableCoupons, currentRestId)
-    if (res.valid && res.coupon) {
-      setAppliedCoupon(res.coupon)
-      setCouponDiscount(res.discountAmount)
-      setCouponMessage({ type: 'success', text: res.message })
-      setCouponCodeInput('')
-    } else {
-      setCouponMessage({ type: 'error', text: res.message })
-    }
-  }
-
-  function handleRemoveCoupon() {
-    setAppliedCoupon(null)
-    setCouponDiscount(0)
-    setCouponMessage(null)
-  }
-
   // Dynamic Road Distance & Admin Payment Config Pricing Engine
   const currentCartRestaurantId =
     selectedRestaurant?.id ||
@@ -1647,10 +1433,6 @@ export default function CustomerDashboard({
     calculatorApiBreakdown,
   ])
 
-  const deliveryFee = pricingBreakdown.deliveryFee
-  const packagingFee = pricingBreakdown.handlingFee
-  const platformFee = pricingBreakdown.platformFee
-  const taxAmount = pricingBreakdown.gstAmount ?? 0
   const grandTotal = pricingBreakdown.grandTotal
 
   // Filtered Restaurants Logic
@@ -1690,14 +1472,11 @@ export default function CustomerDashboard({
   }, [restaurantsList, searchQuery, selectedTag, pureVegOnly, offersOnly, fastDeliveryOnly])
 
   // 3-Minute Payment Verification Countdown Effect & Realtime Sync
-  const [approvalStatus, setApprovalStatus] = useState('pending')
-
   useApprovalUpdates(
     verifyingModal.orderId && verifyingModal.open && verifyingModal.status === 'verifying'
       ? verifyingModal.orderId
       : undefined,
     (status) => {
-      setApprovalStatus(status)
       if (status === 'verified') {
         setVerifyingModal((prev) => ({ ...prev, status: 'verified' }))
         triggerToast('Payment Approved by Admin! Order sent to kitchen.')
@@ -1893,11 +1672,6 @@ export default function CustomerDashboard({
       setIsSubmittingCheckout(false)
       isSubmittingCheckoutRef.current = false
     }
-  }
-
-  function handleMarkDelivered() {
-    setActiveOrder((prev: any) => ({ ...prev, statusStep: 4 }))
-    triggerToast('Order marked as delivered!')
   }
 
   return (
@@ -3846,7 +3620,6 @@ export default function CustomerDashboard({
                     {activeOrder.driverName && activeOrder.driverName !== 'Unassigned' ? (
                       <LiveDriverMap
                         restaurantName={activeOrder.restaurantName}
-                        customerAddress={deliveryAddress}
                         driverName={activeOrder.driverName}
                         statusStep={activeOrder.statusStep}
                         driverLat={

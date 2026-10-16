@@ -2,8 +2,8 @@
  * Database Access Layer — Menu Items
  * Prisma ORM with Neon PostgreSQL
  */
+import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/cache'
 import { prisma } from '@/lib/prisma'
-import { cacheGet, cacheSet, cacheDel, CacheKeys, CacheTTL } from '@/lib/cache'
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -73,10 +73,6 @@ export async function searchMenuItems(restaurantId: string, query: string) {
 }
 
 // ─── Mutations ───────────────────────────────────────────
-
-async function invalidateMenuCache(restaurantId: string): Promise<void> {
-  await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))
-}
 
 export async function createMenuItem(data: {
   id: string
