@@ -1,1 +1,0 @@
-import{t as e}from"./esm-W47tINBp.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

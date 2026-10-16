@@ -50,6 +50,17 @@ Role pages are gated in `proxy.ts` (JWT cookie `crave_auth_token`). APIs use `li
 
 Public: `/`, `/login`, `/signup`, `/policies/*`.
 
+### Android apps
+
+Build the Admin, Driver, and Restaurant Android apps together with:
+
+```bash
+pnpm build:android
+```
+
+The APKs, checksums, installation commands, and build notes are collected in
+[android-builds](./android-builds/README.md).
+
 **Customer** — restaurant explore + CraveXP grocery, cart, UPI collect + 12-digit UTR, live tracking, dual tax invoices (`components/InvoiceModal.tsx`).
 
 **Vendor** — live kitchen / picker desk, Accept → Prepare → Pack → Ready, menu and stock.

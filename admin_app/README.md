@@ -18,3 +18,17 @@ pnpm sync
 The production server defaults to `https://crave.apexonestudio.com`. Open the projects with
 `pnpm android` or, on macOS, `pnpm ios`. For an Android emulator, override the server with
 `CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` while the Next.js development server runs.
+
+## Android APK
+
+The current debug build is available here:
+
+- [Download Crave Admin debug APK](./apk/crave-admin-debug.apk)
+
+To rebuild and refresh the copied APK:
+
+```bash
+cd admin_app/android
+./gradlew assembleDebug
+cp app/build/outputs/apk/debug/app-debug.apk ../apk/crave-admin-debug.apk
+```
