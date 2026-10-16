@@ -246,7 +246,7 @@ export default function AdminDashboard() {
       setAccountsLoading(true)
 
       // 1. Fetch restaurants (vendors) from API
-      const resRest = await fetch('/api/restaurants', { cache: 'no-store' })
+      const resRest = await fetch('/api/restaurants?isDarkStore=false', { cache: 'no-store' })
       const restaurantsJson = await resRest.json()
       const vendorsData = restaurantsJson.restaurants || []
 
@@ -279,6 +279,9 @@ export default function AdminDashboard() {
 
       if (usersData && usersData.length > 0) {
         usersData.forEach((u: any) => {
+          // CraveXP store operators are managed from /admin/cravexp, not User Accounts.
+          if (u.role === 'cravexp_store_vendor') return
+
           const matchedVendor = realVendorsList.find(
             (v) =>
               (v.userId && v.userId === u.id) ||
@@ -297,9 +300,7 @@ export default function AdminDashboard() {
               ? 'customer'
               : u.role === 'rider' || u.role === 'driver'
                 ? 'driver'
-                : u.role === 'restaurant_vendor' ||
-                    u.role === 'cravexp_store_vendor' ||
-                    u.role === 'vendor'
+                : u.role === 'restaurant_vendor' || u.role === 'vendor'
                   ? 'vendor'
                   : (u.role as UserRole) || 'customer'
 
@@ -317,9 +318,7 @@ export default function AdminDashboard() {
                   ? `${u.vehicle_type || 'Electric Scooter'}${u.license_plate ? ` · ${u.license_plate}` : ''}`
                   : u.role === 'admin'
                     ? 'System Super Admin'
-                    : u.role === 'cravexp_store_vendor'
-                      ? 'CraveXP Store Vendor'
-                      : u.address || 'Registered Customer',
+                    : u.address || 'Registered Customer',
             phone: u.phone || matchedVendor?.phone || undefined,
             address: u.address || matchedVendor?.address || undefined,
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
@@ -830,9 +829,7 @@ export default function AdminDashboard() {
   // Filtered lists for tabs
   const vendorAccounts = accounts.filter(
     (a) =>
-      (a.role === 'vendor' ||
-        a.role === 'restaurant_vendor' ||
-        a.role === 'cravexp_store_vendor') &&
+      (a.role === 'vendor' || a.role === 'restaurant_vendor') &&
       (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (a.restaurantName && a.restaurantName.toLowerCase().includes(searchQuery.toLowerCase())))
@@ -872,8 +869,8 @@ export default function AdminDashboard() {
             Platform Accounts &amp; Stores
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9eb3a4] mt-1 font-medium">
-            Admin vendor onboarding (Restaurants &amp; XP Stores), pricing controls, customer
-            insights &amp; live database sync.
+            Restaurant vendor onboarding, pricing controls, customer insights &amp; live database
+            sync. CraveXP stores and products have their own management page.
           </p>
         </div>
 
@@ -982,8 +979,7 @@ export default function AdminDashboard() {
                 Registered Store Vendors
               </h3>
               <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
-                Admin-only onboarding. Manage Restaurants &amp; XP Stores, alter pricing, or access
-                menus.
+                Admin-only restaurant onboarding. Manage profiles, alter pricing, or access menus.
               </p>
             </div>
 
@@ -1789,8 +1785,8 @@ export default function AdminDashboard() {
               ))}
               {vendorsList.length === 0 && (
                 <div className="col-span-full p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4] border border-dashed border-gray-300 dark:border-[#2d3b32] rounded-2xl bg-gray-50 dark:bg-[#121815]">
-                  No stores in database. Click &apos;+ Onboard Restaurant Vendor&apos; to add a new
-                  Restaurant or XP Store.
+                  No restaurant stores in the database. Click &apos;+ Onboard Restaurant
+                  Vendor&apos; to add one.
                 </div>
               )}
             </div>
@@ -2285,7 +2281,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Biryani Blues or craveXP Koramangala"
+                    placeholder="e.g. Biryani Blues"
                     value={newVendorForm.storeName}
                     onChange={(e) =>
                       setNewVendorForm({ ...newVendorForm, storeName: e.target.value })
@@ -2313,12 +2309,6 @@ export default function AdminDashboard() {
                       className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
                     >
                       Restaurant Vendor (Food &amp; Dining)
-                    </option>
-                    <option
-                      value="CraveXP Store Vendor"
-                      className="bg-white dark:bg-[#121815] text-[#18201c] dark:text-white"
-                    >
-                      CraveXP Store Vendor (Dark Store Grocery)
                     </option>
                   </select>
                 </div>

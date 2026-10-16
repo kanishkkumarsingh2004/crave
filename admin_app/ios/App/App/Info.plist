@@ -29,6 +29,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Crave Admin uses the camera to scan product barcodes while adding inventory.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

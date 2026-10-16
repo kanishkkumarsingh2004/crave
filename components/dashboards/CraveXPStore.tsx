@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CRAVEXP_DARK_STORE_ID,
   CRAVEXP_DARK_STORE_INFO,
@@ -118,7 +118,7 @@ export default function CraveXPStore() {
   const [isLoadingItems, setIsLoadingItems] = useState(true)
 
   // Load the database-backed catalog through the server API.
-  const loadCatalog = async () => {
+  const loadCatalog = useCallback(async () => {
     try {
       setIsLoadingItems(true)
       const items = await fetchCraveXPGroceryItems()
@@ -128,23 +128,19 @@ export default function CraveXPStore() {
     } finally {
       setIsLoadingItems(false)
     }
-  }
+  }, [])
 
   // Initial load
   useEffect(() => {
-    loadCatalog()
-  }, [])
+    void loadCatalog()
+  }, [loadCatalog])
 
   // Live real-time WebSocket sync: listen for vendor console & database catalog updates
   useWebSocket({
-    channels: ['catalog_update', 'order_update', 'menu_items'],
+    channels: ['cravexp_products'],
     onMessage: (msg) => {
-      if (
-        msg.channel === 'catalog_update' ||
-        msg.channel === 'order_update' ||
-        msg.channel === 'menu_items'
-      ) {
-        loadCatalog()
+      if (msg.channel === 'cravexp_products') {
+        void loadCatalog()
       }
     },
   })

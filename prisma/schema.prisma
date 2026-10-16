@@ -139,6 +139,32 @@ model MenuItem {
   @@map("menu_items")
 }
 
+/// Customer-facing CraveXP master catalog. This is intentionally separate from
+/// restaurant menu_items because XP inventory is managed at platform level.
+model CraveXPProduct {
+  id             String   @id
+  name           String
+  category       String
+  unit           String   @default("1 Pack")
+  price          Int
+  mrp            Int?
+  description    String?
+  image          String?
+  in_stock       Boolean  @default(true)
+  stock_count    Int      @default(0)
+  sku_code       String?
+  barcode        String?  @unique
+  is_veg         Boolean  @default(true)
+  hsn_sac_code   String?  @default("996331")
+  price_tax_mode String   @default("TAX_INCLUSIVE")
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([in_stock, category])
+  @@index([sku_code])
+  @@map("cravexp_products")
+}
+
 model Order {
   id                    String      @id
   customer_id           String?

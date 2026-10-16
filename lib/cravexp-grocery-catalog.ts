@@ -20,6 +20,7 @@ export interface CraveXPGroceryItem {
   restaurantName: string
   stockCount: number
   skuCode: string
+  barcode?: string
   discount?: string
 }
 

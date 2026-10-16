@@ -62,7 +62,7 @@ export default function VendorSettlementsPage() {
       const activeCfg = getLocalPaymentConfig()
       try {
         const [restResp, settsResp, ordersResp] = await Promise.all([
-          fetch('/api/restaurants').catch(() => null),
+          fetch('/api/restaurants?isDarkStore=false').catch(() => null),
           fetch('/api/admin/settlements').catch(() => null),
           fetch('/api/orders').catch(() => null),
         ])

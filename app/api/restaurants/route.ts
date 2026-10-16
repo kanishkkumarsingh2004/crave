@@ -1,4 +1,4 @@
-import { listRestaurants } from '@/lib/dal/restaurants'
+import { invalidateRestaurantCache, listRestaurants } from '@/lib/dal/restaurants'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
@@ -109,6 +109,7 @@ export async function POST(request: Request) {
         payment_model: isAdmin ? body.payment_model || 'commission' : 'commission',
       },
     })
+    await invalidateRestaurantCache()
 
     await broadcast('restaurants', {
       type: 'create',
@@ -201,6 +202,7 @@ export async function PATCH(request: Request) {
       where: { id: body.id },
       data: updateData,
     })
+    await invalidateRestaurantCache()
 
     await broadcast('restaurants', {
       type: 'update',

@@ -27,6 +27,7 @@ import {
 } from '@/lib/auth-helpers'
 import { isValidTransition, getPhaseName, VALID_TRANSITIONS } from '@/lib/order-state-machine'
 import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
+import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 import {
   processPaymentVerificationTx,
   processPaymentRejectionTx,
@@ -311,6 +312,9 @@ export async function POST(request: Request) {
         order_type = 'restaurant_food',
         // Client distance/coordinates are IGNORED for fee calculation; server computes from DB address
       } = body
+      const isCraveXPOrder =
+        order_type === 'cravexp_grocery' || restaurant_id === CRAVEXP_DARK_STORE_ID
+      const resolvedOrderType = isCraveXPOrder ? 'cravexp_grocery' : 'restaurant_food'
 
       // CR-005: Derive customer_id from authenticated session only
       const finalCustomerId = actor.id
@@ -495,23 +499,40 @@ export async function POST(request: Request) {
         validatedRaw.push({ itemId, quantity, raw: rawItem })
       }
 
-      // Phase 2: Single DB round-trip to fetch ALL menu items (with fallback for mocks/fallbacks)
+      // Phase 2: Fetch from the authoritative catalog for this order type.
+      // CraveXP products intentionally live outside restaurant menu_items.
       const allItemIds = validatedRaw.map((r) => r.itemId)
       let menuItemMap = new Map<string, any>()
-      if (typeof findMenuItemsByIds === 'function') {
+      if (isCraveXPOrder) {
         try {
-          menuItemMap = await findMenuItemsByIds(allItemIds)
+          const products = await prisma.craveXPProduct.findMany({
+            where: { id: { in: allItemIds } },
+          })
+          menuItemMap = new Map(
+            products.map((product) => [
+              product.id,
+              { ...product, restaurant_id: CRAVEXP_DARK_STORE_ID },
+            ])
+          )
         } catch (e) {
           menuItemMap = new Map()
         }
-      }
-      if ((!menuItemMap || menuItemMap.size === 0) && typeof findMenuItemById === 'function') {
-        menuItemMap = new Map()
-        for (const id of allItemIds) {
+      } else {
+        if (typeof findMenuItemsByIds === 'function') {
           try {
-            const item = await findMenuItemById(id)
-            if (item) menuItemMap.set(id, item)
-          } catch (e) {}
+            menuItemMap = await findMenuItemsByIds(allItemIds)
+          } catch (e) {
+            menuItemMap = new Map()
+          }
+        }
+        if ((!menuItemMap || menuItemMap.size === 0) && typeof findMenuItemById === 'function') {
+          menuItemMap = new Map()
+          for (const id of allItemIds) {
+            try {
+              const item = await findMenuItemById(id)
+              if (item) menuItemMap.set(id, item)
+            } catch (e) {}
+          }
         }
       }
 
@@ -534,7 +555,10 @@ export async function POST(request: Request) {
               category: 'food',
             }
           } else {
-            return NextResponse.json({ error: `Menu item not found: ${itemId}` }, { status: 404 })
+            return NextResponse.json(
+              { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}` },
+              { status: 404 }
+            )
           }
         }
 
@@ -549,7 +573,10 @@ export async function POST(request: Request) {
         // Check stock
         const hasStockTracking =
           typeof menuItem.stock_count === 'number' && menuItem.stock_count > 0
-        if (menuItem.in_stock === false || (hasStockTracking && menuItem.stock_count < quantity)) {
+        const hasInsufficientStock = isCraveXPOrder
+          ? typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
+          : hasStockTracking && menuItem.stock_count < quantity
+        if (menuItem.in_stock === false || hasInsufficientStock) {
           if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout')
           return NextResponse.json(
             { error: `Item ${menuItem.name} is out of stock` },
@@ -894,7 +921,7 @@ export async function POST(request: Request) {
       // Convert to paise for the authoritative engine
       const pricingInput: OrderPriceInput = {
         orderId,
-        orderType: order_type as 'restaurant_food' | 'cravexp_grocery',
+        orderType: resolvedOrderType,
         restaurantId: finalRestaurantId,
         restaurantName: finalRestaurantName,
         supplierState: restaurantDetails.supplier_state || 'Karnataka',
@@ -908,7 +935,14 @@ export async function POST(request: Request) {
           quantity: i.quantity,
           unitPricePaise: Math.round(i.price * 100),
           priceTaxMode: i.priceTaxMode,
-          taxCategory: 'RESTAURANT_SERVICE' as const,
+          taxCategory:
+            resolvedOrderType === 'cravexp_grocery'
+              ? i.taxRate === 18
+                ? ('GROCERY_18PCT' as const)
+                : i.taxRate === 12
+                  ? ('GROCERY_12PCT' as const)
+                  : ('GROCERY_5PCT' as const)
+              : ('RESTAURANT_SERVICE' as const),
           taxRatePercent: i.taxRate,
           customCommissionRatePercent: i._menuItem?.custom_commission_rate
             ? Number(i._menuItem.custom_commission_rate)
@@ -1032,7 +1066,8 @@ export async function POST(request: Request) {
           for (const { itemId, quantity } of validatedRaw) {
             const item = menuItemMap.get(itemId)
             if (item && typeof item.stock_count === 'number' && item.stock_count > 0) {
-              const updated = await tx.menuItem.updateMany({
+              const inventory = isCraveXPOrder ? tx.craveXPProduct : tx.menuItem
+              const updated = await inventory.updateMany({
                 where: {
                   id: itemId,
                   in_stock: true,
@@ -1044,6 +1079,12 @@ export async function POST(request: Request) {
               })
               if (updated.count === 0) {
                 throw new Error(`INSUFFICIENT_STOCK:${item.name || itemId}`)
+              }
+              if (isCraveXPOrder && item.stock_count === quantity) {
+                await tx.craveXPProduct.update({
+                  where: { id: itemId },
+                  data: { in_stock: false },
+                })
               }
             }
           }
@@ -1083,7 +1124,7 @@ export async function POST(request: Request) {
               total_amount: calcResult.customerBilling.grandTotal,
               status: initialStatus,
               payment_status: 'pending',
-              order_type,
+              order_type: resolvedOrderType,
               payment_method,
               delivery_otp: deliveryOtp,
               tip: Number(tip) || 0,
@@ -1251,7 +1292,7 @@ export async function POST(request: Request) {
             total_amount: calcResult.customerBilling.grandTotal,
             status: initialStatus,
             payment_status: 'pending',
-            order_type,
+            order_type: resolvedOrderType,
             payment_method,
             delivery_otp: deliveryOtp,
             created_at: new Date().toISOString(),

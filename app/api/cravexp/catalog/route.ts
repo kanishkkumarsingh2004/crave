@@ -55,29 +55,59 @@ function mapItem(item: any): CraveXPGroceryItem {
     mrp,
     image: safeImage,
     category: item.category || 'Grocery Essentials',
-    inStock: item.in_stock !== false,
+    inStock: item.in_stock !== false && Number(item.stock_count ?? 0) > 0,
     restaurantId: CRAVEXP_DARK_STORE_ID,
     restaurantName: CRAVEXP_DARK_STORE_INFO.name,
     stockCount: Number(item.stock_count ?? 50),
     skuCode: item.sku_code || item.id,
+    barcode: item.barcode || undefined,
     discount: mrp > price ? `${Math.round(((mrp - price) / mrp) * 100)}% OFF` : undefined,
+  }
+}
+
+function isTransientConnectionError(error: unknown) {
+  let current: unknown = error
+  for (let depth = 0; depth < 4 && current; depth += 1) {
+    const message = current instanceof Error ? current.message.toLowerCase() : String(current)
+    if (
+      message.includes('connection terminated') ||
+      message.includes('connection timeout') ||
+      message.includes('econnreset') ||
+      message.includes('etimedout')
+    ) {
+      return true
+    }
+    current =
+      typeof current === 'object' && current !== null && 'cause' in current
+        ? current.cause
+        : undefined
+  }
+  return false
+}
+
+async function loadCatalogItems() {
+  try {
+    return await prisma.craveXPProduct.findMany({
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    })
+  } catch (error) {
+    if (!isTransientConnectionError(error)) throw error
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    return prisma.craveXPProduct.findMany({
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    })
   }
 }
 
 /**
  * GET /api/cravexp/catalog
  *
- * Pure read — does NOT run ensureStore().
- * If the dark store record does not exist yet, seed the database via
- *   POST /api/cravexp/catalog
- * or run the DB seed script before serving traffic.
+ * Pure read from the dedicated cravexp_products table. Product management is
+ * intentionally independent from restaurant menu_items and store operators.
  */
 export async function GET() {
   try {
-    const items = await prisma.menuItem.findMany({
-      where: { restaurant_id: CRAVEXP_DARK_STORE_ID },
-      orderBy: { name: 'asc' },
-    })
+    const items = await loadCatalogItems()
     return NextResponse.json({ success: true, items: items.map(mapItem) })
   } catch (error) {
     console.error('[cravexp/catalog] Failed to load catalog:', error)
@@ -88,8 +118,8 @@ export async function GET() {
 /**
  * POST /api/cravexp/catalog
  *
- * Idempotent setup/seed endpoint.  Call once to initialize the dark-store
- * record.  Safe to call again (upsert is idempotent).
+ * Idempotent setup endpoint for the virtual checkout/dispatch hub. Products are
+ * created through /api/admin/cravexp-products and never through menu_items.
  */
 export async function POST(request: Request) {
   try {

@@ -79,11 +79,14 @@ export async function listRestaurants(options?: {
 }) {
   // Try cache first for common queries (no owner filter, no limit override)
   const isCommonQuery = !options?.ownerId && !options?.limit
-  const cacheKey = options?.isDarkStore
-    ? CacheKeys.restaurants.darkStores()
-    : options?.isOpen === false
-      ? 'restaurants:closed'
-      : CacheKeys.restaurants.all()
+  const cacheKey =
+    options?.isDarkStore === true
+      ? CacheKeys.restaurants.darkStores()
+      : options?.isDarkStore === false
+        ? CacheKeys.restaurants.foodStores()
+        : options?.isOpen === false
+          ? 'restaurants:closed'
+          : CacheKeys.restaurants.all()
 
   if (isCommonQuery) {
     const cached = await cacheGet<any[]>(cacheKey)
@@ -213,6 +216,7 @@ export async function invalidateRestaurantCache(): Promise<void> {
     cacheDel(CacheKeys.restaurants.all()),
     cacheDel(CacheKeys.restaurants.open()),
     cacheDel(CacheKeys.restaurants.darkStores()),
+    cacheDel(CacheKeys.restaurants.foodStores()),
     cacheDel('restaurants:closed'),
   ])
 }

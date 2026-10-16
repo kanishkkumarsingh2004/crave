@@ -145,6 +145,7 @@ export const CacheKeys = {
     byId: (id: string) => `restaurant:${id}`,
     open: () => 'restaurants:open',
     darkStores: () => 'restaurants:dark-stores',
+    foodStores: () => 'restaurants:food-stores',
   },
   menus: {
     byRestaurant: (restaurantId: string) => `menu:${restaurantId}`,

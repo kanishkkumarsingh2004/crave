@@ -7,6 +7,11 @@ type GlobalWithPrisma = typeof globalThis & {
 
 const g = globalThis as unknown as GlobalWithPrisma
 
+function positiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
 function createPrismaClient(): PrismaClientType {
   if (typeof window !== 'undefined') {
     // Never instantiate on the client side.
@@ -25,9 +30,14 @@ function createPrismaClient(): PrismaClientType {
     const { PrismaPg } = require('@prisma/adapter-pg')
     const adapter = new PrismaPg({
       connectionString: dbUrl,
-      max: Number(process.env.DB_POOL_MAX || 20),
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      // Neon computes may need several seconds to wake after scaling to zero.
+      // Keep this application pool deliberately small because DATABASE_URL is
+      // already routed through Neon's pooled endpoint.
+      max: positiveInteger(process.env.DB_POOL_MAX, 10),
+      idleTimeoutMillis: positiveInteger(process.env.DB_IDLE_TIMEOUT_MS, 30000),
+      connectionTimeoutMillis: positiveInteger(process.env.DB_CONNECT_TIMEOUT_MS, 15000),
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     })
     return new PrismaClient({ adapter, log: [] })
   } catch (e) {

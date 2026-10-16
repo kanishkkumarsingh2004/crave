@@ -43,7 +43,9 @@ export async function GET(request: Request) {
     const take = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 200)
 
     const rawSettlements = await prisma.vendorSettlement.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+      where: restaurantId
+        ? { restaurant_id: restaurantId }
+        : { restaurant: { is: { is_dark_store: false } } },
       orderBy: { payout_date: 'desc' },
       take: take + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

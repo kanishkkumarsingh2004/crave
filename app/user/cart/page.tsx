@@ -43,6 +43,7 @@ import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
 import dynamic from 'next/dynamic'
 import type { AddressItem } from '@/components/AddressModal'
 import { checkDeliveryServiceability } from '@/lib/serviceability'
+import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
@@ -700,6 +701,7 @@ export default function CartPage() {
         delivery_longitude: detectedCoords?.lng,
         restaurant_id: restaurantId,
         restaurant_name: restName,
+        order_type: restaurantId === CRAVEXP_DARK_STORE_ID ? 'cravexp_grocery' : 'restaurant_food',
         items: cart.map((i) => ({
           id: i.id,
           name: i.name,
