@@ -3,16 +3,33 @@
 This folder contains the latest debug APKs for all three Crave native applications. They connect
 to the production backend at `https://crave.apexonestudio.com` by default.
 
-| Application | Android package        | APK                                                        |
-| ----------- | ---------------------- | ---------------------------------------------------------- |
-| Admin       | `com.crave.admin`      | [crave-admin-debug.apk](./crave-admin-debug.apk)           |
-| Driver      | `com.crave.driver`     | [crave-driver-debug.apk](./crave-driver-debug.apk)         |
-| Restaurant  | `com.crave.restaurant` | [crave-restaurant-debug.apk](./crave-restaurant-debug.apk) |
+| Application | Android package        | APK (direct download)                                              |
+| ----------- | ---------------------- | ------------------------------------------------------------------ |
+| Admin       | `com.crave.admin`      | [crave-admin-debug.apk](./crave-admin-debug.apk)                   |
+| Driver      | `com.crave.driver`     | [crave-driver-debug.apk](./crave-driver-debug.apk)                 |
+| Restaurant  | `com.crave.restaurant` | [crave-restaurant-debug.apk](./crave-restaurant-debug.apk)         |
+
+Click any APK filename above to download it directly.
 
 These are development builds signed with the Android debug key. They are suitable for direct
 testing but not for Google Play production distribution.
 
-## Build all three apps
+## iOS builds
+
+All three apps now have iOS projects generated via Capacitor (`admin_app/ios`, `driver_app/ios`,
+`restaurant_app/ios`). Compiling a native iOS app requires macOS and a compatible Xcode version.
+Once built on a Mac, the resulting `.ipa` files can be distributed for TestFlight or Ad Hoc
+testing. From Kali Linux you can only prepare the iOS project; the actual build must happen on a
+cloud Mac or local macOS machine with Xcode. The iOS builder mirrors the Android builder and
+outputs to a separate `ios-builds/` folder:
+
+```bash
+pnpm build:ios          # prepares all three iOS projects; builds IPAs on macOS
+pnpm exec cap open ios  # from each app directory on macOS with Xcode
+# In Xcode: select a team, build the iPhone scheme, then export as Ad Hoc / Development IPA
+```
+
+## Build all apps
 
 From the repository root, run:
 
@@ -20,8 +37,9 @@ From the repository root, run:
 pnpm build:android
 ```
 
-The script builds each Vite shell, synchronizes Capacitor, runs Gradle `assembleDebug`, copies the
-three APKs into this folder, and refreshes `SHA256SUMS.txt`.
+This runs `scripts/build-apps.sh`, which builds each Vite shell, synchronizes Capacitor for both
+Android and iOS, runs Gradle `assembleDebug`, copies the three APKs into this folder, and refreshes
+`SHA256SUMS.txt`. iOS IPA compilation still requires macOS/Xcode.
 
 Requirements: Node.js 22+, pnpm 12.3.4, a compatible JDK, and Android SDK 36.
 
