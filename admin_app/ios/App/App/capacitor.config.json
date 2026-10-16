@@ -4,6 +4,11 @@
 	"webDir": "dist",
 	"backgroundColor": "#121815",
 	"appendUserAgent": " CraveAdmin/1.0",
+	"server": {
+		"url": "https://crave.apexonestudio.com/admin/dashboard",
+		"cleartext": false,
+		"errorPath": "index.html"
+	},
 	"plugins": {
 		"SplashScreen": {
 			"launchShowDuration": 1500,

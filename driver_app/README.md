@@ -8,18 +8,18 @@ the splash screen, and the status bar.
 
 ## Configure and sync
 
-Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). Then install both projects
-and set the HTTPS origin of the deployed application:
+Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). Then install and sync the
+project:
 
 ```bash
 pnpm install
 cd driver_app
-pnpm install
-CAPACITOR_SERVER_URL=https://your-crave-host.example pnpm sync
+pnpm sync
 ```
 
-Open the native projects with `pnpm android` or, on macOS, `pnpm ios`. For local Android emulator
-development, `CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` enables cleartext automatically.
+The production server defaults to `https://crave.apexonestudio.com`. Open the native projects with
+`pnpm android` or, on macOS, `pnpm ios`. For local Android emulator development,
+`CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` enables cleartext automatically.
 
 ## Push notification credentials
 

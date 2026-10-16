@@ -12,8 +12,9 @@ Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). From the
 ```bash
 pnpm install
 cd admin_app
-CAPACITOR_SERVER_URL=https://your-crave-host.example pnpm sync
+pnpm sync
 ```
 
-Open the projects with `pnpm android` or, on macOS, `pnpm ios`. For an Android emulator, use
+The production server defaults to `https://crave.apexonestudio.com`. Open the projects with
+`pnpm android` or, on macOS, `pnpm ios`. For an Android emulator, override the server with
 `CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` while the Next.js development server runs.

@@ -14,8 +14,9 @@ function NativeBootstrap() {
         <span className="app-pill">Admin</span>
         <h1 id="app-title">Native app is ready</h1>
         <p>
-          Set <code>CAPACITOR_SERVER_URL</code> to your deployed Crave URL, then run the native sync
-          command. The app will open the existing React admin console with native services enabled.
+          The app connects to <code>crave.apexonestudio.com</code> and opens the existing React
+          admin console with native services enabled. Set <code>CAPACITOR_SERVER_URL</code> only to
+          override the production server.
         </p>
         <div className="status-row">
           <span /> React + Capacitor shell installed
