@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useEffect, useRef, useState } from 'react'
 
 export type WSMessage = {

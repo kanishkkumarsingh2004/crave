@@ -2,13 +2,8 @@ import { blacklistToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-function getIsSecure(request: Request): boolean {
-  if (process.env.NODE_ENV !== 'production') return false
-  const host = request.headers.get('host') || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return false
-  const proto = request.headers.get('x-forwarded-proto')
-  if (proto === 'https') return true
-  return request.url.startsWith('https:')
+function getIsSecure(): boolean {
+  return process.env.NODE_ENV === 'production'
 }
 
 function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
@@ -100,33 +95,13 @@ export async function POST(request: Request) {
   try {
     await processLogout(request)
     const response = NextResponse.json({ success: true, message: 'Logged out successfully' })
-    const isSecure = getIsSecure(request)
+    const isSecure = getIsSecure()
     clearAllAuthCookies(response, isSecure)
     return response
   } catch (error: any) {
     console.error('[POST /api/auth/logout]', error)
     const response = NextResponse.json({ error: 'Logout failed' }, { status: 500 })
-    const isSecure = getIsSecure(request)
-    clearAllAuthCookies(response, isSecure)
-    return response
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    await processLogout(request)
-    const response = NextResponse.redirect(new URL('/login?logout=1', request.url), {
-      status: 303,
-    })
-    const isSecure = getIsSecure(request)
-    clearAllAuthCookies(response, isSecure)
-    return response
-  } catch (error: any) {
-    console.error('[GET /api/auth/logout]', error)
-    const response = NextResponse.redirect(new URL('/login?logout=1', request.url), {
-      status: 303,
-    })
-    const isSecure = getIsSecure(request)
+    const isSecure = getIsSecure()
     clearAllAuthCookies(response, isSecure)
     return response
   }

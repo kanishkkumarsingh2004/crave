@@ -2,6 +2,7 @@
 
 import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import { useVendorOrderUpdates } from '@/lib/websocket'
 import {

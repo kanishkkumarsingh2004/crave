@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { unregisterNativePushToken } from '@/lib/native-driver'
 import { unregisterWebPushSubscription } from '@/lib/web-push-client'
 
@@ -50,38 +51,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('crave_user')
-        return saved ? JSON.parse(saved) : null
-      } catch (e) {
-        return null
-      }
-    }
-    return null
-  })
-
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('crave_token')
-    }
-    return null
-  })
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [token, setToken] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
-
-  const syncClientCookies = (rawToken: string | null) => {
-    if (typeof document === 'undefined') return
-    if (!rawToken || rawToken === 'local-token') return
-    const maxAge = 60 * 60 * 24 * 7 // 7 days
-    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
-    const secureFlag = isHttps ? '; Secure' : ''
-    const cookieVal = `${rawToken}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`
-    document.cookie = `crave_auth_token=${cookieVal}`
-    document.cookie = `drop_auth_token=${cookieVal}`
-    document.cookie = `crave_token=${cookieVal}`
-  }
 
   const clearClientCookies = () => {
     if (typeof document === 'undefined') return
@@ -115,14 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        const savedUserStr =
-          typeof window !== 'undefined' ? localStorage.getItem('crave_user') : null
+        // Read a legacy token once so existing users can migrate to the HttpOnly cookie session.
         const savedToken =
           typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
-
-        if (savedToken && savedToken !== 'local-token') {
-          syncClientCookies(savedToken)
-        }
 
         // Validate session with server using an AbortController with a 4500ms timeout
         try {
@@ -144,13 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = await res.json()
             if (data.authenticated && data.user && !cancelled) {
               setUser(data.user)
-              const activeToken = savedToken || 'cookie-session'
-              setToken(activeToken)
+              setToken(null)
               if (typeof window !== 'undefined') {
-                localStorage.setItem('crave_user', JSON.stringify(data.user))
-                if (savedToken) localStorage.setItem('crave_token', savedToken)
+                localStorage.removeItem('crave_user')
+                localStorage.removeItem('crave_token')
               }
-              syncClientCookies(savedToken)
               setIsLoading(false)
               return
             }
@@ -170,26 +136,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return
           }
         } catch {
-          // If network error, timeout, or offline, fall back gracefully to cached local storage
-        }
-
-        if (savedUserStr) {
-          try {
-            const parsed = JSON.parse(savedUserStr)
-            if (parsed && parsed.id && !cancelled) {
-              setUser(parsed)
-              setToken(savedToken ?? 'local-token')
-              if (savedToken) syncClientCookies(savedToken)
-              setIsLoading(false)
-              return
-            }
-          } catch (e) {
-            console.warn('Stored session data was invalid, clearing it.')
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('crave_user')
-              localStorage.removeItem('crave_token')
-            }
-            clearClientCookies()
+          // Authentication state is never restored from unverified browser storage.
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('crave_user')
+            localStorage.removeItem('crave_token')
           }
         }
       } catch (err) {
@@ -222,13 +172,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok && result.success && result.user) {
         setUser(result.user)
-        setToken(result.token)
+        setToken(null)
         if (typeof window !== 'undefined') {
-          localStorage.setItem('crave_user', JSON.stringify(result.user))
-          localStorage.setItem('crave_token', result.token ?? '')
-        }
-        if (result.token) {
-          syncClientCookies(result.token)
+          localStorage.removeItem('crave_user')
+          localStorage.removeItem('crave_token')
         }
         setIsLoading(false)
         return result.user as UserProfile
@@ -258,13 +205,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       if (result.user) {
         setUser(result.user)
-        setToken(result.token ?? null)
+        setToken(null)
         if (typeof window !== 'undefined') {
-          localStorage.setItem('crave_user', JSON.stringify(result.user))
-          localStorage.setItem('crave_token', result.token ?? '')
-        }
-        if (result.token) {
-          syncClientCookies(result.token)
+          localStorage.removeItem('crave_user')
+          localStorage.removeItem('crave_token')
         }
       }
       return {
@@ -321,11 +265,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => {
       if (!prev) return null
       const updated = { ...prev, ...data }
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('crave_user', JSON.stringify(updated))
-        } catch {}
-      }
       return updated
     })
   }

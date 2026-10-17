@@ -5,7 +5,6 @@ import {
   blacklistToken,
   createToken,
   JWTPayload,
-  unblacklistUser,
   verifyToken,
 } from '../lib/jwt'
 import { proxy } from '../proxy'
@@ -72,15 +71,17 @@ async function runAuthVerification() {
     throw new Error('TEST 3 FAILED: User-level revoked tokens were not rejected.')
   }
 
-  // Restore user via unblacklistUser (simulating new login)
-  await unblacklistUser(userTokenPayload.id)
+  // A fresh login token must work without reviving the older sessions.
   const freshToken = await createToken(userTokenPayload)
   const verifyFreshToken = await verifyToken(freshToken)
   if (!verifyFreshToken) {
-    throw new Error('TEST 3 FAILED: Unblacklisted user fresh token was rejected.')
+    throw new Error('TEST 3 FAILED: Fresh token issued after logout-all was rejected.')
+  }
+  if ((await verifyToken(tokenDevice1)) !== null || (await verifyToken(tokenDevice2)) !== null) {
+    throw new Error('TEST 3 FAILED: Fresh login revived an older session token.')
   }
   console.log(
-    '✅ TEST 3 PASSED: All user session tokens revoked synchronously and restored upon unblacklist.\n'
+    '✅ TEST 3 PASSED: Older sessions stay revoked while a newly issued token is accepted.\n'
   )
 
   // TEST 4: /api/auth/logout Purges All 3 Auth Cookies

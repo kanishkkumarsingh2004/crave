@@ -1,6 +1,7 @@
 'use client'
 
 import AppleToggle from '@/components/ui/AppleToggle'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useWebSocket } from '@/lib/websocket'
 import {
   Building,

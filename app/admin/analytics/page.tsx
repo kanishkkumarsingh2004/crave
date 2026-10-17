@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/client/api-fetch'
 import {
   BarChart3,
   DollarSign,

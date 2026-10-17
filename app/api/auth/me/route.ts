@@ -2,13 +2,8 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-function getIsSecure(request: Request): boolean {
-  if (process.env.NODE_ENV !== 'production') return false
-  const host = request.headers.get('host') || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return false
-  const proto = request.headers.get('x-forwarded-proto')
-  if (proto === 'https') return true
-  return request.url.startsWith('https:')
+function getIsSecure(): boolean {
+  return process.env.NODE_ENV === 'production'
 }
 
 function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
@@ -59,10 +54,12 @@ function parseCookiesFromHeader(header: string | null): Record<string, string> {
 export async function GET(request: Request) {
   try {
     let token = ''
+    let usedBearerToken = false
 
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7)
+      usedBearerToken = true
     }
 
     if (!token) {
@@ -87,7 +84,7 @@ export async function GET(request: Request) {
       } catch {}
     }
 
-    const isSecure = getIsSecure(request)
+    const isSecure = getIsSecure()
 
     if (!token) {
       const res = NextResponse.json({ authenticated: false, user: null }, { status: 401 })
@@ -126,7 +123,21 @@ export async function GET(request: Request) {
       } catch (e) {}
     }
 
-    return NextResponse.json({ authenticated: true, user: payload })
+    const response = NextResponse.json({ authenticated: true, user: payload })
+
+    // Upgrade legacy browser sessions to an HttpOnly cookie before the client
+    // removes its old localStorage token.
+    if (usedBearerToken) {
+      response.cookies.set('crave_auth_token', token, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      })
+    }
+
+    return response
   } catch (error) {
     return NextResponse.json(
       { authenticated: false, error: 'Internal server error' },

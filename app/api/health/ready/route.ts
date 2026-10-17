@@ -13,15 +13,14 @@ export async function GET() {
 
   let dbStatus: 'ok' | 'error' = 'error'
   let dbLatency = -1
-  let dbError: string | null = null
 
   try {
     const dbStart = Date.now()
     await prisma.$queryRaw`SELECT 1`
     dbLatency = Date.now() - dbStart
     dbStatus = 'ok'
-  } catch (err) {
-    dbError = err instanceof Error ? err.message : 'Database connection failed'
+  } catch {
+    // Keep dependency errors out of the public readiness response.
   }
 
   const redisConfig = resolveRedisConfig()
@@ -50,19 +49,11 @@ export async function GET() {
         database: {
           status: dbStatus,
           latencyMs: dbLatency,
-          error: dbError,
         },
         redis: {
           status: redisCheckStatus,
-          mode: redisConfig.mode,
-          isDistributed: redisAvailable,
           required: redisRequired,
         },
-      },
-      env: {
-        nodeVersion: process.version,
-        nextVersion: process.env.__NEXT_VERSION || 'unknown',
-        environment: process.env.NODE_ENV,
       },
     },
     {

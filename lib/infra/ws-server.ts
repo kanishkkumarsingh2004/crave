@@ -4,12 +4,13 @@ import { redis, isRedisAvailable } from '@/lib/redis'
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
 export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000
 export const WS_BROADCAST_HOST = process.env.WS_BROADCAST_HOST || 'localhost'
-const WS_INTERNAL_SECRET = process.env.WS_INTERNAL_SECRET || 'crave_internal_ws_secret_default_key'
 
-function ensureInternalSecret() {
-  if (!process.env.WS_INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
+function getInternalSecret(): string | null {
+  const secret = process.env.WS_INTERNAL_SECRET
+  if (!secret && process.env.NODE_ENV === 'production') {
     throw new Error('FATAL: WS_INTERNAL_SECRET must be set in production environment.')
   }
+  return secret || null
 }
 
 export const broadcast = async (
@@ -20,7 +21,8 @@ export const broadcast = async (
   if (typeof window !== 'undefined') {
     return false
   }
-  ensureInternalSecret()
+  const internalSecret = getInternalSecret()
+  if (!internalSecret) return false
 
   const msgId =
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -55,7 +57,7 @@ export const broadcast = async (
           headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(payload),
-            'x-internal-secret': WS_INTERNAL_SECRET,
+            'x-internal-secret': internalSecret,
           },
         },
         (res: any) => {

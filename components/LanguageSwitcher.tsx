@@ -39,7 +39,7 @@ export default function LanguageSwitcher({
   className = '',
 }: LanguageSwitcherProps) {
   const { locale, setLocale, t } = useLanguage()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -73,7 +73,7 @@ export default function LanguageSwitcher({
     }
     setSaving(true)
     setOpen(false)
-    await setLocale(code, token)
+    await setLocale(code, user ? 'cookie-session' : null)
     setSaving(false)
   }
 

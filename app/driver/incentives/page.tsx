@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { Clock3, Flame, Target, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 

@@ -1,26 +1,16 @@
-import { createToken, unblacklistUser, type JWTPayload, type JWTRole } from '@/lib/jwt'
+import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb, updateUser } from '@/lib/dal'
 import { normalizeEmail } from '@/lib/email'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { NextResponse } from 'next/server'
 
-function isSecureCookie(request?: Request): boolean {
-  if (process.env.NODE_ENV !== 'production') return false
-  if (!request) return false
-  const host = request.headers.get('host') || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return false
-  const proto = request.headers.get('x-forwarded-proto')
-  if (proto === 'https') return true
-  return request.url.startsWith('https:')
+function isSecureCookie(): boolean {
+  return process.env.NODE_ENV === 'production'
 }
 
-function setCookies(
-  response: ReturnType<typeof NextResponse.json>,
-  token: string,
-  request?: Request
-) {
-  const isSecure = isSecureCookie(request)
+function setCookies(response: ReturnType<typeof NextResponse.json>, token: string) {
+  const isSecure = isSecureCookie()
   const cookieOptions = {
     httpOnly: true,
     secure: isSecure,
@@ -128,15 +118,8 @@ export async function POST(request: Request) {
       userPayload.restaurant_id = restaurantId
     }
 
-    // Unblacklist user upon valid credentials authentication to ensure session is immediately valid
-    await unblacklistUser(userPayload.id).catch(() => {})
-
     const token = await createToken(userPayload)
-    return setCookies(
-      NextResponse.json({ success: true, token, user: userPayload }),
-      token,
-      request
-    )
+    return setCookies(NextResponse.json({ success: true, user: userPayload }), token)
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json({ error: 'Unable to sign in at this time' }, { status: 500 })

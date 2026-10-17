@@ -3,7 +3,7 @@ import { redis, isRedisAvailable } from '@/lib/redis'
 
 // In-memory fallback sets for single-process resiliency when Redis is unavailable or unconfigured
 const inMemoryBlacklist = new Set<string>()
-const inMemoryUserBlacklist = new Set<string>()
+const inMemoryUserInvalidBefore = new Map<string, number>()
 let redisAuthWarnLogged = false
 
 function getJwtSecretKey(): Uint8Array {
@@ -16,6 +16,9 @@ function getJwtSecretKey(): Uint8Array {
     }
     // Development fallback - should never be used in production
     return new TextEncoder().encode('dev-secret-change-in-production')
+  }
+  if (process.env.NODE_ENV === 'production' && secret.length < 32) {
+    throw new Error('FATAL: JWT_SECRET must contain at least 32 characters in production.')
   }
   return new TextEncoder().encode(secret)
 }
@@ -41,13 +44,17 @@ export interface JWTPayload {
   locale?: string
   /** JWT ID for token revocation */
   jti?: string
+  /** Millisecond issuance timestamp used by logout-all revocation cutoffs. */
+  issuedAtMs?: number
   iat?: number
   exp?: number
 }
 
 export async function createToken(payload: JWTPayload): Promise<string> {
   const jti = payload.jti || crypto.randomUUID()
-  const token = await new SignJWT({ ...payload, jti })
+  const invalidBefore = inMemoryUserInvalidBefore.get(payload.id) || 0
+  const issuedAtMs = Math.max(Date.now(), invalidBefore + 1)
+  const token = await new SignJWT({ ...payload, jti, issuedAtMs })
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt()
     .setExpirationTime('7d')
@@ -67,7 +74,14 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     if (payloadWithJti.jti && inMemoryBlacklist.has(payloadWithJti.jti)) {
       return null
     }
-    if (payloadWithJti.id && inMemoryUserBlacklist.has(payloadWithJti.id)) {
+    const issuedAtMs =
+      typeof payloadWithJti.issuedAtMs === 'number'
+        ? payloadWithJti.issuedAtMs
+        : (payloadWithJti.iat || 0) * 1000
+    const localInvalidBefore = payloadWithJti.id
+      ? inMemoryUserInvalidBefore.get(payloadWithJti.id)
+      : undefined
+    if (localInvalidBefore && issuedAtMs <= localInvalidBefore) {
       return null
     }
 
@@ -82,10 +96,18 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
             if (blacklisted) return true
           }
           if (payloadWithJti.id) {
-            const userBlacklisted = await redis!.get(
+            const invalidBeforeValue = await redis!.get(
               `crave:jwt:blacklist:user:${payloadWithJti.id}`
             )
-            if (userBlacklisted) return true
+            const invalidBefore = Number(invalidBeforeValue)
+            if (
+              invalidBeforeValue &&
+              Number.isFinite(invalidBefore) &&
+              invalidBefore > 1 &&
+              issuedAtMs <= invalidBefore
+            ) {
+              return true
+            }
           }
           return false
         }
@@ -123,7 +145,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
  */
 export async function blacklistToken(token: string): Promise<boolean> {
   try {
-    const payload = (await verifyToken(token)) || (await decodeToken(token))
+    const payload = await verifyToken(token)
     if (!payload || !payload.jti) return false
 
     // Get token expiration to calculate TTL
@@ -155,14 +177,23 @@ export async function blacklistToken(token: string): Promise<boolean> {
  * Blacklist all tokens for a user (logout all sessions)
  */
 export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
-  inMemoryUserBlacklist.add(userId)
-  const userTimer = setTimeout(() => inMemoryUserBlacklist.delete(userId), 7 * 24 * 60 * 60 * 1000)
+  const invalidBefore = Date.now()
+  inMemoryUserInvalidBefore.set(userId, invalidBefore)
+  const userTimer = setTimeout(
+    () => inMemoryUserInvalidBefore.delete(userId),
+    7 * 24 * 60 * 60 * 1000
+  )
   userTimer?.unref?.()
 
   if (isRedisAvailable() && redis) {
     try {
       await Promise.race([
-        redis.set(`crave:jwt:blacklist:user:${userId}`, '1', 'EX', 7 * 24 * 60 * 60),
+        redis.set(
+          `crave:jwt:blacklist:user:${userId}`,
+          String(invalidBefore),
+          'EX',
+          7 * 24 * 60 * 60
+        ),
         new Promise((resolve) => setTimeout(resolve, 500)),
       ])
     } catch {}
@@ -171,40 +202,11 @@ export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
 }
 
 /**
- * Remove user-level blacklist when a user successfully authenticates afresh
- */
-export async function unblacklistUser(userId: string): Promise<boolean> {
-  inMemoryUserBlacklist.delete(userId)
-  if (isRedisAvailable() && redis) {
-    try {
-      await Promise.race([
-        redis.del(`crave:jwt:blacklist:user:${userId}`),
-        new Promise((resolve) => setTimeout(resolve, 500)),
-      ])
-    } catch {}
-  }
-  return true
-}
-
-/**
- * Check if a user has been globally logged out
+ * Check whether a user currently has a logout-all cutoff.
  */
 export async function isUserBlacklisted(userId: string): Promise<boolean> {
-  if (inMemoryUserBlacklist.has(userId)) return true
+  if (inMemoryUserInvalidBefore.has(userId)) return true
   if (!isRedisAvailable() || !redis) return false
-  const blacklisted = await redis.get(`crave:jwt:blacklist:user:${userId}`)
-  return !!blacklisted
-}
-
-/**
- * Decode a JWT without verification (for extracting claims)
- */
-export async function decodeToken(token: string): Promise<JWTPayload | null> {
-  try {
-    const { decodeJwt } = await import('jose')
-    const decoded = decodeJwt(token)
-    return decoded as unknown as JWTPayload
-  } catch (error) {
-    return null
-  }
+  const invalidBefore = Number(await redis.get(`crave:jwt:blacklist:user:${userId}`))
+  return Number.isFinite(invalidBefore) && invalidBefore > 1
 }

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { isRedisAvailable, redis, resolveRedisConfig } from '@/lib/redis'
 import { getWebPushPublicKey, isWebPushConfigured } from '@/lib/web-push'
+import { handleAuthError, requireRole } from '@/lib/auth-helpers'
 import { NextResponse } from 'next/server'
 
 function formatUptime(seconds: number): string {
@@ -17,25 +18,18 @@ function formatUptime(seconds: number): string {
 }
 
 /**
- * GET /api/health — Comprehensive Platform Health & Parameters API
+ * GET /api/health — lightweight public liveness probe.
  *
- * Exposes real-time health telemetry:
- * - website status & environment
- * - all uptimes (process, formatted, process start time, memory footprint)
- * - notification status (Web Push VAPID configuration, active user & driver push subscriptions)
- * - redis status (connection state, ping latency, clustering mode)
- * - database status (PostgreSQL latency & connectivity)
- * - realtime WebSocket daemon status
+ * Detailed operational telemetry is restricted to administrators and requires
+ * `?details=true`; this prevents public infrastructure and error disclosure.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
 
-  // Lightweight liveness probe override for load balancers
-  if (searchParams.get('probe') === 'liveness' || searchParams.get('quick') === 'true') {
+  if (searchParams.get('details') !== 'true') {
     return NextResponse.json(
       {
         status: 'ok',
-        uptime: process.uptime(),
         timestamp: new Date().toISOString(),
       },
       {
@@ -43,6 +37,12 @@ export async function GET(request: Request) {
         headers: { 'Cache-Control': 'no-store, max-age=0' },
       }
     )
+  }
+
+  try {
+    await requireRole(request, 'admin')
+  } catch (error) {
+    return handleAuthError(error)
   }
 
   const startTime = Date.now()

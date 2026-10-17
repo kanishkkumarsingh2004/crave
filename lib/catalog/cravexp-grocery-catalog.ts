@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/client/api-fetch'
+
 export const CRAVEXP_DARK_STORE_ID = 'cravexp_dark_store_01'
 
 export const CRAVEXP_DARK_STORE_INFO = {

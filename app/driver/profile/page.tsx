@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useDriver } from '@/lib/driver-context'
 import { Bike, CheckCircle2, Save, ShieldCheck, User } from 'lucide-react'
 import React, { useEffect, useState } from 'react'

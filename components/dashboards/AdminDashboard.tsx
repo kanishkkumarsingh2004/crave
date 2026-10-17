@@ -1,12 +1,15 @@
 'use client'
 
+import BulkMenuImportModal from '@/components/menu/BulkMenuImportModal'
 import { UserRole } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import { useAdminStatsUpdates } from '@/lib/websocket'
 import {
   CheckCircle2,
   Crown,
   Edit3,
+  FileSpreadsheet,
   Plus,
   RefreshCw,
   Search,
@@ -204,6 +207,7 @@ export default function AdminDashboard() {
 
   // Admin Menu & Price Alteration Drawer / Modal State
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false)
+  const [isBulkMenuImportOpen, setIsBulkMenuImportOpen] = useState(false)
   const [selectedVendorForMenu, setSelectedVendorForMenu] = useState<VendorStore | null>(null)
   const [vendorProducts, setVendorProducts] = useState<ProductItem[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
@@ -2888,7 +2892,7 @@ export default function AdminDashboard() {
           <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d] max-h-[92vh] overflow-y-auto custom-scrollbar flex flex-col justify-between">
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
+              <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 dark:border-[#27342d] sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-md bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-900 dark:text-amber-300 border border-transparent dark:border-amber-900/50">
@@ -2909,7 +2913,14 @@ export default function AdminDashboard() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkMenuImportOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-[#3a4a40] bg-white dark:bg-[#121815] px-3.5 py-1.5 text-xs font-bold text-gray-700 dark:text-white shadow-xs hover:border-[#86a018] dark:hover:border-[#d9f447] transition-colors"
+                  >
+                    <FileSpreadsheet className="size-3.5" /> Bulk Import CSV
+                  </button>
                   <button
                     onClick={() => {
                       setEditingProduct(null)
@@ -3083,6 +3094,16 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedVendorForMenu && (
+        <BulkMenuImportModal
+          open={isBulkMenuImportOpen}
+          restaurantId={selectedVendorForMenu.id}
+          restaurantName={selectedVendorForMenu.storeName}
+          onClose={() => setIsBulkMenuImportOpen(false)}
+          onImported={() => openMenuDrawerForVendor(selectedVendorForMenu)}
+        />
       )}
 
       {/* EDIT / ADD PRODUCT MODAL FOR ADMIN */}

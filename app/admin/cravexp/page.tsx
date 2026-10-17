@@ -1,6 +1,7 @@
 'use client'
 
 import CraveLogo from '@/components/CraveLogo'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { generateCraveXPSku, normalizeCraveXPBarcode } from '@/lib/cravexp-product-code'
 import { useToast } from '@/lib/toast-context'
 import dynamic from 'next/dynamic'

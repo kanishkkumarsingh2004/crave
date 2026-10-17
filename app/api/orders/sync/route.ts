@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { handleAuthError, requireAuth } from '@/lib/auth-helpers'
+import { canReadOrder, getCustomerOrderScope, sanitizeOrderForActor } from '@/lib/auth/order-access'
 
 export async function GET(request: Request) {
   try {
+    const actor = await requireAuth(request)
     const url = new URL(request.url)
     const orderId = url.searchParams.get('orderId')
     const customerId = url.searchParams.get('customerId')
@@ -28,11 +31,13 @@ export async function GET(request: Request) {
       // Authoritative PostgreSQL Order fetch
       const order = await prisma.order.findUnique({
         where: { id: orderId },
-        include: { customer: true, restaurant: true },
       })
 
       if (!order) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+      }
+      if (!canReadOrder(actor, order)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
       // Authoritative Driver Location (In-memory spatial index + PostgreSQL fallback)
@@ -71,7 +76,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         serverTime: new Date().toISOString(),
-        order,
+        order: sanitizeOrderForActor(actor, order),
         driverLocation: driverLocation || null,
         missedEvents: missedEvents.map((evt) => ({
           id: evt.id,
@@ -82,10 +87,15 @@ export async function GET(request: Request) {
       })
     }
 
-    // Customer-level sync: returns all active orders for the customer
+    const scopedCustomerId = getCustomerOrderScope(actor, customerId)
+    if (!scopedCustomerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Customer-level sync: customers are always scoped to their authenticated identity.
     const orders = await prisma.order.findMany({
       where: {
-        customer_id: customerId!,
+        customer_id: scopedCustomerId,
       },
       orderBy: { created_at: 'desc' },
       take: 10,
@@ -94,13 +104,10 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       serverTime: new Date().toISOString(),
-      orders,
+      orders: orders.map((order) => sanitizeOrderForActor(actor, order)),
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[GET /api/orders/sync]', err)
-    return NextResponse.json(
-      { error: err?.message || 'Failed to sync order state' },
-      { status: 500 }
-    )
+    return handleAuthError(err)
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import AppleProgressBar from '@/components/ui/AppleProgressBar'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useLanguage } from '@/lib/language-context'
 import { useAdminStatsUpdates } from '@/lib/websocket'
 import {

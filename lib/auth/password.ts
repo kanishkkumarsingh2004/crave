@@ -1,10 +1,14 @@
 import crypto from 'crypto'
 
 const MIN_PASSWORD_LENGTH = 8
+const MAX_PASSWORD_LENGTH = 256
 
 export function validatePassword(password: unknown): string {
   if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
     throw new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`)
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    throw new Error(`Password must be no more than ${MAX_PASSWORD_LENGTH} characters long`)
   }
   return password
 }
@@ -21,7 +25,14 @@ export function verifyPassword(
   storedHash: unknown,
   legacySalt?: string
 ): boolean {
-  if (typeof password !== 'string' || typeof storedHash !== 'string' || !storedHash) return false
+  if (
+    typeof password !== 'string' ||
+    password.length > MAX_PASSWORD_LENGTH ||
+    typeof storedHash !== 'string' ||
+    !storedHash
+  ) {
+    return false
+  }
 
   let salt = legacySalt
   let expectedHash = storedHash

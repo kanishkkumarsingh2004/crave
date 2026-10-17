@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/client/api-fetch'
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   MapPin,

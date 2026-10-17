@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/client/api-fetch'
 /**
  * Language Context
  * ─────────────────────────────────────────────────────────────
@@ -107,12 +108,12 @@ export function LanguageProvider({ children, initialLocale }: LanguageProviderPr
     // 2. Persist to DB if the user is authenticated.
     if (token) {
       try {
+        const headers: HeadersInit = { 'Content-Type': 'application/json' }
+        if (token !== 'cookie-session') headers.Authorization = `Bearer ${token}`
         await fetch('/api/user/language', {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers,
+          credentials: 'include',
           body: JSON.stringify({ locale: newLocale }),
         })
       } catch {

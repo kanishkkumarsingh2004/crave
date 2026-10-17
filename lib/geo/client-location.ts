@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/client/api-fetch'
+
 /**
  * Client-Side GPS Geolocation & Reverse Geocoding Utility
  * Ensures reliable GPS detection with high accuracy and fast fallback,

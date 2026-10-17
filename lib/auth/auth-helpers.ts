@@ -29,7 +29,10 @@ export async function getAuthActor(request: Request): Promise<JWTPayload | null>
     try {
       const cookieStore = await cookies()
       token =
-        cookieStore.get('crave_auth_token')?.value || cookieStore.get('crave_token')?.value || ''
+        cookieStore.get('crave_auth_token')?.value ||
+        cookieStore.get('crave_token')?.value ||
+        cookieStore.get('drop_auth_token')?.value ||
+        ''
     } catch {}
   }
   return token ? verifyToken(token) : null
@@ -136,7 +139,13 @@ export function handleAuthError(error: unknown): NextResponse {
     if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 600) {
       return NextResponse.json({ error: error.message }, { status: statusCode })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[auth] Unexpected authenticated route error:', error)
+    return NextResponse.json(
+      {
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+      },
+      { status: 500 }
+    )
   }
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 }

@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/client/api-fetch'
+
 export interface PaymentConfig {
   upiVpa: string
   merchantName: string

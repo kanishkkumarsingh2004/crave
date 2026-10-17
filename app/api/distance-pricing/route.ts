@@ -3,6 +3,7 @@ import { fetchOSRMDrivingDistanceKm, calculateCheckoutPricing } from '@/lib/dist
 import { fetchOSRMDrivingRoutes } from '@/lib/route-service'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 
 export const revalidate = 0
 
@@ -65,6 +66,11 @@ async function getPaymentConfig() {
 
 export async function GET(request: Request) {
   try {
+    const rateLimit = await checkRateLimit(getClientIp(request), 'PUBLIC')
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetTime, rateLimit.retryAfter)
+    }
+
     const { searchParams } = new URL(request.url)
     const startLat = parseFloat(searchParams.get('startLat') || searchParams.get('restLat') || '0')
     const startLng = parseFloat(searchParams.get('startLng') || searchParams.get('restLng') || '0')
@@ -117,6 +123,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = await checkRateLimit(getClientIp(request), 'PUBLIC')
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetTime, rateLimit.retryAfter)
+    }
+
     const body = await request.json()
     const startLat = parseFloat(body.startLat || body.restLat || '0')
     const startLng = parseFloat(body.startLng || body.restLng || '0')

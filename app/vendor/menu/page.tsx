@@ -1,11 +1,14 @@
 'use client'
 
 import VendorSidebar from '@/components/VendorSidebar'
+import BulkMenuImportModal from '@/components/menu/BulkMenuImportModal'
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import {
   Check,
   Edit,
+  FileSpreadsheet,
   Image as ImageIcon,
   Plus,
   Search,
@@ -45,6 +48,40 @@ interface MenuItemVariantRecord {
   price: number
   in_stock: boolean
   is_default: boolean
+}
+
+function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord {
+  return {
+    id: item.id,
+    restaurant_id: item.restaurant_id || fallbackRestaurantId,
+    name: item.name,
+    category: item.category || 'General',
+    price: Number(item.price),
+    restaurant_price: Number(item.restaurant_price ?? item.price),
+    description: item.description ?? '',
+    in_stock: item.in_stock ?? true,
+    image:
+      item.image ||
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+    veg: item.is_veg ?? true,
+    unit: item.unit ?? null,
+    mrp: item.mrp != null ? Number(item.mrp) : null,
+    stock_count: Number(item.stock_count ?? 0),
+    sku_code: item.sku_code ?? null,
+    hsn_sac_code: item.hsn_sac_code ?? '996331',
+    price_tax_mode: item.price_tax_mode ?? 'TAX_INCLUSIVE',
+    expiry_date: item.expiry_date ? String(item.expiry_date).substring(0, 10) : null,
+    variants: Array.isArray(item.variants)
+      ? item.variants.map((variant: any) => ({
+          id: variant.id,
+          name: variant.name,
+          restaurant_price: Number(variant.restaurant_price),
+          price: Number(variant.price),
+          in_stock: variant.in_stock !== false,
+          is_default: variant.is_default === true,
+        }))
+      : [],
+  }
 }
 
 const MENU_CATEGORY_GROUPS = [
@@ -169,6 +206,7 @@ export default function VendorMenuPage() {
 
   // Modal State for Adding / Editing Dish
   const [showItemModal, setShowItemModal] = useState(false)
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   const [editingItem, setEditingItem] = useState<MenuItemRecord | null>(null)
 
   // Form Fields
@@ -266,37 +304,9 @@ export default function VendorMenuPage() {
         if (menuRes.ok) {
           const menuResult = await menuRes.json()
           if (menuResult.success && menuResult.items) {
-            const formatted: MenuItemRecord[] = menuResult.items.map((item: any) => ({
-              id: item.id,
-              restaurant_id: item.restaurant_id || targetRestId,
-              name: item.name,
-              category: item.category || 'General',
-              price: Number(item.price),
-              restaurant_price: Number(item.restaurant_price ?? item.price),
-              description: item.description ?? '',
-              in_stock: item.in_stock ?? true,
-              image:
-                item.image ||
-                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-              veg: item.is_veg ?? true,
-              unit: item.unit ?? null,
-              mrp: item.mrp != null ? Number(item.mrp) : null,
-              stock_count: Number(item.stock_count ?? 0),
-              sku_code: item.sku_code ?? null,
-              hsn_sac_code: item.hsn_sac_code ?? '996331',
-              price_tax_mode: item.price_tax_mode ?? 'TAX_INCLUSIVE',
-              expiry_date: item.expiry_date ? String(item.expiry_date).substring(0, 10) : null,
-              variants: Array.isArray(item.variants)
-                ? item.variants.map((variant: any) => ({
-                    id: variant.id,
-                    name: variant.name,
-                    restaurant_price: Number(variant.restaurant_price),
-                    price: Number(variant.price),
-                    in_stock: variant.in_stock !== false,
-                    is_default: variant.is_default === true,
-                  }))
-                : [],
-            }))
+            const formatted: MenuItemRecord[] = menuResult.items.map((item: any) =>
+              formatMenuItem(item, targetRestId || '')
+            )
             setMenuItems(formatted)
           } else {
             setMenuItems([])
@@ -318,6 +328,20 @@ export default function VendorMenuPage() {
   function triggerToast(msg: string) {
     const isError = /could not|failed|error|unable|invalid/i.test(msg)
     toast(msg, isError ? 'error' : 'success')
+  }
+
+  async function refreshMenuAfterImport() {
+    if (!restaurantId) return
+    const response = await fetch(
+      `/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`,
+      {
+        cache: 'no-store',
+      }
+    )
+    const result = await response.json()
+    if (!response.ok) throw new Error(result.error || 'Unable to refresh the menu.')
+    setMenuItems((result.items || []).map((item: any) => formatMenuItem(item, restaurantId)))
+    triggerToast('Bulk menu import completed successfully!')
   }
 
   function openAddModal() {
@@ -644,13 +668,24 @@ export default function VendorMenuPage() {
               </p>
             </div>
 
-            <button
-              onClick={openAddModal}
-              disabled={!restaurantId}
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition cursor-pointer"
-            >
-              <Plus className="size-4 text-[#0d1310]" /> Add New Dish
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBulkImportModal(true)}
+                disabled={!restaurantId}
+                className="inline-flex items-center gap-2 rounded-full border border-stone-300 dark:border-[#334238] bg-white dark:bg-[#171f1b] px-5 py-3 text-xs font-black text-stone-700 dark:text-white shadow-sm hover:border-[#86a018] dark:hover:border-[#d9f447] disabled:cursor-not-allowed disabled:opacity-50 transition"
+              >
+                <FileSpreadsheet className="size-4" /> Bulk Import CSV
+              </button>
+              <button
+                type="button"
+                onClick={openAddModal}
+                disabled={!restaurantId}
+                className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 transition cursor-pointer"
+              >
+                <Plus className="size-4 text-[#0d1310]" /> Add New Dish
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1407,6 +1442,16 @@ export default function VendorMenuPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {restaurantId && (
+        <BulkMenuImportModal
+          open={showBulkImportModal}
+          restaurantId={restaurantId}
+          restaurantName={user.restaurantName || 'Your restaurant'}
+          onClose={() => setShowBulkImportModal(false)}
+          onImported={refreshMenuAfterImport}
+        />
       )}
     </div>
   )

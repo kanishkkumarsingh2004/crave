@@ -55,6 +55,26 @@ function clearAuthCookies(response: NextResponse, isSecure: boolean) {
 
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
+  const method = request.method.toUpperCase()
+
+  // Browser mutations authenticated by cookies must originate from this site.
+  // Requests without an Origin header remain available to native/server clients.
+  if (pathname.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const origin = request.headers.get('origin')
+    if (origin) {
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const forwardedProtocol = request.headers.get('x-forwarded-proto')
+      const expectedOrigin =
+        forwardedHost && forwardedProtocol
+          ? `${forwardedProtocol}://${forwardedHost}`
+          : request.nextUrl.origin
+
+      if (origin !== expectedOrigin) {
+        return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+      }
+    }
+  }
+
   const authHeader = request.headers.get('authorization')
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
   const token =
@@ -154,5 +174,6 @@ export const config = {
     '/user/:path*',
     '/login',
     '/signup',
+    '/api/:path*',
   ],
 }

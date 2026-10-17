@@ -1,6 +1,7 @@
 'use client'
 
 import AppleToggle from '@/components/ui/AppleToggle'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { Coupon, fetchCoupons } from '@/lib/coupons'
 import { useToast } from '@/lib/toast-context'
 import {

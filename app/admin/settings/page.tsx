@@ -2,6 +2,7 @@
 
 import ThemeSelector from '@/components/ThemeSelector'
 import AppleToggle from '@/components/ui/AppleToggle'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import {
   isWebPushSupported,

@@ -23,6 +23,7 @@ import {
 } from '@/lib/finance'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
 export const revalidate = 0
@@ -48,6 +49,11 @@ interface ResolvedRestaurantConfig {
 
 export async function POST(req: Request) {
   try {
+    const rateLimit = await checkRateLimit(getClientIp(req), 'PUBLIC')
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetTime, rateLimit.retryAfter)
+    }
+
     const body = await req.json()
     const {
       subtotal = 0,

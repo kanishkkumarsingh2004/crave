@@ -5,6 +5,7 @@ import {
   requireAuth,
   requireRole,
 } from '@/lib/auth-helpers'
+import { canReadOrder, sanitizeOrderForActor } from '@/lib/auth/order-access'
 import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 import { dispatchPendingOutboxEvents, findOrderById, listOrders, updateOrder } from '@/lib/dal'
 import { validateAndApplyCoupon } from '@/lib/dal/coupons'
@@ -130,25 +131,12 @@ export async function GET(request: Request) {
         }
 
         // Authorization check for single order access
-        const isCustomer = actor.role === 'user' || (actor.role as string) === 'customer'
-        const isRider = actor.role === 'rider' || (actor.role as string) === 'driver'
         const isVendorActor =
           actor.role === 'restaurant_vendor' ||
           actor.role === 'cravexp_store_vendor' ||
           (actor.role as string) === 'vendor'
 
-        if (isCustomer && order.customer_id && order.customer_id !== actor.id) {
-          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
-        }
-        if (isRider && order.rider_id && order.rider_id !== actor.id) {
-          return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
-        }
-        if (
-          isVendorActor &&
-          actor.restaurantId &&
-          order.restaurant_id &&
-          order.restaurant_id !== actor.restaurantId
-        ) {
+        if (!canReadOrder(actor, order)) {
           return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 })
         }
 
@@ -210,8 +198,8 @@ export async function GET(request: Request) {
         return NextResponse.json({
           success: true,
           serverTime: new Date().toISOString(),
-          order,
-          orders: [order],
+          order: sanitizeOrderForActor(actor, order),
+          orders: [sanitizeOrderForActor(actor, order)],
           driverLocation: driverLocation || null,
           missedEvents: missedEvents.map((evt) => ({
             id: evt.id,
@@ -244,7 +232,13 @@ export async function GET(request: Request) {
         } else if (actor.role === 'rider' || (actor.role as string) === 'driver') {
           scopedDriverId = actor.id
         } else if (isVendorActor) {
-          scopedRestaurantId = (actor as any).restaurantId || vendorId || undefined
+          scopedRestaurantId = actor.restaurantId || actor.restaurant_id || undefined
+          if (!scopedRestaurantId) {
+            return NextResponse.json(
+              { error: 'Vendor account is not linked to a restaurant' },
+              { status: 403 }
+            )
+          }
         }
       }
 
@@ -256,22 +250,11 @@ export async function GET(request: Request) {
         restaurantName: vendorName ?? undefined,
         driverId: scopedDriverId,
         onlyApprovedForVendor: isVendorActor ? true : undefined,
-        includeAvailableForRider: isRiderActor || Boolean(searchParams.get('available')),
+        includeAvailableForRider:
+          isRiderActor || (actor?.role === 'admin' && Boolean(searchParams.get('available'))),
       })
 
-      // Sanitize delivery_otp for non-customer, non-admin callers (riders and vendors must not see the secret OTP)
-      let sanitizedOrders = orders
-      if (
-        actor &&
-        actor.role !== 'admin' &&
-        actor.role !== 'user' &&
-        (actor.role as string) !== 'customer'
-      ) {
-        sanitizedOrders = orders.map((o: any) => {
-          const { delivery_otp, ...safe } = o
-          return safe
-        })
-      }
+      const sanitizedOrders = orders.map((order) => sanitizeOrderForActor(actor!, order))
 
       return NextResponse.json({ success: true, orders: sanitizedOrders })
     } catch (error) {

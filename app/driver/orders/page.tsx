@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/client/api-fetch'
 import { calculateRoadTravelDistanceKm, fetchOSRMDrivingDistanceKm } from '@/lib/distance-pricing'
 import { getDriverPayoutDetails, useDriver } from '@/lib/driver-context'
 import {

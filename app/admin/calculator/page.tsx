@@ -2,6 +2,7 @@
 
 import AppleSlider from '@/components/ui/AppleSlider'
 import { calculateFullBreakdown, CalculatorInput, FullCalculatorResult } from '@/lib/calculator'
+import { apiFetch } from '@/lib/client/api-fetch'
 import {
   Calculator,
   CheckCircle2,

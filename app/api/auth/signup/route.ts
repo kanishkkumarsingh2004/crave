@@ -1,11 +1,11 @@
-import { createToken, unblacklistUser, JWTPayload } from '@/lib/jwt'
+import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail, createCustomerAddress, deleteUser } from '@/lib/dal'
 import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { normalizeEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { hashPassword } from '@/lib/password'
+import { hashPassword, validatePassword } from '@/lib/password'
 
 export async function POST(request: Request) {
   try {
@@ -15,22 +15,31 @@ export async function POST(request: Request) {
       return rateLimitResponse(result.resetTime, result.retryAfter)
     }
 
-    const body = await request.json()
-    const { name, password, role, phone, address } = body
+    const body = await request.json().catch(() => ({}))
+    const { password, role } = body
+    const name = typeof body.name === 'string' ? body.name.trim() : ''
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : ''
+    const address = typeof body.address === 'string' ? body.address.trim() : ''
     const cleanEmail = normalizeEmail(body.email)
 
-    if (!name || !cleanEmail || !password) {
+    if (name.length < 2 || name.length > 100 || !cleanEmail || !password) {
       return NextResponse.json(
-        { error: 'Name, a valid email address, and password are required' },
+        { error: 'Name (2-100 characters), a valid email address, and password are required' },
         { status: 400 }
       )
     }
 
-    if (typeof password !== 'string' || password.length < 8) {
+    try {
+      validatePassword(password)
+    } catch (error) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
+        { error: error instanceof Error ? error.message : 'Invalid password' },
         { status: 400 }
       )
+    }
+
+    if (phone.length > 30 || address.length > 500) {
+      return NextResponse.json({ error: 'Phone or address is too long' }, { status: 400 })
     }
 
     if (!role) {
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
     try {
       await createUser({
         id: finalUserId,
-        name: String(name).trim(),
+        name,
         email: cleanEmail,
         role: finalRole,
         phone: phone || null,
@@ -107,7 +116,7 @@ export async function POST(request: Request) {
     // Create JWT Payload and Auth Token for immediate session login
     const userPayload: JWTPayload = {
       id: finalUserId,
-      name: String(name).trim(),
+      name,
       email: cleanEmail,
       role: finalRole,
       phone: phone || undefined,
@@ -127,21 +136,14 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     })
 
-    await unblacklistUser(userPayload.id).catch(() => {})
-
     const token = await createToken(userPayload)
     const response = NextResponse.json({
       success: true,
-      token,
       user: userPayload,
       message: 'Account created successfully!',
     })
 
-    const host = request.headers.get('host') || ''
-    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1')
-    const isHttps =
-      request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https:')
-    const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost && isHttps
+    const isSecure = process.env.NODE_ENV === 'production'
 
     const cookieOptions = {
       httpOnly: true,

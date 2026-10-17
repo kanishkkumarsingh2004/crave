@@ -1,6 +1,7 @@
 'use client'
 
 import type { BroadcastOrderOffer } from '@/lib/driver-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 
 export interface DriverPosition {
   timestamp: number

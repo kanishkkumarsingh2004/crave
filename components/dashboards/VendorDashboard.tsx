@@ -3,6 +3,7 @@
 import { CraveSpinner } from '@/components/ui/ModernPreloader'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { playChimeSound, useVendorOrderUpdates } from '@/lib/websocket'
 import {
   Bell,

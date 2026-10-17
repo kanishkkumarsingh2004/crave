@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
+import { apiFetch } from '@/lib/client/api-fetch'
 import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { calculateHaversineDistanceKm } from '@/lib/utils'

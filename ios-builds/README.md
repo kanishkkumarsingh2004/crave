@@ -3,10 +3,10 @@
 This folder contains the latest debug IPA files for all three Crave native applications. They
 connect to the production backend at `https://crave.apexonestudio.com` by default.
 
-| Application | iOS bundle           | IPA (direct download)                                                                 |
-| ----------- | -------------------- | ------------------------------------------------------------------------------------- |
-| Admin       | `com.crave.admin`    | [crave-admin-debug.ipa](./crave-admin-debug.ipa) [Download](./crave-admin-debug.ipa)   |
-| Driver      | `com.crave.driver`   | [crave-driver-debug.ipa](./crave-driver-debug.ipa) [Download](./crave-driver-debug.ipa) |
+| Application | iOS bundle             | IPA (direct download)                                                                               |
+| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
+| Admin       | `com.crave.admin`      | [crave-admin-debug.ipa](./crave-admin-debug.ipa) [Download](./crave-admin-debug.ipa)                |
+| Driver      | `com.crave.driver`     | [crave-driver-debug.ipa](./crave-driver-debug.ipa) [Download](./crave-driver-debug.ipa)             |
 | Restaurant  | `com.crave.restaurant` | [crave-restaurant-debug.ipa](./crave-restaurant-debug.ipa) [Download](./crave-restaurant-debug.ipa) |
 
 Click any IPA filename above to download it directly.

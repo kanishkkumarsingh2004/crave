@@ -1,50 +1,11 @@
-import { verifyToken, type JWTPayload } from '@/lib/jwt'
-import { getTestUser, isTestRequest, MOCK_TEST_USER } from '@/lib/test-auth'
-import { cookies } from 'next/headers'
+import { AuthError, getAuthActor, requireAuth, type UserRole } from '@/lib/auth/auth-helpers'
+import type { JWTPayload } from '@/lib/jwt'
 import { NextResponse } from 'next/server'
 
-export type UserRole = JWTPayload['role']
-
-/**
- * Get authenticated actor from request
- * Supports both production JWT and test mode via headers
- */
-export async function getApiActor(request: Request): Promise<JWTPayload | null> {
-  // Check for test mode first (uses headers, no JWT required)
-  if (isTestRequest(request)) {
-    // SECURITY: Test auth headers must NEVER work in production
-    if (process.env.NODE_ENV === 'production' && !process.env.CI) {
-      throw new Error('Test authentication headers are not allowed in production')
-    }
-    const testUser = getTestUser(request)
-    return testUser || MOCK_TEST_USER
-  }
-
-  // Production JWT authentication
-  const authHeader = request.headers.get('authorization')
-  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-  if (!token) {
-    try {
-      const cookieStore = await cookies()
-      token =
-        cookieStore.get('crave_auth_token')?.value ||
-        cookieStore.get('crave_token')?.value ||
-        cookieStore.get('drop_auth_token')?.value ||
-        ''
-    } catch {}
-  }
-  return token ? verifyToken(token) : null
-}
-
-export class AuthApiError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode: number = 401
-  ) {
-    super(message)
-    this.name = 'AuthApiError'
-  }
-}
+export type { UserRole }
+export { AuthError as AuthApiError }
+export const getApiActor = getAuthActor
+export const requireAuthApi = requireAuth
 
 /**
  * Require admin role - throws 403 if not admin, 401 if not authenticated
@@ -52,21 +13,10 @@ export class AuthApiError extends Error {
 export async function requireAdmin(request: Request): Promise<JWTPayload> {
   const actor = await getApiActor(request)
   if (!actor) {
-    throw new AuthApiError('Authentication required', 401)
+    throw new AuthError('Authentication required', 401)
   }
   if (actor.role !== 'admin') {
-    throw new AuthApiError('Admin access required', 403)
-  }
-  return actor
-}
-
-/**
- * Require authentication - throws 401 if not authenticated
- */
-export async function requireAuthApi(request: Request): Promise<JWTPayload> {
-  const actor = await getApiActor(request)
-  if (!actor) {
-    throw new AuthApiError('Authentication required', 401)
+    throw new AuthError('Admin access required', 403)
   }
   return actor
 }
@@ -81,7 +31,7 @@ export async function requireRoleApi(
   const actor = await requireAuthApi(request)
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
   if (!roles.includes(actor.role)) {
-    throw new AuthApiError('Insufficient permissions', 403)
+    throw new AuthError('Insufficient permissions', 403)
   }
   return actor
 }
@@ -90,7 +40,7 @@ export async function requireRoleApi(
  * Handle API auth error consistently across API handlers
  */
 export function handleApiAuthError(error: any): NextResponse | null {
-  if (error instanceof AuthApiError || error?.name === 'AuthApiError' || error?.statusCode) {
+  if (error instanceof AuthError || error?.name === 'AuthError' || error?.statusCode) {
     return NextResponse.json(
       { error: error.message || 'Unauthorized' },
       { status: error.statusCode || 401 }
@@ -155,7 +105,13 @@ export function withAuthApi(
         ) {
           return NextResponse.json({ error: error.message }, { status: 403 })
         }
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        console.error('[auth] Unexpected API authorization wrapper error:', error)
+        return NextResponse.json(
+          {
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+          },
+          { status: 500 }
+        )
       }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
