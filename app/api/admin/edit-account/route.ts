@@ -1,4 +1,4 @@
-import { updateRestaurant } from '@/lib/dal/restaurants'
+import { invalidateRestaurantCache, updateRestaurant } from '@/lib/dal/restaurants'
 import { findUserById, updateUser } from '@/lib/dal/users'
 import { verifyToken } from '@/lib/jwt'
 import { hashPassword } from '@/lib/password'
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       restaurantName,
       storeName,
       cuisine,
+      bannerUrl,
       commissionRate,
       paymentModel,
       vehicleType,
@@ -55,6 +56,27 @@ export async function POST(request: Request) {
     const finalStoreName = storeName || restaurantName
     const finalVehicleType = vehicleType || vehicle_type
     const finalLicensePlate = licensePlate || license_plate
+    let cleanBannerUrl: string | null | undefined
+
+    if (bannerUrl !== undefined) {
+      const candidate = String(bannerUrl).trim()
+      if (!candidate) {
+        cleanBannerUrl = null
+      } else {
+        try {
+          const parsedUrl = new URL(candidate)
+          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+            throw new Error('Unsupported URL protocol')
+          }
+          cleanBannerUrl = parsedUrl.toString()
+        } catch {
+          return NextResponse.json(
+            { error: 'bannerUrl must be a valid HTTP or HTTPS URL.' },
+            { status: 400 }
+          )
+        }
+      }
+    }
 
     // Prepare User update payload
     const userUpdateData: Record<string, any> = {}
@@ -77,6 +99,7 @@ export async function POST(request: Request) {
     const needsRestaurantUpdate =
       finalStoreName ||
       cuisine ||
+      bannerUrl !== undefined ||
       commissionRate !== undefined ||
       paymentModel ||
       address ||
@@ -134,6 +157,7 @@ export async function POST(request: Request) {
             const restUpdateData: Record<string, any> = {}
             if (finalStoreName) restUpdateData.name = String(finalStoreName).trim()
             if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
+            if (bannerUrl !== undefined) restUpdateData.image = cleanBannerUrl
             if (address) restUpdateData.address = String(address).trim()
             if (phone) restUpdateData.phone = String(phone).trim()
             if (commissionRate !== undefined)
@@ -161,6 +185,7 @@ export async function POST(request: Request) {
             })
           }
         })
+        await invalidateRestaurantCache()
       } else {
         // Single table updates (no transaction needed for single table)
         if (Object.keys(userUpdateData).length > 0) {
@@ -170,6 +195,7 @@ export async function POST(request: Request) {
           const restUpdateData: Record<string, any> = {}
           if (finalStoreName) restUpdateData.name = String(finalStoreName).trim()
           if (cuisine) restUpdateData.cuisine = String(cuisine).trim()
+          if (bannerUrl !== undefined) restUpdateData.image = cleanBannerUrl
           if (address) restUpdateData.address = String(address).trim()
           if (phone) restUpdateData.phone = String(phone).trim()
           if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)

@@ -43,6 +43,7 @@ interface AccountRecord {
   totalOrders?: number
   latitude?: number
   longitude?: number
+  bannerUrl?: string
 }
 
 interface PaymentReference {
@@ -196,6 +197,7 @@ export default function AdminDashboard() {
     paymentModel: 'commission' as 'commission' | 'markup',
     vehicleType: 'Electric Scooter',
     licensePlate: '',
+    bannerUrl: '',
     latitude: 12.679898,
     longitude: 77.469493,
   })
@@ -325,6 +327,7 @@ export default function AdminDashboard() {
             vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
             totalSpent: Number(u.total_spent || 0),
             totalOrders: Number(u.total_orders || 0),
+            bannerUrl: matchedVendor?.bannerUrl || undefined,
             latitude: u.latitude
               ? Number(u.latitude)
               : matchedVendor?.latitude
@@ -374,6 +377,7 @@ export default function AdminDashboard() {
               vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
               totalSpent: 0,
               totalOrders: 0,
+              bannerUrl: v.bannerUrl || undefined,
               latitude: v.latitude ? Number(v.latitude) : undefined,
               longitude: v.longitude ? Number(v.longitude) : undefined,
             })
@@ -605,6 +609,7 @@ export default function AdminDashboard() {
         acc.role === 'driver' || acc.role === 'rider'
           ? acc.detail?.split('·')[1]?.trim() || ''
           : '',
+      bannerUrl: acc.bannerUrl || '',
       latitude: acc.latitude ?? 12.679898,
       longitude: acc.longitude ?? 77.469493,
     })
@@ -636,6 +641,7 @@ export default function AdminDashboard() {
                 cuisine: editForm.cuisine,
                 commissionRate: editForm.commissionRate,
                 paymentModel: editForm.paymentModel,
+                bannerUrl: editForm.bannerUrl,
                 latitude: editForm.latitude,
                 longitude: editForm.longitude,
               }
@@ -1880,6 +1886,29 @@ export default function AdminDashboard() {
                       onChange={(e) => setEditForm({ ...editForm, storeName: e.target.value })}
                       className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
                     />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="edit-vendor-banner-url"
+                      className="font-bold text-gray-700 dark:text-gray-300"
+                    >
+                      Front Shop Banner Image URL
+                    </label>
+                    <input
+                      id="edit-vendor-banner-url"
+                      type="url"
+                      inputMode="url"
+                      maxLength={2048}
+                      placeholder="https://example.com/store-banner.jpg"
+                      value={editForm.bannerUrl}
+                      onChange={(e) => setEditForm({ ...editForm, bannerUrl: e.target.value })}
+                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                    <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                      Shown to customers on the restaurant card and storefront. Clear this field to
+                      remove the current banner.
+                    </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { unregisterNativePushToken } from '@/lib/native-driver'
+import { unregisterWebPushSubscription } from '@/lib/web-push-client'
 
 export type UserRole =
   | 'user'
@@ -283,6 +284,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token || (typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null)
 
       await unregisterNativePushToken(activeToken)
+      await unregisterWebPushSubscription(activeToken)
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('crave_user')

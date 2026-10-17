@@ -28,6 +28,7 @@ model User {
   driver_upi         DriverUpiAccount[]
   orders             Order[]
   owned_restaurants  Restaurant[]
+  web_push_subscriptions WebPushSubscription[]
 
   @@index([role, created_at])
   @@map("users")
@@ -410,6 +411,22 @@ model DriverPushToken {
 
   @@index([driver_id, is_active])
   @@map("driver_push_tokens")
+}
+
+model WebPushSubscription {
+  id           String   @id @default(cuid())
+  user_id      String
+  endpoint     String   @unique
+  p256dh       String
+  auth         String
+  user_agent   String?
+  is_active    Boolean  @default(true)
+  last_seen_at DateTime @default(now()) @db.Timestamptz(6)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_active])
+  @@map("web_push_subscriptions")
 }
 
 model PickerMetric {

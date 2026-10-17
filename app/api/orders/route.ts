@@ -29,6 +29,7 @@ import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
+import { sendWebPushToRoles, sendWebPushToUsers, type WebPushPayload } from '@/lib/web-push'
 import { Prisma, type OrderStatus } from '@prisma/client'
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
@@ -1329,6 +1330,13 @@ export async function POST(request: Request) {
         orderId,
         timestamp: new Date().toISOString(),
       })
+      await sendWebPushToRoles(['admin'], {
+        title: 'New order received',
+        body: `${order.customer_name || 'A customer'} placed order #${orderId.slice(-8)} for ₹${Number(order.total_amount || 0).toLocaleString('en-IN')} from ${order.restaurant_name}.`,
+        url: '/admin/dashboard',
+        tag: `admin-new-order-${orderId}`,
+        orderId,
+      }).catch((pushError) => console.error('[POST /api/orders] Admin Web Push failed:', pushError))
       mark('broadcast')
 
       const responseData = {
@@ -1721,6 +1729,45 @@ export async function PATCH(request: Request) {
       if (status) {
         await broadcast('order_update', { order: updated, orderId })
         await broadcast('admin_orders', { order: updated, orderId })
+
+        const statusMessages: Partial<Record<OrderStatus, string>> = {
+          payment_submitted: 'Your payment is being reviewed.',
+          payment_verified: 'Payment verified. Your order is moving to the kitchen.',
+          sent_to_vendor: 'The restaurant has received your order.',
+          preparing: 'Your order is being prepared.',
+          packing: 'Your order is being packed.',
+          ready_for_pickup: 'Your order is ready for pickup.',
+          rider_assigned: 'A delivery partner has been assigned.',
+          picked_up: 'Your order has been picked up.',
+          out_for_delivery: 'Your order is out for delivery.',
+          delivered: 'Your order has been delivered.',
+          completed: 'Your order is complete. Enjoy!',
+          cancelled: 'Your order has been cancelled.',
+        }
+        const customerId = updated.customer_id || existing.customer_id
+        const pushPayload: WebPushPayload = {
+          title: `Order update · ${String(status).replaceAll('_', ' ')}`,
+          body: statusMessages[status as OrderStatus] || 'Your order status has changed.',
+          url: `/user/orders/${encodeURIComponent(orderId)}`,
+          tag: `order-${orderId}`,
+          orderId,
+        }
+        await sendWebPushToUsers([customerId].filter(Boolean), pushPayload).catch((pushError) =>
+          console.error('[PATCH /api/orders] Web Push failed:', pushError)
+        )
+
+        const assignedRiderId = updated.rider_id || existing.rider_id
+        if (assignedRiderId && (status === 'rider_assigned' || status === 'ready_for_pickup')) {
+          await sendWebPushToUsers([assignedRiderId], {
+            title: 'Order ready for pickup',
+            body: `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}. Delivery value ₹${Number(existing.total_amount || 0).toLocaleString('en-IN')}.`,
+            url: '/driver/orders',
+            tag: `driver-order-${orderId}`,
+            orderId,
+          }).catch((pushError) =>
+            console.error('[PATCH /api/orders] Driver Web Push failed:', pushError)
+          )
+        }
       }
 
       // Broadcast driver location update if coordinates changed.

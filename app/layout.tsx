@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { Toaster } from '@/components/ui/Toaster'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
+import WebPushPrompt from '@/components/WebPushPrompt'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
@@ -83,6 +84,7 @@ export default function RootLayout({
                   {children}
                   <Toaster />
                   <PwaInstallPrompt />
+                  <WebPushPrompt />
                 </ToastProvider>
               </ThemeProvider>
             </LanguageProvider>

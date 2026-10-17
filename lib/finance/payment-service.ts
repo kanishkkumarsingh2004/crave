@@ -17,6 +17,7 @@ import {
   type CanonicalPriceResult,
 } from '@/lib/finance'
 import { prisma } from '@/lib/prisma'
+import { sendWebPushToUsers } from '@/lib/web-push'
 import { PaymentStatus, type OrderStatus } from '@prisma/client'
 
 export interface PaymentVerificationInput {
@@ -66,7 +67,7 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     throw new Error('orderId is required for payment verification')
   }
 
-  return await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1. Fetch current order with row check
     const order = await tx.order.findUnique({
       where: { id: orderId },
@@ -236,6 +237,43 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
       alreadyVerified: false,
     }
   })
+
+  if (!result.alreadyVerified) {
+    const customerId = result.order.customer_id
+    if (customerId) {
+      await sendWebPushToUsers([customerId], {
+        title: 'Payment verified',
+        body: `Order #${orderId.slice(-8)} has been sent to the restaurant.`,
+        url: `/user/orders/${encodeURIComponent(orderId)}`,
+        tag: `order-${orderId}`,
+        orderId,
+      }).catch((pushError) =>
+        console.error('[payment-service] Customer Web Push failed:', pushError)
+      )
+    }
+
+    if (result.order.restaurant_id) {
+      const restaurant = await prisma.restaurant
+        .findUnique({
+          where: { id: result.order.restaurant_id },
+          select: { owner_id: true },
+        })
+        .catch(() => null)
+      if (restaurant?.owner_id) {
+        await sendWebPushToUsers([restaurant.owner_id], {
+          title: 'New paid order received',
+          body: `${result.order.customer_name} placed order #${orderId.slice(-8)} for ₹${Number(result.order.total_amount).toLocaleString('en-IN')}. Start preparing it now.`,
+          url: '/vendor/dashboard',
+          tag: `new-order-${orderId}`,
+          orderId,
+        }).catch((pushError) =>
+          console.error('[payment-service] Vendor Web Push failed:', pushError)
+        )
+      }
+    }
+  }
+
+  return result
 }
 
 /**
@@ -245,7 +283,7 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
 export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
   const { orderId, reason = 'Payment verification rejected', actorId = 'SYSTEM' } = input
 
-  return await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
     })
@@ -328,6 +366,20 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
 
     return { success: true, order: updatedOrder }
   })
+
+  if (!result.alreadyRejected && result.order.customer_id) {
+    await sendWebPushToUsers([result.order.customer_id], {
+      title: 'Payment not verified',
+      body: `Payment for order #${orderId.slice(-8)} was not approved. Open the app for details.`,
+      url: `/user/orders/${encodeURIComponent(orderId)}`,
+      tag: `order-${orderId}`,
+      orderId,
+    }).catch((pushError) =>
+      console.error('[payment-service] Payment rejection Web Push failed:', pushError)
+    )
+  }
+
+  return result
 }
 
 /**
