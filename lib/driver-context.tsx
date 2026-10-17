@@ -511,13 +511,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/workers/sw-background.js', { scope: '/' })
-        .then(() => {})
-        .catch(() => {})
-    }
-
     try {
       const worker = new Worker('/workers/driver/location-stream.worker.js')
       workerRef.current = worker

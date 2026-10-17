@@ -79,15 +79,3 @@ export const broadcast = async (
     return false
   }
 }
-
-export const getWSS = () => null
-
-export function getClients() {
-  return new Map()
-}
-
-export function getDrivers() {
-  return new Map()
-}
-
-export const initWebSocketServer = (_server: any) => null

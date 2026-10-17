@@ -86,9 +86,3 @@ export async function deleteUser(id: string): Promise<{ id: string }> {
     throw new Error(`Unable to delete user ${id}: ${detail}`)
   }
 }
-
-export async function deleteUserByEmail(email: string): Promise<{ id: string } | null> {
-  const user = await findUserByEmail(email)
-  if (!user) return null
-  return deleteUser(user.id)
-}

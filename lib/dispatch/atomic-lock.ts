@@ -72,65 +72,6 @@ export async function acquireDriverOfferLock(
 }
 
 /**
- * DEPRECATED: Use acquireDriverOfferLock instead.
- * Kept for backward compatibility with existing call sites.
- */
-export async function tryLockDriverForOffer(
-  driverId: string,
-  requestId: string,
-  ttlMs: number = DEFAULT_OFFER_TTL_MS
-): Promise<boolean> {
-  // Try distributed lock first
-  if (isRedisAvailable() && redis) {
-    const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
-    if (result === 'OK') {
-      offerLocks.set(driverId, {
-        driverId,
-        requestId,
-        lockedAt: Date.now(),
-        expiresAt: Date.now() + ttlMs,
-      })
-      return true
-    }
-    return false
-  }
-
-  // In production, require Redis for distributed locking
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Redis required for distributed locking in production')
-  }
-
-  // Fallback to local
-  const now = Date.now()
-  const existingLock = offerLocks.get(driverId)
-  if (existingLock && existingLock.expiresAt > now) {
-    if (existingLock.requestId === requestId) return true
-    return false
-  }
-  offerLocks.set(driverId, {
-    driverId,
-    requestId,
-    lockedAt: now,
-    expiresAt: now + ttlMs,
-  })
-  return true
-}
-
-/**
- * Check if a driver is currently locked by any dispatch offer (synchronous in-memory check)
- */
-export function isDriverLocked(driverId: string): boolean {
-  const now = Date.now()
-  const lock = offerLocks.get(driverId)
-  if (!lock) return false
-  if (lock.expiresAt <= now) {
-    offerLocks.delete(driverId)
-    return false
-  }
-  return true
-}
-
-/**
  * Check if a driver is currently locked (distributed async check including Redis)
  */
 export async function isDriverLockedAsync(driverId: string): Promise<boolean> {
@@ -206,11 +147,4 @@ export async function releaseDriverLock(driverId: string, requestId?: string): P
   }
 
   return lock !== undefined
-}
-
-/**
- * Clear all locks (Utility for testing)
- */
-export function clearAllOfferLocks(): void {
-  offerLocks.clear()
 }

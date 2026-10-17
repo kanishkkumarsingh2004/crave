@@ -206,7 +206,3 @@ export async function deleteRestaurant(id: string) {
   await invalidateRestaurantCache()
   return { id }
 }
-
-export async function deleteRestaurantsByOwner(ownerId: string) {
-  return await prisma.restaurant.deleteMany({ where: { owner_id: ownerId } })
-}
