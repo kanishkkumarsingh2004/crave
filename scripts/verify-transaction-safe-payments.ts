@@ -15,6 +15,7 @@ import {
   processRefundTx,
   reconcilePendingOrders,
 } from '../lib/finance/payment-service'
+import { calculateOrderPrice } from '../lib/finance/pricing-engine'
 import { acquireIdempotency, completeIdempotency } from '../lib/idempotency'
 import { prisma } from '../lib/prisma'
 
@@ -135,7 +136,23 @@ async function runVerification() {
     console.log('▶ Test 3: Transaction-Safe Payment Verification & Subledger Integrity')
     const testOrderId = `ord_${testIdPrefix}`
 
-    // Create a base pending order
+    // Create a base pending order with canonical financial snapshot
+    const snapshot = calculateOrderPrice({
+      orderId: testOrderId,
+      orderType: 'restaurant_food',
+      restaurantName: 'Test Gourmet Kitchen',
+      items: [
+        { id: testItemId, name: 'Limited Sourdough Pizza', quantity: 2, unitPricePaise: 35000 },
+      ],
+      delivery: {
+        baseDeliveryFeePaise: 5000,
+        baseDistanceKm: 3,
+        perKmRatePaise: 1000,
+        roadDistanceKm: 3,
+      },
+    })
+    const payableAmount = Math.ceil(snapshot.customerPayablePaise / 100)
+
     await prisma.order.create({
       data: {
         id: testOrderId,
@@ -143,9 +160,10 @@ async function runVerification() {
         restaurant_name: 'Test Gourmet Kitchen',
         items: [{ id: testItemId, name: 'Limited Sourdough Pizza', qty: 2, price: 350 }],
         subtotal: 700,
-        total_amount: 750,
+        total_amount: payableAmount,
         status: 'payment_submitted',
         payment_status: 'pending',
+        financial_snapshot: snapshot as any,
       },
     })
 
@@ -154,7 +172,7 @@ async function runVerification() {
       orderId: testOrderId,
       gateway: 'upi_razorpay',
       gatewayPaymentId: `pay_${testIdPrefix}`,
-      amount: 750,
+      amount: payableAmount,
       actorId: 'admin_audit_01',
     })
     console.assert(verifyResult1.success, 'Verification should succeed')
