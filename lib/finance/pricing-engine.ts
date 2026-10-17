@@ -629,7 +629,7 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
 // Converts CanonicalPriceResult to the legacy FullCalculatorResult shape
 // so existing API routes and UI components continue working during migration.
 
-import type { FullCalculatorResult } from '../calculator'
+import type { FullCalculatorResult } from './calculator'
 
 export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculatorResult {
   const toRupees = (paise: number) => Math.round(paise / 100)
