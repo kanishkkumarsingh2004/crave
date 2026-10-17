@@ -7,27 +7,27 @@ datasource db {
 }
 
 model User {
-  id                 String             @id
-  name               String
-  email              String             @unique
-  role               UserRole
-  password_hash      String?
-  phone              String?
-  address            String?
-  avatar             String?
-  restaurant_name    String?
-  cuisine            String?
-  vehicle_type       String?
-  license_plate      String?
-  locale             String?            @default("en")
-  created_at         DateTime?          @default(now()) @db.Timestamptz(6)
-  customer_addresses CustomerAddress[]
-  driver_incentives  DriverIncentive[]
-  driver_payouts     DriverPayout[]
-  driver_push_tokens DriverPushToken[]
-  driver_upi         DriverUpiAccount[]
-  orders             Order[]
-  owned_restaurants  Restaurant[]
+  id                     String                @id
+  name                   String
+  email                  String                @unique
+  role                   UserRole
+  password_hash          String?
+  phone                  String?
+  address                String?
+  avatar                 String?
+  restaurant_name        String?
+  cuisine                String?
+  vehicle_type           String?
+  license_plate          String?
+  locale                 String?               @default("en")
+  created_at             DateTime?             @default(now()) @db.Timestamptz(6)
+  customer_addresses     CustomerAddress[]
+  driver_incentives      DriverIncentive[]
+  driver_payouts         DriverPayout[]
+  driver_push_tokens     DriverPushToken[]
+  driver_upi             DriverUpiAccount[]
+  orders                 Order[]
+  owned_restaurants      Restaurant[]
   web_push_subscriptions WebPushSubscription[]
 
   @@index([role, created_at])
@@ -35,32 +35,32 @@ model User {
 }
 
 model Restaurant {
-  id                  String               @id
-  name                String
-  cuisine             String
-  rating              Decimal?             @default(4.8) @db.Decimal(2, 1)
-  
+  id      String   @id
+  name    String
+  cuisine String
+  rating  Decimal? @default(4.8) @db.Decimal(2, 1)
+
   // Commercial & Pricing Model Settings (Section 4 & 6 of commercial-engine.md)
-  commercial_model    CommercialModel      @default(commission)
-  commission_rate     Decimal?             @default(15.00) @db.Decimal(5, 2)
-  markup_rate         Decimal?             @default(0.00) @db.Decimal(5, 2)
-  fixed_commission    Int?                 @default(0)
-  fixed_markup        Int?                 @default(0)
-  payment_model       CommissionModel      @default(commission)
-  
+  commercial_model CommercialModel @default(commission)
+  commission_rate  Decimal?        @default(15.00) @db.Decimal(5, 2)
+  markup_rate      Decimal?        @default(0.00) @db.Decimal(5, 2)
+  fixed_commission Int?            @default(0)
+  fixed_markup     Int?            @default(0)
+  payment_model    CommissionModel @default(commission)
+
   address             String?
   owner_id            String?
-  created_at          DateTime?            @default(now()) @db.Timestamptz(6)
+  created_at          DateTime?    @default(now()) @db.Timestamptz(6)
   image               String?
-  is_pure_veg         Boolean?             @default(false)
-  is_dark_store       Boolean              @default(false)
-  is_open             Boolean              @default(true)
-  rating_count        Int?                 @default(50)
-  cost_for_two        Int?                 @default(300)
-  delivery_minutes    Int?                 @default(25)
+  is_pure_veg         Boolean?     @default(false)
+  is_dark_store       Boolean      @default(false)
+  is_open             Boolean      @default(true)
+  rating_count        Int?         @default(50)
+  cost_for_two        Int?         @default(300)
+  delivery_minutes    Int?         @default(25)
   offer               String?
-  latitude            Decimal?             @db.Decimal
-  longitude           Decimal?             @db.Decimal
+  latitude            Decimal?     @db.Decimal
+  longitude           Decimal?     @db.Decimal
   phone               String?
   bank_account_name   String?
   bank_name           String?
@@ -69,11 +69,11 @@ model Restaurant {
   payout_vpa          String?
   fssai_license       String?
   gstin               String?
-  gst_status          GstStatus            @default(REGISTERED)
-  supplier_state      String?              @default("Karnataka")
-  price_tax_mode      PriceTaxMode         @default(TAX_INCLUSIVE)
+  gst_status          GstStatus    @default(REGISTERED)
+  supplier_state      String?      @default("Karnataka")
+  price_tax_mode      PriceTaxMode @default(TAX_INCLUSIVE)
   contract_number     String?
-  gst_rate_percent    Decimal?             @db.Decimal(5, 2)
+  gst_rate_percent    Decimal?     @db.Decimal(5, 2)
 
   commercial_contracts CommercialContract[]
   applicable_coupons   CouponRestaurant[]
@@ -91,53 +91,73 @@ model Restaurant {
 }
 
 model CommercialContract {
-  id                    String        @id
-  restaurant_id         String
-  contract_number       String        @unique
-  version               Int           @default(1)
-  status                ContractStatus @default(ACTIVE)
-  commercial_model      CommercialModel @default(commission)
-  commission_rate       Decimal       @default(15.00) @db.Decimal(5, 2)
-  markup_rate           Decimal       @default(0.00) @db.Decimal(5, 2)
-  fixed_commission      Int           @default(0)
-  fixed_markup          Int           @default(0)
-  commission_basis      String        @default("ORDER_SUBTOTAL")
-  price_tax_mode        PriceTaxMode  @default(TAX_INCLUSIVE)
-  effective_from        DateTime      @default(now()) @db.Timestamptz(6)
-  effective_until       DateTime?     @db.Timestamptz(6)
-  created_at            DateTime      @default(now()) @db.Timestamptz(6)
+  id               String          @id
+  restaurant_id    String
+  contract_number  String          @unique
+  version          Int             @default(1)
+  status           ContractStatus  @default(ACTIVE)
+  commercial_model CommercialModel @default(commission)
+  commission_rate  Decimal         @default(15.00) @db.Decimal(5, 2)
+  markup_rate      Decimal         @default(0.00) @db.Decimal(5, 2)
+  fixed_commission Int             @default(0)
+  fixed_markup     Int             @default(0)
+  commission_basis String          @default("ORDER_SUBTOTAL")
+  price_tax_mode   PriceTaxMode    @default(TAX_INCLUSIVE)
+  effective_from   DateTime        @default(now()) @db.Timestamptz(6)
+  effective_until  DateTime?       @db.Timestamptz(6)
+  created_at       DateTime        @default(now()) @db.Timestamptz(6)
 
-  restaurant            Restaurant    @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([restaurant_id])
   @@map("commercial_contracts")
 }
 
 model MenuItem {
-  id                    String      @id
-  restaurant_id         String?
-  name                  String
-  category              String
-  price                 Int
-  description           String?
-  in_stock              Boolean?    @default(true)
-  image                 String?
-  created_at            DateTime?   @default(now()) @db.Timestamptz(6)
-  is_veg                Boolean?    @default(true)
-  unit                  String?
-  mrp                   Int?
-  stock_count           Int         @default(0)
-  sku_code              String?
-  hsn_sac_code          String?     @default("996331")
-  price_tax_mode        PriceTaxMode @default(TAX_INCLUSIVE)
-  custom_commission_rate Decimal?   @db.Decimal(5, 2)
-  custom_markup_rate     Decimal?   @db.Decimal(5, 2)
-  expiry_date           DateTime?   @db.Date
-  restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  id                     String            @id
+  restaurant_id          String?
+  name                   String
+  category               String
+  price                  Int
+  restaurant_price       Int?
+  description            String?
+  in_stock               Boolean?          @default(true)
+  image                  String?
+  created_at             DateTime?         @default(now()) @db.Timestamptz(6)
+  is_veg                 Boolean?          @default(true)
+  unit                   String?
+  mrp                    Int?
+  stock_count            Int               @default(0)
+  sku_code               String?
+  hsn_sac_code           String?           @default("996331")
+  price_tax_mode         PriceTaxMode      @default(TAX_INCLUSIVE)
+  custom_commission_rate Decimal?          @db.Decimal(5, 2)
+  custom_markup_rate     Decimal?          @db.Decimal(5, 2)
+  expiry_date            DateTime?         @db.Date
+  restaurant             Restaurant?       @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  variants               MenuItemVariant[]
 
   @@index([restaurant_id, category])
   @@index([restaurant_id, in_stock, category])
   @@map("menu_items")
+}
+
+model MenuItemVariant {
+  id               String   @id
+  menu_item_id     String
+  name             String
+  restaurant_price Int
+  price            Int
+  in_stock         Boolean  @default(true)
+  is_default       Boolean  @default(false)
+  sort_order       Int      @default(0)
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime @updatedAt @db.Timestamptz(6)
+  menu_item        MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+
+  @@unique([menu_item_id, name])
+  @@index([menu_item_id, sort_order])
+  @@map("menu_item_variants")
 }
 
 /// Customer-facing CraveXP master catalog. This is intentionally separate from
@@ -167,64 +187,64 @@ model CraveXPProduct {
 }
 
 model Order {
-  id                    String      @id
+  id                    String        @id
   customer_id           String?
   customer_name         String
   customer_phone        String?
   customer_address      String?
   restaurant_id         String?
   restaurant_name       String
-  order_type            String      @default("restaurant_food")
+  order_type            String        @default("restaurant_food")
   destination_vendor_id String?
   payment_status        PaymentStatus @default(pending)
   payment_reviewed_by   String?
-  payment_reviewed_at   DateTime?   @db.Timestamptz(6)
+  payment_reviewed_at   DateTime?     @db.Timestamptz(6)
   rider_id              String?
   items                 Json
   subtotal              Int
-  packaging_fee         Int?        @default(20)
-  delivery_fee          Int?        @default(30)
-  platform_fee          Int?        @default(6)
-  handling_fee          Int?        @default(5)
-  gst                   Int?        @default(18)
+  packaging_fee         Int?          @default(20)
+  delivery_fee          Int?          @default(30)
+  platform_fee          Int?          @default(6)
+  handling_fee          Int?          @default(5)
+  gst                   Int?          @default(18)
   total_amount          Int
   status                OrderStatus
   driver_name           String?
   driver_phone          String?
-  payment_method        String?     @default("UPI Online")
-  created_at            DateTime?   @default(now()) @db.Timestamptz(6)
+  payment_method        String?       @default("UPI Online")
+  created_at            DateTime?     @default(now()) @db.Timestamptz(6)
   delivery_otp          String?
-  otp_consumed_at       DateTime?   @db.Timestamptz(6)  // Set atomically on delivery confirmation; prevents OTP reuse
+  otp_consumed_at       DateTime?     @db.Timestamptz(6) // Set atomically on delivery confirmation; prevents OTP reuse
   picker_name           String?
-  tip                   Int         @default(0)
-  discount_amount       Int         @default(0)
+  tip                   Int           @default(0)
+  discount_amount       Int           @default(0)
   coupon_code           String?
-  
+
   // Financial Breakdowns Stored (Section 30)
-  commission_amount     Int?        @default(0)
-  markup_amount         Int?        @default(0)
-  restaurant_payout     Int?        @default(0)
-  platform_revenue      Int?        @default(0)
+  commission_amount Int? @default(0)
+  markup_amount     Int? @default(0)
+  restaurant_payout Int? @default(0)
+  platform_revenue  Int? @default(0)
 
   // Immutable canonical price snapshot — persisted at order creation, never recalculated
   // Contains the full CanonicalPriceResult in paise; source of truth for settlement & invoices
-  financial_snapshot    Json?
+  financial_snapshot Json?
 
   // UTR reference from customer payment submission
-  utr_ref               String?
+  utr_ref String?
 
-  ledger_entries        LedgerEntry[]
-  payment_transactions  PaymentTransaction[]
-  refunds               Refund[]
+  ledger_entries       LedgerEntry[]
+  payment_transactions PaymentTransaction[]
+  refunds              Refund[]
 
   // Idempotency key for preventing duplicate order creation under network retries
-  idempotency_key       String?
+  idempotency_key String?
 
-  delivery_latitude     Decimal?    @db.Decimal
-  delivery_longitude    Decimal?    @db.Decimal
-  delivered_at          DateTime?   @db.Timestamptz(6)
-  customer              User?       @relation(fields: [customer_id], references: [id])
-  restaurant            Restaurant? @relation(fields: [restaurant_id], references: [id])
+  delivery_latitude  Decimal?    @db.Decimal
+  delivery_longitude Decimal?    @db.Decimal
+  delivered_at       DateTime?   @db.Timestamptz(6)
+  customer           User?       @relation(fields: [customer_id], references: [id])
+  restaurant         Restaurant? @relation(fields: [restaurant_id], references: [id])
 
   @@unique([customer_id, idempotency_key], name: "order_customer_idempotency")
   @@index([customer_id])
@@ -237,22 +257,22 @@ model Order {
 }
 
 model Coupon {
-  id               String       @id
-  code             String       @unique
-  description      String
-  discount_type    DiscountType
-  discount_value   Int
-  min_order_amount Int
-  max_discount     Int?
-  usage_limit      Int?
-  used_count       Int?         @default(0)
-  is_active        Boolean?     @default(true)
-  funding_source   String?      @default("SHARED") // RESTAURANT | PLATFORM | SHARED | BANK
-  restaurant_share Int?         @default(50)       // % funded by restaurant
-  expiry_date      DateTime?    @db.Date
-  created_at       DateTime?    @default(now()) @db.Timestamptz(6)
-  restaurant_id    String?
-  restaurant       Restaurant?  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  id                     String             @id
+  code                   String             @unique
+  description            String
+  discount_type          DiscountType
+  discount_value         Int
+  min_order_amount       Int
+  max_discount           Int?
+  usage_limit            Int?
+  used_count             Int?               @default(0)
+  is_active              Boolean?           @default(true)
+  funding_source         String?            @default("SHARED") // RESTAURANT | PLATFORM | SHARED | BANK
+  restaurant_share       Int?               @default(50) // % funded by restaurant
+  expiry_date            DateTime?          @db.Date
+  created_at             DateTime?          @default(now()) @db.Timestamptz(6)
+  restaurant_id          String?
+  restaurant             Restaurant?        @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   applicable_restaurants CouponRestaurant[]
 
   @@index([code])
@@ -271,21 +291,21 @@ model CouponRestaurant {
 }
 
 model VendorSettlement {
-  id                String                @id
+  id                String                 @id
   restaurant_name   String
   gross_sales       Int
-  commercial_model  CommercialModel       @default(commission)
+  commercial_model  CommercialModel        @default(commission)
   commission_rate   Int
   commission_amount Int
-  markup_amount     Int?                  @default(0)
+  markup_amount     Int?                   @default(0)
   net_payout        Int
   status            VendorSettlementStatus @default(scheduled)
-  payout_date       DateTime?             @db.Date
+  payout_date       DateTime?              @db.Date
   restaurant_id     String?
-  period_start      DateTime?             @db.Date
-  period_end        DateTime?             @db.Date
+  period_start      DateTime?              @db.Date
+  period_end        DateTime?              @db.Date
   transaction_ref   String?
-  restaurant        Restaurant?           @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  restaurant        Restaurant?            @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([restaurant_id])
   @@index([restaurant_id, status, period_start])
@@ -301,8 +321,8 @@ model PaymentReview {
   status       PaymentStatus @default(pending)
   created_at   DateTime?     @default(now()) @db.Timestamptz(6)
 
+  @@unique([utr_ref]) // Prevents duplicate UTR claim — anti-replay protection
   @@index([order_id])
-  @@unique([utr_ref])  // Prevents duplicate UTR claim — anti-replay protection
   @@map("payment_reviews")
 }
 
@@ -343,14 +363,14 @@ model PaymentConfig {
   rain_fee                Int?
   night_surge_fee         Int?
   is_rain_mode_active     Boolean? @default(false)
-  is_night_surge_active    Boolean? @default(false)
+  is_night_surge_active   Boolean? @default(false)
   enable_cash_on_delivery Boolean? @default(false)
   enable_upi_deep_link    Boolean? @default(true)
   require_utr_number      Boolean? @default(true)
   is_active               Boolean  @default(false)
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
   gst_rate                Decimal? @db.Decimal(5, 2)
-  gst_rate_percent        Decimal? @db.Decimal(5, 2)  // Alias; use this field in new code
+  gst_rate_percent        Decimal? @db.Decimal(5, 2) // Alias; use this field in new code
 
   @@map("payment_configs")
 }
@@ -370,13 +390,13 @@ model DriverUpiAccount {
 }
 
 model DriverPayout {
-  id              String              @id
+  id              String             @id
   driver_id       String
   amount          Int
-  status          DriverPayoutStatus  @default(pending)
+  status          DriverPayoutStatus @default(pending)
   transaction_ref String?
-  created_at      DateTime            @default(now()) @db.Timestamptz(6)
-  driver          User                @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+  created_at      DateTime           @default(now()) @db.Timestamptz(6)
+  driver          User               @relation(fields: [driver_id], references: [id], onDelete: Cascade)
 
   @@index([driver_id])
   @@index([driver_id, status, created_at])
@@ -449,19 +469,19 @@ model PickerMetric {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model LedgerEntry {
-  id               String   @id @default(cuid())
-  idempotency_key  String   @unique   // Prevents duplicate journal postings
-  event_type       String             // ORDER_CONFIRMED | VENDOR_SETTLEMENT | RIDER_SETTLEMENT | REFUND_INITIATED | REVERSAL
-  order_id         String             // Reference to the originating order
-  reference_id     String?            // Settlement ID / Payout ID / UTR
-  account_code     String             // AccountCode enum value
-  debit_paise      Int                // Debit amount in paise (0 if credit entry)
-  credit_paise     Int                // Credit amount in paise (0 if debit entry)
-  description      String
-  notes            String?
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  id              String   @id @default(cuid())
+  idempotency_key String   @unique // Prevents duplicate journal postings
+  event_type      String // ORDER_CONFIRMED | VENDOR_SETTLEMENT | RIDER_SETTLEMENT | REFUND_INITIATED | REVERSAL
+  order_id        String // Reference to the originating order
+  reference_id    String? // Settlement ID / Payout ID / UTR
+  account_code    String // AccountCode enum value
+  debit_paise     Int // Debit amount in paise (0 if credit entry)
+  credit_paise    Int // Credit amount in paise (0 if debit entry)
+  description     String
+  notes           String?
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
 
-  order            Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@index([event_type, created_at])
@@ -470,12 +490,12 @@ model LedgerEntry {
 }
 
 model DriverLocationHistory {
-  id         String   @id @default(cuid())
-  driver_id  String
-  latitude   Decimal  @db.Decimal(10, 8)
-  longitude  Decimal  @db.Decimal(11, 8)
-  h3_cell    String
-  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+  id        String   @id @default(cuid())
+  driver_id String
+  latitude  Decimal  @db.Decimal(10, 8)
+  longitude Decimal  @db.Decimal(11, 8)
+  h3_cell   String
+  timestamp DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([driver_id, timestamp])
   @@index([h3_cell])
@@ -567,13 +587,13 @@ enum DriverPayoutStatus {
 /// Audit log for admin override actions (delivery confirmations without OTP, etc.)
 /// Append-only — never update or delete rows.
 model AdminOverrideLog {
-  id           String   @id @default(cuid())
-  admin_id     String
-  order_id     String
-  action       String   // e.g. "delivery_confirmed_without_otp", "rider_bypassed"
-  reason       String?  // Optional admin-supplied reason
-  actor_ip     String?
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  id         String   @id @default(cuid())
+  admin_id   String
+  order_id   String
+  action     String // e.g. "delivery_confirmed_without_otp", "rider_bypassed"
+  reason     String? // Optional admin-supplied reason
+  actor_ip   String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([order_id])
   @@index([admin_id])
@@ -586,7 +606,7 @@ model AdminOverrideLog {
 model OrderOutbox {
   id           String    @id @default(cuid())
   order_id     String
-  event_type   String    // ORDER_CREATED | ORDER_ASSIGNED | STATUS_CHANGED | DELIVERY_CONFIRMED
+  event_type   String // ORDER_CREATED | ORDER_ASSIGNED | STATUS_CHANGED | DELIVERY_CONFIRMED
   payload      Json
   status       String    @default("pending") // pending | processed | failed
   attempts     Int       @default(0)
@@ -601,16 +621,16 @@ model OrderOutbox {
 
 /// Generic, high-performance idempotency records for checkout, webhooks, refunds, and settlements.
 model IdempotencyRecord {
-  id            String    @id @default(cuid())
-  key           String    @unique
-  scope         String    // "order_checkout" | "payment_webhook" | "refund" | "settlement"
-  status        String    // "processing" | "completed" | "failed"
+  id            String   @id @default(cuid())
+  key           String   @unique
+  scope         String // "order_checkout" | "payment_webhook" | "refund" | "settlement"
+  status        String // "processing" | "completed" | "failed"
   request_hash  String?
   response_code Int?
   response_body Json?
-  created_at    DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
-  expires_at    DateTime  @db.Timestamptz(6)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @updatedAt @db.Timestamptz(6)
+  expires_at    DateTime @db.Timestamptz(6)
 
   @@index([scope, status])
   @@index([key, scope])
@@ -622,9 +642,9 @@ model PaymentTransaction {
   id                 String          @id @default(cuid())
   order_id           String
   idempotency_key    String          @unique
-  gateway            String          // "UPI_MANUAL" | "RAZORPAY" | "CASHFREE" | "STRIPE" | "MOCK"
+  gateway            String // "UPI_MANUAL" | "RAZORPAY" | "CASHFREE" | "STRIPE" | "MOCK"
   gateway_payment_id String?
-  amount             Int             // in rupees
+  amount             Int // in rupees
   currency           String          @default("INR")
   status             PaymentTxStatus @default(pending)
   failure_reason     String?
@@ -633,7 +653,7 @@ model PaymentTransaction {
   created_at         DateTime        @default(now()) @db.Timestamptz(6)
   updated_at         DateTime        @updatedAt @db.Timestamptz(6)
 
-  order              Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@index([status])
@@ -643,17 +663,17 @@ model PaymentTransaction {
 
 /// Refund records for customer returns, cancellations, and overpayment reversals.
 model Refund {
-  id                String        @id @default(cuid())
+  id                String       @id @default(cuid())
   order_id          String
-  idempotency_key   String        @unique
-  amount            Int           // in rupees
+  idempotency_key   String       @unique
+  amount            Int // in rupees
   reason            String
-  status            RefundStatus  @default(pending)
-  gateway_refund_id String?       @unique
-  processed_at      DateTime?     @db.Timestamptz(6)
-  created_at        DateTime      @default(now()) @db.Timestamptz(6)
+  status            RefundStatus @default(pending)
+  gateway_refund_id String?      @unique
+  processed_at      DateTime?    @db.Timestamptz(6)
+  created_at        DateTime     @default(now()) @db.Timestamptz(6)
 
-  order             Order         @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@map("refunds")

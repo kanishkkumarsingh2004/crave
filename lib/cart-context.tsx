@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export interface CartItem {
   id: string
+  menuItemId?: string
   name: string
   qty: number
   price: number
@@ -15,6 +16,15 @@ export interface CartItem {
   vendorId?: string
   restaurantLat?: number
   restaurantLng?: number
+  variantId?: string
+  variantName?: string
+  variants?: Array<{
+    id: string
+    name: string
+    price: number
+    inStock: boolean
+    isDefault: boolean
+  }>
 }
 
 interface CartContextType {

@@ -701,7 +701,9 @@ export default function CartPage() {
         restaurant_name: restName,
         order_type: restaurantId === CRAVEXP_DARK_STORE_ID ? 'cravexp_grocery' : 'restaurant_food',
         items: cart.map((i) => ({
-          id: i.id,
+          id: i.menuItemId || i.id,
+          menuItemId: i.menuItemId || i.id,
+          variantId: i.variantId,
           name: i.name,
           qty: i.qty,
           price: i.price,
@@ -1011,6 +1013,11 @@ export default function CartPage() {
                               <h3 className="text-sm sm:text-base font-extrabold text-[#121815] dark:text-white truncate">
                                 {item.name}
                               </h3>
+                              {item.variantName && (
+                                <p className="mt-0.5 text-[11px] font-bold text-[#6f840f] dark:text-[#d9f447]">
+                                  Size: {item.variantName}
+                                </p>
+                              )}
                               <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mt-0.5">
                                 ₹{item.price}{' '}
                                 <span className="text-[10px] font-normal text-stone-400">each</span>

@@ -139,7 +139,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
     ? rawItems
         .filter((item: any) => item.name !== 'Order Metadata' && item.price !== 0)
         .map((item: any) => ({
-          name: item.name || item.title || 'Food Item',
+          name: `${item.name || item.title || 'Food Item'}${item.variantName ? ` (${item.variantName})` : ''}`,
           quantity: Number(item.qty || item.quantity || item.count || 1),
           price: Number(item.price || item.mrp || 0),
           hsnSacCode: item.hsnSacCode || '996331',

@@ -8,7 +8,10 @@ import { prisma } from '@/lib/prisma'
 // ─── Queries ─────────────────────────────────────────────
 
 export async function findMenuItemById(id: string) {
-  const item = await prisma.menuItem.findUnique({ where: { id } })
+  const item = await prisma.menuItem.findUnique({
+    where: { id },
+    include: { variants: { orderBy: { sort_order: 'asc' } } },
+  })
   if (item) return item
   return null
 }
@@ -26,6 +29,7 @@ export async function findMenuItemsByIds(ids: string[]): Promise<Map<string, any
   const uniqueIds = Array.from(new Set(ids))
   const items = await prisma.menuItem.findMany({
     where: { id: { in: uniqueIds } },
+    include: { variants: { orderBy: { sort_order: 'asc' } } },
   })
 
   const map = new Map<string, any>()
@@ -45,6 +49,7 @@ export async function listMenuItems(restaurantId: string) {
   const items = await prisma.menuItem.findMany({
     where: { restaurant_id: restaurantId },
     orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    include: { variants: { orderBy: { sort_order: 'asc' } } },
   })
   if (items && items.length > 0) {
     await cacheSet(CacheKeys.menus.byRestaurant(restaurantId), items, {

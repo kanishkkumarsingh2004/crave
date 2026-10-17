@@ -54,6 +54,39 @@ test('pricing snapshot balances discounts and passes the complete tip to the rid
   assert.ok(price.customerPayablePaise > 0)
 })
 
+test('dual menu prices pay the restaurant price and retain only the configured margin', () => {
+  const price = calculateOrderPrice({
+    orderId: 'dual-price-order',
+    orderType: 'restaurant_food',
+    restaurantName: 'Test Kitchen',
+    items: [
+      {
+        name: 'Large Meal',
+        quantity: 2,
+        unitPricePaise: 11_000,
+        restaurantUnitPricePaise: 10_000,
+      },
+    ],
+    delivery: {
+      baseDeliveryFeePaise: 0,
+      baseDistanceKm: 3,
+      perKmRatePaise: 0,
+      roadDistanceKm: 1,
+    },
+    platformFeePaise: 0,
+    handlingFeePaise: 0,
+    packagingFeePaise: 0,
+    contract: { commercialModel: 'commission', commissionRatePercent: 15 },
+  })
+
+  assert.equal(price.grossSubtotalPaise, 22_000)
+  assert.equal(price.restaurantBaseSubtotalPaise, 20_000)
+  assert.equal(price.platformProductMarginPaise, 2_000)
+  assert.equal(price.grossCommissionPaise, 0)
+  assert.equal(price.vendorPayableNetPaise, 20_000)
+  assert.equal(price.platformGrossRevenuePaise, 2_000)
+})
+
 test('order lifecycle rejects backward transitions', () => {
   assert.equal(isValidTransition(OrderStatus.PREPARING, OrderStatus.READY_FOR_PICKUP), true)
   assert.equal(isValidTransition(OrderStatus.DELIVERED, OrderStatus.PREPARING), false)

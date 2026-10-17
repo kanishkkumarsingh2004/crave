@@ -103,8 +103,17 @@ type Restaurant = {
   isOpen?: boolean
 }
 
+type MenuItemVariant = {
+  id: string
+  name: string
+  price: number
+  inStock: boolean
+  isDefault: boolean
+}
+
 type MenuItem = {
   id: string
+  menuItemId?: string
   name: string
   detail: string
   price: number
@@ -115,6 +124,9 @@ type MenuItem = {
   vendorId?: string
   restaurantLat?: number
   restaurantLng?: number
+  variantId?: string
+  variantName?: string
+  variants?: MenuItemVariant[]
 }
 
 type CartItem = MenuItem & {
@@ -153,7 +165,7 @@ type PastOrder = {
   id: string
   restaurantName: string
   restaurantImage: string
-  items: Array<{ name: string; qty: number; price: number }>
+  items: Array<{ name: string; qty: number; price: number; variantName?: string }>
   subtotal: number
   discount: number
   total: number
@@ -404,6 +416,7 @@ export default function CustomerDashboard({
   // Cart & Menu State
   const [cart, setCart] = useState<Array<CartItem>>([])
   const [menuItemsList, setMenuItemsList] = useState<Array<MenuItem>>([])
+  const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({})
   const [restaurantsList, setRestaurantsList] = useState<Array<Restaurant>>([])
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
@@ -472,6 +485,10 @@ export default function CustomerDashboard({
           vendorId: item.vendorId,
           restaurantLat: item.restaurantLat,
           restaurantLng: item.restaurantLng,
+          menuItemId: item.menuItemId,
+          variantId: item.variantId,
+          variantName: item.variantName,
+          variants: item.variants,
         }))
       )
     }
@@ -542,6 +559,17 @@ export default function CustomerDashboard({
             restaurantName: selectedRestaurant?.name || 'Partner Kitchen',
             restaurantId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
             vendorId: selectedRestaurant?.id || item.restaurant_id || item.restaurantId,
+            variants: Array.isArray(item.variants)
+              ? item.variants
+                  .filter((variant: any) => variant.in_stock !== false)
+                  .map((variant: any) => ({
+                    id: variant.id,
+                    name: variant.name,
+                    price: Number(variant.price) || 0,
+                    inStock: variant.in_stock !== false,
+                    isDefault: variant.is_default === true,
+                  }))
+              : [],
           }))
           setMenuItemsList(parsed)
         } else {
@@ -1214,20 +1242,38 @@ export default function CustomerDashboard({
   })
 
   // Cart Handlers
-  function addToCart(item: MenuItem) {
-    const itemRest = item.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
-    const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id
+  function selectedVariantFor(item: MenuItem) {
+    if (!item.variants?.length) return undefined
+    return (
+      item.variants.find((variant) => variant.id === selectedVariantIds[item.id]) ||
+      item.variants.find((variant) => variant.isDefault) ||
+      item.variants[0]
+    )
+  }
+
+  function addToCart(item: MenuItem, chosenVariant?: MenuItemVariant) {
+    const variant = chosenVariant || selectedVariantFor(item)
+    const cartItem: MenuItem = {
+      ...item,
+      id: variant ? `${item.id}::${variant.id}` : item.id,
+      menuItemId: item.menuItemId || item.id,
+      price: variant?.price ?? item.price,
+      variantId: variant?.id,
+      variantName: variant?.name,
+    }
+    const itemRest = cartItem.restaurantName || selectedRestaurant?.name || 'Kitchen Store'
+    const itemRestId = cartItem.restaurantId || cartItem.vendorId || selectedRestaurant?.id
     const itemRestLat =
       selectedRestaurant?.latitude != null
         ? Number(selectedRestaurant.latitude)
-        : (item as any)?.restaurantLat != null
-          ? Number((item as any).restaurantLat)
+        : (cartItem as any)?.restaurantLat != null
+          ? Number((cartItem as any).restaurantLat)
           : undefined
     const itemRestLng =
       selectedRestaurant?.longitude != null
         ? Number(selectedRestaurant.longitude)
-        : (item as any)?.restaurantLng != null
-          ? Number((item as any).restaurantLng)
+        : (cartItem as any)?.restaurantLng != null
+          ? Number((cartItem as any).restaurantLng)
           : undefined
 
     if (cart.length > 0) {
@@ -1241,21 +1287,21 @@ export default function CustomerDashboard({
           open: true,
           currentRest,
           newRest: itemRest,
-          newItem: item,
+          newItem: cartItem,
         })
         return
       }
     }
 
     setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id)
+      const existing = prev.find((i) => i.id === cartItem.id)
       if (existing) {
-        return prev.map((i) => (i.id === item.id ? { ...i, qty: i.qty + 1 } : i))
+        return prev.map((i) => (i.id === cartItem.id ? { ...i, qty: i.qty + 1 } : i))
       }
       return [
         ...prev,
         {
-          ...item,
+          ...cartItem,
           qty: 1,
           restaurantName: itemRest,
           restaurantId: itemRestId,
@@ -1265,7 +1311,7 @@ export default function CustomerDashboard({
         },
       ]
     })
-    triggerToast(`Added ${item.name} to cart!`)
+    triggerToast(`Added ${item.name}${variant ? ` (${variant.name})` : ''} to cart!`)
   }
 
   function handleResolveConflictClear() {
@@ -1567,7 +1613,8 @@ export default function CustomerDashboard({
 
     const cartWithOtp = cart.map((item) => ({
       ...item,
-      menu_item_id: item.id,
+      menu_item_id: item.menuItemId || item.id,
+      variant_id: item.variantId,
       otp: generatedOtp,
     }))
 
@@ -2335,7 +2382,7 @@ export default function CustomerDashboard({
                               Price
                             </span>
                             <span className="font-black text-base text-[#18201c] dark:text-white">
-                              ₹{item.price}
+                              ₹{selectedVariantFor(item)?.price ?? item.price}
                             </span>
                           </div>
                           <button
@@ -2346,6 +2393,27 @@ export default function CustomerDashboard({
                             <span>Add to Cart</span>
                           </button>
                         </div>
+                        {item.variants && item.variants.length > 0 && (
+                          <label className="mt-3 block text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            Choose size
+                            <select
+                              value={selectedVariantFor(item)?.id}
+                              onChange={(event) =>
+                                setSelectedVariantIds((current) => ({
+                                  ...current,
+                                  [item.id]: event.target.value,
+                                }))
+                              }
+                              className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold normal-case text-[#18201c] outline-none dark:border-white/10 dark:bg-[#121815] dark:text-white"
+                            >
+                              {item.variants.map((variant) => (
+                                <option key={variant.id} value={variant.id}>
+                                  {variant.name} · ₹{variant.price}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
                       </div>
                     ))
                   )}
@@ -2678,6 +2746,7 @@ export default function CustomerDashboard({
                           <div key={idx} className="flex justify-between text-xs">
                             <span className="text-gray-700 dark:text-gray-300">
                               {item.qty}× {item.name}
+                              {item.variantName ? ` (${item.variantName})` : ''}
                             </span>
                             <span className="font-semibold text-[#18201c] dark:text-white">
                               ₹{item.price * item.qty}
@@ -3943,7 +4012,9 @@ export default function CustomerDashboard({
                 </div>
               ) : (
                 menuItemsList.map((item) => {
-                  const inCart = cart.find((i) => i.id === item.id)
+                  const selectedVariant = selectedVariantFor(item)
+                  const cartLineId = selectedVariant ? `${item.id}::${selectedVariant.id}` : item.id
+                  const inCart = cart.find((i) => i.id === cartLineId)
                   return (
                     <div
                       key={item.id}
@@ -3967,20 +4038,41 @@ export default function CustomerDashboard({
                             {item.detail}
                           </p>
                         )}
-                        <p className="mt-2 text-sm font-bold text-[#d9f447]">₹{item.price}</p>
+                        {item.variants && item.variants.length > 0 && (
+                          <select
+                            aria-label={`Choose size for ${item.name}`}
+                            value={selectedVariant?.id}
+                            onChange={(event) =>
+                              setSelectedVariantIds((current) => ({
+                                ...current,
+                                [item.id]: event.target.value,
+                              }))
+                            }
+                            className="mt-2 w-full rounded-lg border border-[#25332a] bg-[#1c2620] px-2 py-1.5 text-xs font-bold text-white outline-none focus:border-[#d9f447]"
+                          >
+                            {item.variants.map((variant) => (
+                              <option key={variant.id} value={variant.id}>
+                                {variant.name} · ₹{variant.price}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        <p className="mt-2 text-sm font-bold text-[#d9f447]">
+                          ₹{selectedVariant?.price ?? item.price}
+                        </p>
                       </div>
 
                       {inCart ? (
                         <div className="flex items-center gap-2 rounded-full bg-[#1c2620] border border-[#25332a] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
                           <button
-                            onClick={() => updateItemQty(item.id, -1)}
+                            onClick={() => updateItemQty(cartLineId, -1)}
                             className="hover:text-[#d9f447]"
                           >
                             <Minus className="size-3.5" />
                           </button>
                           <span>{inCart.qty}</span>
                           <button
-                            onClick={() => updateItemQty(item.id, 1)}
+                            onClick={() => updateItemQty(cartLineId, 1)}
                             className="hover:text-[#d9f447]"
                           >
                             <Plus className="size-3.5" />
@@ -3988,7 +4080,7 @@ export default function CustomerDashboard({
                         </div>
                       ) : (
                         <button
-                          onClick={() => addToCart(item)}
+                          onClick={() => addToCart(item, selectedVariant)}
                           className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 hover:bg-[#c2dc3a]"
                         >
                           <Plus className="size-3.5" />

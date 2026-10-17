@@ -45,6 +45,7 @@ export interface PricingItem {
   category?: string
   quantity: number
   unitPricePaise: number // Selling price per unit in PAISE (integer)
+  restaurantUnitPricePaise?: number // Exact restaurant payout price; app keeps the difference
   mrpPaise?: number
   priceTaxMode?: PriceTaxMode // defaults to contract
   taxCategory?: TaxCategory // required for CraveXP items
@@ -131,7 +132,10 @@ export interface ItemPriceResult {
   hsnSacCode: string
   quantity: number
   unitPricePaise: number
+  restaurantUnitPricePaise: number
   grossAmountPaise: number
+  restaurantGrossAmountPaise: number
+  platformProductMarginPaise: number
   priceTaxMode: PriceTaxMode
   taxableBasePaise: number
   taxRatePercent: number
@@ -167,6 +171,8 @@ export interface CanonicalPriceResult {
 
   // Merchandise
   grossSubtotalPaise: number // sum of all item.quantity × unitPrice
+  restaurantBaseSubtotalPaise: number // amount owed for merchandise before discounts
+  platformProductMarginPaise: number // app price minus restaurant price
   couponDiscountPaise: number // validated coupon discount
   restaurantFundedDiscountPaise: number
   platformFundedDiscountPaise: number
@@ -272,11 +278,23 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   // ─── 1. Items ────────────────────────────────────────────────────────────────
 
   let grossSubtotalPaise = 0
+  let restaurantBaseSubtotalPaise = 0
+  let platformProductMarginPaise = 0
+  let legacyCommissionBaseSubtotalPaise = 0
   const processedItems: ItemPriceResult[] = input.items.map((item) => {
     const qty = Math.max(1, item.quantity || 1)
     const unitPricePaise = Math.max(0, item.unitPricePaise || 0)
     const grossAmountPaise = unitPricePaise * qty
+    const hasFixedPayoutPrice = Number.isFinite(item.restaurantUnitPricePaise)
+    const restaurantUnitPricePaise = hasFixedPayoutPrice
+      ? Math.min(unitPricePaise, Math.max(0, item.restaurantUnitPricePaise || 0))
+      : unitPricePaise
+    const restaurantGrossAmountPaise = restaurantUnitPricePaise * qty
+    const itemProductMarginPaise = grossAmountPaise - restaurantGrossAmountPaise
     grossSubtotalPaise += grossAmountPaise
+    restaurantBaseSubtotalPaise += restaurantGrossAmountPaise
+    platformProductMarginPaise += itemProductMarginPaise
+    if (!hasFixedPayoutPrice) legacyCommissionBaseSubtotalPaise += grossAmountPaise
 
     const priceTaxMode: PriceTaxMode = item.priceTaxMode || contract.priceTaxMode
 
@@ -299,14 +317,16 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
       )
     }
 
-    const commissionRatePercent = isCommission
-      ? (item.customCommissionRatePercent ?? contract.commissionRatePercent)
-      : 0
+    const commissionRatePercent =
+      isCommission && !hasFixedPayoutPrice
+        ? (item.customCommissionRatePercent ?? contract.commissionRatePercent)
+        : 0
     const commissionAmountPaise = Math.ceil((grossAmountPaise * commissionRatePercent) / 100)
 
-    const markupRatePercent = isMarkup
-      ? (item.customMarkupRatePercent ?? contract.markupRatePercent)
-      : 0
+    const markupRatePercent =
+      isMarkup && !hasFixedPayoutPrice
+        ? (item.customMarkupRatePercent ?? contract.markupRatePercent)
+        : 0
     const markupAmountPaise = Math.ceil((grossAmountPaise * markupRatePercent) / 100)
 
     return {
@@ -314,7 +334,10 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
       hsnSacCode: item.hsnSacCode || '996331',
       quantity: qty,
       unitPricePaise,
+      restaurantUnitPricePaise,
       grossAmountPaise,
+      restaurantGrossAmountPaise,
+      platformProductMarginPaise: itemProductMarginPaise,
       priceTaxMode,
       taxableBasePaise: taxBreakdown.taxableBasePaise,
       taxRatePercent: taxBreakdown.taxRatePercent,
@@ -332,7 +355,8 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   // ─── 2. Markup (added to customer's food subtotal) ───────────────────────────
 
   const markupAmountPaise = isMarkup
-    ? Math.ceil((grossSubtotalPaise * contract.markupRatePercent) / 100) + contract.fixedMarkupPaise
+    ? Math.ceil((legacyCommissionBaseSubtotalPaise * contract.markupRatePercent) / 100) +
+      (legacyCommissionBaseSubtotalPaise > 0 ? contract.fixedMarkupPaise : 0)
     : 0
 
   // ─── 3. Discount Allocation ──────────────────────────────────────────────────
@@ -449,23 +473,35 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   let commissionBasePaise: number
   switch (contract.commissionBasis) {
     case 'ITEM_SUBTOTAL':
-      commissionBasePaise = grossSubtotalPaise
+      commissionBasePaise = legacyCommissionBaseSubtotalPaise
       break
     case 'TAXABLE_VALUE':
-      commissionBasePaise = restaurantServiceTaxBreakdown.taxableBasePaise
+      commissionBasePaise =
+        grossSubtotalPaise > 0
+          ? Math.floor(
+              (restaurantServiceTaxBreakdown.taxableBasePaise * legacyCommissionBaseSubtotalPaise) /
+                grossSubtotalPaise
+            )
+          : 0
       break
     case 'CUSTOMER_PAYABLE':
-      commissionBasePaise = customerPayablePaise - tipPaise // exclude tip
+      commissionBasePaise =
+        grossSubtotalPaise > 0
+          ? Math.floor(
+              ((customerPayablePaise - tipPaise) * legacyCommissionBaseSubtotalPaise) /
+                grossSubtotalPaise
+            )
+          : 0
       break
     case 'ORDER_SUBTOTAL':
     default:
-      commissionBasePaise = grossSubtotalPaise // standard: pre-discount subtotal
+      commissionBasePaise = legacyCommissionBaseSubtotalPaise // fixed-payout items already include margin
   }
 
   // Commission amount (NEVER on tips, delivery fees, taxes unless contract explicitly requires it)
   const grossCommissionPaise = isCommission
     ? Math.ceil((commissionBasePaise * contract.commissionRatePercent) / 100) +
-      contract.fixedCommissionPaise
+      (legacyCommissionBaseSubtotalPaise > 0 ? contract.fixedCommissionPaise : 0)
     : 0
 
   const commissionGstBreakdown = calculateCommissionGst(
@@ -477,7 +513,7 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   const totalCommissionDeductionPaise = grossCommissionPaise + commissionGstPaise
 
   // Vendor payable
-  const vendorGrossSalesPaise = grossSubtotalPaise
+  const vendorGrossSalesPaise = restaurantBaseSubtotalPaise
   const vendorNetSalesPaise = Math.max(0, vendorGrossSalesPaise - restaurantFundedDiscountPaise)
   const vendorPackagingSharePaise = packagingFeePaise
   const vendorPayableGrossPaise = vendorNetSalesPaise + vendorPackagingSharePaise
@@ -506,7 +542,11 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
   // ─── 11. Platform Economics ───────────────────────────────────────────────────
 
   const platformGrossRevenuePaise =
-    grossCommissionPaise + markupAmountPaise + platformFeePaise + handlingFeePaise
+    grossCommissionPaise +
+    markupAmountPaise +
+    platformProductMarginPaise +
+    platformFeePaise +
+    handlingFeePaise
   const platformGstLiabilityPaise = commissionGstPaise + platformServiceTaxBreakdown.totalGstPaise
   const platformNetRevenuePaise = Math.max(
     0,
@@ -533,6 +573,8 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
     items: processedItems,
 
     grossSubtotalPaise,
+    restaurantBaseSubtotalPaise,
+    platformProductMarginPaise,
     couponDiscountPaise,
     restaurantFundedDiscountPaise,
     platformFundedDiscountPaise,

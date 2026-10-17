@@ -467,11 +467,12 @@ export async function POST(request: Request) {
 
       // ── P0.1 FIX: Batch-validate items before any DB work ──────────────────
       // Phase 1: validate shape, collect all item IDs.
-      type RawItemEntry = { itemId: string; quantity: number; raw: any }
+      type RawItemEntry = { itemId: string; variantId?: string; quantity: number; raw: any }
       const validatedRaw: RawItemEntry[] = []
 
       for (const rawItem of rawItems) {
-        const itemId = rawItem.id || rawItem.itemId || rawItem.menuItemId
+        const itemId = rawItem.menuItemId || rawItem.menu_item_id || rawItem.itemId || rawItem.id
+        const variantId = rawItem.variantId || rawItem.variant_id || undefined
         const rawQuantity = rawItem.quantity || rawItem.qty || 1
 
         if (!itemId) {
@@ -496,7 +497,7 @@ export async function POST(request: Request) {
           )
         }
 
-        validatedRaw.push({ itemId, quantity, raw: rawItem })
+        validatedRaw.push({ itemId, variantId, quantity, raw: rawItem })
       }
 
       // Phase 2: Fetch from the authoritative catalog for this order type.
@@ -540,7 +541,7 @@ export async function POST(request: Request) {
       const itemsList = []
       let foodSubtotal = 0
 
-      for (const { itemId, quantity } of validatedRaw) {
+      for (const { itemId, variantId, quantity } of validatedRaw) {
         let menuItem = menuItemMap.get(itemId)
         if (!menuItem) {
           if (process.env.NODE_ENV !== 'production') {
@@ -584,8 +585,46 @@ export async function POST(request: Request) {
           )
         }
 
-        // Use TRUSTED database price
-        const price = Number(menuItem.price || 0)
+        // Use TRUSTED database prices. A variant ID is only accepted when it belongs
+        // to this menu item; client-supplied prices are always ignored.
+        const variants = Array.isArray(menuItem.variants) ? menuItem.variants : []
+        const selectedVariant =
+          variants.length > 0
+            ? variantId
+              ? variants.find((variant: any) => variant.id === variantId)
+              : variants.find((variant: any) => variant.is_default) || variants[0]
+            : null
+        if (variants.length > 0 && !selectedVariant) {
+          return NextResponse.json(
+            { error: `Selected size is not available for ${menuItem.name}` },
+            { status: 400 }
+          )
+        }
+        if (selectedVariant?.in_stock === false) {
+          return NextResponse.json(
+            { error: `${menuItem.name} (${selectedVariant.name}) is out of stock` },
+            { status: 400 }
+          )
+        }
+
+        const price = Number(selectedVariant?.price ?? menuItem.price ?? 0)
+        const restaurantPrice = Number(
+          selectedVariant?.restaurant_price ?? menuItem.restaurant_price ?? price
+        )
+        const hasExplicitRestaurantPrice =
+          selectedVariant != null || menuItem.restaurant_price != null
+        if (
+          !Number.isFinite(price) ||
+          !Number.isFinite(restaurantPrice) ||
+          price < 0 ||
+          restaurantPrice < 0 ||
+          price < restaurantPrice
+        ) {
+          return NextResponse.json(
+            { error: `Invalid pricing configuration for ${menuItem.name}` },
+            { status: 500 }
+          )
+        }
         const lineTotal = price * quantity
         foodSubtotal += lineTotal
 
@@ -612,9 +651,14 @@ export async function POST(request: Request) {
 
         itemsList.push({
           id: itemId,
+          variantId: selectedVariant?.id || null,
+          variantName: selectedVariant?.name || null,
           name: menuItem.name,
           quantity,
           price,
+          restaurantPrice,
+          hasExplicitRestaurantPrice,
+          platformProductMargin: (price - restaurantPrice) * quantity,
           lineTotal,
           taxRate,
           priceTaxMode,
@@ -934,6 +978,9 @@ export async function POST(request: Request) {
           hsnSacCode: i._menuItem?.hsn_sac_code || '996331',
           quantity: i.quantity,
           unitPricePaise: Math.round(i.price * 100),
+          restaurantUnitPricePaise: i.hasExplicitRestaurantPrice
+            ? Math.round(i.restaurantPrice * 100)
+            : undefined,
           priceTaxMode: i.priceTaxMode,
           taxCategory:
             resolvedOrderType === 'cravexp_grocery'
@@ -1015,6 +1062,8 @@ export async function POST(request: Request) {
         commercial_model: commercialModel,
         markup_rate: Number(restaurantDetails.markup_rate || 0),
         markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
+        product_margin: Math.round(canonicalResult.platformProductMarginPaise / 100),
+        restaurant_base_subtotal: Math.round(canonicalResult.restaurantBaseSubtotalPaise / 100),
         packaging_fee: capPackaging,
         delivery_fee: calcResult.customerBilling.netDeliveryFee,
         platform_fee: calcResult.customerBilling.platformFee,
@@ -1131,7 +1180,10 @@ export async function POST(request: Request) {
               discount_amount: calcResult.customerBilling.couponDiscount,
               coupon_code: coupon_code || undefined,
               commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
-              markup_amount: Math.round(canonicalResult.markupAmountPaise / 100),
+              markup_amount: Math.round(
+                (canonicalResult.markupAmountPaise + canonicalResult.platformProductMarginPaise) /
+                  100
+              ),
               restaurant_payout: vendorNetPayout,
               platform_revenue: platformProfit,
               utr_ref: utr_ref ? String(utr_ref).trim() : undefined,
