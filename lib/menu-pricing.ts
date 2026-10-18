@@ -1,6 +1,8 @@
 export interface MenuPricingSettings {
   commercialModel?: string | null
+  commissionRate?: number | string | null
   markupRate?: number | string | null
+  fixedCommission?: number | string | null
   fixedMarkup?: number | string | null
 }
 
@@ -15,9 +17,22 @@ export function calculateMenuAppPrice(
 ): number {
   const basePrice = Math.max(0, Math.round(restaurantPrice))
   const commercialModel = String(settings.commercialModel || 'commission').toLowerCase()
-  if (commercialModel !== 'markup' && commercialModel !== 'hybrid') return basePrice
-
+  const commissionRate = nonNegativeNumber(settings.commissionRate)
   const markupRate = nonNegativeNumber(settings.markupRate)
+  const fixedCommission = nonNegativeNumber(settings.fixedCommission)
   const fixedMarkup = nonNegativeNumber(settings.fixedMarkup)
-  return Math.ceil(basePrice + (basePrice * markupRate) / 100 + fixedMarkup)
+  const rate =
+    commercialModel === 'commission'
+      ? commissionRate
+      : commercialModel === 'markup'
+        ? markupRate
+        : commissionRate + markupRate
+  const fixed =
+    commercialModel === 'commission'
+      ? fixedCommission
+      : commercialModel === 'markup'
+        ? fixedMarkup
+        : fixedCommission + fixedMarkup
+
+  return Math.ceil(basePrice + (basePrice * rate) / 100 + fixed)
 }

@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Crave Admin',
   webDir: 'dist',
   backgroundColor: '#121815',
-  appendUserAgent: ' CraveAdmin/1.2.0',
+  appendUserAgent: ' CraveAdmin/1.0.0',
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,

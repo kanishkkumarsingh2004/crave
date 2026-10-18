@@ -67,6 +67,10 @@ interface RestaurantRecord {
   address?: string
   is_open?: boolean
   commission_rate?: number | string
+  commercial_model?: 'commission' | 'markup' | 'hybrid'
+  markup_rate?: number | string
+  fixed_commission?: number | string
+  fixed_markup?: number | string
 }
 
 interface PartnerForm {
@@ -77,7 +81,11 @@ interface PartnerForm {
   cuisine: string
   phone: string
   address: string
+  commercialModel: 'commission' | 'markup' | 'hybrid'
   commissionRate: string
+  markupRate: string
+  fixedCommission: string
+  fixedMarkup: string
 }
 
 const emptyPartnerForm: PartnerForm = {
@@ -88,7 +96,24 @@ const emptyPartnerForm: PartnerForm = {
   cuisine: '',
   phone: '',
   address: '',
+  commercialModel: 'commission',
   commissionRate: '15',
+  markupRate: '0',
+  fixedCommission: '0',
+  fixedMarkup: '0',
+}
+
+function commercialSummary(restaurant: RestaurantRecord) {
+  const model = restaurant.commercial_model || 'commission'
+  const commission = `${Number(restaurant.commission_rate || 0)}% + ₹${Number(
+    restaurant.fixed_commission || 0
+  )}`
+  const markup = `${Number(restaurant.markup_rate || 0)}% + ₹${Number(
+    restaurant.fixed_markup || 0
+  )}`
+  if (model === 'hybrid') return `Hybrid · commission ${commission} · markup ${markup}`
+  if (model === 'markup') return `Markup · ${markup}`
+  return `Commission · ${commission}`
 }
 
 interface PaymentReview {
@@ -219,6 +244,52 @@ function EmptyState({ text }: { text: string }) {
   return <div className="empty-state">{text}</div>
 }
 
+const ADMIN_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk'
+
+function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <section
+        className="partner-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="download-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="sheet-handle" />
+        <div className="partner-sheet-heading">
+          <div>
+            <span className="eyebrow">Get the app</span>
+            <h2 id="download-sheet-title">Download Crave Admin</h2>
+          </div>
+          <button onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+        <p className="partner-form-help">
+          Install the native admin app for faster operations and live push alerts.
+        </p>
+        <div className="partner-form-actions" style={{ flexDirection: 'column', gap: 10 }}>
+          <a
+            className="primary-button"
+            href={ADMIN_ANDROID_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="crave-admin-debug.apk"
+          >
+            <Icon name="download" /> Download for Android
+          </a>
+          <button className="secondary-button" disabled>
+            iOS — Coming soon
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function App() {
   const [booting, setBooting] = useState(true)
   const [user, setUser] = useState<AdminUser | null>(null)
@@ -238,6 +309,7 @@ export default function App() {
   const [selectedPartner, setSelectedPartner] = useState<RestaurantRecord | null>(null)
   const [partnerForm, setPartnerForm] = useState<PartnerForm>(emptyPartnerForm)
   const [partnerBusy, setPartnerBusy] = useState(false)
+  const [showDownload, setShowDownload] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
 
@@ -477,7 +549,11 @@ export default function App() {
       cuisine: restaurant.cuisine || '',
       phone: restaurant.phone || '',
       address: restaurant.address || '',
+      commercialModel: restaurant.commercial_model || 'commission',
       commissionRate: String(restaurant.commission_rate ?? 0),
+      markupRate: String(restaurant.markup_rate ?? 0),
+      fixedCommission: String(restaurant.fixed_commission ?? 0),
+      fixedMarkup: String(restaurant.fixed_markup ?? 0),
     })
     setPartnerMode('edit')
   }
@@ -499,7 +575,12 @@ export default function App() {
             cuisine: partnerForm.cuisine.trim() || 'Multi-Cuisine',
             phone: partnerForm.phone.trim(),
             address: partnerForm.address.trim(),
+            commercialModel: partnerForm.commercialModel,
             commissionRate: Number(partnerForm.commissionRate),
+            markupRate: Number(partnerForm.markupRate),
+            fixedCommission: Number(partnerForm.fixedCommission),
+            fixedMarkup: Number(partnerForm.fixedMarkup),
+            paymentModel: partnerForm.commercialModel === 'markup' ? 'markup' : 'commission',
           },
         })
         setNotice('Restaurant partner added successfully.')
@@ -513,7 +594,12 @@ export default function App() {
             cuisine: partnerForm.cuisine.trim(),
             phone: partnerForm.phone.trim(),
             address: partnerForm.address.trim(),
+            commercialModel: partnerForm.commercialModel,
             commissionRate: Number(partnerForm.commissionRate),
+            markupRate: Number(partnerForm.markupRate),
+            fixedCommission: Number(partnerForm.fixedCommission),
+            fixedMarkup: Number(partnerForm.fixedMarkup),
+            paymentModel: partnerForm.commercialModel === 'markup' ? 'markup' : 'commission',
           },
         })
         setNotice('Restaurant details updated.')
@@ -625,6 +711,9 @@ export default function App() {
         <button className="connection-chip" onClick={() => void loadDashboard()}>
           <Icon name={networkConnected ? 'wifi' : 'offline'} />
           {refreshing ? 'Syncing' : networkConnected ? 'Live' : 'Offline'}
+        </button>
+        <button className="connection-chip" onClick={() => setShowDownload(true)}>
+          <Icon name="download" /> App
         </button>
       </header>
 
@@ -791,7 +880,7 @@ export default function App() {
                     <p>{restaurant.cuisine || 'Restaurant partner'}</p>
                   </div>
                   <strong>{restaurant.is_open ? 'Open' : 'Offline'}</strong>
-                  <small>{Number(restaurant.commission_rate || 0)}% commission</small>
+                  <small>{commercialSummary(restaurant)}</small>
                   <div className="partner-actions">
                     <button onClick={() => openEditPartner(restaurant)}>Edit</button>
                     <button
@@ -1027,20 +1116,90 @@ export default function App() {
                   }
                 />
               </label>
-              <label>
-                Commission (%)
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={partnerForm.commissionRate}
+              <label className="commercial-model-field">
+                Commercial model
+                <select
+                  value={partnerForm.commercialModel}
                   onChange={(event) =>
-                    setPartnerForm((form) => ({ ...form, commissionRate: event.target.value }))
+                    setPartnerForm((form) => ({
+                      ...form,
+                      commercialModel: event.target.value as PartnerForm['commercialModel'],
+                    }))
                   }
-                  required
-                />
+                >
+                  <option value="commission">Commission</option>
+                  <option value="markup">Markup</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
               </label>
+              {partnerForm.commercialModel !== 'markup' && (
+                <div className="commercial-fields">
+                  <label>
+                    Commission (%)
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={partnerForm.commissionRate}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({
+                          ...form,
+                          commissionRate: event.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Fixed commission (₹)
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={partnerForm.fixedCommission}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({
+                          ...form,
+                          fixedCommission: event.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </label>
+                </div>
+              )}
+              {partnerForm.commercialModel !== 'commission' && (
+                <div className="commercial-fields">
+                  <label>
+                    Markup (%)
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={partnerForm.markupRate}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({ ...form, markupRate: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Fixed markup (₹)
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={partnerForm.fixedMarkup}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({ ...form, fixedMarkup: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                </div>
+              )}
               <div className="partner-form-actions">
                 <button
                   type="button"
@@ -1063,6 +1222,7 @@ export default function App() {
         </div>
       )}
       {notice && <div className="toast">{notice}</div>}
+      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

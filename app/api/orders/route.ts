@@ -25,6 +25,7 @@ import {
 import type { PriceTaxMode } from '@/lib/finance/tax-engine'
 import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
 import { withTiming } from '@/lib/instrumentation'
+import { calculateMenuAppPrice } from '@/lib/menu-pricing'
 import { sendDriverPushToAll, sendDriverPushToUsers } from '@/lib/notifications/driver-push'
 import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
@@ -611,10 +612,23 @@ export async function POST(request: Request) {
           )
         }
 
-        const price = Number(selectedVariant?.price ?? menuItem.price ?? 0)
         const restaurantPrice = Number(
-          selectedVariant?.restaurant_price ?? menuItem.restaurant_price ?? price
+          selectedVariant?.restaurant_price ??
+            menuItem.restaurant_price ??
+            selectedVariant?.price ??
+            menuItem.price ??
+            0
         )
+        const contract = restaurant?.commercial_contracts?.[0]
+        const price = isCraveXPOrder
+          ? Number(selectedVariant?.price ?? menuItem.price ?? 0)
+          : calculateMenuAppPrice(restaurantPrice, {
+              commercialModel: contract?.commercial_model ?? restaurant?.commercial_model,
+              commissionRate: contract?.commission_rate ?? restaurant?.commission_rate,
+              markupRate: contract?.markup_rate ?? restaurant?.markup_rate,
+              fixedCommission: contract?.fixed_commission ?? restaurant?.fixed_commission,
+              fixedMarkup: contract?.fixed_markup ?? restaurant?.fixed_markup,
+            })
         const hasExplicitRestaurantPrice =
           selectedVariant != null || menuItem.restaurant_price != null
         if (

@@ -5,10 +5,76 @@ import { hashPassword } from '@/lib/password'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { AdminStatsCache } from '@/lib/cache'
+import { calculateMenuAppPrice } from '@/lib/menu-pricing'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
+
+async function repriceRestaurantMenu(db: any, restaurantId: string) {
+  const restaurant = await db.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: {
+      commercial_model: true,
+      commission_rate: true,
+      markup_rate: true,
+      fixed_commission: true,
+      fixed_markup: true,
+      commercial_contracts: {
+        where: { status: 'ACTIVE' },
+        orderBy: { effective_from: 'desc' },
+        take: 1,
+        select: {
+          commercial_model: true,
+          commission_rate: true,
+          markup_rate: true,
+          fixed_commission: true,
+          fixed_markup: true,
+        },
+      },
+    },
+  })
+  const contract = restaurant?.commercial_contracts?.[0]
+  const settings = {
+    commercialModel: contract?.commercial_model ?? restaurant?.commercial_model,
+    commissionRate: contract?.commission_rate ?? restaurant?.commission_rate,
+    markupRate: contract?.markup_rate ?? restaurant?.markup_rate,
+    fixedCommission: contract?.fixed_commission ?? restaurant?.fixed_commission,
+    fixedMarkup: contract?.fixed_markup ?? restaurant?.fixed_markup,
+  }
+  const items = await db.menuItem.findMany({
+    where: { restaurant_id: restaurantId },
+    select: {
+      id: true,
+      price: true,
+      restaurant_price: true,
+      variants: {
+        select: { id: true, price: true, restaurant_price: true },
+      },
+    },
+  })
+
+  for (const item of items) {
+    const restaurantPrice = Number(item.restaurant_price ?? item.price)
+    await db.menuItem.update({
+      where: { id: item.id },
+      data: {
+        price: calculateMenuAppPrice(restaurantPrice, settings),
+        variants: {
+          update: item.variants.map((variant: any) => {
+            const variantRestaurantPrice = Number(variant.restaurant_price ?? variant.price)
+            return {
+              where: { id: variant.id },
+              data: {
+                price: calculateMenuAppPrice(variantRestaurantPrice, settings),
+              },
+            }
+          }),
+        },
+      },
+    })
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +100,11 @@ export async function POST(request: Request) {
       storeName,
       cuisine,
       bannerUrl,
+      commercialModel,
       commissionRate,
+      markupRate,
+      fixedCommission,
+      fixedMarkup,
       paymentModel,
       vehicleType,
       vehicle_type,
@@ -114,7 +184,11 @@ export async function POST(request: Request) {
       finalStoreName ||
       cuisine ||
       bannerUrl !== undefined ||
+      commercialModel !== undefined ||
       commissionRate !== undefined ||
+      markupRate !== undefined ||
+      fixedCommission !== undefined ||
+      fixedMarkup !== undefined ||
       paymentModel ||
       address ||
       latitude !== undefined ||
@@ -123,11 +197,28 @@ export async function POST(request: Request) {
 
     // CR-08 FIX: Validate commercial settings before writing to the database.
     // Storing out-of-range values silently corrupts every subsequent order for that restaurant.
-    if (commissionRate !== undefined) {
-      const rate = Number(commissionRate)
+    if (
+      commercialModel !== undefined &&
+      !['commission', 'markup', 'hybrid'].includes(String(commercialModel))
+    ) {
+      return NextResponse.json({ error: 'Invalid commercial model.' }, { status: 400 })
+    }
+    for (const [field, value] of Object.entries({ commissionRate, markupRate })) {
+      if (value === undefined) continue
+      const rate = Number(value)
       if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
         return NextResponse.json(
-          { error: 'commissionRate must be a number between 0 and 100 (percent).' },
+          { error: `${field} must be a number between 0 and 100 (percent).` },
+          { status: 400 }
+        )
+      }
+    }
+    for (const [field, value] of Object.entries({ fixedCommission, fixedMarkup })) {
+      if (value === undefined) continue
+      const amount = Number(value)
+      if (!Number.isInteger(amount) || amount < 0) {
+        return NextResponse.json(
+          { error: `${field} must be a non-negative whole rupee amount.` },
           { status: 400 }
         )
       }
@@ -175,8 +266,14 @@ export async function POST(request: Request) {
             if (bannerUrl !== undefined) restUpdateData.image = cleanBannerUrl
             if (address) restUpdateData.address = String(address).trim()
             if (phone) restUpdateData.phone = String(phone).trim()
+            if (commercialModel !== undefined)
+              restUpdateData.commercial_model = String(commercialModel)
             if (commissionRate !== undefined)
               restUpdateData.commission_rate = Number(commissionRate)
+            if (markupRate !== undefined) restUpdateData.markup_rate = Number(markupRate)
+            if (fixedCommission !== undefined)
+              restUpdateData.fixed_commission = Number(fixedCommission)
+            if (fixedMarkup !== undefined) restUpdateData.fixed_markup = Number(fixedMarkup)
             if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
             if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
             if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
@@ -205,6 +302,31 @@ export async function POST(request: Request) {
               where: { id: targetRestId },
               data: restUpdateData,
             })
+            if (
+              commercialModel !== undefined ||
+              commissionRate !== undefined ||
+              markupRate !== undefined ||
+              fixedCommission !== undefined ||
+              fixedMarkup !== undefined
+            ) {
+              await tx.commercialContract.updateMany({
+                where: { restaurant_id: targetRestId, status: 'ACTIVE' },
+                data: {
+                  ...(commercialModel !== undefined && {
+                    commercial_model: String(commercialModel) as any,
+                  }),
+                  ...(commissionRate !== undefined && {
+                    commission_rate: Number(commissionRate),
+                  }),
+                  ...(markupRate !== undefined && { markup_rate: Number(markupRate) }),
+                  ...(fixedCommission !== undefined && {
+                    fixed_commission: Number(fixedCommission),
+                  }),
+                  ...(fixedMarkup !== undefined && { fixed_markup: Number(fixedMarkup) }),
+                },
+              })
+              await repriceRestaurantMenu(tx, targetRestId)
+            }
           }
         })
         await invalidateRestaurantCache()
@@ -220,7 +342,13 @@ export async function POST(request: Request) {
           if (bannerUrl !== undefined) restUpdateData.image = cleanBannerUrl
           if (address) restUpdateData.address = String(address).trim()
           if (phone) restUpdateData.phone = String(phone).trim()
+          if (commercialModel !== undefined)
+            restUpdateData.commercial_model = String(commercialModel)
           if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
+          if (markupRate !== undefined) restUpdateData.markup_rate = Number(markupRate)
+          if (fixedCommission !== undefined)
+            restUpdateData.fixed_commission = Number(fixedCommission)
+          if (fixedMarkup !== undefined) restUpdateData.fixed_markup = Number(fixedMarkup)
           if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
           if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
           if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
@@ -246,6 +374,29 @@ export async function POST(request: Request) {
           }
 
           await updateRestaurant(targetRestId, restUpdateData)
+          if (
+            commercialModel !== undefined ||
+            commissionRate !== undefined ||
+            markupRate !== undefined ||
+            fixedCommission !== undefined ||
+            fixedMarkup !== undefined
+          ) {
+            await prisma.commercialContract.updateMany({
+              where: { restaurant_id: targetRestId, status: 'ACTIVE' },
+              data: {
+                ...(commercialModel !== undefined && {
+                  commercial_model: String(commercialModel) as any,
+                }),
+                ...(commissionRate !== undefined && { commission_rate: Number(commissionRate) }),
+                ...(markupRate !== undefined && { markup_rate: Number(markupRate) }),
+                ...(fixedCommission !== undefined && {
+                  fixed_commission: Number(fixedCommission),
+                }),
+                ...(fixedMarkup !== undefined && { fixed_markup: Number(fixedMarkup) }),
+              },
+            })
+            await repriceRestaurantMenu(prisma, targetRestId)
+          }
         }
       }
     } catch (dbErr: any) {

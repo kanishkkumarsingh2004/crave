@@ -597,6 +597,44 @@ function MenuEditor({
   )
 }
 
+const RESTAURANT_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk'
+
+function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <section className="sheet" onClick={(event) => event.stopPropagation()}>
+        <header className="sheet-header">
+          <div>
+            <span className="eyebrow">Get the app</span>
+            <h2>Download Crave Kitchen</h2>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Close">
+            <Icon name="close" />
+          </button>
+        </header>
+        <p>Install the native restaurant app for live orders, menu control and push alerts.</p>
+        <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+          <a
+            className="primary-button"
+            href={RESTAURANT_ANDROID_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="crave-restaurant-debug.apk"
+            style={{ textAlign: 'center', textDecoration: 'none' }}
+          >
+            <Icon name="download" /> Download for Android
+          </a>
+          <button className="secondary-button" disabled>
+            iOS — Coming soon
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function App() {
   const [booting, setBooting] = useState(true)
   const [user, setUser] = useState<RestaurantUser | null>(null)
@@ -623,6 +661,7 @@ export default function App() {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [showDownload, setShowDownload] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [settingsForm, setSettingsForm] = useState({
     name: '',
@@ -1706,6 +1745,20 @@ export default function App() {
                     <Icon name="logout" /> Sign out
                   </button>
                 </article>
+                <article className="settings-card download-card">
+                  <div className="card-title">
+                    <span>
+                      <Icon name="download" />
+                    </span>
+                    <div>
+                      <h2>Download the app</h2>
+                      <p>Get the native restaurant app for faster live order handling.</p>
+                    </div>
+                  </div>
+                  <button className="primary-button" onClick={() => setShowDownload(true)}>
+                    <Icon name="download" /> Download app
+                  </button>
+                </article>
               </div>
             </div>
           </section>
@@ -1738,6 +1791,7 @@ export default function App() {
           onSave={() => void saveMenuItem()}
         />
       )}
+      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

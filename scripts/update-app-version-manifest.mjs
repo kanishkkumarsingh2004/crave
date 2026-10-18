@@ -12,7 +12,7 @@ const apps = {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
     releaseNotes:
-      'Responsive partner management with add, edit, suspend and delete controls, device navigation and selectable themes.',
+      'Commercial model controls with commission, markup and hybrid values, responsive partner cards and stable management actions.',
   },
   driver: {
     directory: 'driver_app',
@@ -30,7 +30,7 @@ const apps = {
     directory: 'customer_app',
     apk: 'crave-customer-debug.apk',
     releaseNotes:
-      'Direct Google Pay, PhonePe and Paytm checkout, any-UPI chooser, cleaner navigation and selectable themes.',
+      'Interactive address maps, accurate customer-facing commercial pricing, animated bottom sheets and a cleaner restaurant search.',
   },
 }
 

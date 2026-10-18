@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Network } from '@capacitor/network'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
@@ -25,6 +26,7 @@ import { connectCustomerOrders } from './realtime'
 import { openUpiPayment, type UpiPaymentApp } from './payment'
 import { checkoutDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import type { AddressMapPoint } from './AddressMap'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
 
 type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
@@ -32,6 +34,7 @@ const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
 const titleCase = (value: string) =>
   value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 const FALLBACK = ['#f4ff52', '#ffb86b', '#b8d8ff', '#e6cbff', '#a9efcf']
+const AddressMap = lazy(() => import('./AddressMap'))
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
@@ -43,6 +46,64 @@ function Logo({ compact = false }: { compact?: boolean }) {
 }
 function Spinner() {
   return <span className="spinner" />
+}
+
+const CUSTOMER_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
+
+function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return createPortal(
+    <div className="modal-backdrop animated-backdrop" onClick={onClose}>
+      <section
+        className="bottom-sheet animated-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="download-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="sheet-handle" />
+        <div className="sheet-title">
+          <div>
+            <p className="eyebrow">GET THE APP</p>
+            <h2 id="download-sheet-title">Download CRAVE</h2>
+          </div>
+          <button className="round pale" onClick={onClose} aria-label="Close">
+            <Icon name="close" />
+          </button>
+        </div>
+        <p className="upi-picker-total">Order from your phone. Faster than the website.</p>
+        <div className="upi-app-grid">
+          <a
+            className="upi-app-card"
+            href={CUSTOMER_ANDROID_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="crave-customer-debug.apk"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            <span className="upi-app-mark gpay">
+              <Icon name="download" />
+            </span>
+            <b>Android</b>
+            <small>Download the CRAVE app</small>
+          </a>
+          <button
+            className="upi-app-card"
+            disabled
+            style={{ opacity: 0.6, cursor: 'not-allowed' }}
+          >
+            <span className="upi-app-mark phonepe">
+              <Icon name="clock" />
+            </span>
+            <b>iOS</b>
+            <small>Coming soon</small>
+          </button>
+        </div>
+      </section>
+    </div>,
+    document.body
+  )
 }
 function Empty({
   icon,
@@ -468,43 +529,45 @@ function MenuScreen({
           </div>
         )}
       </div>
-      {pick && (
-        <div className="modal-backdrop" onClick={() => setPick(null)}>
-          <section className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">CHOOSE A SIZE</p>
-                <h2>{pick.name}</h2>
+      {pick &&
+        createPortal(
+          <div className="modal-backdrop animated-backdrop" onClick={() => setPick(null)}>
+            <section className="bottom-sheet animated-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="sheet-handle" />
+              <div className="sheet-title">
+                <div>
+                  <p className="eyebrow">CHOOSE A SIZE</p>
+                  <h2>{pick.name}</h2>
+                </div>
+                <button className="round pale" onClick={() => setPick(null)}>
+                  <Icon name="close" />
+                </button>
               </div>
-              <button className="round pale" onClick={() => setPick(null)}>
-                <Icon name="close" />
-              </button>
-            </div>
-            <div className="variant-list">
-              {(pick.variants || [])
-                .filter((v) => v.in_stock !== false)
-                .map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      onAdd(pick, v)
-                      setPick(null)
-                    }}
-                  >
-                    <span>
-                      <b>{v.name}</b>
-                      <small>Freshly made</small>
-                    </span>
-                    <strong>
-                      {money(v.price)} <Icon name="plus" />
-                    </strong>
-                  </button>
-                ))}
-            </div>
-          </section>
-        </div>
-      )}
+              <div className="variant-list">
+                {(pick.variants || [])
+                  .filter((v) => v.in_stock !== false)
+                  .map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        onAdd(pick, v)
+                        setPick(null)
+                      }}
+                    >
+                      <span>
+                        <b>{v.name}</b>
+                        <small>Freshly made</small>
+                      </span>
+                      <strong>
+                        {money(v.price)} <Icon name="plus" />
+                      </strong>
+                    </button>
+                  ))}
+              </div>
+            </section>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }
@@ -996,6 +1059,7 @@ function Account({
   onLogout,
   theme,
   onTheme,
+  onDownload,
 }: {
   user: User
   addresses: Address[]
@@ -1003,6 +1067,7 @@ function Account({
   onLogout: () => void
   theme: ThemeMode
   onTheme: (theme: ThemeMode) => void
+  onDownload: () => void
 }) {
   const [notifications, setNotifications] = useState(false),
     [checking, setChecking] = useState(false),
@@ -1094,11 +1159,24 @@ function Account({
           </span>
           {checking ? <Spinner /> : <Icon name="chevron" />}
         </button>
+        <button
+          onClick={onDownload}
+          disabled={checking}
+        >
+          <span className="setting-icon">
+            <Icon name="download" />
+          </span>
+          <span>
+            <b>Download the app</b>
+            <small>Get the native CRAVE app for faster ordering.</small>
+          </span>
+          <Icon name="chevron" />
+        </button>
       </div>
       <button className="logout-button" onClick={onLogout}>
         <Icon name="logout" /> Sign out
       </button>
-      <p className="version">CRAVE. Customer · 1.1.0</p>
+      <p className="version">CRAVE. Customer · 1.0.0</p>
     </section>
   )
 }
@@ -1116,7 +1194,7 @@ function Addresses({
     [form, setForm] = useState({ label: 'Home', address: '' }),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
-    [location, setLocation] = useState<{ lat: number; lng: number } | null>(null),
+    [location, setLocation] = useState<AddressMapPoint | null>(null),
     [suggestions, setSuggestions] = useState<
       Array<{
         placeId: string
@@ -1126,7 +1204,9 @@ function Addresses({
         lng: number
       }>
     >([]),
-    [searching, setSearching] = useState(false)
+    [searching, setSearching] = useState(false),
+    [locating, setLocating] = useState(false),
+    [mapBusy, setMapBusy] = useState(false)
   useEffect(() => {
     if (!adding || form.address.trim().length < 3 || location) {
       setSuggestions([])
@@ -1147,6 +1227,45 @@ function Addresses({
     }, 500)
     return () => clearTimeout(timer)
   }, [adding, form.address, location])
+  const chooseMapLocation = async (point: AddressMapPoint) => {
+    setLocation(point)
+    setSuggestions([])
+    setMapBusy(true)
+    setError('')
+    try {
+      const response = await apiRequest<{ formattedAddress: string }>(
+        `/api/geocode/reverse?lat=${point.lat}&lng=${point.lng}`
+      )
+      setForm((current) => ({ ...current, address: response.formattedAddress }))
+    } catch (mapError) {
+      setError(mapError instanceof Error ? mapError.message : 'Could not identify this location.')
+    } finally {
+      setMapBusy(false)
+    }
+  }
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Location is not available on this device.')
+      return
+    }
+    setLocating(true)
+    setError('')
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocating(false)
+        void chooseMapLocation({ lat: coords.latitude, lng: coords.longitude })
+      },
+      (locationError) => {
+        setLocating(false)
+        setError(
+          locationError.code === locationError.PERMISSION_DENIED
+            ? 'Allow location access to use your current position.'
+            : 'Could not get your current location. Try selecting the pin on the map.'
+        )
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    )
+  }
   const save = async () => {
     setBusy(true)
     setError('')
@@ -1264,6 +1383,27 @@ function Addresses({
                 ))}
               </div>
             )}
+            <div className="address-map">
+              <Suspense
+                fallback={
+                  <div className="address-map-canvas address-map-loading">
+                    <Spinner /> Loading map…
+                  </div>
+                }
+              >
+                <AddressMap location={location} onPick={(point) => void chooseMapLocation(point)} />
+              </Suspense>
+              <div className="address-map-toolbar">
+                <span>
+                  <b>{mapBusy ? 'Finding this address…' : 'Pin your delivery entrance'}</b>
+                  <small>Tap the map for a precise location.</small>
+                </span>
+                <button type="button" onClick={useCurrentLocation} disabled={locating || mapBusy}>
+                  {locating ? <Spinner /> : <Icon name="pin" />}
+                  {locating ? 'Locating…' : 'Use my location'}
+                </button>
+              </div>
+            </div>
             {location && (
               <p className="address-confirmed">
                 <Icon name="check" /> Location confirmed
@@ -1322,6 +1462,7 @@ export default function App() {
       }
     }),
     [toast, setToast] = useState('')
+  const [showDownload, setShowDownload] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
   const showToast = (m: string) => {
@@ -1655,21 +1796,6 @@ export default function App() {
                 </button>
               )}
             </div>
-            <div className="cuisine-row">
-              {['All', 'Momos', 'Indian', 'Chinese', 'Pizza', 'Biryani'].map((c) => (
-                <button
-                  key={c}
-                  className={
-                    (c === 'All' && !search) || search.toLowerCase() === c.toLowerCase()
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() => setSearch(c === 'All' ? '' : c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
             <h2 className="section-title">
               {search ? `Results for “${search}”` : 'All restaurants'} <span>{visible.length}</span>
             </h2>
@@ -1733,6 +1859,7 @@ export default function App() {
               setTheme(mode)
               void saveTheme(mode)
             }}
+            onDownload={() => setShowDownload(true)}
           />
         )}
       </main>
@@ -1764,6 +1891,7 @@ export default function App() {
         ))}
       </nav>
       {toast && <div className="toast">{toast}</div>}
+      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

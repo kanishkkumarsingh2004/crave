@@ -953,10 +953,31 @@ textarea {
   display: flex;
   align-items: end;
 }
+.animated-backdrop {
+  animation: modal-fade-in 180ms ease-out both;
+}
+.animated-sheet {
+  max-height: min(82dvh, 720px);
+  overflow-y: auto;
+  animation: sheet-slide-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes modal-fade-in {
+  from {
+    background: transparent;
+  }
+}
+@keyframes sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
 .bottom-sheet {
   width: 100%;
   max-width: 740px;
-  margin: auto;
+  margin: 0 auto;
   padding: 10px 20px calc(24px + var(--safe-bottom));
   border-radius: 28px 28px 0 0;
   background: #f7f7f2;
@@ -1763,6 +1784,83 @@ html[data-theme='dark'] .bottom-nav .active {
 .address-suggestions small {
   margin-top: 3px;
   color: var(--muted);
+}
+.address-map {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.address-map-canvas {
+  width: 100%;
+  height: clamp(210px, 35dvh, 310px);
+  background: #e7ecdf;
+}
+.address-map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+.address-map-toolbar {
+  display: flex !important;
+  align-items: center;
+  gap: 12px !important;
+  padding: 12px;
+}
+.address-map-toolbar span {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.address-map-toolbar b {
+  font-size: 11px;
+}
+.address-map-toolbar small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+.address-map-toolbar button {
+  flex: 0 0 auto !important;
+  min-height: 38px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--lime);
+  color: #172014;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.address-map-toolbar button svg {
+  width: 15px;
+}
+.address-map-toolbar button:disabled {
+  opacity: 0.65;
+}
+html[data-theme='dark'] .address-map,
+html[data-theme='dark'] .address-form,
+html[data-theme='dark'] .saved-address {
+  border-color: var(--line);
+  background: var(--surface);
+}
+@media (max-width: 380px) {
+  .address-map-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .address-map-toolbar button {
+    width: 100%;
+  }
 }
 @media (min-width: 700px) {
   .restaurant-list {

@@ -536,7 +536,8 @@ svg {
   font-weight: 800;
 }
 .partner-form input,
-.partner-form textarea {
+.partner-form textarea,
+.partner-form select {
   width: 100%;
   min-height: 47px;
   border: 1px solid var(--line);
@@ -552,8 +553,18 @@ svg {
   resize: vertical;
 }
 .partner-form input:focus,
-.partner-form textarea:focus {
+.partner-form textarea:focus,
+.partner-form select:focus {
   border-color: rgb(217 244 71 / 65%);
+}
+.commercial-model-field,
+.commercial-fields {
+  grid-column: 1 / -1;
+}
+.commercial-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
 }
 .partner-form-actions {
   grid-column: 1 / -1;
@@ -702,7 +713,8 @@ html[data-theme='light'] .empty-state {
 }
 html[data-theme='light'] .payment-details,
 html[data-theme='light'] .partner-form input,
-html[data-theme='light'] .partner-form textarea {
+html[data-theme='light'] .partner-form textarea,
+html[data-theme='light'] .partner-form select {
   color: #152019;
   background: #f5f7f3;
 }
@@ -1002,5 +1014,17 @@ html[data-theme='light'] .partner-sheet-heading > button {
   }
   .partner-form-actions {
     grid-column: 1;
+  }
+  .commercial-model-field,
+  .commercial-fields {
+    grid-column: 1;
+  }
+}
+@media (max-width: 380px) {
+  .commercial-fields {
+    grid-template-columns: 1fr;
+  }
+  .partner-actions {
+    grid-template-columns: 1fr;
   }
 }

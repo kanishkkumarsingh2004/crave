@@ -92,6 +92,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `${field} must be between 0 and 100` }, { status: 400 })
       }
     }
+    if (!['commission', 'markup', 'hybrid'].includes(String(commercialModel))) {
+      return NextResponse.json({ error: 'Invalid commercial model.' }, { status: 400 })
+    }
+    for (const [field, value] of Object.entries({ fixedCommission, fixedMarkup })) {
+      const amount = Number(value)
+      if (!Number.isInteger(amount) || amount < 0) {
+        return NextResponse.json(
+          { error: `${field} must be a non-negative whole rupee amount.` },
+          { status: 400 }
+        )
+      }
+    }
     const lat = latitude == null || latitude === '' ? null : Number(latitude)
     const lng = longitude == null || longitude === '' ? null : Number(longitude)
     if (lat != null && (!Number.isFinite(lat) || lat < -90 || lat > 90)) {

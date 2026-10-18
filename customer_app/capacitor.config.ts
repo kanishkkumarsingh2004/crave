@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'CRAVE.',
   webDir: 'dist',
   backgroundColor: '#08110C',
-  appendUserAgent: ' CraveCustomer/1.1.0',
+  appendUserAgent: ' CraveCustomer/1.0.0',
   plugins: {
     LocalNotifications: { smallIcon: 'ic_stat_crave', iconColor: '#F4FF52' },
     SplashScreen: {

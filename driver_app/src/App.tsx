@@ -860,6 +860,44 @@ function EmptyState({ icon, title, text }: { icon: IconName; title: string; text
   )
 }
 
+const DRIVER_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk'
+
+function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <section className="sheet small-sheet" onClick={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <span className="eyebrow">Get the app</span>
+            <h2>Download Crave Driver</h2>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Close">
+            <Icon name="close" />
+          </button>
+        </header>
+        <p>Install the native driver app for live offers, GPS and push notifications.</p>
+        <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+          <a
+            className="primary-button"
+            href={DRIVER_ANDROID_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="crave-driver-debug.apk"
+            style={{ textAlign: 'center', textDecoration: 'none' }}
+          >
+            <Icon name="download" /> Download for Android
+          </a>
+          <button className="secondary-button" disabled>
+            iOS — Coming soon
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function OtpSheet({
   busy,
   onClose,
@@ -938,6 +976,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [otpOpen, setOtpOpen] = useState(false)
+  const [showDownload, setShowDownload] = useState(false)
   const activeOrder = useMemo(
     () => orders.find((order) => ACTIVE_STATUSES.has(order.status)) || null,
     [orders]
@@ -1533,6 +1572,9 @@ export default function App() {
             <span />
             <b>{online ? 'Online' : 'Offline'}</b>
           </button>
+          <button className="icon-button" onClick={() => setShowDownload(true)} aria-label="Download app">
+            <Icon name="download" />
+          </button>
         </div>
       </header>
       {(error || notice) && (
@@ -1710,6 +1752,7 @@ export default function App() {
           onSubmit={completeDelivery}
         />
       )}
+      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

@@ -69,7 +69,9 @@ const restaurantPricingSelect = {
   id: true,
   owner_id: true,
   commercial_model: true,
+  commission_rate: true,
   markup_rate: true,
+  fixed_commission: true,
   fixed_markup: true,
   commercial_contracts: {
     where: { status: 'ACTIVE' as const },
@@ -77,7 +79,9 @@ const restaurantPricingSelect = {
     take: 1,
     select: {
       commercial_model: true,
+      commission_rate: true,
       markup_rate: true,
+      fixed_commission: true,
       fixed_markup: true,
     },
   },
@@ -87,7 +91,9 @@ function pricingSettings(restaurant: any): MenuPricingSettings {
   const contract = restaurant?.commercial_contracts?.[0]
   return {
     commercialModel: contract?.commercial_model ?? restaurant?.commercial_model,
+    commissionRate: contract?.commission_rate ?? restaurant?.commission_rate,
     markupRate: contract?.markup_rate ?? restaurant?.markup_rate,
+    fixedCommission: contract?.fixed_commission ?? restaurant?.fixed_commission,
     fixedMarkup: contract?.fixed_markup ?? restaurant?.fixed_markup,
   }
 }
@@ -118,12 +124,13 @@ export async function GET(request: Request) {
     }
 
     const actor = await getActor(request)
-    const restaurant = actor
-      ? await prisma.restaurant.findUnique({
-          where: { id: restaurantId },
-          select: { owner_id: true },
-        })
-      : null
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: restaurantPricingSelect,
+    })
+    if (!restaurant) {
+      return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+    }
     const canViewRestaurantPricing =
       actor?.role === 'admin' ||
       (actor != null &&
@@ -139,12 +146,24 @@ export async function GET(request: Request) {
 
     const visibleItems = canViewRestaurantPricing
       ? items
-      : items.map(({ restaurant_price: _restaurantPrice, variants, ...item }) => ({
-          ...item,
-          variants: variants.map(
-            ({ restaurant_price: _variantRestaurantPrice, ...variant }) => variant
-          ),
-        }))
+      : items.map(({ restaurant_price, variants, ...item }) => {
+          const settings = pricingSettings(restaurant)
+          const customerPrice = calculateMenuAppPrice(
+            Number(restaurant_price ?? item.price),
+            settings
+          )
+          return {
+            ...item,
+            price: customerPrice,
+            variants: variants.map(({ restaurant_price: variantRestaurantPrice, ...variant }) => ({
+              ...variant,
+              price: calculateMenuAppPrice(
+                Number(variantRestaurantPrice ?? variant.price),
+                settings
+              ),
+            })),
+          }
+        })
 
     return NextResponse.json({ success: true, items: visibleItems })
   } catch (error: any) {

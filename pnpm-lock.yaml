@@ -351,6 +351,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      maplibre-gl:
+        specifier: 6.14.0
+        version: 6.14.0
       react:
         specifier: 19.3.1
         version: 19.3.1

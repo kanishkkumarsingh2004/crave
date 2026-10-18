@@ -35,7 +35,14 @@ const RESTAURANT_LISTING_SELECT = {
 export async function findRestaurantById(id: string) {
   const r = await prisma.restaurant.findUnique({
     where: { id },
-    include: { owner: true },
+    include: {
+      owner: true,
+      commercial_contracts: {
+        where: { status: 'ACTIVE' },
+        orderBy: { effective_from: 'desc' },
+        take: 1,
+      },
+    },
   })
   return r ?? null
 }
