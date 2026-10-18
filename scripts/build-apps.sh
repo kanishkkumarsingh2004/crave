@@ -55,8 +55,10 @@ done
   cd "${output_directory}"
   sha256sum "${apk_names[@]}" > SHA256SUMS.txt
 )
+node "${repository_root}/scripts/update-app-version-manifest.mjs"
 
 echo
 echo "All apps built successfully:"
 ls -lh "${output_directory}"/*.apk
 echo "Checksums: ${output_directory}/SHA256SUMS.txt"
+echo "Update manifest: ${output_directory}/version.json"

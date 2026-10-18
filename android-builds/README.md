@@ -3,6 +3,11 @@
 This folder contains the latest debug APKs for all three Crave native applications. They connect
 to the production backend at `https://crave.apexonestudio.com` by default.
 
+The Restaurant app checks `version.json` at launch, whenever it returns to the foreground, and
+once every minute while it is open. If `apps.restaurant.versionCode` is newer than the installed
+build, it offers an in-app download. The APK is restricted to this repository's raw GitHub URL and
+its SHA-256 must match the manifest before Android's installer is opened.
+
 | Application | Android package        | APK (direct download)                                                                   |
 | ----------- | ---------------------- | --------------------------------------------------------------------------------------- |
 | Admin       | `com.crave.admin`      | <a href="./crave-admin-debug.apk?raw=true" download>crave-admin-debug.apk</a>           |
@@ -39,7 +44,9 @@ pnpm build:android
 
 This runs `scripts/build-apps.sh`, which builds each Vite shell, synchronizes Capacitor for both
 Android and iOS, runs Gradle `assembleDebug`, copies the three APKs into this folder, and refreshes
-`SHA256SUMS.txt`. iOS IPA compilation still requires macOS/Xcode.
+`SHA256SUMS.txt` and `version.json`. Commit and push the APK and manifest together so installed
+apps never see a version whose binary is not yet available. iOS IPA compilation still requires
+macOS/Xcode.
 
 Requirements: Node.js 22+, pnpm 12.3.4, a compatible JDK, and Android SDK 36.
 

@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ApiError,
+  COOKIE_SESSION_TOKEN,
   apiRequest,
   clearAuthToken,
   getAuthToken,
@@ -21,6 +22,7 @@ import {
   showKitchenNotification,
 } from './native'
 import { connectRestaurantEvents } from './realtime'
+import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdate } from './update'
 import type {
   AppTab,
   MenuEditorValue,
@@ -34,6 +36,7 @@ import type {
 } from './types'
 
 const APP_NAME = 'crave kitchen'
+const RESTAURANT_ROLES = new Set(['restaurant_vendor', 'cravexp_store_vendor', 'vendor'])
 const ACTIVE_STATUSES = new Set([
   'payment_verified',
   'sent_to_vendor',
@@ -238,6 +241,47 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
         <p className="login-security">Secure access for approved Crave restaurant partners.</p>
       </section>
     </main>
+  )
+}
+
+function UpdatePrompt({
+  update,
+  installing,
+  error,
+  onInstall,
+  onDismiss,
+}: {
+  update: RestaurantUpdate | null
+  installing: boolean
+  error: string
+  onInstall: () => void
+  onDismiss: () => void
+}) {
+  if (!update) return null
+  return (
+    <div className="modal-backdrop update-backdrop" role="dialog" aria-modal="true">
+      <section className="update-sheet">
+        <span className="update-icon" aria-hidden="true">
+          <Icon name="download" />
+        </span>
+        <span className="eyebrow">New version available</span>
+        <h2>Update Crave Restaurant</h2>
+        <p>
+          Version {update.versionName} is ready. The app will verify the download before opening
+          Android’s installer.
+        </p>
+        <div className="update-notes">{update.releaseNotes}</div>
+        {error && <div className="update-error">{error}</div>}
+        <div className="update-actions">
+          <button className="secondary-button" disabled={installing} onClick={onDismiss}>
+            Later
+          </button>
+          <button className="primary-button" disabled={installing} onClick={onInstall}>
+            {installing ? <span className="button-spinner dark" /> : 'Update now'}
+          </button>
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -521,6 +565,9 @@ export default function App() {
   const [notificationEnabled, setNotificationEnabled] = useState(false)
   const [alert, setAlert] = useState<{ title: string; body: string } | null>(null)
   const [toast, setToast] = useState('')
+  const [availableUpdate, setAvailableUpdate] = useState<RestaurantUpdate | null>(null)
+  const [installingUpdate, setInstallingUpdate] = useState(false)
+  const [updateError, setUpdateError] = useState('')
   const [settingsForm, setSettingsForm] = useState({
     name: '',
     cuisine: '',
@@ -530,6 +577,8 @@ export default function App() {
     fssai: '',
   })
   const ordersRef = useRef<RestaurantOrder[]>([])
+  const updateCheckRunningRef = useRef(false)
+  const dismissedUpdateRef = useRef<number | null>(null)
 
   useEffect(() => {
     ordersRef.current = orders
@@ -537,6 +586,40 @@ export default function App() {
 
   useEffect(() => {
     void bootstrap()
+  }, [])
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return
+    let active = true
+    const check = async () => {
+      if (updateCheckRunningRef.current) return
+      updateCheckRunningRef.current = true
+      try {
+        const update = await checkForRestaurantUpdate()
+        if (active && update && update.versionCode !== dismissedUpdateRef.current) {
+          setAvailableUpdate(update)
+          setUpdateError('')
+        }
+      } catch (error) {
+        console.warn('[update] Version check failed:', error)
+      } finally {
+        updateCheckRunningRef.current = false
+      }
+    }
+
+    void check()
+    const timer = window.setInterval(() => void check(), 60_000)
+    let appStateHandle: { remove: () => Promise<void> } | undefined
+    void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) void check()
+    }).then((handle) => {
+      appStateHandle = handle
+    })
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      if (appStateHandle) void appStateHandle.remove()
+    }
   }, [])
 
   useEffect(() => {
@@ -552,7 +635,9 @@ export default function App() {
   }, [restaurant?.id])
 
   useEffect(() => {
-    if (!user || !restaurant || !getAuthToken()) return
+    if (!user || !restaurant || !getAuthToken() || getAuthToken() === COOKIE_SESSION_TOKEN) {
+      return
+    }
     return connectRestaurantEvents({
       token: getAuthToken(),
       onStatus: setLiveConnected,
@@ -640,13 +725,27 @@ export default function App() {
       token?: string
       user: RestaurantUser
     }>('/api/auth/login', { method: 'POST', body: { email, password }, token: '' })
-    if (!result.token) throw new Error('The server did not create a native app session.')
-    if (!['restaurant_vendor', 'vendor'].includes(result.user.role)) {
+    if (!RESTAURANT_ROLES.has(result.user.role)) {
       throw new Error('This app is only for restaurant partner accounts.')
     }
-    await saveAuthToken(result.token)
+    let sessionUser = result.user
+    if (result.token) {
+      await saveAuthToken(result.token)
+    } else {
+      const cookieSession = await apiRequest<{
+        authenticated: boolean
+        user?: RestaurantUser
+      }>('/api/auth/me', { token: '' })
+      if (!cookieSession.authenticated || !cookieSession.user) {
+        throw new Error(
+          'Your sign-in was accepted, but the server did not keep the app session. Update the backend and try again.'
+        )
+      }
+      sessionUser = cookieSession.user
+      await saveAuthToken(COOKIE_SESSION_TOKEN)
+    }
     try {
-      await startSession(result.user)
+      await startSession(sessionUser)
     } catch (error) {
       await clearAuthToken()
       throw error
@@ -654,7 +753,7 @@ export default function App() {
   }
 
   async function startSession(nextUser: RestaurantUser) {
-    if (!['restaurant_vendor', 'vendor'].includes(nextUser.role)) {
+    if (!RESTAURANT_ROLES.has(nextUser.role)) {
       await clearAuthToken()
       throw new Error('This app is only for restaurant partner accounts.')
     }
@@ -662,6 +761,25 @@ export default function App() {
     setUser(nextUser)
     setRestaurant(nextRestaurant)
     await loadAllData(nextRestaurant.id)
+  }
+
+  async function installUpdate() {
+    if (!availableUpdate || installingUpdate) return
+    setInstallingUpdate(true)
+    setUpdateError('')
+    try {
+      await installRestaurantUpdate(availableUpdate)
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : 'The update could not be installed.')
+    } finally {
+      setInstallingUpdate(false)
+    }
+  }
+
+  function dismissUpdate() {
+    if (availableUpdate) dismissedUpdateRef.current = availableUpdate.versionCode
+    setAvailableUpdate(null)
+    setUpdateError('')
   }
 
   async function resolveRestaurant(nextUser: RestaurantUser): Promise<Restaurant> {
@@ -986,17 +1104,39 @@ export default function App() {
 
   if (booting) {
     return (
-      <main className="splash-screen">
-        <span className="brand-mark splash-mark">c</span>
-        <strong>crave.</strong>
-        <span className="loader-line">
-          <i />
-        </span>
-      </main>
+      <>
+        <main className="splash-screen">
+          <span className="brand-mark splash-mark">c</span>
+          <strong>crave.</strong>
+          <span className="loader-line">
+            <i />
+          </span>
+        </main>
+        <UpdatePrompt
+          update={availableUpdate}
+          installing={installingUpdate}
+          error={updateError}
+          onInstall={() => void installUpdate()}
+          onDismiss={dismissUpdate}
+        />
+      </>
     )
   }
 
-  if (!user) return <LoginScreen onLogin={handleLogin} />
+  if (!user) {
+    return (
+      <>
+        <LoginScreen onLogin={handleLogin} />
+        <UpdatePrompt
+          update={availableUpdate}
+          installing={installingUpdate}
+          error={updateError}
+          onInstall={() => void installUpdate()}
+          onDismiss={dismissUpdate}
+        />
+      </>
+    )
+  }
 
   const navItems: Array<{ id: AppTab; label: string; icon: IconName; badge?: number }> = [
     { id: 'home', label: 'Home', icon: 'home' },
@@ -1459,6 +1599,13 @@ export default function App() {
           onSave={() => void saveMenuItem()}
         />
       )}
+      <UpdatePrompt
+        update={availableUpdate}
+        installing={installingUpdate}
+        error={updateError}
+        onInstall={() => void installUpdate()}
+        onDismiss={dismissUpdate}
+      />
     </div>
   )
 }

@@ -19,6 +19,7 @@ export type IconName =
   | 'trash'
   | 'wifi'
   | 'offline'
+  | 'download'
   | 'chevron'
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -114,6 +115,12 @@ const paths: Record<IconName, React.ReactNode> = {
   offline: (
     <>
       <path d="m3 3 18 18M7 13a8 8 0 0 1 4-2M4 9a12 12 0 0 1 3-2M14 11a8 8 0 0 1 3 2M13 17a3 3 0 0 0-3 0" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12m0 0 5-5m-5 5-5-5" />
+      <path d="M5 21h14" />
     </>
   ),
   chevron: <path d="m9 18 6-6-6-6" />,

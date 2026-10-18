@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "apps": {
+    "admin": {
+      "versionCode": 1,
+      "versionName": "1.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=17871adc5d60d88c7319265ffb477904ad5e1ea35d2df0ed6788a927fba1f848",
+      "sha256": "17871adc5d60d88c7319265ffb477904ad5e1ea35d2df0ed6788a927fba1f848",
+      "releaseNotes": "Administration stability and backend connectivity updates."
+    },
+    "driver": {
+      "versionCode": 1,
+      "versionName": "1.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=0cf5f0b8732ea06f7e96749f0ec6dc777a14e29011ad4eed4ce3348fb79bdcb5",
+      "sha256": "0cf5f0b8732ea06f7e96749f0ec6dc777a14e29011ad4eed4ce3348fb79bdcb5",
+      "releaseNotes": "Live delivery, background location and notification stability updates."
+    },
+    "restaurant": {
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=d3189f2577b0ef094be24f3c6405c87a07457c830dc07c9adbdee509d02c1543",
+      "sha256": "d3189f2577b0ef094be24f3c6405c87a07457c830dc07c9adbdee509d02c1543",
+      "releaseNotes": "Native sign-in compatibility and secure in-app updates from GitHub."
+    }
+  }
+}

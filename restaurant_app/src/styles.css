@@ -1281,6 +1281,67 @@ svg {
   background: rgb(0 0 0 / 72%);
   backdrop-filter: blur(7px);
 }
+.update-backdrop {
+  z-index: 250;
+  align-items: center;
+  padding: 22px;
+}
+.update-sheet {
+  width: min(100%, 440px);
+  padding: 28px;
+  border: 1px solid rgb(217 244 71 / 22%);
+  border-radius: 28px;
+  background: #111814;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 65%);
+}
+.update-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 17px;
+  color: #10160f;
+  background: var(--accent);
+}
+.update-icon svg {
+  width: 25px;
+  height: 25px;
+}
+.update-sheet h2 {
+  margin: 7px 0 10px;
+  font-size: clamp(1.6rem, 7vw, 2.15rem);
+  letter-spacing: -0.045em;
+}
+.update-sheet > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.update-notes,
+.update-error {
+  margin-top: 16px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: #dfe7e1;
+  background: rgb(255 255 255 / 3%);
+  line-height: 1.45;
+}
+.update-error {
+  border-color: rgb(255 107 126 / 30%);
+  color: #ff9cab;
+  background: rgb(255 107 126 / 8%);
+}
+.update-actions {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+.update-actions button {
+  min-height: 52px;
+}
 .sheet {
   width: 100%;
   max-height: 94vh;

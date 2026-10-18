@@ -6,6 +6,7 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
   ''
 )
 const TOKEN_KEY = 'crave_restaurant_auth_token'
+export const COOKIE_SESSION_TOKEN = 'cookie-session'
 
 let currentToken = ''
 
@@ -81,7 +82,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     Accept: 'application/json',
     'X-Crave-Native-App': 'restaurant',
     ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token && token !== COOKIE_SESSION_TOKEN ? { Authorization: `Bearer ${token}` } : {}),
   }
 
   let status: number

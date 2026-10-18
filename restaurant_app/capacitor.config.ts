@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Crave Restaurant',
   webDir: 'dist',
   backgroundColor: '#121815',
-  appendUserAgent: ' CraveRestaurant/1.0',
+  appendUserAgent: ' CraveRestaurant/1.1.0',
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_crave',

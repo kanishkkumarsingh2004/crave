@@ -119,7 +119,15 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    const nativeApp = request.headers.get('x-crave-native-app')?.trim().toLowerCase()
+    const nativeHeader = request.headers.get('x-crave-native-app')?.trim().toLowerCase()
+    const userAgent = request.headers.get('user-agent')?.toLowerCase() || ''
+    const nativeApp =
+      nativeHeader ||
+      (userAgent.includes('craverestaurant/')
+        ? 'restaurant'
+        : userAgent.includes('cravedriver/')
+          ? 'driver'
+          : undefined)
     const isRestaurantRole =
       userPayload.role === 'restaurant_vendor' ||
       userPayload.role === 'cravexp_store_vendor' ||
