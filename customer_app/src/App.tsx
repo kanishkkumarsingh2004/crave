@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Network } from '@capacitor/network'
+import { App as CapacitorApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -20,8 +22,9 @@ import {
 } from './native'
 import { checkForCustomerUpdate, installCustomerUpdate, type CustomerUpdate } from './update'
 import { connectCustomerOrders } from './realtime'
-import { openUpiPayment } from './payment'
+import { openUpiPayment, type UpiPaymentApp } from './payment'
 import { checkoutDistanceKm } from './pricing'
+import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
 
 type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
@@ -614,6 +617,7 @@ function Checkout({
     [coupon, setCoupon] = useState(''),
     [busy, setBusy] = useState(false),
     [paid, setPaid] = useState(false),
+    [paymentPicker, setPaymentPicker] = useState(false),
     [error, setError] = useState(''),
     [billing, setBilling] = useState<any>(null),
     [config, setConfig] = useState<any>(null),
@@ -647,7 +651,8 @@ function Checkout({
       )
   }, [subtotal, restaurant, selected, addresses, coupon, cart])
   const total = billing?.grandTotal || subtotal
-  const pay = async () => {
+  const pay = async (app: UpiPaymentApp) => {
+    setError('')
     if (!config?.upiVpa) {
       setError('UPI payment is temporarily unavailable.')
       return
@@ -666,7 +671,9 @@ function Checkout({
         merchant: config.merchantName || 'CRAVE',
         amount: Number(total),
         note: `CRAVE order from ${restaurant.name}`,
+        app,
       })
+      setPaymentPicker(false)
       setPaid(true)
     } catch (paymentError) {
       setError(
@@ -787,7 +794,7 @@ function Checkout({
           <button
             className="primary wide"
             disabled={!billing || !config || !!pricingError}
-            onClick={pay}
+            onClick={() => setPaymentPicker(true)}
           >
             {!billing && !pricingError ? (
               <>
@@ -836,6 +843,50 @@ function Checkout({
           Your order starts only after CRAVE verifies the UPI transaction.
         </p>
       </main>
+      {paymentPicker && (
+        <div className="modal-backdrop" onClick={() => setPaymentPicker(false)}>
+          <section
+            className="bottom-sheet upi-picker"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upi-picker-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">PAY SECURELY</p>
+                <h2 id="upi-picker-title">Choose your UPI app</h2>
+              </div>
+              <button className="round pale" onClick={() => setPaymentPicker(false)}>
+                <Icon name="close" />
+              </button>
+            </div>
+            <p className="upi-picker-total">
+              Pay {money(total)} to {config?.merchantName || 'CRAVE'}
+            </p>
+            {error && <div className="error-box">{error}</div>}
+            <div className="upi-app-grid">
+              {(
+                [
+                  ['gpay', 'G', 'Google Pay'],
+                  ['phonepe', 'पे', 'PhonePe'],
+                  ['paytm', 'P', 'Paytm'],
+                  ['other', 'UPI', 'Other app'],
+                ] as [UpiPaymentApp, string, string][]
+              ).map(([app, mark, label]) => (
+                <button key={app} onClick={() => void pay(app)}>
+                  <span className={`upi-app-mark ${app}`}>{mark}</span>
+                  <b>{label}</b>
+                  <small>
+                    {app === 'other' ? 'Choose any installed UPI app' : `Open ${label}`}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }
@@ -943,11 +994,15 @@ function Account({
   addresses,
   onAddresses,
   onLogout,
+  theme,
+  onTheme,
 }: {
   user: User
   addresses: Address[]
   onAddresses: () => void
   onLogout: () => void
+  theme: ThemeMode
+  onTheme: (theme: ThemeMode) => void
 }) {
   const [notifications, setNotifications] = useState(false),
     [checking, setChecking] = useState(false),
@@ -1010,6 +1065,18 @@ function Account({
           <Icon name="chevron" />
         </button>
       </div>
+      <h2 className="section-title">Appearance</h2>
+      <div className="theme-control" role="group" aria-label="App theme">
+        {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+          <button
+            key={mode}
+            className={theme === mode ? 'active' : ''}
+            onClick={() => onTheme(mode)}
+          >
+            {titleCase(mode)}
+          </button>
+        ))}
+      </div>
       <h2 className="section-title">App</h2>
       <div className="settings-list">
         <button
@@ -1031,7 +1098,7 @@ function Account({
       <button className="logout-button" onClick={onLogout}>
         <Icon name="logout" /> Sign out
       </button>
-      <p className="version">CRAVE. Customer · 1.0.0</p>
+      <p className="version">CRAVE. Customer · 1.1.0</p>
     </section>
   )
 }
@@ -1255,6 +1322,7 @@ export default function App() {
       }
     }),
     [toast, setToast] = useState('')
+  const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
   const showToast = (m: string) => {
     setToast(m)
@@ -1304,6 +1372,7 @@ export default function App() {
   }, [])
   useEffect(() => {
     void initializeNative()
+    void loadTheme().then(setTheme)
     restoreAuthToken().then(async (token) => {
       if (!token) {
         setReady(true)
@@ -1319,6 +1388,12 @@ export default function App() {
       }
     })
   }, [])
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => applyTheme(theme)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [theme])
   useEffect(() => {
     let listener: { remove: () => Promise<void> } | undefined
     void Network.getStatus().then((status) => setOnline(status.connected))
@@ -1356,6 +1431,20 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('crave_favourites', JSON.stringify(favourites))
   }, [favourites])
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    let listener: { remove: () => Promise<void> } | undefined
+    void CapacitorApp.addListener('backButton', () => {
+      if (addressPage) setAddressPage(false)
+      else if (checkout) setCheckout(false)
+      else if (selected) setSelected(null)
+      else if (tab !== 'home') setTab('home')
+      else void CapacitorApp.minimizeApp()
+    }).then((handle) => {
+      listener = handle
+    })
+    return () => void listener?.remove()
+  }, [addressPage, checkout, selected, tab])
   const add = (item: MenuItem, variant?: Variant) => {
     const switchingRestaurant = Boolean(
       cartRestaurant && selected && cartRestaurant.id !== selected.id
@@ -1639,6 +1728,11 @@ export default function App() {
             addresses={addresses}
             onAddresses={() => setAddressPage(true)}
             onLogout={logout}
+            theme={theme}
+            onTheme={(mode) => {
+              setTheme(mode)
+              void saveTheme(mode)
+            }}
           />
         )}
       </main>
@@ -1646,7 +1740,6 @@ export default function App() {
         {(
           [
             ['home', 'Home'],
-            ['search', 'Search'],
             ['orders', 'Orders'],
             ['cart', 'Bag'],
             ['account', 'You'],

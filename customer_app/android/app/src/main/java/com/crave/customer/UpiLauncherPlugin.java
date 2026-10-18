@@ -21,11 +21,26 @@ public class UpiLauncherPlugin extends Plugin {
         }
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        String app = call.getString("app", "other");
+        if ("gpay".equals(app)) {
+            intent.setPackage("com.google.android.apps.nbu.paisa.user");
+        } else if ("phonepe".equals(app)) {
+            intent.setPackage("com.phonepe.app");
+        } else if ("paytm".equals(app)) {
+            intent.setPackage("net.one97.paytm");
+        } else if (!"other".equals(app)) {
+            call.reject("Unsupported UPI app.");
+            return;
+        }
         try {
-            getActivity().startActivity(intent);
+            if ("other".equals(app)) {
+                getActivity().startActivity(Intent.createChooser(intent, "Pay with UPI"));
+            } else {
+                getActivity().startActivity(intent);
+            }
             call.resolve(new JSObject().put("opened", true));
         } catch (ActivityNotFoundException error) {
-            call.reject("Install a UPI app such as Google Pay, PhonePe or Paytm to continue.", error);
+            call.reject("That UPI app is not installed. Choose another UPI app to continue.", error);
         }
     }
 }

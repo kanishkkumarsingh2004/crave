@@ -24,6 +24,7 @@ import {
 } from './native'
 import { connectRestaurantEvents } from './realtime'
 import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdate } from './update'
+import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import type {
   AppTab,
   MenuEditorValue,
@@ -622,6 +623,7 @@ export default function App() {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [theme, setTheme] = useState<ThemeMode>('system')
   const [settingsForm, setSettingsForm] = useState({
     name: '',
     cuisine: '',
@@ -639,7 +641,15 @@ export default function App() {
 
   useEffect(() => {
     void bootstrap()
+    void loadTheme().then(setTheme)
   }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => applyTheme(theme)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [theme])
 
   useEffect(() => {
     void refreshUpdateStatus()
@@ -714,7 +724,8 @@ export default function App() {
         }
       }),
       CapacitorApp.addListener('backButton', () => {
-        if (menuEditor) setMenuEditor(null)
+        if (alert) setAlert(null)
+        else if (menuEditor) setMenuEditor(null)
         else if (activeTab !== 'home') setActiveTab('home')
         else void CapacitorApp.minimizeApp()
       }),
@@ -725,7 +736,7 @@ export default function App() {
     ]).then((listeners) => handles.push(...listeners))
     void Network.getStatus().then(({ connected }) => setOnline(connected))
     return () => handles.forEach((handle) => void handle.remove())
-  }, [activeTab, menuEditor, restaurant?.id])
+  }, [activeTab, alert, menuEditor, restaurant?.id])
 
   async function bootstrap() {
     await initializeNativeAppearance()
@@ -948,21 +959,36 @@ export default function App() {
       setMenuEditor({ ...EMPTY_EDITOR })
       return
     }
+    const smallPrice =
+      item.variants.find((variant) => variant.name.toLowerCase() === 'small')?.restaurant_price ??
+      item.restaurant_price
+    const normalizedVariants = ['Small', 'Medium', 'Large'].map((name, index) => {
+      const existing = item.variants.find(
+        (variant) => variant.name.toLowerCase() === name.toLowerCase()
+      )
+      return (
+        existing || {
+          id: crypto.randomUUID(),
+          name,
+          restaurant_price: Number(smallPrice || 0),
+          price: Number(smallPrice || 0),
+          in_stock: true,
+          is_default: index === 0,
+        }
+      )
+    })
     setMenuEditor({
       id: item.id,
       name: item.name,
       category: item.category,
       description: item.description,
-      restaurantPrice: String(
-        item.variants.find((variant) => variant.name.toLowerCase() === 'small')?.restaurant_price ??
-          item.restaurant_price
-      ),
+      restaurantPrice: String(smallPrice),
       image: item.image,
       isVeg: item.is_veg,
       inStock: item.in_stock,
       unit: item.unit || 'Serves 1',
       useSizes: item.variants.length > 0,
-      variants: item.variants,
+      variants: item.variants.length > 0 ? normalizedVariants : [],
     })
   }
 
@@ -1582,6 +1608,29 @@ export default function App() {
                 </button>
               </form>
               <div className="settings-stack">
+                <article className="settings-card theme-card">
+                  <div className="card-title">
+                    <span className="theme-symbol">◐</span>
+                    <div>
+                      <h2>Appearance</h2>
+                      <p>Use a light, dark, or device-controlled theme.</p>
+                    </div>
+                  </div>
+                  <div className="theme-control" role="group" aria-label="Restaurant app theme">
+                    {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        className={theme === mode ? 'active' : ''}
+                        onClick={() => {
+                          setTheme(mode)
+                          void saveTheme(mode)
+                        }}
+                      >
+                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </article>
                 <article className="settings-card notification-card">
                   <div className="card-title">
                     <span>

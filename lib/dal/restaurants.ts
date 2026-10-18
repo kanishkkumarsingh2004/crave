@@ -22,7 +22,12 @@ const RESTAURANT_LISTING_SELECT = {
   longitude: true,
   phone: true,
   fssai_license: true,
-  owner_id: true,
+  commercial_model: true,
+  commission_rate: true,
+  markup_rate: true,
+  fixed_commission: true,
+  fixed_markup: true,
+  payment_model: true,
 } as const
 
 // ─── Queries ─────────────────────────────────────────────
@@ -33,6 +38,13 @@ export async function findRestaurantById(id: string) {
     include: { owner: true },
   })
   return r ?? null
+}
+
+export async function findRestaurantListingById(id: string) {
+  return prisma.restaurant.findUnique({
+    where: { id },
+    select: RESTAURANT_LISTING_SELECT,
+  })
 }
 
 export async function listRestaurants(options?: {

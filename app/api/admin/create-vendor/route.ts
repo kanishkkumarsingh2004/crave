@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/password'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
+import { AdminStatsCache } from '@/lib/cache'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
       })
     })
     await invalidateRestaurantCache()
+    await AdminStatsCache.invalidateDailyStats(new Date().toISOString().split('T')[0])
 
     // Broadcast real-time vendor creation to Admin WebSocket channels
     broadcast('admin_stats', {

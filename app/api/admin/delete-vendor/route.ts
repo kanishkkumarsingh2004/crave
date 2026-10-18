@@ -3,6 +3,7 @@ import { invalidateRestaurantCache } from '@/lib/dal/restaurants'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
+import { AdminStatsCache } from '@/lib/cache'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
       }
     }
     await invalidateRestaurantCache()
+    await AdminStatsCache.invalidateDailyStats(new Date().toISOString().split('T')[0])
 
     // Broadcast vendor deletion event to Admin WebSocket channels
     broadcast('admin_stats', {

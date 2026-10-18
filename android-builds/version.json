@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "apps": {
     "admin": {
-      "versionCode": 3,
-      "versionName": "1.1.1",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=eee938951d2056dfad37e953a554ffca1c371e023e67fedbb3caf2273d876498",
-      "sha256": "eee938951d2056dfad37e953a554ffca1c371e023e67fedbb3caf2273d876498",
-      "releaseNotes": "Reliable native sign-in, official Crave branding and an end-to-end manual UPI verification queue."
+      "versionCode": 4,
+      "versionName": "1.2.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=0d7f15b16c5198ce48ba7b1eb4fcba752f456edbb0f7be7ed81f200511cfce35",
+      "sha256": "0d7f15b16c5198ce48ba7b1eb4fcba752f456edbb0f7be7ed81f200511cfce35",
+      "releaseNotes": "Responsive partner management with add, edit, suspend and delete controls, device navigation and selectable themes."
     },
     "driver": {
       "versionCode": 3,
@@ -16,18 +16,18 @@
       "releaseNotes": "Reliable native sign-in, official Crave branding, live delivery, background location and notification stability."
     },
     "restaurant": {
-      "versionCode": 5,
-      "versionName": "1.3.1",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=8960c5690f596b70dd980c0043677f873cc950260216a95c23bf4635140db43f",
-      "sha256": "8960c5690f596b70dd980c0043677f873cc950260216a95c23bf4635140db43f",
-      "releaseNotes": "Official Crave branding, secure session stability, faster menu controls and automatic restaurant contract pricing."
+      "versionCode": 6,
+      "versionName": "1.4.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=3972e420389f3e702c847d1682f1925a44d479c09dfcdf7d6ad89c78f23bb9d5",
+      "sha256": "3972e420389f3e702c847d1682f1925a44d479c09dfcdf7d6ad89c78f23bb9d5",
+      "releaseNotes": "Persistent payout UPI settings, complete Small/Medium/Large pricing, device navigation and selectable themes."
     },
     "customer": {
-      "versionCode": 2,
-      "versionName": "1.0.1",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=b74c12b2c97110ac96bbf0c5dcc9ea63234e56658a89bd0dc7160a48f512423b",
-      "sha256": "b74c12b2c97110ac96bbf0c5dcc9ea63234e56658a89bd0dc7160a48f512423b",
-      "releaseNotes": "Reliable native sign-in, official Crave branding, exact checkout pricing, UPI payments and improved network recovery."
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=cf7fa78e5846aa9c4c08cf8e63e76f9b0e8fb8caeb195ea69678cedb8620f429",
+      "sha256": "cf7fa78e5846aa9c4c08cf8e63e76f9b0e8fb8caeb195ea69678cedb8620f429",
+      "releaseNotes": "Direct Google Pay, PhonePe and Paytm checkout, any-UPI chooser, cleaner navigation and selectable themes."
     }
   }
 }

@@ -1140,6 +1140,84 @@ svg {
   width: 100%;
   margin-top: 18px;
 }
+.theme-symbol {
+  font-size: 19px;
+  font-weight: 900;
+}
+.theme-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0d1511;
+}
+.theme-control button {
+  min-height: 39px;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 800;
+}
+.theme-control button.active {
+  color: #10160f;
+  background: var(--lime);
+}
+
+html[data-theme='light'] {
+  color: #152019;
+  background: #f3f5ef;
+  color-scheme: light;
+  --ink: #152019;
+  --muted: #68756c;
+  --surface: #fff;
+  --surface-2: #f0f3ee;
+  --surface-3: #e7ece6;
+  --line: #d9e0d9;
+  --danger: #c94055;
+}
+html[data-theme='light'] body,
+html[data-theme='light'] #root,
+html[data-theme='light'] .app-shell {
+  background: radial-gradient(circle at 80% -10%, rgb(145 170 32 / 8%), transparent 28rem), #f3f5ef;
+}
+html[data-theme='light'] .app-header,
+html[data-theme='light'] .bottom-nav {
+  border-color: #dce3dc;
+  background: rgb(255 255 255 / 95%);
+}
+html[data-theme='light'] input,
+html[data-theme='light'] select,
+html[data-theme='light'] textarea,
+html[data-theme='light'] .search-field input,
+html[data-theme='light'] .theme-control {
+  color: var(--ink);
+  background: #f7f9f5;
+}
+html[data-theme='light'] .hero-card,
+html[data-theme='light'] .stat-card,
+html[data-theme='light'] .order-card,
+html[data-theme='light'] .menu-card,
+html[data-theme='light'] .settings-card,
+html[data-theme='light'] .settlement-list article,
+html[data-theme='light'] .empty-state,
+html[data-theme='light'] .sheet {
+  color: var(--ink);
+  background: var(--surface);
+}
+html[data-theme='light'] .order-card-foot,
+html[data-theme='light'] .variant-title,
+html[data-theme='light'] .menu-actions button,
+html[data-theme='light'] .secondary-button {
+  color: var(--ink);
+  background: #eef2ec;
+}
+html[data-theme='light'] .toast-message {
+  color: var(--ink);
+  background: #fff;
+}
 .software-card.ready {
   border-color: rgb(217 244 71 / 34%);
   background: linear-gradient(145deg, rgb(217 244 71 / 7%), var(--surface) 55%);

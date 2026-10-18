@@ -1,4 +1,8 @@
-import { invalidateRestaurantCache, listRestaurants } from '@/lib/dal/restaurants'
+import {
+  findRestaurantListingById,
+  invalidateRestaurantCache,
+  listRestaurants,
+} from '@/lib/dal/restaurants'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
@@ -38,21 +42,29 @@ export async function GET(request: Request) {
 
     let effectiveOwnerId: string | null = null
     if (ownerId) {
+      if (!actor) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
       if (isVendor) {
         // Vendors can only query their own stores when filtering by owner
         effectiveOwnerId = actor?.id || null
-      } else {
+      } else if (actor.role === 'admin') {
         effectiveOwnerId = ownerId
+      } else {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     }
 
     let restaurants
     if (restaurantId) {
-      const { findRestaurantById } = await import('@/lib/dal/restaurants')
-      const found = await findRestaurantById(restaurantId)
+      const found = await findRestaurantListingById(restaurantId)
       restaurants = found ? [found] : []
     } else if (effectiveOwnerId) {
-      restaurants = await listRestaurants({ ownerId: effectiveOwnerId })
+      restaurants = await prisma.restaurant.findMany({
+        where: { owner_id: effectiveOwnerId },
+        orderBy: { created_at: 'desc' },
+        take: 20,
+      })
     } else if (isDarkStore !== null) {
       restaurants = await listRestaurants({ isDarkStore: isDarkStore === 'true' })
     } else {

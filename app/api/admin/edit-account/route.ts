@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 import { hashPassword } from '@/lib/password'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
+import { AdminStatsCache } from '@/lib/cache'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const {
       id,
+      restaurantId,
       name,
       email,
       phone,
@@ -40,14 +42,25 @@ export async function POST(request: Request) {
       license_plate,
       latitude,
       longitude,
+      isOpen,
+      is_open,
     } = body
 
-    if (!id) {
-      return NextResponse.json({ error: 'Account ID is required.' }, { status: 400 })
+    let accountId = id ? String(id) : ''
+    const requestedRestaurantId = restaurantId ? String(restaurantId) : ''
+    if (!accountId && requestedRestaurantId) {
+      const restaurantOwner = await prisma.restaurant.findUnique({
+        where: { id: requestedRestaurantId },
+        select: { owner_id: true },
+      })
+      accountId = restaurantOwner?.owner_id || ''
+    }
+    if (!accountId) {
+      return NextResponse.json({ error: 'Account or restaurant ID is required.' }, { status: 400 })
     }
 
     // CR-14 FIX: Validate target account exists before attempting updates
-    const targetUser = await findUserById(id)
+    const targetUser = await findUserById(accountId)
     if (!targetUser) {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 })
     }
@@ -56,6 +69,7 @@ export async function POST(request: Request) {
     const finalStoreName = storeName || restaurantName
     const finalVehicleType = vehicleType || vehicle_type
     const finalLicensePlate = licensePlate || license_plate
+    const finalIsOpen = isOpen !== undefined ? isOpen : is_open
     let cleanBannerUrl: string | null | undefined
 
     if (bannerUrl !== undefined) {
@@ -104,7 +118,8 @@ export async function POST(request: Request) {
       paymentModel ||
       address ||
       latitude !== undefined ||
-      longitude !== undefined
+      longitude !== undefined ||
+      finalIsOpen !== undefined
 
     // CR-08 FIX: Validate commercial settings before writing to the database.
     // Storing out-of-range values silently corrupts every subsequent order for that restaurant.
@@ -147,7 +162,7 @@ export async function POST(request: Request) {
           // Update User
           if (Object.keys(userUpdateData).length > 0) {
             await tx.user.update({
-              where: { id },
+              where: { id: accountId },
               data: userUpdateData,
             })
           }
@@ -165,12 +180,19 @@ export async function POST(request: Request) {
             if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
             if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
             if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
+            if (finalIsOpen !== undefined) restUpdateData.is_open = Boolean(finalIsOpen)
 
-            let targetRestId = id
+            let targetRestId = requestedRestaurantId || accountId
             if (typeof tx?.restaurant?.findFirst === 'function') {
               const foundRest = await tx.restaurant
                 .findFirst({
-                  where: { OR: [{ id }, { owner_id: id }] },
+                  where: {
+                    OR: [
+                      ...(requestedRestaurantId ? [{ id: requestedRestaurantId }] : []),
+                      { id: accountId },
+                      { owner_id: accountId },
+                    ],
+                  },
                   select: { id: true },
                 })
                 .catch(() => null)
@@ -189,7 +211,7 @@ export async function POST(request: Request) {
       } else {
         // Single table updates (no transaction needed for single table)
         if (Object.keys(userUpdateData).length > 0) {
-          await updateUser(id, userUpdateData)
+          await updateUser(accountId, userUpdateData)
         }
         if (needsRestaurantUpdate) {
           const restUpdateData: Record<string, any> = {}
@@ -202,12 +224,19 @@ export async function POST(request: Request) {
           if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
           if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
           if (longitude !== undefined) restUpdateData.longitude = Number(longitude)
+          if (finalIsOpen !== undefined) restUpdateData.is_open = Boolean(finalIsOpen)
 
-          let targetRestId = id
+          let targetRestId = requestedRestaurantId || accountId
           if (typeof prisma?.restaurant?.findFirst === 'function') {
             const foundRest = await prisma.restaurant
               .findFirst({
-                where: { OR: [{ id }, { owner_id: id }] },
+                where: {
+                  OR: [
+                    ...(requestedRestaurantId ? [{ id: requestedRestaurantId }] : []),
+                    { id: accountId },
+                    { owner_id: accountId },
+                  ],
+                },
                 select: { id: true },
               })
               .catch(() => null)
@@ -223,14 +252,20 @@ export async function POST(request: Request) {
       throw dbErr
     }
 
+    await AdminStatsCache.invalidateDailyStats(new Date().toISOString().split('T')[0])
+
     // Broadcast WebSocket updates
-    broadcast('admin_users', { type: 'user_update', id, timestamp: new Date().toISOString() })
+    broadcast('admin_users', {
+      type: 'user_update',
+      id: accountId,
+      timestamp: new Date().toISOString(),
+    })
     broadcast('admin_stats', { type: 'stats_update', timestamp: new Date().toISOString() })
 
     return NextResponse.json({
       success: true,
       message: 'Account details successfully updated.',
-      updated: { id, ...userUpdateData },
+      updated: { id: accountId, ...userUpdateData },
       restaurantUpdated: needsRestaurantUpdate,
     })
   } catch (error: any) {

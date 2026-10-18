@@ -12,7 +12,7 @@ const apps = {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
     releaseNotes:
-      'Reliable native sign-in, official Crave branding and an end-to-end manual UPI verification queue.',
+      'Responsive partner management with add, edit, suspend and delete controls, device navigation and selectable themes.',
   },
   driver: {
     directory: 'driver_app',
@@ -24,13 +24,13 @@ const apps = {
     directory: 'restaurant_app',
     apk: 'crave-restaurant-debug.apk',
     releaseNotes:
-      'Official Crave branding, secure session stability, faster menu controls and automatic restaurant contract pricing.',
+      'Persistent payout UPI settings, complete Small/Medium/Large pricing, device navigation and selectable themes.',
   },
   customer: {
     directory: 'customer_app',
     apk: 'crave-customer-debug.apk',
     releaseNotes:
-      'Reliable native sign-in, official Crave branding, exact checkout pricing, UPI payments and improved network recovery.',
+      'Direct Google Pay, PhonePe and Paytm checkout, any-UPI chooser, cleaner navigation and selectable themes.',
   },
 }
 

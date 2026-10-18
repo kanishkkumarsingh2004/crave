@@ -14,6 +14,7 @@ import {
   saveAuthToken,
 } from './api'
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
+import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 
 type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'settings'
 type IconName =
@@ -59,11 +60,35 @@ interface OrderRecord {
 
 interface RestaurantRecord {
   id: string
+  owner_id?: string | null
   name: string
   cuisine?: string
   phone?: string
+  address?: string
   is_open?: boolean
   commission_rate?: number | string
+}
+
+interface PartnerForm {
+  ownerName: string
+  email: string
+  password: string
+  name: string
+  cuisine: string
+  phone: string
+  address: string
+  commissionRate: string
+}
+
+const emptyPartnerForm: PartnerForm = {
+  ownerName: '',
+  email: '',
+  password: '',
+  name: '',
+  cuisine: '',
+  phone: '',
+  address: '',
+  commissionRate: '15',
 }
 
 interface PaymentReview {
@@ -209,6 +234,11 @@ export default function App() {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [partnerMode, setPartnerMode] = useState<'add' | 'edit' | null>(null)
+  const [selectedPartner, setSelectedPartner] = useState<RestaurantRecord | null>(null)
+  const [partnerForm, setPartnerForm] = useState<PartnerForm>(emptyPartnerForm)
+  const [partnerBusy, setPartnerBusy] = useState(false)
+  const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
 
   const activeOrders = useMemo(
@@ -226,7 +256,15 @@ export default function App() {
   useEffect(() => {
     void bootstrap()
     void refreshUpdateStatus()
+    void loadTheme().then(setTheme)
   }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => applyTheme(theme)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [theme])
 
   useEffect(() => {
     if (tab === 'settings') void refreshUpdateStatus()
@@ -248,12 +286,13 @@ export default function App() {
         if (isActive && user) void loadDashboard(false)
       }),
       CapacitorApp.addListener('backButton', () => {
-        if (tab !== 'overview') setTab('overview')
+        if (partnerMode) setPartnerMode(null)
+        else if (tab !== 'overview') setTab('overview')
         else void CapacitorApp.minimizeApp()
       }),
     ]).then((listeners) => handles.push(...listeners))
     return () => handles.forEach((handle) => void handle.remove())
-  }, [user?.id, tab])
+  }, [user?.id, tab, partnerMode])
 
   useEffect(() => {
     if (!notice) return
@@ -422,6 +461,135 @@ export default function App() {
     setData({ stats: {}, orders: [], restaurants: [] })
     setPayments([])
     setTab('overview')
+  }
+
+  function openAddPartner() {
+    setSelectedPartner(null)
+    setPartnerForm(emptyPartnerForm)
+    setPartnerMode('add')
+  }
+
+  function openEditPartner(restaurant: RestaurantRecord) {
+    setSelectedPartner(restaurant)
+    setPartnerForm({
+      ...emptyPartnerForm,
+      name: restaurant.name || '',
+      cuisine: restaurant.cuisine || '',
+      phone: restaurant.phone || '',
+      address: restaurant.address || '',
+      commissionRate: String(restaurant.commission_rate ?? 0),
+    })
+    setPartnerMode('edit')
+  }
+
+  async function savePartner(event: FormEvent) {
+    event.preventDefault()
+    if (partnerBusy) return
+    setPartnerBusy(true)
+    setError('')
+    try {
+      if (partnerMode === 'add') {
+        await apiRequest('/api/admin/create-vendor', {
+          method: 'POST',
+          body: {
+            name: partnerForm.ownerName.trim(),
+            email: partnerForm.email.trim(),
+            password: partnerForm.password,
+            storeName: partnerForm.name.trim(),
+            cuisine: partnerForm.cuisine.trim() || 'Multi-Cuisine',
+            phone: partnerForm.phone.trim(),
+            address: partnerForm.address.trim(),
+            commissionRate: Number(partnerForm.commissionRate),
+          },
+        })
+        setNotice('Restaurant partner added successfully.')
+      } else if (selectedPartner) {
+        await apiRequest('/api/admin/edit-account', {
+          method: 'POST',
+          body: {
+            id: selectedPartner.owner_id || undefined,
+            restaurantId: selectedPartner.id,
+            storeName: partnerForm.name.trim(),
+            cuisine: partnerForm.cuisine.trim(),
+            phone: partnerForm.phone.trim(),
+            address: partnerForm.address.trim(),
+            commissionRate: Number(partnerForm.commissionRate),
+          },
+        })
+        setNotice('Restaurant details updated.')
+      }
+      setPartnerMode(null)
+      setSelectedPartner(null)
+      await loadDashboard(false)
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Could not save the restaurant.')
+    } finally {
+      setPartnerBusy(false)
+    }
+  }
+
+  async function setPartnerSuspended(restaurant: RestaurantRecord) {
+    const nextOpen = !restaurant.is_open
+    if (
+      !window.confirm(
+        nextOpen
+          ? `Restore ${restaurant.name} and allow it to accept orders?`
+          : `Suspend ${restaurant.name} and stop it from accepting orders?`
+      )
+    )
+      return
+    const previous = data.restaurants
+    setData((current) => ({
+      ...current,
+      restaurants: current.restaurants.map((entry) =>
+        entry.id === restaurant.id ? { ...entry, is_open: nextOpen } : entry
+      ),
+    }))
+    try {
+      await apiRequest('/api/admin/edit-account', {
+        method: 'POST',
+        body: {
+          id: restaurant.owner_id || undefined,
+          restaurantId: restaurant.id,
+          isOpen: nextOpen,
+        },
+      })
+      setNotice(nextOpen ? 'Restaurant restored.' : 'Restaurant suspended.')
+      await loadDashboard(false)
+    } catch (suspendError) {
+      setData((current) => ({ ...current, restaurants: previous }))
+      setError(
+        suspendError instanceof Error ? suspendError.message : 'Could not change restaurant status.'
+      )
+    }
+  }
+
+  async function deletePartner(restaurant: RestaurantRecord) {
+    if (
+      !window.confirm(
+        `Delete ${restaurant.name}? If it has order history, it will be safely deactivated instead.`
+      )
+    )
+      return
+    setPartnerBusy(true)
+    setError('')
+    try {
+      const result = await apiRequest<{ action?: string; message?: string }>(
+        '/api/admin/delete-vendor',
+        {
+          method: 'POST',
+          body: { vendorId: restaurant.id, userId: restaurant.owner_id || undefined },
+        }
+      )
+      setNotice(result.message || 'Restaurant removed.')
+      await loadDashboard(false)
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : 'Could not remove the restaurant.'
+      )
+    } finally {
+      setPartnerBusy(false)
+    }
   }
 
   if (booting) {
@@ -604,10 +772,15 @@ export default function App() {
 
         {tab === 'partners' && (
           <section className="page">
-            <div className="page-heading">
-              <span className="eyebrow">Partner network</span>
-              <h1>Restaurants</h1>
-              <p>Live status and commercial overview.</p>
+            <div className="page-heading partner-page-heading">
+              <div>
+                <span className="eyebrow">Partner network</span>
+                <h1>Restaurants</h1>
+                <p>Live status and commercial overview.</p>
+              </div>
+              <button className="add-partner-button" onClick={openAddPartner}>
+                <b>+</b> Add restaurant
+              </button>
             </div>
             <div className="partner-grid">
               {data.restaurants.map((restaurant) => (
@@ -619,6 +792,22 @@ export default function App() {
                   </div>
                   <strong>{restaurant.is_open ? 'Open' : 'Offline'}</strong>
                   <small>{Number(restaurant.commission_rate || 0)}% commission</small>
+                  <div className="partner-actions">
+                    <button onClick={() => openEditPartner(restaurant)}>Edit</button>
+                    <button
+                      className="suspend"
+                      onClick={() => void setPartnerSuspended(restaurant)}
+                    >
+                      {restaurant.is_open ? 'Suspend' : 'Restore'}
+                    </button>
+                    <button
+                      className="delete"
+                      disabled={partnerBusy}
+                      onClick={() => void deletePartner(restaurant)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </article>
               ))}
               {data.restaurants.length === 0 && <EmptyState text="No restaurant partners found." />}
@@ -653,6 +842,29 @@ export default function App() {
               </div>
               <div className={`health-pill ${networkConnected ? 'healthy' : ''}`}>
                 {networkConnected ? 'Connected' : 'Offline'}
+              </div>
+            </article>
+            <article className="settings-card">
+              <div className="settings-title">
+                <span className="theme-symbol">◐</span>
+                <div>
+                  <h3>Appearance</h3>
+                  <p>Choose a light, dark, or device-controlled theme.</p>
+                </div>
+              </div>
+              <div className="theme-control" role="group" aria-label="Admin app theme">
+                {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    className={theme === mode ? 'active' : ''}
+                    onClick={() => {
+                      setTheme(mode)
+                      void saveTheme(mode)
+                    }}
+                  >
+                    {label(mode)}
+                  </button>
+                ))}
               </div>
             </article>
             <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
@@ -717,6 +929,139 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {partnerMode && (
+        <div className="modal-backdrop" onClick={() => !partnerBusy && setPartnerMode(null)}>
+          <section
+            className="partner-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="partner-form-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="partner-sheet-heading">
+              <div>
+                <span className="eyebrow">Partner management</span>
+                <h2 id="partner-form-title">
+                  {partnerMode === 'add' ? 'Add restaurant' : 'Edit restaurant'}
+                </h2>
+              </div>
+              <button onClick={() => setPartnerMode(null)} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <form className="partner-form" onSubmit={savePartner}>
+              {partnerMode === 'add' && (
+                <>
+                  <label>
+                    Owner name
+                    <input
+                      value={partnerForm.ownerName}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({ ...form, ownerName: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Owner email
+                    <input
+                      type="email"
+                      value={partnerForm.email}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({ ...form, email: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Temporary password
+                    <input
+                      type="password"
+                      minLength={8}
+                      value={partnerForm.password}
+                      onChange={(event) =>
+                        setPartnerForm((form) => ({ ...form, password: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              <label>
+                Restaurant name
+                <input
+                  value={partnerForm.name}
+                  onChange={(event) =>
+                    setPartnerForm((form) => ({ ...form, name: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Cuisine
+                <input
+                  value={partnerForm.cuisine}
+                  onChange={(event) =>
+                    setPartnerForm((form) => ({ ...form, cuisine: event.target.value }))
+                  }
+                  placeholder="Multi-Cuisine"
+                />
+              </label>
+              <label>
+                Phone
+                <input
+                  type="tel"
+                  value={partnerForm.phone}
+                  onChange={(event) =>
+                    setPartnerForm((form) => ({ ...form, phone: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Address
+                <textarea
+                  value={partnerForm.address}
+                  onChange={(event) =>
+                    setPartnerForm((form) => ({ ...form, address: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Commission (%)
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={partnerForm.commissionRate}
+                  onChange={(event) =>
+                    setPartnerForm((form) => ({ ...form, commissionRate: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <div className="partner-form-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setPartnerMode(null)}
+                  disabled={partnerBusy}
+                >
+                  Cancel
+                </button>
+                <button className="primary-button" type="submit" disabled={partnerBusy}>
+                  {partnerBusy
+                    ? 'Saving…'
+                    : partnerMode === 'add'
+                      ? 'Add restaurant'
+                      : 'Save changes'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
       {notice && <div className="toast">{notice}</div>}
     </div>
   )
