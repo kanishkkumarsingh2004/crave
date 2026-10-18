@@ -1,6 +1,5 @@
 'use client'
 
-import { apiFetch } from '@/lib/client/api-fetch'
 import { Download, FileSpreadsheet, Upload, X } from 'lucide-react'
 import { ChangeEvent, useRef, useState } from 'react'
 
@@ -12,19 +11,21 @@ type BulkMenuImportModalProps = {
   onImported: () => void | Promise<void>
 }
 
-const CSV_HEADERS = [
+export const CSV_HEADERS = [
   'name',
   'category',
   'description',
   'restaurant_price',
   'app_price',
-  'mrp',
   'in_stock',
   'is_veg',
   'unit',
   'stock_count',
   'sku_code',
   'image_url',
+  'hsn_sac_code',
+  'price_tax_mode',
+  'expiry_date',
   'variant_names',
   'variant_restaurant_prices',
   'variant_app_prices',
@@ -36,7 +37,7 @@ function escapeCsv(value: string | number | boolean) {
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
-function parseCsv(text: string): string[][] {
+export function parseCsv(text: string): string[][] {
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -98,7 +99,7 @@ function splitList(value: string) {
     .filter(Boolean)
 }
 
-function rowsToItems(rows: string[][]) {
+export function rowsToItems(rows: string[][]) {
   if (rows.length < 2) throw new Error('The CSV does not contain any menu item rows.')
   const headers = rows[0].map((header) =>
     header
@@ -137,19 +138,30 @@ function rowsToItems(rows: string[][]) {
     }
 
     const defaultVariant = record.default_variant.trim().toLowerCase()
+    const priceTaxMode = record.price_tax_mode.trim().toUpperCase() || 'TAX_INCLUSIVE'
+    if (!['TAX_INCLUSIVE', 'TAX_EXCLUSIVE'].includes(priceTaxMode)) {
+      throw new Error(`Row ${line}: price_tax_mode must be TAX_INCLUSIVE or TAX_EXCLUSIVE.`)
+    }
+    const expiryDate = record.expiry_date.trim()
+    if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
+      throw new Error(`Row ${line}: expiry_date must use YYYY-MM-DD format.`)
+    }
+
     return {
       name,
       category,
       description: record.description.trim() || null,
       restaurant_price: restaurantPrice,
       price: appPrice,
-      mrp: optionalNumber(record.mrp),
       in_stock: booleanValue(record.in_stock, true),
       is_veg: booleanValue(record.is_veg, true),
       unit: record.unit.trim() || null,
       stock_count: optionalNumber(record.stock_count) ?? 0,
       sku_code: record.sku_code.trim() || null,
       image: record.image_url.trim() || null,
+      hsn_sac_code: record.hsn_sac_code.trim() || '996331',
+      price_tax_mode: priceTaxMode as 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE',
+      expiry_date: expiryDate || null,
       variants: variantNames.map((variantName, index) => ({
         name: variantName,
         restaurant_price: Number(variantRestaurantPrices[index]),
@@ -199,13 +211,15 @@ export default function BulkMenuImportModal({
         'Smoky paneer tikka served with mint chutney',
         100,
         110,
-        130,
         true,
         true,
         '1 Plate',
         50,
         'PANEER-TIKKA-01',
         'https://example.com/paneer-tikka.jpg',
+        '996331',
+        'TAX_INCLUSIVE',
+        '2026-12-31',
         '',
         '',
         '',
@@ -217,13 +231,15 @@ export default function BulkMenuImportModal({
         'Fresh vegetable pizza with three sizes',
         120,
         135,
-        180,
         true,
         true,
         '1 Pizza',
         30,
         'VEG-PIZZA-01',
         'https://example.com/veg-pizza.jpg',
+        '996331',
+        'TAX_INCLUSIVE',
+        '2026-12-31',
         'Small|Medium|Large',
         '120|170|220',
         '135|190|245',
@@ -321,7 +337,8 @@ export default function BulkMenuImportModal({
           <FileSpreadsheet className="mx-auto size-9 text-[#6f840f] dark:text-[#d9f447]" />
           <p className="mt-2 text-sm font-extrabold">Start with the official CSV template</p>
           <p className="mt-1 text-xs text-stone-500 dark:text-gray-400">
-            Keep the column names unchanged. Variant lists use the | separator.
+            Restaurant price is the MRP/restaurant amount. Keep column names unchanged; variant
+            lists use the | separator.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <button

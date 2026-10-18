@@ -3,11 +3,11 @@
 This folder contains the latest debug APKs for all three Crave native applications. They connect
 to the production backend at `https://crave.apexonestudio.com` by default.
 
-| Application | Android package        | APK (direct download)                                      |
-| ----------- | ---------------------- | ---------------------------------------------------------- |
-| Admin       | `com.crave.admin`      | [crave-admin-debug.apk](./crave-admin-debug.apk)           |
-| Driver      | `com.crave.driver`     | [crave-driver-debug.apk](./crave-driver-debug.apk)         |
-| Restaurant  | `com.crave.restaurant` | [crave-restaurant-debug.apk](./crave-restaurant-debug.apk) |
+| Application | Android package        | APK (direct download)                                                                   |
+| ----------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| Admin       | `com.crave.admin`      | <a href="./crave-admin-debug.apk?raw=true" download>crave-admin-debug.apk</a>           |
+| Driver      | `com.crave.driver`     | <a href="./crave-driver-debug.apk?raw=true" download>crave-driver-debug.apk</a>         |
+| Restaurant  | `com.crave.restaurant` | <a href="./crave-restaurant-debug.apk?raw=true" download>crave-restaurant-debug.apk</a> |
 
 Click any APK filename above to download it directly.
 

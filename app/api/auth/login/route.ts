@@ -119,7 +119,36 @@ export async function POST(request: Request) {
     }
 
     const token = await createToken(userPayload)
-    return setCookies(NextResponse.json({ success: true, user: userPayload }), token)
+    const nativeApp = request.headers.get('x-crave-native-app')?.trim().toLowerCase()
+    const isRestaurantRole =
+      userPayload.role === 'restaurant_vendor' ||
+      userPayload.role === 'cravexp_store_vendor' ||
+      (userPayload.role as string) === 'vendor'
+    const isDriverRole = userPayload.role === 'rider' || (userPayload.role as string) === 'driver'
+
+    if (nativeApp === 'restaurant' && !isRestaurantRole) {
+      return NextResponse.json(
+        { error: 'This account is not registered as a restaurant partner' },
+        { status: 403 }
+      )
+    }
+    if (nativeApp === 'driver' && !isDriverRole) {
+      return NextResponse.json(
+        { error: 'This account is not registered as a delivery partner' },
+        { status: 403 }
+      )
+    }
+
+    const shouldReturnNativeToken =
+      (nativeApp === 'restaurant' && isRestaurantRole) || (nativeApp === 'driver' && isDriverRole)
+    return setCookies(
+      NextResponse.json({
+        success: true,
+        user: userPayload,
+        ...(shouldReturnNativeToken ? { token } : {}),
+      }),
+      token
+    )
   } catch (error) {
     console.error('Login failed:', error)
     return NextResponse.json({ error: 'Unable to sign in at this time' }, { status: 500 })

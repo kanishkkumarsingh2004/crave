@@ -25,6 +25,7 @@ import {
 import type { PriceTaxMode } from '@/lib/finance/tax-engine'
 import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
 import { withTiming } from '@/lib/instrumentation'
+import { sendDriverPushToAll, sendDriverPushToUsers } from '@/lib/notifications/driver-push'
 import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
@@ -34,6 +35,13 @@ import { sendWebPushToRoles, sendWebPushToUsers, type WebPushPayload } from '@/l
 import { Prisma, type OrderStatus } from '@prisma/client'
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
+
+const DRIVER_OFFER_STATUSES = new Set<OrderStatus>([
+  'sent_to_vendor',
+  'preparing',
+  'packing',
+  'ready_for_pickup',
+])
 
 async function getActiveConfig(): Promise<PaymentConfig> {
   const dbConfig: any = await getActivePaymentConfig()
@@ -1762,8 +1770,60 @@ export async function PATCH(request: Request) {
 
       // Broadcast order status update to subscribed clients.
       if (status) {
-        await broadcast('order_update', { order: updated, orderId })
-        await broadcast('admin_orders', { order: updated, orderId })
+        await broadcast('order_update', { type: 'order_updated', order: updated, orderId })
+        await broadcast('admin_orders', { type: 'order_updated', order: updated, orderId })
+        await broadcast('vendor_orders', {
+          type: 'order_updated',
+          order: updated,
+          orderId,
+          restaurantId: updated.restaurant_id || existing.restaurant_id,
+          timestamp: new Date().toISOString(),
+        })
+
+        if (
+          DRIVER_OFFER_STATUSES.has(status as OrderStatus) &&
+          !DRIVER_OFFER_STATUSES.has(existing.status as OrderStatus) &&
+          !updated.rider_id &&
+          updated.payment_status === 'verified'
+        ) {
+          const snapshot = (updated as any).financial_snapshot || {}
+          const driverPayout = Number(
+            snapshot.riderPayablePaise != null
+              ? snapshot.riderPayablePaise / 100
+              : (updated as any).driver_payout || updated.delivery_fee || 30
+          )
+          await broadcast('driver_offers', {
+            type: 'offer_available',
+            order: {
+              id: updated.id,
+              status: updated.status,
+              restaurantId: updated.restaurant_id,
+              restaurantName: updated.restaurant_name || 'Crave restaurant',
+              customerArea: 'Delivery address shown after acceptance',
+              itemsCount: Array.isArray(updated.items)
+                ? updated.items.reduce(
+                    (total: number, item: any) => total + Number(item?.qty || 1),
+                    0
+                  )
+                : 1,
+              distanceKm: Number((updated as any).distance_km || 0),
+              driverPayout,
+              tip: Number(updated.tip || 0),
+              createdAt: updated.created_at,
+            },
+            orderId,
+            timestamp: new Date().toISOString(),
+          })
+          await sendDriverPushToAll({
+            title: `New delivery · ₹${driverPayout.toLocaleString('en-IN')}`,
+            body: `${updated.restaurant_name || 'Crave restaurant'} · Open the app to review the trip.`,
+            orderId,
+            type: 'offer_available',
+            route: 'home',
+          }).catch((pushError) =>
+            console.error('[PATCH /api/orders] Driver native offer push failed:', pushError)
+          )
+        }
 
         const statusMessages: Partial<Record<OrderStatus, string>> = {
           payment_submitted: 'Your payment is being reviewed.',
@@ -1801,6 +1861,15 @@ export async function PATCH(request: Request) {
             orderId,
           }).catch((pushError) =>
             console.error('[PATCH /api/orders] Driver Web Push failed:', pushError)
+          )
+          await sendDriverPushToUsers([assignedRiderId], {
+            title: 'Order ready for pickup',
+            body: `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}.`,
+            orderId,
+            type: 'order_ready',
+            route: 'home',
+          }).catch((pushError) =>
+            console.error('[PATCH /api/orders] Driver native push failed:', pushError)
           )
         }
       }

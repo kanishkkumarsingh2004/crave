@@ -77,6 +77,53 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  try {
+    const actor = await requireAuthApi(request)
+    if (actor.role !== 'rider' && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
+    }
+
+    const body = await request.json().catch(() => ({}))
+    const id = typeof body.id === 'string' ? body.id : ''
+    if (!id || body.isPrimary !== true) {
+      return NextResponse.json({ error: 'A UPI account is required' }, { status: 400 })
+    }
+
+    const account = await prisma.driverUpiAccount.findUnique({
+      where: { id },
+      select: { driver_id: true },
+    })
+    if (!account) {
+      return NextResponse.json({ error: 'UPI account not found' }, { status: 404 })
+    }
+    if (actor.role !== 'admin' && account.driver_id !== actor.id) {
+      return NextResponse.json({ error: 'Unauthorized to update this account' }, { status: 403 })
+    }
+
+    await prisma.$transaction([
+      prisma.driverUpiAccount.updateMany({
+        where: { driver_id: account.driver_id },
+        data: { is_primary: false },
+      }),
+      prisma.driverUpiAccount.update({
+        where: { id },
+        data: { is_primary: true },
+      }),
+    ])
+
+    return NextResponse.json({ success: true, id })
+  } catch (error: any) {
+    const authRes = handleApiAuthError(error)
+    if (authRes) return authRes
+    console.error('[PUT /api/driver/upi]', error)
+    return NextResponse.json(
+      { error: error?.message || 'Failed to update UPI account' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const actor = await requireAuthApi(request)

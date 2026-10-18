@@ -1,10 +1,10 @@
-const CACHE_NAME = 'crave-pwa-v1'
+const CACHE_NAME = 'crave-pwa-v2'
 const OFFLINE_URL = '/offline.html'
 
 const STATIC_ASSETS = [
   '/',
   '/offline.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icon.svg',
   '/favicon.svg',
   '/icons/icon-192x192.png',
@@ -123,6 +123,51 @@ self.addEventListener('fetch', (event) => {
     fetch(request).catch(async () => {
       const cached = await caches.match(request)
       return cached || new Response(null, { status: 404 })
+    })
+  )
+})
+
+// Display standards-based Web Push notifications while the PWA is in the background.
+self.addEventListener('push', (event) => {
+  let payload = {}
+  try {
+    payload = event.data ? event.data.json() : {}
+  } catch {
+    payload = { body: event.data ? event.data.text() : 'You have a new Crave update.' }
+  }
+
+  const title = payload.title || 'crave.'
+  const options = {
+    body: payload.body || 'You have a new update.',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: payload.tag || 'crave-update',
+    renotify: true,
+    data: {
+      url: payload.url || '/',
+      orderId: payload.orderId || null,
+    },
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const requestedUrl = new URL(event.notification.data?.url || '/', self.location.origin)
+  const targetUrl =
+    requestedUrl.origin === self.location.origin ? requestedUrl.href : self.location.origin
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('navigate' in client) {
+          client.navigate(targetUrl)
+        }
+        if ('focus' in client) return client.focus()
+      }
+      return self.clients.openWindow ? self.clients.openWindow(targetUrl) : undefined
     })
   )
 })

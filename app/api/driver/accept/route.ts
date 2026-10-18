@@ -96,12 +96,22 @@ export async function POST(request: Request) {
 
       // Broadcast driver acceptance to order and driver WebSocket channels
       await broadcast('order_update', {
+        type: 'rider_assigned',
         orderId: requestId,
         order: updatedOrder,
         driverId,
         driver_name: driverName,
         driver_phone: driverPhone,
         status: 'rider_assigned',
+        timestamp: new Date().toISOString(),
+      }).catch(() => {})
+
+      // Remove the claimed offer from every other rider immediately. The database
+      // claim above remains the source of truth if two devices accept concurrently.
+      await broadcast('driver_offers', {
+        type: 'offer_claimed',
+        orderId: requestId,
+        driverId,
         timestamp: new Date().toISOString(),
       }).catch(() => {})
 

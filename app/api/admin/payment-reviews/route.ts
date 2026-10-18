@@ -145,13 +145,6 @@ export async function PATCH(request: Request) {
       if (updatedOrder) {
         await broadcast('order_update', { order: updatedOrder, orderId: finalOrderId })
         await broadcast('admin_orders', { order: updatedOrder, orderId: finalOrderId })
-        await broadcast('vendor_orders', { order: updatedOrder, orderId: finalOrderId })
-        if (updatedOrder.restaurant_id) {
-          await broadcast(`vendor_orders_${updatedOrder.restaurant_id}`, {
-            order: updatedOrder,
-            orderId: finalOrderId,
-          })
-        }
       }
       await broadcast('admin_stats', {
         type: 'payment_review_updated',

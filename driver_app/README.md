@@ -1,34 +1,47 @@
-# Crave Driver app
+# Crave Driver App
 
-This folder is the Capacitor Android/iOS shell for the existing React driver experience in
-`app/driver`. It intentionally does not duplicate dashboard components: the native WebView loads
-the deployed Next.js driver route, while the shared code in `lib/native-driver.ts` activates native
-GPS, local and push notifications, haptics, app links, network state, Android back-button handling,
-the splash screen, and the status bar.
+Standalone Capacitor application for Crave delivery partners. The APK packages its own responsive React interface and connects directly to the authenticated Crave backend; it does not load the driver website in a remote WebView.
 
-## Configure and sync
+## Driver features
 
-Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). Then install and sync the
-project:
+- Rider-only native JWT login with persistent app session
+- Online/offline duty control and precise native background GPS streaming
+- Authenticated live delivery offers with atomic acceptance
+- Active trip workflow: pickup, out for delivery, and OTP handoff
+- Google Maps navigation and customer calling shortcuts
+- Trip history, earnings, payouts, incentives, profile, vehicle and UPI settings
+- Background offer polling, native push/local notifications, haptics and responsive bottom navigation
+- Android immersive fullscreen and iOS status/home-indicator hiding
 
-```bash
-pnpm install
-cd driver_app
-pnpm sync
+## Environment
+
+Copy `.env.example` to `.env.local` when backend origins differ from production:
+
+```env
+VITE_API_BASE_URL=https://crave.apexonestudio.com
+VITE_WS_BASE_URL=wss://crave.apexonestudio.com/api/ws
 ```
 
-The production server defaults to `https://crave.apexonestudio.com`. Open the native projects with
-`pnpm android` or, on macOS, `pnpm ios`. For local Android emulator development,
-`CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` enables cleartext automatically.
+## Commands
 
-## Push notification credentials
+```bash
+pnpm --dir driver_app dev
+pnpm --dir driver_app build
+pnpm --dir driver_app sync
+```
 
-- Android: add your Firebase `google-services.json` to `android/app/` and follow the Capacitor Push
-  Notifications Firebase setup.
-- iOS: enable the Push Notifications capability, add the APNs entitlement, and upload the APNs key
-  to the push provider.
-- Apply the Prisma schema with `pnpm db:push` from the repository root. Device tokens are stored in
-  `driver_push_tokens` by `/api/driver/push-token`.
+Build the Android APK from the repository root with `pnpm build:android`. iOS compilation requires Xcode on macOS after Capacitor synchronization.
 
-The app still works without provider credentials; local new-order notifications and native GPS are
-available, while remote pushes will begin registering after Firebase/APNs is configured.
+While a driver is online, Android uses a foreground location service and iOS uses the background
+location mode. Both native services upload GPS directly to the authenticated production API and
+check for new offers even when the web view is suspended. Android shows the required persistent
+"Crave Driver is live" notification while this service is running.
+
+Remote push delivery requires the server credentials documented in the root `.env.example`.
+Android additionally needs the matching `driver_app/android/app/google-services.json` and iOS
+needs Push Notifications/Background Modes enabled for the `com.crave.driver` signing profile.
+The checked-in debug iOS entitlement uses the APNs development environment; set
+`APNS_PRODUCTION=false` for debug-device tokens and `true` for TestFlight/App Store tokens.
+
+The operating systems intentionally stop background work if a user force-stops the Android app or
+force-quits the iOS app. Tracking resumes after the driver opens the app and returns online.

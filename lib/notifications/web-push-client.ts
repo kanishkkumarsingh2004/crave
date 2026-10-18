@@ -67,8 +67,8 @@ export async function syncExistingWebPushSubscription(): Promise<boolean> {
 
 export async function unregisterWebPushSubscription(authToken?: string | null): Promise<void> {
   if (!isWebPushSupported()) return
-  const registration = await navigator.serviceWorker.getRegistration('/sw.js')
-  const subscription = await registration?.pushManager.getSubscription()
+  const registration = await getWebPushRegistration()
+  const subscription = await registration.pushManager.getSubscription()
   if (!subscription) return
 
   await fetch('/api/push/subscriptions', {

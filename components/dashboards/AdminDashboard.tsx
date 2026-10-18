@@ -15,7 +15,6 @@ import {
   Search,
   ShieldCheck,
   Store,
-  Tag,
   Trash2,
   Users,
   Utensils,
@@ -67,11 +66,27 @@ interface ProductItem {
   description?: string
   sku?: string
   price: number
-  comparePrice?: number
+  restaurantPrice: number
   currency: string
   imageUrl?: string
-  status: 'ACTIVE' | 'OUT_OF_STOCK'
+  status: 'ACTIVE' | 'INACTIVE'
   categoryName?: string
+  isVeg: boolean
+  unit?: string
+  stockCount: number
+  hsnSacCode: string
+  priceTaxMode: 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
+  expiryDate?: string
+  variants: ProductVariant[]
+}
+
+interface ProductVariant {
+  id: string
+  name: string
+  restaurantPrice: number
+  price: number
+  inStock: boolean
+  isDefault: boolean
 }
 
 interface VendorStore {
@@ -219,10 +234,17 @@ export default function AdminDashboard() {
     name: '',
     description: '',
     categoryName: 'General',
+    restaurantPrice: '' as number | '',
     price: '' as number | '',
-    comparePrice: '' as number | '',
     imageUrl: '',
     sku: '',
+    isVeg: true,
+    unit: '',
+    stockCount: 0 as number | '',
+    hsnSacCode: '996331',
+    priceTaxMode: 'TAX_INCLUSIVE' as 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE',
+    expiryDate: '',
+    variants: [] as ProductVariant[],
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   })
 
@@ -721,11 +743,27 @@ export default function AdminDashboard() {
             description: p.description,
             sku: p.sku_code,
             price: Number(p.price),
-            comparePrice: p.mrp ? Number(p.mrp) : undefined,
+            restaurantPrice: Number(p.restaurant_price ?? p.price),
             currency: 'INR',
             imageUrl: p.image,
             status: p.in_stock ? 'ACTIVE' : 'INACTIVE',
             categoryName: p.category || 'General',
+            isVeg: p.is_veg !== false,
+            unit: p.unit || '',
+            stockCount: Number(p.stock_count ?? 0),
+            hsnSacCode: p.hsn_sac_code || '996331',
+            priceTaxMode: p.price_tax_mode === 'TAX_EXCLUSIVE' ? 'TAX_EXCLUSIVE' : 'TAX_INCLUSIVE',
+            expiryDate: p.expiry_date ? String(p.expiry_date).slice(0, 10) : '',
+            variants: Array.isArray(p.variants)
+              ? p.variants.map((variant: any) => ({
+                  id: variant.id || crypto.randomUUID(),
+                  name: variant.name || '',
+                  restaurantPrice: Number(variant.restaurant_price ?? 0),
+                  price: Number(variant.price ?? 0),
+                  inStock: variant.in_stock !== false,
+                  isDefault: variant.is_default === true,
+                }))
+              : [],
           }))
         )
       } else {
@@ -742,55 +780,92 @@ export default function AdminDashboard() {
   // Save Product Changes / Add New Product
   async function handleSaveProduct(e: FormEvent) {
     e.preventDefault()
-    if (!selectedVendorForMenu || !productForm.name || productForm.price === '') return
+    if (
+      !selectedVendorForMenu ||
+      !productForm.name.trim() ||
+      !productForm.categoryName.trim() ||
+      productForm.restaurantPrice === '' ||
+      productForm.price === ''
+    ) {
+      triggerToast('Invalid item: name, category, restaurant price, and app price are required.')
+      return
+    }
 
     const isEdit = !!editingProduct
     const prodId = editingProduct ? editingProduct.id : crypto.randomUUID()
+    const finalRestaurantPrice = Number(productForm.restaurantPrice)
     const finalPrice = Number(productForm.price)
-    const finalComparePrice =
-      productForm.comparePrice !== '' ? Number(productForm.comparePrice) : null
+    if (
+      !Number.isInteger(finalRestaurantPrice) ||
+      finalRestaurantPrice < 0 ||
+      !Number.isInteger(finalPrice) ||
+      finalPrice < finalRestaurantPrice
+    ) {
+      triggerToast(
+        'Invalid prices: use whole rupees and keep app price at or above restaurant price.'
+      )
+      return
+    }
+    if (
+      productForm.variants.some(
+        (variant) =>
+          !variant.name.trim() ||
+          !Number.isInteger(variant.restaurantPrice) ||
+          variant.restaurantPrice < 0 ||
+          !Number.isInteger(variant.price) ||
+          variant.price < variant.restaurantPrice
+      )
+    ) {
+      triggerToast(
+        'Invalid variant: every variant needs a name and valid restaurant and app prices.'
+      )
+      return
+    }
+
+    const variants = productForm.variants.map((variant, index) => ({
+      id: variant.id,
+      name: variant.name.trim(),
+      restaurant_price: variant.restaurantPrice,
+      price: variant.price,
+      in_stock: variant.inStock,
+      is_default: productForm.variants.some((entry) => entry.isDefault)
+        ? variant.isDefault
+        : index === 0,
+    }))
+    const payload = {
+      id: prodId,
+      restaurant_id: selectedVendorForMenu.id,
+      name: productForm.name.trim(),
+      category: productForm.categoryName.trim(),
+      description: productForm.description.trim() || null,
+      restaurant_price: finalRestaurantPrice,
+      price: finalPrice,
+      mrp: null,
+      image: productForm.imageUrl.trim() || null,
+      in_stock: productForm.status === 'ACTIVE',
+      is_veg: productForm.isVeg,
+      unit: productForm.unit.trim() || null,
+      stock_count: productForm.stockCount === '' ? 0 : Number(productForm.stockCount),
+      sku_code: productForm.sku.trim() || null,
+      hsn_sac_code: productForm.hsnSacCode.trim() || '996331',
+      price_tax_mode: productForm.priceTaxMode,
+      expiry_date: productForm.expiryDate || null,
+      variants,
+    }
 
     try {
-      if (isEdit) {
-        const res = await fetch('/api/menu-items', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: prodId,
-            name: productForm.name,
-            description: `${productForm.categoryName} · ${productForm.description || ''}`,
-            price: finalPrice,
-            mrp: finalComparePrice,
-            image: productForm.imageUrl || null,
-            in_stock: productForm.status === 'ACTIVE',
-            sku_code: productForm.sku || `SKU-${Date.now()}`,
-          }),
-        })
-        if (!res.ok) throw new Error('Update failed')
-        triggerToast(`Updated product '${productForm.name}' pricing & details!`)
-      } else {
-        const res = await fetch('/api/menu-items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: prodId,
-            restaurant_id: selectedVendorForMenu.id,
-            name: productForm.name,
-            category: productForm.categoryName || 'General',
-            price: finalPrice,
-            description: `${productForm.categoryName} · ${productForm.description || ''}`,
-            image:
-              productForm.imageUrl ||
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-            in_stock: productForm.status === 'ACTIVE',
-            is_veg: productForm.categoryName?.toLowerCase().includes('veg') ?? false,
-            mrp: finalComparePrice,
-            sku_code: productForm.sku || `SKU-${Date.now()}`,
-          }),
-        })
-        if (!res.ok) throw new Error('Create failed')
-        triggerToast(`Added '${productForm.name}' to ${selectedVendorForMenu.storeName}'s catalog!`)
-      }
+      const res = await fetch('/api/menu-items', {
+        method: isEdit ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(result.error || (isEdit ? 'Update failed' : 'Create failed'))
+      triggerToast(
+        isEdit
+          ? `Updated product '${productForm.name}' pricing & details!`
+          : `Added '${productForm.name}' to ${selectedVendorForMenu.storeName}'s catalog!`
+      )
 
       setIsAddProductOpen(false)
       setEditingProduct(null)
@@ -801,24 +876,34 @@ export default function AdminDashboard() {
     }
   }
 
-  // Quick Discount Application Preset (e.g., 20% OFF)
-  function applyQuickDiscount(percent: number) {
-    if (productForm.price === '' && productForm.comparePrice === '') return
+  function addProductVariant() {
+    setProductForm((current) => ({
+      ...current,
+      variants: [
+        ...current.variants,
+        {
+          id: crypto.randomUUID(),
+          name: '',
+          restaurantPrice: Number(current.restaurantPrice || 0),
+          price: Number(current.price || current.restaurantPrice || 0),
+          inStock: true,
+          isDefault: current.variants.length === 0,
+        },
+      ],
+    }))
+  }
 
-    const baseMRP =
-      productForm.comparePrice !== ''
-        ? Number(productForm.comparePrice)
-        : Number(productForm.price || 0)
-
-    if (baseMRP <= 0) return
-
-    const discountedPrice = Math.round(baseMRP * (1 - percent / 100))
-    setProductForm({
-      ...productForm,
-      comparePrice: baseMRP,
-      price: discountedPrice,
-    })
-    triggerToast(`Applied ${percent}% OFF! Price set to ₹${discountedPrice} (Original ₹${baseMRP})`)
+  function updateProductVariant(id: string, changes: Partial<ProductVariant>) {
+    setProductForm((current) => ({
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.id === id
+          ? { ...variant, ...changes }
+          : changes.isDefault
+            ? { ...variant, isDefault: false }
+            : variant
+      ),
+    }))
   }
 
   // Toggle Account Status
@@ -2908,8 +2993,7 @@ export default function AdminDashboard() {
                     {selectedVendorForMenu.storeName} — Menu &amp; Price Controls
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Admin can alter regular prices, set compare prices (discounts), or add new items
-                    directly.
+                    Admin can manage the same item fields available in the bulk CSV template.
                   </p>
                 </div>
 
@@ -2928,10 +3012,17 @@ export default function AdminDashboard() {
                         name: '',
                         description: '',
                         categoryName: 'General',
+                        restaurantPrice: '',
                         price: '',
-                        comparePrice: '',
                         imageUrl: '',
                         sku: '',
+                        isVeg: true,
+                        unit: '',
+                        stockCount: 0,
+                        hsnSacCode: '996331',
+                        priceTaxMode: 'TAX_INCLUSIVE',
+                        expiryDate: '',
+                        variants: [],
                         status: 'ACTIVE',
                       })
                       setIsAddProductOpen(true)
@@ -2967,23 +3058,16 @@ export default function AdminDashboard() {
                       <thead className="border-b border-gray-200 dark:border-[#27342d] bg-gray-50/90 dark:bg-[#121815] text-gray-500 dark:text-gray-400 uppercase font-bold text-[10px] tracking-wider">
                         <tr>
                           <th className="px-4 py-3">Product / Item</th>
-                          <th className="px-4 py-3">Selling Price</th>
-                          <th className="px-4 py-3">Original MRP</th>
-                          <th className="px-4 py-3">Discount Badge</th>
+                          <th className="px-4 py-3">App Price</th>
+                          <th className="px-4 py-3">Restaurant Price / MRP</th>
+                          <th className="px-4 py-3">Platform Margin</th>
                           <th className="px-4 py-3">Status</th>
                           <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-[#27342d] bg-white dark:bg-[#18201c]">
                         {vendorProducts.map((product) => {
-                          const hasDiscount =
-                            product.comparePrice && product.comparePrice > product.price
-                          const discountPct = hasDiscount
-                            ? Math.round(
-                                ((product.comparePrice! - product.price) / product.comparePrice!) *
-                                  100
-                              )
-                            : 0
+                          const platformMargin = product.price - product.restaurantPrice
 
                           return (
                             <tr
@@ -3019,23 +3103,13 @@ export default function AdminDashboard() {
                               </td>
 
                               <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                                {product.comparePrice ? (
-                                  <span className="line-through">₹{product.comparePrice}</span>
-                                ) : (
-                                  '—'
-                                )}
+                                ₹{product.restaurantPrice}
                               </td>
 
                               <td className="px-4 py-3 whitespace-nowrap">
-                                {hasDiscount ? (
-                                  <span className="rounded-md bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 text-[10px] font-black text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
-                                    {discountPct}% OFF
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                                    Regular
-                                  </span>
-                                )}
+                                <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                  ₹{platformMargin}
+                                </span>
                               </td>
 
                               <td className="px-4 py-3 whitespace-nowrap">
@@ -3060,10 +3134,17 @@ export default function AdminDashboard() {
                                         ? product.description.split('·')[1].trim()
                                         : product.description || '',
                                       categoryName: product.categoryName || 'General',
+                                      restaurantPrice: product.restaurantPrice,
                                       price: product.price,
-                                      comparePrice: product.comparePrice || '',
                                       imageUrl: product.imageUrl || '',
                                       sku: product.sku || '',
+                                      isVeg: product.isVeg,
+                                      unit: product.unit || '',
+                                      stockCount: product.stockCount,
+                                      hsnSacCode: product.hsnSacCode,
+                                      priceTaxMode: product.priceTaxMode,
+                                      expiryDate: product.expiryDate || '',
+                                      variants: product.variants,
                                       status: product.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
                                     })
                                     setIsAddProductOpen(true)
@@ -3109,7 +3190,7 @@ export default function AdminDashboard() {
       {/* EDIT / ADD PRODUCT MODAL FOR ADMIN */}
       {isAddProductOpen && selectedVendorForMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d]">
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-6 shadow-2xl border border-gray-200 dark:border-[#27342d]">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#a3c428]">
@@ -3130,124 +3211,280 @@ export default function AdminDashboard() {
             </div>
 
             <form onSubmit={handleSaveProduct} className="mt-4 space-y-4 text-xs">
-              <div>
-                <label className="font-bold text-[#18201c] dark:text-white">Product Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={productForm.name}
-                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
-                />
-              </div>
+              <p className="rounded-xl border border-[#86a018]/30 bg-[#d9f447]/10 p-3 text-gray-600 dark:text-gray-300">
+                These fields match the bulk CSV template. Restaurant price is the item&apos;s MRP
+                and payout amount; app price is the customer-facing selling price.
+              </p>
 
-              {/* Price & Compare Price Alteration Box */}
-              <div className="rounded-xl bg-gray-50 dark:bg-[#121815] p-3.5 border border-gray-200 dark:border-[#27342d] space-y-3">
-                <p className="font-bold text-[#18201c] dark:text-amber-400 flex items-center gap-1.5 text-xs">
-                  <Tag className="size-4 text-amber-600 dark:text-amber-400" /> Admin Pricing &amp;
-                  Discount Presets
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-gray-700 dark:text-gray-300">
-                      Selling Price (₹) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      value={productForm.price}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          price: e.target.value === '' ? '' : Number(e.target.value),
-                        })
-                      }
-                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-2 font-extrabold text-sm outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-gray-700 dark:text-gray-300">
-                      Original MRP / Compare (₹)
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 200"
-                      value={productForm.comparePrice}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          comparePrice: e.target.value === '' ? '' : Number(e.target.value),
-                        })
-                      }
-                      className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white p-2 font-bold text-sm outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Discount Tool */}
-                <div className="pt-1">
-                  <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">
-                    Quick Discount Presets:
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {[10, 20, 30, 50].map((pct) => (
-                      <button
-                        key={pct}
-                        type="button"
-                        onClick={() => applyQuickDiscount(pct)}
-                        className="rounded-lg border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] px-2.5 py-1 text-[10px] font-bold text-gray-800 dark:text-gray-200 hover:bg-[#18201c] dark:hover:bg-[#86a018] hover:text-white dark:hover:text-[#121815] transition"
-                      >
-                        {pct}% OFF
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="font-bold text-[#18201c] dark:text-white">
-                  Description / Notes
+                  Product Name *
+                  <input
+                    type="text"
+                    required
+                    value={productForm.name}
+                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
                 </label>
-                <input
-                  type="text"
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Category *
+                  <input
+                    type="text"
+                    required
+                    value={productForm.categoryName}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, categoryName: e.target.value })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-medium outline-none focus:border-[#86a018]"
+                  />
+                </label>
+              </div>
+
+              <label className="block font-bold text-[#18201c] dark:text-white">
+                Description
+                <textarea
+                  rows={2}
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-medium outline-none focus:border-[#86a018]"
                 />
+              </label>
+
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3.5 dark:border-[#27342d] dark:bg-[#121815] sm:grid-cols-2">
+                <label className="font-bold text-gray-700 dark:text-gray-300">
+                  Restaurant Price / MRP (₹) *
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    step={1}
+                    value={productForm.restaurantPrice}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        restaurantPrice: e.target.value === '' ? '' : Number(e.target.value),
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 font-extrabold text-sm outline-none focus:border-[#86a018]"
+                  />
+                </label>
+                <label className="font-bold text-gray-700 dark:text-gray-300">
+                  App Selling Price (₹) *
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    step={1}
+                    value={productForm.price}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        price: e.target.value === '' ? '' : Number(e.target.value),
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 font-extrabold text-sm outline-none focus:border-[#86a018]"
+                  />
+                </label>
               </div>
 
-              <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="font-bold text-[#18201c] dark:text-white">
-                  Product Image URL
+                  In Stock
+                  <select
+                    value={productForm.status}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        status: e.target.value as 'ACTIVE' | 'INACTIVE',
+                      })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  >
+                    <option value="ACTIVE">True</option>
+                    <option value="INACTIVE">False</option>
+                  </select>
                 </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Food Type
+                  <select
+                    value={productForm.isVeg ? 'true' : 'false'}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, isVeg: e.target.value === 'true' })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  >
+                    <option value="true">Vegetarian</option>
+                    <option value="false">Non-vegetarian</option>
+                  </select>
+                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Unit / Serving Size
+                  <input
+                    value={productForm.unit}
+                    onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })}
+                    placeholder="1 Plate"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  />
+                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Stock Count
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={productForm.stockCount}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        stockCount: e.target.value === '' ? '' : Number(e.target.value),
+                      })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  SKU Code
+                  <input
+                    value={productForm.sku}
+                    onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-mono outline-none"
+                  />
+                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  HSN/SAC Code
+                  <input
+                    value={productForm.hsnSacCode}
+                    onChange={(e) => setProductForm({ ...productForm, hsnSacCode: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-mono outline-none"
+                  />
+                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Price Tax Mode
+                  <select
+                    value={productForm.priceTaxMode}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        priceTaxMode: e.target.value as 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE',
+                      })
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  >
+                    <option value="TAX_INCLUSIVE">TAX_INCLUSIVE</option>
+                    <option value="TAX_EXCLUSIVE">TAX_EXCLUSIVE</option>
+                  </select>
+                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">
+                  Expiry Date
+                  <input
+                    type="date"
+                    value={productForm.expiryDate}
+                    onChange={(e) => setProductForm({ ...productForm, expiryDate: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 outline-none"
+                  />
+                </label>
+              </div>
+
+              <label className="block font-bold text-[#18201c] dark:text-white">
+                Product Image URL
                 <input
                   type="url"
                   value={productForm.imageUrl}
                   onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-mono text-[11px] outline-none focus:border-[#86a018] placeholder-gray-400 dark:placeholder-gray-500"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-mono text-[11px] outline-none focus:border-[#86a018]"
                 />
-              </div>
+              </label>
 
-              <div className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-[#121815] p-3 border border-gray-200 dark:border-[#27342d]">
-                <span className="font-bold text-[#18201c] dark:text-white">
-                  Product In-Stock Status
-                </span>
-                <select
-                  value={productForm.status}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      status: e.target.value as 'ACTIVE' | 'INACTIVE',
-                    })
-                  }
-                  className="rounded-lg border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white px-3 py-1 font-bold outline-none text-xs"
-                >
-                  <option value="ACTIVE">Active (In Stock)</option>
-                  <option value="INACTIVE">Out of Stock</option>
-                </select>
+              <div className="rounded-xl border border-gray-200 p-3.5 dark:border-[#27342d]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold">Variants (optional)</p>
+                    <p className="mt-0.5 text-[10px] text-gray-500">
+                      Matches variant_names and the two variant price columns in the CSV.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addProductVariant}
+                    className="rounded-lg bg-[#18201c] px-3 py-1.5 font-bold text-white dark:bg-[#86a018] dark:text-[#121815]"
+                  >
+                    + Add variant
+                  </button>
+                </div>
+                {productForm.variants.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {productForm.variants.map((variant) => (
+                      <div
+                        key={variant.id}
+                        className="grid grid-cols-1 gap-2 rounded-xl bg-gray-50 p-3 dark:bg-[#121815] sm:grid-cols-[1fr_1fr_1fr_auto]"
+                      >
+                        <input
+                          aria-label="Variant name"
+                          placeholder="Variant name"
+                          value={variant.name}
+                          onChange={(e) =>
+                            updateProductVariant(variant.id, { name: e.target.value })
+                          }
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-[#27342d] dark:bg-[#18201c]"
+                        />
+                        <input
+                          aria-label={`${variant.name || 'Variant'} restaurant price`}
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="Restaurant ₹"
+                          value={variant.restaurantPrice}
+                          onChange={(e) =>
+                            updateProductVariant(variant.id, {
+                              restaurantPrice: Number(e.target.value),
+                            })
+                          }
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-[#27342d] dark:bg-[#18201c]"
+                        />
+                        <input
+                          aria-label={`${variant.name || 'Variant'} app price`}
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="App ₹"
+                          value={variant.price}
+                          onChange={(e) =>
+                            updateProductVariant(variant.id, { price: Number(e.target.value) })
+                          }
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-[#27342d] dark:bg-[#18201c]"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <label className="flex items-center gap-1 font-bold text-gray-500">
+                            <input
+                              type="radio"
+                              name="admin-default-variant"
+                              checked={variant.isDefault}
+                              onChange={() => updateProductVariant(variant.id, { isDefault: true })}
+                            />
+                            Default
+                          </label>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${variant.name || 'variant'}`}
+                            onClick={() =>
+                              setProductForm((current) => ({
+                                ...current,
+                                variants: current.variants.filter((item) => item.id !== variant.id),
+                              }))
+                            }
+                            className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-500/10"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-5 flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#27342d]">

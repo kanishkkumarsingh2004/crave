@@ -420,9 +420,9 @@ export function playChimeSound() {
 
 export function useVendorOrderUpdates(onOrderEvent: (data: any) => void) {
   return useWebSocket({
-    channels: ['order_update', 'admin_orders'],
+    channels: ['vendor_orders'],
     onMessage: (msg) => {
-      if (msg.channel === 'order_update' || msg.channel === 'admin_orders') {
+      if (msg.channel === 'vendor_orders') {
         onOrderEvent(msg.data)
       }
     },

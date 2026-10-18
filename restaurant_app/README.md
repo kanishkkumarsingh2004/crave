@@ -1,9 +1,12 @@
 # Crave Restaurant app
 
-This folder is the Capacitor Android/iOS shell for the existing restaurant experience in
-`app/vendor`. It reuses the current dashboard and components instead of maintaining a second UI.
-The WebView opens the deployed restaurant route with its own native app identity and deep-link
-scheme. Links such as `craverestaurant://vendor/dashboard` open directly in the restaurant app.
+This is the bundled Capacitor Android/iOS application for restaurant partners. It does not load
+the `/vendor` website in a remote WebView. The APK contains its own responsive React interface,
+native authentication session, restaurant-scoped live order connection, local notifications and
+full-screen mobile navigation.
+
+The app contains five bottom-tab areas: Home, Orders, Menu, Sales and Settings. All data is read
+from and written to the existing Next.js backend APIs with bearer authentication.
 
 ## Configure and sync
 
@@ -15,6 +18,10 @@ cd restaurant_app
 pnpm sync
 ```
 
-The production server defaults to `https://crave.apexonestudio.com`. Open the projects with
-`pnpm android` or, on macOS, `pnpm ios`. For an Android emulator, override the server with
-`CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm sync` while the Next.js development server runs.
+The backend defaults to `https://crave.apexonestudio.com`. Override `VITE_API_BASE_URL` and
+`VITE_WS_BASE_URL` at build time for another environment. Open the projects with `pnpm android`
+or, on macOS, `pnpm ios`.
+
+Android uses immersive sticky mode to hide the status and navigation bars. iOS hides the status
+bar and automatically hides the home indicator. Users can reveal system navigation temporarily
+with the operating system gesture.

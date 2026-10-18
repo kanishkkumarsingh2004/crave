@@ -32,7 +32,6 @@ export interface MenuItemRecord {
   image: string
   veg?: boolean
   unit?: string | null
-  mrp?: number | null
   stock_count?: number
   sku_code?: string | null
   hsn_sac_code?: string | null
@@ -65,7 +64,6 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     veg: item.is_veg ?? true,
     unit: item.unit ?? null,
-    mrp: item.mrp != null ? Number(item.mrp) : null,
     stock_count: Number(item.stock_count ?? 0),
     sku_code: item.sku_code ?? null,
     hsn_sac_code: item.hsn_sac_code ?? '996331',
@@ -217,7 +215,6 @@ export default function VendorMenuPage() {
   const [priceInput, setPriceInput] = useState<number | ''>('')
   const [restaurantPriceInput, setRestaurantPriceInput] = useState<number | ''>('')
   const [variantsInput, setVariantsInput] = useState<MenuItemVariantRecord[]>([])
-  const [mrpInput, setMrpInput] = useState<number | ''>('')
   const [descInput, setDescInput] = useState('')
   const [imageInput, setImageInput] = useState('')
   const [isVegInput, setIsVegInput] = useState(true)
@@ -353,7 +350,6 @@ export default function VendorMenuPage() {
     setPriceInput('')
     setRestaurantPriceInput('')
     setVariantsInput([])
-    setMrpInput('')
     setDescInput('')
     setImageInput('')
     setIsVegInput(true)
@@ -383,7 +379,6 @@ export default function VendorMenuPage() {
     setPriceInput(item.price)
     setRestaurantPriceInput(item.restaurant_price ?? item.price)
     setVariantsInput(item.variants || [])
-    setMrpInput(item.mrp != null ? item.mrp : '')
     setDescInput(item.description || '')
     setImageInput(item.image || '')
     setIsVegInput(item.veg !== false)
@@ -475,7 +470,6 @@ export default function VendorMenuPage() {
       image: imageInput.trim() || defaultImg,
       veg: isVegInput,
       unit: unitInput.trim() || null,
-      mrp: mrpInput !== '' ? Number(mrpInput) : null,
       stock_count: stockCountInput !== '' ? Number(stockCountInput) : 0,
       sku_code: skuCodeInput.trim() || null,
       hsn_sac_code: hsnSacInput.trim() || '996331',
@@ -503,7 +497,7 @@ export default function VendorMenuPage() {
         in_stock: itemData.in_stock,
         is_veg: itemData.veg ?? true,
         unit: itemData.unit || null,
-        mrp: itemData.mrp || null,
+        mrp: null,
         stock_count: itemData.stock_count || 0,
         sku_code: itemData.sku_code || null,
         hsn_sac_code: itemData.hsn_sac_code || '996331',
@@ -814,11 +808,6 @@ export default function VendorMenuPage() {
                         Restaurant ₹{item.restaurant_price} · Margin ₹
                         {item.price - item.restaurant_price}
                       </span>
-                      {item.mrp != null && item.mrp > item.price && (
-                        <span className="block text-[10px] font-medium text-stone-400 dark:text-gray-500 line-through">
-                          ₹{item.mrp}
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -1069,11 +1058,11 @@ export default function VendorMenuPage() {
                 </div>
               </div>
 
-              {/* Pricing, Strike MRP & Tax Mode */}
+              {/* Pricing & Tax Mode */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-stone-700 dark:text-gray-200">
-                    Restaurant Price (₹) <span className="text-rose-500">*</span>
+                    Restaurant Price / MRP (₹) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -1088,7 +1077,7 @@ export default function VendorMenuPage() {
                     className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-black text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
                   />
                   <span className="mt-1 block text-[10px] text-stone-400">
-                    Amount paid to the restaurant
+                    Restaurant amount used for payout and MRP
                   </span>
                 </div>
                 <div>
@@ -1110,22 +1099,6 @@ export default function VendorMenuPage() {
                   <span className="mt-1 block text-[10px] text-stone-400">
                     Customer price; difference is platform margin
                   </span>
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">
-                    Original MRP (₹) <span className="text-stone-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="e.g. 349 (Crossed out)"
-                    value={mrpInput}
-                    onChange={(e) =>
-                      setMrpInput(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
-                  />
                 </div>
 
                 <div>
@@ -1272,7 +1245,7 @@ export default function VendorMenuPage() {
               </div>
 
               {/* Commercial & Inventory Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
                   <label className="font-bold text-stone-700 dark:text-gray-200">
                     HSN/SAC Code
@@ -1321,6 +1294,21 @@ export default function VendorMenuPage() {
                   />
                   <span className="text-[10px] text-stone-400 mt-0.5 block">
                     Internal tracking code
+                  </span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-stone-700 dark:text-gray-200">
+                    Expiry Date <span className="text-stone-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={expiryDateInput}
+                    onChange={(e) => setExpiryDateInput(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  />
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">
+                    Use the same YYYY-MM-DD value as the CSV
                   </span>
                 </div>
               </div>

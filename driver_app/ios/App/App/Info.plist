@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Crave Driver uses your location to dispatch nearby orders and keep customers informed during an active delivery.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Crave Driver shares your live location while you are on duty, including when the app is in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Crave Driver uses your precise location to dispatch nearby orders and navigate active deliveries.</string>
 	<key>NSAppTransportSecurity</key>
@@ -71,6 +73,11 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -85,6 +92,8 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+	<key>UIStatusBarHidden</key>
 	<true/>
 </dict>
 </plist>

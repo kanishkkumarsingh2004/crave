@@ -4,11 +4,6 @@
 	"webDir": "dist",
 	"backgroundColor": "#121815",
 	"appendUserAgent": " CraveDriver/1.0",
-	"server": {
-		"url": "https://crave.apexonestudio.com/driver/dashboard",
-		"cleartext": false,
-		"errorPath": "index.html"
-	},
 	"plugins": {
 		"LocalNotifications": {
 			"smallIcon": "ic_stat_crave",
@@ -40,7 +35,7 @@
 		"StatusBar": {
 			"style": "LIGHT",
 			"backgroundColor": "#121815",
-			"overlaysWebView": false
+			"overlaysWebView": true
 		}
 	},
 	"packageClassList": [

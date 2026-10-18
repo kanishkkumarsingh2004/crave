@@ -26,18 +26,17 @@ type BulkItem = {
   image: string | null
   is_veg: boolean
   unit: string | null
-  mrp: number | null
   stock_count: number
   sku_code: string | null
   hsn_sac_code: string
   price_tax_mode: 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
+  expiry_date: Date | null
   variants: BulkVariant[]
 }
 
 class BulkImportValidationError extends Error {}
 
-function wholeNumber(value: unknown, field: string, row: number, allowNull = false) {
-  if (allowNull && (value == null || value === '')) return null
+function wholeNumber(value: unknown, field: string, row: number) {
   const parsed = Number(value)
   if (!Number.isInteger(parsed) || parsed < 0) {
     throw new BulkImportValidationError(
@@ -50,6 +49,19 @@ function wholeNumber(value: unknown, field: string, row: number, allowNull = fal
 function text(value: unknown, maxLength: number) {
   const result = typeof value === 'string' ? value.trim() : ''
   return result ? result.slice(0, maxLength) : null
+}
+
+function optionalDate(value: unknown, field: string, row: number) {
+  if (value == null || value === '') return null
+  const raw = String(value).trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    throw new BulkImportValidationError(`Row ${row}: ${field} must use YYYY-MM-DD format.`)
+  }
+  const parsed = new Date(`${raw}T00:00:00.000Z`)
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== raw) {
+    throw new BulkImportValidationError(`Row ${row}: ${field} is not a valid date.`)
+  }
+  return parsed
 }
 
 function normalizeItem(
@@ -123,9 +135,14 @@ function normalizeItem(
     throw new BulkImportValidationError(`Row ${row}: app_price cannot be below restaurant_price.`)
   }
 
-  const mrp = wholeNumber(raw.mrp, 'mrp', row, true)
   const stockCount = wholeNumber(raw.stock_count ?? 0, 'stock_count', row) as number
-  const priceTaxMode = raw.price_tax_mode === 'TAX_EXCLUSIVE' ? 'TAX_EXCLUSIVE' : 'TAX_INCLUSIVE'
+  const rawPriceTaxMode = text(raw.price_tax_mode, 30)?.toUpperCase() || 'TAX_INCLUSIVE'
+  if (!['TAX_INCLUSIVE', 'TAX_EXCLUSIVE'].includes(rawPriceTaxMode)) {
+    throw new BulkImportValidationError(
+      `Row ${row}: price_tax_mode must be TAX_INCLUSIVE or TAX_EXCLUSIVE.`
+    )
+  }
+  const priceTaxMode = rawPriceTaxMode as 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
 
   return {
     id: crypto.randomUUID(),
@@ -139,11 +156,11 @@ function normalizeItem(
     image: text(raw.image, 2000),
     is_veg: raw.is_veg !== false,
     unit: text(raw.unit, 100),
-    mrp: mrp as number | null,
     stock_count: stockCount,
     sku_code: text(raw.sku_code, 120),
     hsn_sac_code: text(raw.hsn_sac_code, 30) || '996331',
     price_tax_mode: priceTaxMode,
+    expiry_date: optionalDate(raw.expiry_date, 'expiry_date', row),
     variants,
   }
 }

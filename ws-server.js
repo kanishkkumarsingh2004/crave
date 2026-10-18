@@ -146,10 +146,18 @@ const broadcastLocal = (channel, data, excludeSocket) => {
   const isOwnershipChannel = ['order_update', 'approval_update', 'driver_location'].includes(
     channel
   )
+  const isRestaurantChannel = channel === 'vendor_orders'
 
   const payload = JSON.stringify({ channel, data, ts: Date.now() })
 
-  if (isOwnershipChannel && orderId) {
+  if (isRestaurantChannel) {
+    const restaurantId = data?.restaurantId || data?.order?.restaurant_id
+    const restaurantSubscribers = restaurantId ? subscribers.get(restaurantId) : undefined
+    restaurantSubscribers?.forEach((ws) => {
+      if (excludeSocket && ws === excludeSocket) return
+      if (ws.readyState === WS_OPEN) ws.send(payload)
+    })
+  } else if (isOwnershipChannel && orderId) {
     // Send only to subscribers of this specific order
     const orderSubscribers = subscribers.get(orderId)
     if (orderSubscribers) {
@@ -485,6 +493,11 @@ const CHANNEL_AUTH_RULES = {
   },
   admin_stats: { roles: ['admin'] },
   admin_orders: { roles: ['admin'] },
+  vendor_orders: {
+    roles: ['restaurant_vendor', 'cravexp_store_vendor', 'vendor'],
+    requireRestaurant: true,
+  },
+  driver_offers: { roles: ['rider', 'driver'] },
   admin_users: { roles: ['admin'] },
   approval_update: {
     roles: ['user', 'customer', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor', 'admin'],
@@ -683,6 +696,7 @@ async function authorizeChannelAsync(channel, clientInfo, subscriptionData = {})
   if (!checkRoleForChannel(channel, clientInfo)) return false
 
   const rules = CHANNEL_AUTH_RULES[channel]
+  if (rules.requireRestaurant) return Boolean(clientInfo.restaurantId)
   if (!rules.requireOwnership) return true
 
   // All ownership channels require a DB-verified orderId
@@ -792,6 +806,8 @@ const server = createServer((req, res) => {
             'order_update',
             'admin_stats',
             'admin_orders',
+            'vendor_orders',
+            'driver_offers',
             'admin_users',
             'approval_update',
             'driver_location',
@@ -886,6 +902,8 @@ function validateBroadcastPayload(channel, data) {
       return data.type && typeof data.type === 'string' && (data.order || data.orders)
     case 'admin_stats':
     case 'admin_orders':
+    case 'vendor_orders':
+    case 'driver_offers':
     case 'admin_users':
       return data.type && typeof data.type === 'string'
     case 'approval_update':
@@ -1002,9 +1020,11 @@ wss.on('connection', async (ws, req) => {
                   'driver_location',
                 ].includes(ch)
                 const orderKey =
-                  isOwnershipChannel && subscriptionData.orderId
-                    ? subscriptionData.orderId
-                    : 'global'
+                  ch === 'vendor_orders'
+                    ? info.restaurantId
+                    : isOwnershipChannel && subscriptionData.orderId
+                      ? subscriptionData.orderId
+                      : 'global'
 
                 if (!channelMap.has(orderKey)) {
                   channelMap.set(orderKey, new Set())

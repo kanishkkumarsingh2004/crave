@@ -1,7 +1,6 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { apiFetch } from '@/lib/client/api-fetch'
 import {
   getWebPushRegistration,
   isWebPushSupported,
@@ -68,6 +67,13 @@ export default function WebPushPrompt() {
     }
   }, [isLoading, user?.id])
 
+  useEffect(() => {
+    const hideAfterSettingsChange = () => setVisible(false)
+    window.addEventListener('crave_push_subscription_changed', hideAfterSettingsChange)
+    return () =>
+      window.removeEventListener('crave_push_subscription_changed', hideAfterSettingsChange)
+  }, [])
+
   async function enableNotifications() {
     setSubmitting(true)
     setError('')
@@ -80,6 +86,7 @@ export default function WebPushPrompt() {
       await subscribeToWebPush(publicKey)
       localStorage.removeItem(DISMISS_KEY)
       setVisible(false)
+      window.dispatchEvent(new Event('crave_push_subscription_changed'))
     } catch (subscribeError) {
       setError(
         subscribeError instanceof Error

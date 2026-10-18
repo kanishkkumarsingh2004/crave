@@ -3,6 +3,7 @@
 import CraveLogo from '@/components/CraveLogo'
 import CraveXPDeliveryIllustration from '@/components/illustrations/CraveXPDeliveryIllustration'
 import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
+import NotificationSettingsCard from '@/components/NotificationSettingsCard'
 import ThemeSelector from '@/components/ThemeSelector'
 import ThemeToggle from '@/components/ThemeToggle'
 import { CraveButtonLoader, CraveSpinner } from '@/components/ui/ModernPreloader'
@@ -417,7 +418,8 @@ export default function CustomerDashboard({
   // Cart & Menu State
   const [cart, setCart] = useState<Array<CartItem>>([])
   const [menuItemsList, setMenuItemsList] = useState<Array<MenuItem>>([])
-  const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({})
+  const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
+  const [variantPickerSelection, setVariantPickerSelection] = useState('')
   const [restaurantsList, setRestaurantsList] = useState<Array<Restaurant>>([])
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
@@ -1243,17 +1245,52 @@ export default function CustomerDashboard({
   })
 
   // Cart Handlers
-  function selectedVariantFor(item: MenuItem) {
-    if (!item.variants?.length) return undefined
+  function defaultVariantFor(item: MenuItem) {
     return (
-      item.variants.find((variant) => variant.id === selectedVariantIds[item.id]) ||
-      item.variants.find((variant) => variant.isDefault) ||
-      item.variants[0]
+      item.variants?.find((variant) => variant.isDefault && variant.inStock) ||
+      item.variants?.find((variant) => variant.inStock)
     )
   }
 
+  function menuItemDisplayPrice(item: MenuItem) {
+    if (!item.variants?.length) return item.price
+    const availablePrices = item.variants
+      .filter((variant) => variant.inStock)
+      .map((variant) => variant.price)
+    return availablePrices.length > 0 ? Math.min(...availablePrices) : item.price
+  }
+
+  function openVariantPicker(item: MenuItem) {
+    const defaultVariant = defaultVariantFor(item)
+    setVariantPickerItem(item)
+    setVariantPickerSelection(defaultVariant?.id || '')
+  }
+
+  function closeVariantPicker() {
+    setVariantPickerItem(null)
+    setVariantPickerSelection('')
+  }
+
+  function confirmVariantSelection() {
+    if (!variantPickerItem) return
+    const selectedVariant = variantPickerItem.variants?.find(
+      (variant) => variant.id === variantPickerSelection
+    )
+    if (!selectedVariant?.inStock) {
+      triggerToast('Please select a size before adding this item.')
+      return
+    }
+    const item = variantPickerItem
+    closeVariantPicker()
+    addToCart(item, selectedVariant)
+  }
+
   function addToCart(item: MenuItem, chosenVariant?: MenuItemVariant) {
-    const variant = chosenVariant || selectedVariantFor(item)
+    if (item.variants?.length && !chosenVariant) {
+      openVariantPicker(item)
+      return
+    }
+    const variant = chosenVariant
     const cartItem: MenuItem = {
       ...item,
       id: variant ? `${item.id}::${variant.id}` : item.id,
@@ -2383,7 +2420,7 @@ export default function CustomerDashboard({
                               Price
                             </span>
                             <span className="font-black text-base text-[#18201c] dark:text-white">
-                              ₹{selectedVariantFor(item)?.price ?? item.price}
+                              {item.variants?.length ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
                             </span>
                           </div>
                           <button
@@ -2395,25 +2432,9 @@ export default function CustomerDashboard({
                           </button>
                         </div>
                         {item.variants && item.variants.length > 0 && (
-                          <label className="mt-3 block text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            Choose size
-                            <select
-                              value={selectedVariantFor(item)?.id}
-                              onChange={(event) =>
-                                setSelectedVariantIds((current) => ({
-                                  ...current,
-                                  [item.id]: event.target.value,
-                                }))
-                              }
-                              className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold normal-case text-[#18201c] outline-none dark:border-white/10 dark:bg-[#121815] dark:text-white"
-                            >
-                              {item.variants.map((variant) => (
-                                <option key={variant.id} value={variant.id}>
-                                  {variant.name} · ₹{variant.price}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                          <p className="mt-2 text-[10px] font-bold text-[#86a018] dark:text-[#d9f447]">
+                            Choose Small, Medium or Large in the next step
+                          </p>
                         )}
                       </div>
                     ))
@@ -3201,7 +3222,10 @@ export default function CustomerDashboard({
               <ThemeSelector />
             </div>
 
-            {/* 5. Saved Delivery Locations Quick Selector */}
+            {/* 5. Notification Permission and Device Subscription */}
+            <NotificationSettingsCard />
+
+            {/* 6. Saved Delivery Locations Quick Selector */}
             <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 sm:p-7 shadow-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#f0f3eb] dark:border-[#27342d] mb-4">
                 <div>
@@ -4013,9 +4037,17 @@ export default function CustomerDashboard({
                 </div>
               ) : (
                 menuItemsList.map((item) => {
-                  const selectedVariant = selectedVariantFor(item)
-                  const cartLineId = selectedVariant ? `${item.id}::${selectedVariant.id}` : item.id
-                  const inCart = cart.find((i) => i.id === cartLineId)
+                  const hasVariants = Boolean(item.variants?.length)
+                  const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+                  const variantCartQuantity = hasVariants
+                    ? cart
+                        .filter(
+                          (cartItem) =>
+                            cartItem.menuItemId === item.id ||
+                            cartItem.id.startsWith(`${item.id}::`)
+                        )
+                        .reduce((quantity, cartItem) => quantity + cartItem.qty, 0)
+                    : 0
                   return (
                     <div
                       key={item.id}
@@ -4039,41 +4071,37 @@ export default function CustomerDashboard({
                             {item.detail}
                           </p>
                         )}
-                        {item.variants && item.variants.length > 0 && (
-                          <select
-                            aria-label={`Choose size for ${item.name}`}
-                            value={selectedVariant?.id}
-                            onChange={(event) =>
-                              setSelectedVariantIds((current) => ({
-                                ...current,
-                                [item.id]: event.target.value,
-                              }))
-                            }
-                            className="mt-2 w-full rounded-lg border border-[#25332a] bg-[#1c2620] px-2 py-1.5 text-xs font-bold text-white outline-none focus:border-[#d9f447]"
-                          >
-                            {item.variants.map((variant) => (
-                              <option key={variant.id} value={variant.id}>
-                                {variant.name} · ₹{variant.price}
-                              </option>
-                            ))}
-                          </select>
+                        {hasVariants && (
+                          <p className="mt-1.5 text-[11px] font-semibold text-white/60">
+                            {item.variants?.length} sizes available
+                            {variantCartQuantity > 0 && ` · ${variantCartQuantity} in cart`}
+                          </p>
                         )}
                         <p className="mt-2 text-sm font-bold text-[#d9f447]">
-                          ₹{selectedVariant?.price ?? item.price}
+                          {hasVariants ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
                         </p>
                       </div>
 
-                      {inCart ? (
+                      {hasVariants ? (
+                        <button
+                          type="button"
+                          onClick={() => openVariantPicker(item)}
+                          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 hover:bg-[#c2dc3a]"
+                        >
+                          <Plus className="size-3.5" />
+                          Choose size
+                        </button>
+                      ) : inCart ? (
                         <div className="flex items-center gap-2 rounded-full bg-[#1c2620] border border-[#25332a] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
                           <button
-                            onClick={() => updateItemQty(cartLineId, -1)}
+                            onClick={() => updateItemQty(item.id, -1)}
                             className="hover:text-[#d9f447]"
                           >
                             <Minus className="size-3.5" />
                           </button>
                           <span>{inCart.qty}</span>
                           <button
-                            onClick={() => updateItemQty(cartLineId, 1)}
+                            onClick={() => updateItemQty(item.id, 1)}
                             className="hover:text-[#d9f447]"
                           >
                             <Plus className="size-3.5" />
@@ -4081,7 +4109,7 @@ export default function CustomerDashboard({
                         </div>
                       ) : (
                         <button
-                          onClick={() => addToCart(item, selectedVariant)}
+                          onClick={() => addToCart(item)}
                           className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 hover:bg-[#c2dc3a]"
                         >
                           <Plus className="size-3.5" />
@@ -4108,6 +4136,122 @@ export default function CustomerDashboard({
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Size and Price Selection Modal */}
+      {variantPickerItem && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 p-0 backdrop-blur-md sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="variant-picker-title"
+          onClick={closeVariantPicker}
+        >
+          <div
+            className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-t-3xl border border-[#2d3b32] bg-[#1c2620] text-white shadow-2xl sm:rounded-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-[#2d3b32] p-5 sm:p-6">
+              <div className="min-w-0 pr-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9f447]">
+                  Select a variant
+                </p>
+                <h3 id="variant-picker-title" className="mt-1 truncate text-xl font-black">
+                  {variantPickerItem.name}
+                </h3>
+                <p className="mt-1 text-xs text-[#9eb3a4]">
+                  Choose Small, Medium or Large and review its price before adding it.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeVariantPicker}
+                aria-label="Close size selection"
+                className="grid size-9 shrink-0 place-items-center rounded-full border border-[#2d3b32] bg-[#121815] text-[#9eb3a4] transition hover:text-white"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="p-5 sm:p-6">
+              <div className="overflow-hidden rounded-2xl border border-[#2d3b32]">
+                <table className="w-full border-collapse text-left">
+                  <thead className="bg-[#121815] text-[10px] font-black uppercase tracking-wider text-[#9eb3a4]">
+                    <tr>
+                      <th className="px-4 py-3">Size</th>
+                      <th className="px-4 py-3 text-right">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#2d3b32]">
+                    {variantPickerItem.variants?.map((variant) => {
+                      const selected = variantPickerSelection === variant.id
+                      return (
+                        <tr
+                          key={variant.id}
+                          className={`${
+                            selected ? 'bg-[#d9f447]/10' : 'bg-[#18201c] hover:bg-[#202c25]'
+                          } ${variant.inStock ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                          onClick={() => {
+                            if (variant.inStock) setVariantPickerSelection(variant.id)
+                          }}
+                        >
+                          <td className="px-4 py-4">
+                            <label className="flex cursor-pointer items-center gap-3 font-bold">
+                              <input
+                                type="radio"
+                                name={`variant-${variantPickerItem.id}`}
+                                value={variant.id}
+                                checked={selected}
+                                disabled={!variant.inStock}
+                                onChange={() => setVariantPickerSelection(variant.id)}
+                                className="size-4 accent-[#d9f447]"
+                              />
+                              <span>{variant.name}</span>
+                              {!variant.inStock && (
+                                <span className="text-[10px] font-bold uppercase text-rose-400">
+                                  Unavailable
+                                </span>
+                              )}
+                            </label>
+                          </td>
+                          <td className="px-4 py-4 text-right text-base font-black text-[#d9f447]">
+                            ₹{variant.price}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={closeVariantPicker}
+                  className="flex-1 rounded-2xl border border-[#2d3b32] px-4 py-3 text-xs font-extrabold text-white/75 transition hover:bg-white/5 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmVariantSelection}
+                  disabled={!variantPickerSelection}
+                  className="flex-[1.5] rounded-2xl bg-[#d9f447] px-4 py-3 text-xs font-black text-[#121815] transition hover:bg-[#c8e434] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Add selected size
+                  {variantPickerItem.variants?.find(
+                    (variant) => variant.id === variantPickerSelection
+                  ) &&
+                    ` · ₹${
+                      variantPickerItem.variants.find(
+                        (variant) => variant.id === variantPickerSelection
+                      )?.price
+                    }`}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

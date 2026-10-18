@@ -18,6 +18,7 @@ import {
 } from '@/lib/finance'
 import { prisma } from '@/lib/prisma'
 import { sendWebPushToUsers } from '@/lib/web-push'
+import { broadcast } from '@/lib/ws-server'
 import { PaymentStatus, type OrderStatus } from '@prisma/client'
 
 export interface PaymentVerificationInput {
@@ -239,6 +240,14 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
   })
 
   if (!result.alreadyVerified) {
+    await broadcast('vendor_orders', {
+      type: 'new_paid_order',
+      order: result.order,
+      orderId,
+      restaurantId: result.order.restaurant_id,
+      timestamp: new Date().toISOString(),
+    })
+
     const customerId = result.order.customer_id
     if (customerId) {
       await sendWebPushToUsers([customerId], {

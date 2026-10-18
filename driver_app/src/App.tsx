@@ -1,0 +1,1595 @@
+import { App as CapacitorApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
+import { Network } from '@capacitor/network'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ApiError,
+  apiRequest,
+  clearAuthToken,
+  getAuthToken,
+  restoreAuthToken,
+  saveAuthToken,
+} from './api'
+import { Icon, type IconName } from './Icon'
+import {
+  getNotificationPreference,
+  getStoredDutyStatus,
+  initializeNativeAppearance,
+  openNavigation,
+  registerDriverPushNotifications,
+  requestCurrentPosition,
+  requestNotificationPermission,
+  setNotificationPreference,
+  setStoredDutyStatus,
+  showDriverNotification,
+  startBackgroundDriverLocation,
+  stopBackgroundDriverLocation,
+  unregisterDriverPushNotifications,
+  updateBackgroundDriverLocation,
+  watchDriverPosition,
+} from './native'
+import { connectDriverEvents } from './realtime'
+import type {
+  AppTab,
+  CompletedTrip,
+  DriverOffer,
+  DriverOrder,
+  DriverOrdersResponse,
+  DriverProfile,
+  DriverUser,
+  Incentive,
+  PayoutLog,
+  UpiAccount,
+} from './types'
+
+const ACTIVE_STATUSES = new Set([
+  'ready_for_pickup',
+  'rider_assigned',
+  'picked_up',
+  'out_for_delivery',
+])
+const AVAILABLE_OFFER_STATUSES = new Set([
+  'sent_to_vendor',
+  'preparing',
+  'packing',
+  'ready_for_pickup',
+])
+
+function toDriverOffer(order: DriverOrder): DriverOffer {
+  let items: any[] = []
+  try {
+    items = Array.isArray(order.items)
+      ? order.items
+      : typeof order.items === 'string'
+        ? JSON.parse(order.items)
+        : []
+  } catch {}
+  return {
+    id: order.id,
+    status: order.status,
+    restaurantId: order.restaurant_id,
+    restaurantName: order.restaurant_name || 'Crave restaurant',
+    customerArea: 'Delivery address shown after acceptance',
+    itemsCount:
+      items.reduce((total, item) => total + Number(item?.qty || item?.quantity || 1), 0) || 1,
+    distanceKm: Number((order as any).distance_km || 0),
+    driverPayout: Number(
+      order.financial_snapshot?.riderPayablePaise != null
+        ? order.financial_snapshot.riderPayablePaise / 100
+        : order.driver_payout || order.delivery_fee || 30
+    ),
+    tip: Number(order.tip || 0),
+    createdAt: order.created_at,
+  }
+}
+
+function money(value: unknown): string {
+  return `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+}
+
+function shortId(id: string): string {
+  return `#${id.slice(-8).toUpperCase()}`
+}
+
+function dateTime(value?: string): string {
+  if (!value) return 'Just now'
+  return new Date(value).toLocaleString([], {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    ready_for_pickup: 'Ready for pickup',
+    rider_assigned: 'Go to restaurant',
+    picked_up: 'Order picked up',
+    out_for_delivery: 'At customer location',
+    delivered: 'Delivered',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  }
+  return labels[status] || status.replaceAll('_', ' ')
+}
+
+function driverPay(order: DriverOrder): number {
+  if (order.financial_snapshot?.riderPayablePaise != null) {
+    return Number(order.financial_snapshot.riderPayablePaise) / 100
+  }
+  return Number(order.driver_payout || order.delivery_fee || 0) + Number(order.tip || 0)
+}
+
+function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) => Promise<void> }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setSubmitting(true)
+    setError('')
+    try {
+      await onLogin(email, password)
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="login-screen">
+      <div className="login-glow login-glow-one" />
+      <div className="login-glow login-glow-two" />
+      <section className="login-card">
+        <div className="brand-lockup brand-lockup-large">
+          <span className="brand-mark">c</span>
+          <div>
+            <strong>crave.</strong>
+            <small>delivery partner</small>
+          </div>
+        </div>
+        <div className="login-copy">
+          <span className="eyebrow">Your delivery cockpit</span>
+          <h1>Every trip. One clear route.</h1>
+          <p>Live offers, guided delivery steps, earnings and payouts—built for Crave riders.</p>
+        </div>
+        <form className="login-form" onSubmit={submit}>
+          <label>
+            Driver email
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="driver@crave.com"
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <span className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+              />
+              <button type="button" onClick={() => setShowPassword((value) => !value)}>
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </span>
+          </label>
+          {error && <p className="form-error">{error}</p>}
+          <button className="primary-button login-button" type="submit" disabled={submitting}>
+            {submitting ? <span className="button-spinner" /> : 'Open driver app'}
+          </button>
+        </form>
+        <p className="login-security">Secure access for approved Crave delivery partners.</p>
+      </section>
+    </main>
+  )
+}
+
+function OfferCard({
+  offer,
+  busy,
+  onAccept,
+}: {
+  offer: DriverOffer
+  busy: boolean
+  onAccept: (offer: DriverOffer) => void
+}) {
+  const total = offer.driverPayout
+  return (
+    <article className="offer-card">
+      <div className="offer-card-head">
+        <div>
+          <span className="live-kicker">
+            <i /> Live offer
+          </span>
+          <h3>{offer.restaurantName}</h3>
+          <p>{dateTime(offer.createdAt)}</p>
+        </div>
+        <div className="offer-pay">
+          <span>You earn</span>
+          <strong>{money(total)}</strong>
+        </div>
+      </div>
+      <div className="route-line">
+        <span className="route-dot pickup" />
+        <div>
+          <b>Pickup</b>
+          <span>{offer.restaurantName}</span>
+        </div>
+        <span className="route-connector" />
+        <span className="route-dot drop" />
+        <div>
+          <b>Drop</b>
+          <span>{offer.customerArea}</span>
+        </div>
+      </div>
+      <div className="offer-facts">
+        <span>
+          <Icon name="trips" /> {offer.itemsCount} item{offer.itemsCount === 1 ? '' : 's'}
+        </span>
+        <span>
+          <Icon name="navigation" />{' '}
+          {offer.distanceKm > 0 ? `${offer.distanceKm.toFixed(1)} km` : 'Distance on accept'}
+        </span>
+        {offer.tip > 0 && <span className="tip-chip">+{money(offer.tip)} tip</span>}
+      </div>
+      <button
+        className="primary-button offer-accept"
+        disabled={busy}
+        onClick={() => onAccept(offer)}
+      >
+        {busy ? <span className="button-spinner dark" /> : 'Accept delivery'}
+        {!busy && <Icon name="chevron" />}
+      </button>
+    </article>
+  )
+}
+
+function ActiveTripCard({
+  order,
+  busy,
+  onAdvance,
+  onComplete,
+}: {
+  order: DriverOrder
+  busy: boolean
+  onAdvance: () => void
+  onComplete: () => void
+}) {
+  const isFinal = order.status === 'out_for_delivery'
+  const nextLabel =
+    order.status === 'picked_up'
+      ? 'Start delivery'
+      : order.status === 'out_for_delivery'
+        ? 'Complete with OTP'
+        : 'Confirm pickup'
+  const progress = order.status === 'out_for_delivery' ? 3 : order.status === 'picked_up' ? 2 : 1
+
+  return (
+    <article className="active-trip-card">
+      <header>
+        <div>
+          <span className="live-kicker">
+            <i /> Active delivery
+          </span>
+          <h2>{shortId(order.id)}</h2>
+        </div>
+        <strong>{money(driverPay(order))}</strong>
+      </header>
+      <div className="trip-progress">
+        {['Pickup', 'On the way', 'Delivered'].map((label, index) => (
+          <div className={index + 1 <= progress ? 'done' : ''} key={label}>
+            <span>{index + 1 < progress ? <Icon name="check" /> : index + 1}</span>
+            <small>{label}</small>
+          </div>
+        ))}
+      </div>
+      <div className="trip-stop">
+        <span className="trip-stop-icon pickup">
+          <Icon name="bike" />
+        </span>
+        <div>
+          <small>Restaurant</small>
+          <strong>{order.restaurant_name || 'Crave restaurant'}</strong>
+          <p>
+            {order.status === 'rider_assigned' ? 'Head to the pickup counter' : 'Pickup confirmed'}
+          </p>
+        </div>
+        <button
+          className="icon-action"
+          aria-label="Navigate to restaurant"
+          onClick={() => openNavigation(undefined, undefined, order.restaurant_name)}
+        >
+          <Icon name="navigation" />
+        </button>
+      </div>
+      <div className="trip-stop">
+        <span className="trip-stop-icon drop">
+          <Icon name="pin" />
+        </span>
+        <div>
+          <small>Customer</small>
+          <strong>{order.customer_name || 'Crave customer'}</strong>
+          <p>{order.customer_address || 'Address available for this delivery'}</p>
+        </div>
+        <div className="trip-actions">
+          {order.customer_phone && (
+            <a
+              className="icon-action"
+              aria-label="Call customer"
+              href={`tel:${order.customer_phone}`}
+            >
+              <Icon name="phone" />
+            </a>
+          )}
+          <button
+            className="icon-action"
+            aria-label="Navigate to customer"
+            onClick={() =>
+              openNavigation(
+                Number(order.delivery_latitude) || undefined,
+                Number(order.delivery_longitude) || undefined,
+                order.customer_address
+              )
+            }
+          >
+            <Icon name="navigation" />
+          </button>
+        </div>
+      </div>
+      <button
+        className="primary-button trip-primary-action"
+        disabled={busy}
+        onClick={isFinal ? onComplete : onAdvance}
+      >
+        {busy ? <span className="button-spinner dark" /> : nextLabel}
+        {!busy && <Icon name="chevron" />}
+      </button>
+    </article>
+  )
+}
+
+function TripsPage({ orders, trips }: { orders: DriverOrder[]; trips: CompletedTrip[] }) {
+  const history = orders.filter((order) => !ACTIVE_STATUSES.has(order.status))
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Delivery record</span>
+          <h1>Your trips</h1>
+        </div>
+        <span className="count-badge">{trips.length || history.length} completed</span>
+      </div>
+      <div className="trip-history-list">
+        {trips.length > 0 ? (
+          trips.map((trip) => (
+            <article className="history-card" key={trip.id}>
+              <span className="history-icon">
+                <Icon name="check" />
+              </span>
+              <div className="history-main">
+                <div>
+                  <strong>{trip.restaurant}</strong>
+                  <span>
+                    {trip.order} · {trip.time}
+                  </span>
+                </div>
+                <p>
+                  <Icon name="pin" /> {trip.customer} · {trip.distance}
+                </p>
+              </div>
+              <strong className="history-pay">{money(trip.total)}</strong>
+            </article>
+          ))
+        ) : history.length > 0 ? (
+          history.map((order) => (
+            <article className="history-card" key={order.id}>
+              <span className="history-icon">
+                <Icon name="check" />
+              </span>
+              <div className="history-main">
+                <div>
+                  <strong>{order.restaurant_name}</strong>
+                  <span>
+                    {shortId(order.id)} · {dateTime(order.created_at)}
+                  </span>
+                </div>
+                <p>{statusLabel(order.status)}</p>
+              </div>
+              <strong className="history-pay">{money(driverPay(order))}</strong>
+            </article>
+          ))
+        ) : (
+          <EmptyState
+            icon="trips"
+            title="No completed trips yet"
+            text="Completed deliveries will appear here with their final earnings."
+          />
+        )}
+      </div>
+    </section>
+  )
+}
+
+function EarningsPage({
+  trips,
+  payouts,
+  upi,
+  busy,
+  onCashout,
+}: {
+  trips: CompletedTrip[]
+  payouts: PayoutLog[]
+  upi: UpiAccount[]
+  busy: boolean
+  onCashout: (amount: number) => Promise<void>
+}) {
+  const earned = trips.reduce((total, trip) => total + Number(trip.total || 0), 0)
+  const withdrawn = payouts.reduce((total, payout) => total + Number(payout.amount || 0), 0)
+  const balance = Math.max(0, earned - withdrawn)
+  const primary = upi.find((account) => account.isPrimary)
+  const [amount, setAmount] = useState('')
+  const [showCashout, setShowCashout] = useState(false)
+
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Money centre</span>
+          <h1>Earnings</h1>
+        </div>
+      </div>
+      <article className="wallet-hero">
+        <span>Available balance</span>
+        <strong>{money(balance)}</strong>
+        <p>{primary ? `Payout to ${primary.vpa}` : 'Add a UPI account from the Account page'}</p>
+        <button
+          className="light-button"
+          disabled={!primary || balance <= 0}
+          onClick={() => {
+            setAmount(String(balance))
+            setShowCashout(true)
+          }}
+        >
+          Request payout
+        </button>
+      </article>
+      <div className="money-stats">
+        <article>
+          <span>Lifetime earned</span>
+          <strong>{money(earned)}</strong>
+        </article>
+        <article>
+          <span>Paid out</span>
+          <strong>{money(withdrawn)}</strong>
+        </article>
+        <article>
+          <span>Trips</span>
+          <strong>{trips.length}</strong>
+        </article>
+      </div>
+      <div className="section-title">
+        <h2>Payout activity</h2>
+      </div>
+      <div className="payout-list">
+        {payouts.length > 0 ? (
+          payouts.map((payout) => (
+            <article key={payout.id}>
+              <span className="payout-icon">
+                <Icon name="wallet" />
+              </span>
+              <div>
+                <strong>{payout.status}</strong>
+                <small>{payout.date}</small>
+              </div>
+              <b>-{money(payout.amount)}</b>
+            </article>
+          ))
+        ) : (
+          <EmptyState
+            icon="wallet"
+            title="No payouts yet"
+            text="Your payout requests and transfers will be shown here."
+          />
+        )}
+      </div>
+      {showCashout && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <section className="sheet small-sheet">
+            <header>
+              <div>
+                <span className="eyebrow">Instant payout</span>
+                <h2>Move your earnings</h2>
+              </div>
+              <button className="icon-button" onClick={() => setShowCashout(false)}>
+                <Icon name="close" />
+              </button>
+            </header>
+            <label className="field-label">
+              Amount
+              <input
+                type="number"
+                min="1"
+                max={balance}
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+              />
+            </label>
+            <div className="destination-card">
+              <Icon name="card" />
+              <div>
+                <span>Destination</span>
+                <strong>{primary?.vpa}</strong>
+              </div>
+            </div>
+            <button
+              className="primary-button"
+              disabled={busy || Number(amount) <= 0 || Number(amount) > balance}
+              onClick={async () => {
+                await onCashout(Number(amount))
+                setShowCashout(false)
+              }}
+            >
+              {busy ? <span className="button-spinner dark" /> : `Request ${money(amount)}`}
+            </button>
+          </section>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function RewardsPage({ incentives }: { incentives: Incentive[] }) {
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Go further</span>
+          <h1>Rewards</h1>
+        </div>
+        <span className="count-badge">
+          {incentives.filter((item) => item.isActive).length} active
+        </span>
+      </div>
+      <article className="rewards-hero">
+        <span className="rewards-icon">
+          <Icon name="gift" />
+        </span>
+        <div>
+          <span>Weekly opportunity</span>
+          <h2>Complete more trips. Keep more rewards.</h2>
+          <p>
+            Active incentives are calculated by the Crave backend and added to your earnings after
+            qualification.
+          </p>
+        </div>
+      </article>
+      <div className="reward-list">
+        {incentives.length > 0 ? (
+          incentives.map((incentive) => (
+            <article className={incentive.isActive ? 'active' : ''} key={incentive.id}>
+              <div>
+                <span>{incentive.isActive ? 'Active challenge' : 'Ended'}</span>
+                <h3>{incentive.title}</h3>
+                <p>{incentive.description}</p>
+                {incentive.endsAt && (
+                  <small>
+                    <Icon name="clock" /> Ends {dateTime(incentive.endsAt)}
+                  </small>
+                )}
+              </div>
+              <strong>+{money(incentive.rewardAmount)}</strong>
+            </article>
+          ))
+        ) : (
+          <EmptyState
+            icon="gift"
+            title="No active rewards"
+            text="New delivery incentives will appear here automatically."
+          />
+        )}
+      </div>
+    </section>
+  )
+}
+
+function AccountPage({
+  profile,
+  upi,
+  notificationsEnabled,
+  busy,
+  onSaveProfile,
+  onAddUpi,
+  onPrimaryUpi,
+  onDeleteUpi,
+  onToggleNotifications,
+  onLogout,
+}: {
+  profile: DriverProfile
+  upi: UpiAccount[]
+  notificationsEnabled: boolean
+  busy: boolean
+  onSaveProfile: (profile: DriverProfile) => Promise<void>
+  onAddUpi: (vpa: string, bankName: string) => Promise<void>
+  onPrimaryUpi: (id: string) => Promise<void>
+  onDeleteUpi: (id: string) => Promise<void>
+  onToggleNotifications: (enabled: boolean) => Promise<void>
+  onLogout: () => Promise<void>
+}) {
+  const [draft, setDraft] = useState(profile)
+  const [vpa, setVpa] = useState('')
+  const [provider, setProvider] = useState('Google Pay / PhonePe UPI')
+
+  useEffect(() => setDraft(profile), [profile])
+
+  return (
+    <section className="page-section account-page">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Partner account</span>
+          <h1>Profile & settings</h1>
+        </div>
+      </div>
+      <article className="profile-summary">
+        <span className="profile-avatar">{profile.name?.charAt(0).toUpperCase() || 'D'}</span>
+        <div>
+          <h2>{profile.name}</h2>
+          <p>{profile.email}</p>
+          <span>
+            <Icon name="shield" /> {profile.kycStatus || 'Verified delivery partner'}
+          </span>
+        </div>
+      </article>
+      <article className="settings-card">
+        <div className="settings-card-title">
+          <span className="settings-icon">
+            <Icon name="bell" />
+          </span>
+          <div>
+            <h3>Delivery notifications</h3>
+            <p>Get instant alerts for nearby offers and trip updates.</p>
+          </div>
+          <button
+            className={`switch ${notificationsEnabled ? 'on' : ''}`}
+            aria-label="Toggle delivery notifications"
+            onClick={() => onToggleNotifications(!notificationsEnabled)}
+          >
+            <span />
+          </button>
+        </div>
+      </article>
+      <article className="settings-card">
+        <div className="settings-card-title">
+          <span className="settings-icon">
+            <Icon name="user" />
+          </span>
+          <div>
+            <h3>Personal & vehicle details</h3>
+            <p>These details are shared with customers during an active trip.</p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <label className="field-label">
+            Full name
+            <input
+              value={draft.name || ''}
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            />
+          </label>
+          <label className="field-label">
+            Phone
+            <input
+              value={draft.phone || ''}
+              onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
+            />
+          </label>
+          <label className="field-label full">
+            Operating address
+            <input
+              value={draft.address || ''}
+              onChange={(event) => setDraft({ ...draft, address: event.target.value })}
+            />
+          </label>
+          <label className="field-label">
+            Vehicle type
+            <select
+              value={draft.vehicleType || ''}
+              onChange={(event) => setDraft({ ...draft, vehicleType: event.target.value })}
+            >
+              <option>Commercial EV Delivery Scooter</option>
+              <option>Petrol Two-Wheeler Motorcycle</option>
+              <option>Cargo E-Loader Trike</option>
+              <option>Bicycle Partner</option>
+            </select>
+          </label>
+          <label className="field-label">
+            License plate
+            <input
+              value={draft.licensePlate || ''}
+              onChange={(event) =>
+                setDraft({ ...draft, licensePlate: event.target.value.toUpperCase() })
+              }
+            />
+          </label>
+        </div>
+        <button className="secondary-button" disabled={busy} onClick={() => onSaveProfile(draft)}>
+          Save profile
+        </button>
+      </article>
+      <article className="settings-card">
+        <div className="settings-card-title">
+          <span className="settings-icon">
+            <Icon name="card" />
+          </span>
+          <div>
+            <h3>UPI payout accounts</h3>
+            <p>Choose where your approved payouts should be sent.</p>
+          </div>
+        </div>
+        <div className="upi-list">
+          {upi.map((account) => (
+            <div className={account.isPrimary ? 'primary' : ''} key={account.id}>
+              <button
+                className="radio-button"
+                aria-label="Make primary"
+                onClick={() => onPrimaryUpi(account.id)}
+              >
+                <span />
+              </button>
+              <div>
+                <strong>{account.vpa}</strong>
+                <small>
+                  {account.bankName} · {account.isVerified ? 'Verified' : 'Pending'}
+                </small>
+              </div>
+              {!account.isPrimary && (
+                <button className="text-danger" onClick={() => onDeleteUpi(account.id)}>
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <form
+          className="upi-form"
+          onSubmit={async (event) => {
+            event.preventDefault()
+            await onAddUpi(vpa, provider)
+            setVpa('')
+          }}
+        >
+          <input
+            required
+            pattern=".+@.+"
+            placeholder="name@upi"
+            value={vpa}
+            onChange={(event) => setVpa(event.target.value)}
+          />
+          <select value={provider} onChange={(event) => setProvider(event.target.value)}>
+            <option>Google Pay / PhonePe UPI</option>
+            <option>Paytm Payments Bank</option>
+            <option>BHIM NPCI UPI</option>
+            <option>Bank UPI</option>
+          </select>
+          <button className="secondary-button" type="submit">
+            Add UPI
+          </button>
+        </form>
+      </article>
+      <button className="logout-button" onClick={onLogout}>
+        <Icon name="logout" /> Sign out of driver app
+      </button>
+    </section>
+  )
+}
+
+function EmptyState({ icon, title, text }: { icon: IconName; title: string; text: string }) {
+  return (
+    <div className="empty-state">
+      <span>
+        <Icon name={icon} />
+      </span>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </div>
+  )
+}
+
+function OtpSheet({
+  busy,
+  onClose,
+  onSubmit,
+}: {
+  busy: boolean
+  onClose: () => void
+  onSubmit: (otp: string) => Promise<void>
+}) {
+  const [otp, setOtp] = useState('')
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
+      <section className="sheet otp-sheet">
+        <header>
+          <div>
+            <span className="eyebrow">Secure handoff</span>
+            <h2>Enter customer OTP</h2>
+          </div>
+          <button className="icon-button" onClick={onClose}>
+            <Icon name="close" />
+          </button>
+        </header>
+        <p>Ask the customer for the 6-digit delivery code before handing over the order.</p>
+        <input
+          className="otp-input"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={otp}
+          onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="000000"
+          autoFocus
+        />
+        <button
+          className="primary-button"
+          disabled={busy || otp.length !== 6}
+          onClick={() => onSubmit(otp)}
+        >
+          {busy ? <span className="button-spinner dark" /> : 'Verify and complete delivery'}
+        </button>
+      </section>
+    </div>
+  )
+}
+
+const NAV_ITEMS: Array<{ tab: AppTab; label: string; icon: IconName }> = [
+  { tab: 'home', label: 'Home', icon: 'home' },
+  { tab: 'trips', label: 'Trips', icon: 'trips' },
+  { tab: 'earnings', label: 'Earnings', icon: 'wallet' },
+  { tab: 'rewards', label: 'Rewards', icon: 'gift' },
+  { tab: 'account', label: 'Account', icon: 'user' },
+]
+
+export default function App() {
+  const [booting, setBooting] = useState(true)
+  const [user, setUser] = useState<DriverUser | null>(null)
+  const [profile, setProfile] = useState<DriverProfile | null>(null)
+  const [tab, setTab] = useState<AppTab>('home')
+  const [online, setOnline] = useState(false)
+  const [gpsStatus, setGpsStatus] = useState<'off' | 'acquiring' | 'live' | 'error'>('off')
+  const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null)
+  const [wsConnected, setWsConnected] = useState(false)
+  const [networkConnected, setNetworkConnected] = useState(true)
+  const [offers, setOffers] = useState<DriverOffer[]>([])
+  const [orders, setOrders] = useState<DriverOrder[]>([])
+  const [completedTrips, setCompletedTrips] = useState<CompletedTrip[]>([])
+  const [payouts, setPayouts] = useState<PayoutLog[]>([])
+  const [upi, setUpi] = useState<UpiAccount[]>([])
+  const [incentives, setIncentives] = useState<Incentive[]>([])
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [busyKey, setBusyKey] = useState('')
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [otpOpen, setOtpOpen] = useState(false)
+  const activeOrder = useMemo(
+    () => orders.find((order) => ACTIVE_STATUSES.has(order.status)) || null,
+    [orders]
+  )
+  const activeOrderRef = useRef<DriverOrder | null>(null)
+  const backgroundTrackingStartedRef = useRef(false)
+
+  useEffect(() => {
+    activeOrderRef.current = activeOrder
+  }, [activeOrder])
+
+  useEffect(() => {
+    if (!user || !notificationsEnabled) return
+    let disposed = false
+    let removeListeners: (() => void) | undefined
+    void registerDriverPushNotifications(() => {
+      setTab('home')
+      void Promise.all([loadData(), online ? loadOffers() : Promise.resolve()])
+    }).then((cleanup) => {
+      if (disposed) cleanup()
+      else removeListeners = cleanup
+    })
+    return () => {
+      disposed = true
+      removeListeners?.()
+    }
+  }, [user?.id, notificationsEnabled, online])
+
+  useEffect(() => {
+    if (!user || !online) {
+      backgroundTrackingStartedRef.current = false
+      void stopBackgroundDriverLocation()
+      return
+    }
+
+    let cancelled = false
+    void (async () => {
+      try {
+        if (!backgroundTrackingStartedRef.current) {
+          await requestCurrentPosition()
+          if (cancelled) return
+          await startBackgroundDriverLocation({
+            driverId: user.id,
+            token: getAuthToken(),
+            activeOrderId: activeOrder?.id,
+            vehicleType: profile?.vehicleType,
+          })
+          backgroundTrackingStartedRef.current = true
+        } else {
+          await updateBackgroundDriverLocation({
+            driverId: user.id,
+            token: getAuthToken(),
+            activeOrderId: activeOrder?.id,
+            vehicleType: profile?.vehicleType,
+          })
+        }
+      } catch (trackingError) {
+        if (!cancelled) {
+          setGpsStatus('error')
+          setError(
+            trackingError instanceof Error
+              ? trackingError.message
+              : 'Unable to keep live location active.'
+          )
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, online, activeOrder?.id, profile?.vehicleType])
+
+  async function loadData(token?: string) {
+    const authToken = token || getAuthToken()
+    const [profileResult, ordersResult, payoutsResult, upiResult, incentivesResult] =
+      await Promise.all([
+        apiRequest<{ profile: DriverProfile }>('/api/driver/profile', { token: authToken }),
+        apiRequest<DriverOrdersResponse>('/api/driver/orders', { token: authToken }),
+        apiRequest<{ payoutLogs: PayoutLog[] }>('/api/driver/payouts', { token: authToken }),
+        apiRequest<{ savedUpiList: UpiAccount[] }>('/api/driver/upi', { token: authToken }),
+        apiRequest<{ incentives: Incentive[] }>('/api/driver/incentives', { token: authToken }),
+      ])
+    setProfile(profileResult.profile)
+    setOrders(ordersResult.allAssignedOrders || [])
+    setCompletedTrips(ordersResult.completedTrips || [])
+    setPayouts(payoutsResult.payoutLogs || [])
+    setUpi(upiResult.savedUpiList || [])
+    setIncentives(incentivesResult.incentives || [])
+  }
+
+  async function loadOffers() {
+    try {
+      const response = await apiRequest<{ offers: DriverOffer[] }>('/api/driver/offers')
+      setOffers(response.offers || [])
+    } catch (loadError) {
+      if (loadError instanceof ApiError && loadError.status === 404) {
+        const fallback = await apiRequest<{ orders: DriverOrder[] }>('/api/orders?available=true')
+        setOffers(
+          (fallback.orders || [])
+            .filter(
+              (order: any) =>
+                AVAILABLE_OFFER_STATUSES.has(order.status) &&
+                order.payment_status === 'verified' &&
+                !order.rider_id
+            )
+            .map(toDriverOffer)
+        )
+        return
+      }
+      if (loadError instanceof ApiError && loadError.status === 401) throw loadError
+    }
+  }
+
+  async function startSession(sessionUser: DriverUser, token: string) {
+    if (!['rider', 'driver'].includes(sessionUser.role)) {
+      throw new Error('Please sign in with an approved delivery partner account.')
+    }
+    await saveAuthToken(token)
+    setUser(sessionUser)
+    await loadData(token)
+    const storedOnline = await getStoredDutyStatus()
+    setOnline(storedOnline)
+    setNotificationsEnabled(await getNotificationPreference())
+    if (storedOnline) await loadOffers()
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    void initializeNativeAppearance()
+    void (async () => {
+      try {
+        const token = await restoreAuthToken()
+        if (!token) return
+        const response = await apiRequest<{ profile: DriverProfile }>('/api/driver/profile', {
+          token,
+        })
+        if (cancelled) return
+        await startSession(response.profile, token)
+      } catch (bootstrapError) {
+        if (bootstrapError instanceof ApiError && bootstrapError.status === 401) {
+          await clearAuthToken()
+        }
+      } finally {
+        if (!cancelled) setBooting(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const handles: Array<{ remove: () => Promise<void> }> = []
+    void Network.getStatus().then((status) => setNetworkConnected(status.connected))
+    void Network.addListener('networkStatusChange', (status) =>
+      setNetworkConnected(status.connected)
+    ).then((handle) => handles.push(handle))
+    void CapacitorApp.addListener('resume', () => {
+      if (user) void Promise.all([loadData(), online ? loadOffers() : Promise.resolve()])
+    }).then((handle) => handles.push(handle))
+    void CapacitorApp.addListener('backButton', () => {
+      if (tab !== 'home') setTab('home')
+      else void CapacitorApp.minimizeApp()
+    }).then((handle) => handles.push(handle))
+    return () => {
+      handles.forEach((handle) => void handle.remove())
+    }
+  }, [user?.id, online, tab])
+
+  useEffect(() => {
+    if (!user || !getAuthToken()) return
+    return connectDriverEvents({
+      token: getAuthToken(),
+      activeOrderId: activeOrder?.id,
+      onStatus: setWsConnected,
+      onEvent: (channel, data) => {
+        if (channel === 'driver_offers') {
+          if (data?.type === 'offer_claimed' && data.orderId) {
+            setOffers((current) => current.filter((offer) => offer.id !== data.orderId))
+          } else if (
+            data?.type === 'offer_available' &&
+            data.order &&
+            online &&
+            !activeOrderRef.current
+          ) {
+            const offer = data.order as DriverOffer
+            setOffers((current) => [offer, ...current.filter((item) => item.id !== offer.id)])
+            setNotice(`New delivery from ${offer.restaurantName}`)
+            void showDriverNotification({
+              id: offer.id,
+              title: `New trip · ${money(offer.driverPayout)}`,
+              body: `${offer.restaurantName} · ${offer.itemsCount} item${offer.itemsCount === 1 ? '' : 's'}`,
+            })
+          }
+        }
+        if (channel === 'order_update' && data?.order) {
+          const updated = data.order as DriverOrder
+          setOrders((current) => [updated, ...current.filter((order) => order.id !== updated.id)])
+        }
+      },
+    })
+  }, [user?.id, activeOrder?.id, online])
+
+  useEffect(() => {
+    if (!user) return
+    const timer = window.setInterval(() => {
+      void loadData().catch(() => undefined)
+      if (online && !activeOrderRef.current) void loadOffers().catch(() => undefined)
+    }, 15000)
+    return () => window.clearInterval(timer)
+  }, [user?.id, online])
+
+  useEffect(() => {
+    if (!user || !online) {
+      setGpsStatus('off')
+      return
+    }
+    let stop: (() => void) | undefined
+    let cancelled = false
+    setGpsStatus('acquiring')
+    void watchDriverPosition(
+      (position) => {
+        if (cancelled) return
+        const next = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        }
+        setCoords(next)
+        setGpsStatus('live')
+        if (!Capacitor.isNativePlatform()) {
+          const currentOrder = activeOrderRef.current
+          void apiRequest('/api/driver/location', {
+            method: 'POST',
+            body: {
+              driverId: user.id,
+              orderId: currentOrder?.id,
+              lat: next.lat,
+              lng: next.lng,
+              status: currentOrder ? 'ON_TRIP' : 'ONLINE',
+              available: !currentOrder,
+              vehicleType: profile?.vehicleType || 'EV_SCOOTER',
+              timestamp: position.timestamp,
+            },
+          }).catch(() => undefined)
+        }
+      },
+      (message) => {
+        if (!cancelled) {
+          setGpsStatus('error')
+          setError(message)
+        }
+      }
+    ).then((cleanup) => {
+      if (cancelled) cleanup()
+      else stop = cleanup
+    })
+    return () => {
+      cancelled = true
+      stop?.()
+    }
+  }, [user?.id, online, activeOrder?.id])
+
+  async function login(email: string, password: string) {
+    const response = await apiRequest<{ token?: string; user: DriverUser }>('/api/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      token: '',
+    })
+    if (!response.token)
+      throw new Error(
+        'The server did not create a driver app session. Deploy the updated backend and try again.'
+      )
+    try {
+      await startSession(response.user, response.token)
+    } catch (sessionError) {
+      await clearAuthToken()
+      setUser(null)
+      throw sessionError
+    }
+  }
+
+  async function toggleDuty(nextOnline: boolean) {
+    if (!user || busyKey) return
+    if (!nextOnline && activeOrder) {
+      setError('Complete the active delivery before going offline.')
+      return
+    }
+    setBusyKey('duty')
+    setError('')
+    try {
+      if (nextOnline) {
+        setGpsStatus('acquiring')
+        const position = await requestCurrentPosition()
+        const next = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        }
+        setCoords(next)
+        await apiRequest('/api/driver/location', {
+          method: 'POST',
+          body: {
+            driverId: user.id,
+            lat: next.lat,
+            lng: next.lng,
+            status: 'ONLINE',
+            available: true,
+            vehicleType: profile?.vehicleType || 'EV_SCOOTER',
+          },
+        })
+        setGpsStatus('live')
+      }
+      await apiRequest('/api/driver/status', {
+        method: 'POST',
+        body: { isOnline: nextOnline, status: nextOnline ? 'ONLINE' : 'OFFLINE' },
+      })
+      await setStoredDutyStatus(nextOnline)
+      if (!nextOnline) {
+        backgroundTrackingStartedRef.current = false
+        await stopBackgroundDriverLocation()
+      }
+      setOnline(nextOnline)
+      if (nextOnline) await loadOffers()
+      else setOffers([])
+    } catch (dutyError) {
+      setGpsStatus('error')
+      setError(dutyError instanceof Error ? dutyError.message : 'Unable to change duty status.')
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function acceptOffer(offer: DriverOffer) {
+    if (!user || busyKey) return
+    setBusyKey(`offer-${offer.id}`)
+    setError('')
+    try {
+      const response = await apiRequest<{ order: DriverOrder }>('/api/driver/accept', {
+        method: 'POST',
+        body: { requestId: offer.id, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) },
+      })
+      setOrders((current) => [response.order, ...current.filter((order) => order.id !== offer.id)])
+      setOffers([])
+      setNotice('Delivery accepted. Navigate to the restaurant for pickup.')
+      setTab('home')
+      await loadData()
+    } catch (acceptError) {
+      setOffers((current) => current.filter((item) => item.id !== offer.id))
+      setError(
+        acceptError instanceof Error ? acceptError.message : 'This offer is no longer available.'
+      )
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function advanceTrip() {
+    if (!activeOrder || busyKey) return
+    const status = activeOrder.status === 'picked_up' ? 'out_for_delivery' : 'picked_up'
+    setBusyKey('advance')
+    setError('')
+    try {
+      const response = await apiRequest<{ order: DriverOrder }>('/api/orders', {
+        method: 'PATCH',
+        body: { orderId: activeOrder.id, status },
+      })
+      setOrders((current) => [
+        response.order,
+        ...current.filter((order) => order.id !== activeOrder.id),
+      ])
+      setNotice(
+        status === 'picked_up'
+          ? 'Pickup confirmed. Check the package before leaving.'
+          : 'Customer has been notified that you are on the way.'
+      )
+    } catch (advanceError) {
+      setError(advanceError instanceof Error ? advanceError.message : 'Unable to update delivery.')
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function completeDelivery(otp: string) {
+    if (!activeOrder || busyKey) return
+    setBusyKey('complete')
+    setError('')
+    try {
+      await apiRequest('/api/orders', {
+        method: 'PATCH',
+        body: { orderId: activeOrder.id, status: 'delivered', otp, delivery_otp: otp },
+      })
+      setOtpOpen(false)
+      setNotice('Delivery completed. Great work!')
+      await loadData()
+      await loadOffers()
+    } catch (completeError) {
+      setError(
+        completeError instanceof Error
+          ? completeError.message
+          : 'Unable to verify the delivery OTP.'
+      )
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function saveProfile(next: DriverProfile) {
+    setBusyKey('profile')
+    setError('')
+    try {
+      const response = await apiRequest<{ profile: DriverProfile }>('/api/driver/profile', {
+        method: 'PUT',
+        body: {
+          name: next.name,
+          phone: next.phone,
+          address: next.address,
+          vehicleType: next.vehicleType,
+          licensePlate: next.licensePlate,
+        },
+      })
+      setProfile({ ...next, ...response.profile })
+      setUser((current) => (current ? { ...current, ...response.profile } : current))
+      setNotice('Profile updated successfully.')
+    } catch (profileError) {
+      setError(profileError instanceof Error ? profileError.message : 'Unable to save profile.')
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function addUpi(vpa: string, bankName: string) {
+    const response = await apiRequest<{ account: UpiAccount }>('/api/driver/upi', {
+      method: 'POST',
+      body: { vpa, bankName, isPrimary: upi.length === 0 },
+    })
+    setUpi((current) => [...current, response.account])
+    setNotice('UPI payout account added.')
+  }
+
+  async function primaryUpi(id: string) {
+    await apiRequest('/api/driver/upi', { method: 'PUT', body: { id, isPrimary: true } })
+    setUpi((current) => current.map((account) => ({ ...account, isPrimary: account.id === id })))
+  }
+
+  async function deleteUpi(id: string) {
+    await apiRequest(`/api/driver/upi?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    setUpi((current) => current.filter((account) => account.id !== id))
+  }
+
+  async function cashout(amount: number) {
+    setBusyKey('cashout')
+    try {
+      await apiRequest('/api/driver/payouts', { method: 'POST', body: { amount } })
+      const response = await apiRequest<{ payoutLogs: PayoutLog[] }>('/api/driver/payouts')
+      setPayouts(response.payoutLogs || [])
+      setNotice('Payout request submitted.')
+    } finally {
+      setBusyKey('')
+    }
+  }
+
+  async function toggleNotifications(enabled: boolean) {
+    const granted = enabled ? await requestNotificationPermission() : false
+    const finalValue = enabled && granted
+    await setNotificationPreference(finalValue)
+    if (!finalValue) await unregisterDriverPushNotifications()
+    setNotificationsEnabled(finalValue)
+    if (enabled && !granted) setError('Notification permission was not granted in device settings.')
+  }
+
+  async function logout() {
+    if (activeOrder) {
+      setTab('home')
+      setError('Complete the active delivery before signing out.')
+      return
+    }
+    if (online)
+      await apiRequest('/api/driver/status', {
+        method: 'POST',
+        body: { isOnline: false, status: 'OFFLINE' },
+      }).catch(() => undefined)
+    await stopBackgroundDriverLocation()
+    await unregisterDriverPushNotifications()
+    await apiRequest('/api/auth/logout', { method: 'POST', body: { token: getAuthToken() } }).catch(
+      () => undefined
+    )
+    await clearAuthToken()
+    await setStoredDutyStatus(false)
+    setUser(null)
+    setProfile(null)
+    setOnline(false)
+    setOrders([])
+    setOffers([])
+    setTab('home')
+  }
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(''), 4500)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
+  if (booting)
+    return (
+      <main className="splash-screen">
+        <span className="brand-mark">c</span>
+        <div className="splash-loader" />
+      </main>
+    )
+  if (!user || !profile) return <LoginScreen onLogin={login} />
+
+  const todayEarnings = completedTrips.reduce((total, trip) => total + Number(trip.total || 0), 0)
+
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="brand-lockup">
+          <span className="brand-mark">c</span>
+          <div>
+            <strong>crave.</strong>
+            <small>driver</small>
+          </div>
+        </div>
+        <div className="header-status">
+          <span className={`connection-pill ${networkConnected && wsConnected ? 'connected' : ''}`}>
+            <Icon name={networkConnected && wsConnected ? 'wifi' : 'offline'} />
+            {networkConnected && wsConnected ? 'Live' : networkConnected ? 'Syncing' : 'Offline'}
+          </span>
+          <button
+            className={`duty-toggle ${online ? 'online' : ''}`}
+            disabled={busyKey === 'duty'}
+            onClick={() => toggleDuty(!online)}
+          >
+            <span />
+            <b>{online ? 'Online' : 'Offline'}</b>
+          </button>
+        </div>
+      </header>
+      {(error || notice) && (
+        <div className={`app-banner ${error ? 'error' : 'success'}`}>
+          <span>{error || notice}</span>
+          <button
+            onClick={() => {
+              setError('')
+              setNotice('')
+            }}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+      )}
+      <main className="app-content">
+        {tab === 'home' && (
+          <section className="page-section home-page">
+            <div className="driver-welcome">
+              <div>
+                <span className="eyebrow">
+                  {online ? 'You are on duty' : 'You are currently offline'}
+                </span>
+                <h1>
+                  {online
+                    ? `Ride safe, ${profile.name.split(' ')[0]}.`
+                    : `Ready when you are, ${profile.name.split(' ')[0]}.`}
+                </h1>
+                <p>
+                  {online
+                    ? 'New delivery offers will appear here in real time.'
+                    : 'Go online to share GPS and receive nearby delivery offers.'}
+                </p>
+              </div>
+              <span className={`gps-orb ${gpsStatus}`}>
+                <Icon name={gpsStatus === 'live' ? 'navigation' : 'pin'} />
+                <small>
+                  {gpsStatus === 'live'
+                    ? `GPS ±${Math.round(coords?.accuracy || 0)}m`
+                    : gpsStatus === 'acquiring'
+                      ? 'Finding GPS'
+                      : 'GPS off'}
+                </small>
+              </span>
+            </div>
+            <div className="home-stats">
+              <article>
+                <span>Today&apos;s earnings</span>
+                <strong>{money(todayEarnings)}</strong>
+              </article>
+              <article>
+                <span>Completed trips</span>
+                <strong>{completedTrips.length}</strong>
+              </article>
+              <article>
+                <span>Live offers</span>
+                <strong>{online ? offers.length : '—'}</strong>
+              </article>
+            </div>
+            {activeOrder ? (
+              <>
+                <div className="section-title">
+                  <div>
+                    <span className="eyebrow">Current job</span>
+                    <h2>Active delivery</h2>
+                  </div>
+                </div>
+                <ActiveTripCard
+                  order={activeOrder}
+                  busy={busyKey === 'advance' || busyKey === 'complete'}
+                  onAdvance={advanceTrip}
+                  onComplete={() => setOtpOpen(true)}
+                />
+              </>
+            ) : online ? (
+              <>
+                <div className="section-title">
+                  <div>
+                    <span className="eyebrow">Nearby queue</span>
+                    <h2>Delivery offers</h2>
+                  </div>
+                  <button className="refresh-button" onClick={() => loadOffers()}>
+                    <Icon name="refresh" /> Refresh
+                  </button>
+                </div>
+                <div className="offer-grid">
+                  {offers.length > 0 ? (
+                    offers.map((offer) => (
+                      <OfferCard
+                        key={offer.id}
+                        offer={offer}
+                        busy={busyKey === `offer-${offer.id}`}
+                        onAccept={acceptOffer}
+                      />
+                    ))
+                  ) : (
+                    <EmptyState
+                      icon="bike"
+                      title="Waiting for the next order"
+                      text="Stay online. A live alert will appear as soon as an eligible order is ready."
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              <article className="offline-card">
+                <span>
+                  <Icon name="bike" />
+                </span>
+                <h2>Start accepting deliveries</h2>
+                <p>
+                  Going online requests precise location access so Crave can route nearby orders and
+                  keep customers updated.
+                </p>
+                <button className="primary-button" onClick={() => toggleDuty(true)}>
+                  Go online
+                </button>
+              </article>
+            )}
+          </section>
+        )}
+        {tab === 'trips' && <TripsPage orders={orders} trips={completedTrips} />}
+        {tab === 'earnings' && (
+          <EarningsPage
+            trips={completedTrips}
+            payouts={payouts}
+            upi={upi}
+            busy={busyKey === 'cashout'}
+            onCashout={cashout}
+          />
+        )}
+        {tab === 'rewards' && <RewardsPage incentives={incentives} />}
+        {tab === 'account' && (
+          <AccountPage
+            profile={profile}
+            upi={upi}
+            notificationsEnabled={notificationsEnabled}
+            busy={busyKey === 'profile'}
+            onSaveProfile={saveProfile}
+            onAddUpi={addUpi}
+            onPrimaryUpi={primaryUpi}
+            onDeleteUpi={deleteUpi}
+            onToggleNotifications={toggleNotifications}
+            onLogout={logout}
+          />
+        )}
+      </main>
+      <nav className="bottom-nav" aria-label="Driver app navigation">
+        {NAV_ITEMS.map((item) => (
+          <button
+            className={tab === item.tab ? 'active' : ''}
+            key={item.tab}
+            onClick={() => setTab(item.tab)}
+          >
+            <span>
+              <Icon name={item.icon} />
+              {item.tab === 'home' && online && offers.length > 0 && !activeOrder && (
+                <i>{Math.min(offers.length, 9)}</i>
+              )}
+            </span>
+            <small>{item.label}</small>
+          </button>
+        ))}
+      </nav>
+      {otpOpen && (
+        <OtpSheet
+          busy={busyKey === 'complete'}
+          onClose={() => setOtpOpen(false)}
+          onSubmit={completeDelivery}
+        />
+      )}
+    </div>
+  )
+}
