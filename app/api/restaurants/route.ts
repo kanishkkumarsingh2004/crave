@@ -180,7 +180,13 @@ export async function PATCH(request: Request) {
     if (body.name !== undefined) updateData.name = body.name
     if (body.cuisine !== undefined) updateData.cuisine = body.cuisine
     if (body.phone !== undefined) updateData.phone = body.phone
-    if (actor.role === 'admin') {
+    const actorRole = actor.role as string
+    if (
+      actorRole === 'admin' ||
+      actorRole === 'restaurant_vendor' ||
+      actorRole === 'cravexp_store_vendor' ||
+      actorRole === 'vendor'
+    ) {
       if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
       if (body.commission_rate !== undefined)
         updateData.commission_rate = Number(body.commission_rate)

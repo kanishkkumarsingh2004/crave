@@ -47,64 +47,6 @@ function Logo({ compact = false }: { compact?: boolean }) {
 function Spinner() {
   return <span className="spinner" />
 }
-
-const CUSTOMER_ANDROID_APK_URL =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
-
-function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null
-  return createPortal(
-    <div className="modal-backdrop animated-backdrop" onClick={onClose}>
-      <section
-        className="bottom-sheet animated-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="download-sheet-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="sheet-handle" />
-        <div className="sheet-title">
-          <div>
-            <p className="eyebrow">GET THE APP</p>
-            <h2 id="download-sheet-title">Download CRAVE</h2>
-          </div>
-          <button className="round pale" onClick={onClose} aria-label="Close">
-            <Icon name="close" />
-          </button>
-        </div>
-        <p className="upi-picker-total">Order from your phone. Faster than the website.</p>
-        <div className="upi-app-grid">
-          <a
-            className="upi-app-card"
-            href={CUSTOMER_ANDROID_APK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            download="crave-customer-debug.apk"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            <span className="upi-app-mark gpay">
-              <Icon name="download" />
-            </span>
-            <b>Android</b>
-            <small>Download the CRAVE app</small>
-          </a>
-          <button
-            className="upi-app-card"
-            disabled
-            style={{ opacity: 0.6, cursor: 'not-allowed' }}
-          >
-            <span className="upi-app-mark phonepe">
-              <Icon name="clock" />
-            </span>
-            <b>iOS</b>
-            <small>Coming soon</small>
-          </button>
-        </div>
-      </section>
-    </div>,
-    document.body
-  )
-}
 function Empty({
   icon,
   title,
@@ -1059,7 +1001,6 @@ function Account({
   onLogout,
   theme,
   onTheme,
-  onDownload,
 }: {
   user: User
   addresses: Address[]
@@ -1067,7 +1008,6 @@ function Account({
   onLogout: () => void
   theme: ThemeMode
   onTheme: (theme: ThemeMode) => void
-  onDownload: () => void
 }) {
   const [notifications, setNotifications] = useState(false),
     [checking, setChecking] = useState(false),
@@ -1158,19 +1098,6 @@ function Account({
             <small>{checking ? 'Checking…' : message}</small>
           </span>
           {checking ? <Spinner /> : <Icon name="chevron" />}
-        </button>
-        <button
-          onClick={onDownload}
-          disabled={checking}
-        >
-          <span className="setting-icon">
-            <Icon name="download" />
-          </span>
-          <span>
-            <b>Download the app</b>
-            <small>Get the native CRAVE app for faster ordering.</small>
-          </span>
-          <Icon name="chevron" />
         </button>
       </div>
       <button className="logout-button" onClick={onLogout}>
@@ -1462,7 +1389,6 @@ export default function App() {
       }
     }),
     [toast, setToast] = useState('')
-  const [showDownload, setShowDownload] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
   const showToast = (m: string) => {
@@ -1859,7 +1785,6 @@ export default function App() {
               setTheme(mode)
               void saveTheme(mode)
             }}
-            onDownload={() => setShowDownload(true)}
           />
         )}
       </main>
@@ -1891,7 +1816,6 @@ export default function App() {
         ))}
       </nav>
       {toast && <div className="toast">{toast}</div>}
-      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

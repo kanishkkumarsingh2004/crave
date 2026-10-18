@@ -5,7 +5,7 @@ import AppleToggle from '@/components/ui/AppleToggle'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
-import { Building2, FileText, Palette, Save, ShieldCheck } from 'lucide-react'
+import { Building2, FileText, Palette, Save, ShieldCheck, Tag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 
@@ -33,9 +33,9 @@ export default function VendorSettingsPage() {
   const [gstStatus, setGstStatus] = useState('REGISTERED')
   const [supplierState, setSupplierState] = useState('Karnataka')
   const [priceTaxMode, setPriceTaxMode] = useState('TAX_INCLUSIVE')
-  const [, setCommercialModel] = useState('commission')
-  const [, setCommissionRate] = useState(15)
-  const [, setMarkupRate] = useState(0)
+  const [commercialModel, setCommercialModel] = useState('commission')
+  const [commissionRate, setCommissionRate] = useState(15)
+  const [markupRate, setMarkupRate] = useState(0)
 
   useEffect(() => {
     if (isLoading) return
@@ -128,12 +128,18 @@ export default function VendorSettingsPage() {
           gst_status: gstStatus || 'REGISTERED',
           supplier_state: supplierState || 'Karnataka',
           price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
+          commercial_model: commercialModel || 'commission',
+          commission_rate: Number(commissionRate) || 15,
+          markup_rate: Number(markupRate) || 0,
         }),
       })
-      if (!res.ok) throw new Error('Save failed')
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Save failed')
+      }
       setToastMsg('Bank account details & store settings saved successfully!')
     } catch (err) {
-      setToastMsg('Could not save settings to the database.')
+      setToastMsg(err instanceof Error ? err.message : 'Could not save settings to the database.')
     } finally {
       setTimeout(() => setToastMsg(''), 3500)
     }
@@ -491,6 +497,72 @@ export default function VendorSettingsPage() {
                     TAX EXCLUSIVE (5% GST added at checkout)
                   </option>
                 </select>
+              </div>
+            </div>
+</div>
+
+          {/* Commission & Markup Rate Card */}
+          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 font-bold">
+                <Tag className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                  Commission &amp; Markup Rate
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-gray-400">
+                  Platform commission and markup applied to your order totals
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3 text-xs">
+              <div>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Commercial Model
+                </label>
+                <select
+                  value={commercialModel}
+                  onChange={(e) => setCommercialModel(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                >
+                  <option value="commission">Commission</option>
+                  <option value="markup">Markup</option>
+                  <option value="fixed">Fixed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Commission Rate (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  placeholder="e.g. 15"
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-stone-700 dark:text-gray-200">
+                  Markup Rate (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  placeholder="e.g. 0"
+                  value={markupRate}
+                  onChange={(e) => setMarkupRate(Number(e.target.value) || 0)}
+                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                />
               </div>
             </div>
           </div>

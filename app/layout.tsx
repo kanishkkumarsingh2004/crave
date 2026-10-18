@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   title: 'crave. | Crave What You Love • Instant Food & Grocery Delivery',
   description:
     'Order gourmet food, top local kitchen dishes, and 10-minute instant groceries delivered straight to your door.',
-  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -57,7 +56,6 @@ export default function RootLayout({
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="shortcut icon" href="/favicon.svg" />
-        <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />

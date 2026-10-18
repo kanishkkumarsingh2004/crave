@@ -15,6 +15,7 @@ import {
 } from './api'
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import { initializeNativeAppearance, sendTestNotification } from './native'
 
 type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'settings'
 type IconName =
@@ -29,6 +30,7 @@ type IconName =
   | 'logout'
   | 'users'
   | 'money'
+  | 'bell'
 
 interface AdminUser {
   id: string
@@ -154,6 +156,12 @@ function Icon({ name }: { name: IconName }) {
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8m13 18v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
     ),
     money: <path d="M12 2v20m5-16H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />,
+    bell: (
+      <>
+        <path d="M15 18a3 3 0 0 0 2-2.9V11a7 7 0 0 0-5-6.9V3h-4v1.1A7 7 0 0 0 6 11v4.1a3 3 0 0 0 2 2.9" />
+        <path d="M10 18a4 4 0 0 0 4-4M9 21h6" />
+      </>
+    ),
   }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -244,52 +252,6 @@ function EmptyState({ text }: { text: string }) {
   return <div className="empty-state">{text}</div>
 }
 
-const ADMIN_ANDROID_APK_URL =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk'
-
-function DownloadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <section
-        className="partner-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="download-sheet-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="sheet-handle" />
-        <div className="partner-sheet-heading">
-          <div>
-            <span className="eyebrow">Get the app</span>
-            <h2 id="download-sheet-title">Download Crave Admin</h2>
-          </div>
-          <button onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
-        <p className="partner-form-help">
-          Install the native admin app for faster operations and live push alerts.
-        </p>
-        <div className="partner-form-actions" style={{ flexDirection: 'column', gap: 10 }}>
-          <a
-            className="primary-button"
-            href={ADMIN_ANDROID_APK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            download="crave-admin-debug.apk"
-          >
-            <Icon name="download" /> Download for Android
-          </a>
-          <button className="secondary-button" disabled>
-            iOS — Coming soon
-          </button>
-        </div>
-      </section>
-    </div>
-  )
-}
-
 export default function App() {
   const [booting, setBooting] = useState(true)
   const [user, setUser] = useState<AdminUser | null>(null)
@@ -309,7 +271,8 @@ export default function App() {
   const [selectedPartner, setSelectedPartner] = useState<RestaurantRecord | null>(null)
   const [partnerForm, setPartnerForm] = useState<PartnerForm>(emptyPartnerForm)
   const [partnerBusy, setPartnerBusy] = useState(false)
-  const [showDownload, setShowDownload] = useState(false)
+  const [notifBusy, setNotifBusy] = useState(false)
+  const [notifMsg, setNotifMsg] = useState('')
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
 
@@ -327,6 +290,7 @@ export default function App() {
 
   useEffect(() => {
     void bootstrap()
+    void initializeNativeAppearance()
     void refreshUpdateStatus()
     void loadTheme().then(setTheme)
   }, [])
@@ -712,9 +676,6 @@ export default function App() {
           <Icon name={networkConnected ? 'wifi' : 'offline'} />
           {refreshing ? 'Syncing' : networkConnected ? 'Live' : 'Offline'}
         </button>
-        <button className="connection-chip" onClick={() => setShowDownload(true)}>
-          <Icon name="download" /> App
-        </button>
       </header>
 
       {!networkConnected && <div className="offline-banner">No internet connection</div>}
@@ -996,6 +957,37 @@ export default function App() {
                 <div className="software-error">{updateError}</div>
               )}
             </article>
+            <article className="settings-card">
+              <div className="settings-title">
+                <span>
+                  <Icon name="bell" />
+                </span>
+                <div>
+                  <h3>Push notifications</h3>
+                  <p>Send a local test notification with the app icon to verify alerts.</p>
+                </div>
+              </div>
+              {notifMsg && <div className="software-error">{notifMsg}</div>}
+              <button
+                className="primary-button"
+                disabled={notifBusy}
+                onClick={() => {
+                  setNotifBusy(true)
+                  setNotifMsg('')
+                  void sendTestNotification()
+                    .then(() => setNotifMsg('Test notification sent — check your status bar.'))
+                    .catch((err) =>
+                      setNotifMsg(err instanceof Error ? err.message : 'Could not send notification.')
+                    )
+                    .finally(() => {
+                      window.setTimeout(() => setNotifMsg(''), 4000)
+                      setNotifBusy(false)
+                    })
+                }}
+              >
+                <Icon name="bell" /> {notifBusy ? 'Sending…' : 'Send test notification'}
+              </button>
+            </article>
             <button className="logout-button" onClick={() => void logout()}>
               <Icon name="logout" /> Sign out of admin app
             </button>
@@ -1222,7 +1214,6 @@ export default function App() {
         </div>
       )}
       {notice && <div className="toast">{notice}</div>}
-      <DownloadSheet open={showDownload} onClose={() => setShowDownload(false)} />
     </div>
   )
 }

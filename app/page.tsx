@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
   ChevronRight,
+  Download,
   LogOut,
   MapPin,
   Search,
@@ -17,6 +18,83 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
+const CUSTOMER_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
+
+function AppDownloadPopup({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  if (!open) return null
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#111714] border border-black/10 dark:border-white/10 shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-black tracking-widest uppercase text-[#5e8210] dark:text-[#d9f447]">
+              Get the app
+            </p>
+            <h2 className="text-xl font-black text-[#121815] dark:text-white mt-0.5">
+              Download CRAVE
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid size-8 place-items-center rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-[#121815] dark:text-white text-lg leading-none hover:bg-black/10 dark:hover:bg-white/15"
+          >
+            ×
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          Order from your phone. Faster than the website.
+        </p>
+        <div className="space-y-2.5">
+          <a
+            href={CUSTOMER_ANDROID_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="crave-customer-debug.apk"
+            className="flex items-center gap-3 rounded-2xl bg-[#121815] dark:bg-[#d9f447] px-4 py-3.5 text-[#d9f447] dark:text-[#121815] hover:opacity-90 transition-opacity"
+          >
+            <span className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/15 dark:bg-[#121815]/15">
+              <Download className="size-5" />
+            </span>
+            <span className="flex flex-col">
+              <b className="text-sm">Android</b>
+              <span className="text-[11px] opacity-80">Download the CRAVE app</span>
+            </span>
+            <ArrowRight className="size-4 ml-auto" />
+          </a>
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-3 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] px-4 py-3.5 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+          >
+            <span className="grid size-10 place-items-center rounded-xl bg-black/5 dark:bg-white/5">
+              <Download className="size-5" />
+            </span>
+            <span className="flex flex-col items-start">
+              <b className="text-sm">iOS</b>
+              <span className="text-[11px]">Coming soon</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Featured Kitchen Collections (Zomato/Swiggy Curated Partners) ────────────
 const FEATURED_KITCHENS = [
@@ -94,6 +172,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('Kanakapura Road, Bengaluru')
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
+  const [showAppPopup, setShowAppPopup] = useState(false)
 
   // Compute target dashboard URL based on user role or URL redirect param
   const getTargetDashboard = () => {
@@ -569,6 +648,19 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <Footer />
+
+      {/* Floating download button */}
+      <button
+        type="button"
+        onClick={() => setShowAppPopup(true)}
+        aria-label="Download the CRAVE app"
+        className="fixed bottom-6 right-6 z-[80] flex items-center gap-2 rounded-full bg-[#121815] dark:bg-[#d9f447] px-4 py-3 text-[#d9f447] dark:text-[#121815] shadow-2xl hover:opacity-90 active:scale-95 transition-all"
+      >
+        <Download className="size-4" />
+        <span className="text-xs font-black">Get the app</span>
+      </button>
+
+      <AppDownloadPopup open={showAppPopup} onClose={() => setShowAppPopup(false)} />
     </div>
   )
 }

@@ -275,6 +275,9 @@ importers:
       '@capacitor/ios':
         specifier: 8.5.3
         version: 8.5.3(@capacitor/core@8.5.3)
+      '@capacitor/local-notifications':
+        specifier: 8.3.1
+        version: 8.3.1
       '@capacitor/network':
         specifier: 8.0.1
         version: 8.0.1(@capacitor/core@8.5.3)
