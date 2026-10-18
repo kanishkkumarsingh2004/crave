@@ -22,13 +22,7 @@ import { useEffect, useState } from 'react'
 const CUSTOMER_ANDROID_APK_URL =
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
 
-function AppDownloadPopup({
-  open,
-  onClose,
-}: {
-  open: boolean
-  onClose: () => void
-}) {
+function AppDownloadPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null
   return (
     <div

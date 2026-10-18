@@ -15,6 +15,8 @@
   --lime: #d9f447;
   --lime-dark: #91aa20;
   --danger: #ff6b77;
+  --input-bg: #0e1511;
+  --input-text: #f7faf7;
   color-scheme: dark;
 }
 
@@ -57,7 +59,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 14px;
   outline: none;
-  background: #0e1511;
+  background: var(--input-bg);
   color: var(--ink);
   padding: 13px 14px;
   transition:

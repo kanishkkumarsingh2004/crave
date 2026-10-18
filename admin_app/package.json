@@ -23,6 +23,7 @@
     "@capacitor/preferences": "8.0.1",
     "@capacitor/splash-screen": "8.0.2",
     "@capacitor/status-bar": "8.0.4",
+    "maplibre-gl": "6.15.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

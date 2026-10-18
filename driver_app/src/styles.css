@@ -13,6 +13,9 @@
   --acid: #d9ff38;
   --green: #53e08c;
   --red: #ff8995;
+  --input-bg: #0b130f;
+  --input-text: #f4f7f2;
+  --input-border: #304137;
 }
 
 * {
@@ -232,12 +235,12 @@ b {
 .upi-form select {
   width: 100%;
   min-height: 54px;
-  border: 1px solid #304137;
+  border: 1px solid var(--input-border);
   border-radius: 16px;
   outline: 0;
   padding: 0 17px;
-  color: white;
-  background: #0b130f;
+  color: var(--input-text);
+  background: var(--input-bg);
 }
 .login-form input:focus,
 .field-label input:focus,
@@ -1697,4 +1700,52 @@ b {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html[data-theme='light'] {
+  color: #101712;
+  background: #f4f7f2;
+  color-scheme: light;
+  --ink: #101712;
+  --muted: #6a736b;
+  --surface: #ffffff;
+  --raised: #f0f3ee;
+  --line: #dfe3dc;
+  --acid: #0b2e1c;
+  --green: #1f7a4d;
+  --red: #c43043;
+  --input-bg: #ffffff;
+  --input-text: #101712;
+  --input-border: #d9e0d9;
+}
+html[data-theme='light'] body,
+html[data-theme='light'] #root {
+  background: #f4f7f2;
+}
+html[data-theme='light'] .login-card,
+html[data-theme='light'] .panel,
+html[data-theme='light'] .card,
+html[data-theme='light'] .order-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme='light'] .login-form input,
+html[data-theme='light'] .field-label input,
+html[data-theme='light'] .field-label select,
+html[data-theme='light'] .upi-form input,
+html[data-theme='light'] .upi-form select {
+  color: var(--input-text);
+  background: var(--input-bg);
+  border-color: var(--input-border);
+}
+html[data-theme='light'] .brand-lockup strong,
+html[data-theme='light'] h1,
+html[data-theme='light'] h2,
+html[data-theme='light'] h3 {
+  color: var(--ink);
+}
+html[data-theme='light'] .text-muted,
+html[data-theme='light'] p,
+html[data-theme='light'] .muted {
+  color: var(--muted);
 }

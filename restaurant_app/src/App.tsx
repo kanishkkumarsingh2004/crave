@@ -624,6 +624,7 @@ export default function App() {
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>('system')
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [settingsForm, setSettingsForm] = useState({
     name: '',
     cuisine: '',
@@ -1145,6 +1146,8 @@ export default function App() {
   }
 
   async function logout() {
+    if (!confirmLogout) return
+    setConfirmLogout(false)
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)
@@ -1153,6 +1156,10 @@ export default function App() {
     setMenuItems([])
     setSettlements([])
     setActiveTab('home')
+  }
+
+  function requestLogout() {
+    setConfirmLogout(true)
   }
 
   const activeOrders = orders.filter((order) => ACTIVE_STATUSES.has(order.status))
@@ -1702,7 +1709,7 @@ export default function App() {
                     <p>{user.email}</p>
                     <span>Restaurant partner</span>
                   </div>
-                  <button className="logout-button" onClick={() => void logout()}>
+                  <button className="logout-button" onClick={requestLogout}>
                     <Icon name="logout" /> Sign out
                   </button>
                 </article>
@@ -1711,6 +1718,41 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {confirmLogout && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="restaurant-logout-title"
+          onClick={() => setConfirmLogout(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Confirm sign out</span>
+                <h2 id="restaurant-logout-title">Really sign out?</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setConfirmLogout(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>You will be signed out of the restaurant app. You can sign back in anytime.</p>
+            <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+              <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                Cancel
+              </button>
+              <button className="primary-button" onClick={() => void logout()}>
+                <Icon name="logout" /> Sign out
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <nav className="bottom-nav" aria-label="Restaurant app navigation">
         {navItems.map((item) => (

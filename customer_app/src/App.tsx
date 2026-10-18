@@ -1009,6 +1009,7 @@ function Account({
   theme: ThemeMode
   onTheme: (theme: ThemeMode) => void
 }) {
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [notifications, setNotifications] = useState(false),
     [checking, setChecking] = useState(false),
     [update, setUpdate] = useState<CustomerUpdate | null>(null),
@@ -1100,9 +1101,57 @@ function Account({
           {checking ? <Spinner /> : <Icon name="chevron" />}
         </button>
       </div>
-      <button className="logout-button" onClick={onLogout}>
+      <button className="logout-button" onClick={() => setConfirmLogout(true)}>
         <Icon name="logout" /> Sign out
       </button>
+      {confirmLogout && (
+        <div
+          className="modal-backdrop animated-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="customer-logout-title"
+          onClick={() => setConfirmLogout(false)}
+        >
+          <section
+            className="bottom-sheet animated-sheet"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">Confirm sign out</p>
+                <h2 id="customer-logout-title">Really sign out?</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setConfirmLogout(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <p className="upi-picker-total">
+              You will be signed out of the CRAVE app. You can sign back in anytime.
+            </p>
+            <div className="upi-app-grid">
+              <button className="upi-app-card" onClick={() => setConfirmLogout(false)}>
+                <span className="upi-app-mark gpay">
+                  <Icon name="close" />
+                </span>
+                <b>Cancel</b>
+                <small>Stay signed in</small>
+              </button>
+              <button className="upi-app-card" onClick={onLogout}>
+                <span className="upi-app-mark phonepe">
+                  <Icon name="logout" />
+                </span>
+                <b>Sign out</b>
+                <small>Leave the app</small>
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <p className="version">CRAVE. Customer · 1.0.0</p>
     </section>
   )
@@ -1389,6 +1438,7 @@ export default function App() {
       }
     }),
     [toast, setToast] = useState('')
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
   const showToast = (m: string) => {
@@ -1554,12 +1604,18 @@ export default function App() {
         .filter((x) => x.quantity > 0)
     )
   const logout = async () => {
+    if (!confirmLogout) return
+    setConfirmLogout(false)
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)
     setCart([])
     setCartRestaurant(null)
     setOrders([])
+  }
+
+  function requestLogout() {
+    setConfirmLogout(true)
   }
   if (!ready)
     return (

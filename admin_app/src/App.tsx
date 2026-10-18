@@ -16,6 +16,7 @@ import {
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { initializeNativeAppearance, sendTestNotification } from './native'
+import AddressMap, { type AddressMapPoint } from './AddressMap'
 
 type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'settings'
 type IconName =
@@ -67,6 +68,8 @@ interface RestaurantRecord {
   cuisine?: string
   phone?: string
   address?: string
+  latitude?: number | string
+  longitude?: number | string
   is_open?: boolean
   commission_rate?: number | string
   commercial_model?: 'commission' | 'markup' | 'hybrid'
@@ -83,6 +86,8 @@ interface PartnerForm {
   cuisine: string
   phone: string
   address: string
+  latitude: string
+  longitude: string
   commercialModel: 'commission' | 'markup' | 'hybrid'
   commissionRate: string
   markupRate: string
@@ -98,8 +103,10 @@ const emptyPartnerForm: PartnerForm = {
   cuisine: '',
   phone: '',
   address: '',
+  latitude: '',
+  longitude: '',
   commercialModel: 'commission',
-  commissionRate: '15',
+  commissionRate: '0',
   markupRate: '0',
   fixedCommission: '0',
   fixedMarkup: '0',
@@ -270,9 +277,11 @@ export default function App() {
   const [partnerMode, setPartnerMode] = useState<'add' | 'edit' | null>(null)
   const [selectedPartner, setSelectedPartner] = useState<RestaurantRecord | null>(null)
   const [partnerForm, setPartnerForm] = useState<PartnerForm>(emptyPartnerForm)
+  const [mapPoint, setMapPoint] = useState<AddressMapPoint | null>(null)
   const [partnerBusy, setPartnerBusy] = useState(false)
   const [notifBusy, setNotifBusy] = useState(false)
   const [notifMsg, setNotifMsg] = useState('')
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
 
@@ -491,6 +500,8 @@ export default function App() {
   }
 
   async function logout() {
+    if (!confirmLogout) return
+    setConfirmLogout(false)
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)
@@ -499,26 +510,36 @@ export default function App() {
     setTab('overview')
   }
 
+  function requestLogout() {
+    setConfirmLogout(true)
+  }
+
   function openAddPartner() {
     setSelectedPartner(null)
     setPartnerForm(emptyPartnerForm)
+    setMapPoint(null)
     setPartnerMode('add')
   }
 
   function openEditPartner(restaurant: RestaurantRecord) {
     setSelectedPartner(restaurant)
+    const lat = restaurant.latitude ? Number(restaurant.latitude) : null
+    const lng = restaurant.longitude ? Number(restaurant.longitude) : null
     setPartnerForm({
       ...emptyPartnerForm,
       name: restaurant.name || '',
       cuisine: restaurant.cuisine || '',
       phone: restaurant.phone || '',
       address: restaurant.address || '',
+      latitude: lat ? String(lat.toFixed(6)) : '',
+      longitude: lng ? String(lng.toFixed(6)) : '',
       commercialModel: restaurant.commercial_model || 'commission',
       commissionRate: String(restaurant.commission_rate ?? 0),
       markupRate: String(restaurant.markup_rate ?? 0),
       fixedCommission: String(restaurant.fixed_commission ?? 0),
       fixedMarkup: String(restaurant.fixed_markup ?? 0),
     })
+    setMapPoint(lat && lng && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null)
     setPartnerMode('edit')
   }
 
@@ -539,6 +560,8 @@ export default function App() {
             cuisine: partnerForm.cuisine.trim() || 'Multi-Cuisine',
             phone: partnerForm.phone.trim(),
             address: partnerForm.address.trim(),
+            latitude: partnerForm.latitude ? Number(partnerForm.latitude) : null,
+            longitude: partnerForm.longitude ? Number(partnerForm.longitude) : null,
             commercialModel: partnerForm.commercialModel,
             commissionRate: Number(partnerForm.commissionRate),
             markupRate: Number(partnerForm.markupRate),
@@ -558,6 +581,8 @@ export default function App() {
             cuisine: partnerForm.cuisine.trim(),
             phone: partnerForm.phone.trim(),
             address: partnerForm.address.trim(),
+            latitude: partnerForm.latitude ? Number(partnerForm.latitude) : null,
+            longitude: partnerForm.longitude ? Number(partnerForm.longitude) : null,
             commercialModel: partnerForm.commercialModel,
             commissionRate: Number(partnerForm.commissionRate),
             markupRate: Number(partnerForm.markupRate),
@@ -977,7 +1002,9 @@ export default function App() {
                   void sendTestNotification()
                     .then(() => setNotifMsg('Test notification sent — check your status bar.'))
                     .catch((err) =>
-                      setNotifMsg(err instanceof Error ? err.message : 'Could not send notification.')
+                      setNotifMsg(
+                        err instanceof Error ? err.message : 'Could not send notification.'
+                      )
                     )
                     .finally(() => {
                       window.setTimeout(() => setNotifMsg(''), 4000)
@@ -988,9 +1015,42 @@ export default function App() {
                 <Icon name="bell" /> {notifBusy ? 'Sending…' : 'Send test notification'}
               </button>
             </article>
-            <button className="logout-button" onClick={() => void logout()}>
+            <button className="logout-button" onClick={requestLogout}>
               <Icon name="logout" /> Sign out of admin app
             </button>
+            {confirmLogout && (
+              <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
+                <article
+                  className="partner-sheet"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="logout-confirm-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="sheet-handle" />
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Confirm sign out</span>
+                      <h2 id="logout-confirm-title">Really sign out?</h2>
+                    </div>
+                    <button onClick={() => setConfirmLogout(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <p className="partner-form-help">
+                    You will be signed out of the admin app. You can sign back in anytime.
+                  </p>
+                  <div className="partner-form-actions">
+                    <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                      Cancel
+                    </button>
+                    <button className="primary-button" onClick={() => void logout()}>
+                      <Icon name="logout" /> Sign out
+                    </button>
+                  </div>
+                </article>
+              </div>
+            )}
           </section>
         )}
       </main>
@@ -1192,6 +1252,33 @@ export default function App() {
                   </label>
                 </div>
               )}
+              <div className="partner-map-wrap">
+                <div className="partner-map-head">
+                  <span>Restaurant location</span>
+                  <small>Click the map to drop the pin and capture coordinates.</small>
+                </div>
+                <AddressMap
+                  location={mapPoint}
+                  onPick={(point) => {
+                    setMapPoint(point)
+                    setPartnerForm((form) => ({
+                      ...form,
+                      latitude: String(point.lat.toFixed(6)),
+                      longitude: String(point.lng.toFixed(6)),
+                    }))
+                  }}
+                />
+                <div className="partner-coords">
+                  <label>
+                    Latitude
+                    <input value={partnerForm.latitude} readOnly placeholder="Click the map" />
+                  </label>
+                  <label>
+                    Longitude
+                    <input value={partnerForm.longitude} readOnly placeholder="Click the map" />
+                  </label>
+                </div>
+              </div>
               <div className="partner-form-actions">
                 <button
                   type="button"

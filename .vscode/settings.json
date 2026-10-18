@@ -6,5 +6,6 @@
   },
   "path-autocomplete.pathMappings": {
     "@": "${workspaceFolder}"
-  }
+  },
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

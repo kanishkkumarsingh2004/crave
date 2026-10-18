@@ -5,7 +5,16 @@ import AppleToggle from '@/components/ui/AppleToggle'
 import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
-import { Building2, FileText, Palette, Save, ShieldCheck, Tag } from 'lucide-react'
+import {
+  Building2,
+  FileText,
+  Loader2,
+  Palette,
+  Save,
+  ShieldCheck,
+  Tag,
+  UtensilsCrossed,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 
@@ -36,6 +45,7 @@ export default function VendorSettingsPage() {
   const [commercialModel, setCommercialModel] = useState('commission')
   const [commissionRate, setCommissionRate] = useState(15)
   const [markupRate, setMarkupRate] = useState(0)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (isLoading) return
@@ -108,9 +118,46 @@ export default function VendorSettingsPage() {
     )
   }
 
+  if (settingsLoading) {
+    return (
+      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar transition-colors duration-200">
+        <VendorSidebar />
+        <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 space-y-6">
+          <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-2xl bg-stone-200 dark:bg-[#1d2621]" />
+              <div className="space-y-2">
+                <div className="h-3 w-24 rounded bg-stone-200 dark:bg-[#1d2621]" />
+                <div className="h-5 w-40 rounded bg-stone-200 dark:bg-[#1d2621]" />
+              </div>
+            </div>
+          </div>
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl animate-pulse space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-stone-200 dark:bg-[#1d2621]" />
+                <div className="h-4 w-32 rounded bg-stone-200 dark:bg-[#1d2621]" />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="h-11 rounded-xl bg-stone-200 dark:bg-[#1d2621]" />
+                <div className="h-11 rounded-xl bg-stone-200 dark:bg-[#1d2621]" />
+                <div className="h-11 rounded-xl bg-stone-200 dark:bg-[#1d2621]" />
+                <div className="h-11 rounded-xl bg-stone-200 dark:bg-[#1d2621]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   async function handleSaveSettings(e: FormEvent) {
     e.preventDefault()
     if (!restaurantId || !user?.id) return
+    setSaving(true)
     try {
       const res = await fetch('/api/restaurants', {
         method: 'PATCH',
@@ -141,6 +188,7 @@ export default function VendorSettingsPage() {
     } catch (err) {
       setToastMsg(err instanceof Error ? err.message : 'Could not save settings to the database.')
     } finally {
+      setSaving(false)
       setTimeout(() => setToastMsg(''), 3500)
     }
   }
@@ -173,16 +221,21 @@ export default function VendorSettingsPage() {
         {/* Header Hero */}
         <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-6 shadow-sm dark:shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
-                Restaurant Profile &amp; Payout Settings
-              </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
-                Bank Profile &amp; Kitchen Settings
-              </h2>
-              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-                Manage the contact, payout, and availability details stored for this restaurant.
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="grid size-12 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-md shadow-[#d9f447]/20">
+                <UtensilsCrossed className="size-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
+                  Vendor Console
+                </span>
+                <h2 className="mt-0.5 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
+                  Bank &amp; Store Settings
+                </h2>
+                <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                  Manage payout, kitchen availability, tax profile, and commission rates.
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 bg-stone-100 dark:bg-[#18201c] p-3 rounded-2xl border border-stone-200 dark:border-[#27342d]">
@@ -499,7 +552,7 @@ export default function VendorSettingsPage() {
                 </select>
               </div>
             </div>
-</div>
+          </div>
 
           {/* Commission & Markup Rate Card */}
           <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
@@ -571,9 +624,15 @@ export default function VendorSettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition cursor-pointer"
+              disabled={saving}
+              className={`inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] hover:shadow-lg active:scale-95 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100`}
             >
-              <Save className="size-4 text-[#0d1310]" /> Save Bank &amp; Store Settings
+              {saving ? (
+                <Loader2 className="size-4 text-[#0d1310] animate-spin" />
+              ) : (
+                <Save className="size-4 text-[#0d1310]" />
+              )}{' '}
+              {saving ? 'Saving...' : 'Save Bank & Store Settings'}
             </button>
           </div>
         </form>

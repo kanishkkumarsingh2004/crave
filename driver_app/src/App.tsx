@@ -32,6 +32,7 @@ import {
 } from './native'
 import { connectDriverEvents } from './realtime'
 import { checkForDriverUpdate, installDriverUpdate, type DriverUpdate } from './update'
+import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import type {
   AppTab,
   CompletedTrip,
@@ -618,6 +619,8 @@ function AccountPage({
   onPrimaryUpi,
   onDeleteUpi,
   onToggleNotifications,
+  onTheme,
+  theme,
   availableUpdate,
   checkingUpdate,
   installingUpdate,
@@ -635,6 +638,8 @@ function AccountPage({
   onPrimaryUpi: (id: string) => Promise<void>
   onDeleteUpi: (id: string) => Promise<void>
   onToggleNotifications: (enabled: boolean) => Promise<void>
+  onTheme: (mode: ThemeMode) => void
+  theme: ThemeMode
   availableUpdate: DriverUpdate | null
   checkingUpdate: boolean
   installingUpdate: boolean
@@ -646,6 +651,7 @@ function AccountPage({
   const [draft, setDraft] = useState(profile)
   const [vpa, setVpa] = useState('')
   const [provider, setProvider] = useState('Google Pay / PhonePe UPI')
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   useEffect(() => setDraft(profile), [profile])
 
@@ -722,6 +728,28 @@ function AccountPage({
           </button>
         </div>
         {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
+      </article>
+      <article className="settings-card">
+        <div className="settings-card-title">
+          <span className="settings-icon">
+            <Icon name="theme" />
+          </span>
+          <div>
+            <h3>Appearance</h3>
+            <p>Choose light, dark, or follow your device setting.</p>
+          </div>
+        </div>
+        <div className="theme-control" role="group" aria-label="Driver app theme">
+          {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+            <button
+              key={mode}
+              className={theme === mode ? 'active' : ''}
+              onClick={() => onTheme(mode)}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
+        </div>
       </article>
       <article className="settings-card">
         <div className="settings-card-title">
@@ -841,9 +869,43 @@ function AccountPage({
           </button>
         </form>
       </article>
-      <button className="logout-button" onClick={onLogout}>
+      <button className="logout-button" onClick={() => setConfirmLogout(true)}>
         <Icon name="logout" /> Sign out of driver app
       </button>
+      {confirmLogout && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="driver-logout-title"
+          onClick={() => setConfirmLogout(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Confirm sign out</span>
+                <h2 id="driver-logout-title">Really sign out?</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setConfirmLogout(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>You will be signed out of the driver app. You can sign back in anytime.</p>
+            <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+              <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                Cancel
+              </button>
+              <button className="primary-button" onClick={onLogout}>
+                <Icon name="logout" /> Sign out
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }
@@ -918,6 +980,7 @@ export default function App() {
   const [user, setUser] = useState<DriverUser | null>(null)
   const [profile, setProfile] = useState<DriverProfile | null>(null)
   const [tab, setTab] = useState<AppTab>('home')
+  const [theme, setTheme] = useState<ThemeMode>('system')
   const [online, setOnline] = useState(false)
   const [gpsStatus, setGpsStatus] = useState<'off' | 'acquiring' | 'live' | 'error'>('off')
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null)
@@ -1077,6 +1140,15 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     void initializeNativeAppearance()
+    void (async () => {
+      try {
+        const mode = await loadTheme()
+        if (cancelled) return
+        setTheme(mode)
+      } catch {
+        setTheme('system')
+      }
+    })()
     void (async () => {
       try {
         const token = await restoreAuthToken()
@@ -1676,6 +1748,11 @@ export default function App() {
             onPrimaryUpi={primaryUpi}
             onDeleteUpi={deleteUpi}
             onToggleNotifications={toggleNotifications}
+            onTheme={(mode) => {
+              setTheme(mode)
+              void saveTheme(mode)
+            }}
+            theme={theme}
             availableUpdate={availableUpdate}
             checkingUpdate={checkingUpdate}
             installingUpdate={installingUpdate}

@@ -6,10 +6,15 @@
   font-family: 'Manrope', system-ui, sans-serif;
   font-synthesis: none;
   --lime: #d9f447;
+  --lime-dark: #91aa20;
   --surface: #101914;
-  --line: #28372d;
+  --surface-2: #18231c;
+  --ink: #f5f7f5;
   --muted: #829087;
+  --line: #28372d;
   --danger: #ff8e9d;
+  --input-bg: #08110c;
+  --input-text: #f5f7f5;
 }
 
 * {
@@ -406,14 +411,20 @@ svg {
 }
 .partner-page-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
+  flex-wrap: nowrap;
 }
 .partner-page-heading > div {
   min-width: 0;
   display: grid;
   gap: 7px;
+}
+.partner-page-heading h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .add-partner-button {
   min-height: 45px;
@@ -543,8 +554,8 @@ svg {
   border: 1px solid var(--line);
   border-radius: 13px;
   outline: 0;
-  color: white;
-  background: #08110c;
+  color: var(--input-text);
+  background: var(--input-bg);
   padding: 11px 13px;
   font-size: 11px;
 }
@@ -555,7 +566,8 @@ svg {
 .partner-form input:focus,
 .partner-form textarea:focus,
 .partner-form select:focus {
-  border-color: rgb(217 244 71 / 65%);
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgb(217 244 71 / 10%);
 }
 .commercial-model-field,
 .commercial-fields {
@@ -582,6 +594,60 @@ svg {
 .status-dot.open {
   background: #64dc92;
   box-shadow: 0 0 13px rgb(100 220 146 / 50%);
+}
+.partner-map-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+  align-content: start;
+}
+.partner-map-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.partner-map-head span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.partner-map-head small {
+  font-size: 9px;
+  color: var(--muted);
+}
+.address-map-canvas {
+  width: 100%;
+  height: 260px;
+  min-height: 260px;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #e7ecdf;
+}
+.partner-coords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.partner-coords input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: 0;
+  color: var(--input-text);
+  background: var(--input-bg);
+  padding: 10px 12px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+}
+html[data-theme='light'] .address-map-canvas {
+  border-color: #d9e0d9;
 }
 .settings-card {
   display: grid;
@@ -666,9 +732,13 @@ html[data-theme='light'] {
   background: #f3f5ef;
   color-scheme: light;
   --surface: #ffffff;
+  --surface-2: #f5f7f3;
+  --ink: #152019;
   --line: #d9e0d9;
   --muted: #68756c;
   --danger: #c94055;
+  --input-bg: #ffffff;
+  --input-text: #152019;
 }
 html[data-theme='light'] body,
 html[data-theme='light'] #root,
@@ -904,11 +974,12 @@ html[data-theme='light'] .partner-sheet-heading > button {
   border: 1px solid var(--line);
   border-radius: 14px;
   outline: 0;
-  color: white;
-  background: #0a120d;
+  color: var(--input-text);
+  background: var(--input-bg);
 }
 .login-card input:focus {
-  border-color: rgb(217 244 71 / 45%);
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgb(217 244 71 / 10%);
 }
 .password-field {
   position: relative;

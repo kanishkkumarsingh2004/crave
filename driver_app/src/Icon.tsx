@@ -22,6 +22,7 @@ export type IconName =
   | 'shield'
   | 'card'
   | 'close'
+  | 'theme'
 
 const paths: Record<IconName, React.ReactNode> = {
   home: (
@@ -136,6 +137,12 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   close: <path d="m6 6 12 12M18 6 6 18" />,
+  theme: (
+    <>
+      <path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
+      <circle cx="12" cy="12" r="4" />
+    </>
+  ),
 }
 
 export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGElement>) {
