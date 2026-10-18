@@ -62,21 +62,16 @@ svg {
   gap: 0;
 }
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 48px;
   height: 48px;
   border-radius: 15px;
-  background: var(--lime);
-  color: #0b120d;
-  font-size: 28px;
-  letter-spacing: -2px;
+  object-fit: cover;
 }
 .brand.compact .brand-mark {
   width: 43px;
   height: 43px;
   border-radius: 14px;
-  font-size: 24px;
 }
 .spinner {
   display: inline-block;

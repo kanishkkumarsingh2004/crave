@@ -158,16 +158,12 @@ b {
   margin-bottom: 62px;
 }
 .brand-mark {
-  display: grid;
+  display: block;
   width: 48px;
   height: 48px;
-  place-items: center;
   flex: 0 0 auto;
   border-radius: 15px;
-  color: #09100c;
-  background: var(--acid);
-  font: 800 31px/1 'Manrope';
-  letter-spacing: -0.08em;
+  object-fit: cover;
 }
 .brand-lockup strong {
   display: block;
@@ -188,7 +184,6 @@ b {
   width: 64px;
   height: 64px;
   border-radius: 20px;
-  font-size: 39px;
 }
 .brand-lockup-large strong {
   font-size: 39px;

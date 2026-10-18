@@ -241,7 +241,7 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
       <div className="login-glow login-glow-two" />
       <section className="login-card">
         <div className="brand-lockup brand-lockup-large">
-          <span className="brand-mark">c</span>
+          <img className="brand-mark" src={appLogo} alt="Crave" />
           <div>
             <strong>crave.</strong>
             <small>restaurant partner</small>
@@ -1170,7 +1170,7 @@ export default function App() {
   if (booting) {
     return (
       <main className="splash-screen">
-        <span className="brand-mark splash-mark">c</span>
+        <img className="brand-mark splash-mark" src={appLogo} alt="Crave" />
         <strong>crave.</strong>
         <span className="loader-line">
           <i />

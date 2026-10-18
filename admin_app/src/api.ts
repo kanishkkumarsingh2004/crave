@@ -6,6 +6,7 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
   ''
 )
 const TOKEN_KEY = 'crave_admin_auth_token'
+export const COOKIE_SESSION_TOKEN = 'cookie-session'
 
 let currentToken = ''
 
@@ -62,7 +63,7 @@ export async function apiRequest<T>(
     Accept: 'application/json',
     'X-Crave-Native-App': 'admin',
     ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token && token !== COOKIE_SESSION_TOKEN ? { Authorization: `Bearer ${token}` } : {}),
   }
 
   let status: number
@@ -82,6 +83,7 @@ export async function apiRequest<T>(
     const response = await fetch(`${API_ORIGIN}${path}`, {
       method,
       headers,
+      credentials: 'include',
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
     status = response.status

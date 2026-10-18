@@ -20,9 +20,7 @@ export function checkoutDistanceKm(restaurant: Restaurant, address?: Address): n
   const deltaLng = radians(customerLng - restaurantLng)
   const a =
     Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(radians(restaurantLat)) *
-      Math.cos(radians(customerLat)) *
-      Math.sin(deltaLng / 2) ** 2
+    Math.cos(radians(restaurantLat)) * Math.cos(radians(customerLat)) * Math.sin(deltaLng / 2) ** 2
   const directKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   if (directKm <= 0.05) return 1.8
   return Math.max(1, Number((directKm * 1.3).toFixed(1)))

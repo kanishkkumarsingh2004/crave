@@ -2,32 +2,32 @@
   "schemaVersion": 1,
   "apps": {
     "admin": {
-      "versionCode": 2,
-      "versionName": "1.1.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=f06016e92736f1caf7f5f17c6b63505364e2c4dfab4ae4e4bde2e6e7e3fd62c6",
-      "sha256": "f06016e92736f1caf7f5f17c6b63505364e2c4dfab4ae4e4bde2e6e7e3fd62c6",
-      "releaseNotes": "New native admin dashboard with mobile navigation, live operations and Settings-based updates."
+      "versionCode": 3,
+      "versionName": "1.1.1",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=eee938951d2056dfad37e953a554ffca1c371e023e67fedbb3caf2273d876498",
+      "sha256": "eee938951d2056dfad37e953a554ffca1c371e023e67fedbb3caf2273d876498",
+      "releaseNotes": "Reliable native sign-in, official Crave branding and an end-to-end manual UPI verification queue."
     },
     "driver": {
-      "versionCode": 2,
-      "versionName": "1.1.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=0486142fb297635585bee017a41c3e3f61ee7958dad23994a99b41eeedcae761",
-      "sha256": "0486142fb297635585bee017a41c3e3f61ee7958dad23994a99b41eeedcae761",
-      "releaseNotes": "Settings-based secure updates with live delivery, background location and notification stability."
+      "versionCode": 3,
+      "versionName": "1.1.1",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=1d6844234c2a2c22d441e395e8a3eb1d2ce94c2e3605bf4600d84f2a7694c187",
+      "sha256": "1d6844234c2a2c22d441e395e8a3eb1d2ce94c2e3605bf4600d84f2a7694c187",
+      "releaseNotes": "Reliable native sign-in, official Crave branding, live delivery, background location and notification stability."
     },
     "restaurant": {
-      "versionCode": 4,
-      "versionName": "1.3.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=7e870d8408af067ef69a9ede8f35fd2b79eab2c53f461f79421d2dd35021a9df",
-      "sha256": "7e870d8408af067ef69a9ede8f35fd2b79eab2c53f461f79421d2dd35021a9df",
-      "releaseNotes": "Settings-based secure updates, faster menu controls and automatic restaurant contract pricing."
+      "versionCode": 5,
+      "versionName": "1.3.1",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=8960c5690f596b70dd980c0043677f873cc950260216a95c23bf4635140db43f",
+      "sha256": "8960c5690f596b70dd980c0043677f873cc950260216a95c23bf4635140db43f",
+      "releaseNotes": "Official Crave branding, secure session stability, faster menu controls and automatic restaurant contract pricing."
     },
     "customer": {
-      "versionCode": 1,
-      "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=7d0c2bf961386da7517a0a1284d02c6dd104de0e776fa0eae80993319ebd9bb3",
-      "sha256": "7d0c2bf961386da7517a0a1284d02c6dd104de0e776fa0eae80993319ebd9bb3",
-      "releaseNotes": "The new CRAVE customer app with restaurant discovery, live menus, checkout, order tracking and account controls."
+      "versionCode": 2,
+      "versionName": "1.0.1",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=b74c12b2c97110ac96bbf0c5dcc9ea63234e56658a89bd0dc7160a48f512423b",
+      "sha256": "b74c12b2c97110ac96bbf0c5dcc9ea63234e56658a89bd0dc7160a48f512423b",
+      "releaseNotes": "Reliable native sign-in, official Crave branding, exact checkout pricing, UPI payments and improved network recovery."
     }
   }
 }

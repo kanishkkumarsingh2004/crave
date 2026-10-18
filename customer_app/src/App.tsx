@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Network } from '@capacitor/network'
-import { ApiError, apiRequest, clearAuthToken, restoreAuthToken, saveAuthToken } from './api'
+import appLogo from '../assets/logo.svg'
+import {
+  ApiError,
+  apiRequest,
+  clearAuthToken,
+  COOKIE_SESSION_TOKEN,
+  getAuthToken,
+  restoreAuthToken,
+  saveAuthToken,
+} from './api'
 import { Icon } from './Icon'
 import {
   enableNotifications,
@@ -24,7 +33,7 @@ const FALLBACK = ['#f4ff52', '#ffb86b', '#b8d8ff', '#e6cbff', '#a9efcf']
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`brand ${compact ? 'compact' : ''}`}>
-      <span className="brand-mark">C</span>
+      <img className="brand-mark" src={appLogo} alt="Crave" />
       {!compact && <span>CRAVE.</span>}
     </div>
   )
@@ -85,17 +94,29 @@ function Auth({ onDone }: { onDone: (u: User) => void }) {
         } catch {}
       }
       const data = signup
-        ? await apiRequest<{ token: string; user: User }>('/api/auth/signup', {
+        ? await apiRequest<{ token?: string; user: User }>('/api/auth/signup', {
             method: 'POST',
             body: { ...form, ...signupCoordinates, role: 'user' },
           })
-        : await apiRequest<{ token: string; user: User }>('/api/auth/login', {
+        : await apiRequest<{ token?: string; user: User }>('/api/auth/login', {
             method: 'POST',
             body: { email: form.email, password: form.password },
           })
-      if (!data.token) throw new Error('The server did not create a native app session.')
-      await saveAuthToken(data.token)
-      onDone(data.user)
+      let sessionUser = data.user
+      if (data.token) {
+        await saveAuthToken(data.token)
+      } else {
+        const cookieSession = await apiRequest<{ authenticated: boolean; user?: User }>(
+          '/api/auth/me',
+          { token: '' }
+        )
+        if (!cookieSession.authenticated || !cookieSession.user) {
+          throw new Error('Sign-in succeeded, but the secure app session could not be restored.')
+        }
+        sessionUser = cookieSession.user
+        await saveAuthToken(COOKIE_SESSION_TOKEN)
+      }
+      onDone(sessionUser)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to continue.')
     } finally {
@@ -373,29 +394,29 @@ function MenuScreen({
         <h2 className="section-title">
           Menu <span>{filtered.length} items</span>
         </h2>
-      {loading ? (
-        <div className="loading">
-          <Spinner /> Loading fresh dishes
-        </div>
-      ) : loadError ? (
-        <div className="inline-retry">
-          <div className="error-box">{loadError}</div>
-          <button className="secondary" onClick={() => setRetry((value) => value + 1)}>
-            Try again
-          </button>
-        </div>
-      ) : filtered.length === 0 ? (
+        {loading ? (
+          <div className="loading">
+            <Spinner /> Loading fresh dishes
+          </div>
+        ) : loadError ? (
+          <div className="inline-retry">
+            <div className="error-box">{loadError}</div>
+            <button className="secondary" onClick={() => setRetry((value) => value + 1)}>
+              Try again
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
           <Empty icon="search" title="No dishes found" text="Try a different search or category." />
         ) : (
           <div className="menu-list">
-          {filtered.map((item) => {
-            const variants = (item.variants || []).filter((v) => v.in_stock !== false)
-            const unavailable =
-              restaurant.is_open === false ||
-              item.in_stock === false ||
-              item.is_available === false ||
-              ((item.variants?.length || 0) > 0 && variants.length === 0)
-            const from = variants.length
+            {filtered.map((item) => {
+              const variants = (item.variants || []).filter((v) => v.in_stock !== false)
+              const unavailable =
+                restaurant.is_open === false ||
+                item.in_stock === false ||
+                item.is_available === false ||
+                ((item.variants?.length || 0) > 0 && variants.length === 0)
+              const from = variants.length
                 ? Math.min(...variants.map((v) => Number(v.price)))
                 : Number(item.price)
               return (
@@ -428,14 +449,14 @@ function MenuScreen({
                     >
                       {!(item.image || item.image_url) && '🍽️'}
                     </div>
-                  <button disabled={unavailable} onClick={() => add(item)}>
-                    {unavailable
-                      ? restaurant.is_open === false
-                        ? 'CLOSED'
-                        : 'SOLD OUT'
-                      : count(item.id)
-                        ? `ADD · ${count(item.id)}`
-                        : 'ADD +'}
+                    <button disabled={unavailable} onClick={() => add(item)}>
+                      {unavailable
+                        ? restaurant.is_open === false
+                          ? 'CLOSED'
+                          : 'SOLD OUT'
+                        : count(item.id)
+                          ? `ADD · ${count(item.id)}`
+                          : 'ADD +'}
                     </button>
                   </div>
                 </article>
@@ -1030,7 +1051,13 @@ function Addresses({
     [error, setError] = useState(''),
     [location, setLocation] = useState<{ lat: number; lng: number } | null>(null),
     [suggestions, setSuggestions] = useState<
-      Array<{ placeId: string; formattedAddress: string; secondaryAddress: string; lat: number; lng: number }>
+      Array<{
+        placeId: string
+        formattedAddress: string
+        secondaryAddress: string
+        lat: number
+        lng: number
+      }>
     >([]),
     [searching, setSearching] = useState(false)
   useEffect(() => {
@@ -1145,7 +1172,11 @@ function Addresses({
                 placeholder="House, street, landmark and city"
               />
             </label>
-            {searching && <p className="address-searching"><Spinner /> Finding addresses…</p>}
+            {searching && (
+              <p className="address-searching">
+                <Spinner /> Finding addresses…
+              </p>
+            )}
             {suggestions.length > 0 && (
               <div className="address-suggestions">
                 {suggestions.map((suggestion) => (
@@ -1166,7 +1197,11 @@ function Addresses({
                 ))}
               </div>
             )}
-            {location && <p className="address-confirmed"><Icon name="check" /> Location confirmed</p>}
+            {location && (
+              <p className="address-confirmed">
+                <Icon name="check" /> Location confirmed
+              </p>
+            )}
             {error && <div className="error-box">{error}</div>}
             <div>
               <button className="secondary" onClick={() => setAdding(false)}>
@@ -1229,9 +1264,7 @@ export default function App() {
     setCatalogError('')
     try {
       const response = await apiRequest<{ restaurants: Restaurant[] }>('/api/restaurants')
-      setRestaurants(
-        (response.restaurants || []).filter((restaurant) => !restaurant.is_dark_store)
-      )
+      setRestaurants((response.restaurants || []).filter((restaurant) => !restaurant.is_dark_store))
     } catch (catalogFailure) {
       setCatalogError(
         catalogFailure instanceof Error ? catalogFailure.message : 'Could not load restaurants.'
@@ -1303,7 +1336,7 @@ export default function App() {
     return () => clearInterval(timer)
   }, [user, loadRestaurants, loadAddresses, loadOrders])
   useEffect(() => {
-    if (!user) return
+    if (!user || getAuthToken() === COOKIE_SESSION_TOKEN) return
     const activeIds = orders
       .filter((o) => !['delivered', 'completed', 'cancelled'].includes(o.status))
       .map((o) => o.id)
@@ -1313,7 +1346,8 @@ export default function App() {
     localStorage.setItem('crave_cart', JSON.stringify(cart))
   }, [cart])
   useEffect(() => {
-    if (cartRestaurant) localStorage.setItem('crave_cart_restaurant', JSON.stringify(cartRestaurant))
+    if (cartRestaurant)
+      localStorage.setItem('crave_cart_restaurant', JSON.stringify(cartRestaurant))
     else localStorage.removeItem('crave_cart_restaurant')
   }, [cartRestaurant])
   useEffect(() => {
@@ -1329,7 +1363,8 @@ export default function App() {
     if (
       switchingRestaurant &&
       !confirm(`Start a new order from ${selected!.name}? Your current bag will be cleared.`)
-    ) return
+    )
+      return
     const r = selected!
     setCartRestaurant(r)
     const key = `${item.id}:${variant?.id || 'base'}`,
@@ -1363,6 +1398,7 @@ export default function App() {
         .filter((x) => x.quantity > 0)
     )
   const logout = async () => {
+    await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)
     setCart([])
@@ -1432,7 +1468,9 @@ export default function App() {
   )
   return (
     <div className="app-shell">
-      {!online && <div className="offline-banner">You’re offline. We’ll reconnect automatically.</div>}
+      {!online && (
+        <div className="offline-banner">You’re offline. We’ll reconnect automatically.</div>
+      )}
       <main className="content">
         {tab === 'home' && (
           <section className="page home">

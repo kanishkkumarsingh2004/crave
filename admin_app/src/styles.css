@@ -238,10 +238,124 @@ svg {
   font-weight: 800;
 }
 .record-list,
+.payment-list,
 .partner-grid,
 .settings-page {
   display: grid;
   gap: 10px;
+}
+.payment-alert {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid rgb(217 244 71 / 30%);
+  border-radius: 18px;
+  color: white;
+  background: rgb(217 244 71 / 7%);
+  text-align: left;
+}
+.payment-alert > span {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--lime);
+  background: rgb(217 244 71 / 10%);
+}
+.payment-alert div {
+  display: grid;
+  gap: 3px;
+}
+.payment-alert strong {
+  font-size: 11px;
+}
+.payment-alert small {
+  color: var(--muted);
+  font-size: 8px;
+}
+.payment-alert > b {
+  color: var(--lime);
+  font-size: 9px;
+}
+.payment-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: var(--surface);
+}
+.payment-card.pending {
+  border-color: rgb(217 244 71 / 28%);
+}
+.payment-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.payment-card-head span,
+.payment-details span {
+  color: var(--muted);
+  font-size: 8px;
+}
+.payment-card-head h3 {
+  margin-top: 3px;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.payment-card-head > strong {
+  color: var(--lime);
+  font-size: 17px;
+}
+.payment-details {
+  display: grid;
+  gap: 7px;
+  padding: 11px;
+  border-radius: 12px;
+  background: #0b140e;
+}
+.payment-details span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.payment-details b {
+  max-width: 65%;
+  overflow-wrap: anywhere;
+  color: #dce4de;
+  text-align: right;
+}
+.payment-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 8px;
+}
+.reject-button {
+  min-height: 46px;
+  border: 1px solid rgb(255 110 126 / 24%);
+  border-radius: 13px;
+  color: var(--danger);
+  background: rgb(255 110 126 / 7%);
+  font-size: 10px;
+  font-weight: 800;
+}
+.review-status {
+  padding: 10px;
+  border-radius: 11px;
+  color: #78e5a4;
+  background: rgb(72 191 118 / 10%);
+  text-align: center;
+  font-size: 9px;
+  font-weight: 800;
+}
+.review-status.rejected {
+  color: var(--danger);
+  background: rgb(255 110 126 / 7%);
 }
 .order-card,
 .partner-card,
@@ -427,7 +541,7 @@ svg {
   left: 0;
   height: calc(68px + env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   padding: 7px 6px env(safe-area-inset-bottom);
   border-top: 1px solid #1e2a22;
   background: rgb(8 16 11 / 96%);

@@ -12,25 +12,25 @@ const apps = {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
     releaseNotes:
-      'New native admin dashboard with mobile navigation, live operations and Settings-based updates.',
+      'Reliable native sign-in, official Crave branding and an end-to-end manual UPI verification queue.',
   },
   driver: {
     directory: 'driver_app',
     apk: 'crave-driver-debug.apk',
     releaseNotes:
-      'Settings-based secure updates with live delivery, background location and notification stability.',
+      'Reliable native sign-in, official Crave branding, live delivery, background location and notification stability.',
   },
   restaurant: {
     directory: 'restaurant_app',
     apk: 'crave-restaurant-debug.apk',
     releaseNotes:
-      'Settings-based secure updates, faster menu controls and automatic restaurant contract pricing.',
+      'Official Crave branding, secure session stability, faster menu controls and automatic restaurant contract pricing.',
   },
   customer: {
     directory: 'customer_app',
     apk: 'crave-customer-debug.apk',
     releaseNotes:
-      'The new CRAVE customer app with restaurant discovery, live menus, checkout, order tracking and account controls.',
+      'Reliable native sign-in, official Crave branding, exact checkout pricing, UPI payments and improved network recovery.',
   },
 }
 

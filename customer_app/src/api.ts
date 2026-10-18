@@ -6,6 +6,7 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
   ''
 )
 const TOKEN_KEY = 'crave_customer_auth_token'
+export const COOKIE_SESSION_TOKEN = 'cookie-session'
 let currentToken = ''
 
 export class ApiError extends Error {
@@ -42,7 +43,9 @@ export function getWebSocketUrl() {
   const base =
     import.meta.env.VITE_WS_BASE_URL?.trim() || `${API_ORIGIN.replace(/^http/, 'ws')}/api/ws`
   const url = new URL(base)
-  url.searchParams.set('token', currentToken)
+  if (currentToken && currentToken !== COOKIE_SESSION_TOKEN) {
+    url.searchParams.set('token', currentToken)
+  }
   return url.toString()
 }
 export async function apiRequest<T>(
@@ -55,7 +58,7 @@ export async function apiRequest<T>(
     Accept: 'application/json',
     'X-Crave-Native-App': 'customer',
     ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token && token !== COOKIE_SESSION_TOKEN ? { Authorization: `Bearer ${token}` } : {}),
   }
   let status = 0
   let data: any
@@ -74,6 +77,7 @@ export async function apiRequest<T>(
     const response = await fetch(path, {
       method,
       headers,
+      credentials: 'include',
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
     status = response.status

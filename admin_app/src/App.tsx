@@ -8,13 +8,14 @@ import {
   ApiError,
   apiRequest,
   clearAuthToken,
+  COOKIE_SESSION_TOKEN,
   getApiOrigin,
   restoreAuthToken,
   saveAuthToken,
 } from './api'
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 
-type Tab = 'overview' | 'orders' | 'partners' | 'settings'
+type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'settings'
 type IconName =
   | 'home'
   | 'orders'
@@ -63,6 +64,16 @@ interface RestaurantRecord {
   phone?: string
   is_open?: boolean
   commission_rate?: number | string
+}
+
+interface PaymentReview {
+  id: string
+  order_id: string
+  customer_vpa?: string | null
+  utr_ref: string
+  amount: number | string
+  status: 'pending' | 'verified' | 'rejected'
+  created_at?: string
 }
 
 interface DashboardData {
@@ -188,6 +199,8 @@ export default function App() {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [tab, setTab] = useState<Tab>('overview')
   const [data, setData] = useState<DashboardData>({ stats: {}, orders: [], restaurants: [] })
+  const [payments, setPayments] = useState<PaymentReview[]>([])
+  const [paymentBusy, setPaymentBusy] = useState('')
   const [networkConnected, setNetworkConnected] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [notice, setNotice] = useState('')
@@ -204,6 +217,10 @@ export default function App() {
         (order) => !['delivered', 'completed', 'cancelled'].includes(order.status || '')
       ),
     [data.orders]
+  )
+  const pendingPayments = useMemo(
+    () => payments.filter((payment) => payment.status === 'pending'),
+    [payments]
   )
 
   useEffect(() => {
@@ -278,11 +295,22 @@ export default function App() {
     })
     if (response.user?.role !== 'admin')
       throw new Error('This app requires an administrator account.')
-    if (!response.token) {
-      throw new Error('The server did not create an admin app session. Deploy the updated backend.')
+    let sessionUser = response.user
+    let sessionToken = response.token
+    if (!sessionToken) {
+      const cookieSession = await apiRequest<{ authenticated: boolean; user?: AdminUser }>(
+        '/api/auth/me',
+        { token: '' }
+      )
+      if (!cookieSession.authenticated || !cookieSession.user) {
+        throw new Error('Sign-in succeeded, but the secure app session could not be restored.')
+      }
+      sessionUser = cookieSession.user
+      sessionToken = COOKIE_SESSION_TOKEN
     }
-    await saveAuthToken(response.token)
-    setUser(response.user)
+    if (sessionUser.role !== 'admin') throw new Error('This app requires an administrator account.')
+    await saveAuthToken(sessionToken)
+    setUser(sessionUser)
     await loadDashboard(false)
   }
 
@@ -290,16 +318,70 @@ export default function App() {
     if (showLoader) setRefreshing(true)
     setError('')
     try {
-      const response = await apiRequest<DashboardData>('/api/admin/stats')
+      const [dashboardResult, paymentResult] = await Promise.allSettled([
+        apiRequest<DashboardData>('/api/admin/stats'),
+        apiRequest<{ reviews?: PaymentReview[] }>('/api/admin/payment-reviews?limit=100'),
+      ])
+      if (dashboardResult.status === 'rejected') throw dashboardResult.reason
+      const response = dashboardResult.value
       setData({
         stats: response.stats || {},
         orders: response.orders || [],
         restaurants: response.restaurants || [],
       })
+      if (paymentResult.status === 'fulfilled') {
+        setPayments(paymentResult.value.reviews || [])
+      } else {
+        setError(
+          paymentResult.reason instanceof Error
+            ? `Operations loaded, but payments could not sync: ${paymentResult.reason.message}`
+            : 'Operations loaded, but the payment review queue could not sync.'
+        )
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load admin data.')
     } finally {
       if (showLoader) setRefreshing(false)
+    }
+  }
+
+  async function reviewPayment(payment: PaymentReview, status: 'verified' | 'rejected') {
+    if (paymentBusy) return
+    if (
+      !window.confirm(
+        status === 'verified'
+          ? `Verify UPI payment ${payment.utr_ref} for ${money(payment.amount)}?`
+          : `Reject UPI payment ${payment.utr_ref}?`
+      )
+    )
+      return
+
+    const reason =
+      status === 'rejected'
+        ? window.prompt('Reason for rejection', 'UPI payment could not be verified')?.trim()
+        : undefined
+    if (status === 'rejected' && reason == null) return
+
+    const previous = payments
+    setPaymentBusy(payment.id)
+    setError('')
+    setPayments((current) =>
+      current.map((entry) => (entry.id === payment.id ? { ...entry, status } : entry))
+    )
+    try {
+      await apiRequest('/api/admin/payment-reviews', {
+        method: 'PATCH',
+        body: { id: payment.id, orderId: payment.order_id, status, reason },
+      })
+      setNotice(status === 'verified' ? 'UPI payment verified.' : 'UPI payment rejected.')
+      await loadDashboard(false)
+    } catch (reviewError) {
+      setPayments(previous)
+      setError(
+        reviewError instanceof Error ? reviewError.message : 'Could not update the payment review.'
+      )
+    } finally {
+      setPaymentBusy('')
     }
   }
 
@@ -338,6 +420,7 @@ export default function App() {
     await clearAuthToken()
     setUser(null)
     setData({ stats: {}, orders: [], restaurants: [] })
+    setPayments([])
     setTab('overview')
   }
 
@@ -356,6 +439,7 @@ export default function App() {
   const nav: Array<{ id: Tab; label: string; icon: IconName; badge?: number }> = [
     { id: 'overview', label: 'Home', icon: 'home' },
     { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
+    { id: 'payments', label: 'Payments', icon: 'money', badge: pendingPayments.length },
     { id: 'partners', label: 'Partners', icon: 'store' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
@@ -394,6 +478,18 @@ export default function App() {
                 <Icon name="refresh" /> Refresh operations
               </button>
             </article>
+            {pendingPayments.length > 0 && (
+              <button className="payment-alert" onClick={() => setTab('payments')}>
+                <span>
+                  <Icon name="money" />
+                </span>
+                <div>
+                  <strong>{pendingPayments.length} UPI payment awaiting review</strong>
+                  <small>Open the manual verification queue</small>
+                </div>
+                <b>Review</b>
+              </button>
+            )}
             <div className="stats-grid">
               <article>
                 <span>Orders</span>
@@ -440,6 +536,68 @@ export default function App() {
                 <OrderCard order={order} key={order.id} />
               ))}
               {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
+            </div>
+          </section>
+        )}
+
+        {tab === 'payments' && (
+          <section className="page">
+            <div className="page-heading">
+              <span className="eyebrow">Manual UPI verification</span>
+              <h1>Payments</h1>
+              <p>Match each UTR with the bank transaction before approving the order.</p>
+            </div>
+            <div className="payment-list">
+              {payments.map((payment) => (
+                <article className={`payment-card ${payment.status}`} key={payment.id}>
+                  <div className="payment-card-head">
+                    <div>
+                      <span>UTR</span>
+                      <h3>{payment.utr_ref}</h3>
+                    </div>
+                    <strong>{money(payment.amount)}</strong>
+                  </div>
+                  <div className="payment-details">
+                    <span>
+                      Order <b>#{payment.order_id.slice(-8).toUpperCase()}</b>
+                    </span>
+                    <span>
+                      Customer UPI <b>{payment.customer_vpa || 'Not provided'}</b>
+                    </span>
+                    <span>
+                      Submitted{' '}
+                      <b>
+                        {payment.created_at
+                          ? new Date(payment.created_at).toLocaleString()
+                          : 'Just now'}
+                      </b>
+                    </span>
+                  </div>
+                  {payment.status === 'pending' ? (
+                    <div className="payment-actions">
+                      <button
+                        className="reject-button"
+                        disabled={paymentBusy === payment.id}
+                        onClick={() => void reviewPayment(payment, 'rejected')}
+                      >
+                        Reject
+                      </button>
+                      <button
+                        className="primary-button"
+                        disabled={paymentBusy === payment.id}
+                        onClick={() => void reviewPayment(payment, 'verified')}
+                      >
+                        {paymentBusy === payment.id ? 'Saving…' : 'Verify payment'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={`review-status ${payment.status}`}>
+                      {payment.status === 'verified' ? 'Payment verified' : 'Payment rejected'}
+                    </div>
+                  )}
+                </article>
+              ))}
+              {payments.length === 0 && <EmptyState text="No UPI payments need review." />}
             </div>
           </section>
         )}

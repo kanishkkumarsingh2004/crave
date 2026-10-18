@@ -2,10 +2,12 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import appLogo from '../assets/logo.svg'
 import {
   ApiError,
   apiRequest,
   clearAuthToken,
+  COOKIE_SESSION_TOKEN,
   getAuthToken,
   restoreAuthToken,
   saveAuthToken,
@@ -148,7 +150,7 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
       <div className="login-glow login-glow-two" />
       <section className="login-card">
         <div className="brand-lockup brand-lockup-large">
-          <span className="brand-mark">c</span>
+          <img className="brand-mark" src={appLogo} alt="Crave" />
           <div>
             <strong>crave.</strong>
             <small>delivery partner</small>
@@ -1116,7 +1118,10 @@ export default function App() {
   }, [user?.id, online, tab])
 
   useEffect(() => {
-    if (!user || !getAuthToken()) return
+    if (!user || !getAuthToken() || getAuthToken() === COOKIE_SESSION_TOKEN) {
+      setWsConnected(false)
+      return
+    }
     return connectDriverEvents({
       token: getAuthToken(),
       activeOrderId: activeOrder?.id,
@@ -1215,12 +1220,21 @@ export default function App() {
       body: { email, password },
       token: '',
     })
-    if (!response.token)
-      throw new Error(
-        'The server did not create a driver app session. Deploy the updated backend and try again.'
+    let sessionUser = response.user
+    let sessionToken = response.token
+    if (!sessionToken) {
+      const cookieSession = await apiRequest<{ authenticated: boolean; user?: DriverUser }>(
+        '/api/auth/me',
+        { token: '' }
       )
+      if (!cookieSession.authenticated || !cookieSession.user) {
+        throw new Error('Sign-in succeeded, but the secure app session could not be restored.')
+      }
+      sessionUser = cookieSession.user
+      sessionToken = COOKIE_SESSION_TOKEN
+    }
     try {
-      await startSession(response.user, response.token)
+      await startSession(sessionUser, sessionToken)
     } catch (sessionError) {
       await clearAuthToken()
       setUser(null)
@@ -1488,7 +1502,7 @@ export default function App() {
   if (booting)
     return (
       <main className="splash-screen">
-        <span className="brand-mark">c</span>
+        <img className="brand-mark" src={appLogo} alt="Crave" />
         <div className="splash-loader" />
       </main>
     )
@@ -1500,7 +1514,7 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand-lockup">
-          <span className="brand-mark">c</span>
+          <img className="brand-mark" src={appLogo} alt="Crave" />
           <div>
             <strong>crave.</strong>
             <small>driver</small>

@@ -317,18 +317,14 @@ export async function POST(request: Request) {
         null
       const orderId = id || crypto.randomUUID()
       const paymentConfig = await getActiveConfig()
-      const isCustomerActor =
-        actor.role === 'user' || (actor.role as string) === 'customer'
+      const isCustomerActor = actor.role === 'user' || (actor.role as string) === 'customer'
       if (isCustomerActor && !String(payment_method).toLowerCase().includes('upi')) {
         return NextResponse.json(
           { error: 'Customer checkout supports UPI payments only.' },
           { status: 400 }
         )
       }
-      if (
-        isCustomerActor &&
-        (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))
-      ) {
+      if (isCustomerActor && (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))) {
         return NextResponse.json(
           { error: 'Enter a valid 10–18 digit UPI transaction reference (UTR).' },
           { status: 400 }

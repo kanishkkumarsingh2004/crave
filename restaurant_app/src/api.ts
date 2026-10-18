@@ -65,7 +65,7 @@ export function getWebSocketUrl(token: string): string {
   const configured = import.meta.env.VITE_WS_BASE_URL?.trim()
   const base = configured || `${API_ORIGIN.replace(/^http/, 'ws')}/api/ws`
   const url = new URL(base)
-  url.searchParams.set('token', token)
+  if (token && token !== COOKIE_SESSION_TOKEN) url.searchParams.set('token', token)
   return url.toString()
 }
 
@@ -103,6 +103,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     const response = await fetch(path, {
       method,
       headers,
+      credentials: 'include',
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
     status = response.status

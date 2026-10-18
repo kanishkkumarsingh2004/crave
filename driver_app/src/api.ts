@@ -6,6 +6,7 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
   ''
 )
 const TOKEN_KEY = 'crave_driver_auth_token'
+export const COOKIE_SESSION_TOKEN = 'cookie-session'
 
 let currentToken = ''
 
@@ -68,7 +69,7 @@ export function getWebSocketUrl(token: string): string {
   const configured = import.meta.env.VITE_WS_BASE_URL?.trim()
   const base = configured || `${API_ORIGIN.replace(/^http/, 'ws')}/api/ws`
   const url = new URL(base)
-  url.searchParams.set('token', token)
+  if (token && token !== COOKIE_SESSION_TOKEN) url.searchParams.set('token', token)
   return url.toString()
 }
 
@@ -85,7 +86,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     Accept: 'application/json',
     'X-Crave-Native-App': 'driver',
     ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token && token !== COOKIE_SESSION_TOKEN ? { Authorization: `Bearer ${token}` } : {}),
   }
 
   let status: number
@@ -106,6 +107,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     const response = await fetch(path, {
       method,
       headers,
+      credentials: 'include',
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
     status = response.status
