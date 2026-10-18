@@ -1229,6 +1229,36 @@ b {
   justify-self: end;
   min-width: 150px;
 }
+.software-card.ready {
+  border-color: rgb(217 255 56 / 35%);
+  background: linear-gradient(145deg, rgb(217 255 56 / 7%), var(--surface) 58%);
+}
+.software-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 9px;
+}
+.software-actions button {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding-inline: 10px;
+  font-size: 10px;
+}
+.software-actions button:disabled {
+  cursor: default;
+  opacity: 0.46;
+}
+.software-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgb(255 110 126 / 25%);
+  border-radius: 12px;
+  color: #ff9cab;
+  background: rgb(255 110 126 / 7%);
+  font-size: 10px;
+  line-height: 1.45;
+}
 .upi-list {
   display: grid;
   gap: 9px;

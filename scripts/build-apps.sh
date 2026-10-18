@@ -5,8 +5,8 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/android-builds"
 
-app_directories=(admin_app driver_app restaurant_app)
-apk_names=(crave-admin-debug.apk crave-driver-debug.apk crave-restaurant-debug.apk)
+app_directories=(admin_app driver_app restaurant_app customer_app)
+apk_names=(crave-admin-debug.apk crave-driver-debug.apk crave-restaurant-debug.apk crave-customer-debug.apk)
 
 mkdir -p "${output_directory}"
 

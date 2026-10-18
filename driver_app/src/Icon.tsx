@@ -14,6 +14,7 @@ export type IconName =
   | 'clock'
   | 'check'
   | 'refresh'
+  | 'download'
   | 'logout'
   | 'wifi'
   | 'offline'
@@ -95,6 +96,13 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M20 6v5h-5" />
       <path d="M18.5 9A8 8 0 1 0 20 15" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
     </>
   ),
   logout: (

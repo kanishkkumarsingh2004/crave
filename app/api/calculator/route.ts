@@ -18,6 +18,7 @@ import { calculateFullBreakdown, CalculatorInput } from '@/lib/calculator'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import {
   calculateOrderPrice,
+  tolegacyCalculatorResult,
   type CommercialContractInput,
   type OrderPriceInput,
 } from '@/lib/finance'
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
       gstRatePercent,
       // New v2 fields (optional — gracefully fall back to legacy calculation)
       items, // PricingItem[] — for canonical paise calculation
+      itemsAreCustomerPrices = false,
       orderType = 'restaurant_food',
     } = body
 
@@ -288,7 +290,7 @@ export async function POST(req: Request) {
             : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 5),
     }
 
-    const breakdown = calculateFullBreakdown(legacyInput, couponDetails)
+    let breakdown = calculateFullBreakdown(legacyInput, couponDetails)
 
     // ─── CANONICAL CALCULATION (new paise-based engine, used in v2 flows) ────────
 
@@ -318,17 +320,23 @@ export async function POST(req: Request) {
       // If item-level data provided (v2 callers), use it; otherwise synthesise a single item
       const pricingItems =
         Array.isArray(items) && items.length > 0
-          ? items.map((it: any) => ({
-              name: it.name || 'Item',
-              quantity: Math.max(1, Number(it.quantity) || 1),
-              unitPricePaise: Math.round(
+          ? items.map((it: any) => {
+              const unitPricePaise = Math.round(
                 Number(it.price || it.unitPricePaise || 0) * (it.unitPricePaise ? 1 : 100)
-              ),
-              hsnSacCode: it.hsnSacCode || '996331',
-              priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
-              customCommissionRatePercent: it.customCommissionRatePercent,
-              customMarkupRatePercent: it.customMarkupRatePercent,
-            }))
+              )
+              return {
+                name: it.name || 'Item',
+                quantity: Math.max(1, Number(it.quantity) || 1),
+                unitPricePaise,
+                // The customer menu already contains the final selling price. Marking it as
+                // fixed prevents a restaurant markup from being applied for a second time.
+                ...(itemsAreCustomerPrices ? { restaurantUnitPricePaise: unitPricePaise } : {}),
+                hsnSacCode: it.hsnSacCode || '996331',
+                priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
+                customCommissionRatePercent: it.customCommissionRatePercent,
+                customMarkupRatePercent: it.customMarkupRatePercent,
+              }
+            })
           : [
               {
                 name: 'Order Items',
@@ -368,6 +376,7 @@ export async function POST(req: Request) {
       }
 
       canonical = calculateOrderPrice(priceInput)
+      if (itemsAreCustomerPrices) breakdown = tolegacyCalculatorResult(canonical)
     } catch (canonicalErr) {
       console.error(
         '[Calculator] Canonical engine error (non-fatal, legacy result returned):',

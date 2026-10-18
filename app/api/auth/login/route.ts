@@ -127,12 +127,19 @@ export async function POST(request: Request) {
         ? 'restaurant'
         : userAgent.includes('cravedriver/')
           ? 'driver'
-          : undefined)
+          : userAgent.includes('craveadmin/')
+            ? 'admin'
+            : userAgent.includes('cravecustomer/')
+              ? 'customer'
+              : undefined)
     const isRestaurantRole =
       userPayload.role === 'restaurant_vendor' ||
       userPayload.role === 'cravexp_store_vendor' ||
       (userPayload.role as string) === 'vendor'
     const isDriverRole = userPayload.role === 'rider' || (userPayload.role as string) === 'driver'
+    const isAdminRole = userPayload.role === 'admin'
+    const isCustomerRole =
+      userPayload.role === 'user' || (userPayload.role as string) === 'customer'
 
     if (nativeApp === 'restaurant' && !isRestaurantRole) {
       return NextResponse.json(
@@ -146,9 +153,24 @@ export async function POST(request: Request) {
         { status: 403 }
       )
     }
+    if (nativeApp === 'admin' && !isAdminRole) {
+      return NextResponse.json(
+        { error: 'This account is not registered as an administrator' },
+        { status: 403 }
+      )
+    }
+    if (nativeApp === 'customer' && !isCustomerRole) {
+      return NextResponse.json(
+        { error: 'Please use a customer account to open CRAVE.' },
+        { status: 403 }
+      )
+    }
 
     const shouldReturnNativeToken =
-      (nativeApp === 'restaurant' && isRestaurantRole) || (nativeApp === 'driver' && isDriverRole)
+      (nativeApp === 'restaurant' && isRestaurantRole) ||
+      (nativeApp === 'driver' && isDriverRole) ||
+      (nativeApp === 'admin' && isAdminRole) ||
+      (nativeApp === 'customer' && isCustomerRole)
     return setCookies(
       NextResponse.json({
         success: true,

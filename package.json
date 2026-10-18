@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "node server.js",
     "dev:ws": "node ws-server.js",
-    "build": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build",
+    "build": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build @crave/customer-app#build",
     "build:android": "bash scripts/build-apps.sh",
     "build:ios": "bash scripts/build-ios.sh",
     "build:next": "prisma generate && next build --webpack",
-    "rebuild": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build --force",
+    "rebuild": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build @crave/customer-app#build --force",
     "start": "node server.js",
     "start:ws": "node ws-server.js",
     "typecheck": "turbo run typecheck:ts",

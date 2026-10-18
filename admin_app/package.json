@@ -1,6 +1,6 @@
 {
   "name": "@crave/admin-app",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.3.4",
@@ -19,6 +19,7 @@
     "@capacitor/core": "8.5.3",
     "@capacitor/ios": "8.5.3",
     "@capacitor/network": "8.0.1",
+    "@capacitor/preferences": "8.0.1",
     "@capacitor/splash-screen": "8.0.2",
     "@capacitor/status-bar": "8.0.4",
     "react": "19.3.1",

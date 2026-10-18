@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Crave Driver',
   webDir: 'dist',
   backgroundColor: '#121815',
-  appendUserAgent: ' CraveDriver/1.0',
+  appendUserAgent: ' CraveDriver/1.1.0',
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_crave',

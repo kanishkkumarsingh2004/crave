@@ -52,7 +52,7 @@ export async function checkForRestaurantUpdate(): Promise<RestaurantUpdate | nul
   const manifestUrl = import.meta.env.VITE_UPDATE_MANIFEST_URL || DEFAULT_MANIFEST_URL
   const separator = manifestUrl.includes('?') ? '&' : '?'
   const response = await CapacitorHttp.get({
-    url: `${manifestUrl}${separator}minute=${Math.floor(Date.now() / 60_000)}`,
+    url: `${manifestUrl}${separator}check=${Date.now()}`,
     headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
     connectTimeout: 10_000,
     readTimeout: 15_000,

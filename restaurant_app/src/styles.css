@@ -1146,6 +1146,37 @@ svg {
   width: 100%;
   margin-top: 18px;
 }
+.software-card.ready {
+  border-color: rgb(217 244 71 / 34%);
+  background: linear-gradient(145deg, rgb(217 244 71 / 7%), var(--surface) 55%);
+}
+.software-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 8px;
+}
+.software-actions button,
+.settings-card .software-actions .primary-button {
+  width: 100%;
+  min-height: 45px;
+  margin: 0;
+  padding-inline: 10px;
+  font-size: 9px;
+}
+.software-actions button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+.software-error {
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid rgb(255 107 126 / 25%);
+  border-radius: 11px;
+  color: #ff9cab;
+  background: rgb(255 107 126 / 7%);
+  font-size: 9px;
+  line-height: 1.45;
+}
 .large-toggle {
   width: 100%;
   display: flex;

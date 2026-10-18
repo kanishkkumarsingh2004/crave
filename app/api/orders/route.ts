@@ -317,6 +317,23 @@ export async function POST(request: Request) {
         null
       const orderId = id || crypto.randomUUID()
       const paymentConfig = await getActiveConfig()
+      const isCustomerActor =
+        actor.role === 'user' || (actor.role as string) === 'customer'
+      if (isCustomerActor && !String(payment_method).toLowerCase().includes('upi')) {
+        return NextResponse.json(
+          { error: 'Customer checkout supports UPI payments only.' },
+          { status: 400 }
+        )
+      }
+      if (
+        isCustomerActor &&
+        (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))
+      ) {
+        return NextResponse.json(
+          { error: 'Enter a valid 10–18 digit UPI transaction reference (UTR).' },
+          { status: 400 }
+        )
+      }
 
       // P0-A: Distributed, transaction-safe idempotency acquisition
       if (idempotencyKey) {
@@ -990,25 +1007,25 @@ export async function POST(request: Request) {
             : undefined,
         })),
         delivery: {
-          baseDeliveryFeePaise: Math.round((paymentConfig.baseDeliveryFee || 30) * 100),
-          baseDistanceKm: paymentConfig.baseDistanceKm || 2.5,
-          perKmRatePaise: Math.round((paymentConfig.perKmRate || 10) * 100),
+          baseDeliveryFeePaise: Math.round((paymentConfig.baseDeliveryFee ?? 30) * 100),
+          baseDistanceKm: paymentConfig.baseDistanceKm ?? 2.5,
+          perKmRatePaise: Math.round((paymentConfig.perKmRate ?? 10) * 100),
           freeDeliveryThresholdPaise: Math.round(
-            (paymentConfig.freeDeliveryThreshold || 500) * 100
+            (paymentConfig.freeDeliveryThreshold ?? 500) * 100
           ),
           // CR-005: Use server-calculated distance, ignore client-provided distance_km
           roadDistanceKm: serverCalculatedDistanceKm,
         },
         surcharges: {
-          surgeMultiplier: paymentConfig.surgeMultiplier || 1.0,
-          rainFeePaise: Math.round((paymentConfig.rainFee || 0) * 100),
-          nightSurgeFeePaise: Math.round((paymentConfig.nightSurgeFee || 0) * 100),
-          isRainActive: paymentConfig.isRainModeActive || false,
-          isNightSurgeActive: paymentConfig.isNightSurgeActive || false,
+          surgeMultiplier: paymentConfig.surgeMultiplier ?? 1.0,
+          rainFeePaise: Math.round((paymentConfig.rainFee ?? 0) * 100),
+          nightSurgeFeePaise: Math.round((paymentConfig.nightSurgeFee ?? 0) * 100),
+          isRainActive: paymentConfig.isRainModeActive ?? false,
+          isNightSurgeActive: paymentConfig.isNightSurgeActive ?? false,
         },
-        platformFeePaise: Math.round((paymentConfig.platformFee || 6) * 100),
-        handlingFeePaise: Math.round((paymentConfig.handlingFee || 5) * 100),
-        packagingFeePaise: Math.round((paymentConfig.packagingCap || 20) * 100),
+        platformFeePaise: Math.round((paymentConfig.platformFee ?? 6) * 100),
+        handlingFeePaise: Math.round((paymentConfig.handlingFee ?? 5) * 100),
+        packagingFeePaise: Math.round((paymentConfig.packagingCap ?? 20) * 100),
         smallCartFeePaise: 0,
         smallCartThresholdPaise: 0,
         couponDiscountPaise: Math.round(couponDiscountAmount * 100),
@@ -1025,7 +1042,7 @@ export async function POST(request: Request) {
           version: 1,
           commercialModel,
           commissionRatePercent: Number(
-            restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+            restaurantDetails.commission_rate ?? paymentConfig.vendorCommission ?? 15
           ),
           markupRatePercent: Number(restaurantDetails.markup_rate || 0),
           fixedCommissionPaise: Math.round((restaurantDetails.fixed_commission || 0) * 100),

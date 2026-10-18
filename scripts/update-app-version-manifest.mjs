@@ -11,18 +11,26 @@ const apps = {
   admin: {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
-    releaseNotes: 'Administration stability and backend connectivity updates.',
+    releaseNotes:
+      'New native admin dashboard with mobile navigation, live operations and Settings-based updates.',
   },
   driver: {
     directory: 'driver_app',
     apk: 'crave-driver-debug.apk',
-    releaseNotes: 'Live delivery, background location and notification stability updates.',
+    releaseNotes:
+      'Settings-based secure updates with live delivery, background location and notification stability.',
   },
   restaurant: {
     directory: 'restaurant_app',
     apk: 'crave-restaurant-debug.apk',
     releaseNotes:
-      'Faster menu controls, responsive catalog cards, searchable categories and automatic contract pricing.',
+      'Settings-based secure updates, faster menu controls and automatic restaurant contract pricing.',
+  },
+  customer: {
+    directory: 'customer_app',
+    apk: 'crave-customer-debug.apk',
+    releaseNotes:
+      'The new CRAVE customer app with restaurant discovery, live menus, checkout, order tracking and account controls.',
   },
 }
 

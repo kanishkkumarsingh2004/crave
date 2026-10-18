@@ -4,6 +4,7 @@ packages:
   - driver_app
   - admin_app
   - restaurant_app
+  - customer_app
 
 minimumReleaseAgeExclude:
   - '@next/*'

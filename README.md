@@ -52,7 +52,7 @@ Public: `/`, `/login`, `/signup`, `/policies/*`.
 
 ### Android apps
 
-Build the Admin, Driver, and Restaurant Android apps together with:
+Build the Admin, Driver, Restaurant, and CRAVE customer Android apps together with:
 
 ```bash
 pnpm build:android

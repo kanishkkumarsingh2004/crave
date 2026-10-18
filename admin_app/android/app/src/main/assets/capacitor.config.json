@@ -3,12 +3,7 @@
 	"appName": "Crave Admin",
 	"webDir": "dist",
 	"backgroundColor": "#121815",
-	"appendUserAgent": " CraveAdmin/1.0",
-	"server": {
-		"url": "https://crave.apexonestudio.com/admin/dashboard",
-		"cleartext": false,
-		"errorPath": "index.html"
-	},
+	"appendUserAgent": " CraveAdmin/1.1.0",
 	"plugins": {
 		"SplashScreen": {
 			"launchShowDuration": 1500,
@@ -22,7 +17,7 @@
 		"StatusBar": {
 			"style": "LIGHT",
 			"backgroundColor": "#121815",
-			"overlaysWebView": false
+			"overlaysWebView": true
 		}
 	}
 }

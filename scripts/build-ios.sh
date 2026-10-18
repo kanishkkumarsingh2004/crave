@@ -5,8 +5,8 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/ios-builds"
 
-app_directories=(admin_app driver_app restaurant_app)
-ipa_names=(crave-admin-debug.ipa crave-driver-debug.ipa crave-restaurant-debug.ipa)
+app_directories=(admin_app driver_app restaurant_app customer_app)
+ipa_names=(crave-admin-debug.ipa crave-driver-debug.ipa crave-restaurant-debug.ipa crave-customer-debug.ipa)
 
 mkdir -p "${output_directory}"
 

@@ -20,6 +20,20 @@ export async function POST(request: Request) {
     const name = typeof body.name === 'string' ? body.name.trim() : ''
     const phone = typeof body.phone === 'string' ? body.phone.trim() : ''
     const address = typeof body.address === 'string' ? body.address.trim() : ''
+    const parsedLatitude =
+      body.latitude != null && Number.isFinite(Number(body.latitude)) ? Number(body.latitude) : null
+    const parsedLongitude =
+      body.longitude != null && Number.isFinite(Number(body.longitude))
+        ? Number(body.longitude)
+        : null
+    const latitude =
+      parsedLatitude != null && parsedLatitude >= -90 && parsedLatitude <= 90
+        ? parsedLatitude
+        : null
+    const longitude =
+      parsedLongitude != null && parsedLongitude >= -180 && parsedLongitude <= 180
+        ? parsedLongitude
+        : null
     const cleanEmail = normalizeEmail(body.email)
 
     if (name.length < 2 || name.length > 100 || !cleanEmail || !password) {
@@ -91,6 +105,8 @@ export async function POST(request: Request) {
           customer_id: finalUserId,
           label: 'Home',
           address: address.trim(),
+          latitude,
+          longitude,
           is_default: true,
         })
       }
@@ -137,9 +153,11 @@ export async function POST(request: Request) {
     })
 
     const token = await createToken(userPayload)
+    const nativeApp = request.headers.get('x-crave-native-app')?.trim().toLowerCase()
     const response = NextResponse.json({
       success: true,
       user: userPayload,
+      ...(nativeApp === 'customer' ? { token } : {}),
       message: 'Account created successfully!',
     })
 

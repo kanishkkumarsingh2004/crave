@@ -291,47 +291,6 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
   )
 }
 
-function UpdatePrompt({
-  update,
-  installing,
-  error,
-  onInstall,
-  onDismiss,
-}: {
-  update: RestaurantUpdate | null
-  installing: boolean
-  error: string
-  onInstall: () => void
-  onDismiss: () => void
-}) {
-  if (!update) return null
-  return (
-    <div className="modal-backdrop update-backdrop" role="dialog" aria-modal="true">
-      <section className="update-sheet">
-        <span className="update-icon" aria-hidden="true">
-          <Icon name="download" />
-        </span>
-        <span className="eyebrow">New version available</span>
-        <h2>Update Crave Restaurant</h2>
-        <p>
-          Version {update.versionName} is ready. The app will verify the download before opening
-          Android’s installer.
-        </p>
-        <div className="update-notes">{update.releaseNotes}</div>
-        {error && <div className="update-error">{error}</div>}
-        <div className="update-actions">
-          <button className="secondary-button" disabled={installing} onClick={onDismiss}>
-            Later
-          </button>
-          <button className="primary-button" disabled={installing} onClick={onInstall}>
-            {installing ? <span className="button-spinner dark" /> : 'Update now'}
-          </button>
-        </div>
-      </section>
-    </div>
-  )
-}
-
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <article className={`stat-card stat-${tone}`}>
@@ -401,7 +360,8 @@ function OrderCard({
 
 function CategoryPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false)
-  const query = value.trim().toLowerCase()
+  const [searchTerm, setSearchTerm] = useState('')
+  const query = searchTerm.trim().toLowerCase()
   const options = CATEGORY_OPTIONS.filter((category) => category.toLowerCase().includes(query))
 
   return (
@@ -414,9 +374,14 @@ function CategoryPicker({ value, onChange }: { value: string; onChange: (value: 
           value={value}
           onChange={(event) => {
             onChange(event.target.value)
+            setSearchTerm(event.target.value)
             setOpen(true)
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={(event) => {
+            setSearchTerm('')
+            setOpen(true)
+            event.currentTarget.select()
+          }}
           onBlur={() => window.setTimeout(() => setOpen(false), 120)}
           placeholder="Search or enter a category"
           autoComplete="off"
@@ -432,6 +397,7 @@ function CategoryPicker({ value, onChange }: { value: string; onChange: (value: 
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     onChange(category)
+                    setSearchTerm(category)
                     setOpen(false)
                   }}
                 >
@@ -653,6 +619,7 @@ export default function App() {
   const [alert, setAlert] = useState<{ title: string; body: string } | null>(null)
   const [toast, setToast] = useState('')
   const [availableUpdate, setAvailableUpdate] = useState<RestaurantUpdate | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
   const [settingsForm, setSettingsForm] = useState({
@@ -665,7 +632,6 @@ export default function App() {
   })
   const ordersRef = useRef<RestaurantOrder[]>([])
   const updateCheckRunningRef = useRef(false)
-  const dismissedUpdateRef = useRef<number | null>(null)
 
   useEffect(() => {
     ordersRef.current = orders
@@ -676,38 +642,12 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return
-    let active = true
-    const check = async () => {
-      if (updateCheckRunningRef.current) return
-      updateCheckRunningRef.current = true
-      try {
-        const update = await checkForRestaurantUpdate()
-        if (active && update && update.versionCode !== dismissedUpdateRef.current) {
-          setAvailableUpdate(update)
-          setUpdateError('')
-        }
-      } catch (error) {
-        console.warn('[update] Version check failed:', error)
-      } finally {
-        updateCheckRunningRef.current = false
-      }
-    }
-
-    void check()
-    const timer = window.setInterval(() => void check(), 60_000)
-    let appStateHandle: { remove: () => Promise<void> } | undefined
-    void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) void check()
-    }).then((handle) => {
-      appStateHandle = handle
-    })
-    return () => {
-      active = false
-      window.clearInterval(timer)
-      if (appStateHandle) void appStateHandle.remove()
-    }
+    void refreshUpdateStatus()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'settings') void refreshUpdateStatus()
+  }, [activeTab])
 
   useEffect(() => {
     if (!restaurant) return
@@ -863,10 +803,19 @@ export default function App() {
     }
   }
 
-  function dismissUpdate() {
-    if (availableUpdate) dismissedUpdateRef.current = availableUpdate.versionCode
-    setAvailableUpdate(null)
+  async function refreshUpdateStatus() {
+    if (updateCheckRunningRef.current) return
+    updateCheckRunningRef.current = true
+    setCheckingUpdate(true)
     setUpdateError('')
+    try {
+      setAvailableUpdate(await checkForRestaurantUpdate())
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : 'Unable to check for updates.')
+    } finally {
+      setCheckingUpdate(false)
+      updateCheckRunningRef.current = false
+    }
   }
 
   async function resolveRestaurant(nextUser: RestaurantUser): Promise<Restaurant> {
@@ -1220,38 +1169,18 @@ export default function App() {
 
   if (booting) {
     return (
-      <>
-        <main className="splash-screen">
-          <span className="brand-mark splash-mark">c</span>
-          <strong>crave.</strong>
-          <span className="loader-line">
-            <i />
-          </span>
-        </main>
-        <UpdatePrompt
-          update={availableUpdate}
-          installing={installingUpdate}
-          error={updateError}
-          onInstall={() => void installUpdate()}
-          onDismiss={dismissUpdate}
-        />
-      </>
+      <main className="splash-screen">
+        <span className="brand-mark splash-mark">c</span>
+        <strong>crave.</strong>
+        <span className="loader-line">
+          <i />
+        </span>
+      </main>
     )
   }
 
   if (!user) {
-    return (
-      <>
-        <LoginScreen onLogin={handleLogin} />
-        <UpdatePrompt
-          update={availableUpdate}
-          installing={installingUpdate}
-          error={updateError}
-          onInstall={() => void installUpdate()}
-          onDismiss={dismissUpdate}
-        />
-      </>
-    )
+    return <LoginScreen onLogin={handleLogin} />
   }
 
   const navItems: Array<{ id: AppTab; label: string; icon: IconName; badge?: number }> = [
@@ -1673,6 +1602,48 @@ export default function App() {
                     <b>{notificationEnabled ? 'Enabled on this device' : 'Enable notifications'}</b>
                   </button>
                 </article>
+                <article
+                  className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}
+                >
+                  <div className="card-title">
+                    <span>
+                      <Icon name="download" />
+                    </span>
+                    <div>
+                      <h2>App update</h2>
+                      <p>
+                        {checkingUpdate
+                          ? 'Checking for the latest restaurant app…'
+                          : availableUpdate
+                            ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                            : updateError || 'You are using the latest available version.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="software-actions">
+                    <button
+                      className="secondary-button"
+                      disabled={checkingUpdate || installingUpdate}
+                      onClick={() => void refreshUpdateStatus()}
+                    >
+                      {checkingUpdate ? 'Checking…' : 'Check again'}
+                    </button>
+                    <button
+                      className="primary-button"
+                      disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                      onClick={() => void installUpdate()}
+                    >
+                      {installingUpdate
+                        ? 'Opening installer…'
+                        : availableUpdate
+                          ? `Update to ${availableUpdate.versionName}`
+                          : 'App is up to date'}
+                    </button>
+                  </div>
+                  {updateError && availableUpdate && (
+                    <div className="software-error">{updateError}</div>
+                  )}
+                </article>
                 <article className="settings-card account-card">
                   <div className="profile-avatar">
                     {user.name?.slice(0, 1).toUpperCase() || 'R'}
@@ -1718,13 +1689,6 @@ export default function App() {
           onSave={() => void saveMenuItem()}
         />
       )}
-      <UpdatePrompt
-        update={availableUpdate}
-        installing={installingUpdate}
-        error={updateError}
-        onInstall={() => void installUpdate()}
-        onDismiss={dismissUpdate}
-      />
     </div>
   )
 }

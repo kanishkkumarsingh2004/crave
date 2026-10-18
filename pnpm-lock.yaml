@@ -278,6 +278,73 @@ importers:
       '@capacitor/network':
         specifier: 8.0.1
         version: 8.0.1(@capacitor/core@8.5.3)
+      '@capacitor/preferences':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@capacitor/splash-screen':
+        specifier: 8.0.2
+        version: 8.0.2(@capacitor/core@8.5.3)
+      '@capacitor/status-bar':
+        specifier: 8.0.4
+        version: 8.0.4(@capacitor/core@8.5.3)
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@capacitor/assets':
+        specifier: 3.0.5
+        version: 3.0.5(supports-color@8.1.1)
+      '@capacitor/cli':
+        specifier: 8.5.3
+        version: 8.5.3(supports-color@8.1.1)
+      '@types/node':
+        specifier: 26.6.5
+        version: 26.6.5
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: 6.1.2
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)
+
+  customer_app:
+    dependencies:
+      '@capacitor/android':
+        specifier: 8.5.3
+        version: 8.5.3(@capacitor/core@8.5.3)
+      '@capacitor/app':
+        specifier: 8.1.2
+        version: 8.1.2(@capacitor/core@8.5.3)
+      '@capacitor/core':
+        specifier: 8.5.3
+        version: 8.5.3
+      '@capacitor/haptics':
+        specifier: 8.0.2
+        version: 8.0.2(@capacitor/core@8.5.3)
+      '@capacitor/ios':
+        specifier: 8.5.3
+        version: 8.5.3(@capacitor/core@8.5.3)
+      '@capacitor/local-notifications':
+        specifier: 8.3.1
+        version: 8.3.1(@capacitor/core@8.5.3)
+      '@capacitor/network':
+        specifier: 8.0.1
+        version: 8.0.1(@capacitor/core@8.5.3)
+      '@capacitor/preferences':
+        specifier: 8.0.1
+        version: 8.0.1(@capacitor/core@8.5.3)
       '@capacitor/splash-screen':
         specifier: 8.0.2
         version: 8.0.2(@capacitor/core@8.5.3)

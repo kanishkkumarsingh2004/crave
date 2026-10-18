@@ -29,6 +29,7 @@ import {
   watchDriverPosition,
 } from './native'
 import { connectDriverEvents } from './realtime'
+import { checkForDriverUpdate, installDriverUpdate, type DriverUpdate } from './update'
 import type {
   AppTab,
   CompletedTrip,
@@ -615,6 +616,12 @@ function AccountPage({
   onPrimaryUpi,
   onDeleteUpi,
   onToggleNotifications,
+  availableUpdate,
+  checkingUpdate,
+  installingUpdate,
+  updateError,
+  onCheckUpdate,
+  onInstallUpdate,
   onLogout,
 }: {
   profile: DriverProfile
@@ -626,6 +633,12 @@ function AccountPage({
   onPrimaryUpi: (id: string) => Promise<void>
   onDeleteUpi: (id: string) => Promise<void>
   onToggleNotifications: (enabled: boolean) => Promise<void>
+  availableUpdate: DriverUpdate | null
+  checkingUpdate: boolean
+  installingUpdate: boolean
+  updateError: string
+  onCheckUpdate: () => Promise<void>
+  onInstallUpdate: () => Promise<void>
   onLogout: () => Promise<void>
 }) {
   const [draft, setDraft] = useState(profile)
@@ -669,6 +682,44 @@ function AccountPage({
             <span />
           </button>
         </div>
+      </article>
+      <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
+        <div className="settings-card-title">
+          <span className="settings-icon">
+            <Icon name="download" />
+          </span>
+          <div>
+            <h3>Driver app update</h3>
+            <p>
+              {checkingUpdate
+                ? 'Checking for the latest driver app…'
+                : availableUpdate
+                  ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                  : updateError || 'You are using the latest available version.'}
+            </p>
+          </div>
+        </div>
+        <div className="software-actions">
+          <button
+            className="secondary-button"
+            disabled={checkingUpdate || installingUpdate}
+            onClick={() => void onCheckUpdate()}
+          >
+            {checkingUpdate ? 'Checking…' : 'Check again'}
+          </button>
+          <button
+            className="primary-button"
+            disabled={!availableUpdate || checkingUpdate || installingUpdate}
+            onClick={() => void onInstallUpdate()}
+          >
+            {installingUpdate
+              ? 'Opening installer…'
+              : availableUpdate
+                ? `Update to ${availableUpdate.versionName}`
+                : 'App is up to date'}
+          </button>
+        </div>
+        {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
       </article>
       <article className="settings-card">
         <div className="settings-card-title">
@@ -877,6 +928,10 @@ export default function App() {
   const [upi, setUpi] = useState<UpiAccount[]>([])
   const [incentives, setIncentives] = useState<Incentive[]>([])
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [availableUpdate, setAvailableUpdate] = useState<DriverUpdate | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [installingUpdate, setInstallingUpdate] = useState(false)
+  const [updateError, setUpdateError] = useState('')
   const [busyKey, setBusyKey] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -887,10 +942,19 @@ export default function App() {
   )
   const activeOrderRef = useRef<DriverOrder | null>(null)
   const backgroundTrackingStartedRef = useRef(false)
+  const updateCheckRunningRef = useRef(false)
 
   useEffect(() => {
     activeOrderRef.current = activeOrder
   }, [activeOrder])
+
+  useEffect(() => {
+    void refreshUpdateStatus()
+  }, [])
+
+  useEffect(() => {
+    if (tab === 'account') void refreshUpdateStatus()
+  }, [tab])
 
   useEffect(() => {
     if (!user || !notificationsEnabled) return
@@ -1353,6 +1417,42 @@ export default function App() {
     if (enabled && !granted) setError('Notification permission was not granted in device settings.')
   }
 
+  async function refreshUpdateStatus() {
+    if (updateCheckRunningRef.current) return
+    updateCheckRunningRef.current = true
+    setCheckingUpdate(true)
+    setUpdateError('')
+    try {
+      setAvailableUpdate(await checkForDriverUpdate())
+    } catch (updateCheckError) {
+      setUpdateError(
+        updateCheckError instanceof Error
+          ? updateCheckError.message
+          : 'Unable to check for updates.'
+      )
+    } finally {
+      setCheckingUpdate(false)
+      updateCheckRunningRef.current = false
+    }
+  }
+
+  async function installUpdate() {
+    if (!availableUpdate || installingUpdate) return
+    setInstallingUpdate(true)
+    setUpdateError('')
+    try {
+      await installDriverUpdate(availableUpdate)
+    } catch (updateInstallError) {
+      setUpdateError(
+        updateInstallError instanceof Error
+          ? updateInstallError.message
+          : 'The update could not be installed.'
+      )
+    } finally {
+      setInstallingUpdate(false)
+    }
+  }
+
   async function logout() {
     if (activeOrder) {
       setTab('home')
@@ -1562,6 +1662,12 @@ export default function App() {
             onPrimaryUpi={primaryUpi}
             onDeleteUpi={deleteUpi}
             onToggleNotifications={toggleNotifications}
+            availableUpdate={availableUpdate}
+            checkingUpdate={checkingUpdate}
+            installingUpdate={installingUpdate}
+            updateError={updateError}
+            onCheckUpdate={refreshUpdateStatus}
+            onInstallUpdate={installUpdate}
             onLogout={logout}
           />
         )}

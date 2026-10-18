@@ -1,0 +1,581 @@
+import { App as CapacitorApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
+import { Network } from '@capacitor/network'
+import { SplashScreen } from '@capacitor/splash-screen'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import appLogo from '../assets/logo.svg'
+import {
+  ApiError,
+  apiRequest,
+  clearAuthToken,
+  getApiOrigin,
+  restoreAuthToken,
+  saveAuthToken,
+} from './api'
+import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
+
+type Tab = 'overview' | 'orders' | 'partners' | 'settings'
+type IconName =
+  | 'home'
+  | 'orders'
+  | 'store'
+  | 'settings'
+  | 'refresh'
+  | 'wifi'
+  | 'offline'
+  | 'download'
+  | 'logout'
+  | 'users'
+  | 'money'
+
+interface AdminUser {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
+interface AdminStats {
+  weeklyGross?: number
+  weeklyRevenue?: number
+  orderCount?: number
+  totalCommission?: number
+  customerCount?: number
+  vendorCount?: number
+  driverCount?: number
+  restaurantCount?: number
+  liveDevices?: number
+}
+
+interface OrderRecord {
+  id: string
+  status?: string
+  customer_name?: string
+  restaurant_name?: string
+  total_amount?: number | string
+  created_at?: string
+}
+
+interface RestaurantRecord {
+  id: string
+  name: string
+  cuisine?: string
+  phone?: string
+  is_open?: boolean
+  commission_rate?: number | string
+}
+
+interface DashboardData {
+  stats: AdminStats
+  orders: OrderRecord[]
+  restaurants: RestaurantRecord[]
+}
+
+function Icon({ name }: { name: IconName }) {
+  const paths: Record<IconName, React.ReactNode> = {
+    home: <path d="M3 11 12 3l9 8M5 10v11h14V10M9 21v-7h6v7" />,
+    orders: <path d="M6 3h12l2 5H4l2-5ZM5 8v13h14V8M9 12h6M9 16h6" />,
+    store: <path d="M4 10v11h16V10M3 4h18l-2 6H5L3 4ZM9 21v-6h6v6" />,
+    settings: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.8-1L14.4 3h-4.8l-.4 3a8 8 0 0 0-1.8 1L5 6.1 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a8 8 0 0 0 1.8 1l.4 3h4.8l.4-3a8 8 0 0 0 1.8-1l2.4 1 2-3.5-2.1-1.5a7 7 0 0 0 .1-1Z" />
+      </>
+    ),
+    refresh: <path d="M20 6v5h-5M18.5 9A8 8 0 1 0 20 15" />,
+    wifi: <path d="M4 9a12 12 0 0 1 16 0M7 13a8 8 0 0 1 10 0M10 17a3 3 0 0 1 4 0M12 20h.01" />,
+    offline: (
+      <path d="m3 3 18 18M7 13a8 8 0 0 1 4-2M4 9a12 12 0 0 1 3-2M14 11a8 8 0 0 1 3 2M10 17a3 3 0 0 1 3 0" />
+    ),
+    download: <path d="M12 3v12m-5-5 5 5 5-5M5 21h14" />,
+    logout: <path d="m10 17 5-5-5-5m5 5H3m11-9h7v18h-7" />,
+    users: (
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8m13 18v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
+    ),
+    money: <path d="M12 2v20m5-16H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />,
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      {paths[name]}
+    </svg>
+  )
+}
+
+function money(value: unknown): string {
+  return `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+}
+
+function label(value = ''): string {
+  return value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
+function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) => Promise<void> }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await onLogin(email, password)
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="login-screen">
+      <div className="login-glow" />
+      <section className="login-card">
+        <div className="brand-lockup login-brand">
+          <img src={appLogo} alt="Crave" />
+          <div>
+            <strong>crave.</strong>
+            <small>admin control</small>
+          </div>
+        </div>
+        <span className="eyebrow">Operations command centre</span>
+        <h1>Run Crave from one app.</h1>
+        <p>Live orders, partner health, platform numbers and secure administration.</p>
+        <form onSubmit={submit}>
+          <label>
+            Admin email
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <span className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button type="button" onClick={() => setShowPassword((current) => !current)}>
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </span>
+          </label>
+          {error && <div className="error-box">{error}</div>}
+          <button className="primary-button" type="submit" disabled={busy}>
+            {busy ? 'Signing in…' : 'Open admin app'}
+          </button>
+        </form>
+      </section>
+    </main>
+  )
+}
+
+function EmptyState({ text }: { text: string }) {
+  return <div className="empty-state">{text}</div>
+}
+
+export default function App() {
+  const [booting, setBooting] = useState(true)
+  const [user, setUser] = useState<AdminUser | null>(null)
+  const [tab, setTab] = useState<Tab>('overview')
+  const [data, setData] = useState<DashboardData>({ stats: {}, orders: [], restaurants: [] })
+  const [networkConnected, setNetworkConnected] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
+  const [availableUpdate, setAvailableUpdate] = useState<AdminUpdate | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [installingUpdate, setInstallingUpdate] = useState(false)
+  const [updateError, setUpdateError] = useState('')
+  const updateCheckRunningRef = useRef(false)
+
+  const activeOrders = useMemo(
+    () =>
+      data.orders.filter(
+        (order) => !['delivered', 'completed', 'cancelled'].includes(order.status || '')
+      ),
+    [data.orders]
+  )
+
+  useEffect(() => {
+    void bootstrap()
+    void refreshUpdateStatus()
+  }, [])
+
+  useEffect(() => {
+    if (tab === 'settings') void refreshUpdateStatus()
+  }, [tab])
+
+  useEffect(() => {
+    if (!user) return
+    const timer = window.setInterval(() => void loadDashboard(false), 20_000)
+    return () => window.clearInterval(timer)
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const handles: Array<{ remove: () => Promise<void> }> = []
+    void Network.getStatus().then(({ connected }) => setNetworkConnected(connected))
+    void Promise.all([
+      Network.addListener('networkStatusChange', ({ connected }) => setNetworkConnected(connected)),
+      CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive && user) void loadDashboard(false)
+      }),
+      CapacitorApp.addListener('backButton', () => {
+        if (tab !== 'overview') setTab('overview')
+        else void CapacitorApp.minimizeApp()
+      }),
+    ]).then((listeners) => handles.push(...listeners))
+    return () => handles.forEach((handle) => void handle.remove())
+  }, [user?.id, tab])
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(''), 3600)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
+  async function bootstrap() {
+    try {
+      const token = await restoreAuthToken()
+      if (!token) return
+      const response = await apiRequest<{ authenticated: boolean; user: AdminUser }>(
+        '/api/auth/me',
+        {
+          token,
+        }
+      )
+      if (response.authenticated && response.user?.role === 'admin') {
+        setUser(response.user)
+        await loadDashboard(false)
+      } else {
+        await clearAuthToken()
+      }
+    } catch (bootstrapError) {
+      if (bootstrapError instanceof ApiError && bootstrapError.status === 401) {
+        await clearAuthToken()
+      }
+    } finally {
+      setBooting(false)
+      await SplashScreen.hide().catch(() => undefined)
+    }
+  }
+
+  async function login(email: string, password: string) {
+    const response = await apiRequest<{ token?: string; user: AdminUser }>('/api/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      token: '',
+    })
+    if (response.user?.role !== 'admin')
+      throw new Error('This app requires an administrator account.')
+    if (!response.token) {
+      throw new Error('The server did not create an admin app session. Deploy the updated backend.')
+    }
+    await saveAuthToken(response.token)
+    setUser(response.user)
+    await loadDashboard(false)
+  }
+
+  async function loadDashboard(showLoader = true) {
+    if (showLoader) setRefreshing(true)
+    setError('')
+    try {
+      const response = await apiRequest<DashboardData>('/api/admin/stats')
+      setData({
+        stats: response.stats || {},
+        orders: response.orders || [],
+        restaurants: response.restaurants || [],
+      })
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load admin data.')
+    } finally {
+      if (showLoader) setRefreshing(false)
+    }
+  }
+
+  async function refreshUpdateStatus() {
+    if (updateCheckRunningRef.current) return
+    updateCheckRunningRef.current = true
+    setCheckingUpdate(true)
+    setUpdateError('')
+    try {
+      setAvailableUpdate(await checkForAdminUpdate())
+    } catch (checkError) {
+      setUpdateError(checkError instanceof Error ? checkError.message : 'Unable to check updates.')
+    } finally {
+      setCheckingUpdate(false)
+      updateCheckRunningRef.current = false
+    }
+  }
+
+  async function installUpdate() {
+    if (!availableUpdate || installingUpdate) return
+    setInstallingUpdate(true)
+    setUpdateError('')
+    try {
+      await installAdminUpdate(availableUpdate)
+    } catch (installError) {
+      setUpdateError(
+        installError instanceof Error ? installError.message : 'The update could not be installed.'
+      )
+    } finally {
+      setInstallingUpdate(false)
+    }
+  }
+
+  async function logout() {
+    await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
+    await clearAuthToken()
+    setUser(null)
+    setData({ stats: {}, orders: [], restaurants: [] })
+    setTab('overview')
+  }
+
+  if (booting) {
+    return (
+      <main className="splash-screen">
+        <img src={appLogo} alt="Crave" />
+        <strong>crave admin</strong>
+        <span />
+      </main>
+    )
+  }
+  if (!user) return <LoginScreen onLogin={login} />
+
+  const stats = data.stats
+  const nav: Array<{ id: Tab; label: string; icon: IconName; badge?: number }> = [
+    { id: 'overview', label: 'Home', icon: 'home' },
+    { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
+    { id: 'partners', label: 'Partners', icon: 'store' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+  ]
+
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="brand-lockup">
+          <img src={appLogo} alt="Crave" />
+          <div>
+            <strong>crave admin</strong>
+            <small>Operations control</small>
+          </div>
+        </div>
+        <button className="connection-chip" onClick={() => void loadDashboard()}>
+          <Icon name={networkConnected ? 'wifi' : 'offline'} />
+          {refreshing ? 'Syncing' : networkConnected ? 'Live' : 'Offline'}
+        </button>
+      </header>
+
+      {!networkConnected && <div className="offline-banner">No internet connection</div>}
+      {error && (
+        <button className="error-banner" onClick={() => void loadDashboard()}>
+          {error}
+        </button>
+      )}
+
+      <main className="app-content">
+        {tab === 'overview' && (
+          <section className="page">
+            <article className="hero-card">
+              <span className="eyebrow">Live platform</span>
+              <h1>Everything is in view.</h1>
+              <p>{activeOrders.length} active orders currently need platform attention.</p>
+              <button className="primary-button" onClick={() => void loadDashboard()}>
+                <Icon name="refresh" /> Refresh operations
+              </button>
+            </article>
+            <div className="stats-grid">
+              <article>
+                <span>Orders</span>
+                <strong>{stats.orderCount || data.orders.length}</strong>
+              </article>
+              <article>
+                <span>Revenue</span>
+                <strong>{money(stats.weeklyRevenue)}</strong>
+              </article>
+              <article>
+                <span>Restaurants</span>
+                <strong>{stats.restaurantCount || data.restaurants.length}</strong>
+              </article>
+              <article>
+                <span>Live users</span>
+                <strong>{stats.liveDevices || 0}</strong>
+              </article>
+            </div>
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">Command queue</span>
+                <h2>Recent orders</h2>
+              </div>
+              <button onClick={() => setTab('orders')}>View all</button>
+            </div>
+            <div className="record-list">
+              {data.orders.slice(0, 5).map((order) => (
+                <OrderCard order={order} key={order.id} />
+              ))}
+              {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
+            </div>
+          </section>
+        )}
+
+        {tab === 'orders' && (
+          <section className="page">
+            <div className="page-heading">
+              <span className="eyebrow">Live operations</span>
+              <h1>Orders</h1>
+              <p>Monitor every order across the platform.</p>
+            </div>
+            <div className="record-list">
+              {data.orders.map((order) => (
+                <OrderCard order={order} key={order.id} />
+              ))}
+              {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
+            </div>
+          </section>
+        )}
+
+        {tab === 'partners' && (
+          <section className="page">
+            <div className="page-heading">
+              <span className="eyebrow">Partner network</span>
+              <h1>Restaurants</h1>
+              <p>Live status and commercial overview.</p>
+            </div>
+            <div className="partner-grid">
+              {data.restaurants.map((restaurant) => (
+                <article className="partner-card" key={restaurant.id}>
+                  <span className={restaurant.is_open ? 'status-dot open' : 'status-dot'} />
+                  <div>
+                    <h3>{restaurant.name}</h3>
+                    <p>{restaurant.cuisine || 'Restaurant partner'}</p>
+                  </div>
+                  <strong>{restaurant.is_open ? 'Open' : 'Offline'}</strong>
+                  <small>{Number(restaurant.commission_rate || 0)}% commission</small>
+                </article>
+              ))}
+              {data.restaurants.length === 0 && <EmptyState text="No restaurant partners found." />}
+            </div>
+          </section>
+        )}
+
+        {tab === 'settings' && (
+          <section className="page settings-page">
+            <div className="page-heading">
+              <span className="eyebrow">Application control</span>
+              <h1>Settings</h1>
+              <p>Admin access, backend health and app updates.</p>
+            </div>
+            <article className="settings-card profile-card">
+              <span className="profile-avatar">{user.name?.slice(0, 1).toUpperCase() || 'A'}</span>
+              <div>
+                <h2>{user.name}</h2>
+                <p>{user.email}</p>
+                <small>Platform administrator</small>
+              </div>
+            </article>
+            <article className="settings-card">
+              <div className="settings-title">
+                <span>
+                  <Icon name="wifi" />
+                </span>
+                <div>
+                  <h3>Production backend</h3>
+                  <p>{getApiOrigin()}</p>
+                </div>
+              </div>
+              <div className={`health-pill ${networkConnected ? 'healthy' : ''}`}>
+                {networkConnected ? 'Connected' : 'Offline'}
+              </div>
+            </article>
+            <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
+              <div className="settings-title">
+                <span>
+                  <Icon name="download" />
+                </span>
+                <div>
+                  <h3>Admin app update</h3>
+                  <p>
+                    {checkingUpdate
+                      ? 'Checking for the latest admin app…'
+                      : availableUpdate
+                        ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                        : updateError || 'You are using the latest available version.'}
+                  </p>
+                </div>
+              </div>
+              <div className="software-actions">
+                <button
+                  className="secondary-button"
+                  disabled={checkingUpdate || installingUpdate}
+                  onClick={() => void refreshUpdateStatus()}
+                >
+                  {checkingUpdate ? 'Checking…' : 'Check again'}
+                </button>
+                <button
+                  className="primary-button"
+                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                  onClick={() => void installUpdate()}
+                >
+                  {installingUpdate
+                    ? 'Opening installer…'
+                    : availableUpdate
+                      ? `Update to ${availableUpdate.versionName}`
+                      : 'App is up to date'}
+                </button>
+              </div>
+              {updateError && availableUpdate && (
+                <div className="software-error">{updateError}</div>
+              )}
+            </article>
+            <button className="logout-button" onClick={() => void logout()}>
+              <Icon name="logout" /> Sign out of admin app
+            </button>
+          </section>
+        )}
+      </main>
+
+      <nav className="bottom-nav" aria-label="Admin app navigation">
+        {nav.map((item) => (
+          <button
+            className={tab === item.id ? 'active' : ''}
+            key={item.id}
+            onClick={() => setTab(item.id)}
+          >
+            <span>
+              <Icon name={item.icon} />
+              {Boolean(item.badge) && <i>{Math.min(item.badge || 0, 99)}</i>}
+            </span>
+            <small>{item.label}</small>
+          </button>
+        ))}
+      </nav>
+      {notice && <div className="toast">{notice}</div>}
+    </div>
+  )
+}
+
+function OrderCard({ order }: { order: OrderRecord }) {
+  return (
+    <article className="order-card">
+      <div>
+        <span>{order.id.slice(-8).toUpperCase()}</span>
+        <h3>{order.restaurant_name || 'Restaurant order'}</h3>
+        <p>{order.customer_name || 'Crave customer'}</p>
+      </div>
+      <div className="order-meta">
+        <strong>{money(order.total_amount)}</strong>
+        <span>{label(order.status)}</span>
+      </div>
+    </article>
+  )
+}
