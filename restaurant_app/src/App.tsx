@@ -4,6 +4,7 @@ import { LocalNotifications } from '@capacitor/local-notifications'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import appLogo from '../assets/logo.svg'
 import {
   ApiError,
   COOKIE_SESSION_TOKEN,
@@ -53,16 +54,64 @@ const ACTIVE_STATUSES = new Set([
 const COMPLETED_STATUSES = new Set(['picked_up', 'out_for_delivery', 'delivered', 'completed'])
 
 const CATEGORY_OPTIONS = [
-  'Biryani, Rice & Pulao',
-  'North Indian Curries',
-  'South Indian & Dosa',
-  'Starters & Appetizers',
-  'Burgers & Sandwiches',
-  'Pizzas & Pasta',
-  'Rolls & Wraps',
-  'Beverages',
-  'Desserts & Sweets',
   'General',
+  'Breakfast',
+  'Lunch Specials',
+  'Dinner Specials',
+  'Biryani, Rice & Pulao',
+  'Rice Bowls',
+  'North Indian Curries',
+  'Punjabi',
+  'Mughlai',
+  'Rajasthani',
+  'Gujarati',
+  'Bengali',
+  'Kashmiri',
+  'Maharashtrian',
+  'Goan',
+  'Kerala',
+  'Andhra',
+  'Hyderabadi',
+  'South Indian & Dosa',
+  'Idli & Vada',
+  'Thali & Combos',
+  'Dal & Khichdi',
+  'Roti, Naan & Breads',
+  'Starters & Appetizers',
+  'Soups & Salads',
+  'Tandoor & Kebabs',
+  'Momos & Dumplings',
+  'Chinese',
+  'Thai',
+  'Japanese & Sushi',
+  'Korean',
+  'Continental',
+  'Mediterranean',
+  'Mexican',
+  'Italian',
+  'Burgers & Sandwiches',
+  'Pizza',
+  'Pasta',
+  'Rolls & Wraps',
+  'Noodles',
+  'Seafood',
+  'Chicken',
+  'Mutton',
+  'Egg Dishes',
+  'Vegetarian',
+  'Vegan',
+  'Healthy & Diet',
+  'Jain Food',
+  'Street Food',
+  'Chaat',
+  'Snacks',
+  'Bakery',
+  'Cakes',
+  'Beverages',
+  'Tea & Coffee',
+  'Juices & Shakes',
+  'Ice Cream',
+  'Desserts & Sweets',
 ]
 
 const EMPTY_EDITOR: MenuEditorValue = {
@@ -70,11 +119,9 @@ const EMPTY_EDITOR: MenuEditorValue = {
   category: CATEGORY_OPTIONS[0],
   description: '',
   restaurantPrice: '',
-  appPrice: '',
   image: '',
   isVeg: true,
   inStock: true,
-  stockCount: '50',
   unit: 'Serves 1',
   useSizes: false,
   variants: [],
@@ -352,6 +399,56 @@ function OrderCard({
   )
 }
 
+function CategoryPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const query = value.trim().toLowerCase()
+  const options = CATEGORY_OPTIONS.filter((category) => category.toLowerCase().includes(query))
+
+  return (
+    <div className="category-field">
+      <label htmlFor="menu-category">Category</label>
+      <div className="category-picker">
+        <Icon name="search" />
+        <input
+          id="menu-category"
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+          placeholder="Search or enter a category"
+          autoComplete="off"
+        />
+        {open && (
+          <div className="category-options" role="listbox" aria-label="Food categories">
+            {options.length > 0 ? (
+              options.map((category) => (
+                <button
+                  type="button"
+                  key={category}
+                  className={category === value ? 'selected' : ''}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onChange(category)
+                    setOpen(false)
+                  }}
+                >
+                  {category}
+                  {category === value && <Icon name="check" />}
+                </button>
+              ))
+            ) : (
+              <span>Use “{value}” as a custom category</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function MenuEditor({
   value,
   saving,
@@ -371,7 +468,6 @@ function MenuEditor({
       return
     }
     const restaurantPrice = Number(value.restaurantPrice || 0)
-    const price = Number(value.appPrice || restaurantPrice)
     onChange({
       ...value,
       useSizes: true,
@@ -379,7 +475,7 @@ function MenuEditor({
         id: crypto.randomUUID(),
         name,
         restaurant_price: restaurantPrice,
-        price,
+        price: restaurantPrice,
         in_stock: true,
         is_default: index === 0,
       })),
@@ -391,6 +487,19 @@ function MenuEditor({
       ...value,
       variants: value.variants.map((variant) =>
         variant.id === id ? { ...variant, ...changes } : variant
+      ),
+    })
+  }
+
+  function updateBasePrice(restaurantPrice: string) {
+    const numericPrice = Number(restaurantPrice || 0)
+    onChange({
+      ...value,
+      restaurantPrice,
+      variants: value.variants.map((variant) =>
+        variant.name.toLowerCase() === 'small'
+          ? { ...variant, restaurant_price: numericPrice, price: numericPrice }
+          : variant
       ),
     })
   }
@@ -416,17 +525,10 @@ function MenuEditor({
               placeholder="e.g. Paneer Tikka Bowl"
             />
           </label>
-          <label>
-            Category
-            <select
-              value={value.category}
-              onChange={(event) => onChange({ ...value, category: event.target.value })}
-            >
-              {CATEGORY_OPTIONS.map((category) => (
-                <option key={category}>{category}</option>
-              ))}
-            </select>
-          </label>
+          <CategoryPicker
+            value={value.category}
+            onChange={(category) => onChange({ ...value, category })}
+          />
           <label>
             Portion / unit
             <input
@@ -436,30 +538,16 @@ function MenuEditor({
             />
           </label>
           <label>
-            Restaurant price
+            {value.useSizes ? 'Small price' : 'Restaurant price'}
             <input
               inputMode="numeric"
               value={value.restaurantPrice}
-              onChange={(event) => onChange({ ...value, restaurantPrice: event.target.value })}
+              onChange={(event) => updateBasePrice(event.target.value)}
               placeholder="₹0"
             />
-          </label>
-          <label>
-            App selling price
-            <input
-              inputMode="numeric"
-              value={value.appPrice}
-              onChange={(event) => onChange({ ...value, appPrice: event.target.value })}
-              placeholder="₹0"
-            />
-          </label>
-          <label>
-            Stock count
-            <input
-              inputMode="numeric"
-              value={value.stockCount}
-              onChange={(event) => onChange({ ...value, stockCount: event.target.value })}
-            />
+            <small className="price-helper">
+              Your customer price is calculated automatically from the restaurant contract.
+            </small>
           </label>
           <label>
             Image URL
@@ -497,32 +585,29 @@ function MenuEditor({
           </div>
           {value.useSizes && (
             <div className="variant-editor field-wide">
-              <div className="variant-head">
-                <span>Size</span>
-                <span>Restaurant</span>
-                <span>App price</span>
+              <div className="variant-title">
+                <strong>Medium and large prices</strong>
+                <span>Small uses the price entered above.</span>
               </div>
-              {value.variants.map((variant) => (
-                <div className="variant-row" key={variant.id}>
-                  <strong>{variant.name}</strong>
-                  <input
-                    inputMode="numeric"
-                    value={variant.restaurant_price}
-                    onChange={(event) =>
-                      updateVariant(variant.id, {
-                        restaurant_price: Number(event.target.value || 0),
-                      })
-                    }
-                  />
-                  <input
-                    inputMode="numeric"
-                    value={variant.price}
-                    onChange={(event) =>
-                      updateVariant(variant.id, { price: Number(event.target.value || 0) })
-                    }
-                  />
-                </div>
-              ))}
+              {value.variants
+                .filter((variant) => variant.name.toLowerCase() !== 'small')
+                .map((variant) => (
+                  <div className="variant-row" key={variant.id}>
+                    <strong>{variant.name}</strong>
+                    <input
+                      inputMode="numeric"
+                      value={variant.restaurant_price}
+                      onChange={(event) =>
+                        updateVariant(variant.id, {
+                          restaurant_price: Number(event.target.value || 0),
+                          price: Number(event.target.value || 0),
+                        })
+                      }
+                      aria-label={`${variant.name} restaurant price`}
+                      placeholder="₹0"
+                    />
+                  </div>
+                ))}
             </div>
           )}
         </div>
@@ -560,6 +645,8 @@ export default function App() {
   const [orderFilter, setOrderFilter] = useState('active')
   const [menuSearch, setMenuSearch] = useState('')
   const [busyOrders, setBusyOrders] = useState<Record<string, boolean>>({})
+  const [busyMenuStock, setBusyMenuStock] = useState<Record<string, boolean>>({})
+  const [restaurantTogglePending, setRestaurantTogglePending] = useState(false)
   const [menuEditor, setMenuEditor] = useState<MenuEditorValue | null>(null)
   const [savingMenu, setSavingMenu] = useState(false)
   const [notificationEnabled, setNotificationEnabled] = useState(false)
@@ -885,18 +972,25 @@ export default function App() {
   }
 
   async function toggleRestaurant() {
-    if (!restaurant) return
+    if (!restaurant || restaurantTogglePending) return
+    const previousRestaurant = restaurant
+    const nextIsOpen = !restaurant.is_open
+    setRestaurant({ ...restaurant, is_open: nextIsOpen })
+    setRestaurantTogglePending(true)
     try {
       const result = await apiRequest<{ restaurant: Restaurant }>('/api/restaurants', {
         method: 'PATCH',
-        body: { id: restaurant.id, is_open: !restaurant.is_open },
+        body: { id: restaurant.id, is_open: nextIsOpen },
       })
       setRestaurant(result.restaurant)
       showToast(
         result.restaurant.is_open ? 'Restaurant is accepting orders.' : 'Restaurant is offline.'
       )
     } catch (error) {
+      setRestaurant(previousRestaurant)
       showToast(error instanceof Error ? error.message : 'Unable to update restaurant status.')
+    } finally {
+      setRestaurantTogglePending(false)
     }
   }
 
@@ -910,12 +1004,13 @@ export default function App() {
       name: item.name,
       category: item.category,
       description: item.description,
-      restaurantPrice: String(item.restaurant_price),
-      appPrice: String(item.price),
+      restaurantPrice: String(
+        item.variants.find((variant) => variant.name.toLowerCase() === 'small')?.restaurant_price ??
+          item.restaurant_price
+      ),
       image: item.image,
       isVeg: item.is_veg,
       inStock: item.in_stock,
-      stockCount: String(item.stock_count),
       unit: item.unit || 'Serves 1',
       useSizes: item.variants.length > 0,
       variants: item.variants,
@@ -925,26 +1020,23 @@ export default function App() {
   async function saveMenuItem() {
     if (!restaurant || !menuEditor) return
     const restaurantPrice = Math.round(Number(menuEditor.restaurantPrice))
-    const appPrice = Math.round(Number(menuEditor.appPrice))
     if (
       !menuEditor.name.trim() ||
-      !Number.isFinite(restaurantPrice) ||
-      !Number.isFinite(appPrice)
+      !menuEditor.category.trim() ||
+      !Number.isFinite(restaurantPrice)
     ) {
-      showToast('Dish name and both prices are required.')
+      showToast('Dish name, category and restaurant price are required.')
       return
     }
-    if (restaurantPrice < 0 || appPrice < restaurantPrice) {
-      showToast('App price must be at least the restaurant price.')
+    if (restaurantPrice < 0) {
+      showToast('Restaurant price must be zero or more.')
       return
     }
     if (
       menuEditor.useSizes &&
-      menuEditor.variants.some(
-        (variant) => variant.restaurant_price < 0 || variant.price < variant.restaurant_price
-      )
+      menuEditor.variants.some((variant) => variant.restaurant_price < 0)
     ) {
-      showToast('Each app size price must be at least its restaurant price.')
+      showToast('Every size needs a valid restaurant price.')
       return
     }
 
@@ -954,14 +1046,13 @@ export default function App() {
         ...(menuEditor.id ? { id: menuEditor.id } : {}),
         restaurant_id: restaurant.id,
         name: menuEditor.name.trim(),
-        category: menuEditor.category,
+        category: menuEditor.category.trim(),
         description: menuEditor.description.trim() || null,
         restaurant_price: restaurantPrice,
-        price: appPrice,
+        price: restaurantPrice,
         image: menuEditor.image.trim() || null,
         is_veg: menuEditor.isVeg,
         in_stock: menuEditor.inStock,
-        stock_count: Math.max(0, Math.round(Number(menuEditor.stockCount || 0))),
         unit: menuEditor.unit.trim() || null,
         hsn_sac_code: '996331',
         price_tax_mode: 'TAX_INCLUSIVE',
@@ -969,16 +1060,26 @@ export default function App() {
           ? menuEditor.variants.map((variant, index) => ({
               ...variant,
               restaurant_price: Math.round(variant.restaurant_price),
-              price: Math.round(variant.price),
+              price: Math.round(variant.restaurant_price),
               is_default: index === 0,
             }))
           : [],
       }
-      await apiRequest('/api/menu-items', {
+      const result = await apiRequest<{ item: MenuItem }>('/api/menu-items', {
         method: menuEditor.id ? 'PATCH' : 'POST',
         body: payload,
       })
-      await loadMenu(restaurant.id)
+      const savedItem = formatMenuItem(result.item, restaurant.id)
+      setMenuItems((current) => {
+        const exists = current.some((item) => item.id === savedItem.id)
+        const next = exists
+          ? current.map((item) => (item.id === savedItem.id ? savedItem : item))
+          : [...current, savedItem]
+        return next.sort(
+          (left, right) =>
+            left.category.localeCompare(right.category) || left.name.localeCompare(right.name)
+        )
+      })
       setMenuEditor(null)
       showToast(menuEditor.id ? 'Dish updated.' : 'Dish added to the live menu.')
     } catch (error) {
@@ -989,18 +1090,33 @@ export default function App() {
   }
 
   async function toggleMenuStock(item: MenuItem) {
+    if (busyMenuStock[item.id]) return
+    const nextInStock = !item.in_stock
+    setMenuItems((current) =>
+      current.map((entry) => (entry.id === item.id ? { ...entry, in_stock: nextInStock } : entry))
+    )
+    setBusyMenuStock((current) => ({ ...current, [item.id]: true }))
     try {
-      await apiRequest('/api/menu-items', {
+      const result = await apiRequest<{ item: MenuItem }>('/api/menu-items', {
         method: 'PATCH',
-        body: { id: item.id, in_stock: !item.in_stock },
+        body: { id: item.id, in_stock: nextInStock },
       })
       setMenuItems((current) =>
         current.map((entry) =>
-          entry.id === item.id ? { ...entry, in_stock: !entry.in_stock } : entry
+          entry.id === item.id
+            ? { ...entry, ...formatMenuItem(result.item, item.restaurant_id) }
+            : entry
         )
       )
     } catch (error) {
+      setMenuItems((current) =>
+        current.map((entry) =>
+          entry.id === item.id ? { ...entry, in_stock: item.in_stock } : entry
+        )
+      )
       showToast(error instanceof Error ? error.message : 'Unable to update dish.')
+    } finally {
+      setBusyMenuStock((current) => ({ ...current, [item.id]: false }))
     }
   }
 
@@ -1150,7 +1266,7 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand-lockup">
-          <span className="brand-mark">c</span>
+          <img className="brand-logo" src={appLogo} alt="Crave" />
           <div>
             <strong>{APP_NAME}</strong>
             <small>{restaurant?.name || 'Restaurant partner'}</small>
@@ -1211,8 +1327,10 @@ export default function App() {
                 </p>
               </div>
               <button
-                className={`store-switch ${restaurant?.is_open ? 'online' : ''}`}
+                className={`store-switch ${restaurant?.is_open ? 'online' : ''} ${restaurantTogglePending ? 'saving' : ''}`}
                 onClick={() => void toggleRestaurant()}
+                disabled={restaurantTogglePending}
+                aria-pressed={restaurant?.is_open}
               >
                 <span>
                   <i />
@@ -1359,21 +1477,22 @@ export default function App() {
                       <div className="size-chips">
                         {item.variants.map((variant) => (
                           <span key={variant.id}>
-                            {variant.name} {money(variant.price)}
+                            {variant.name} {money(variant.restaurant_price)}
                           </span>
                         ))}
                       </div>
                     )}
                     <div className="menu-price-row">
                       <div>
-                        <small>Restaurant / App</small>
-                        <strong>
-                          {money(item.restaurant_price)} <i>→</i> {money(item.price)}
-                        </strong>
+                        <small>Restaurant price</small>
+                        <strong>{money(item.restaurant_price)}</strong>
                       </div>
                       <button
-                        className={`mini-switch ${item.in_stock ? 'on' : ''}`}
+                        className={`mini-switch ${item.in_stock ? 'on' : ''} ${busyMenuStock[item.id] ? 'saving' : ''}`}
                         onClick={() => void toggleMenuStock(item)}
+                        disabled={busyMenuStock[item.id]}
+                        aria-label={`${item.in_stock ? 'Mark' : 'Restore'} ${item.name} ${item.in_stock ? 'unavailable' : 'available'}`}
+                        aria-pressed={item.in_stock}
                       >
                         <span />
                       </button>

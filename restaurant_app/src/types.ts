@@ -112,11 +112,9 @@ export interface MenuEditorValue {
   category: string
   description: string
   restaurantPrice: string
-  appPrice: string
   image: string
   isVeg: boolean
   inStock: boolean
-  stockCount: string
   unit: string
   useSizes: boolean
   variants: MenuVariant[]

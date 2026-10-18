@@ -32,13 +32,15 @@ export async function GET(request: Request) {
     const isDarkStore = searchParams.get('isDarkStore')
 
     // CR-009: Prevent cross-tenant data leak - derive owner from session for vendors querying ownerId
-    const isVendor = actor?.role === 'restaurant_vendor' || actor?.role === 'cravexp_store_vendor'
+    const isVendor = ['restaurant_vendor', 'cravexp_store_vendor', 'vendor'].includes(
+      actor?.role as string
+    )
 
     let effectiveOwnerId: string | null = null
     if (ownerId) {
       if (isVendor) {
         // Vendors can only query their own stores when filtering by owner
-        effectiveOwnerId = actor.id
+        effectiveOwnerId = actor?.id || null
       } else {
         effectiveOwnerId = ownerId
       }
@@ -73,9 +75,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
     if (
-      actor.role !== 'admin' &&
-      actor.role !== 'restaurant_vendor' &&
-      actor.role !== 'cravexp_store_vendor'
+      !['admin', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor'].includes(
+        actor.role as string
+      )
     ) {
       return NextResponse.json({ error: 'Unauthorized to create restaurant' }, { status: 403 })
     }
@@ -133,9 +135,9 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
     if (
-      actor.role !== 'admin' &&
-      actor.role !== 'restaurant_vendor' &&
-      actor.role !== 'cravexp_store_vendor'
+      !['admin', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor'].includes(
+        actor.role as string
+      )
     ) {
       return NextResponse.json({ error: 'Unauthorized to modify restaurant' }, { status: 403 })
     }

@@ -21,7 +21,8 @@ const apps = {
   restaurant: {
     directory: 'restaurant_app',
     apk: 'crave-restaurant-debug.apk',
-    releaseNotes: 'Native sign-in compatibility and secure in-app updates from GitHub.',
+    releaseNotes:
+      'Faster menu controls, responsive catalog cards, searchable categories and automatic contract pricing.',
   },
 }
 

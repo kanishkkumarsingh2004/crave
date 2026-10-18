@@ -16,11 +16,11 @@
       "releaseNotes": "Live delivery, background location and notification stability updates."
     },
     "restaurant": {
-      "versionCode": 2,
-      "versionName": "1.1.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=d3189f2577b0ef094be24f3c6405c87a07457c830dc07c9adbdee509d02c1543",
-      "sha256": "d3189f2577b0ef094be24f3c6405c87a07457c830dc07c9adbdee509d02c1543",
-      "releaseNotes": "Native sign-in compatibility and secure in-app updates from GitHub."
+      "versionCode": 3,
+      "versionName": "1.2.0",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=093ddcea771b94b0fb343c6502596c92e52748a50ddb095ee358679cfac48195",
+      "sha256": "093ddcea771b94b0fb343c6502596c92e52748a50ddb095ee358679cfac48195",
+      "releaseNotes": "Faster menu controls, responsive catalog cards, searchable categories and automatic contract pricing."
     }
   }
 }

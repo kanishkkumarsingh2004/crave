@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { calculateMenuAppPrice, type MenuPricingSettings } from '@/lib/menu-pricing'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
@@ -14,7 +15,10 @@ type NormalizedVariant = {
   sort_order: number
 }
 
-function normalizeVariants(value: unknown): { variants?: NormalizedVariant[]; error?: string } {
+function normalizeVariants(
+  value: unknown,
+  calculatePrice?: (restaurantPrice: number) => number
+): { variants?: NormalizedVariant[]; error?: string } {
   if (value === undefined) return {}
   if (!Array.isArray(value)) return { error: 'variants must be an array' }
   if (value.length > 20) return { error: 'A menu item can have at most 20 variants' }
@@ -25,7 +29,9 @@ function normalizeVariants(value: unknown): { variants?: NormalizedVariant[]; er
     const raw = value[index] as Record<string, unknown>
     const name = String(raw?.name || '').trim()
     const restaurantPrice = Number(raw?.restaurant_price)
-    const price = Number(raw?.price)
+    const price = calculatePrice
+      ? calculatePrice(restaurantPrice)
+      : Number(raw?.price ?? restaurantPrice)
     if (!name) return { error: `Variant ${index + 1} needs a name` }
     const nameKey = name.toLowerCase()
     if (names.has(nameKey)) return { error: `Variant names must be unique: ${name}` }
@@ -57,6 +63,37 @@ function normalizeVariants(value: unknown): { variants?: NormalizedVariant[]; er
     })
   }
   return { variants }
+}
+
+const restaurantPricingSelect = {
+  id: true,
+  owner_id: true,
+  commercial_model: true,
+  markup_rate: true,
+  fixed_markup: true,
+  commercial_contracts: {
+    where: { status: 'ACTIVE' as const },
+    orderBy: { effective_from: 'desc' as const },
+    take: 1,
+    select: {
+      commercial_model: true,
+      markup_rate: true,
+      fixed_markup: true,
+    },
+  },
+}
+
+function pricingSettings(restaurant: any): MenuPricingSettings {
+  const contract = restaurant?.commercial_contracts?.[0]
+  return {
+    commercialModel: contract?.commercial_model ?? restaurant?.commercial_model,
+    markupRate: contract?.markup_rate ?? restaurant?.markup_rate,
+    fixedMarkup: contract?.fixed_markup ?? restaurant?.fixed_markup,
+  }
+}
+
+function canManageMenus(role: string): boolean {
+  return ['admin', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor'].includes(role)
 }
 
 async function getActor(request: Request) {
@@ -125,11 +162,7 @@ export async function POST(request: Request) {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
       }
-      if (
-        actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor'
-      ) {
+      if (!canManageMenus(actor.role as string)) {
         return NextResponse.json({ error: 'Unauthorized to modify menu items' }, { status: 403 })
       }
     }
@@ -138,12 +171,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'restaurant_id is required' }, { status: 400 })
     }
 
+    const rest = await prisma.restaurant.findUnique({
+      where: { id: body.restaurant_id },
+      select: restaurantPricingSelect,
+    })
+    if (!rest) return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+
     if (process.env.NODE_ENV !== 'test' && actor) {
-      const rest = await prisma.restaurant.findUnique({
-        where: { id: body.restaurant_id },
-        select: { owner_id: true, id: true },
-      })
-      if (!rest) return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
       const vendorRestaurantId = (actor as any).restaurantId || (actor as any).restaurant_id
       if (actor.role !== 'admin' && rest.owner_id !== actor.id && rest.id !== vendorRestaurantId) {
         return NextResponse.json(
@@ -153,18 +187,26 @@ export async function POST(request: Request) {
       }
     }
 
-    const normalizedVariants = normalizeVariants(body.variants)
+    const shouldCalculateAppPrice = actor != null && actor.role !== 'admin'
+    const calculatePrice = shouldCalculateAppPrice
+      ? (restaurantPrice: number) => calculateMenuAppPrice(restaurantPrice, pricingSettings(rest))
+      : undefined
+    const normalizedVariants = normalizeVariants(body.variants, calculatePrice)
     if (normalizedVariants.error) {
       return NextResponse.json({ error: normalizedVariants.error }, { status: 400 })
     }
     const variants = normalizedVariants.variants || []
     const defaultVariant = variants.find((variant) => variant.is_default)
-    const price = defaultVariant?.price ?? Number(body.price)
     const restaurantPrice =
       defaultVariant?.restaurant_price ??
       (body.restaurant_price != null && body.restaurant_price !== ''
         ? Number(body.restaurant_price)
         : null)
+    const price =
+      defaultVariant?.price ??
+      (calculatePrice && restaurantPrice != null
+        ? calculatePrice(restaurantPrice)
+        : Number(body.price))
     const stockCount = Number(body.stock_count ?? 0)
     if (!body.name || !body.category || !Number.isInteger(price) || price < 0) {
       return NextResponse.json(
@@ -247,11 +289,7 @@ export async function PATCH(request: Request) {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
       }
-      if (
-        actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor'
-      ) {
+      if (!canManageMenus(actor.role as string)) {
         return NextResponse.json({ error: 'Unauthorized to modify menu items' }, { status: 403 })
       }
     }
@@ -262,17 +300,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 })
     }
 
-    const normalizedVariants = normalizeVariants(body.variants)
-    if (normalizedVariants.error) {
-      return NextResponse.json({ error: normalizedVariants.error }, { status: 400 })
-    }
-
     const existingItem = await prisma.menuItem.findUnique({
       where: { id },
       select: {
         price: true,
         restaurant_price: true,
-        restaurant: { select: { owner_id: true, id: true } },
+        restaurant: { select: restaurantPricingSelect },
       },
     })
     if (!existingItem) {
@@ -291,6 +324,17 @@ export async function PATCH(request: Request) {
           { status: 403 }
         )
       }
+    }
+
+    const shouldCalculateAppPrice = actor != null && actor.role !== 'admin'
+    const calculatePrice =
+      shouldCalculateAppPrice && existingItem.restaurant
+        ? (restaurantPrice: number) =>
+            calculateMenuAppPrice(restaurantPrice, pricingSettings(existingItem.restaurant))
+        : undefined
+    const normalizedVariants = normalizeVariants(body.variants, calculatePrice)
+    if (normalizedVariants.error) {
+      return NextResponse.json({ error: normalizedVariants.error }, { status: 400 })
     }
 
     const allowedFields = [
@@ -337,6 +381,10 @@ export async function PATCH(request: Request) {
     }
     if (data.expiry_date !== undefined) {
       data.expiry_date = data.expiry_date ? new Date(data.expiry_date) : null
+    }
+    if (calculatePrice) {
+      if (data.restaurant_price != null) data.price = calculatePrice(data.restaurant_price)
+      else delete data.price
     }
     for (const field of [
       'price',
@@ -411,11 +459,7 @@ export async function DELETE(request: Request) {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
       }
-      if (
-        actor.role !== 'admin' &&
-        actor.role !== 'restaurant_vendor' &&
-        actor.role !== 'cravexp_store_vendor'
-      ) {
+      if (!canManageMenus(actor.role as string)) {
         return NextResponse.json({ error: 'Unauthorized to delete menu items' }, { status: 403 })
       }
     }
