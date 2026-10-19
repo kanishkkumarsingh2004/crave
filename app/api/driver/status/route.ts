@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { updateDriverLocation, getDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { updateDriverLocation, getDriverLocationDistributed } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
 import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { driverId: bodyDriverId, isOnline, status } = body
     const driverId = actor.role === 'admin' ? bodyDriverId || actor.id : actor.id
 
-    const currentLoc = getDriverLocation(driverId)
+    const currentLoc = await getDriverLocationDistributed(driverId)
     const dutyStatus = status || (isOnline ? 'ONLINE' : 'OFFLINE')
 
     if (currentLoc && typeof currentLoc.lat === 'number' && typeof currentLoc.lng === 'number') {

@@ -1,5 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
+import { cacheApiResponse, clearMobileDataCache, readCachedApiResponse } from './mobileCache'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexonestudio.com').replace(
   /\/$/,
@@ -7,6 +8,7 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
 )
 const TOKEN_KEY = 'crave_driver_auth_token'
 export const COOKIE_SESSION_TOKEN = 'cookie-session'
+const CACHEABLE_GET_PREFIXES = ['/api/auth/me', '/api/driver/profile', '/api/driver/upi']
 
 let currentToken = ''
 
@@ -40,6 +42,7 @@ export async function restoreAuthToken(): Promise<string> {
 }
 
 export async function saveAuthToken(token: string): Promise<void> {
+  if (currentToken && currentToken !== token) await clearMobileDataCache()
   currentToken = token
   if (Capacitor.isNativePlatform()) {
     await Preferences.set({ key: TOKEN_KEY, value: token })
@@ -55,6 +58,7 @@ export async function clearAuthToken(): Promise<void> {
   } else {
     localStorage.removeItem(TOKEN_KEY)
   }
+  await clearMobileDataCache()
 }
 
 export function getAuthToken(): string {
@@ -91,31 +95,50 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   let status: number
   let data: any
+  // Offers, trips, orders, payouts, and GPS must always be live. Only stable
+  // rider account data is eligible for offline fallback.
+  const cacheable =
+    Capacitor.isNativePlatform() &&
+    method === 'GET' &&
+    Boolean(token) &&
+    CACHEABLE_GET_PREFIXES.some((prefix) => path.startsWith(prefix))
 
-  if (Capacitor.isNativePlatform()) {
-    const response = await CapacitorHttp.request({
-      url: `${API_ORIGIN}${path}`,
-      method,
-      headers,
-      data: options.body,
-      connectTimeout: 15000,
-      readTimeout: 20000,
-    })
-    status = response.status
-    data = normalizeResponseData(response.data)
-  } else {
-    const response = await fetch(path, {
-      method,
-      headers,
-      credentials: 'include',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    })
-    status = response.status
-    data = normalizeResponseData(await response.text())
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const response = await CapacitorHttp.request({
+        url: `${API_ORIGIN}${path}`,
+        method,
+        headers,
+        data: options.body,
+        connectTimeout: 15000,
+        readTimeout: 20000,
+      })
+      status = response.status
+      data = normalizeResponseData(response.data)
+    } else {
+      const response = await fetch(path, {
+        method,
+        headers,
+        credentials: 'include',
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      })
+      status = response.status
+      data = normalizeResponseData(await response.text())
+    }
+  } catch (error) {
+    const cached = cacheable ? await readCachedApiResponse<T>(path) : null
+    if (cached !== null) return cached
+    throw error
   }
 
   if (status < 200 || status >= 300) {
+    if (cacheable && status >= 500) {
+      const cached = await readCachedApiResponse<T>(path)
+      if (cached !== null) return cached
+    }
     throw new ApiError(data?.error || data?.message || 'Unable to complete the request.', status)
   }
+  if (cacheable) await cacheApiResponse(path, data)
+  else if (Capacitor.isNativePlatform() && method !== 'GET') await clearMobileDataCache()
   return data as T
 }

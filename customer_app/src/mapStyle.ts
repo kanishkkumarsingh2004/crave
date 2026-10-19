@@ -1,35 +1,94 @@
-import type { Map as MapLibreMap } from 'maplibre-gl'
+import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl'
+
+export type WebsiteMapTheme = 'light' | 'dark'
 
 export const WEBSITE_MAP_STYLES = {
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
 } as const
 
-const palette = {
-  land: '#f8fafc',
-  landcover: '#eef2f6',
-  water: '#e2e8f0',
-  waterways: '#abb7c7',
-  parks: '#f1f5f9',
-  buildings: '#8e9eb3',
-  aeroway: '#e2e8f0',
-  rail: '#37475c',
-  roadMajor: '#35455c',
-  roadMinorHigh: '#425267',
-  roadMinorMid: '#5e7086',
-  roadMinorLow: '#9faec0',
-  roadPath: '#b0bccb',
-  roadOutline: '#ffffff',
-  text: '#0f172a',
+const palettes = {
+  light: {
+    land: '#f8fafc',
+    landcover: '#eef2f6',
+    water: '#e2e8f0',
+    waterways: '#abb7c7',
+    parks: '#f1f5f9',
+    buildings: '#8e9eb3',
+    aeroway: '#e2e8f0',
+    rail: '#37475c',
+    roadMajor: '#35455c',
+    roadMinorHigh: '#425267',
+    roadMinorMid: '#5e7086',
+    roadMinorLow: '#9faec0',
+    roadPath: '#b0bccb',
+    roadOutline: '#ffffff',
+    text: '#0f172a',
+  },
+  dark: {
+    land: '#111a15',
+    landcover: '#17231c',
+    water: '#10242a',
+    waterways: '#315460',
+    parks: '#183022',
+    buildings: '#2a3830',
+    aeroway: '#1c2922',
+    rail: '#53665b',
+    roadMajor: '#899b90',
+    roadMinorHigh: '#6c7f74',
+    roadMinorMid: '#53665b',
+    roadMinorLow: '#3c5045',
+    roadPath: '#34443b',
+    roadOutline: '#0b1210',
+    text: '#e7eee9',
+  },
 } as const
 
-export function websiteMapStyle() {
-  return document.documentElement.dataset.theme === 'dark'
-    ? WEBSITE_MAP_STYLES.dark
-    : WEBSITE_MAP_STYLES.light
+export function websiteMapTheme(): WebsiteMapTheme {
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }
 
-export function applyWebsiteMapPalette(map: MapLibreMap) {
+export function websiteMapStyle(theme = websiteMapTheme()) {
+  return WEBSITE_MAP_STYLES[theme]
+}
+
+export function websiteMapFallbackStyle(theme = websiteMapTheme()): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      openstreetmap: {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      {
+        id: 'fallback-background',
+        type: 'background',
+        paint: { 'background-color': palettes[theme].land },
+      },
+      {
+        id: 'fallback-openstreetmap',
+        type: 'raster',
+        source: 'openstreetmap',
+        paint:
+          theme === 'dark'
+            ? {
+                'raster-brightness-max': 0.68,
+                'raster-brightness-min': 0.08,
+                'raster-contrast': 0.16,
+                'raster-saturation': -0.45,
+              }
+            : {},
+      },
+    ],
+  }
+}
+
+export function applyWebsiteMapPalette(map: MapLibreMap, theme = websiteMapTheme()) {
+  const palette = palettes[theme]
   const layers = map.getStyle()?.layers || []
   for (const layer of layers) {
     const id = layer.id.toLowerCase()

@@ -12,13 +12,13 @@ const apps = {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
     releaseNotes:
-      'Dedicated XP Store catalog management with add, edit, availability and delete actions, plus the exact website Mapcn location experience.',
+      'XP Store barcode scanning with the device camera, durable rider live-map telemetry and the exact website Mapcn location experience.',
   },
   driver: {
     directory: 'driver_app',
     apk: 'crave-driver-debug.apk',
     releaseNotes:
-      'Crash-safe notification permission handling and a polished responsive light, dark and system theme selector.',
+      'Rewards removed from the Driver app, with a cleaner four-item navigation bar and no incentives request during startup.',
   },
   restaurant: {
     directory: 'restaurant_app',

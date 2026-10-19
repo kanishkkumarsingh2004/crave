@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import type { Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { applyWebsiteMapPalette, websiteMapStyle } from './mapStyle'
+import {
+  applyWebsiteMapPalette,
+  websiteMapFallbackStyle,
+  websiteMapStyle,
+  websiteMapTheme,
+} from './mapStyle'
+
+if (typeof window !== 'undefined') {
+  maplibregl.setWorkerUrl(new URL('maplibre-gl-worker.mjs', document.baseURI).href)
+}
 
 export type AddressMapPoint = {
   lat: number
@@ -37,7 +46,7 @@ export default function AddressMap({
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRef = useRef<Marker | null>(null)
   const onPickRef = useRef(onPick)
-  const [fallback, setFallback] = useState(false)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
   onPickRef.current = onPick
 
@@ -45,7 +54,9 @@ export default function AddressMap({
     if (!containerRef.current || mapRef.current) return
 
     const initial = location || DEFAULT_LOCATION
-    let activeStyle = websiteMapStyle()
+    let activeTheme = websiteMapTheme()
+    let activeStyle = websiteMapStyle(activeTheme)
+    let fallbackAttempted = false
     let map: MapLibreMap
     try {
       map = new maplibregl.Map({
@@ -58,8 +69,9 @@ export default function AddressMap({
         renderWorldCopies: false,
         attributionControl: false,
       })
-    } catch {
-      setFallback(true)
+    } catch (error) {
+      console.error('Address map failed to start:', error)
+      setStatus('error')
       return
     }
 
@@ -69,31 +81,61 @@ export default function AddressMap({
         lng: Number(event.lngLat.lng.toFixed(6)),
       })
     })
-    map.on('style.load', () => applyWebsiteMapPalette(map))
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     mapRef.current = map
-    const loadTimeout = window.setTimeout(() => setFallback(true), 15_000)
+    let loadTimeout: number | undefined
+    let failureTimeout: number | undefined
     const resize = () => map.resize()
+    const clearTimers = () => {
+      if (loadTimeout) window.clearTimeout(loadTimeout)
+      if (failureTimeout) window.clearTimeout(failureTimeout)
+    }
+    const scheduleFallback = () => {
+      clearTimers()
+      loadTimeout = window.setTimeout(() => {
+        if (map.isStyleLoaded()) return
+        if (fallbackAttempted) {
+          setStatus('error')
+          return
+        }
+        fallbackAttempted = true
+        map.setStyle(websiteMapFallbackStyle(activeTheme), { diff: false })
+        failureTimeout = window.setTimeout(() => {
+          if (!map.isStyleLoaded()) setStatus('error')
+        }, 10_000)
+      }, 10_000)
+    }
+    const handleStyleLoad = () => {
+      clearTimers()
+      applyWebsiteMapPalette(map, activeTheme)
+      setStatus('ready')
+      requestAnimationFrame(resize)
+      window.setTimeout(resize, 320)
+    }
+    map.on('style.load', handleStyleLoad)
+    map.on('error', (event) => console.warn('Address map resource error:', event.error))
+    scheduleFallback()
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(containerRef.current)
     const themeObserver = new MutationObserver(() => {
-      const nextStyle = websiteMapStyle()
+      const nextTheme = websiteMapTheme()
+      const nextStyle = websiteMapStyle(nextTheme)
       if (nextStyle === activeStyle) return
+      activeTheme = nextTheme
       activeStyle = nextStyle
+      fallbackAttempted = false
+      setStatus('loading')
       map.setStyle(nextStyle, { diff: false })
+      scheduleFallback()
     })
     themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme'],
     })
-    map.once('load', () => {
-      window.clearTimeout(loadTimeout)
-      requestAnimationFrame(resize)
-      window.setTimeout(resize, 320)
-    })
     document.addEventListener('visibilitychange', resize)
 
     return () => {
-      window.clearTimeout(loadTimeout)
+      clearTimers()
       resizeObserver.disconnect()
       themeObserver.disconnect()
       document.removeEventListener('visibilitychange', resize)
@@ -129,19 +171,24 @@ export default function AddressMap({
     map.easeTo({ center: [location.lng, location.lat], zoom: Math.max(map.getZoom(), 15) })
   }, [location?.lat, location?.lng])
 
-  if (fallback) {
-    const point = location || DEFAULT_LOCATION
-    const delta = 0.008
-    const source = `https://www.openstreetmap.org/export/embed.html?bbox=${point.lng - delta}%2C${point.lat - delta}%2C${point.lng + delta}%2C${point.lat + delta}&layer=mapnik&marker=${point.lat}%2C${point.lng}`
-    return (
-      <iframe
-        className="address-map-canvas address-map-fallback"
-        title="Address map"
-        src={source}
-        loading="lazy"
-      />
-    )
-  }
-
-  return <div ref={containerRef} className="address-map-canvas" aria-label="Address map" />
+  return (
+    <div className="address-map-shell">
+      <div ref={containerRef} className="address-map-canvas" aria-label="Address map" />
+      {status === 'loading' && <div className="address-map-status">Loading map…</div>}
+      {status === 'error' && (
+        <div className="address-map-status address-map-error">
+          Map unavailable. Check your connection and reopen this page.
+        </div>
+      )}
+      <div className="address-map-credit">
+        <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
+          © CARTO
+        </a>{' '}
+        ·{' '}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+          © OSM
+        </a>
+      </div>
+    </div>
+  )
 }

@@ -907,8 +907,7 @@ b {
 }
 
 .trip-history-list,
-.payout-list,
-.reward-list {
+.payout-list {
   display: grid;
   gap: 11px;
 }
@@ -1015,93 +1014,6 @@ b {
 .payout-list article > b {
   color: #ff9da7;
   font-size: 14px;
-}
-
-.rewards-hero {
-  display: flex;
-  align-items: center;
-  gap: clamp(18px, 4vw, 32px);
-  border: 1px solid rgb(217 255 56 / 24%);
-  border-radius: 28px;
-  padding: clamp(23px, 5vw, 36px);
-  background: linear-gradient(125deg, rgb(217 255 56 / 12%), var(--surface));
-}
-.rewards-icon {
-  display: grid;
-  width: 82px;
-  height: 82px;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 25px;
-  color: #09100c;
-  background: var(--acid);
-  transform: rotate(-4deg);
-}
-.rewards-icon svg {
-  width: 39px;
-  height: 39px;
-}
-.rewards-hero > div > span {
-  color: var(--acid);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.rewards-hero h2 {
-  margin-top: 6px;
-  font-size: clamp(22px, 4vw, 34px);
-  line-height: 1.15;
-}
-.rewards-hero p {
-  max-width: 650px;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-.reward-list article {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border: 1px solid var(--line);
-  border-radius: 21px;
-  padding: 20px;
-  background: var(--surface);
-}
-.reward-list article.active {
-  border-color: rgb(217 255 56 / 24%);
-}
-.reward-list article > div > span {
-  color: var(--green);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.reward-list h3 {
-  margin-top: 5px;
-  font-size: 17px;
-}
-.reward-list p {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.reward-list small {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 9px;
-  color: #69766d;
-  font-size: 10px;
-}
-.reward-list small svg {
-  width: 13px;
-}
-.reward-list article > strong {
-  flex: 0 0 auto;
-  color: var(--acid);
-  font-size: 22px;
 }
 
 .profile-summary {
@@ -1393,7 +1305,7 @@ b {
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   padding: 7px max(9px, calc((100vw - 720px) / 2)) max(7px, env(safe-area-inset-bottom));
   border-top: 1px solid rgb(47 63 53 / 85%);
   background: rgb(12 20 15 / 95%);
@@ -1547,13 +1459,6 @@ b {
   .offer-grid {
     grid-template-columns: 1fr;
   }
-  .rewards-hero {
-    align-items: flex-start;
-  }
-  .rewards-icon {
-    width: 64px;
-    height: 64px;
-  }
   .upi-form {
     grid-template-columns: 1fr;
   }
@@ -1663,12 +1568,6 @@ b {
     width: 100%;
     justify-self: stretch;
   }
-  .rewards-hero {
-    display: grid;
-  }
-  .reward-list article {
-    align-items: flex-start;
-  }
   .bottom-nav small {
     font-size: 8px;
   }
@@ -1697,7 +1596,7 @@ b {
     right: auto;
     width: 106px;
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(5, min-content);
+    grid-template-rows: repeat(4, min-content);
     align-content: center;
     gap: 7px;
     padding: 20px 11px;
@@ -1791,7 +1690,6 @@ html[data-theme='light'] p,
 html[data-theme='light'] .muted {
   color: var(--muted);
 }
-html[data-theme='light'] .rewards-icon,
 html[data-theme='light'] .profile-avatar,
 html[data-theme='light'] .trip-progress .done span,
 html[data-theme='light'] .upi-list i {
@@ -1848,7 +1746,6 @@ select option {
 .sheet,
 .destination-card,
 .payout-list article,
-.reward-list article,
 .empty-state {
   border-color: var(--line);
   color: var(--ink);

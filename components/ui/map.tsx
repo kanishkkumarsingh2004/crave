@@ -1,7 +1,7 @@
 'use client'
 
 import type * as GeoJSON from 'geojson'
-import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react'
+import { Loader2, Locate, MapPin, Maximize, Minus, Plus, X } from 'lucide-react'
 import type { MarkerOptions, PopupOptions } from 'maplibre-gl'
 import * as MapLibreGL from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -20,10 +20,13 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 
-import { CUSTOM_MAP_PALETTE } from '@/lib/map-config'
+import { CUSTOM_MAP_PALETTES } from '@/lib/map-config'
 import { cn } from '@/lib/utils'
 
-function applyCustomPalette(map: MapLibreGL.Map) {
+type Theme = 'light' | 'dark'
+
+function applyCustomPalette(map: MapLibreGL.Map, theme: Theme) {
+  const palette = CUSTOM_MAP_PALETTES[theme]
   try {
     const style = map.getStyle()
     if (!style || !style.layers) return
@@ -33,14 +36,14 @@ function applyCustomPalette(map: MapLibreGL.Map) {
       const type = layer.type
 
       if (type === 'background') {
-        map.setPaintProperty(layer.id, 'background-color', CUSTOM_MAP_PALETTE.land)
+        map.setPaintProperty(layer.id, 'background-color', palette.land)
       } else if (id.includes('land') && type === 'fill') {
-        map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.land)
+        map.setPaintProperty(layer.id, 'fill-color', palette.land)
       }
 
       if (id.includes('landcover') || id.includes('landuse')) {
         if (type === 'fill') {
-          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.landcover)
+          map.setPaintProperty(layer.id, 'fill-color', palette.landcover)
         }
       }
 
@@ -51,11 +54,11 @@ function applyCustomPalette(map: MapLibreGL.Map) {
         id.includes('stream')
       ) {
         if (type === 'line') {
-          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.waterways)
+          map.setPaintProperty(layer.id, 'line-color', palette.waterways)
         }
       } else if (id.includes('water') || id.includes('ocean') || id.includes('lake')) {
         if (type === 'fill') {
-          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.water)
+          map.setPaintProperty(layer.id, 'fill-color', palette.water)
         }
       }
 
@@ -67,16 +70,16 @@ function applyCustomPalette(map: MapLibreGL.Map) {
         id.includes('pitch')
       ) {
         if (type === 'fill') {
-          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.parks)
+          map.setPaintProperty(layer.id, 'fill-color', palette.parks)
         }
       }
 
       if (id.includes('building')) {
         if (type === 'fill') {
-          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.buildings)
+          map.setPaintProperty(layer.id, 'fill-color', palette.buildings)
         }
         if (type === 'fill-extrusion') {
-          map.setPaintProperty(layer.id, 'fill-extrusion-color', CUSTOM_MAP_PALETTE.buildings)
+          map.setPaintProperty(layer.id, 'fill-extrusion-color', palette.buildings)
         }
       }
 
@@ -87,16 +90,16 @@ function applyCustomPalette(map: MapLibreGL.Map) {
         id.includes('airport')
       ) {
         if (type === 'fill') {
-          map.setPaintProperty(layer.id, 'fill-color', CUSTOM_MAP_PALETTE.aeroway)
+          map.setPaintProperty(layer.id, 'fill-color', palette.aeroway)
         }
         if (type === 'line') {
-          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.aeroway)
+          map.setPaintProperty(layer.id, 'line-color', palette.aeroway)
         }
       }
 
       if (id.includes('rail') || id.includes('train') || id.includes('transit')) {
         if (type === 'line') {
-          map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.rail)
+          map.setPaintProperty(layer.id, 'line-color', palette.rail)
         }
       }
 
@@ -110,7 +113,7 @@ function applyCustomPalette(map: MapLibreGL.Map) {
       ) {
         if (id.includes('casing') || id.includes('outline')) {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadOutline)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadOutline)
           }
         } else if (
           id.includes('motorway') ||
@@ -119,15 +122,15 @@ function applyCustomPalette(map: MapLibreGL.Map) {
           id.includes('major')
         ) {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMajor)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadMajor)
           }
         } else if (id.includes('secondary')) {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorHigh)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadMinorHigh)
           }
         } else if (id.includes('tertiary')) {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorMid)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadMinorMid)
           }
         } else if (
           id.includes('path') ||
@@ -136,19 +139,19 @@ function applyCustomPalette(map: MapLibreGL.Map) {
           id.includes('cycle')
         ) {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadPath)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadPath)
           }
         } else {
           if (type === 'line') {
-            map.setPaintProperty(layer.id, 'line-color', CUSTOM_MAP_PALETTE.roadMinorLow)
+            map.setPaintProperty(layer.id, 'line-color', palette.roadMinorLow)
           }
         }
       }
 
       if (type === 'symbol') {
         try {
-          map.setPaintProperty(layer.id, 'text-color', CUSTOM_MAP_PALETTE.text)
-          map.setPaintProperty(layer.id, 'text-halo-color', '#ffffff')
+          map.setPaintProperty(layer.id, 'text-color', palette.text)
+          map.setPaintProperty(layer.id, 'text-halo-color', palette.roadOutline)
           map.setPaintProperty(layer.id, 'text-halo-width', 2.5)
           map.setPaintProperty(layer.id, 'text-halo-blur', 0.2)
         } catch (e) {}
@@ -159,15 +162,50 @@ function applyCustomPalette(map: MapLibreGL.Map) {
   }
 }
 
-if (typeof window !== 'undefined' && !MapLibreGL.getWorkerUrl()) {
-  MapLibreGL.setWorkerUrl(
-    `https://unpkg.com/maplibre-gl@${MapLibreGL.getVersion()}/dist/maplibre-gl-worker.mjs`
-  )
+if (typeof window !== 'undefined') {
+  // Keep the worker same-origin. Remote module workers are blocked by the
+  // production CSP and are unreliable inside Android/iOS web views.
+  MapLibreGL.setWorkerUrl(new URL('/maplibre-gl-worker.mjs', window.location.origin).href)
 }
 
 const defaultStyles = {
   dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+}
+
+function createRasterFallbackStyle(theme: Theme): MapLibreGL.StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      openstreetmap: {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      {
+        id: 'fallback-background',
+        type: 'background',
+        paint: { 'background-color': theme === 'dark' ? '#111a15' : '#f8fafc' },
+      },
+      {
+        id: 'fallback-openstreetmap',
+        type: 'raster',
+        source: 'openstreetmap',
+        paint:
+          theme === 'dark'
+            ? {
+                'raster-brightness-max': 0.68,
+                'raster-brightness-min': 0.08,
+                'raster-contrast': 0.16,
+                'raster-saturation': -0.45,
+              }
+            : {},
+      },
+    ],
+  }
 }
 
 // A tile-less, dependency-free style with a transparent background. Use it for
@@ -211,8 +249,6 @@ function mergeHoverPaint<T extends Record<string, unknown>>(
   }
   return merged as T
 }
-
-type Theme = 'light' | 'dark'
 
 // Check the document for an explicit theme (works with next-themes, etc.).
 // Covers both `attribute="class"` (the default) and `attribute="data-theme"`.
@@ -357,6 +393,34 @@ function DefaultLoader() {
   )
 }
 
+function MapLoadError() {
+  return (
+    <div className="bg-background/90 absolute inset-0 z-20 grid place-items-center p-6 text-center backdrop-blur-sm">
+      <div>
+        <MapPin className="text-muted-foreground mx-auto mb-2 size-6" />
+        <p className="text-foreground text-sm font-semibold">Map could not be loaded</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Check the connection and reopen this page.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function MapDataCredit() {
+  return (
+    <div className="bg-background/85 text-muted-foreground pointer-events-auto absolute bottom-1 left-1 z-10 rounded px-1.5 py-0.5 text-[9px] leading-none shadow-sm backdrop-blur-sm">
+      <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
+        © CARTO
+      </a>{' '}
+      ·{' '}
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+        © OSM
+      </a>
+    </div>
+  )
+}
+
 function getViewport(map: MapLibreGL.Map): MapViewport {
   const center = map.getCenter()
   return {
@@ -388,10 +452,15 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   const [isLoaded, setIsLoaded] = useState(false)
   const [isStyleLoaded, setIsStyleLoaded] = useState(false)
   const [pendingStyle, setPendingStyle] = useState<MapStyleOption | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const currentStyleRef = useRef<MapStyleOption | null>(null)
   const styleSwapInFlightRef = useRef(false)
   const internalUpdateRef = useRef(false)
+  const styleLoadTimerRef = useRef<number | undefined>(undefined)
+  const styleFailureTimerRef = useRef<number | undefined>(undefined)
   const resolvedTheme = useResolvedTheme(themeProp)
+  const resolvedThemeRef = useRef(resolvedTheme)
+  resolvedThemeRef.current = resolvedTheme
 
   const isControlled = viewport !== undefined && onViewportChange !== undefined
 
@@ -402,6 +471,29 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   onClickRef.current = onClick
 
   const stableStyles = useStableValue(styles)
+
+  const clearStyleTimers = useCallback(() => {
+    if (styleLoadTimerRef.current) window.clearTimeout(styleLoadTimerRef.current)
+    if (styleFailureTimerRef.current) window.clearTimeout(styleFailureTimerRef.current)
+    styleLoadTimerRef.current = undefined
+    styleFailureTimerRef.current = undefined
+  }, [])
+
+  const scheduleStyleFallback = useCallback(
+    (map: MapLibreGL.Map) => {
+      clearStyleTimers()
+      styleLoadTimerRef.current = window.setTimeout(() => {
+        if (map.isStyleLoaded()) return
+        const fallbackStyle = createRasterFallbackStyle(resolvedThemeRef.current)
+        currentStyleRef.current = fallbackStyle
+        map.setStyle(fallbackStyle, { diff: false })
+        styleFailureTimerRef.current = window.setTimeout(() => {
+          if (!map.isStyleLoaded()) setLoadFailed(true)
+        }, 10_000)
+      }, 10_000)
+    },
+    [clearStyleTimers]
+  )
 
   const mapStyles = useMemo(() => {
     // Explicit styles win. Otherwise `blank` opts into the transparent
@@ -428,18 +520,30 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     const initialStyle = resolvedTheme === 'dark' ? mapStyles.dark : mapStyles.light
     currentStyleRef.current = initialStyle
 
-    const map = new MapLibreGL.Map({
-      container: containerRef.current,
-      style: initialStyle,
-      renderWorldCopies: false,
-      attributionControl: false,
-      ...props,
-      ...viewport,
-    })
+    let map: MapLibreGL.Map
+    try {
+      map = new MapLibreGL.Map({
+        container: containerRef.current,
+        style: initialStyle,
+        renderWorldCopies: false,
+        attributionControl: false,
+        ...props,
+        ...viewport,
+      })
+    } catch (error) {
+      console.error('MapLibre failed to start:', error)
+      setLoadFailed(true)
+      return
+    }
+
+    scheduleStyleFallback(map)
 
     const styleLoadHandler = () => {
+      clearStyleTimers()
       styleSwapInFlightRef.current = false
-      applyCustomPalette(map)
+      applyCustomPalette(map, resolvedThemeRef.current)
+      setLoadFailed(false)
+      setIsLoaded(true)
       setIsStyleLoaded(true)
     }
     const loadHandler = () => setIsLoaded(true)
@@ -460,7 +564,15 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     map.on('click', handleClick)
     setMapInstance(map)
 
+    const resize = () => map.resize()
+    const resizeObserver = new ResizeObserver(resize)
+    resizeObserver.observe(containerRef.current)
+    document.addEventListener('visibilitychange', resize)
+
     return () => {
+      clearStyleTimers()
+      resizeObserver.disconnect()
+      document.removeEventListener('visibilitychange', resize)
       map.off('load', loadHandler)
       map.off('style.load', styleLoadHandler)
       map.off('move', handleMove)
@@ -468,6 +580,7 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       map.remove()
       setIsLoaded(false)
       setIsStyleLoaded(false)
+      setLoadFailed(false)
       setMapInstance(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -523,7 +636,8 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     // Full reload (no diff) so `style.load` fires deterministically. A
     // successful diff would never fire it, leaving isStyleLoaded stuck false.
     mapInstance.setStyle(pendingStyle, { diff: false })
-  }, [mapInstance, pendingStyle])
+    scheduleStyleFallback(mapInstance)
+  }, [mapInstance, pendingStyle, scheduleStyleFallback])
 
   // Sync projection when the prop changes after mount.
   useEffect(() => {
@@ -544,7 +658,8 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   return (
     <MapContext.Provider value={contextValue}>
       <div ref={containerRef} className={cn('relative h-full w-full', className)}>
-        {(!isLoaded || loading) && <DefaultLoader />}
+        {loadFailed ? <MapLoadError /> : (!isLoaded || loading) && <DefaultLoader />}
+        {!blank && <MapDataCredit />}
         {/* SSR-safe: children render only when map is loaded on client */}
         {mapInstance && children}
       </div>

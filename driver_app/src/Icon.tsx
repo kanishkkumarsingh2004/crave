@@ -4,7 +4,6 @@ export type IconName =
   | 'home'
   | 'trips'
   | 'wallet'
-  | 'gift'
   | 'user'
   | 'bell'
   | 'bike'
@@ -44,12 +43,6 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M3 6h16v14H3z" />
       <path d="M3 9h16" />
       <path d="M15 13h6v4h-6z" />
-    </>
-  ),
-  gift: (
-    <>
-      <path d="M3 10h18v11H3zM2 6h20v4H2zM12 6v15" />
-      <path d="M12 6H8.5A2.5 2.5 0 1 1 11 3.5L12 6Zm0 0h3.5A2.5 2.5 0 1 0 13 3.5L12 6Z" />
     </>
   ),
   user: (

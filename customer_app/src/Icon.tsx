@@ -23,6 +23,7 @@ export type IconName =
   | 'wallet'
   | 'tag'
   | 'utensils'
+  | 'truck'
 const paths: Record<IconName, React.ReactNode> = {
   home: (
     <>
@@ -122,6 +123,13 @@ const paths: Record<IconName, React.ReactNode> = {
   utensils: (
     <>
       <path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M16 3v18M16 3c4 2 4 8 0 10" />
+    </>
+  ),
+  truck: (
+    <>
+      <path d="M3 7h4l2 9h9l3-6h2V7H3Z" />
+      <circle cx="8" cy="20" r="1" />
+      <circle cx="17" cy="20" r="1" />
     </>
   ),
 }

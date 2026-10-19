@@ -656,6 +656,25 @@ function Checkout({
       )
   }, [subtotal, restaurant, selected, addresses, coupon, cart])
   const total = billing?.grandTotal || subtotal
+  const foodSubtotal = billing?.customerFoodSubtotal || subtotal
+  const freeDeliveryThreshold = config?.freeDeliveryThreshold ?? 0
+  const freeDeliveryProgress = (() => {
+    if (!freeDeliveryThreshold || freeDeliveryThreshold <= 0) return null
+    if (billing?.isFreeDelivery) {
+      return {
+        pct: 100,
+        label: 'Free delivery unlocked',
+        detail: 'Enjoy free delivery on this order.',
+      }
+    }
+    const pct = Math.min(100, Math.round((foodSubtotal / freeDeliveryThreshold) * 100))
+    const remaining = Math.max(0, freeDeliveryThreshold - foodSubtotal)
+    return {
+      pct,
+      label: `${money(remaining)} more for free delivery`,
+      detail: `Add ${money(remaining)} to your order total to remove the delivery charge.`,
+    }
+  })()
   const pay = async (app: UpiPaymentApp) => {
     setError('')
     if (!config?.upiVpa) {
@@ -785,6 +804,43 @@ function Checkout({
             Total to pay <strong>{money(total)}</strong>
           </div>
         </div>
+        <div className="coupon-row">
+          <div className="coupon-input">
+            <Icon name="tag" />
+            <input
+              value={coupon}
+              onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+              placeholder="Have a coupon code?"
+              inputMode="text"
+              autoCapitalize="characters"
+            />
+            {coupon && (
+              <button
+                className="round pale small"
+                onClick={() => setCoupon('')}
+                aria-label="Clear coupon"
+              >
+                <Icon name="close" />
+              </button>
+            )}
+          </div>
+        </div>
+        {freeDeliveryProgress && (
+          <div className="free-delivery-meter">
+            <div className="meter-head">
+              <span className="meter-icon">
+                <Icon name="truck" />
+              </span>
+              <div className="meter-text">
+                <b>{freeDeliveryProgress.label}</b>
+                <small>{freeDeliveryProgress.detail}</small>
+              </div>
+            </div>
+            <div className="meter-track">
+              <div className="meter-fill" style={{ width: `${freeDeliveryProgress.pct}%` }} />
+            </div>
+          </div>
+        )}
         <h2>Pay securely with UPI</h2>
         <div className="upi-card">
           <Icon name="wallet" />
@@ -1359,13 +1415,13 @@ function Addresses({
                 ))}
               </div>
             )}
-            <div className="address-map">
+            <div className="partner-map-wrap">
+              <div className="partner-map-head">
+                <span>Delivery location</span>
+                <small>Tap the map to drop the pin or use your current location.</small>
+              </div>
               <Suspense
-                fallback={
-                  <div className="address-map-canvas address-map-loading">
-                    <Spinner /> Loading map…
-                  </div>
-                }
+                fallback={<div className="address-map-canvas map-loading">Loading map…</div>}
               >
                 <AddressMap location={location} onPick={(point) => void chooseMapLocation(point)} />
               </Suspense>

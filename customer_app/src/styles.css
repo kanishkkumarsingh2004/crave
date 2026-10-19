@@ -1275,6 +1275,112 @@ textarea {
 .bill-card strong {
   font-size: 20px;
 }
+.coupon-row {
+  margin-top: 13px;
+}
+.coupon-input {
+  height: 53px;
+  border: 1px solid #dce0d9;
+  border-radius: 16px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 9px;
+}
+.coupon-input svg {
+  color: #7f887f;
+  flex-shrink: 0;
+}
+.coupon-input input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  background: transparent;
+  font-size: 14px;
+  color: #2a332b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.coupon-input input::placeholder {
+  color: #9aa39a;
+}
+.round.pale.small {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.free-delivery-meter {
+  margin-top: 14px;
+  border: 1px solid #dce0d9;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 16px;
+  display: grid;
+  gap: 11px;
+}
+.meter-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.meter-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: #eaff87;
+  color: #294000;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.meter-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.meter-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.meter-text b {
+  font-size: 13px;
+  color: #2a332b;
+}
+.meter-text small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.meter-track {
+  height: 9px;
+  border-radius: 999px;
+  background: #e7eadf;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c8e434, #86a018);
+  transition: width 0.5s ease;
+}
+html[data-theme='dark'] .free-delivery-meter,
+html[data-theme='dark'] .coupon-input {
+  background: #141b17;
+  border-color: #233027;
+}
+html[data-theme='dark'] .coupon-input input {
+  color: #fff;
+}
+html[data-theme='dark'] .meter-icon {
+  background: #2a3a0a;
+  color: #d9f447;
+}
+html[data-theme='dark'] .meter-text b {
+  color: #fff;
+}
+html[data-theme='dark'] .meter-track {
+  background: #1d2621;
+}
 .upi-card {
   display: flex;
   align-items: center;
@@ -2050,6 +2156,49 @@ textarea,
 .address-map-canvas {
   border: 1px solid var(--line);
   background: var(--surface-2);
+}
+.address-map-shell {
+  position: relative;
+  width: 100%;
+}
+.address-map-status {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}
+.address-map-error {
+  color: var(--danger);
+}
+.address-map-credit {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  z-index: 5;
+  padding: 3px 5px;
+  border-radius: 5px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 14%);
+  font-size: 8px;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+}
+.address-map-credit a {
+  color: inherit;
+  text-decoration: none;
+}
+.address-map-canvas .maplibregl-ctrl-attrib,
+.address-map-canvas .maplibregl-ctrl-attrib-button {
+  display: none !important;
 }
 .address-map-fallback {
   display: block;

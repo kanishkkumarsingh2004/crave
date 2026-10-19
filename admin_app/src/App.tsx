@@ -19,6 +19,7 @@ import { initializeNativeAppearance, sendTestNotification } from './native'
 import type { AddressMapPoint } from './AddressMap'
 
 const AddressMap = lazy(() => import('./AddressMap'))
+const BarcodeScanner = lazy(() => import('./BarcodeScanner'))
 
 type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'xp-store' | 'settings'
 type IconName =
@@ -35,6 +36,7 @@ type IconName =
   | 'money'
   | 'bell'
   | 'package'
+  | 'camera'
 
 interface AdminUser {
   id: string
@@ -216,6 +218,12 @@ function Icon({ name }: { name: IconName }) {
         <path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.2l8 4.5" />
       </>
     ),
+    camera: (
+      <>
+        <path d="M4 7h3l1.5-2h7L17 7h3v12H4V7Z" />
+        <circle cx="12" cy="13" r="3.5" />
+      </>
+    ),
   }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -330,6 +338,7 @@ export default function App() {
   const [xpLoading, setXPLoading] = useState(false)
   const [xpSearch, setXPSearch] = useState('')
   const [xpFormOpen, setXPFormOpen] = useState(false)
+  const [barcodeScannerOpen, setBarcodeScannerOpen] = useState(false)
   const [xpEditingId, setXPEditingId] = useState<string | null>(null)
   const [xpForm, setXPForm] = useState<XPProductForm>(emptyXPProductForm)
   const [xpBusy, setXPBusy] = useState(false)
@@ -395,14 +404,15 @@ export default function App() {
         if (isActive && user) void loadDashboard(false)
       }),
       CapacitorApp.addListener('backButton', () => {
-        if (xpFormOpen) closeXPProductForm()
+        if (barcodeScannerOpen) setBarcodeScannerOpen(false)
+        else if (xpFormOpen) closeXPProductForm()
         else if (partnerMode) setPartnerMode(null)
         else if (tab !== 'overview') setTab('overview')
         else void CapacitorApp.minimizeApp()
       }),
     ]).then((listeners) => handles.push(...listeners))
     return () => handles.forEach((handle) => void handle.remove())
-  }, [user?.id, tab, partnerMode, xpFormOpen])
+  }, [user?.id, tab, partnerMode, xpFormOpen, barcodeScannerOpen])
 
   useEffect(() => {
     if (!notice) return
@@ -769,6 +779,7 @@ export default function App() {
 
   function closeXPProductForm() {
     if (xpBusy) return
+    setBarcodeScannerOpen(false)
     setXPFormOpen(false)
     setXPEditingId(null)
     setXPForm(emptyXPProductForm)
@@ -1701,16 +1712,28 @@ export default function App() {
                   required
                 />
               </label>
-              <label>
+              <label className="barcode-field">
                 Barcode
-                <input
-                  inputMode="numeric"
-                  value={xpForm.barcode}
-                  onChange={(event) =>
-                    setXPForm((form) => ({ ...form, barcode: event.target.value }))
-                  }
-                  placeholder="Optional"
-                />
+                <span className="barcode-input-row">
+                  <input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={xpForm.barcode}
+                    onChange={(event) =>
+                      setXPForm((form) => ({ ...form, barcode: event.target.value }))
+                    }
+                    placeholder="Scan or enter barcode"
+                  />
+                  <button
+                    type="button"
+                    className="barcode-scan-button"
+                    onClick={() => setBarcodeScannerOpen(true)}
+                    aria-label="Scan product barcode with camera"
+                  >
+                    <Icon name="camera" />
+                    <span>Scan</span>
+                  </button>
+                </span>
               </label>
               <label>
                 Image URL
@@ -1749,6 +1772,24 @@ export default function App() {
             </form>
           </section>
         </div>
+      )}
+      {barcodeScannerOpen && (
+        <Suspense
+          fallback={
+            <div className="barcode-scanner-backdrop">
+              <div className="barcode-scanner-loading">Loading scanner…</div>
+            </div>
+          }
+        >
+          <BarcodeScanner
+            onClose={() => setBarcodeScannerOpen(false)}
+            onDetected={(barcode) => {
+              setXPForm((form) => ({ ...form, barcode }))
+              setBarcodeScannerOpen(false)
+              setNotice('Barcode scanned and added to the product.')
+            }}
+          />
+        </Suspense>
       )}
       {notice && <div className="toast">{notice}</div>}
     </div>

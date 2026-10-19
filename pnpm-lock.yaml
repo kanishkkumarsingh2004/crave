@@ -327,6 +327,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      html5-qrcode:
+        specifier: 2.3.8
+        version: 2.3.8
       maplibre-gl:
         specifier: 6.15.0
         version: 6.15.0

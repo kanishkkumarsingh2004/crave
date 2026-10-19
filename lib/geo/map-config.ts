@@ -53,24 +53,47 @@ export interface MapThemeConfig {
   }
 }
 
-export const CUSTOM_MAP_PALETTE = {
-  overlay: '#f8fafc',
-  text: '#0f172a',
-  land: '#f8fafc',
-  landcover: '#eef2f6',
-  water: '#e2e8f0',
-  waterways: '#abb7c7',
-  parks: '#f1f5f9',
-  buildings: '#8e9eb3',
-  aeroway: '#e2e8f0',
-  rail: '#37475c',
-  roadMajor: '#35455c',
-  roadMinorHigh: '#425267',
-  roadMinorMid: '#5e7086',
-  roadMinorLow: '#9faec0',
-  roadPath: '#b0bccb',
-  roadOutline: '#ffffff',
+export const CUSTOM_MAP_PALETTES = {
+  light: {
+    overlay: '#f8fafc',
+    text: '#0f172a',
+    land: '#f8fafc',
+    landcover: '#eef2f6',
+    water: '#e2e8f0',
+    waterways: '#abb7c7',
+    parks: '#f1f5f9',
+    buildings: '#8e9eb3',
+    aeroway: '#e2e8f0',
+    rail: '#37475c',
+    roadMajor: '#35455c',
+    roadMinorHigh: '#425267',
+    roadMinorMid: '#5e7086',
+    roadMinorLow: '#9faec0',
+    roadPath: '#b0bccb',
+    roadOutline: '#ffffff',
+  },
+  dark: {
+    overlay: '#0b1210',
+    text: '#e7eee9',
+    land: '#111a15',
+    landcover: '#17231c',
+    water: '#10242a',
+    waterways: '#315460',
+    parks: '#183022',
+    buildings: '#2a3830',
+    aeroway: '#1c2922',
+    rail: '#53665b',
+    roadMajor: '#899b90',
+    roadMinorHigh: '#6c7f74',
+    roadMinorMid: '#53665b',
+    roadMinorLow: '#3c5045',
+    roadPath: '#34443b',
+    roadOutline: '#0b1210',
+  },
 } as const
+
+// Kept for callers that still expect the original light palette.
+export const CUSTOM_MAP_PALETTE = CUSTOM_MAP_PALETTES.light
 
 export const DEFAULT_MAP_THEME_KEY = 'slateMinimal'
 

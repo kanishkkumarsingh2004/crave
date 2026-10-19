@@ -13,7 +13,8 @@ export interface DriverLocationState {
   lng: number
   h3Cell: string
   resolution: number
-  lastUpdated: number // Unix timestamp (ms)
+  lastUpdated: number // Server receipt timestamp (ms), used for live freshness
+  reportedAt?: number // Device GPS sample timestamp (ms), used for packet ordering/history
   isStale?: boolean
   staleDurationSeconds?: number
 }
@@ -58,6 +59,47 @@ let historyFlushTimer: NodeJS.Timeout | null = null
 export const DEFAULT_H3_RESOLUTION = 8 // ~0.737 km² per cell, ~461m edge length
 export const DEFAULT_STALE_LOCATION_MS = 45 * 1000 // 45 seconds threshold for stale signal
 export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold for expiry/offline
+
+async function persistCurrentDriverLocation(
+  state: DriverLocationState,
+  previousCell?: string,
+  cellChanged = false
+): Promise<void> {
+  await prisma.driverCurrentLocation.upsert({
+    where: { driver_id: state.driverId },
+    create: {
+      driver_id: state.driverId,
+      latitude: state.lat,
+      longitude: state.lng,
+      h3_cell: state.h3Cell,
+      resolution: state.resolution,
+      status: state.status,
+      available: state.available,
+      vehicle_type: state.vehicleType,
+      reported_at: new Date(state.reportedAt ?? state.lastUpdated),
+    },
+    update: {
+      latitude: state.lat,
+      longitude: state.lng,
+      h3_cell: state.h3Cell,
+      resolution: state.resolution,
+      status: state.status,
+      available: state.available,
+      vehicle_type: state.vehicleType,
+      reported_at: new Date(state.reportedAt ?? state.lastUpdated),
+    },
+  })
+
+  if (!isRedisAvailable() || !redis) return
+  const pipe = redis.pipeline()
+  pipe.set(`crave:driver:loc:${state.driverId}`, JSON.stringify(state), 'EX', 120)
+  if (cellChanged && previousCell) {
+    pipe.srem(`crave:h3:cell:${previousCell}`, state.driverId)
+  }
+  pipe.sadd(`crave:h3:cell:${state.h3Cell}`, state.driverId)
+  pipe.expire(`crave:h3:cell:${state.h3Cell}`, 180)
+  await pipe.exec().catch(() => {})
+}
 
 /**
  * Update a driver's GPS location and re-index into H3 Spatial Cell
@@ -114,7 +156,8 @@ export async function updateDriverLocation(params: {
   // OUT-OF-ORDER PACKET DETECTION:
   // If an update arrives with a timestamp older than the existing state's last update,
   // reject updating the authoritative position cache to prevent erratic track jumping.
-  if (existingState && clientTs < existingState.lastUpdated) {
+  const existingReportedAt = existingState?.reportedAt ?? existingState?.lastUpdated
+  if (existingState && existingReportedAt != null && clientTs < existingReportedAt) {
     const ageFromExisting = now - existingState.lastUpdated
     return {
       state: {
@@ -127,7 +170,7 @@ export async function updateDriverLocation(params: {
       coalesced: true,
       stale: true,
       outOfOrder: true,
-      reason: `Out-of-order GPS packet: packet timestamp (${clientTs}) is older than last update (${existingState.lastUpdated})`,
+      reason: `Out-of-order GPS packet: packet timestamp (${clientTs}) is older than last update (${existingReportedAt})`,
     }
   }
 
@@ -155,12 +198,24 @@ export async function updateDriverLocation(params: {
     }
 
     if (coalesced) {
+      // A stationary driver still sends a valid heartbeat. Refreshing the
+      // timestamp and durable current-location row prevents online riders from
+      // disappearing after the two-minute spatial-cache TTL.
+      const heartbeatReportedAt = Math.max(clientTs, existingReportedAt ?? clientTs)
+      const heartbeatState: DriverLocationState = {
+        ...existingState,
+        status,
+        available,
+        vehicleType,
+        lastUpdated: now,
+        reportedAt: heartbeatReportedAt,
+        isStale: false,
+        staleDurationSeconds: 0,
+      }
+      driverSpatialIndex.set(driverId, heartbeatState)
+      await persistCurrentDriverLocation(heartbeatState)
       return {
-        state: {
-          ...existingState,
-          isStale: now - existingState.lastUpdated > DEFAULT_STALE_LOCATION_MS,
-          staleDurationSeconds: Math.floor((now - existingState.lastUpdated) / 1000),
-        },
+        state: heartbeatState,
         cellChanged: false,
         previousCell,
         coalesced: true,
@@ -197,13 +252,15 @@ export async function updateDriverLocation(params: {
     lng,
     h3Cell: newH3Cell,
     resolution,
-    lastUpdated: effectiveTimestamp,
+    lastUpdated: now,
+    reportedAt: effectiveTimestamp,
     isStale: isStalePacket,
     staleDurationSeconds: isStalePacket ? Math.floor((now - clientTs) / 1000) : 0,
   }
 
   // Update primary spatial cache
   driverSpatialIndex.set(driverId, updatedState)
+  await persistCurrentDriverLocation(updatedState, previousCell, cellChanged)
 
   // Persist authoritative driver coordinates on Order in PostgreSQL when on trip
   if (orderId) {
@@ -222,19 +279,6 @@ export async function updateDriverLocation(params: {
 
   // Buffer position for history (async, non-blocking)
   bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })
-
-  // Replicate to Redis distributed cache with TTL if available
-  if (isRedisAvailable() && redis) {
-    const pipe = redis.pipeline()
-    pipe.set(`crave:driver:loc:${driverId}`, JSON.stringify(updatedState), 'EX', 120)
-
-    if (cellChanged && previousCell) {
-      pipe.srem(`crave:h3:cell:${previousCell}`, driverId)
-    }
-    pipe.sadd(`crave:h3:cell:${newH3Cell}`, driverId)
-    pipe.expire(`crave:h3:cell:${newH3Cell}`, 180) // slightly longer than location TTL
-    await pipe.exec().catch(() => {})
-  }
 
   // Ensure history flush timer is running
   if (!historyFlushTimer) {
@@ -410,6 +454,77 @@ export function getDriverLocation(driverId: string): DriverLocationState | undef
   return {
     ...loc,
     isStale,
+    staleDurationSeconds: Math.floor(ageMs / 1000),
+  }
+}
+
+/**
+ * Resolve the current rider position across all server instances.
+ *
+ * The in-memory index is the fastest path, Redis shares positions between
+ * processes, and PostgreSQL is the durable source used when Redis is disabled
+ * or a request lands on a freshly started instance.
+ */
+export async function getDriverLocationDistributed(
+  driverId: string,
+  maxAgeMs: number = DEFAULT_MAX_LOCATION_AGE_MS
+): Promise<DriverLocationState | undefined> {
+  const local = getDriverLocation(driverId)
+  if (local && Date.now() - local.lastUpdated <= maxAgeMs) return local
+
+  if (isRedisAvailable() && redis) {
+    try {
+      const raw = await redis.get(`crave:driver:loc:${driverId}`)
+      if (raw) {
+        const parsed = JSON.parse(raw) as DriverLocationState
+        const ageMs = Date.now() - parsed.lastUpdated
+        if (
+          parsed.driverId === driverId &&
+          Number.isFinite(parsed.lat) &&
+          Number.isFinite(parsed.lng) &&
+          ageMs <= maxAgeMs
+        ) {
+          return {
+            ...parsed,
+            isStale: ageMs > DEFAULT_STALE_LOCATION_MS,
+            staleDurationSeconds: Math.floor(ageMs / 1000),
+          }
+        }
+      }
+    } catch {
+      // Continue to the durable database source when Redis is unavailable.
+    }
+  }
+
+  const persisted = await prisma.driverCurrentLocation.findUnique({
+    where: { driver_id: driverId },
+  })
+  if (!persisted) return undefined
+
+  // updated_at is the server receipt time. It remains reliable when a mobile
+  // device clock is slightly ahead or behind the API server.
+  const lastUpdated = persisted.updated_at.getTime()
+  const ageMs = Date.now() - lastUpdated
+  if (ageMs > maxAgeMs) return undefined
+
+  const persistedStatus = ['ONLINE', 'OFFLINE', 'ON_TRIP'].includes(persisted.status)
+    ? (persisted.status as DriverLocationState['status'])
+    : 'ONLINE'
+
+  return {
+    driverId,
+    name: `Driver ${driverId.slice(0, 6)}`,
+    phone: '',
+    vehicleType: persisted.vehicle_type || 'EV_SCOOTER',
+    status: persistedStatus,
+    available: persisted.available,
+    lat: Number(persisted.latitude),
+    lng: Number(persisted.longitude),
+    h3Cell: persisted.h3_cell,
+    resolution: persisted.resolution,
+    lastUpdated,
+    reportedAt: persisted.reported_at.getTime(),
+    isStale: ageMs > DEFAULT_STALE_LOCATION_MS,
     staleDurationSeconds: Math.floor(ageMs / 1000),
   }
 }

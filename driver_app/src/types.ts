@@ -1,4 +1,4 @@
-export type AppTab = 'home' | 'trips' | 'earnings' | 'rewards' | 'account'
+export type AppTab = 'home' | 'trips' | 'earnings' | 'account'
 
 export interface DriverUser {
   id: string
@@ -77,16 +77,6 @@ export interface UpiAccount {
   bankName: string
   isPrimary: boolean
   isVerified: boolean
-}
-
-export interface Incentive {
-  id: string
-  title: string
-  description: string
-  rewardAmount: number
-  startsAt?: string
-  endsAt?: string
-  isActive: boolean
 }
 
 export interface DriverOrdersResponse {

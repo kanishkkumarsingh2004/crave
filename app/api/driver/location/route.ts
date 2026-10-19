@@ -163,10 +163,13 @@ export async function GET(request: Request) {
       )
     }
 
-    const { getDriverLocation } = await import('@/lib/dispatch/driver-tracker')
-    let location = effectiveDriverId ? getDriverLocation(effectiveDriverId) : undefined
+    const { getDriverLocationDistributed } = await import('@/lib/dispatch/driver-tracker')
+    let location = effectiveDriverId
+      ? await getDriverLocationDistributed(effectiveDriverId)
+      : undefined
 
-    // If not found in spatial cache or orderId provided, recover from authoritative PostgreSQL
+    // If no current location exists, recover the assigned-order metadata before
+    // attempting the older location-history fallback.
     if (!location && !order && effectiveDriverId) {
       order = await prisma.order.findFirst({
         where: {

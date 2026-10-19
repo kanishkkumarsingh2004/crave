@@ -41,7 +41,6 @@ import type {
   DriverOrdersResponse,
   DriverProfile,
   DriverUser,
-  Incentive,
   PayoutLog,
   UpiAccount,
 } from './types'
@@ -555,60 +554,6 @@ function EarningsPage({
   )
 }
 
-function RewardsPage({ incentives }: { incentives: Incentive[] }) {
-  return (
-    <section className="page-section">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Go further</span>
-          <h1>Rewards</h1>
-        </div>
-        <span className="count-badge">
-          {incentives.filter((item) => item.isActive).length} active
-        </span>
-      </div>
-      <article className="rewards-hero">
-        <span className="rewards-icon">
-          <Icon name="gift" />
-        </span>
-        <div>
-          <span>Weekly opportunity</span>
-          <h2>Complete more trips. Keep more rewards.</h2>
-          <p>
-            Active incentives are calculated by the Crave backend and added to your earnings after
-            qualification.
-          </p>
-        </div>
-      </article>
-      <div className="reward-list">
-        {incentives.length > 0 ? (
-          incentives.map((incentive) => (
-            <article className={incentive.isActive ? 'active' : ''} key={incentive.id}>
-              <div>
-                <span>{incentive.isActive ? 'Active challenge' : 'Ended'}</span>
-                <h3>{incentive.title}</h3>
-                <p>{incentive.description}</p>
-                {incentive.endsAt && (
-                  <small>
-                    <Icon name="clock" /> Ends {dateTime(incentive.endsAt)}
-                  </small>
-                )}
-              </div>
-              <strong>+{money(incentive.rewardAmount)}</strong>
-            </article>
-          ))
-        ) : (
-          <EmptyState
-            icon="gift"
-            title="No active rewards"
-            text="New delivery incentives will appear here automatically."
-          />
-        )}
-      </div>
-    </section>
-  )
-}
-
 function AccountPage({
   profile,
   upi,
@@ -980,7 +925,6 @@ const NAV_ITEMS: Array<{ tab: AppTab; label: string; icon: IconName }> = [
   { tab: 'home', label: 'Home', icon: 'home' },
   { tab: 'trips', label: 'Trips', icon: 'trips' },
   { tab: 'earnings', label: 'Earnings', icon: 'wallet' },
-  { tab: 'rewards', label: 'Rewards', icon: 'gift' },
   { tab: 'account', label: 'Account', icon: 'user' },
 ]
 
@@ -1000,7 +944,6 @@ export default function App() {
   const [completedTrips, setCompletedTrips] = useState<CompletedTrip[]>([])
   const [payouts, setPayouts] = useState<PayoutLog[]>([])
   const [upi, setUpi] = useState<UpiAccount[]>([])
-  const [incentives, setIncentives] = useState<Incentive[]>([])
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [notificationBusy, setNotificationBusy] = useState(false)
   const [availableUpdate, setAvailableUpdate] = useState<DriverUpdate | null>(null)
@@ -1106,20 +1049,17 @@ export default function App() {
 
   async function loadData(token?: string) {
     const authToken = token || getAuthToken()
-    const [profileResult, ordersResult, payoutsResult, upiResult, incentivesResult] =
-      await Promise.all([
-        apiRequest<{ profile: DriverProfile }>('/api/driver/profile', { token: authToken }),
-        apiRequest<DriverOrdersResponse>('/api/driver/orders', { token: authToken }),
-        apiRequest<{ payoutLogs: PayoutLog[] }>('/api/driver/payouts', { token: authToken }),
-        apiRequest<{ savedUpiList: UpiAccount[] }>('/api/driver/upi', { token: authToken }),
-        apiRequest<{ incentives: Incentive[] }>('/api/driver/incentives', { token: authToken }),
-      ])
+    const [profileResult, ordersResult, payoutsResult, upiResult] = await Promise.all([
+      apiRequest<{ profile: DriverProfile }>('/api/driver/profile', { token: authToken }),
+      apiRequest<DriverOrdersResponse>('/api/driver/orders', { token: authToken }),
+      apiRequest<{ payoutLogs: PayoutLog[] }>('/api/driver/payouts', { token: authToken }),
+      apiRequest<{ savedUpiList: UpiAccount[] }>('/api/driver/upi', { token: authToken }),
+    ])
     setProfile(profileResult.profile)
     setOrders(ordersResult.allAssignedOrders || [])
     setCompletedTrips(ordersResult.completedTrips || [])
     setPayouts(payoutsResult.payoutLogs || [])
     setUpi(upiResult.savedUpiList || [])
-    setIncentives(incentivesResult.incentives || [])
   }
 
   async function loadOffers() {
@@ -1778,7 +1718,6 @@ export default function App() {
             onCashout={cashout}
           />
         )}
-        {tab === 'rewards' && <RewardsPage incentives={incentives} />}
         {tab === 'account' && (
           <AccountPage
             profile={profile}

@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_BASE_URL || 'https://crave.apexonestudio.com'
   return {
     plugins: [react()],
-    publicDir: false,
+    publicDir: '../public',
     server: {
       proxy: {
         '/api': { target: apiTarget, changeOrigin: true, secure: apiTarget.startsWith('https://') },

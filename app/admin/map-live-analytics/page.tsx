@@ -178,17 +178,18 @@ export default function MapLiveAnalyticsPage() {
     onMessage: (msg) => {
       if (msg.channel === 'driver_location' && msg.data) {
         const data = msg.data as any
-        const driverId = data.driverId
+        const driverId = String(data.driverId || '').replace(/^drv_/, '')
+        const pinId = `drv_${driverId}`
         const lat = typeof data.lat === 'number' ? data.lat : parseFloat(data.lat)
         const lng = typeof data.lng === 'number' ? data.lng : parseFloat(data.lng)
 
         if (driverId && !isNaN(lat) && !isNaN(lng)) {
           setPins((prevPins) => {
-            const exists = prevPins.some((p) => p.id === `drv_${driverId}` || p.id === driverId)
+            const exists = prevPins.some((p) => p.id === pinId)
 
             if (exists) {
               return prevPins.map((p) => {
-                if (p.id === `drv_${driverId}` || p.id === driverId) {
+                if (p.id === pinId) {
                   return {
                     ...p,
                     lat,
@@ -203,7 +204,7 @@ export default function MapLiveAnalyticsPage() {
               return [
                 ...prevPins,
                 {
-                  id: `drv_${driverId}`,
+                  id: pinId,
                   name: `Rider (${driverId.slice(0, 8)})`,
                   type: 'driver',
                   status: `Status: ${data.status || 'ONLINE'}`,

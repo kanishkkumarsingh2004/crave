@@ -3,7 +3,13 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { OrderStatus, UserRole } from '@prisma/client'
-import { getDriverLocation, getAllDriverLocations } from '@/lib/dispatch/driver-tracker'
+import {
+  DEFAULT_MAX_LOCATION_AGE_MS,
+  DEFAULT_STALE_LOCATION_MS,
+  getDriverLocation,
+  getAllDriverLocations,
+  type DriverLocationState,
+} from '@/lib/dispatch/driver-tracker'
 import { withTiming } from '@/lib/instrumentation'
 
 async function verifyAdminAuth(request: Request): Promise<boolean> {
@@ -41,6 +47,11 @@ const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.out_for_delivery,
 ]
 
+// Temporary compatibility window for app builds that were released before the
+// durable current-location table existed. The current table remains the source
+// of truth; recent history is only used when that row has not been created yet.
+const RECENT_DRIVER_HISTORY_FALLBACK_MS = 15 * 60 * 1000
+
 export async function GET(request: Request) {
   return withTiming('GET /api/admin/map-live-analytics', async (mark) => {
     const isAdmin = await verifyAdminAuth(request)
@@ -50,9 +61,18 @@ export async function GET(request: Request) {
     mark('auth')
 
     try {
-      // P1.1 FIX: Run all three independent DB reads concurrently instead of sequentially.
-      // This reduces total DB round-trip wall-clock time to max(t_restaurants, t_orders, t_drivers).
-      const [restaurants, orders, drivers, customerAddresses] = await Promise.all([
+      // Run independent DB reads concurrently so live-map latency is bounded by
+      // the slowest query instead of the sum of every query.
+      const currentLocationCutoff = new Date(Date.now() - DEFAULT_MAX_LOCATION_AGE_MS)
+      const recentHistoryCutoff = new Date(Date.now() - RECENT_DRIVER_HISTORY_FALLBACK_MS)
+      const [
+        restaurants,
+        orders,
+        drivers,
+        customerAddresses,
+        currentDriverLocations,
+        recentDriverHistory,
+      ] = await Promise.all([
         // 1. Fetch restaurants — static/slow-changing; cap at 20
         prisma.restaurant.findMany({
           select: {
@@ -127,6 +147,24 @@ export async function GET(request: Request) {
           },
           take: 25,
         }) ?? Promise.resolve([]),
+
+        // 5. Durable current GPS rows make live riders visible across server
+        //    processes and after deployments. Only fresh, non-offline rows are read.
+        prisma.driverCurrentLocation.findMany({
+          where: {
+            updated_at: { gte: currentLocationCutoff },
+            status: { not: 'OFFLINE' },
+          },
+        }),
+
+        // 6. Compatibility fallback for riders still talking to an older
+        //    server build. Bound the result and keep only the latest row per
+        //    rider below; this path is never preferred over current telemetry.
+        prisma.driverLocationHistory.findMany({
+          where: { timestamp: { gte: recentHistoryCutoff } },
+          orderBy: { timestamp: 'desc' },
+          take: 500,
+        }),
       ])
       mark('db')
 
@@ -168,6 +206,53 @@ export async function GET(request: Request) {
 
       // Map Drivers with Real-Time Live Device GPS Coordinates (Only if GPS is acquired from device)
       const trackedDriverIds = new Set<string>()
+      const durableLocations = new Map<string, DriverLocationState>()
+      const historyFallbackLocations = new Map<string, DriverLocationState>()
+
+      currentDriverLocations.forEach((location) => {
+        const ageMs = Date.now() - location.updated_at.getTime()
+        const status = ['ONLINE', 'OFFLINE', 'ON_TRIP'].includes(location.status)
+          ? (location.status as DriverLocationState['status'])
+          : 'ONLINE'
+        durableLocations.set(location.driver_id, {
+          driverId: location.driver_id,
+          name: `Driver ${location.driver_id.slice(0, 6)}`,
+          phone: '',
+          vehicleType: location.vehicle_type || 'EV_SCOOTER',
+          status,
+          available: location.available,
+          lat: Number(location.latitude),
+          lng: Number(location.longitude),
+          h3Cell: location.h3_cell,
+          resolution: location.resolution,
+          lastUpdated: location.updated_at.getTime(),
+          reportedAt: location.reported_at.getTime(),
+          isStale: ageMs > DEFAULT_STALE_LOCATION_MS,
+          staleDurationSeconds: Math.floor(ageMs / 1000),
+        })
+      })
+
+      recentDriverHistory.forEach((location) => {
+        if (historyFallbackLocations.has(location.driver_id)) return
+        const lastUpdated = location.timestamp.getTime()
+        const ageMs = Date.now() - lastUpdated
+        historyFallbackLocations.set(location.driver_id, {
+          driverId: location.driver_id,
+          name: `Driver ${location.driver_id.slice(0, 6)}`,
+          phone: '',
+          vehicleType: 'EV_SCOOTER',
+          status: 'ONLINE',
+          available: true,
+          lat: Number(location.latitude),
+          lng: Number(location.longitude),
+          h3Cell: location.h3_cell,
+          resolution: 8,
+          lastUpdated,
+          reportedAt: lastUpdated,
+          isStale: ageMs > DEFAULT_STALE_LOCATION_MS,
+          staleDurationSeconds: Math.floor(ageMs / 1000),
+        })
+      })
 
       drivers.forEach((d) => {
         const cleanId = d.id.replace(/^drv_/, '')
@@ -175,7 +260,17 @@ export async function GET(request: Request) {
         trackedDriverIds.add(cleanId)
         trackedDriverIds.add(`drv_${cleanId}`)
 
-        const liveLoc = getDriverLocation(d.id) || getDriverLocation(cleanId)
+        const memoryLocation = getDriverLocation(d.id) || getDriverLocation(cleanId)
+        const durableLocation = durableLocations.get(d.id) || durableLocations.get(cleanId)
+        const currentLocation =
+          memoryLocation &&
+          (!durableLocation || memoryLocation.lastUpdated >= durableLocation.lastUpdated)
+            ? memoryLocation
+            : durableLocation
+        const historyLocation =
+          historyFallbackLocations.get(d.id) || historyFallbackLocations.get(cleanId)
+        const liveLoc = currentLocation || historyLocation
+        const isHistoryFallback = !currentLocation && Boolean(historyLocation)
 
         // Only display rider pin if actual live device GPS coordinates are present
         if (liveLoc && typeof liveLoc.lat === 'number' && typeof liveLoc.lng === 'number') {
@@ -183,12 +278,45 @@ export async function GET(request: Request) {
             id: `drv_${cleanId}`,
             name: `${d.name} (${d.vehicle_type || 'EV Fleet'})`,
             type: 'driver',
-            status: `Status: ${liveLoc.status || 'ONLINE'}`,
+            status: isHistoryFallback
+              ? 'Status: Recent rider GPS'
+              : `Status: ${liveLoc.status || 'ONLINE'}`,
             lat: liveLoc.lat,
             lng: liveLoc.lng,
             hasGps: true,
             locationName: d.address || 'Live Mobile GPS Feed',
-            detail: `Plate: ${d.license_plate || 'EV-REG-01'} • Contact: ${d.phone || 'N/A'}`,
+            detail: `Plate: ${d.license_plate || 'EV-REG-01'} • Contact: ${d.phone || 'N/A'}${
+              isHistoryFallback ? ' • Compatibility telemetry' : ''
+            }`,
+            timestamp: `${isHistoryFallback ? 'Recent' : 'Live'} Device GPS (${new Date(
+              liveLoc.lastUpdated
+            ).toLocaleTimeString()})`,
+          })
+        }
+      })
+
+      // Include durable rows even if a legacy driver account is not returned by
+      // the rider-user query. The foreign key still guarantees a real user.
+      durableLocations.forEach((liveLoc) => {
+        const cleanLocId = liveLoc.driverId.replace(/^drv_/, '')
+        if (
+          liveLoc.driverId !== 'driver_partner' &&
+          !trackedDriverIds.has(liveLoc.driverId) &&
+          !trackedDriverIds.has(cleanLocId) &&
+          !trackedDriverIds.has(`drv_${cleanLocId}`)
+        ) {
+          trackedDriverIds.add(liveLoc.driverId)
+          trackedDriverIds.add(cleanLocId)
+          pins.push({
+            id: `drv_${cleanLocId}`,
+            name: liveLoc.name || `Rider (${cleanLocId.slice(0, 8)})`,
+            type: 'driver',
+            status: `Status: ${liveLoc.status}`,
+            lat: liveLoc.lat,
+            lng: liveLoc.lng,
+            hasGps: true,
+            locationName: 'Live Mobile GPS Feed',
+            detail: `Vehicle: ${liveLoc.vehicleType} • Active Telemetry`,
             timestamp: `Live Device GPS (${new Date(liveLoc.lastUpdated).toLocaleTimeString()})`,
           })
         }
@@ -307,7 +435,7 @@ export async function GET(request: Request) {
       pins.push(...Array.from(addressPinMap.values()))
 
       const openKitchensCount = restaurants.filter((r: any) => r.is_open).length
-      const activeRidersCount = drivers.length
+      const activeRidersCount = pins.filter((pin) => pin.type === 'driver').length
       const activeOrdersCount = orders.length
       mark('processing')
 

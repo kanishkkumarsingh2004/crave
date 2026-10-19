@@ -7,28 +7,29 @@ datasource db {
 }
 
 model User {
-  id                     String                @id
-  name                   String
-  email                  String                @unique
-  role                   UserRole
-  password_hash          String?
-  phone                  String?
-  address                String?
-  avatar                 String?
-  restaurant_name        String?
-  cuisine                String?
-  vehicle_type           String?
-  license_plate          String?
-  locale                 String?               @default("en")
-  created_at             DateTime?             @default(now()) @db.Timestamptz(6)
-  customer_addresses     CustomerAddress[]
-  driver_incentives      DriverIncentive[]
-  driver_payouts         DriverPayout[]
-  driver_push_tokens     DriverPushToken[]
-  driver_upi             DriverUpiAccount[]
-  orders                 Order[]
-  owned_restaurants      Restaurant[]
-  web_push_subscriptions WebPushSubscription[]
+  id                      String                 @id
+  name                    String
+  email                   String                 @unique
+  role                    UserRole
+  password_hash           String?
+  phone                   String?
+  address                 String?
+  avatar                  String?
+  restaurant_name         String?
+  cuisine                 String?
+  vehicle_type            String?
+  license_plate           String?
+  locale                  String?                @default("en")
+  created_at              DateTime?              @default(now()) @db.Timestamptz(6)
+  customer_addresses      CustomerAddress[]
+  driver_incentives       DriverIncentive[]
+  driver_payouts          DriverPayout[]
+  driver_push_tokens      DriverPushToken[]
+  driver_current_location DriverCurrentLocation?
+  driver_upi              DriverUpiAccount[]
+  orders                  Order[]
+  owned_restaurants       Restaurant[]
+  web_push_subscriptions  WebPushSubscription[]
 
   @@index([role, created_at])
   @@map("users")
@@ -500,6 +501,24 @@ model DriverLocationHistory {
   @@index([driver_id, timestamp])
   @@index([h3_cell])
   @@map("driver_location_history")
+}
+
+model DriverCurrentLocation {
+  driver_id    String   @id
+  latitude     Decimal  @db.Decimal(10, 8)
+  longitude    Decimal  @db.Decimal(11, 8)
+  h3_cell      String
+  resolution   Int      @default(8)
+  status       String   @default("ONLINE")
+  available    Boolean  @default(true)
+  vehicle_type String?
+  reported_at  DateTime @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  driver       User     @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@index([status, updated_at])
+  @@index([h3_cell])
+  @@map("driver_current_locations")
 }
 
 enum UserRole {

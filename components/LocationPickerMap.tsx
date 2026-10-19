@@ -3,6 +3,7 @@
 import { apiFetch } from '@/lib/client/api-fetch'
 import {
   Map,
+  MapControls,
   MapGeoJSON,
   MapMarker,
   MarkerContent,
@@ -173,6 +174,8 @@ export default function LocationPickerMap({
         onClick={handleMapClick}
         className="h-full w-full"
       >
+        <MapControls position="bottom-right" showZoom />
+
         {/* H3 Spatial Hexagon Grid GeoJSON Layer (Compact Size, Info on Click only) */}
         {gridVisible && h3GeoJSONData.features.length > 0 && (
           <MapGeoJSON
