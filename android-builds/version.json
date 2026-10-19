@@ -11,22 +11,22 @@
     "driver": {
       "versionCode": 7,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=4c412c0133a5e41455de03adf259ed014d2f7828baafbe69e162f54c52ee8a5c",
-      "sha256": "4c412c0133a5e41455de03adf259ed014d2f7828baafbe69e162f54c52ee8a5c",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=a7cd0f840a83b085f13fbdb781e572399ca1763d5115c82374423a72056f70da",
+      "sha256": "a7cd0f840a83b085f13fbdb781e572399ca1763d5115c82374423a72056f70da",
       "releaseNotes": "Rewards removed from the Driver app, with a cleaner four-item navigation bar and no incentives request during startup."
     },
     "restaurant": {
       "versionCode": 8,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=c4293a49913473231853a8bd151e44f914f701abad54ec9e38fd7dfbbd6c7671",
-      "sha256": "c4293a49913473231853a8bd151e44f914f701abad54ec9e38fd7dfbbd6c7671",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=1fad01fc9610b0ef9608b34494634f750c7f770831f3c56317d3877432af1ff0",
+      "sha256": "1fad01fc9610b0ef9608b34494634f750c7f770831f3c56317d3877432af1ff0",
       "releaseNotes": "Complete light, dark and system themes with consistent text, icons, forms, menu cards, modals and restaurant controls."
     },
     "customer": {
       "versionCode": 7,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=3d2a7c1ed2f9d0be539de516ec8240568d1b214c91b68e520ec4b34a57350a04",
-      "sha256": "3d2a7c1ed2f9d0be539de516ec8240568d1b214c91b68e520ec4b34a57350a04",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=87cfa6f5f94e36562b724ce6fded52cac40ab52876937d774cc7febdfc97b8d0",
+      "sha256": "87cfa6f5f94e36562b724ce6fded52cac40ab52876937d774cc7febdfc97b8d0",
       "releaseNotes": "The exact website Mapcn address picker with its custom palette, draggable marker, theme lifecycle and complete CARTO tile access."
     }
   }
