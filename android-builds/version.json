@@ -2,32 +2,32 @@
   "schemaVersion": 1,
   "apps": {
     "admin": {
-      "versionCode": 5,
+      "versionCode": 8,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=4a73ede7dc13e5971fe3d18414d4b8fad8ca6c4a9f65c14d1a4b49c6f536ddfb",
-      "sha256": "4a73ede7dc13e5971fe3d18414d4b8fad8ca6c4a9f65c14d1a4b49c6f536ddfb",
-      "releaseNotes": "Commercial model controls with commission, markup and hybrid values, responsive partner cards and stable management actions."
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=5a45cae5b2a5e377060806834ed5eb648a4cefe5c0403a457f14d746383673b0",
+      "sha256": "5a45cae5b2a5e377060806834ed5eb648a4cefe5c0403a457f14d746383673b0",
+      "releaseNotes": "Dedicated XP Store catalog management with add, edit, availability and delete actions, plus the exact website Mapcn location experience."
     },
     "driver": {
-      "versionCode": 4,
+      "versionCode": 6,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=af6293d83846ab999d430f5bf134f1e12db501cf8e274aeaab8179e1530daa01",
-      "sha256": "af6293d83846ab999d430f5bf134f1e12db501cf8e274aeaab8179e1530daa01",
-      "releaseNotes": "Reliable native sign-in, official Crave branding, live delivery, background location and notification stability."
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=04a472a85a52f0375699f27645f849662feb194832bf8a8cb6adae6faf10f78e",
+      "sha256": "04a472a85a52f0375699f27645f849662feb194832bf8a8cb6adae6faf10f78e",
+      "releaseNotes": "Crash-safe notification permission handling and a polished responsive light, dark and system theme selector."
     },
     "restaurant": {
-      "versionCode": 7,
+      "versionCode": 8,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=5c4fdb2c9bf1b2b6f16191159271085b04e7cfe2e1ef16a432740443bcd2c1d2",
-      "sha256": "5c4fdb2c9bf1b2b6f16191159271085b04e7cfe2e1ef16a432740443bcd2c1d2",
-      "releaseNotes": "Persistent payout UPI settings, complete Small/Medium/Large pricing, device navigation and selectable themes."
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=c4293a49913473231853a8bd151e44f914f701abad54ec9e38fd7dfbbd6c7671",
+      "sha256": "c4293a49913473231853a8bd151e44f914f701abad54ec9e38fd7dfbbd6c7671",
+      "releaseNotes": "Complete light, dark and system themes with consistent text, icons, forms, menu cards, modals and restaurant controls."
     },
     "customer": {
-      "versionCode": 4,
+      "versionCode": 7,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=920a9ac42429e6cae1bd97c202790e11a6e7e214e9251c0665dff06bf292d80e",
-      "sha256": "920a9ac42429e6cae1bd97c202790e11a6e7e214e9251c0665dff06bf292d80e",
-      "releaseNotes": "Interactive address maps, accurate customer-facing commercial pricing, animated bottom sheets and a cleaner restaurant search."
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=235199706e81c0fad6cd5d2a8ef307e07a961ac407e1016b1f96ea53fdcf815c",
+      "sha256": "235199706e81c0fad6cd5d2a8ef307e07a961ac407e1016b1f96ea53fdcf815c",
+      "releaseNotes": "The exact website Mapcn address picker with its custom palette, draggable marker, theme lifecycle and complete CARTO tile access."
     }
   }
 }

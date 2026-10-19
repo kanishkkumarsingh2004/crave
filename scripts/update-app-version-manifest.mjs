@@ -12,25 +12,25 @@ const apps = {
     directory: 'admin_app',
     apk: 'crave-admin-debug.apk',
     releaseNotes:
-      'Commercial model controls with commission, markup and hybrid values, responsive partner cards and stable management actions.',
+      'Dedicated XP Store catalog management with add, edit, availability and delete actions, plus the exact website Mapcn location experience.',
   },
   driver: {
     directory: 'driver_app',
     apk: 'crave-driver-debug.apk',
     releaseNotes:
-      'Reliable native sign-in, official Crave branding, live delivery, background location and notification stability.',
+      'Crash-safe notification permission handling and a polished responsive light, dark and system theme selector.',
   },
   restaurant: {
     directory: 'restaurant_app',
     apk: 'crave-restaurant-debug.apk',
     releaseNotes:
-      'Persistent payout UPI settings, complete Small/Medium/Large pricing, device navigation and selectable themes.',
+      'Complete light, dark and system themes with consistent text, icons, forms, menu cards, modals and restaurant controls.',
   },
   customer: {
     directory: 'customer_app',
     apk: 'crave-customer-debug.apk',
     releaseNotes:
-      'Interactive address maps, accurate customer-facing commercial pricing, animated bottom sheets and a cleaner restaurant search.',
+      'The exact website Mapcn address picker with its custom palette, draggable marker, theme lifecycle and complete CARTO tile access.',
   },
 }
 

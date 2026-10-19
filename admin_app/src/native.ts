@@ -79,6 +79,8 @@ export async function showAdminNotification(input: {
           title: input.title,
           body: input.body,
           channelId: CHANNEL_ID,
+          smallIcon: 'ic_stat_crave_notification',
+          iconColor: '#D9F447',
           largeIcon: 'ic_launcher',
           extra: { tab: 'overview', notificationId: input.id },
         },

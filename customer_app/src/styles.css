@@ -10,6 +10,14 @@
   --green: #0b2e1c;
   --line: #dfe3dc;
   --surface: #fff;
+  --surface-2: #f1f4ed;
+  --input-bg: #fff;
+  --input-text: #101712;
+  --app-bg: #f7f7f2;
+  --chrome-bg: rgb(255 255 255 / 94%);
+  --overlay-bg: rgb(6 16 9 / 60%);
+  --on-accent: #172014;
+  --shadow-color: rgb(17 32 25 / 13%);
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
 }
@@ -1932,4 +1940,178 @@ html[data-theme='dark'] .saved-address {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Semantic theme normalization. Values come from THEME_DICTIONARY in theme.ts. */
+html,
+body,
+#root {
+  color: var(--ink);
+  background: var(--app-bg);
+}
+body,
+button,
+a,
+input,
+textarea {
+  color: var(--ink);
+}
+svg {
+  color: inherit;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.82;
+}
+.app-shell,
+.page,
+.detail-screen,
+.checkout,
+.subpage,
+.auth-screen {
+  background-color: var(--app-bg);
+}
+.main-header,
+.checkout > header,
+.subpage > header,
+.bottom-nav,
+.sticky-action {
+  border-color: var(--line);
+  background: var(--chrome-bg);
+}
+.auth-sheet,
+.restaurant-card,
+.menu-item,
+.order-card,
+.settings-list,
+.bill-card,
+.bill-preview,
+.upi-card,
+.address-list button,
+.bottom-sheet,
+.theme-control,
+.address-suggestions,
+.address-form,
+.saved-address,
+.cart-items,
+.delivery-note,
+.search-field,
+.variant-list button,
+.upi-app-grid > button {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface);
+}
+.round.pale,
+.secondary,
+.empty-icon,
+.setting-icon,
+.stepper button {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+input,
+textarea,
+.search-field input {
+  border-color: var(--line);
+  color: var(--input-text);
+  background: var(--input-bg);
+}
+.modal-backdrop {
+  background: var(--overlay-bg);
+}
+.primary,
+.round.lime,
+.address-map-toolbar button,
+.theme-control button.active {
+  color: var(--on-accent);
+}
+.restaurant-card h3,
+.menu-item h3,
+.order-card h3,
+.settings-list b,
+.bill-card b,
+.saved-address h3,
+.auth-sheet h1,
+.auth-sheet label {
+  color: var(--ink);
+}
+.restaurant-card p,
+.menu-item p,
+.order-card p,
+.settings-list small,
+.saved-address p,
+.secure-note,
+.version {
+  color: var(--muted);
+}
+.address-map-canvas {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.address-map-fallback {
+  display: block;
+  padding: 0;
+}
+html[data-theme='dark'] .address-map-fallback {
+  filter: brightness(0.7) saturate(0.72) contrast(1.16);
+}
+.mapcn-marker {
+  position: relative;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  cursor: grab;
+  place-items: center;
+}
+.mapcn-marker:active {
+  cursor: grabbing;
+}
+.mapcn-marker-pulse {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgb(16 185 129 / 34%);
+  animation: mapcn-pulse 1.7s ease-out infinite;
+}
+.mapcn-marker-dot {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #059669;
+  box-shadow: 0 6px 18px rgb(5 80 54 / 45%);
+  place-items: center;
+}
+.mapcn-marker-dot svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+@keyframes mapcn-pulse {
+  from {
+    opacity: 0.82;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+.address-map-canvas .maplibregl-ctrl-group {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.address-map-canvas .maplibregl-ctrl button {
+  color: var(--ink);
 }

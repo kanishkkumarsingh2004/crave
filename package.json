@@ -105,7 +105,7 @@
     "@types/ws": "^8.18.2",
     "postcss": "^8.5.30",
     "prettier": "^3.9.10",
-    "prisma": "^8.0.0-rc.23",
+    "prisma": "7.10.1",
     "shadcn": "^4.22.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",

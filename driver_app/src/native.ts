@@ -17,6 +17,9 @@ const BACKGROUND_DRIVER_ID_KEY = 'crave_driver_background_driver_id'
 const BACKGROUND_API_ORIGIN_KEY = 'crave_driver_background_api_origin'
 const BACKGROUND_ORDER_ID_KEY = 'crave_driver_background_order_id'
 const BACKGROUND_VEHICLE_TYPE_KEY = 'crave_driver_background_vehicle_type'
+// Firebase registration is unsafe on Android until the packaged app contains a
+// valid google-services.json. Local notifications remain available without it.
+const REMOTE_PUSH_ENABLED = import.meta.env.VITE_FIREBASE_PUSH_ENABLED === 'true'
 
 interface DriverLocationPlugin {
   start(options: BackgroundLocationOptions): Promise<{ active: boolean }>
@@ -101,52 +104,65 @@ export async function requestNotificationPermission(): Promise<boolean> {
     if (typeof Notification === 'undefined') return false
     return (await Notification.requestPermission()) === 'granted'
   }
-  const localPermission = await LocalNotifications.requestPermissions()
-  const pushPermission = await PushNotifications.requestPermissions().catch(() => ({
-    receive: 'denied' as const,
-  }))
-  return localPermission.display === 'granted' && pushPermission.receive === 'granted'
+  try {
+    const localPermission = await LocalNotifications.requestPermissions()
+    if (localPermission.display !== 'granted') return false
+    if (!REMOTE_PUSH_ENABLED) return true
+
+    const pushPermission = await PushNotifications.requestPermissions()
+    return pushPermission.receive === 'granted'
+  } catch (error) {
+    console.warn('Unable to request notification permission', error)
+    return false
+  }
 }
 
 export async function registerDriverPushNotifications(
   onOpen?: (data: Record<string, unknown>) => void
 ): Promise<() => void> {
-  if (!Capacitor.isNativePlatform()) return () => undefined
-  const permission = await PushNotifications.checkPermissions()
-  if (permission.receive !== 'granted') return () => undefined
-
   const handles: PluginListenerHandle[] = []
-  const addHandle = async (promise: Promise<PluginListenerHandle>) => handles.push(await promise)
+  if (!Capacitor.isNativePlatform() || !REMOTE_PUSH_ENABLED) return () => undefined
 
-  await addHandle(
-    PushNotifications.addListener('registration', (registration) => {
-      void (async () => {
-        const device = await Device.getId()
-        await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
-        await apiRequest('/api/driver/push-token', {
-          method: 'POST',
-          body: {
-            token: registration.value,
-            platform: Capacitor.getPlatform(),
-            deviceId: device.identifier,
-          },
-        }).catch(() => undefined)
-      })()
-    })
-  )
-  await addHandle(PushNotifications.addListener('registrationError', () => undefined))
-  await addHandle(
-    PushNotifications.addListener('pushNotificationReceived', () => {
-      void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
-    })
-  )
-  await addHandle(
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      const data = (action.notification.data || {}) as Record<string, unknown>
-      onOpen?.(data)
-    })
-  )
-  await PushNotifications.register().catch(() => undefined)
+  try {
+    const permission = await PushNotifications.checkPermissions()
+    if (permission.receive !== 'granted') return () => undefined
+
+    const addHandle = async (promise: Promise<PluginListenerHandle>) => handles.push(await promise)
+
+    await addHandle(
+      PushNotifications.addListener('registration', (registration) => {
+        void (async () => {
+          const device = await Device.getId()
+          await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
+          await apiRequest('/api/driver/push-token', {
+            method: 'POST',
+            body: {
+              token: registration.value,
+              platform: Capacitor.getPlatform(),
+              deviceId: device.identifier,
+            },
+          }).catch(() => undefined)
+        })()
+      })
+    )
+    await addHandle(PushNotifications.addListener('registrationError', () => undefined))
+    await addHandle(
+      PushNotifications.addListener('pushNotificationReceived', () => {
+        void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
+      })
+    )
+    await addHandle(
+      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+        const data = (action.notification.data || {}) as Record<string, unknown>
+        onOpen?.(data)
+      })
+    )
+    await PushNotifications.register()
+  } catch (error) {
+    console.warn('Remote push registration is unavailable', error)
+    handles.forEach((handle) => void handle.remove())
+    return () => undefined
+  }
 
   return () => {
     handles.forEach((handle) => void handle.remove())
@@ -163,7 +179,7 @@ export async function unregisterDriverPushNotifications(): Promise<void> {
     }).catch(() => undefined)
   }
   await Preferences.remove({ key: PUSH_TOKEN_KEY })
-  await PushNotifications.unregister().catch(() => undefined)
+  if (REMOTE_PUSH_ENABLED) await PushNotifications.unregister().catch(() => undefined)
 }
 
 async function storeBackgroundLocationOptions(options: BackgroundLocationOptions): Promise<void> {

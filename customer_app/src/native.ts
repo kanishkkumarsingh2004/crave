@@ -2,7 +2,6 @@ import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Preferences } from '@capacitor/preferences'
-import { StatusBar, Style } from '@capacitor/status-bar'
 
 const CHANNEL = 'customer-orders'
 const PREF = 'crave_customer_notifications_enabled'
@@ -11,8 +10,6 @@ const idFor = (value: string) =>
 
 export async function initializeNative() {
   if (!Capacitor.isNativePlatform()) return
-  await StatusBar.setStyle({ style: Style.Dark }).catch(() => undefined)
-  await StatusBar.setBackgroundColor({ color: '#F7F7F2' }).catch(() => undefined)
   await LocalNotifications.createChannel({
     id: CHANNEL,
     name: 'Order updates',

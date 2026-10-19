@@ -17,6 +17,12 @@
   --danger: #ff6b77;
   --input-bg: #0e1511;
   --input-text: #f7faf7;
+  --accent: #d9f447;
+  --app-bg: #0a0f0d;
+  --chrome-bg: rgb(10 15 13 / 94%);
+  --overlay-bg: rgb(0 0 0 / 58%);
+  --on-accent: #101710;
+  --shadow-color: rgb(0 0 0 / 42%);
   color-scheme: dark;
 }
 
@@ -1812,4 +1818,106 @@ html[data-theme='light'] .toast-message {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Semantic theme normalization. Values come from THEME_DICTIONARY in theme.ts. */
+html,
+body,
+#root {
+  color: var(--ink);
+  background-color: var(--app-bg);
+}
+body,
+button,
+a,
+input,
+select,
+textarea {
+  color: var(--ink);
+}
+svg {
+  color: inherit;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.82;
+}
+select option {
+  color: var(--ink);
+  background: var(--surface);
+}
+body,
+.app-shell,
+.login-screen,
+.splash-screen {
+  background-color: var(--app-bg);
+}
+.app-header,
+.bottom-nav {
+  border-color: var(--line);
+  background: var(--chrome-bg);
+}
+.login-card,
+.hero-card,
+.stat-card,
+.order-card,
+.menu-card,
+.settings-card,
+.settlement-list article,
+.empty-state,
+.sheet,
+.update-sheet {
+  border-color: var(--line);
+  color: var(--ink);
+  background-color: var(--surface);
+  box-shadow: 0 14px 40px var(--shadow-color);
+}
+.order-card-foot,
+.variant-title,
+.menu-actions button,
+.secondary-button,
+.filter-tabs,
+.theme-control,
+.category-picker {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+input,
+select,
+textarea,
+.search-field,
+.search-field input {
+  border-color: var(--line);
+  color: var(--input-text);
+  background: var(--input-bg);
+}
+.modal-backdrop,
+.update-backdrop {
+  background: var(--overlay-bg);
+}
+.primary-button,
+.add-button,
+.theme-control button.active,
+.store-switch {
+  color: var(--on-accent);
+}
+.brand-lockup strong,
+.page h1,
+.page h2,
+.page h3,
+.settings-card h2,
+.settings-card h3,
+.menu-card h3,
+.order-card h3 {
+  color: var(--ink);
+}
+.brand-lockup small,
+.page p,
+.settings-card p,
+.settings-card small,
+.menu-card p,
+.order-card p {
+  color: var(--muted);
 }

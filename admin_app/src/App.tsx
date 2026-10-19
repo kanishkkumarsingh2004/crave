@@ -2,7 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -16,9 +16,11 @@ import {
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { initializeNativeAppearance, sendTestNotification } from './native'
-import AddressMap, { type AddressMapPoint } from './AddressMap'
+import type { AddressMapPoint } from './AddressMap'
 
-type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'settings'
+const AddressMap = lazy(() => import('./AddressMap'))
+
+type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'xp-store' | 'settings'
 type IconName =
   | 'home'
   | 'orders'
@@ -32,6 +34,7 @@ type IconName =
   | 'users'
   | 'money'
   | 'bell'
+  | 'package'
 
 interface AdminUser {
   id: string
@@ -78,6 +81,32 @@ interface RestaurantRecord {
   fixed_markup?: number | string
 }
 
+interface XPProduct {
+  id: string
+  name: string
+  category: string
+  unit: string
+  price: number | string
+  mrp: number | string
+  image?: string | null
+  in_stock: boolean
+  stock_count: number
+  sku_code: string
+  barcode?: string | null
+}
+
+interface XPProductForm {
+  name: string
+  category: string
+  unit: string
+  price: string
+  mrp: string
+  image: string
+  stockCount: string
+  barcode: string
+  inStock: boolean
+}
+
 interface PartnerForm {
   ownerName: string
   email: string
@@ -110,6 +139,18 @@ const emptyPartnerForm: PartnerForm = {
   markupRate: '0',
   fixedCommission: '0',
   fixedMarkup: '0',
+}
+
+const emptyXPProductForm: XPProductForm = {
+  name: '',
+  category: 'Grocery Essentials',
+  unit: '1 Pack',
+  price: '',
+  mrp: '',
+  image: '',
+  stockCount: '50',
+  barcode: '',
+  inStock: true,
 }
 
 function commercialSummary(restaurant: RestaurantRecord) {
@@ -165,8 +206,14 @@ function Icon({ name }: { name: IconName }) {
     money: <path d="M12 2v20m5-16H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />,
     bell: (
       <>
-        <path d="M15 18a3 3 0 0 0 2-2.9V11a7 7 0 0 0-5-6.9V3h-4v1.1A7 7 0 0 0 6 11v4.1a3 3 0 0 0 2 2.9" />
-        <path d="M10 18a4 4 0 0 0 4-4M9 21h6" />
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M10 21h4" />
+      </>
+    ),
+    package: (
+      <>
+        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" />
+        <path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.2l8 4.5" />
       </>
     ),
   }
@@ -279,6 +326,13 @@ export default function App() {
   const [partnerForm, setPartnerForm] = useState<PartnerForm>(emptyPartnerForm)
   const [mapPoint, setMapPoint] = useState<AddressMapPoint | null>(null)
   const [partnerBusy, setPartnerBusy] = useState(false)
+  const [xpProducts, setXPProducts] = useState<XPProduct[]>([])
+  const [xpLoading, setXPLoading] = useState(false)
+  const [xpSearch, setXPSearch] = useState('')
+  const [xpFormOpen, setXPFormOpen] = useState(false)
+  const [xpEditingId, setXPEditingId] = useState<string | null>(null)
+  const [xpForm, setXPForm] = useState<XPProductForm>(emptyXPProductForm)
+  const [xpBusy, setXPBusy] = useState(false)
   const [notifBusy, setNotifBusy] = useState(false)
   const [notifMsg, setNotifMsg] = useState('')
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -296,6 +350,15 @@ export default function App() {
     () => payments.filter((payment) => payment.status === 'pending'),
     [payments]
   )
+  const filteredXPProducts = useMemo(() => {
+    const query = xpSearch.trim().toLowerCase()
+    if (!query) return xpProducts
+    return xpProducts.filter((product) =>
+      [product.name, product.category, product.unit, product.sku_code, product.barcode || ''].some(
+        (value) => value.toLowerCase().includes(query)
+      )
+    )
+  }, [xpProducts, xpSearch])
 
   useEffect(() => {
     void bootstrap()
@@ -313,6 +376,7 @@ export default function App() {
 
   useEffect(() => {
     if (tab === 'settings') void refreshUpdateStatus()
+    if (tab === 'xp-store' && xpProducts.length === 0) void loadXPProducts()
   }, [tab])
 
   useEffect(() => {
@@ -331,13 +395,14 @@ export default function App() {
         if (isActive && user) void loadDashboard(false)
       }),
       CapacitorApp.addListener('backButton', () => {
-        if (partnerMode) setPartnerMode(null)
+        if (xpFormOpen) closeXPProductForm()
+        else if (partnerMode) setPartnerMode(null)
         else if (tab !== 'overview') setTab('overview')
         else void CapacitorApp.minimizeApp()
       }),
     ]).then((listeners) => handles.push(...listeners))
     return () => handles.forEach((handle) => void handle.remove())
-  }, [user?.id, tab, partnerMode])
+  }, [user?.id, tab, partnerMode, xpFormOpen])
 
   useEffect(() => {
     if (!notice) return
@@ -667,6 +732,157 @@ export default function App() {
     }
   }
 
+  async function loadXPProducts() {
+    setXPLoading(true)
+    setError('')
+    try {
+      const response = await apiRequest<{ products?: XPProduct[] }>('/api/admin/cravexp-products')
+      setXPProducts(response.products || [])
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load XP Store items.')
+    } finally {
+      setXPLoading(false)
+    }
+  }
+
+  function openNewXPProduct() {
+    setXPEditingId(null)
+    setXPForm(emptyXPProductForm)
+    setXPFormOpen(true)
+  }
+
+  function openEditXPProduct(product: XPProduct) {
+    setXPEditingId(product.id)
+    setXPForm({
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      price: String(product.price),
+      mrp: String(product.mrp),
+      image: product.image || '',
+      stockCount: String(product.stock_count),
+      barcode: product.barcode || '',
+      inStock: product.in_stock,
+    })
+    setXPFormOpen(true)
+  }
+
+  function closeXPProductForm() {
+    if (xpBusy) return
+    setXPFormOpen(false)
+    setXPEditingId(null)
+    setXPForm(emptyXPProductForm)
+  }
+
+  function xpProductPayload(form: XPProductForm) {
+    return {
+      name: form.name.trim(),
+      category: form.category.trim(),
+      unit: form.unit.trim(),
+      price: Number(form.price),
+      mrp: Number(form.mrp || form.price),
+      image: form.image.trim() || null,
+      stock_count: Number(form.stockCount),
+      barcode: form.barcode.trim() || null,
+      in_stock: form.inStock,
+      is_veg: true,
+      description: `${form.category.trim()} · ${form.unit.trim()}`,
+    }
+  }
+
+  async function saveXPProduct(event: FormEvent) {
+    event.preventDefault()
+    if (xpBusy) return
+    const price = Number(xpForm.price)
+    const mrp = Number(xpForm.mrp || xpForm.price)
+    const stockCount = Number(xpForm.stockCount)
+    if (!Number.isInteger(price) || price < 0 || !Number.isInteger(mrp) || mrp < price) {
+      setError('Enter whole-number prices. MRP must be equal to or higher than selling price.')
+      return
+    }
+    if (!Number.isInteger(stockCount) || stockCount < 0) {
+      setError('Stock count must be a non-negative whole number.')
+      return
+    }
+
+    setXPBusy(true)
+    setError('')
+    try {
+      await apiRequest('/api/admin/cravexp-products', {
+        method: xpEditingId ? 'PATCH' : 'POST',
+        body: {
+          ...(xpEditingId ? { id: xpEditingId } : {}),
+          ...xpProductPayload(xpForm),
+        },
+      })
+      setNotice(xpEditingId ? 'XP Store item updated.' : 'Item added to the XP Store.')
+      setXPFormOpen(false)
+      setXPEditingId(null)
+      setXPForm(emptyXPProductForm)
+      await loadXPProducts()
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save the XP Store item.')
+    } finally {
+      setXPBusy(false)
+    }
+  }
+
+  async function toggleXPProduct(product: XPProduct) {
+    const previous = xpProducts
+    const nextAvailable = !product.in_stock
+    setXPProducts((current) =>
+      current.map((entry) =>
+        entry.id === product.id ? { ...entry, in_stock: nextAvailable } : entry
+      )
+    )
+    try {
+      const response = await apiRequest<{ product: XPProduct }>('/api/admin/cravexp-products', {
+        method: 'PATCH',
+        body: {
+          id: product.id,
+          ...xpProductPayload({
+            name: product.name,
+            category: product.category,
+            unit: product.unit,
+            price: String(product.price),
+            mrp: String(product.mrp),
+            image: product.image || '',
+            stockCount: String(product.stock_count),
+            barcode: product.barcode || '',
+            inStock: nextAvailable,
+          }),
+        },
+      })
+      setXPProducts((current) =>
+        current.map((entry) => (entry.id === product.id ? response.product : entry))
+      )
+      setNotice(nextAvailable ? 'Item is available to customers.' : 'Item hidden from customers.')
+    } catch (toggleError) {
+      setXPProducts(previous)
+      setError(
+        toggleError instanceof Error ? toggleError.message : 'Unable to update item availability.'
+      )
+    }
+  }
+
+  async function deleteXPProduct(product: XPProduct) {
+    if (!window.confirm(`Remove ${product.name} from the customer XP Store?`)) return
+    setXPBusy(true)
+    try {
+      await apiRequest(`/api/admin/cravexp-products?id=${encodeURIComponent(product.id)}`, {
+        method: 'DELETE',
+      })
+      setXPProducts((current) => current.filter((entry) => entry.id !== product.id))
+      setNotice(`${product.name} removed from the XP Store.`)
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : 'Unable to delete the XP Store item.'
+      )
+    } finally {
+      setXPBusy(false)
+    }
+  }
+
   if (booting) {
     return (
       <main className="splash-screen">
@@ -684,6 +900,7 @@ export default function App() {
     { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
     { id: 'payments', label: 'Payments', icon: 'money', badge: pendingPayments.length },
     { id: 'partners', label: 'Partners', icon: 'store' },
+    { id: 'xp-store', label: 'XP Store', icon: 'package' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
 
@@ -705,7 +922,10 @@ export default function App() {
 
       {!networkConnected && <div className="offline-banner">No internet connection</div>}
       {error && (
-        <button className="error-banner" onClick={() => void loadDashboard()}>
+        <button
+          className="error-banner"
+          onClick={() => void (tab === 'xp-store' ? loadXPProducts() : loadDashboard())}
+        >
           {error}
         </button>
       )}
@@ -886,6 +1106,94 @@ export default function App() {
                 </article>
               ))}
               {data.restaurants.length === 0 && <EmptyState text="No restaurant partners found." />}
+            </div>
+          </section>
+        )}
+
+        {tab === 'xp-store' && (
+          <section className="page xp-page">
+            <div className="page-heading xp-page-heading">
+              <div>
+                <span className="eyebrow">Customer catalog</span>
+                <h1>XP Store</h1>
+                <p>Add products and control what customers can order from CraveXP.</p>
+              </div>
+              <button className="add-partner-button" onClick={openNewXPProduct}>
+                <b>+</b> Add item
+              </button>
+            </div>
+            <div className="xp-toolbar">
+              <label className="xp-search">
+                <Icon name="package" />
+                <input
+                  type="search"
+                  value={xpSearch}
+                  onChange={(event) => setXPSearch(event.target.value)}
+                  placeholder="Search name, category, SKU or barcode"
+                />
+              </label>
+              <button
+                className="secondary-button"
+                disabled={xpLoading}
+                onClick={() => void loadXPProducts()}
+              >
+                <Icon name="refresh" /> {xpLoading ? 'Syncing…' : 'Refresh'}
+              </button>
+            </div>
+            <div className="xp-grid">
+              {xpLoading && xpProducts.length === 0 && (
+                <EmptyState text="Loading XP Store items…" />
+              )}
+              {filteredXPProducts.map((product) => (
+                <article className="xp-card" key={product.id}>
+                  <div className="xp-card-image">
+                    {product.image ? (
+                      <img src={product.image} alt="" loading="lazy" />
+                    ) : (
+                      <Icon name="package" />
+                    )}
+                    <span className={product.in_stock ? 'available' : ''}>
+                      {product.in_stock ? 'Available' : 'Hidden'}
+                    </span>
+                  </div>
+                  <div className="xp-card-body">
+                    <small>{product.category}</small>
+                    <h3>{product.name}</h3>
+                    <p>
+                      {product.unit} · Stock {product.stock_count}
+                    </p>
+                    <div className="xp-prices">
+                      <strong>{money(product.price)}</strong>
+                      {Number(product.mrp) > Number(product.price) && <s>{money(product.mrp)}</s>}
+                    </div>
+                    <code>{product.sku_code}</code>
+                    <div className="xp-card-actions">
+                      <button onClick={() => openEditXPProduct(product)}>Edit</button>
+                      <button
+                        className="suspend"
+                        disabled={xpBusy}
+                        onClick={() => void toggleXPProduct(product)}
+                      >
+                        {product.in_stock ? 'Hide' : 'Show'}
+                      </button>
+                      <button
+                        className="delete"
+                        disabled={xpBusy}
+                        onClick={() => void deleteXPProduct(product)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+              {!xpLoading && filteredXPProducts.length === 0 && (
+                <EmptyState
+                  text={
+                    xpSearch ? 'No XP Store items match your search.' : 'No XP Store items yet.'
+                  }
+                />
+              )}
             </div>
           </section>
         )}
@@ -1257,17 +1565,21 @@ export default function App() {
                   <span>Restaurant location</span>
                   <small>Click the map to drop the pin and capture coordinates.</small>
                 </div>
-                <AddressMap
-                  location={mapPoint}
-                  onPick={(point) => {
-                    setMapPoint(point)
-                    setPartnerForm((form) => ({
-                      ...form,
-                      latitude: String(point.lat.toFixed(6)),
-                      longitude: String(point.lng.toFixed(6)),
-                    }))
-                  }}
-                />
+                <Suspense
+                  fallback={<div className="address-map-canvas map-loading">Loading map…</div>}
+                >
+                  <AddressMap
+                    location={mapPoint}
+                    onPick={(point) => {
+                      setMapPoint(point)
+                      setPartnerForm((form) => ({
+                        ...form,
+                        latitude: String(point.lat.toFixed(6)),
+                        longitude: String(point.lng.toFixed(6)),
+                      }))
+                    }}
+                  />
+                </Suspense>
                 <div className="partner-coords">
                   <label>
                     Latitude
@@ -1294,6 +1606,144 @@ export default function App() {
                     : partnerMode === 'add'
                       ? 'Add restaurant'
                       : 'Save changes'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+      {xpFormOpen && (
+        <div className="modal-backdrop" onClick={closeXPProductForm}>
+          <section
+            className="partner-sheet xp-product-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="xp-product-form-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="partner-sheet-heading">
+              <div>
+                <span className="eyebrow">XP Store catalog</span>
+                <h2 id="xp-product-form-title">{xpEditingId ? 'Edit XP item' : 'Add XP item'}</h2>
+              </div>
+              <button onClick={closeXPProductForm} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <p className="partner-form-help">
+              This item is saved directly to the customer-facing CraveXP catalog.
+            </p>
+            <form className="partner-form xp-product-form" onSubmit={saveXPProduct}>
+              <label>
+                Product name
+                <input
+                  value={xpForm.name}
+                  onChange={(event) => setXPForm((form) => ({ ...form, name: event.target.value }))}
+                  placeholder="Organic eggs"
+                  required
+                />
+              </label>
+              <label>
+                Category
+                <input
+                  value={xpForm.category}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, category: event.target.value }))
+                  }
+                  placeholder="Dairy & Eggs"
+                  required
+                />
+              </label>
+              <label>
+                Unit
+                <input
+                  value={xpForm.unit}
+                  onChange={(event) => setXPForm((form) => ({ ...form, unit: event.target.value }))}
+                  placeholder="6 Pieces"
+                  required
+                />
+              </label>
+              <label>
+                Selling price (₹)
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={xpForm.price}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, price: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                MRP (₹)
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={xpForm.mrp}
+                  onChange={(event) => setXPForm((form) => ({ ...form, mrp: event.target.value }))}
+                  placeholder="Defaults to selling price"
+                />
+              </label>
+              <label>
+                Stock count
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={xpForm.stockCount}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, stockCount: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Barcode
+                <input
+                  inputMode="numeric"
+                  value={xpForm.barcode}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, barcode: event.target.value }))
+                  }
+                  placeholder="Optional"
+                />
+              </label>
+              <label>
+                Image URL
+                <input
+                  type="url"
+                  value={xpForm.image}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, image: event.target.value }))
+                  }
+                  placeholder="https://…"
+                />
+              </label>
+              <label className="xp-availability-field">
+                <input
+                  type="checkbox"
+                  checked={xpForm.inStock}
+                  onChange={(event) =>
+                    setXPForm((form) => ({ ...form, inStock: event.target.checked }))
+                  }
+                />
+                Available to customers
+              </label>
+              <div className="partner-form-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={closeXPProductForm}
+                  disabled={xpBusy}
+                >
+                  Cancel
+                </button>
+                <button className="primary-button" type="submit" disabled={xpBusy}>
+                  {xpBusy ? 'Saving…' : xpEditingId ? 'Save item' : 'Add to XP Store'}
                 </button>
               </div>
             </form>

@@ -613,6 +613,7 @@ function AccountPage({
   profile,
   upi,
   notificationsEnabled,
+  notificationBusy,
   busy,
   onSaveProfile,
   onAddUpi,
@@ -632,6 +633,7 @@ function AccountPage({
   profile: DriverProfile
   upi: UpiAccount[]
   notificationsEnabled: boolean
+  notificationBusy: boolean
   busy: boolean
   onSaveProfile: (profile: DriverProfile) => Promise<void>
   onAddUpi: (vpa: string, bankName: string) => Promise<void>
@@ -683,9 +685,14 @@ function AccountPage({
             <p>Get instant alerts for nearby offers and trip updates.</p>
           </div>
           <button
+            type="button"
             className={`switch ${notificationsEnabled ? 'on' : ''}`}
             aria-label="Toggle delivery notifications"
-            onClick={() => onToggleNotifications(!notificationsEnabled)}
+            role="switch"
+            aria-checked={notificationsEnabled}
+            aria-busy={notificationBusy}
+            disabled={notificationBusy}
+            onClick={() => void onToggleNotifications(!notificationsEnabled)}
           >
             <span />
           </button>
@@ -742,8 +749,10 @@ function AccountPage({
         <div className="theme-control" role="group" aria-label="Driver app theme">
           {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
             <button
+              type="button"
               key={mode}
               className={theme === mode ? 'active' : ''}
+              aria-pressed={theme === mode}
               onClick={() => onTheme(mode)}
             >
               {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -993,6 +1002,7 @@ export default function App() {
   const [upi, setUpi] = useState<UpiAccount[]>([])
   const [incentives, setIncentives] = useState<Incentive[]>([])
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [notificationBusy, setNotificationBusy] = useState(false)
   const [availableUpdate, setAvailableUpdate] = useState<DriverUpdate | null>(null)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
@@ -1018,6 +1028,13 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => applyTheme(theme)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [theme])
+
+  useEffect(() => {
     if (tab === 'account') void refreshUpdateStatus()
   }, [tab])
 
@@ -1028,10 +1045,14 @@ export default function App() {
     void registerDriverPushNotifications(() => {
       setTab('home')
       void Promise.all([loadData(), online ? loadOffers() : Promise.resolve()])
-    }).then((cleanup) => {
-      if (disposed) cleanup()
-      else removeListeners = cleanup
     })
+      .then((cleanup) => {
+        if (disposed) cleanup()
+        else removeListeners = cleanup
+      })
+      .catch((registrationError) => {
+        console.warn('Driver push listeners could not be started', registrationError)
+      })
     return () => {
       disposed = true
       removeListeners?.()
@@ -1495,12 +1516,33 @@ export default function App() {
   }
 
   async function toggleNotifications(enabled: boolean) {
-    const granted = enabled ? await requestNotificationPermission() : false
-    const finalValue = enabled && granted
-    await setNotificationPreference(finalValue)
-    if (!finalValue) await unregisterDriverPushNotifications()
-    setNotificationsEnabled(finalValue)
-    if (enabled && !granted) setError('Notification permission was not granted in device settings.')
+    if (notificationBusy) return
+    setNotificationBusy(true)
+    setError('')
+    try {
+      const granted = enabled ? await requestNotificationPermission() : false
+      const finalValue = enabled && granted
+      await setNotificationPreference(finalValue)
+      if (!finalValue) await unregisterDriverPushNotifications()
+      setNotificationsEnabled(finalValue)
+      if (enabled && !granted) {
+        setError('Notification permission was not granted. You can enable it in device settings.')
+      } else {
+        setNotice(
+          finalValue ? 'Delivery notifications enabled.' : 'Delivery notifications disabled.'
+        )
+      }
+    } catch (notificationError) {
+      setNotificationsEnabled(false)
+      await setNotificationPreference(false).catch(() => undefined)
+      setError(
+        notificationError instanceof Error
+          ? notificationError.message
+          : 'Unable to change notification settings.'
+      )
+    } finally {
+      setNotificationBusy(false)
+    }
   }
 
   async function refreshUpdateStatus() {
@@ -1742,6 +1784,7 @@ export default function App() {
             profile={profile}
             upi={upi}
             notificationsEnabled={notificationsEnabled}
+            notificationBusy={notificationBusy}
             busy={busyKey === 'profile'}
             onSaveProfile={saveProfile}
             onAddUpi={addUpi}
