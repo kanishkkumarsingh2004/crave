@@ -37,6 +37,7 @@ type IconName =
   | 'bell'
   | 'package'
   | 'camera'
+  | 'lock'
 
 interface AdminUser {
   id: string
@@ -224,6 +225,7 @@ function Icon({ name }: { name: IconName }) {
         <circle cx="12" cy="13" r="3.5" />
       </>
     ),
+    lock: <path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10ZM12 14v3" />,
   }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -310,6 +312,55 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
   )
 }
 
+interface PasswordFieldProps {
+  label: string
+  value: string
+  placeholder: string
+  autoComplete: string
+  visible: boolean
+  onChange: (value: string) => void
+  onToggleVisibility: () => void
+  minLength?: number
+  maxLength?: number
+}
+
+function PasswordField({
+  label,
+  value,
+  placeholder,
+  autoComplete,
+  visible,
+  onChange,
+  onToggleVisibility,
+  minLength,
+  maxLength,
+}: PasswordFieldProps) {
+  return (
+    <label className="change-password-label">
+      {label}
+      <span className="change-password-field">
+        <input
+          type={visible ? 'text' : 'password'}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          minLength={minLength}
+          maxLength={maxLength}
+          required
+        />
+        <button
+          type="button"
+          onClick={onToggleVisibility}
+          aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
+        >
+          {visible ? 'Hide' : 'Show'}
+        </button>
+      </span>
+    </label>
+  )
+}
+
 function EmptyState({ text }: { text: string }) {
   return <div className="empty-state">{text}</div>
 }
@@ -344,6 +395,17 @@ export default function App() {
   const [xpBusy, setXPBusy] = useState(false)
   const [notifBusy, setNotifBusy] = useState(false)
   const [notifMsg, setNotifMsg] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordFeedback, setPasswordFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
@@ -571,6 +633,66 @@ export default function App() {
       )
     } finally {
       setInstallingUpdate(false)
+    }
+  }
+
+  async function changePassword(event: FormEvent) {
+    event.preventDefault()
+    if (passwordBusy) return
+
+    setPasswordFeedback(null)
+    if (!currentPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Please enter your current password.' })
+      return
+    }
+    if (!newPassword || newPassword.length < 8 || newPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New password and confirmation do not match.' })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password cannot be the same as your current password.',
+      })
+      return
+    }
+
+    setPasswordBusy(true)
+    try {
+      const response = await apiRequest<{ success?: boolean; message?: string }>(
+        '/api/user/change-password',
+        {
+          method: 'POST',
+          body: { currentPassword, newPassword, confirmPassword },
+        }
+      )
+      if (response.success === false) {
+        throw new Error(response.message || 'Unable to update your password.')
+      }
+      setPasswordFeedback({
+        type: 'success',
+        message: response.message || 'Password updated successfully.',
+      })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (passwordError) {
+      setPasswordFeedback({
+        type: 'error',
+        message:
+          passwordError instanceof Error
+            ? passwordError.message
+            : 'Unable to update your password.',
+      })
+    } finally {
+      setPasswordBusy(false)
     }
   }
 
@@ -1223,6 +1345,73 @@ export default function App() {
                 <p>{user.email}</p>
                 <small>Platform administrator</small>
               </div>
+            </article>
+            <article className="settings-card change-password-card">
+              <div className="settings-title">
+                <span>
+                  <Icon name="lock" />
+                </span>
+                <div>
+                  <h3>Change password</h3>
+                  <p>Update the password used to sign in to the admin app.</p>
+                </div>
+              </div>
+              <form
+                className="change-password-form"
+                noValidate
+                onSubmit={(event) => void changePassword(event)}
+              >
+                <div className="change-password-fields">
+                  <PasswordField
+                    label="Current password"
+                    value={currentPassword}
+                    onChange={setCurrentPassword}
+                    placeholder="Current password"
+                    autoComplete="current-password"
+                    visible={showCurrentPassword}
+                    onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
+                    minLength={8}
+                    maxLength={256}
+                  />
+                  <PasswordField
+                    label="New password"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    placeholder="8–256 characters"
+                    autoComplete="new-password"
+                    visible={showNewPassword}
+                    onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
+                    minLength={8}
+                    maxLength={256}
+                  />
+                  <PasswordField
+                    label="Confirm new password"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                    visible={showConfirmPassword}
+                    onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
+                    minLength={8}
+                    maxLength={256}
+                  />
+                </div>
+                {passwordFeedback && (
+                  <div
+                    className={`password-feedback ${passwordFeedback.type}`}
+                    role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                    aria-live="polite"
+                  >
+                    {passwordFeedback.message}
+                  </div>
+                )}
+                <div className="change-password-actions">
+                  <small>Password length: 8–256 characters.</small>
+                  <button className="primary-button" type="submit" disabled={passwordBusy}>
+                    {passwordBusy ? 'Updating password…' : 'Update password'}
+                  </button>
+                </div>
+              </form>
             </article>
             <article className="settings-card">
               <div className="settings-title">

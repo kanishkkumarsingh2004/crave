@@ -12,6 +12,7 @@
   --ink: #f5f7f5;
   --muted: #829087;
   --line: #28372d;
+  --success: #78e5a4;
   --danger: #ff8e9d;
   --input-bg: #08110c;
   --input-text: #f5f7f5;
@@ -1054,6 +1055,89 @@ html[data-theme='light'] .address-map-canvas {
   color: #10160d;
   background: var(--lime);
 }
+.change-password-card {
+  gap: 17px;
+}
+.change-password-form {
+  display: grid;
+  gap: 14px;
+}
+.change-password-fields {
+  display: grid;
+  gap: 13px;
+}
+.change-password-label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.change-password-field {
+  position: relative;
+  display: block;
+}
+.change-password-field input {
+  width: 100%;
+  min-height: 47px;
+  padding: 11px 58px 11px 13px;
+  border: 1px solid var(--input-border);
+  border-radius: 13px;
+  outline: 0;
+  color: var(--input-text);
+  background: var(--input-bg);
+  font-size: 11px;
+}
+.change-password-field input:focus {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgb(217 244 71 / 10%);
+}
+.change-password-field button {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  min-height: 30px;
+  padding: 5px 3px;
+  transform: translateY(-50%);
+  color: var(--lime);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 800;
+}
+.password-feedback {
+  padding: 11px 12px;
+  border: 1px solid;
+  border-radius: 12px;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.password-feedback.success {
+  border-color: color-mix(in srgb, var(--success) 28%, transparent);
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+.password-feedback.error {
+  border-color: rgb(255 110 126 / 25%);
+  color: var(--danger);
+  background: rgb(255 110 126 / 7%);
+}
+.change-password-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 3px;
+  border-top: 1px solid var(--line);
+}
+.change-password-actions small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.change-password-actions .primary-button {
+  flex: 0 0 auto;
+  min-height: 42px;
+}
 
 html[data-theme='light'] {
   color: #152019;
@@ -1067,6 +1151,7 @@ html[data-theme='light'] {
   --danger: #c94055;
   --input-bg: #ffffff;
   --input-text: #152019;
+  --success: #197a49;
 }
 html[data-theme='light'] body,
 html[data-theme='light'] #root,
@@ -1376,6 +1461,9 @@ html[data-theme='light'] .partner-sheet-heading > button {
     max-width: 760px;
     margin: auto;
   }
+  .change-password-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 @media (max-width: 370px) {
   .app-header {
@@ -1433,6 +1521,13 @@ html[data-theme='light'] .partner-sheet-heading > button {
   }
   .xp-toolbar {
     grid-template-columns: 1fr;
+  }
+  .change-password-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .change-password-actions .primary-button {
+    width: 100%;
   }
 }
 @media (max-width: 380px) {

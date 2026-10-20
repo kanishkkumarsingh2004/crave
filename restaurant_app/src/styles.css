@@ -682,6 +682,8 @@ svg {
   gap: 12px;
 }
 .order-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
@@ -785,6 +787,7 @@ svg {
   height: 13px;
 }
 .order-card-foot {
+  margin-top: auto;
   align-items: center;
   border-top: 1px solid var(--line);
   background: #101713;
@@ -1148,6 +1151,48 @@ svg {
   width: 100%;
   margin-top: 18px;
 }
+.password-form {
+  display: grid;
+  gap: 14px;
+}
+.password-form label {
+  display: grid;
+  gap: 7px;
+  color: #cad3cd;
+  font-size: 11px;
+  font-weight: 700;
+}
+.password-form .password-field input {
+  padding-right: 66px;
+}
+.password-helper {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+.password-feedback {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.password-feedback.error {
+  border-color: rgb(255 107 119 / 25%);
+  background: rgb(255 107 119 / 8%);
+  color: var(--danger);
+}
+.password-feedback.success {
+  border-color: rgb(115 221 162 / 28%);
+  background: rgb(115 221 162 / 8%);
+  color: var(--success, #73dda2);
+}
+.password-card .primary-button {
+  margin-top: 2px;
+}
 .theme-symbol {
   font-size: 19px;
   font-weight: 900;
@@ -1340,7 +1385,7 @@ html[data-theme='light'] .toast-message {
   left: 0;
   height: calc(68px + env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 5px max(6px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
     max(6px, env(safe-area-inset-left));
   border-top: 1px solid rgb(255 255 255 / 7%);
@@ -1920,4 +1965,118 @@ textarea,
 .menu-card p,
 .order-card p {
   color: var(--muted);
+}
+
+/* Profile page styles */
+.profile-page {
+  padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  min-height: calc(100dvh - 80px);
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.human-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  border: 2px solid var(--line);
+}
+
+.human-avatar svg {
+  width: 64px;
+  height: 64px;
+  color: var(--accent);
+}
+
+.profile-name-block h1 {
+  margin: 0;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-details {
+  width: min(100%, 600px);
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.field-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.field-value {
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.profile-stats {
+  width: min(100%, 600px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.readonly-field {
+  min-height: 44px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.readonly-field.multiline {
+  min-height: 80px;
+  align-items: flex-start;
+  white-space: pre-wrap;
 }

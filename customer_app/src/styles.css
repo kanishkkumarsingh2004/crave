@@ -1,22 +1,79 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 :root {
   font-family: 'DM Sans', sans-serif;
-  color: #101712;
-  background: #f7f7f2;
+  color: var(--ink);
+  background: var(--app-bg);
   font-synthesis: none;
   --ink: #101712;
   --muted: #6f776f;
   --lime: #eaff3f;
   --green: #0b2e1c;
   --line: #dfe3dc;
+  --line-strong: #cbd4c9;
   --surface: #fff;
   --surface-2: #f1f4ed;
+  --surface-3: #e7ece5;
   --input-bg: #fff;
   --input-text: #101712;
+  --input-placeholder: #6f776f;
+  --input-focus-border: #7b9518;
+  --input-focus-ring: #dff33f55;
   --app-bg: #f7f7f2;
   --chrome-bg: rgb(255 255 255 / 94%);
   --overlay-bg: rgb(6 16 9 / 60%);
+  --accent: #eaff3f;
+  --accent-strong: #5f7400;
+  --accent-soft: #f1f8cc;
   --on-accent: #172014;
+  --success: #267448;
+  --success-bg: #edf8e9;
+  --success-border: #bfe1bf;
+  --danger: #b33a43;
+  --danger-bg: #fff0f1;
+  --danger-border: #f2b9bd;
+  --warning: #9a6400;
+  --warning-bg: #fff5d9;
+  --chip-bg: #fff;
+  --chip-text: #101712;
+  --chip-active-bg: #142119;
+  --chip-active-text: #fff;
+  --nav-active-bg: #edff77;
+  --nav-active-text: #264713;
+  --icon-surface: #eff3e6;
+  --icon-accent: #4d6500;
+  --media-placeholder-bg: #e8ebdf;
+  --cart-header-bg: #eaf2df;
+  --cart-header-text: #101712;
+  --cart-header-muted: #728072;
+  --status-bg: #f1f4eb;
+  --status-text: #101712;
+  --status-pending: #e4a22a;
+  --status-success: #38a367;
+  --status-danger: #d3515c;
+  --profile-bg: linear-gradient(130deg, #102c1c, #1d4b2e);
+  --profile-text: #fff;
+  --profile-muted: #bfd0c3;
+  --auth-art-start: #dcefc3;
+  --auth-art-end: #a8c97d;
+  --auth-grid: rgba(16, 23, 18, 0.08);
+  --auth-card-bg: rgb(255 255 255 / 72%);
+  --auth-card-border: rgb(16 23 18 / 14%);
+  --auth-card-text: #52604f;
+  --auth-card-strong: #172014;
+  --auth-orb-bg: #f1ead5;
+  --promo-bg: linear-gradient(120deg, #edf7d5, #d6e9a5);
+  --promo-text: #172014;
+  --promo-muted: #52604f;
+  --promo-shadow: rgb(18 52 30 / 14%);
+  --hero-fallback: #14231a;
+  --hero-overlay-strong: rgba(5, 12, 8, 0.88);
+  --hero-overlay-soft: rgba(5, 12, 8, 0.08);
+  --sheet-handle: #c8cec6;
+  --restaurant-fallback-1: #f4ff52;
+  --restaurant-fallback-2: #ffb86b;
+  --restaurant-fallback-3: #b8d8ff;
+  --restaurant-fallback-4: #e6cbff;
+  --restaurant-fallback-5: #a9efcf;
   --shadow-color: rgb(17 32 25 / 13%);
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
@@ -29,7 +86,7 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
-  background: #f7f7f2;
+  background: var(--app-bg);
 }
 body {
   overscroll-behavior: none;
@@ -54,8 +111,8 @@ svg {
   place-content: center;
   gap: 34px;
   text-align: center;
-  background: #08110c;
-  color: #fff;
+  background: var(--app-bg);
+  color: var(--ink);
 }
 .brand {
   display: flex;
@@ -65,6 +122,7 @@ svg {
     800 28px 'Manrope',
     sans-serif;
   letter-spacing: -1.5px;
+  color: var(--ink);
 }
 .brand.compact {
   gap: 0;
@@ -98,9 +156,9 @@ svg {
 }
 .auth-screen {
   min-height: 100dvh;
-  background: #09120d;
+  background: var(--app-bg);
   padding-top: var(--safe-top);
-  color: #fff;
+  color: var(--ink);
   display: flex;
   flex-direction: column;
 }
@@ -109,15 +167,15 @@ svg {
   min-height: 190px;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at 65% 48%, #28492c, #09120d 58%);
+  background: radial-gradient(circle at 65% 48%, var(--auth-art-start), var(--auth-art-end) 58%);
 }
 .auth-art:after {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(var(--auth-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--auth-grid) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 .food-orb {
@@ -132,23 +190,23 @@ svg {
   display: grid;
   place-content: center;
   font-size: 82px;
-  background: #f1ead5;
+  background: var(--auth-orb-bg);
   box-shadow: 0 22px 50px #0008;
 }
 .floating-card {
   position: absolute;
   z-index: 3;
   padding: 12px 15px;
-  border: 1px solid #ffffff20;
+  border: 1px solid var(--auth-card-border);
   border-radius: 16px;
-  background: #142019d9;
+  background: var(--auth-card-bg);
   backdrop-filter: blur(12px);
   font-size: 12px;
-  color: #bdc5bd;
+  color: var(--auth-card-text);
 }
 .floating-card b {
   font-size: 15px;
-  color: #fff;
+  color: var(--auth-card-strong);
 }
 .card-one {
   left: 7%;
@@ -170,7 +228,7 @@ svg {
   margin-top: -20px;
   padding: 30px 24px calc(30px + var(--safe-bottom));
   border-radius: 30px 30px 0 0;
-  background: #f7f7f2;
+  background: var(--surface);
   color: var(--ink);
   min-height: 72dvh;
 }
@@ -209,18 +267,18 @@ label {
 input,
 textarea {
   width: 100%;
-  border: 1px solid #d9ded7;
+  border: 1px solid var(--line);
   border-radius: 15px;
-  background: #fff;
+  background: var(--input-bg);
   padding: 15px 16px;
   outline: none;
-  color: var(--ink);
+  color: var(--input-text);
   transition: 0.2s;
 }
 input:focus,
 textarea:focus {
-  border-color: #7b9518;
-  box-shadow: 0 0 0 3px #dff33f33;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
 }
 textarea {
   resize: none;
@@ -240,7 +298,7 @@ textarea {
   border: 0;
   background: transparent;
   font-weight: 800;
-  color: #627800;
+  color: var(--accent-strong);
 }
 .primary,
 .secondary {
@@ -263,7 +321,7 @@ textarea {
 }
 .secondary {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
 }
 .wide {
   width: 100%;
@@ -276,15 +334,15 @@ textarea {
   margin: 20px auto 0;
   border: 0;
   background: transparent;
-  color: #5f7400;
+  color: var(--accent-strong);
   font-weight: 700;
 }
 .error-box {
   padding: 13px 15px;
-  border: 1px solid #f2b9bd;
+  border: 1px solid var(--danger-border);
   border-radius: 13px;
-  background: #fff0f1;
-  color: #a92f3b;
+  background: var(--danger-bg);
+  color: var(--danger);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -383,9 +441,9 @@ textarea {
   border-radius: 25px;
   overflow: hidden;
   padding: 22px;
-  background: linear-gradient(120deg, #092d1a, #174d2f);
-  color: #fff;
-  box-shadow: 0 16px 32px #12341e24;
+  background: var(--promo-bg);
+  color: var(--promo-text);
+  box-shadow: 0 16px 32px var(--promo-shadow);
 }
 .promo > div:first-child {
   position: relative;
@@ -404,13 +462,13 @@ textarea {
 }
 .promo p {
   margin: 0 0 16px;
-  color: #c3d1c7;
+  color: var(--promo-muted);
   font-size: 13px;
 }
 .promo button {
   border: 0;
-  background: #fff;
-  color: #0e2518;
+  background: var(--surface);
+  color: var(--ink);
   border-radius: 11px;
   padding: 10px 13px;
   font-size: 12px;
@@ -1275,8 +1333,77 @@ textarea {
 .bill-card strong {
   font-size: 20px;
 }
+.bill-card .discount-row {
+  color: #4caf50 !important;
+}
+.bill-card .discount-row b {
+  color: #2e7d32 !important;
+}
+.bill-card .included-row {
+  color: #9aa39a;
+}
+.bill-card .included-row b {
+  color: #9aa39a;
+  font-weight: 600;
+}
+.bill-note {
+  margin: 10px 2px 0;
+  color: #667066;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .coupon-row {
   margin-top: 13px;
+}
+/* Tip row */
+.tip-row {
+  margin-top: 13px;
+  border: 1px solid #e0e3dd;
+  border-radius: 17px;
+  background: #fff;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tip-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a332b;
+  margin: 0;
+}
+.tip-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.tip-preset {
+  min-width: 0;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid #dce0d9;
+  background: #f5f7f4;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667066;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.tip-preset.active {
+  border-color: #b5d43b;
+  background: #eef5cf;
+  color: #3a5a00;
+}
+.tip-rupee {
+  color: #7f887f;
+  flex-shrink: 0;
+}
+.tip-input::-webkit-outer-spin-button,
+.tip-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.tip-input[type='number'] {
+  appearance: textfield;
 }
 .coupon-input {
   height: 53px;
@@ -1365,21 +1492,41 @@ textarea {
 }
 html[data-theme='dark'] .free-delivery-meter,
 html[data-theme='dark'] .coupon-input {
-  background: #141b17;
-  border-color: #233027;
+  background: var(--input-bg);
+  border-color: var(--line);
 }
 html[data-theme='dark'] .coupon-input input {
-  color: #fff;
+  color: var(--input-text);
+}
+html[data-theme='dark'] .tip-row {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme='dark'] .tip-label {
+  color: var(--ink);
+}
+html[data-theme='dark'] .tip-preset {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--muted);
+}
+html[data-theme='dark'] .tip-preset.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+}
+html[data-theme='dark'] .tip-rupee {
+  color: var(--muted);
 }
 html[data-theme='dark'] .meter-icon {
-  background: #2a3a0a;
-  color: #d9f447;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 html[data-theme='dark'] .meter-text b {
-  color: #fff;
+  color: var(--ink);
 }
 html[data-theme='dark'] .meter-track {
-  background: #1d2621;
+  background: var(--surface-3);
 }
 .upi-card {
   display: flex;
@@ -1655,6 +1802,61 @@ html[data-theme='dark'] .meter-track {
   width: 17px;
   color: #879087;
 }
+.password-form {
+  margin-bottom: 25px;
+}
+.password-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.password-card-header h3 {
+  margin: 0;
+  font: 800 19px 'Manrope';
+  letter-spacing: -0.4px;
+}
+.password-card-header > p:last-child {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.password-fields {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.password-fields label {
+  color: var(--ink);
+}
+.password-guidance {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.password-card .success-box,
+.password-card .error-box {
+  margin-top: 14px;
+}
+.success-box {
+  padding: 13px 15px;
+  border: 1px solid var(--success-border);
+  border-radius: 13px;
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.password-card > .primary {
+  margin-top: 14px;
+}
+@media (min-width: 600px) {
+  .password-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 .theme-control {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1679,13 +1881,9 @@ html[data-theme='dark'] .meter-track {
 }
 
 html[data-theme='dark'] {
-  color: #f5f8f5;
-  background: #07100b;
+  color: var(--ink);
+  background: var(--app-bg);
   color-scheme: dark;
-  --ink: #f5f8f5;
-  --muted: #8c9a90;
-  --line: #29372f;
-  --surface: #111a15;
 }
 html[data-theme='dark'] body,
 html[data-theme='dark'] #root,
@@ -1693,14 +1891,14 @@ html[data-theme='dark'] .app-shell,
 html[data-theme='dark'] .page,
 html[data-theme='dark'] .checkout,
 html[data-theme='dark'] .subpage {
-  background: #07100b;
+  background: var(--app-bg);
 }
 html[data-theme='dark'] .main-header,
 html[data-theme='dark'] .checkout > header,
 html[data-theme='dark'] .subpage > header,
 html[data-theme='dark'] .bottom-nav {
-  border-color: #243129;
-  background: rgb(8 17 12 / 94%);
+  border-color: var(--line);
+  background: var(--chrome-bg);
 }
 html[data-theme='dark'] .restaurant-card,
 html[data-theme='dark'] .menu-item,
@@ -1721,7 +1919,7 @@ html[data-theme='dark'] input,
 html[data-theme='dark'] textarea {
   border-color: var(--line);
   color: var(--ink);
-  background: #0b140f;
+  background: var(--input-bg);
 }
 html[data-theme='dark'] .bill-card span b,
 html[data-theme='dark'] .restaurant-card h3,
@@ -1733,14 +1931,14 @@ html[data-theme='dark'] .upi-app-grid > button,
 html[data-theme='dark'] .variant-list button,
 html[data-theme='dark'] .address-suggestions button {
   border-color: var(--line);
-  background: #142019;
+  background: var(--surface-2);
 }
 html[data-theme='dark'] .address-list button.selected {
-  border-color: #91aa20;
-  background: #1a2414;
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 html[data-theme='dark'] .bottom-nav .active {
-  color: var(--lime);
+  color: var(--nav-active-text);
 }
 .toggle {
   position: relative;
@@ -2263,4 +2461,388 @@ html[data-theme='dark'] .address-map-fallback {
 }
 .address-map-canvas .maplibregl-ctrl button {
   color: var(--ink);
+}
+
+/* Theme-aware component colors. Keep component surfaces on semantic tokens so
+   switching between light, dark, and system mode updates the whole app. */
+.splash,
+.auth-screen,
+.auth-sheet,
+.detail-screen,
+.checkout,
+.subpage {
+  color: var(--ink);
+  background: var(--app-bg);
+}
+.brand,
+.welcome,
+.home,
+.page,
+.content {
+  color: var(--ink);
+}
+.eyebrow,
+.home-header button svg:first-child,
+.title-row button,
+.menu-copy small,
+.saved-address > b,
+.saved-address > button {
+  color: var(--accent-strong);
+}
+.home-header p,
+.welcome p,
+.section-title span,
+.meta,
+.loading,
+.secure-note,
+.version {
+  color: var(--muted);
+}
+.search-launch {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+.sticky-search {
+  box-shadow: 0 8px 20px var(--shadow-color);
+}
+.search-launch svg,
+.search-field svg,
+.delivery-note > svg,
+.address-list button > svg,
+.address-suggestions svg,
+.saved-address > svg {
+  color: var(--accent-strong);
+}
+.promo button {
+  background: var(--surface);
+  color: var(--ink);
+}
+.restaurant-card,
+.search-field,
+.delivery-note,
+.cart-items,
+.bill-preview,
+.bill-card,
+.tip-row,
+.free-delivery-meter,
+.upi-card,
+.order-card,
+.settings-list,
+.saved-address,
+.address-form,
+.address-suggestions,
+.variant-list button,
+.upi-app-grid > button {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.restaurant-card {
+  box-shadow: 0 7px 20px var(--shadow-color);
+}
+.restaurant-image {
+  background: var(--media-placeholder-bg);
+}
+.restaurant-image-fallback-0 {
+  background: var(--restaurant-fallback-1);
+}
+.restaurant-image-fallback-1 {
+  background: var(--restaurant-fallback-2);
+}
+.restaurant-image-fallback-2 {
+  background: var(--restaurant-fallback-3);
+}
+.restaurant-image-fallback-3 {
+  background: var(--restaurant-fallback-4);
+}
+.restaurant-image-fallback-4 {
+  background: var(--restaurant-fallback-5);
+}
+.cuisine-row button,
+.chips button {
+  border-color: var(--line);
+  background: var(--chip-bg);
+  color: var(--chip-text);
+}
+.cuisine-row button.active,
+.chips button.active {
+  border-color: var(--chip-active-bg);
+  background: var(--chip-active-bg);
+  color: var(--chip-active-text);
+}
+.bottom-nav button {
+  color: var(--muted);
+}
+.bottom-nav .active {
+  color: var(--nav-active-text);
+}
+.bottom-nav .active > span {
+  background: var(--nav-active-bg);
+}
+.bottom-nav i {
+  background: var(--accent-strong);
+  color: var(--surface);
+}
+.empty-icon,
+.setting-icon {
+  border-color: var(--line);
+  background: var(--icon-surface);
+  color: var(--icon-accent);
+}
+.toast {
+  background: var(--surface-3);
+  color: var(--ink);
+  box-shadow: 0 10px 30px var(--shadow-color);
+}
+.menu-item {
+  border-bottom-color: var(--line);
+}
+.menu-copy p,
+.cart-restaurant small,
+.meter-text small,
+.upi-picker-total,
+.profile-card p,
+.success-line small {
+  color: var(--muted);
+}
+.variant-list strong {
+  color: var(--accent-strong);
+}
+.dish-image-placeholder {
+  background: var(--media-placeholder-bg);
+}
+.menu-action button {
+  border-color: var(--accent-strong);
+  background: var(--surface);
+  color: var(--accent-strong);
+}
+.cart-restaurant {
+  background: var(--cart-header-bg);
+  color: var(--cart-header-text);
+}
+.cart-restaurant small {
+  color: var(--cart-header-muted);
+}
+.cart-items article {
+  border-bottom-color: var(--line);
+}
+.stepper {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+}
+.stepper button {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.sticky-action {
+  background: var(--chrome-bg);
+  border-top-color: var(--line);
+}
+.checkout > header,
+.subpage > header {
+  background: var(--chrome-bg);
+  border-bottom-color: var(--line);
+}
+.address-list button {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.address-list button.selected {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.address-list i {
+  border-color: var(--line-strong);
+  color: var(--accent-strong);
+}
+.bill-card span {
+  color: var(--muted);
+}
+.bill-card span b {
+  color: var(--ink);
+}
+.bill-card div {
+  border-top-color: var(--line-strong);
+}
+.bill-card .discount-row,
+.bill-card .discount-row b {
+  color: var(--success) !important;
+}
+.coupon-input {
+  border-color: var(--line);
+  background: var(--input-bg);
+}
+.coupon-input input {
+  color: var(--input-text);
+}
+.coupon-input input::placeholder {
+  color: var(--input-placeholder);
+}
+.tip-input {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.free-delivery-meter {
+  background: var(--surface);
+}
+.tip-row {
+  background: var(--surface);
+}
+.tip-label,
+.meter-text b {
+  color: var(--ink);
+}
+.tip-preset {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.tip-preset.active {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.tip-rupee {
+  color: var(--muted);
+}
+.meter-icon,
+.upi-card > svg {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.meter-track {
+  background: var(--surface-3);
+}
+.upi-card > strong {
+  color: var(--accent-strong);
+}
+.upi-app-grid > button {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.upi-app-grid > button:active {
+  background: var(--accent-soft);
+}
+.upi-app-mark {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.upi-app-mark.other {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.success-line {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.status {
+  background: var(--status-bg);
+  color: var(--status-text);
+}
+.status > i {
+  background: var(--status-pending);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-pending) 20%, transparent);
+}
+.status.delivered > i,
+.status.completed > i {
+  background: var(--status-success);
+}
+.status.cancelled > i {
+  background: var(--status-danger);
+}
+.otp {
+  border-color: var(--accent-strong);
+}
+.profile-card {
+  background: var(--profile-bg);
+  color: var(--profile-text);
+}
+.profile-card p {
+  color: var(--profile-muted);
+}
+.settings-list {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.settings-list > div,
+.settings-list > button {
+  border-bottom-color: var(--line);
+  color: var(--ink);
+}
+.settings-list > button > svg {
+  color: var(--muted);
+}
+.theme-control {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.theme-control button.active {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+.toggle {
+  background: var(--surface-3);
+}
+.toggle span {
+  background: var(--surface);
+  box-shadow: 0 2px 5px var(--shadow-color);
+}
+.toggle.on {
+  background: var(--accent-strong);
+}
+.logout-button {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.address-form,
+.saved-address {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.address-confirmed {
+  color: var(--success);
+}
+.address-suggestions {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.address-suggestions button {
+  border-bottom-color: var(--line);
+  color: var(--ink);
+}
+.address-map-canvas {
+  background: var(--surface-2);
+}
+.address-map-toolbar button {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.offline-banner {
+  background: var(--surface-3);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.sheet-handle {
+  background: var(--sheet-handle);
+}
+.error-box {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.auth-copy {
+  color: var(--muted);
+}
+.auth-sheet h1,
+.auth-sheet label {
+  color: var(--ink);
+}
+.auth-sheet .brand {
+  color: var(--ink);
+}
+.version {
+  color: var(--muted);
 }

@@ -77,6 +77,7 @@ export default function CalculatorPlaygroundPage() {
         // Initialize controls with live DB payment config
         const cfg = json.dbData.paymentConfig
         if (cfg) {
+          setPackagingFee(cfg.packagingCap ?? 20)
           setPlatformFee(cfg.platformFee ?? 6)
           setHandlingFee(cfg.handlingFee ?? 5)
           setVendorCommissionPercent(cfg.vendorCommission ?? 15)
@@ -107,26 +108,27 @@ export default function CalculatorPlaygroundPage() {
 
   // Quick Preset Handlers
   const resetToSystemDefaults = () => {
+    const cfg = dbData?.paymentConfig
     setSelectedOrderId('')
     setSelectedRestaurantId('')
     setSelectedCouponCode('')
     setSubtotal(450)
     setDistanceKm(3.5)
-    setPackagingFee(20)
+    setPackagingFee(cfg?.packagingCap ?? 20)
     setTip(0)
-    setVendorCommissionPercent(15)
-    setDriverPayoutSharePercent(80)
-    setPlatformFee(6)
-    setHandlingFee(5)
-    setBaseDeliveryFee(30)
-    setBaseDistanceKm(3)
-    setPerKmRate(10)
-    setFreeDeliveryThreshold(500)
-    setSurgeMultiplier(1.0)
-    setRainFee(20)
-    setNightSurgeFee(15)
-    setIsRainModeActive(false)
-    setIsNightSurgeActive(false)
+    setVendorCommissionPercent(cfg?.vendorCommission ?? 15)
+    setDriverPayoutSharePercent(cfg?.driverPayoutShare ?? 80)
+    setPlatformFee(cfg?.platformFee ?? 6)
+    setHandlingFee(cfg?.handlingFee ?? 5)
+    setBaseDeliveryFee(cfg?.baseDeliveryFee ?? 30)
+    setBaseDistanceKm(cfg?.baseDistanceKm ?? 3)
+    setPerKmRate(cfg?.perKmRate ?? 10)
+    setFreeDeliveryThreshold(cfg?.freeDeliveryThreshold ?? 500)
+    setSurgeMultiplier(cfg?.surgeMultiplier ?? 1.0)
+    setRainFee(cfg?.rainFee ?? 20)
+    setNightSurgeFee(cfg?.nightSurgeFee ?? 15)
+    setIsRainModeActive(cfg?.isRainModeActive ?? false)
+    setIsNightSurgeActive(cfg?.isNightSurgeActive ?? false)
   }
 
   const applyRainSurgePreset = () => {
@@ -155,7 +157,7 @@ export default function CalculatorPlaygroundPage() {
     const ord = dbData.orders.find((o) => o.id === orderId)
     if (ord) {
       setSubtotal(ord.subtotal || 450)
-      setPackagingFee(ord.packaging_fee ?? 20)
+      setPackagingFee(ord.packaging_fee ?? dbData.paymentConfig?.packagingCap ?? 20)
       setTip(ord.tip || 0)
       if (ord.coupon_code) {
         setSelectedCouponCode(ord.coupon_code)
@@ -454,7 +456,7 @@ export default function CalculatorPlaygroundPage() {
                   onClick={resetToSystemDefaults}
                   className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-extrabold text-[#18201c] dark:text-[#d9f447] transition"
                 >
-                  <RefreshCw className="size-3" /> Reset Defaults
+                  <RefreshCw className="size-3" /> Reset to DB Config
                 </button>
               </div>
 

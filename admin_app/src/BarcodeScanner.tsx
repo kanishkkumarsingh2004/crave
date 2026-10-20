@@ -57,37 +57,56 @@ export default function BarcodeScanner({ onClose, onDetected }: BarcodeScannerPr
       verbose: false,
     })
 
-    // Deferring one task prevents React StrictMode's development-only probe
-    // mount from opening the camera before that probe is cleaned up.
+    // Ask for camera permission explicitly before opening the scanner. This surfaces the
+    // native permission dialog on Android/iOS (and the browser prompt on web) instead of
+    // silently failing once html5-qrcode tries to start.
+    const probe = navigator.mediaDevices?.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+    })
+
     const startTimer = window.setTimeout(() => {
-      void scanner
-        .start(
-          { facingMode: { ideal: 'environment' } },
-          {
-            fps: 10,
-            aspectRatio: 16 / 9,
-            qrbox: (viewWidth, viewHeight) => ({
-              width: Math.min(Math.floor(viewWidth * 0.88), 380),
-              height: Math.min(Math.max(Math.floor(viewHeight * 0.3), 90), 145),
-            }),
-          },
-          (decodedText) => {
-            const barcode = decodedText.trim()
-            if (disposed || detectedRef.current || !barcode) return
-            detectedRef.current = true
-            navigator.vibrate?.(80)
-            onDetectedRef.current(barcode)
-          },
-          () => undefined
-        )
-        .then(() => {
-          if (disposed && scanner.isScanning) void scanner.stop().catch(() => undefined)
-          if (!disposed) setStarting(false)
+      void probe
+        .then((stream) => {
+          if (disposed) {
+            stream.getTracks().forEach((track) => track.stop())
+            return
+          }
+          stream.getTracks().forEach((track) => track.stop())
+          return scanner
+            .start(
+              { facingMode: { ideal: 'environment' } },
+              {
+                fps: 10,
+                aspectRatio: 16 / 9,
+                qrbox: (viewWidth, viewHeight) => ({
+                  width: Math.min(Math.floor(viewWidth * 0.88), 380),
+                  height: Math.min(Math.max(Math.floor(viewHeight * 0.3), 90), 145),
+                }),
+              },
+              (decodedText) => {
+                const barcode = decodedText.trim()
+                if (disposed || detectedRef.current || !barcode) return
+                detectedRef.current = true
+                navigator.vibrate?.(80)
+                onDetectedRef.current(barcode)
+              },
+              () => undefined
+            )
+            .then(() => {
+              if (disposed && scanner.isScanning) void scanner.stop().catch(() => undefined)
+              if (!disposed) setStarting(false)
+            })
+            .catch((scanError) => {
+              if (!disposed) {
+                setStarting(false)
+                setError(cameraErrorMessage(scanError))
+              }
+            })
         })
-        .catch((scanError) => {
+        .catch((probeError) => {
           if (!disposed) {
             setStarting(false)
-            setError(cameraErrorMessage(scanError))
+            setError(cameraErrorMessage(probeError))
           }
         })
     }, 0)

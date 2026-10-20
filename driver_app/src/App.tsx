@@ -561,6 +561,7 @@ function AccountPage({
   notificationBusy,
   busy,
   onSaveProfile,
+  onChangePassword,
   onAddUpi,
   onPrimaryUpi,
   onDeleteUpi,
@@ -581,6 +582,11 @@ function AccountPage({
   notificationBusy: boolean
   busy: boolean
   onSaveProfile: (profile: DriverProfile) => Promise<void>
+  onChangePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => Promise<void>
   onAddUpi: (vpa: string, bankName: string) => Promise<void>
   onPrimaryUpi: (id: string) => Promise<void>
   onDeleteUpi: (id: string) => Promise<void>
@@ -705,6 +711,7 @@ function AccountPage({
           ))}
         </div>
       </article>
+      <ChangePasswordForm onChangePassword={onChangePassword} />
       <article className="settings-card">
         <div className="settings-card-title">
           <span className="settings-icon">
@@ -873,6 +880,176 @@ function EmptyState({ icon, title, text }: { icon: IconName; title: string; text
       <h3>{title}</h3>
       <p>{text}</p>
     </div>
+  )
+}
+
+function ChangePasswordForm({
+  onChangePassword,
+}: {
+  onChangePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => Promise<void>
+}) {
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
+    null
+  )
+
+  function validatePassword(value: string, label: string): string | null {
+    if (value.length < 8 || value.length > 256) {
+      return `${label} must be between 8 and 256 characters.`
+    }
+    return null
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    if (submitting) return
+
+    const currentError = validatePassword(currentPassword, 'Current password')
+    const newError = validatePassword(newPassword, 'New password')
+    const confirmError = validatePassword(confirmPassword, 'Confirm password')
+    const validationError = currentError || newError || confirmError
+
+    if (validationError) {
+      setFeedback({ type: 'error', message: validationError })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setFeedback({
+        type: 'error',
+        message: 'New password must be different from your current password.',
+      })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setFeedback({ type: 'error', message: 'New password and confirmation do not match.' })
+      return
+    }
+
+    setSubmitting(true)
+    setFeedback(null)
+    try {
+      await onChangePassword(currentPassword, newPassword, confirmPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowCurrentPassword(false)
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
+      setFeedback({ type: 'success', message: 'Password changed successfully.' })
+    } catch (changePasswordError) {
+      setFeedback({
+        type: 'error',
+        message:
+          changePasswordError instanceof Error
+            ? changePasswordError.message
+            : 'Unable to change your password.',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <article className="settings-card">
+      <div className="settings-card-title">
+        <span className="settings-icon">
+          <Icon name="shield" />
+        </span>
+        <div>
+          <h3>Change password</h3>
+          <p>Keep your driver account secure with a new sign-in password.</p>
+        </div>
+      </div>
+      <form className="change-password-form" onSubmit={submit} noValidate>
+        <label className="field-label">
+          Current password
+          <span className="password-field">
+            <input
+              type={showCurrentPassword ? 'text' : 'password'}
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              autoComplete="current-password"
+              maxLength={256}
+              aria-required="true"
+            />
+            <button
+              type="button"
+              aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+              aria-pressed={showCurrentPassword}
+              onClick={() => setShowCurrentPassword((value) => !value)}
+            >
+              {showCurrentPassword ? 'Hide' : 'Show'}
+            </button>
+          </span>
+        </label>
+        <label className="field-label">
+          New password
+          <span className="password-field">
+            <input
+              type={showNewPassword ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              autoComplete="new-password"
+              maxLength={256}
+              aria-required="true"
+            />
+            <button
+              type="button"
+              aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+              aria-pressed={showNewPassword}
+              onClick={() => setShowNewPassword((value) => !value)}
+            >
+              {showNewPassword ? 'Hide' : 'Show'}
+            </button>
+          </span>
+        </label>
+        <label className="field-label">
+          Confirm new password
+          <span className="password-field">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              maxLength={256}
+              aria-required="true"
+            />
+            <button
+              type="button"
+              aria-label={
+                showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'
+              }
+              aria-pressed={showConfirmPassword}
+              onClick={() => setShowConfirmPassword((value) => !value)}
+            >
+              {showConfirmPassword ? 'Hide' : 'Show'}
+            </button>
+          </span>
+        </label>
+        {feedback && (
+          <p
+            className={`change-password-feedback ${feedback.type}`}
+            role={feedback.type === 'error' ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {feedback.message}
+          </p>
+        )}
+        <button className="primary-button" type="submit" disabled={submitting}>
+          {submitting ? <span className="button-spinner dark" /> : 'Change password'}
+        </button>
+      </form>
+    </article>
   )
 }
 
@@ -1424,6 +1601,17 @@ export default function App() {
     }
   }
 
+  async function changePassword(
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) {
+    await apiRequest('/api/user/change-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword, confirmPassword },
+    })
+  }
+
   async function addUpi(vpa: string, bankName: string) {
     const response = await apiRequest<{ account: UpiAccount }>('/api/driver/upi', {
       method: 'POST',
@@ -1726,6 +1914,7 @@ export default function App() {
             notificationBusy={notificationBusy}
             busy={busyKey === 'profile'}
             onSaveProfile={saveProfile}
+            onChangePassword={changePassword}
             onAddUpi={addUpi}
             onPrimaryUpi={primaryUpi}
             onDeleteUpi={deleteUpi}

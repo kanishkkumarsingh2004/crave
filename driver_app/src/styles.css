@@ -1130,6 +1130,39 @@ b {
 .form-grid .full {
   grid-column: 1 / -1;
 }
+.change-password-form {
+  display: grid;
+  gap: 15px;
+}
+.change-password-form .field-label {
+  gap: 9px;
+}
+.change-password-form .password-field input {
+  min-height: 48px;
+  border-radius: 13px;
+  font-size: 13px;
+}
+.change-password-form .primary-button {
+  justify-self: start;
+  min-width: 170px;
+}
+.change-password-feedback {
+  border-radius: 15px;
+  padding: 13px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.change-password-feedback.success {
+  border: 1px solid rgb(83 224 140 / 30%);
+  color: var(--green);
+  background: rgb(83 224 140 / 9%);
+}
+.change-password-feedback.error {
+  border: 1px solid rgb(255 137 149 / 34%);
+  color: #ffadb5;
+  background: rgb(255 137 149 / 9%);
+}
 .field-label {
   color: #8e9a91;
   font-size: 11px;
@@ -1565,6 +1598,10 @@ b {
     grid-column: auto;
   }
   .settings-card > .secondary-button {
+    width: 100%;
+    justify-self: stretch;
+  }
+  .change-password-form .primary-button {
     width: 100%;
     justify-self: stretch;
   }

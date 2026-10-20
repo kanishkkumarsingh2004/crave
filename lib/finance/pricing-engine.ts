@@ -666,6 +666,9 @@ export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculato
       roundingAdjustment: 0,
       tip: toRupees(r.tipPaise),
       grandTotal: toRupees(r.customerPayablePaise),
+      foodPackagingGst: toRupees(r.restaurantServiceTaxBreakdown.totalGstPaise),
+      platformServiceGst: toRupees(r.platformServiceTaxBreakdown.totalGstPaise),
+      taxSplit: r.restaurantServiceTaxBreakdown.taxMode,
     },
     vendorSettlement: {
       restaurantName: r.restaurantName,

@@ -220,16 +220,20 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
   const finalPlatformFee = priceSnapshot.platformFee
   const finalHandlingFee = priceSnapshot.handlingFee
   const finalGst = priceSnapshot.foodGstTotal
+  const finalPlatformServiceGst = priceSnapshot.platformServiceGst
+  const finalMarkupAmount = priceSnapshot.markupAmount
   const finalTotal = priceSnapshot.customerPayable
 
   const exactUnroundedSum =
     Number(finalSubtotal || 0) -
     Number(discountAmount || 0) +
+    Number(finalMarkupAmount || 0) +
     Number(finalDeliveryFee || 0) +
     Number(finalPackagingFee || 0) +
     Number(finalPlatformFee || 0) +
     Number(finalHandlingFee || 0) +
     Number(finalGst || 0) +
+    Number(finalPlatformServiceGst || 0) +
     Number(tip || 0)
 
   const finalRoundingAdjustment = Math.max(0, Number(finalTotal || 0) - exactUnroundedSum)
@@ -573,6 +577,13 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
                   </div>
                 )}
 
+                {finalMarkupAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span>Markup</span>
+                    <span>₹{finalMarkupAmount}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span>Kitchen Packaging Fee</span>
                   <span>₹{finalPackagingFee}</span>
@@ -598,6 +609,15 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
                   </span>
                   <span className="font-mono font-bold">₹{Number(finalGst).toFixed(2)}</span>
                 </div>
+
+                {finalPlatformServiceGst > 0 && (
+                  <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                    <span>Platform Service GST (18%)</span>
+                    <span className="font-mono font-bold">
+                      ₹{Number(finalPlatformServiceGst).toFixed(2)}
+                    </span>
+                  </div>
+                )}
 
                 {tip > 0 && (
                   <div className="flex justify-between text-blue-700 dark:text-blue-400 font-semibold">

@@ -50,6 +50,11 @@ export interface CustomerBillingBreakdown {
   roundingAdjustment: number
   tip: number
   grandTotal: number
+  // Split of gstAmount by whether it is already embedded in menu prices or added on top.
+  // Only populated by the canonical (paise) engine; legacy callers leave these undefined.
+  foodPackagingGst?: number // GST inside item + packaging prices (TAX_INCLUSIVE) — NOT added again
+  platformServiceGst?: number // 18% GST on platform + handling fees — added on top
+  taxSplit?: 'CGST_SGST' | 'IGST' | 'EXEMPT'
 }
 
 export interface VendorSettlementBreakdown {

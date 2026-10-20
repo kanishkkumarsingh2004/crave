@@ -33,7 +33,7 @@ type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
 const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
 const titleCase = (value: string) =>
   value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-const FALLBACK = ['#f4ff52', '#ffb86b', '#b8d8ff', '#e6cbff', '#a9efcf']
+const RESTAURANT_FALLBACK_COUNT = 5
 const AddressMap = lazy(() => import('./AddressMap'))
 
 function Logo({ compact = false }: { compact?: boolean }) {
@@ -253,12 +253,18 @@ function RestaurantCard({
   return (
     <article className="restaurant-card" onClick={onOpen}>
       <div
-        className="restaurant-image"
-        style={{
-          background: restaurant.image
-            ? `linear-gradient(0deg,rgba(0,0,0,.38),transparent),url(${restaurant.image}) center/cover`
-            : FALLBACK[restaurant.name.length % FALLBACK.length],
-        }}
+        className={`restaurant-image${
+          restaurant.image
+            ? ''
+            : ` restaurant-image-fallback-${restaurant.name.length % RESTAURANT_FALLBACK_COUNT}`
+        }`}
+        style={
+          restaurant.image
+            ? {
+                background: `linear-gradient(0deg,rgba(0,0,0,.38),transparent),url(${restaurant.image}) center/cover`,
+              }
+            : undefined
+        }
       >
         {restaurant.offer && <span className="offer">{restaurant.offer}</span>}
         <button
@@ -351,8 +357,8 @@ function MenuScreen({
         className="detail-hero"
         style={{
           background: restaurant.image
-            ? `linear-gradient(0deg,rgba(5,12,8,.88),rgba(5,12,8,.08)),url(${restaurant.image}) center/cover`
-            : '#14231a',
+            ? `linear-gradient(0deg,var(--hero-overlay-strong),var(--hero-overlay-soft)),url(${restaurant.image}) center/cover`
+            : 'var(--hero-fallback)',
         }}
       >
         <button className="round" onClick={onBack}>
@@ -417,6 +423,7 @@ function MenuScreen({
           <div className="menu-list">
             {filtered.map((item) => {
               const variants = (item.variants || []).filter((v) => v.in_stock !== false)
+              const image = item.image || item.image_url
               const unavailable =
                 restaurant.is_open === false ||
                 item.in_stock === false ||
@@ -445,15 +452,10 @@ function MenuScreen({
                   </div>
                   <div className="menu-action">
                     <div
-                      className="dish-image"
-                      style={{
-                        background:
-                          item.image || item.image_url
-                            ? `url(${item.image || item.image_url}) center/cover`
-                            : '#e8ebdf',
-                      }}
+                      className={`dish-image${image ? '' : ' dish-image-placeholder'}`}
+                      style={image ? { background: `url(${image}) center/cover` } : undefined}
                     >
-                      {!(item.image || item.image_url) && '🍽️'}
+                      {!image && '🍽️'}
                     </div>
                     <button disabled={unavailable} onClick={() => add(item)}>
                       {unavailable
@@ -620,6 +622,8 @@ function Checkout({
     ),
     [utr, setUtr] = useState(''),
     [coupon, setCoupon] = useState(''),
+    [tip, setTip] = useState(0),
+    [tipInput, setTipInput] = useState(''),
     [busy, setBusy] = useState(false),
     [paid, setPaid] = useState(false),
     [paymentPicker, setPaymentPicker] = useState(false),
@@ -640,6 +644,7 @@ function Checkout({
           restaurantId: restaurant.id,
           distanceKm: checkoutDistanceKm(restaurant, address),
           couponCode: coupon || undefined,
+          tip: tip > 0 ? tip : undefined,
           itemsAreCustomerPrices: true,
           items: cart.map((x) => ({ name: x.name, quantity: x.quantity, price: x.price })),
         },
@@ -654,9 +659,14 @@ function Checkout({
           quoteError instanceof Error ? quoteError.message : 'Could not calculate this order.'
         )
       )
-  }, [subtotal, restaurant, selected, addresses, coupon, cart])
-  const total = billing?.grandTotal || subtotal
+  }, [subtotal, restaurant, selected, addresses, coupon, tip, cart])
+  // Use the backend quote as the single payable amount everywhere. Rebuilding
+  // it from visible rows would double-count GST when menu prices are tax-inclusive.
+  const totalToPay = billing?.grandTotal ?? subtotal
   const foodSubtotal = billing?.customerFoodSubtotal || subtotal
+  // The canonical engine splits GST into an embedded part (already inside menu prices) and a
+  // platform-service part (18% on fees, charged on top). Present both so the bill reconciles.
+  const taxSplit = billing?.taxSplit
   const freeDeliveryThreshold = config?.freeDeliveryThreshold ?? 0
   const freeDeliveryProgress = (() => {
     if (!freeDeliveryThreshold || freeDeliveryThreshold <= 0) return null
@@ -693,7 +703,7 @@ function Checkout({
       await openUpiPayment({
         vpa: config.upiVpa,
         merchant: config.merchantName || 'CRAVE',
-        amount: Number(total),
+        amount: Number(totalToPay),
         note: `CRAVE order from ${restaurant.name}`,
         app,
       })
@@ -740,6 +750,7 @@ function Checkout({
           utr_ref: utr.trim(),
           customer_vpa: user.email,
           coupon_code: coupon || undefined,
+          tip,
         },
       })
       onPlaced()
@@ -797,13 +808,48 @@ function Checkout({
             Platform & handling{' '}
             <b>{money((billing?.platformFee || 0) + (billing?.handlingFee || 0))}</b>
           </span>
-          <span>
-            Taxes <b>{money(billing?.gstAmount || 0)}</b>
-          </span>
+          {taxSplit ? (
+            <>
+              {/* GST already baked into menu prices — informational, not added to the total */}
+              <span className="included-row">
+                Food &amp; packaging GST ({taxSplit}) · included in item prices
+                <b>{money(billing?.foodPackagingGst || 0)}</b>
+              </span>
+              {/* 18% GST on platform/handling fees is a separate supply and IS charged */}
+              {(billing?.platformServiceGst || 0) > 0 && (
+                <span>
+                  GST on platform &amp; handling (18%) <b>{money(billing.platformServiceGst)}</b>
+                </span>
+              )}
+            </>
+          ) : (
+            <span>
+              Taxes (included where applicable) <b>{money(billing?.gstAmount || 0)}</b>
+            </span>
+          )}
+          {billing?.couponDiscount > 0 && (
+            <span className="discount-row">
+              Coupon discount <b>-{money(billing.couponDiscount)}</b>
+            </span>
+          )}
+          {billing?.tip > 0 && (
+            <span>
+              Tip <b>{money(billing.tip)}</b>
+            </span>
+          )}
           <div>
-            Total to pay <strong>{money(total)}</strong>
+            Total to pay <strong>{money(totalToPay)}</strong>
           </div>
         </div>
+        {taxSplit && (
+          <p className="bill-note">
+            Your total adds up like this: item prices already include food &amp; packaging GST, so
+            only the 18% tax on platform &amp; handling fees is charged on top. Menu price +
+            packaging + delivery + platform &amp; handling + platform GST
+            {billing?.couponDiscount > 0 ? ' − coupon' : ''}
+            {billing?.tip > 0 ? ' + tip' : ''} = total.
+          </p>
+        )}
         <div className="coupon-row">
           <div className="coupon-input">
             <Icon name="tag" />
@@ -823,6 +869,40 @@ function Checkout({
                 <Icon name="close" />
               </button>
             )}
+          </div>
+        </div>
+        <div className="tip-row">
+          <p className="tip-label">Add a tip for your delivery partner 🙏</p>
+          <div className="tip-presets">
+            {[0, 10, 20, 50].map((amt) => (
+              <button
+                key={amt}
+                className={`tip-preset${tip === amt ? ' active' : ''}`}
+                onClick={() => {
+                  setTip(amt)
+                  setTipInput(amt > 0 ? String(amt) : '')
+                }}
+              >
+                {amt === 0 ? 'No tip' : `₹${amt}`}
+              </button>
+            ))}
+          </div>
+          <div className="coupon-input">
+            <span className="tip-rupee">₹</span>
+            <input
+              className="tip-input"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              placeholder="Custom amount"
+              value={tipInput}
+              onChange={(e) => {
+                const val = e.target.value
+                setTipInput(val)
+                const num = Math.max(0, Number(val) || 0)
+                setTip(num)
+              }}
+            />
           </div>
         </div>
         {freeDeliveryProgress && (
@@ -862,7 +942,7 @@ function Checkout({
                 <Spinner /> Calculating final total
               </>
             ) : (
-              `Pay ${money(total)} with UPI`
+              `Pay ${money(totalToPay)} with UPI`
             )}
           </button>
         ) : (
@@ -924,7 +1004,7 @@ function Checkout({
               </button>
             </div>
             <p className="upi-picker-total">
-              Pay {money(total)} to {config?.merchantName || 'CRAVE'}
+              Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'}
             </p>
             {error && <div className="error-box">{error}</div>}
             <div className="upi-app-grid">
@@ -1066,6 +1146,17 @@ function Account({
   onTheme: (theme: ThemeMode) => void
 }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordFeedback, setPasswordFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
   const [notifications, setNotifications] = useState(false),
     [checking, setChecking] = useState(false),
     [update, setUpdate] = useState<CustomerUpdate | null>(null),
@@ -1083,6 +1174,84 @@ function Account({
       setMessage(e instanceof Error ? e.message : 'Could not check for updates')
     } finally {
       setChecking(false)
+    }
+  }
+  const changePassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setPasswordFeedback(null)
+    if (!currentPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Enter your current password.' })
+      return
+    }
+    if (currentPassword.length < 8 || currentPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'Your current password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (!newPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Enter a new password.' })
+      return
+    }
+    if (newPassword.length < 8 || newPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'Your new password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (!confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Confirm your new password.' })
+      return
+    }
+    if (confirmPassword.length < 8 || confirmPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'Your confirmed password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New passwords do not match.' })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'Your new password must be different from your current password.',
+      })
+      return
+    }
+    setChangingPassword(true)
+    try {
+      const response = await apiRequest<{ success?: boolean; message?: string }>(
+        '/api/user/change-password',
+        {
+          method: 'POST',
+          body: { currentPassword, newPassword, confirmPassword },
+        }
+      )
+      setPasswordFeedback({
+        type: 'success',
+        message: response.message || 'Password changed successfully.',
+      })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowCurrentPassword(false)
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
+    } catch (passwordError) {
+      setPasswordFeedback({
+        type: 'error',
+        message:
+          passwordError instanceof Error
+            ? passwordError.message
+            : 'Could not change your password.',
+      })
+    } finally {
+      setChangingPassword(false)
     }
   }
   return (
@@ -1127,6 +1296,119 @@ function Account({
           <Icon name="chevron" />
         </button>
       </div>
+      <h2 className="section-title">Security</h2>
+      <form className="password-form" onSubmit={changePassword} noValidate>
+        <div className="password-card">
+          <div className="password-card-header">
+            <p className="eyebrow">ACCOUNT SECURITY</p>
+            <h3>Change password</h3>
+            <p>Choose a password you do not use anywhere else.</p>
+          </div>
+          <div className="password-fields">
+            <label>
+              Current password
+              <div className="password">
+                <input
+                  required
+                  minLength={8}
+                  maxLength={256}
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(event) => {
+                    setCurrentPassword(event.target.value)
+                    setPasswordFeedback(null)
+                  }}
+                  autoComplete="current-password"
+                  placeholder="Current password"
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showCurrentPassword ? 'Hide current password' : 'Show current password'
+                  }
+                  aria-pressed={showCurrentPassword}
+                  onClick={() => setShowCurrentPassword((visible) => !visible)}
+                >
+                  {showCurrentPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </label>
+            <label>
+              New password
+              <div className="password">
+                <input
+                  required
+                  minLength={8}
+                  maxLength={256}
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(event) => {
+                    setNewPassword(event.target.value)
+                    setPasswordFeedback(null)
+                  }}
+                  autoComplete="new-password"
+                  placeholder="8–256 characters"
+                />
+                <button
+                  type="button"
+                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                  aria-pressed={showNewPassword}
+                  onClick={() => setShowNewPassword((visible) => !visible)}
+                >
+                  {showNewPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </label>
+            <label>
+              Confirm new password
+              <div className="password">
+                <input
+                  required
+                  minLength={8}
+                  maxLength={256}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value)
+                    setPasswordFeedback(null)
+                  }}
+                  autoComplete="new-password"
+                  placeholder="Re-enter new password"
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'
+                  }
+                  aria-pressed={showConfirmPassword}
+                  onClick={() => setShowConfirmPassword((visible) => !visible)}
+                >
+                  {showConfirmPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </label>
+          </div>
+          <p className="password-guidance">New passwords must be 8–256 characters long.</p>
+          {passwordFeedback && (
+            <div
+              className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
+              role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
+              aria-live="polite"
+            >
+              {passwordFeedback.message}
+            </div>
+          )}
+          <button className="primary wide" type="submit" disabled={changingPassword}>
+            {changingPassword ? (
+              <>
+                <Spinner /> Updating password
+              </>
+            ) : (
+              'Change password'
+            )}
+          </button>
+        </div>
+      </form>
       <h2 className="section-title">Appearance</h2>
       <div className="theme-control" role="group" aria-label="App theme">
         {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (

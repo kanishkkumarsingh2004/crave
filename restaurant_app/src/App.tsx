@@ -416,6 +416,78 @@ function CategoryPicker({ value, onChange }: { value: string; onChange: (value: 
   )
 }
 
+function ProfileTab({
+  user,
+  restaurant,
+  activeOrders,
+  todayOrders,
+  salesMetrics,
+}: {
+  user: RestaurantUser
+  restaurant: Restaurant
+  activeOrders: RestaurantOrder[]
+  todayOrders: RestaurantOrder[]
+  salesMetrics: { gross: number; commission: number; net: number; paid: number; pending: number }
+}) {
+  const cards = activeOrders.length + todayOrders.length
+  return (
+    <section className="page profile-page">
+      <div className="profile-header">
+        <div className="human-avatar">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
+            <path d="M20 21a8 8 0 1 0-16 0" />
+          </svg>
+        </div>
+        <div className="profile-name-block">
+          <h1>{restaurant?.name}</h1>
+          <span className="role-badge">Restaurant partner</span>
+        </div>
+      </div>
+      <div className="profile-details">
+        <div className="profile-field">
+          <span className="field-label">Restaurant name</span>
+          <span className="field-value">{restaurant?.name}</span>
+        </div>
+        <div className="profile-field">
+          <span className="field-label">Address</span>
+          <span className="field-value">{restaurant?.address || '-'}</span>
+        </div>
+        <div className="profile-field">
+          <span className="field-label">Mobile</span>
+          <span className="field-value">{user?.phone || restaurant?.phone || '-'}</span>
+        </div>
+        <div className="profile-field">
+          <span className="field-label">FSSAI licence number</span>
+          <span className="field-value">{restaurant?.fssai_license || '-'}</span>
+        </div>
+      </div>
+      <div className="profile-stats">
+        <div className="stat-card stat-violet">
+          <span>Total revenue</span>
+          <strong>{money(salesMetrics.net)}</strong>
+        </div>
+        <div className="stat-card stat-blue">
+          <span>Total sales</span>
+          <strong>{money(salesMetrics.gross)}</strong>
+        </div>
+        <div className="stat-card stat-green">
+          <span>Cards</span>
+          <strong>{cards}</strong>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function MenuEditor({
   value,
   saving,
@@ -625,6 +697,17 @@ export default function App() {
   const [updateError, setUpdateError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordFeedback, setPasswordFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
   const [settingsForm, setSettingsForm] = useState({
     name: '',
     cuisine: '',
@@ -1130,6 +1213,71 @@ export default function App() {
     }
   }
 
+  async function changePassword(event: FormEvent) {
+    event.preventDefault()
+    setPasswordFeedback(null)
+
+    if (!currentPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Please enter your current password.' })
+      return
+    }
+    if (!newPassword || newPassword.length < 8 || newPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (!confirmPassword || confirmPassword.length < 8 || confirmPassword.length > 256) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'Confirm password must be between 8 and 256 characters.',
+      })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New password and confirmation do not match.' })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordFeedback({
+        type: 'error',
+        message: 'New password cannot be the same as your current password.',
+      })
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      const result = await apiRequest<{ success: boolean; message?: string }>(
+        '/api/user/change-password',
+        {
+          method: 'POST',
+          body: { currentPassword, newPassword, confirmPassword },
+        }
+      )
+      if (!result.success) throw new Error(result.message || 'Unable to change your password.')
+
+      setPasswordFeedback({
+        type: 'success',
+        message: result.message || 'Password changed successfully.',
+      })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowCurrentPassword(false)
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
+    } catch (error) {
+      setPasswordFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Unable to change your password.',
+      })
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   async function toggleNotifications() {
     if (notificationEnabled) {
       await setNotificationPreference(false)
@@ -1218,14 +1366,50 @@ export default function App() {
 
   const navItems: Array<{ id: AppTab; label: string; icon: IconName; badge?: number }> = [
     { id: 'home', label: 'Home', icon: 'home' },
+    { id: 'profile', label: 'Profile', icon: 'human' },
     { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
     { id: 'menu', label: 'Menu', icon: 'menu' },
     { id: 'sales', label: 'Sales', icon: 'sales' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
 
+  const touchStartX = useRef<number>(0)
+  const touchEndX = useRef<number>(0)
+  const minSwipeDistance = 50
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.targetTouches[0].clientX
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    touchEndX.current = e.changedTouches[0].clientX
+  }
+
+  function handleTouchEnd() {
+    const distance = touchStartX.current - touchEndX.current
+    if (distance > minSwipeDistance) {
+      // swipe left - next tab
+      const currentIndex = navItems.findIndex((item) => item.id === activeTab)
+      if (currentIndex < navItems.length - 1) {
+        setActiveTab(navItems[currentIndex + 1].id)
+      }
+    }
+    if (distance < -minSwipeDistance) {
+      // swipe right - prev tab
+      const currentIndex = navItems.findIndex((item) => item.id === activeTab)
+      if (currentIndex > 0) {
+        setActiveTab(navItems[currentIndex - 1].id)
+      }
+    }
+  }
+
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <header className="app-header">
         <div className="brand-lockup">
           <img className="brand-logo" src={appLogo} alt="Crave" />
@@ -1389,6 +1573,16 @@ export default function App() {
               </div>
             )}
           </section>
+        )}
+
+        {activeTab === 'profile' && (
+          <ProfileTab
+            user={user}
+            restaurant={restaurant!}
+            activeOrders={activeOrders}
+            todayOrders={todayOrders}
+            salesMetrics={salesMetrics}
+          />
         )}
 
         {activeTab === 'menu' && (
@@ -1556,12 +1750,9 @@ export default function App() {
                 <div className="form-grid">
                   <label>
                     Restaurant name
-                    <input
-                      value={settingsForm.name}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, name: event.target.value })
-                      }
-                    />
+                    <div className="readonly-field">
+                      {settingsForm.name || restaurant?.name || '-'}
+                    </div>
                   </label>
                   <label>
                     Cuisine
@@ -1592,22 +1783,15 @@ export default function App() {
                   </label>
                   <label className="field-wide">
                     Address
-                    <textarea
-                      rows={3}
-                      value={settingsForm.address}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, address: event.target.value })
-                      }
-                    />
+                    <div className="readonly-field multiline">
+                      {settingsForm.address || restaurant?.address || '-'}
+                    </div>
                   </label>
                   <label className="field-wide">
                     FSSAI licence
-                    <input
-                      value={settingsForm.fssai}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, fssai: event.target.value })
-                      }
-                    />
+                    <div className="readonly-field">
+                      {settingsForm.fssai || restaurant?.fssai_license || '-'}
+                    </div>
                   </label>
                 </div>
                 <button className="primary-button" type="submit">
@@ -1657,6 +1841,107 @@ export default function App() {
                     </span>
                     <b>{notificationEnabled ? 'Enabled on this device' : 'Enable notifications'}</b>
                   </button>
+                </article>
+                <article className="settings-card password-card">
+                  <div className="card-title">
+                    <span>
+                      <Icon name="settings" />
+                    </span>
+                    <div>
+                      <h2>Change password</h2>
+                      <p>Keep your restaurant partner account secure.</p>
+                    </div>
+                  </div>
+                  <form className="password-form" onSubmit={changePassword} noValidate>
+                    <label>
+                      Current password
+                      <span className="password-field">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(event) => setCurrentPassword(event.target.value)}
+                          placeholder="Enter current password"
+                          autoComplete="current-password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword((value) => !value)}
+                          aria-label={
+                            showCurrentPassword ? 'Hide current password' : 'Show current password'
+                          }
+                        >
+                          {showCurrentPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </span>
+                    </label>
+                    <label>
+                      New password
+                      <span className="password-field">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(event) => setNewPassword(event.target.value)}
+                          placeholder="8–256 characters"
+                          autoComplete="new-password"
+                          minLength={8}
+                          maxLength={256}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword((value) => !value)}
+                          aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                        >
+                          {showNewPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </span>
+                    </label>
+                    <label>
+                      Confirm new password
+                      <span className="password-field">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(event) => setConfirmPassword(event.target.value)}
+                          placeholder="Re-enter new password"
+                          autoComplete="new-password"
+                          minLength={8}
+                          maxLength={256}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((value) => !value)}
+                          aria-label={
+                            showConfirmPassword
+                              ? 'Hide confirmation password'
+                              : 'Show confirmation password'
+                          }
+                        >
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </span>
+                    </label>
+                    <p className="password-helper">New passwords must be 8–256 characters long.</p>
+                    {passwordFeedback && (
+                      <p
+                        className={`password-feedback ${passwordFeedback.type}`}
+                        role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                      >
+                        {passwordFeedback.message}
+                      </p>
+                    )}
+                    <button className="primary-button" type="submit" disabled={changingPassword}>
+                      {changingPassword ? (
+                        <>
+                          <span className="button-spinner dark" /> Updating password…
+                        </>
+                      ) : (
+                        'Change password'
+                      )}
+                    </button>
+                  </form>
                 </article>
                 <article
                   className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}
