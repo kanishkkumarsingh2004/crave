@@ -31,6 +31,7 @@ import type { AddressMapPoint } from './AddressMap'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
 
 type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
+const SWIPE_TABS: Tab[] = ['home', 'orders', 'cart', 'account']
 const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
 const titleCase = (value: string) =>
   value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -1886,6 +1887,24 @@ export default function App() {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
+  const touchStartX = useRef(0)
+  const touchEndX = useRef(0)
+  const handleTouchStart = (event: React.TouchEvent) => {
+    touchStartX.current = event.targetTouches[0]?.clientX ?? 0
+    touchEndX.current = touchStartX.current
+  }
+  const handleTouchMove = (event: React.TouchEvent) => {
+    touchEndX.current = event.changedTouches[0]?.clientX ?? touchEndX.current
+  }
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    touchEndX.current = event.changedTouches[0]?.clientX ?? touchEndX.current
+    const distance = touchStartX.current - touchEndX.current
+    if (Math.abs(distance) < 50) return
+    const currentIndex = SWIPE_TABS.indexOf(tab)
+    if (currentIndex < 0) return
+    if (distance > 0 && currentIndex < SWIPE_TABS.length - 1) setTab(SWIPE_TABS[currentIndex + 1])
+    if (distance < 0 && currentIndex > 0) setTab(SWIPE_TABS[currentIndex - 1])
+  }
   const showToast = (m: string) => {
     setToast(m)
     window.setTimeout(() => setToast(''), 2200)
@@ -2124,7 +2143,12 @@ export default function App() {
     `${r.name} ${r.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
   )
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {!online && (
         <div className="offline-banner">You’re offline. We’ll reconnect automatically.</div>
       )}
@@ -2298,13 +2322,10 @@ export default function App() {
             ['account', 'You'],
           ] as [Tab, string][]
         ).map(([id, label]) => (
-          <button
+          <div
             key={id}
             className={tab === id ? 'active' : ''}
-            onClick={() => {
-              setTab(id)
-              void tap()
-            }}
+            aria-current={tab === id ? 'page' : undefined}
           >
             <span>
               <Icon name={id === 'account' ? 'user' : id} />
@@ -2313,7 +2334,7 @@ export default function App() {
               ) : null}
             </span>
             <small>{label}</small>
-          </button>
+          </div>
         ))}
       </nav>
       {toast && <div className="toast">{toast}</div>}

@@ -1279,7 +1279,8 @@ html[data-theme='light'] .partner-sheet-heading > button {
   background: rgb(8 16 11 / 96%);
   backdrop-filter: blur(20px);
 }
-.bottom-nav button {
+.bottom-nav button,
+.bottom-nav > div {
   display: grid;
   place-items: center;
   gap: 2px;
@@ -1297,7 +1298,8 @@ html[data-theme='light'] .partner-sheet-heading > button {
   font-size: 8px;
   font-weight: 800;
 }
-.bottom-nav button.active {
+.bottom-nav button.active,
+.bottom-nav > div.active {
   color: var(--lime);
 }
 .bottom-nav i {

@@ -1393,7 +1393,8 @@ html[data-theme='light'] .toast-message {
   background: rgb(13 19 16 / 94%);
   backdrop-filter: blur(22px);
 }
-.bottom-nav button {
+.bottom-nav button,
+.bottom-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1405,7 +1406,8 @@ html[data-theme='light'] .toast-message {
   font-size: 8px;
   font-weight: 800;
 }
-.bottom-nav button.active {
+.bottom-nav button.active,
+.bottom-nav-item.active {
   color: var(--lime);
 }
 .nav-icon {
@@ -1847,7 +1849,8 @@ html[data-theme='light'] .toast-message {
   .app-shell {
     padding-bottom: 74px;
   }
-  .bottom-nav button {
+  .bottom-nav button,
+  .bottom-nav-item {
     flex-direction: row;
     gap: 6px;
   }

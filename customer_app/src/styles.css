@@ -720,7 +720,8 @@ textarea {
   border-top: 1px solid #dfe2dc;
   backdrop-filter: blur(18px);
 }
-.bottom-nav button {
+.bottom-nav button,
+.bottom-nav > div {
   flex: 1;
   border: 0;
   background: none;

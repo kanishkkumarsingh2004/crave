@@ -407,6 +407,8 @@ export default function App() {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
+  const touchStartX = useRef(0)
+  const touchEndX = useRef(0)
 
   const activeOrders = useMemo(
     () =>
@@ -428,6 +430,24 @@ export default function App() {
       )
     )
   }, [xpProducts, xpSearch])
+
+  function handleTouchStart(event: React.TouchEvent) {
+    touchStartX.current = event.targetTouches[0]?.clientX ?? 0
+    touchEndX.current = touchStartX.current
+  }
+
+  function handleTouchMove(event: React.TouchEvent) {
+    touchEndX.current = event.changedTouches[0]?.clientX ?? touchEndX.current
+  }
+
+  function handleTouchEnd(event: React.TouchEvent) {
+    touchEndX.current = event.changedTouches[0]?.clientX ?? touchEndX.current
+    const distance = touchStartX.current - touchEndX.current
+    if (Math.abs(distance) < 50) return
+    const currentIndex = nav.findIndex((item) => item.id === tab)
+    if (distance > 0 && currentIndex < nav.length - 1) setTab(nav[currentIndex + 1].id)
+    if (distance < 0 && currentIndex > 0) setTab(nav[currentIndex - 1].id)
+  }
 
   useEffect(() => {
     void bootstrap()
@@ -1042,7 +1062,12 @@ export default function App() {
   ]
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <header className="app-header">
         <div className="brand-lockup">
           <img src={appLogo} alt="Crave" />
@@ -1536,17 +1561,17 @@ export default function App() {
 
       <nav className="bottom-nav" aria-label="Admin app navigation">
         {nav.map((item) => (
-          <button
+          <div
             className={tab === item.id ? 'active' : ''}
             key={item.id}
-            onClick={() => setTab(item.id)}
+            aria-current={tab === item.id ? 'page' : undefined}
           >
             <span>
               <Icon name={item.icon} />
               {Boolean(item.badge) && <i>{Math.min(item.badge || 0, 99)}</i>}
             </span>
             <small>{item.label}</small>
-          </button>
+          </div>
         ))}
       </nav>
       {partnerMode && (

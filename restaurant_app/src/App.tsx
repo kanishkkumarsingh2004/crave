@@ -1359,7 +1359,10 @@ export default function App() {
     touchEndX.current = e.changedTouches[0].clientX
   }
 
-  function handleTouchEnd() {
+  function handleTouchEnd(e: React.TouchEvent) {
+    // Read the final touch directly so short, fast swipes work even when no
+    // touchmove event was emitted by the device.
+    touchEndX.current = e.changedTouches[0]?.clientX ?? touchEndX.current
     const distance = touchStartX.current - touchEndX.current
     if (distance > minSwipeDistance) {
       // swipe left - next tab
@@ -2005,17 +2008,17 @@ export default function App() {
 
       <nav className="bottom-nav" aria-label="Restaurant app navigation">
         {navItems.map((item) => (
-          <button
+          <div
             key={item.id}
-            className={activeTab === item.id ? 'active' : ''}
-            onClick={() => setActiveTab(item.id)}
+            className={`bottom-nav-item ${activeTab === item.id ? 'active' : ''}`}
+            aria-current={activeTab === item.id ? 'page' : undefined}
           >
             <span className="nav-icon">
               <Icon name={item.icon} />
               {Boolean(item.badge) && <i>{item.badge! > 99 ? '99+' : item.badge}</i>}
             </span>
             <span>{item.label}</span>
-          </button>
+          </div>
         ))}
       </nav>
 
