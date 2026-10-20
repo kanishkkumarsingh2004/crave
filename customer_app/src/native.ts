@@ -59,6 +59,30 @@ export async function notifyOrder(id: string, title: string, body: string) {
     })
   else if (Notification.permission === 'granted') new Notification(title, { body, tag: id })
 }
+
+/**
+ * App-update notice. Bypasses the order-preference gate on purpose: an update prompt
+ * is an app-level event the user is asking for, so it must reach the device even when
+ * order notifications are muted.
+ */
+export async function notifyAppUpdate(title: string, body: string) {
+  if (!Capacitor.isNativePlatform()) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
+      new Notification(title, { body, tag: 'crave-app-update' })
+    return
+  }
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: idFor('crave-app-update'),
+        title,
+        body,
+        channelId: CHANNEL,
+        extra: { tab: 'settings', kind: 'app-update' },
+      },
+    ],
+  }).catch(() => undefined)
+}
 export async function tap() {
   await Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined)
 }

@@ -18,6 +18,7 @@ import {
   enableNotifications,
   initializeNative,
   notificationEnabled,
+  notifyAppUpdate,
   notifyOrder,
   tap,
 } from './native'
@@ -298,6 +299,21 @@ function RestaurantCard({
   )
 }
 
+function DishImage({ src, name }: { src?: string; name: string }) {
+  const [failed, setFailed] = useState(false)
+  const hasImage = Boolean(src && !failed)
+
+  return (
+    <div className={`dish-image${hasImage ? '' : ' dish-image-placeholder'}`}>
+      {hasImage ? (
+        <img src={src} alt={`${name} dish`} loading="lazy" onError={() => setFailed(true)} />
+      ) : (
+        <span aria-hidden="true">🍽️</span>
+      )}
+    </div>
+  )
+}
+
 function MenuScreen({
   restaurant,
   onBack,
@@ -451,12 +467,7 @@ function MenuScreen({
                     </p>
                   </div>
                   <div className="menu-action">
-                    <div
-                      className={`dish-image${image ? '' : ' dish-image-placeholder'}`}
-                      style={image ? { background: `url(${image}) center/cover` } : undefined}
-                    >
-                      {!image && '🍽️'}
-                    </div>
+                    <DishImage src={image} name={item.name} />
                     <button disabled={unavailable} onClick={() => add(item)}>
                       {unavailable
                         ? restaurant.is_open === false
@@ -622,6 +633,11 @@ function Checkout({
     ),
     [utr, setUtr] = useState(''),
     [coupon, setCoupon] = useState(''),
+    [couponInput, setCouponInput] = useState(''),
+    [couponApplying, setCouponApplying] = useState(false),
+    [couponToast, setCouponToast] = useState<{ message: string; type: 'success' | 'error' } | null>(
+      null
+    ),
     [tip, setTip] = useState(0),
     [tipInput, setTipInput] = useState(''),
     [busy, setBusy] = useState(false),
@@ -631,8 +647,25 @@ function Checkout({
     [billing, setBilling] = useState<any>(null),
     [config, setConfig] = useState<any>(null),
     [pricingError, setPricingError] = useState('')
+  const couponApplyRequest = useRef<string | null>(null)
+  const couponToastTimer = useRef<number | undefined>(undefined)
+  const showCouponToast = useCallback((message: string, type: 'success' | 'error') => {
+    if (couponToastTimer.current) window.clearTimeout(couponToastTimer.current)
+    setCouponToast({ message, type })
+    couponToastTimer.current = window.setTimeout(() => setCouponToast(null), 3200)
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (couponToastTimer.current) window.clearTimeout(couponToastTimer.current)
+    },
+    []
+  )
+
   useEffect(() => {
     const address = addresses.find((entry) => entry.id === selected)
+    const requestedCoupon = coupon
+    let cancelled = false
     setBilling(null)
     setPricingError('')
     Promise.all([
@@ -651,15 +684,45 @@ function Checkout({
       }),
     ])
       .then(([p, c]) => {
+        if (cancelled) return
         setConfig(p.config)
-        setBilling(c.breakdown?.customerBilling)
+        const nextBilling = c.breakdown?.customerBilling
+        setBilling(nextBilling)
+
+        if (couponApplyRequest.current === requestedCoupon) {
+          couponApplyRequest.current = null
+          setCouponApplying(false)
+          if ((nextBilling?.couponDiscount || 0) > 0) {
+            setCouponInput(requestedCoupon)
+            showCouponToast(
+              `${requestedCoupon} applied — you saved ${money(nextBilling.couponDiscount)}.`,
+              'success'
+            )
+          } else {
+            setCoupon('')
+            showCouponToast(
+              `${requestedCoupon} could not be applied. Check the code and minimum order.`,
+              'error'
+            )
+          }
+        }
       })
-      .catch((quoteError) =>
+      .catch((quoteError) => {
+        if (cancelled) return
+        if (couponApplyRequest.current === requestedCoupon) {
+          couponApplyRequest.current = null
+          setCouponApplying(false)
+          setCoupon('')
+          showCouponToast('We could not verify that coupon. Please try again.', 'error')
+        }
         setPricingError(
           quoteError instanceof Error ? quoteError.message : 'Could not calculate this order.'
         )
-      )
-  }, [subtotal, restaurant, selected, addresses, coupon, tip, cart])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [subtotal, restaurant, selected, addresses, coupon, tip, cart, showCouponToast])
   // Use the backend quote as the single payable amount everywhere. Rebuilding
   // it from visible rows would double-count GST when menu prices are tax-inclusive.
   const totalToPay = billing?.grandTotal ?? subtotal
@@ -685,6 +748,29 @@ function Checkout({
       detail: `Add ${money(remaining)} to your order total to remove the delivery charge.`,
     }
   })()
+  const applyCoupon = () => {
+    const code = couponInput.trim().toUpperCase()
+    if (!code) {
+      showCouponToast('Enter a coupon code first.', 'error')
+      return
+    }
+    if (couponApplying) return
+    if (coupon === code && (billing?.couponDiscount || 0) > 0) {
+      showCouponToast(`${code} is already applied.`, 'success')
+      return
+    }
+    couponApplyRequest.current = code
+    setCouponApplying(true)
+    setCoupon(code)
+  }
+  const removeCoupon = () => {
+    const removedCoupon = coupon || couponInput.trim().toUpperCase()
+    couponApplyRequest.current = null
+    setCouponApplying(false)
+    setCoupon('')
+    setCouponInput('')
+    if (removedCoupon) showCouponToast(`${removedCoupon} removed.`, 'success')
+  }
   const pay = async (app: UpiPaymentApp) => {
     setError('')
     if (!config?.upiVpa) {
@@ -793,6 +879,22 @@ function Checkout({
         ) : (
           <div className="error-box">Add a delivery address from Account before ordering.</div>
         )}
+        {freeDeliveryProgress && (
+          <div className="free-delivery-meter">
+            <div className="meter-head">
+              <span className="meter-icon">
+                <Icon name="truck" />
+              </span>
+              <div className="meter-text">
+                <b>{freeDeliveryProgress.label}</b>
+                <small>{freeDeliveryProgress.detail}</small>
+              </div>
+            </div>
+            <div className="meter-track">
+              <div className="meter-fill" style={{ width: `${freeDeliveryProgress.pct}%` }} />
+            </div>
+          </div>
+        )}
         <h2>Bill details</h2>
         <div className="bill-card">
           <span>
@@ -850,27 +952,37 @@ function Checkout({
             {billing?.tip > 0 ? ' + tip' : ''} = total.
           </p>
         )}
-        <div className="coupon-row">
+        <form
+          className="coupon-row"
+          onSubmit={(event) => {
+            event.preventDefault()
+            applyCoupon()
+          }}
+        >
           <div className="coupon-input">
             <Icon name="tag" />
             <input
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-              placeholder="Have a coupon code?"
+              value={couponInput}
+              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+              placeholder="Enter coupon code"
               inputMode="text"
               autoCapitalize="characters"
             />
-            {coupon && (
+            {couponInput && (
               <button
+                type="button"
                 className="round pale small"
-                onClick={() => setCoupon('')}
-                aria-label="Clear coupon"
+                onClick={removeCoupon}
+                aria-label={coupon ? 'Remove applied coupon' : 'Clear coupon code'}
               >
                 <Icon name="close" />
               </button>
             )}
+            <button className="coupon-apply" disabled={couponApplying}>
+              {couponApplying ? 'Applying…' : 'Apply'}
+            </button>
           </div>
-        </div>
+        </form>
         <div className="tip-row">
           <p className="tip-label">Add a tip for your delivery partner 🙏</p>
           <div className="tip-presets">
@@ -905,22 +1017,6 @@ function Checkout({
             />
           </div>
         </div>
-        {freeDeliveryProgress && (
-          <div className="free-delivery-meter">
-            <div className="meter-head">
-              <span className="meter-icon">
-                <Icon name="truck" />
-              </span>
-              <div className="meter-text">
-                <b>{freeDeliveryProgress.label}</b>
-                <small>{freeDeliveryProgress.detail}</small>
-              </div>
-            </div>
-            <div className="meter-track">
-              <div className="meter-fill" style={{ width: `${freeDeliveryProgress.pct}%` }} />
-            </div>
-          </div>
-        )}
         <h2>Pay securely with UPI</h2>
         <div className="upi-card">
           <Icon name="wallet" />
@@ -984,6 +1080,15 @@ function Checkout({
           Your order starts only after CRAVE verifies the UPI transaction.
         </p>
       </main>
+      {couponToast && (
+        <div
+          className={`toast checkout-toast ${couponToast.type}`}
+          role={couponToast.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {couponToast.message}
+        </div>
+      )}
       {paymentPicker && (
         <div className="modal-backdrop" onClick={() => setPaymentPicker(false)}>
           <section
@@ -1163,6 +1268,7 @@ function Account({
     [message, setMessage] = useState('Tap to check for a newer version')
   useEffect(() => {
     notificationEnabled().then(setNotifications)
+    void check()
   }, [])
   const check = async () => {
     setChecking(true)
@@ -1170,6 +1276,7 @@ function Account({
       const u = await checkForCustomerUpdate()
       setUpdate(u)
       setMessage(u ? `CRAVE ${u.versionName} is ready` : 'You’re using the latest version')
+      if (u) await notifyAppUpdate(`CRAVE ${u.versionName} available`, u.releaseNotes)
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Could not check for updates')
     } finally {

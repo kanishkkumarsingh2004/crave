@@ -15,13 +15,14 @@ import {
 } from './api'
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
-import { initializeNativeAppearance, sendTestNotification } from './native'
+import { initializeNativeAppearance, notifyAdminAppUpdate } from './native'
 import type { AddressMapPoint } from './AddressMap'
 
 const AddressMap = lazy(() => import('./AddressMap'))
 const BarcodeScanner = lazy(() => import('./BarcodeScanner'))
 
 type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'xp-store' | 'settings'
+type NotificationAudience = 'customer' | 'driver' | 'restaurant'
 type IconName =
   | 'home'
   | 'orders'
@@ -395,6 +396,10 @@ export default function App() {
   const [xpBusy, setXPBusy] = useState(false)
   const [notifBusy, setNotifBusy] = useState(false)
   const [notifMsg, setNotifMsg] = useState('')
+  const [notificationComposerOpen, setNotificationComposerOpen] = useState(false)
+  const [notificationAudience, setNotificationAudience] = useState<NotificationAudience>('customer')
+  const [notificationTitle, setNotificationTitle] = useState('')
+  const [notificationDescription, setNotificationDescription] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -566,6 +571,42 @@ export default function App() {
     }
   }
 
+  async function sendAudienceNotification(event: FormEvent) {
+    event.preventDefault()
+    const title = notificationTitle.trim()
+    const description = notificationDescription.trim()
+    if (!title || !description) {
+      setNotifMsg('Enter both a title and description before sending.')
+      return
+    }
+
+    setNotifBusy(true)
+    setNotifMsg('')
+    try {
+      const result = await apiRequest<{ sent?: number; failed?: number }>(
+        '/api/admin/push-notifications',
+        {
+          method: 'POST',
+          body: {
+            audience: notificationAudience,
+            title,
+            description,
+          },
+        }
+      )
+      setNotifMsg(
+        `Message sent to ${result.sent || 0} ${notificationAudience} device${result.sent === 1 ? '' : 's'}.`
+      )
+      setNotificationTitle('')
+      setNotificationDescription('')
+      setNotificationComposerOpen(false)
+    } catch (error) {
+      setNotifMsg(error instanceof Error ? error.message : 'Could not send notification.')
+    } finally {
+      setNotifBusy(false)
+    }
+  }
+
   async function reviewPayment(payment: PaymentReview, status: 'verified' | 'rejected') {
     if (paymentBusy) return
     if (
@@ -612,7 +653,13 @@ export default function App() {
     setCheckingUpdate(true)
     setUpdateError('')
     try {
-      setAvailableUpdate(await checkForAdminUpdate())
+      const update = await checkForAdminUpdate()
+      setAvailableUpdate(update)
+      if (update)
+        await notifyAdminAppUpdate(
+          `Crave Admin ${update.versionName} available`,
+          update.releaseNotes
+        )
     } catch (checkError) {
       setUpdateError(checkError instanceof Error ? checkError.message : 'Unable to check updates.')
     } finally {
@@ -1497,7 +1544,7 @@ export default function App() {
                 </span>
                 <div>
                   <h3>Push notifications</h3>
-                  <p>Send a local test notification with the app icon to verify alerts.</p>
+                  <p>Send a custom message live to every active device in a user group.</p>
                 </div>
               </div>
               {notifMsg && <div className="software-error">{notifMsg}</div>}
@@ -1505,24 +1552,107 @@ export default function App() {
                 className="primary-button"
                 disabled={notifBusy}
                 onClick={() => {
-                  setNotifBusy(true)
                   setNotifMsg('')
-                  void sendTestNotification()
-                    .then(() => setNotifMsg('Test notification sent — check your status bar.'))
-                    .catch((err) =>
-                      setNotifMsg(
-                        err instanceof Error ? err.message : 'Could not send notification.'
-                      )
-                    )
-                    .finally(() => {
-                      window.setTimeout(() => setNotifMsg(''), 4000)
-                      setNotifBusy(false)
-                    })
+                  setNotificationComposerOpen(true)
                 }}
               >
-                <Icon name="bell" /> {notifBusy ? 'Sending…' : 'Send test notification'}
+                <Icon name="bell" /> Send custom notification
               </button>
             </article>
+            {notificationComposerOpen && (
+              <div
+                className="modal-backdrop"
+                onClick={() => !notifBusy && setNotificationComposerOpen(false)}
+              >
+                <form
+                  className="partner-sheet partner-form notification-composer"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="notification-composer-title"
+                  onClick={(event) => event.stopPropagation()}
+                  onSubmit={(event) => void sendAudienceNotification(event)}
+                >
+                  <div className="sheet-handle" />
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Live audience message</span>
+                      <h2 id="notification-composer-title">Send notification</h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNotificationComposerOpen(false)}
+                      aria-label="Close"
+                      disabled={notifBusy}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <p className="partner-form-help">
+                    Send this notification immediately to every active app device in the selected
+                    group.
+                  </p>
+                  <label>
+                    Recipient group
+                    <select
+                      value={notificationAudience}
+                      onChange={(event) =>
+                        setNotificationAudience(event.target.value as NotificationAudience)
+                      }
+                      disabled={notifBusy}
+                    >
+                      <option value="customer">Customers</option>
+                      <option value="driver">Drivers</option>
+                      <option value="restaurant">Restaurants</option>
+                    </select>
+                  </label>
+                  <label>
+                    Notification title
+                    <input
+                      value={notificationTitle}
+                      onChange={(event) => setNotificationTitle(event.target.value)}
+                      maxLength={80}
+                      placeholder="e.g. Free delivery today"
+                      required
+                      disabled={notifBusy}
+                    />
+                  </label>
+                  <label>
+                    Notification description
+                    <textarea
+                      value={notificationDescription}
+                      onChange={(event) => setNotificationDescription(event.target.value)}
+                      maxLength={500}
+                      rows={4}
+                      placeholder="Write the notification details…"
+                      required
+                      disabled={notifBusy}
+                    />
+                    <small className="partner-form-help">
+                      {notificationDescription.length}/500 characters
+                    </small>
+                  </label>
+                  <div className="partner-form-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => setNotificationComposerOpen(false)}
+                      disabled={notifBusy}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="primary-button"
+                      type="submit"
+                      disabled={
+                        notifBusy || !notificationTitle.trim() || !notificationDescription.trim()
+                      }
+                    >
+                      <Icon name="bell" /> {notifBusy ? 'Sending…' : 'Send to group'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
             <button className="logout-button" onClick={requestLogout}>
               <Icon name="logout" /> Sign out of admin app
             </button>

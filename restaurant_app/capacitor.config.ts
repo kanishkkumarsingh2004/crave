@@ -12,7 +12,9 @@ const config: CapacitorConfig = {
       iconColor: '#D9F447',
     },
     SplashScreen: {
-      launchShowDuration: 1500,
+      // Let the web app own its loading state. A native Android-12 launch gate can
+      // remain over the WebView when the bridge is slow, making the app look frozen.
+      launchShowDuration: 0,
       launchAutoHide: true,
       backgroundColor: '#121815',
       showSpinner: false,

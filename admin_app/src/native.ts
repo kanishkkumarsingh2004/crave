@@ -106,6 +106,33 @@ export async function sendTestNotification(): Promise<void> {
   })
 }
 
+/**
+ * App-update notice. Bypasses the admin's notification preference on purpose: an
+ * update prompt is an app-level event, not a support event, so it must reach the
+ * device even when notifications are muted.
+ */
+export async function notifyAdminAppUpdate(title: string, body: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
+      new Notification(title, { body, tag: 'crave-admin-app-update' })
+    return
+  }
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: notificationId('crave-admin-app-update'),
+        title,
+        body,
+        channelId: CHANNEL_ID,
+        smallIcon: 'ic_stat_crave_notification',
+        iconColor: '#D9F447',
+        largeIcon: 'ic_launcher',
+        extra: { tab: 'settings', kind: 'app-update' },
+      },
+    ],
+  }).catch(() => undefined)
+}
+
 export function getApiOriginAdmin(): string {
   return getApiOrigin()
 }

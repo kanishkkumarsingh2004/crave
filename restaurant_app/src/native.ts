@@ -89,3 +89,27 @@ export async function showKitchenNotification(input: {
     new Notification(input.title, { body: input.body, tag: input.id })
   }
 }
+
+/**
+ * App-update notice. Bypasses the kitchen's notification preference on purpose: an
+ * update prompt is an app-level event, not a dispatch event, so it must reach the
+ * device even when order notifications are muted.
+ */
+export async function notifyRestaurantAppUpdate(title: string, body: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
+      new Notification(title, { body, tag: 'crave-restaurant-app-update' })
+    return
+  }
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: notificationId('crave-restaurant-app-update'),
+        title,
+        body,
+        channelId: CHANNEL_ID,
+        extra: { tab: 'settings', kind: 'app-update' },
+      },
+    ],
+  }).catch(() => undefined)
+}

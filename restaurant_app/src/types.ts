@@ -1,4 +1,4 @@
-export type AppTab = 'home' | 'profile' | 'orders' | 'menu' | 'sales' | 'settings'
+export type AppTab = 'home' | 'orders' | 'menu' | 'sales' | 'settings'
 
 export interface RestaurantUser {
   id: string

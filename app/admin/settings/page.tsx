@@ -5,11 +5,6 @@ import AppleToggle from '@/components/ui/AppleToggle'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import {
-  isWebPushSupported,
-  subscribeToWebPush,
-  syncExistingWebPushSubscription,
-} from '@/lib/web-push-client'
-import {
   AlertTriangle,
   Bell,
   CheckCircle2,
@@ -19,7 +14,6 @@ import {
   Palette,
   RotateCcw,
   Save,
-  Send,
   Truck,
   Volume2,
 } from 'lucide-react'
@@ -76,7 +70,6 @@ export default function AdminSettingsPage() {
   const [sendEmailReceipts, setSendEmailReceipts] = useState<boolean>(true)
   const [enableSoundAlerts, setEnableSoundAlerts] = useState<boolean>(true)
   const [smsProvider, setSmsProvider] = useState<string>('Twilio SMS Gateway')
-  const [pushTestSending, setPushTestSending] = useState(false)
 
   // 4. Partner Onboarding & Compliance
   const [autoApproveVendors, setAutoApproveVendors] = useState<boolean>(false)
@@ -115,51 +108,6 @@ export default function AdminSettingsPage() {
     setRequireDriverLicense(true)
     setRequireGstin(true)
     toast('Settings reset to default configuration.', 'info')
-  }
-
-  async function handleTestPushNotification() {
-    setPushTestSending(true)
-    try {
-      if (!isWebPushSupported()) {
-        throw new Error('This browser does not support Web Push notifications.')
-      }
-
-      const subscriptionReady =
-        Notification.permission === 'granted' && (await syncExistingWebPushSubscription())
-
-      if (!subscriptionReady) {
-        const configResponse = await fetch('/api/push/subscriptions', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-        const config = await configResponse.json()
-        if (!configResponse.ok || !config.configured || !config.publicKey) {
-          throw new Error(config.error || 'Web Push is not configured on the server.')
-        }
-
-        const permission =
-          Notification.permission === 'granted'
-            ? Notification.permission
-            : await Notification.requestPermission()
-        if (permission !== 'granted') {
-          throw new Error('Notification permission was not granted.')
-        }
-        await subscribeToWebPush(config.publicKey)
-      }
-
-      const response = await fetch('/api/admin/push-notifications', {
-        method: 'POST',
-        credentials: 'include',
-      })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Unable to send test notification.')
-
-      toast('Test push notification sent to this device.', 'success')
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Unable to test push notifications.', 'error')
-    } finally {
-      setPushTestSending(false)
-    }
   }
 
   return (
@@ -496,29 +444,16 @@ export default function AdminSettingsPage() {
                 Partner Notification Gateways
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Configure Web Push, SMS, WhatsApp Business alerts, and email receipt triggers.
+                Configure app push, SMS, WhatsApp Business alerts, and email receipt triggers.
               </p>
             </div>
 
             <div className="rounded-2xl border border-[#b5de28]/40 bg-[#b5de28]/10 p-4 dark:border-[#d9f447]/30 dark:bg-[#d9f447]/10">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-bold text-[#18201c] dark:text-white">Web Push Notifications</p>
-                  <p className="mt-0.5 text-[10px] text-gray-600 dark:text-gray-300">
-                    Test the current browser subscription and confirm background notifications are
-                    working.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleTestPushNotification()}
-                  disabled={pushTestSending}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#18201c] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#2b3831] disabled:cursor-wait disabled:opacity-60 dark:bg-[#d9f447] dark:text-[#121815] dark:hover:bg-[#c8e434]"
-                >
-                  <Send className="size-3.5" />
-                  {pushTestSending ? 'Sending…' : 'Enable & Send Test'}
-                </button>
-              </div>
+              <p className="font-bold text-[#18201c] dark:text-white">App push notifications</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-gray-600 dark:text-gray-300">
+                Custom audience notifications can only be sent from the installed Crave Admin app.
+                The website does not send push notifications.
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">

@@ -263,6 +263,30 @@ export async function showDriverNotification(input: {
   }
 }
 
+/**
+ * App-update notice. Bypasses the driver's notification preference on purpose: an
+ * update prompt is an app-level event, not a dispatch event, so it must reach the
+ * device even when order notifications are muted.
+ */
+export async function notifyDriverAppUpdate(title: string, body: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
+      new Notification(title, { body, tag: 'crave-driver-app-update' })
+    return
+  }
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: notificationId('crave-driver-app-update'),
+        title,
+        body,
+        channelId: CHANNEL_ID,
+        extra: { tab: 'account', kind: 'app-update' },
+      },
+    ],
+  }).catch(() => undefined)
+}
+
 export async function requestCurrentPosition(): Promise<Position> {
   if (Capacitor.isNativePlatform()) {
     const permission = await Geolocation.requestPermissions({ permissions: ['location'] })

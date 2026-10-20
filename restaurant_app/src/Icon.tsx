@@ -21,7 +21,6 @@ export type IconName =
   | 'offline'
   | 'download'
   | 'chevron'
-  | 'human'
 
 const paths: Record<IconName, React.ReactNode> = {
   home: (
@@ -125,12 +124,6 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   chevron: <path d="m9 18 6-6-6-6" />,
-  human: (
-    <>
-      <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
-      <path d="M20 21a8 8 0 1 0-16 0" />
-    </>
-  ),
 }
 
 export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGElement>) {

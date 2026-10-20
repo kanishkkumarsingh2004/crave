@@ -17,6 +17,7 @@ import {
   getNotificationPreference,
   getStoredDutyStatus,
   initializeNativeAppearance,
+  notifyDriverAppUpdate,
   openNavigation,
   registerDriverPushNotifications,
   requestCurrentPosition,
@@ -1679,7 +1680,13 @@ export default function App() {
     setCheckingUpdate(true)
     setUpdateError('')
     try {
-      setAvailableUpdate(await checkForDriverUpdate())
+      const update = await checkForDriverUpdate()
+      setAvailableUpdate(update)
+      if (update)
+        await notifyDriverAppUpdate(
+          `CRAVE Driver ${update.versionName} available`,
+          update.releaseNotes
+        )
     } catch (updateCheckError) {
       setUpdateError(
         updateCheckError instanceof Error

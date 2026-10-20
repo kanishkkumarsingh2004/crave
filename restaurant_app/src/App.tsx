@@ -18,6 +18,7 @@ import { Icon, type IconName } from './Icon'
 import {
   getNotificationPreference,
   initializeNativeAppearance,
+  notifyRestaurantAppUpdate,
   requestNotificationPermission,
   setNotificationPreference,
   showKitchenNotification,
@@ -53,6 +54,34 @@ const ACTIVE_STATUSES = new Set([
 ])
 
 const COMPLETED_STATUSES = new Set(['picked_up', 'out_for_delivery', 'delivered', 'completed'])
+
+/**
+ * Rejects a promise after `ms` milliseconds so a native plugin (e.g. StatusBar or the
+ * notification channel) can never stall the boot flow. Falls back to the resolved value.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let settled = false
+    const timer = window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      reject(new Error(`Boot step timed out after ${ms}ms`))
+    }, ms)
+    promise
+      .then((value) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
 
 const CATEGORY_OPTIONS = [
   'General',
@@ -416,78 +445,6 @@ function CategoryPicker({ value, onChange }: { value: string; onChange: (value: 
   )
 }
 
-function ProfileTab({
-  user,
-  restaurant,
-  activeOrders,
-  todayOrders,
-  salesMetrics,
-}: {
-  user: RestaurantUser
-  restaurant: Restaurant
-  activeOrders: RestaurantOrder[]
-  todayOrders: RestaurantOrder[]
-  salesMetrics: { gross: number; commission: number; net: number; paid: number; pending: number }
-}) {
-  const cards = activeOrders.length + todayOrders.length
-  return (
-    <section className="page profile-page">
-      <div className="profile-header">
-        <div className="human-avatar">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
-            <path d="M20 21a8 8 0 1 0-16 0" />
-          </svg>
-        </div>
-        <div className="profile-name-block">
-          <h1>{restaurant?.name}</h1>
-          <span className="role-badge">Restaurant partner</span>
-        </div>
-      </div>
-      <div className="profile-details">
-        <div className="profile-field">
-          <span className="field-label">Restaurant name</span>
-          <span className="field-value">{restaurant?.name}</span>
-        </div>
-        <div className="profile-field">
-          <span className="field-label">Address</span>
-          <span className="field-value">{restaurant?.address || '-'}</span>
-        </div>
-        <div className="profile-field">
-          <span className="field-label">Mobile</span>
-          <span className="field-value">{user?.phone || restaurant?.phone || '-'}</span>
-        </div>
-        <div className="profile-field">
-          <span className="field-label">FSSAI licence number</span>
-          <span className="field-value">{restaurant?.fssai_license || '-'}</span>
-        </div>
-      </div>
-      <div className="profile-stats">
-        <div className="stat-card stat-violet">
-          <span>Total revenue</span>
-          <strong>{money(salesMetrics.net)}</strong>
-        </div>
-        <div className="stat-card stat-blue">
-          <span>Total sales</span>
-          <strong>{money(salesMetrics.gross)}</strong>
-        </div>
-        <div className="stat-card stat-green">
-          <span>Cards</span>
-          <strong>{cards}</strong>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function MenuEditor({
   value,
   saving,
@@ -718,6 +675,11 @@ export default function App() {
   })
   const ordersRef = useRef<RestaurantOrder[]>([])
   const updateCheckRunningRef = useRef(false)
+  // Keep these refs mounted on every render, including the login screen.
+  // Declaring them below the auth guard changes the hook order after login
+  // and causes React to unmount the app with a blank screen.
+  const touchStartX = useRef<number>(0)
+  const touchEndX = useRef<number>(0)
 
   useEffect(() => {
     ordersRef.current = orders
@@ -823,8 +785,17 @@ export default function App() {
   }, [activeTab, alert, menuEditor, restaurant?.id])
 
   async function bootstrap() {
-    await initializeNativeAppearance()
+    // Hide the native preloader the moment the web app is interactive. It must never
+    // depend on native appearance setup succeeding, otherwise a stalled StatusBar or
+    // notification channel leaves the app on a plain dark screen forever.
+    // Do not await this native bridge call: on a device with a stalled bridge, awaiting
+    // it would prevent the React app's boot timeout from ever being registered.
+    void SplashScreen.hide().catch(() => undefined)
+    // Safety net: if any boot step hangs (network, native plugin), still dismiss the
+    // preloader so a reload can never leave the app stuck on the splash screen.
+    const bootTimer = window.setTimeout(() => setBooting(false), 8000)
     try {
+      await withTimeout(initializeNativeAppearance(), 4000)
       const token = await restoreAuthToken()
       setNotificationEnabled(await getNotificationPreference())
       if (!token) return
@@ -836,8 +807,8 @@ export default function App() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) await clearAuthToken()
     } finally {
+      window.clearTimeout(bootTimer)
       setBooting(false)
-      await SplashScreen.hide().catch(() => undefined)
     }
   }
 
@@ -904,7 +875,13 @@ export default function App() {
     setCheckingUpdate(true)
     setUpdateError('')
     try {
-      setAvailableUpdate(await checkForRestaurantUpdate())
+      const update = await checkForRestaurantUpdate()
+      setAvailableUpdate(update)
+      if (update)
+        await notifyRestaurantAppUpdate(
+          `CRAVE Restaurant ${update.versionName} available`,
+          update.releaseNotes
+        )
     } catch (error) {
       setUpdateError(error instanceof Error ? error.message : 'Unable to check for updates.')
     } finally {
@@ -1366,15 +1343,12 @@ export default function App() {
 
   const navItems: Array<{ id: AppTab; label: string; icon: IconName; badge?: number }> = [
     { id: 'home', label: 'Home', icon: 'home' },
-    { id: 'profile', label: 'Profile', icon: 'human' },
     { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
     { id: 'menu', label: 'Menu', icon: 'menu' },
     { id: 'sales', label: 'Sales', icon: 'sales' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
 
-  const touchStartX = useRef<number>(0)
-  const touchEndX = useRef<number>(0)
   const minSwipeDistance = 50
 
   function handleTouchStart(e: React.TouchEvent) {
@@ -1573,16 +1547,6 @@ export default function App() {
               </div>
             )}
           </section>
-        )}
-
-        {activeTab === 'profile' && (
-          <ProfileTab
-            user={user}
-            restaurant={restaurant!}
-            activeOrders={activeOrders}
-            todayOrders={todayOrders}
-            salesMetrics={salesMetrics}
-          />
         )}
 
         {activeTab === 'menu' && (
