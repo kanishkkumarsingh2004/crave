@@ -16,6 +16,10 @@ GitHub URLs and each APK's SHA-256 must match the manifest before Android's inst
 
 Click any APK filename above to download it directly.
 
+The current versions are Admin `1.0.5` (code 13), Driver `1.0.0` (code 7), Restaurant `1.0.4`
+(code 12), and Customer `1.0.0` (code 7). The machine-readable update metadata and release
+notes are in [`version.json`](./version.json).
+
 These are development builds signed with the Android debug key. They are suitable for direct
 testing but not for Google Play production distribution.
 
@@ -65,3 +69,6 @@ Verify downloaded or copied files with:
 cd android-builds
 sha256sum --check SHA256SUMS.txt
 ```
+
+The checksum file must be updated whenever an APK is replaced. Do not publish an APK without its
+matching `version.json` hash and URL query parameter.

@@ -8,6 +8,10 @@ full-screen mobile navigation.
 The app contains five bottom-tab areas: Home, Orders, Menu, Sales and Settings. All data is read
 from and written to the existing Next.js backend APIs with bearer authentication.
 
+The standalone Profile tab has been removed. Restaurant account and business details remain
+editable from Settings, while live order updates and native kitchen notifications continue to
+work independently of the selected tab.
+
 ## Configure and sync
 
 Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). From the repository root:

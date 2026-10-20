@@ -57,63 +57,50 @@ export default function BarcodeScanner({ onClose, onDetected }: BarcodeScannerPr
       verbose: false,
     })
 
-    // Ask for camera permission explicitly before opening the scanner. This surfaces the
-    // native permission dialog on Android/iOS (and the browser prompt on web) instead of
-    // silently failing once html5-qrcode tries to start.
-    const probe = navigator.mediaDevices?.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
-    })
+    // Let html5-qrcode open the camera itself. Probing with getUserMedia first and then
+    // stopping that stream caused Android WebView to release the permission/ camera
+    // between two separate opens, leaving the scanner on the generic error screen.
+    const start = async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera access is unavailable in this WebView.')
+      }
 
-    const startTimer = window.setTimeout(() => {
-      void probe
-        .then((stream) => {
-          if (disposed) {
-            stream.getTracks().forEach((track) => track.stop())
-            return
-          }
-          stream.getTracks().forEach((track) => track.stop())
-          return scanner
-            .start(
-              { facingMode: { ideal: 'environment' } },
-              {
-                fps: 10,
-                aspectRatio: 16 / 9,
-                qrbox: (viewWidth, viewHeight) => ({
-                  width: Math.min(Math.floor(viewWidth * 0.88), 380),
-                  height: Math.min(Math.max(Math.floor(viewHeight * 0.3), 90), 145),
-                }),
-              },
-              (decodedText) => {
-                const barcode = decodedText.trim()
-                if (disposed || detectedRef.current || !barcode) return
-                detectedRef.current = true
-                navigator.vibrate?.(80)
-                onDetectedRef.current(barcode)
-              },
-              () => undefined
-            )
-            .then(() => {
-              if (disposed && scanner.isScanning) void scanner.stop().catch(() => undefined)
-              if (!disposed) setStarting(false)
-            })
-            .catch((scanError) => {
-              if (!disposed) {
-                setStarting(false)
-                setError(cameraErrorMessage(scanError))
-              }
-            })
-        })
-        .catch((probeError) => {
-          if (!disposed) {
-            setStarting(false)
-            setError(cameraErrorMessage(probeError))
-          }
-        })
-    }, 0)
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          aspectRatio: 16 / 9,
+          qrbox: (viewWidth, viewHeight) => ({
+            width: Math.min(Math.floor(viewWidth * 0.88), 380),
+            height: Math.min(Math.max(Math.floor(viewHeight * 0.3), 90), 145),
+          }),
+        },
+        (decodedText) => {
+          const barcode = decodedText.trim()
+          if (disposed || detectedRef.current || !barcode) return
+          detectedRef.current = true
+          navigator.vibrate?.(80)
+          onDetectedRef.current(barcode)
+        },
+        () => undefined
+      )
+
+      if (disposed) {
+        await scanner.stop().catch(() => undefined)
+        return
+      }
+      setStarting(false)
+    }
+
+    void start().catch((scanError) => {
+      if (!disposed) {
+        setStarting(false)
+        setError(cameraErrorMessage(scanError))
+      }
+    })
 
     return () => {
       disposed = true
-      window.clearTimeout(startTimer)
       const clear = () => {
         try {
           scanner.clear()

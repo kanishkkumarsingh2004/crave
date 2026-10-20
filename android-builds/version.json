@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "apps": {
     "admin": {
-      "versionCode": 11,
-      "versionName": "1.0.3",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=5b12d43962ee052e70e78af3b77a388d585b207a1ab529a4124e3af22ba75374",
-      "sha256": "5b12d43962ee052e70e78af3b77a388d585b207a1ab529a4124e3af22ba75374",
+      "versionCode": 13,
+      "versionName": "1.0.5",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=dbad2312c913efab510aa6aa29e0b3619d070931db1b9df91c9717b81dfdd84b",
+      "sha256": "dbad2312c913efab510aa6aa29e0b3619d070931db1b9df91c9717b81dfdd84b",
       "releaseNotes": "XP Store barcode scanning with the device camera, durable rider live-map telemetry and the exact website Mapcn location experience."
     },
     "driver": {

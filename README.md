@@ -69,6 +69,12 @@ The APKs, checksums, installation commands, and build notes are collected in
 
 **Admin** — KPIs, UTR review queue, coupons, vendor settlements, payment/fee config, live H3 map (`/admin/map-live-analytics`).
 
+The native shells are self-contained Capacitor React apps rather than remote website wrappers.
+The Admin app includes CraveXP product barcode scanning and standard update/order/system
+notifications; it does not expose a custom audience notification composer. The Restaurant app has
+five tabs (Home, Orders, Menu, Sales, Settings); its standalone Profile tab is removed. Current
+APK versions and SHA-256 values are maintained in [`android-builds/version.json`](./android-builds/version.json).
+
 ---
 
 ## Core systems
@@ -218,6 +224,22 @@ See `.env.example`. Required in production:
 | `NEON_BUCKET_UPLOADS`                     | Object storage bucket name (optional)       |
 
 `REDIS_REQUIRED=true` makes `/api/health` return 503 if Redis is down.
+
+### Native app configuration
+
+Each native app has its own Vite/Capacitor workspace:
+
+```text
+admin_app/      Admin dashboard, CraveXP catalog and barcode scanner
+driver_app/     Driver operations, GPS and delivery workflow
+restaurant_app/ Restaurant kitchen, orders and menu management
+customer_app/   Customer restaurant and CraveXP shopping experience
+```
+
+Build or synchronize an individual app with `pnpm --dir <app> build` or
+`pnpm --dir <app> sync`. Use `pnpm build:android` to build all debug APKs and refresh the
+checksums/update manifest. Camera access is declared by the Admin Android manifest and is requested
+when the product scanner starts; Android Settings may be required after a permanent denial.
 
 ---
 

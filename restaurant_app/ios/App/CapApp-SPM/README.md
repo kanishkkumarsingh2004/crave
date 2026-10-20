@@ -1,5 +1,5 @@
 # CapApp-SPM
 
-This package is used to host SPM dependencies for your Capacitor project
-
-Do not modify the contents of it or there may be unintended consequences.
+Generated Capacitor package used to host Swift Package Manager dependencies for the Crave
+Restaurant iOS project. Do not edit this directory manually; run `pnpm --dir restaurant_app sync`
+to regenerate it.

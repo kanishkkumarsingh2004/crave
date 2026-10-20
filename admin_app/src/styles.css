@@ -915,50 +915,6 @@ svg {
   margin-top: 5px;
 }
 
-/* The notification composer is intentionally a single-column form. The shared
-   partner form uses two columns, which makes these labels collide on phones. */
-.notification-composer {
-  width: min(100%, 620px);
-  grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
-  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
-  border-radius: 28px 28px 0 0;
-}
-.notification-composer .partner-form-help {
-  margin: 0 0 20px;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.55;
-  font-weight: 500;
-}
-.notification-composer label {
-  grid-column: 1 / -1;
-  gap: 8px;
-  color: var(--ink);
-  font-size: 10px;
-  letter-spacing: 0.01em;
-}
-.notification-composer select,
-.notification-composer textarea {
-  min-height: 50px;
-  border-radius: 15px;
-  font-size: 12px;
-}
-.notification-composer textarea {
-  min-height: 132px;
-  line-height: 1.5;
-}
-.notification-composer label > small.partner-form-help {
-  margin: -2px 2px 0;
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 600;
-  text-align: right;
-}
-.notification-composer .partner-form-actions {
-  margin-top: 4px;
-  padding-top: 4px;
-}
 .status-dot {
   width: 10px;
   height: 10px;

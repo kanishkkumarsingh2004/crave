@@ -448,14 +448,6 @@ export default function AdminSettingsPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[#b5de28]/40 bg-[#b5de28]/10 p-4 dark:border-[#d9f447]/30 dark:bg-[#d9f447]/10">
-              <p className="font-bold text-[#18201c] dark:text-white">App push notifications</p>
-              <p className="mt-1 text-[10px] leading-relaxed text-gray-600 dark:text-gray-300">
-                Custom audience notifications can only be sent from the installed Crave Admin app.
-                The website does not send push notifications.
-              </p>
-            </div>
-
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
                 <label className="font-bold text-[#18201c] dark:text-white">

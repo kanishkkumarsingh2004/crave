@@ -1,7 +1,11 @@
 # Crave iOS builds
 
-This folder contains the latest debug IPA files for all three Crave native applications. They
+This folder contains debug IPA outputs for the Crave native applications. They
 connect to the production backend at `https://crave.apexonestudio.com` by default.
+
+The repository currently tracks Capacitor iOS projects for Admin, Driver, Restaurant and Customer.
+IPA compilation/export still requires macOS, Xcode, an Apple Developer team, and a registered
+device or distribution profile; Linux can only prepare and synchronize the projects.
 
 | Application | iOS bundle             | IPA (direct download)                                                                               |
 | ----------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
@@ -9,12 +13,15 @@ connect to the production backend at `https://crave.apexonestudio.com` by defaul
 | Driver      | `com.crave.driver`     | [crave-driver-debug.ipa](./crave-driver-debug.ipa) [Download](./crave-driver-debug.ipa)             |
 | Restaurant  | `com.crave.restaurant` | [crave-restaurant-debug.ipa](./crave-restaurant-debug.ipa) [Download](./crave-restaurant-debug.ipa) |
 
+The Customer iOS project is prepared by the repository build, but a Customer IPA is not currently
+published in this directory.
+
 Click any IPA filename above to download it directly.
 
 These are development builds signed with an Apple development provisioning profile. They are
 suitable for direct testing on a registered device but not for App Store distribution.
 
-## Build all three apps (iOS)
+## Build all apps (iOS)
 
 From the repository root, run:
 
@@ -23,8 +30,9 @@ pnpm build:ios
 ```
 
 This runs `scripts/build-ios.sh`, which builds each Vite shell, synchronizes Capacitor for iOS,
-and on macOS runs `xcodebuild` to archive and export each IPA into this folder, refreshing
-`SHA256SUMS.txt`. On Linux it only prepares the iOS projects and prints the macOS/Xcode steps.
+and on macOS runs `xcodebuild` to archive and export each available IPA into this folder,
+refreshing `SHA256SUMS.txt`. On Linux it only prepares the iOS projects and prints the
+macOS/Xcode steps.
 
 Requirements: macOS with Xcode and an Apple Developer team for IPA compilation.
 

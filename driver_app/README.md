@@ -45,3 +45,7 @@ The checked-in debug iOS entitlement uses the APNs development environment; set
 
 The operating systems intentionally stop background work if a user force-stops the Android app or
 force-quits the iOS app. Tracking resumes after the driver opens the app and returns online.
+
+The current Android navigation is focused on delivery operations: Home, Orders, Wallet and
+Settings. Rewards/incentive promotional flows are not part of the driver app startup or primary
+navigation.
