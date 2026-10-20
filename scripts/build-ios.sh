@@ -5,6 +5,9 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/ios-builds"
 
+# shellcheck source=scripts/app-version.sh
+source "${repository_root}/scripts/app-version.sh"
+
 app_directories=(admin_app driver_app restaurant_app customer_app)
 ipa_names=(crave-admin-debug.ipa crave-driver-debug.ipa crave-restaurant-debug.ipa crave-customer-debug.ipa)
 
@@ -19,6 +22,12 @@ for index in "${!app_directories[@]}"; do
 
   echo
   echo "==> Building ${app_name}"
+
+  # Keep the iOS build number in step with the Android one.
+  if [[ -f "${ios_directory}/App/App.xcodeproj/project.pbxproj" ]]; then
+    bump_ios_version "${ios_directory}/App/App.xcodeproj/project.pbxproj"
+  fi
+
   pnpm --dir "${app_directory}" build
   pnpm --dir "${app_directory}" exec cap sync ios
 

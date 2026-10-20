@@ -22,7 +22,12 @@ import {
   notifyOrder,
   tap,
 } from './native'
-import { checkForCustomerUpdate, installCustomerUpdate, type CustomerUpdate } from './update'
+import {
+  checkForCustomerUpdate,
+  getInstalledVersion,
+  installCustomerUpdate,
+  type CustomerUpdate,
+} from './update'
 import { connectCustomerOrders } from './realtime'
 import { openUpiPayment, type UpiPaymentApp } from './payment'
 import { checkoutDistanceKm } from './pricing'
@@ -1362,9 +1367,14 @@ function Account({
   const check = async () => {
     setChecking(true)
     try {
+      const installed = await getInstalledVersion()
       const u = await checkForCustomerUpdate()
       setUpdate(u)
-      setMessage(u ? `CRAVE ${u.versionName} is ready` : 'You’re using the latest version')
+      setMessage(
+        u
+          ? `CRAVE ${u.versionName} (build ${u.versionCode}) is ready`
+          : `You’re on build ${installed.versionCode} — the latest version`
+      )
       if (u) await notifyAppUpdate(`CRAVE ${u.versionName} available`, u.releaseNotes)
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Could not check for updates')

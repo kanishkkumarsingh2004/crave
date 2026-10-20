@@ -18,7 +18,7 @@ const apps = {
     directory: 'driver_app',
     apk: 'crave-driver-debug.apk',
     releaseNotes:
-      'Rewards removed from the Driver app, with a cleaner four-item navigation bar and no incentives request during startup.',
+      'Clearer pickup handover: the customer sees their delivery code from the moment the food is collected, and the driver confirms it at the door.',
   },
   restaurant: {
     directory: 'restaurant_app',
@@ -30,7 +30,7 @@ const apps = {
     directory: 'customer_app',
     apk: 'crave-customer-debug.apk',
     releaseNotes:
-      'The exact website Mapcn address picker with its custom palette, draggable marker, theme lifecycle and complete CARTO tile access.',
+      'Redesigned restaurant menu screen with aligned cards, plus a delivery code that appears once the food is collected and disappears once the driver confirms the handover.',
   },
 }
 

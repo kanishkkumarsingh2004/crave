@@ -5,6 +5,9 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/android-builds"
 
+# shellcheck source=scripts/app-version.sh
+source "${repository_root}/scripts/app-version.sh"
+
 app_directories=(admin_app driver_app restaurant_app customer_app)
 apk_names=(crave-admin-debug.apk crave-driver-debug.apk crave-restaurant-debug.apk crave-customer-debug.apk)
 
@@ -21,6 +24,11 @@ for index in "${!app_directories[@]}"; do
 
   echo
   echo "==> Building ${app_name}"
+
+  # Raise the build number so installed apps recognise this build as newer.
+  # Without it the in-app updater keeps every device on the previous APK.
+  bump_android_version "${android_directory}/app/build.gradle"
+
   pnpm --dir "${app_directory}" build
 
   # Prepare native projects. cap sync android also runs Gradle via the CLI; we run

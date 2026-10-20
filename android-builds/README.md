@@ -16,12 +16,23 @@ GitHub URLs and each APK's SHA-256 must match the manifest before Android's inst
 
 Click any APK filename above to download it directly.
 
-The current versions are Admin `1.0.5` (code 13), Driver `1.0.0` (code 7), Restaurant `1.0.4`
-(code 12), and Customer `1.0.0` (code 7). The machine-readable update metadata and release
+The current versions are Admin `1.0.0` (code 15), Driver `1.0.0` (code 15), Restaurant `1.0.0`
+(code 15), and Customer `1.0.0` (code 15). The machine-readable update metadata and release
 notes are in [`version.json`](./version.json).
 
 These are development builds signed with the Android debug key. They are suitable for direct
 testing but not for Google Play production distribution.
+
+## Build numbers are raised automatically
+
+The in-app update check only offers a build when the published build number is **strictly greater**
+than the one installed on the device. `scripts/build-apps.sh` therefore raises `versionCode` (and
+`CURRENT_PROJECT_VERSION` on iOS) by one on every build, before Gradle runs. `versionName` stays
+hand-written, so a release can be labelled `1.0.0` while its build number keeps counting up.
+
+If a build is published without raising the number, every installed app keeps reporting "you are on
+the latest version" and stays on the previous binary — even though a newer APK was pushed. If you
+build by hand, raise the number yourself or run `pnpm build:android`.
 
 ## iOS builds
 
@@ -51,6 +62,19 @@ Android and iOS, runs Gradle `assembleDebug`, copies the four APKs into this fol
 `SHA256SUMS.txt` and `version.json`. Commit and push the APK and manifest together so installed
 apps never see a version whose binary is not yet available. iOS IPA compilation still requires
 macOS/Xcode.
+
+## Start from a clean build
+
+To drop every cached build artefact and rebuild from scratch:
+
+```bash
+bash scripts/clean-native-builds.sh
+pnpm build:android
+```
+
+That removes the Vite `dist/` output, the copied web assets under
+`android/app/src/main/assets/public`, the Gradle build directories and the published APKs, so no
+stale file from an earlier build can end up inside a new APK.
 
 Requirements: Node.js 22+, pnpm 12.3.4, a compatible JDK, and Android SDK 36.
 

@@ -18,6 +18,18 @@ export interface CustomerUpdate {
   releaseNotes: string
 }
 
+/** The build of the app that is currently installed on the device. */
+export async function getInstalledVersion(): Promise<{
+  versionCode: number
+  versionName: string
+}> {
+  const info = await CapacitorApp.getInfo()
+  return {
+    versionCode: Number.parseInt(info.build, 10) || 0,
+    versionName: String(info.version || ''),
+  }
+}
+
 export async function checkForCustomerUpdate(): Promise<CustomerUpdate | null> {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return null
   const current = Number.parseInt((await CapacitorApp.getInfo()).build, 10)
