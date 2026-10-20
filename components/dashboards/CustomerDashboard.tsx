@@ -1086,6 +1086,7 @@ export default function CustomerDashboard({
         statusText,
         rawStatus: active.status,
         otp: active.delivery_otp || active.deliveryOtp || undefined,
+        otpConsumed: Boolean(active.otp_consumed_at),
         driverName: active.driver_name || null,
         driverPhone: active.driver_phone || null,
         driverLat: liveDriverPos?.lat ?? active.driver_lat ?? active.driver_latitude ?? null,
@@ -1644,16 +1645,14 @@ export default function CustomerDashboard({
     const orderId = crypto.randomUUID()
     checkoutIdempotencyKeyRef.current = null
 
-    const otpBytes = new Uint32Array(1)
-    crypto.getRandomValues(otpBytes)
-    const generatedOtp = String(100000 + (otpBytes[0] % 900000))
     const restName = targetRestaurantName
 
+    // The delivery code is generated server-side when the order is created —
+    // it is the single source of truth and is never sent from the browser.
     const cartWithOtp = cart.map((item) => ({
       ...item,
       menu_item_id: item.menuItemId || item.id,
       variant_id: item.variantId,
-      otp: generatedOtp,
     }))
 
     let finalOrderId = orderId
@@ -1680,7 +1679,6 @@ export default function CustomerDashboard({
         total_amount: grandTotal,
         status: 'new',
         payment_method: 'UPI Online',
-        delivery_otp: generatedOtp,
         delivery_latitude: 12.9716,
         delivery_longitude: 77.5946,
         utr_ref: cleanUtr,
@@ -1732,7 +1730,6 @@ export default function CustomerDashboard({
         subtotal: Number(savedOrder?.subtotal || cartSubtotal),
         total: Number(savedOrder?.total_amount || grandTotal),
         statusStep: 1,
-        otp: generatedOtp,
         driverName: null,
         driverPhone: null,
         timestamp: nowTime,
@@ -3427,21 +3424,14 @@ export default function CustomerDashboard({
                           <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-1 text-[10px] sm:text-xs font-semibold text-emerald-300 backdrop-blur-xs">
                             {activeOrder.statusText || 'Order Confirmed'}
                           </span>
-                          {activeOrder.otp &&
-                            (activeOrder.statusStep >= 3 ||
-                              activeOrder.rawStatus === 'ready' ||
-                              activeOrder.rawStatus === 'ready_for_pickup' ||
-                              activeOrder.rawStatus === 'rider_assigned' ||
-                              activeOrder.rawStatus === 'out_for_delivery' ||
-                              activeOrder.rawStatus === 'picked_up' ||
-                              activeOrder.rawStatus === 'arrived_customer') && (
-                              <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 shadow-xs">
-                                <span className="text-[9px] sm:text-[10px] uppercase font-sans font-semibold tracking-wider text-emerald-400/80">
-                                  Delivery OTP
-                                </span>
-                                <span className="tracking-widest">{activeOrder.otp}</span>
+                          {activeOrder.otp && (
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 shadow-xs">
+                              <span className="text-[9px] sm:text-[10px] uppercase font-sans font-semibold tracking-wider text-emerald-400/80">
+                                Delivery OTP
                               </span>
-                            )}
+                              <span className="tracking-widest">{activeOrder.otp}</span>
+                            </span>
+                          )}
                           {activeOrder.paymentStatus === 'pending' && (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-amber-200">
                               Payment Pending
@@ -3811,6 +3801,23 @@ export default function CustomerDashboard({
                       <span className="font-mono font-bold text-base sm:text-lg text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#121815] border border-emerald-500/30 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
                         {activeOrder.otp}
                       </span>
+                    </div>
+                  )}
+
+                  {/* Handover confirmed — the code was entered by the driver */}
+                  {!activeOrder.otp && activeOrder.otpConsumed && (
+                    <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-[#27342d] bg-[#f7faef] dark:bg-[#1f2822] flex items-center gap-3 rounded-b-3xl">
+                      <div className="grid size-10 place-items-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                        <ShieldCheck className="size-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] sm:text-[11px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
+                          Delivery Verified
+                        </p>
+                        <p className="text-xs font-bold text-[#18201c] dark:text-gray-200 mt-0.5">
+                          Your delivery code was verified — the order was handed over successfully
+                        </p>
+                      </div>
                     </div>
                   )}
 

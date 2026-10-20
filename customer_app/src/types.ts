@@ -73,6 +73,7 @@ export interface Order {
   total_amount: number
   created_at?: string
   items: any[]
-  delivery_otp?: string
+  delivery_otp?: string | null
+  otp_consumed_at?: string | null
   customer_address?: string
 }

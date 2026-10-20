@@ -476,7 +476,7 @@ svg {
   width: 100%;
   max-width: 1480px;
   margin: 0 auto;
-  padding: 18px max(14px, env(safe-area-inset-right)) 28px max(14px, env(safe-area-inset-left));
+  padding: 18px max(16px, env(safe-area-inset-right)) 28px max(16px, env(safe-area-inset-left));
 }
 .page {
   animation: page-in 200ms ease;
@@ -608,7 +608,7 @@ svg {
   gap: 12px;
 }
 .section-heading {
-  margin: 26px 2px 13px;
+  margin: 26px 0 13px;
 }
 .section-heading h2,
 .card-title h2,
@@ -634,7 +634,7 @@ svg {
   height: 15px;
 }
 .page-title-row {
-  margin: 3px 2px 19px;
+  margin: 3px 0 19px;
 }
 .page-title-row h1 {
   font-size: clamp(27px, 6vw, 38px);
@@ -1383,12 +1383,11 @@ html[data-theme='light'] .toast-message {
   right: 0;
   bottom: 0;
   left: 0;
-  height: calc(68px + env(safe-area-inset-bottom));
+  height: calc(64px + env(safe-area-inset-bottom));
   display: grid;
-  /* Keep every visible destination evenly distributed after removing Profile. */
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  padding: 5px max(6px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
-    max(6px, env(safe-area-inset-left));
+  padding: 4px max(5px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(5px, env(safe-area-inset-left));
   border-top: 1px solid rgb(255 255 255 / 7%);
   background: rgb(13 19 16 / 94%);
   backdrop-filter: blur(22px);
@@ -1399,16 +1398,35 @@ html[data-theme='light'] .toast-message {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px;
   border-radius: 14px;
   background: transparent;
   color: #68766d;
   font-size: 8px;
   font-weight: 800;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+.bottom-nav button:hover,
+.bottom-nav-item:hover {
+  background: rgb(255 255 255 / 5%);
 }
 .bottom-nav button.active,
 .bottom-nav-item.active {
   color: var(--lime);
+  background: rgb(217 244 71 / 10%);
+}
+.bottom-nav button.active::after,
+.bottom-nav-item.active::after {
+  content: '';
+  width: 22px;
+  height: 3px;
+  margin-top: 1px;
+  border-radius: 99px;
+  background: var(--lime);
 }
 .nav-icon {
   position: relative;
@@ -1767,6 +1785,9 @@ html[data-theme='light'] .toast-message {
   .app-content {
     padding-inline: 34px;
   }
+  .app-header {
+    padding-inline: max(34px, calc((100% - 1480px) / 2 + 34px));
+  }
   .home-order-grid,
   .order-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1796,6 +1817,9 @@ html[data-theme='light'] .toast-message {
   }
   .app-content {
     padding-inline: 42px;
+  }
+  .app-header {
+    padding-inline: max(42px, calc((100% - 1480px) / 2 + 42px));
   }
 }
 
@@ -1926,7 +1950,6 @@ body,
 .variant-title,
 .menu-actions button,
 .secondary-button,
-.filter-tabs,
 .theme-control,
 .category-picker {
   border-color: var(--line);

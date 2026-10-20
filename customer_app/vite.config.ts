@@ -9,7 +9,14 @@ export default defineConfig(({ mode }) => {
     publicDir: '../public',
     server: {
       proxy: {
-        '/api': { target: apiTarget, changeOrigin: true, secure: apiTarget.startsWith('https://') },
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: apiTarget.startsWith('https://'),
+          configure(proxy) {
+            proxy.on('proxyReq', (proxyRequest) => proxyRequest.setHeader('origin', apiTarget))
+          },
+        },
       },
     },
     build: { outDir: 'dist', emptyOutDir: true },

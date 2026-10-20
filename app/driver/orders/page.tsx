@@ -121,7 +121,6 @@ export default function DriverAcceptedOrdersPage() {
               payout: totalDriverPayout,
               distanceKm: roadKm,
               distanceStr: `${roadKm.toFixed(1)} km`,
-              otp: o.delivery_otp || '',
               createdAt: o.createdAt || o.created_at,
             }
           })
@@ -505,7 +504,6 @@ export default function DriverAcceptedOrdersPage() {
                           tip: order.tip,
                           distance: order.distanceStr,
                           itemsCount: order.itemsCount || 1,
-                          otp: order.otp || '123456',
                         })
                       }}
                       className="rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] hover:bg-[#c2dc3a] transition flex items-center gap-1 shadow-md cursor-pointer"
@@ -589,7 +587,6 @@ export default function DriverAcceptedOrdersPage() {
                               tip: order.tip,
                               distance: order.distanceStr,
                               itemsCount: order.itemsCount || 1,
-                              otp: order.otp || '123456',
                             })
                           }}
                           className="rounded-full bg-[#d9f447] px-3 py-1.5 text-[11px] font-extrabold text-[#121815] hover:bg-[#c2dc3a] transition shadow-md inline-flex items-center gap-1 cursor-pointer"

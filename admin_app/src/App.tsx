@@ -431,6 +431,11 @@ export default function App() {
     )
   }, [xpProducts, xpSearch])
 
+  function selectTab(next: Tab) {
+    setTab(next)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
   function handleTouchStart(event: React.TouchEvent) {
     touchStartX.current = event.targetTouches[0]?.clientX ?? 0
     touchEndX.current = touchStartX.current
@@ -445,8 +450,8 @@ export default function App() {
     const distance = touchStartX.current - touchEndX.current
     if (Math.abs(distance) < 50) return
     const currentIndex = nav.findIndex((item) => item.id === tab)
-    if (distance > 0 && currentIndex < nav.length - 1) setTab(nav[currentIndex + 1].id)
-    if (distance < 0 && currentIndex > 0) setTab(nav[currentIndex - 1].id)
+    if (distance > 0 && currentIndex < nav.length - 1) selectTab(nav[currentIndex + 1].id)
+    if (distance < 0 && currentIndex > 0) selectTab(nav[currentIndex - 1].id)
   }
 
   useEffect(() => {
@@ -1561,9 +1566,11 @@ export default function App() {
 
       <nav className="bottom-nav" aria-label="Admin app navigation">
         {nav.map((item) => (
-          <div
+          <button
+            type="button"
             className={tab === item.id ? 'active' : ''}
             key={item.id}
+            onClick={() => selectTab(item.id)}
             aria-current={tab === item.id ? 'page' : undefined}
           >
             <span>
@@ -1571,7 +1578,7 @@ export default function App() {
               {Boolean(item.badge) && <i>{Math.min(item.badge || 0, 99)}</i>}
             </span>
             <small>{item.label}</small>
-          </div>
+          </button>
         ))}
       </nav>
       {partnerMode && (

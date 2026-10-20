@@ -1,4 +1,5 @@
 import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { stripOrderSecrets } from '@/lib/auth/order-access'
 import { claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
 import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
 import { getDriverLocation, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
@@ -95,10 +96,11 @@ export async function POST(request: Request) {
       }).catch(() => {})
 
       // Broadcast driver acceptance to order and driver WebSocket channels
+      // The customer's handover code is stripped — only the customer may read it.
       await broadcast('order_update', {
         type: 'rider_assigned',
         orderId: requestId,
-        order: updatedOrder,
+        order: stripOrderSecrets(updatedOrder as any),
         driverId,
         driver_name: driverName,
         driver_phone: driverPhone,

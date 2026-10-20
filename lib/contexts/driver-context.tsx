@@ -63,7 +63,8 @@ function createBroadcastOfferFromOrder(
     itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
   } catch (e) {}
 
-  const realOtp = target.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''
+  // The customer's handover code is never delivered to the driver — the driver
+  // reads it out from the customer at the door.
   const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
 
   return {
@@ -81,7 +82,6 @@ function createBroadcastOfferFromOrder(
     distance: `${distKm || 1.8} km`,
     itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
     customerPhone: target.customer_phone || undefined,
-    otp: String(realOtp),
   }
 }
 
@@ -328,11 +328,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
             else if (o.status === 'picked_up') step = 'picked_up'
             else if (o.status === 'out_for_delivery') step = 'arrived_customer'
 
-            let itemsArr: any[] = []
-            try {
-              itemsArr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
-            } catch (e) {}
-
             const {
               basePayout,
               surgeBonus,
@@ -356,7 +351,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               tip: tipVal,
               distance: `${o.distance_km || 2.4} km`,
               step,
-              otp: String(o.delivery_otp || (Array.isArray(itemsArr) && itemsArr[0]?.otp) || ''),
               restaurantLat: o.restaurant_lat ? Number(o.restaurant_lat) : 12.6817,
               restaurantLng: o.restaurant_lng ? Number(o.restaurant_lng) : 77.4729,
               customerLat: o.customer_lat ? Number(o.customer_lat) : 12.679898,

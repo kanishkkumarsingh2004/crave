@@ -4,7 +4,9 @@ import test from 'node:test'
 import {
   canReadOrder,
   getCustomerOrderScope,
+  isDeliveryOtpActive,
   sanitizeOrderForActor,
+  stripOrderSecrets,
 } from '../lib/auth/order-access'
 import type { JWTPayload } from '../lib/jwt'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
@@ -46,6 +48,7 @@ test('delivery OTP is only returned to its customer or an admin', () => {
     customer_id: 'customer-1',
     rider_id: 'rider-1',
     restaurant_id: 'restaurant-1',
+    status: 'out_for_delivery',
     delivery_otp: '123456',
     otp_consumed_at: null,
   }
@@ -53,6 +56,60 @@ test('delivery OTP is only returned to its customer or an admin', () => {
   assert.equal(sanitizeOrderForActor(actor('user', 'customer-1'), order).delivery_otp, '123456')
   assert.equal(sanitizeOrderForActor(actor('admin', 'admin-1'), order).delivery_otp, '123456')
   assert.equal('delivery_otp' in sanitizeOrderForActor(actor('rider', 'rider-1'), order), false)
+})
+
+test('delivery OTP is only visible to the customer between pickup and delivery', () => {
+  const base = {
+    id: 'order-1',
+    customer_id: 'customer-1',
+    rider_id: 'rider-1',
+    restaurant_id: 'restaurant-1',
+    delivery_otp: '123456',
+    otp_consumed_at: null,
+  }
+  const customer = actor('user', 'customer-1')
+
+  // Before the driver collected the food there is nothing to hand over yet.
+  for (const status of [
+    'sent_to_vendor',
+    'preparing',
+    'packing',
+    'ready_for_pickup',
+    'rider_assigned',
+  ]) {
+    assert.equal(sanitizeOrderForActor(customer, { ...base, status }).delivery_otp, null)
+    assert.equal(isDeliveryOtpActive({ ...base, status }), false)
+  }
+
+  // Between pickup and delivery the customer reads the code out to the driver.
+  for (const status of ['picked_up', 'out_for_delivery']) {
+    assert.equal(sanitizeOrderForActor(customer, { ...base, status }).delivery_otp, '123456')
+    assert.equal(isDeliveryOtpActive({ ...base, status }), true)
+  }
+
+  // As soon as the driver entered it, the code disappears for good.
+  assert.equal(
+    sanitizeOrderForActor(customer, {
+      ...base,
+      status: 'out_for_delivery',
+      otp_consumed_at: new Date(),
+    }).delivery_otp,
+    null
+  )
+  assert.equal(sanitizeOrderForActor(customer, { ...base, status: 'delivered' }).delivery_otp, null)
+})
+
+test('broadcast payloads never carry the customer handover code', () => {
+  const payload = stripOrderSecrets({
+    id: 'order-1',
+    status: 'picked_up',
+    delivery_otp: '123456',
+    otp_consumed_at: null,
+  })
+
+  assert.equal('delivery_otp' in payload, false)
+  assert.equal('otp_consumed_at' in payload, false)
+  assert.equal(payload.status, 'picked_up')
 })
 
 test('customer order-list scope is derived from the authenticated actor', () => {

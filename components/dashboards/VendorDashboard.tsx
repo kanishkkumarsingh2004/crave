@@ -28,7 +28,6 @@ interface KitchenOrder {
   paymentStatus: string
   time: string
   address: string
-  deliveryOtp?: string
   utrRef?: string
 }
 
@@ -153,7 +152,6 @@ export default function VendorDashboard() {
           paymentStatus: o.payment_status || 'pending',
           time: formattedTime,
           address: o.customer_address || 'Bengaluru',
-          deliveryOtp: o.delivery_otp || undefined,
           utrRef: o.utrRef || o.utr_ref || undefined,
         }
       })

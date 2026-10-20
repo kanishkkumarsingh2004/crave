@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { stripOrderSecrets } from '@/lib/auth/order-access'
 import { listOrders } from '@/lib/dal/orders'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
@@ -126,10 +127,11 @@ export async function GET(request: Request) {
         }
       })
 
+    // The customer's handover code is never exposed to the driver — the driver
+    // reads it out from the customer.
     const sanitizeForDriver = (o: any) => {
       if (!o) return o
-      const { delivery_otp, ...safe } = o
-      return safe
+      return stripOrderSecrets(o)
     }
 
     return NextResponse.json({

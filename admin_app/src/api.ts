@@ -92,7 +92,7 @@ export async function apiRequest<T>(
       status = response.status
       data = normalizeData(response.data)
     } else {
-      const response = await fetch(`${API_ORIGIN}${path}`, {
+      const response = await fetch(path, {
         method,
         headers,
         credentials: 'include',

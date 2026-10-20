@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import type { Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import {
-  applyWebsiteMapPalette,
-  websiteMapFallbackStyle,
-  websiteMapStyle,
-  websiteMapTheme,
-} from './mapStyle'
+import { applyWebsiteMapPalette, websiteMapFallbackStyle, websiteMapStyle } from './mapStyle'
 
 if (typeof window !== 'undefined') {
   maplibregl.setWorkerUrl(new URL('maplibre-gl-worker.mjs', document.baseURI).href)
@@ -19,6 +14,9 @@ export type AddressMapPoint = {
 }
 
 const DEFAULT_LOCATION: AddressMapPoint = { lat: 12.9716, lng: 77.5946 }
+// The partner picker always uses the light basemap so street and place names stay
+// legible on top of the map regardless of the app theme.
+const MAP_THEME = 'light'
 
 function createMapcnMarker() {
   const marker = document.createElement('div')
@@ -47,6 +45,8 @@ export default function AddressMap({
   const markerRef = useRef<Marker | null>(null)
   const onPickRef = useRef(onPick)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [locating, setLocating] = useState(false)
+  const [locateError, setLocateError] = useState('')
 
   onPickRef.current = onPick
 
@@ -54,8 +54,7 @@ export default function AddressMap({
     if (!containerRef.current || mapRef.current) return
 
     const initial = location || DEFAULT_LOCATION
-    let activeTheme = websiteMapTheme()
-    let activeStyle = websiteMapStyle(activeTheme)
+    let activeStyle = websiteMapStyle(MAP_THEME)
     let fallbackAttempted = false
     let map: MapLibreMap
     try {
@@ -99,7 +98,7 @@ export default function AddressMap({
           return
         }
         fallbackAttempted = true
-        map.setStyle(websiteMapFallbackStyle(activeTheme), { diff: false })
+        map.setStyle(websiteMapFallbackStyle(MAP_THEME), { diff: false })
         failureTimeout = window.setTimeout(() => {
           if (!map.isStyleLoaded()) setStatus('error')
         }, 10_000)
@@ -107,7 +106,7 @@ export default function AddressMap({
     }
     const handleStyleLoad = () => {
       clearTimers()
-      applyWebsiteMapPalette(map, activeTheme)
+      applyWebsiteMapPalette(map, MAP_THEME)
       setStatus('ready')
       requestAnimationFrame(resize)
       window.setTimeout(resize, 320)
@@ -117,27 +116,11 @@ export default function AddressMap({
     scheduleFallback()
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(containerRef.current)
-    const themeObserver = new MutationObserver(() => {
-      const nextTheme = websiteMapTheme()
-      const nextStyle = websiteMapStyle(nextTheme)
-      if (nextStyle === activeStyle) return
-      activeTheme = nextTheme
-      activeStyle = nextStyle
-      fallbackAttempted = false
-      setStatus('loading')
-      map.setStyle(nextStyle, { diff: false })
-      scheduleFallback()
-    })
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme'],
-    })
     document.addEventListener('visibilitychange', resize)
 
     return () => {
       clearTimers()
       resizeObserver.disconnect()
-      themeObserver.disconnect()
       document.removeEventListener('visibilitychange', resize)
       markerRef.current?.remove()
       map.remove()
@@ -171,24 +154,61 @@ export default function AddressMap({
     map.easeTo({ center: [location.lng, location.lat], zoom: Math.max(map.getZoom(), 15) })
   }, [location?.lat, location?.lng])
 
+  function locateMe() {
+    const map = mapRef.current
+    if (!map) return
+    if (!navigator.geolocation) {
+      setLocateError('Location is not available on this device.')
+      return
+    }
+    setLocating(true)
+    setLocateError('')
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocating(false)
+        const point = {
+          lat: Number(coords.latitude.toFixed(6)),
+          lng: Number(coords.longitude.toFixed(6)),
+        }
+        map.easeTo({ center: [point.lng, point.lat], zoom: 16 })
+        onPickRef.current(point)
+      },
+      (error) => {
+        setLocating(false)
+        setLocateError(
+          error.code === error.PERMISSION_DENIED
+            ? 'Allow location access to use your current position.'
+            : 'Could not get your current location. Tap the map instead.'
+        )
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    )
+  }
+
   return (
     <div className="address-map-shell">
       <div ref={containerRef} className="address-map-canvas" aria-label="Address map" />
+      <button
+        type="button"
+        className={`address-map-locate ${locating ? 'locating' : ''}`}
+        onClick={locateMe}
+        disabled={locating}
+        title="Use my current location"
+        aria-label="Use my current location"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="7" />
+          <path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke-linecap="round" />
+          <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+      {locateError && <div className="address-map-locate-error">{locateError}</div>}
       {status === 'loading' && <div className="address-map-status">Loading map…</div>}
       {status === 'error' && (
         <div className="address-map-status address-map-error">
           Map unavailable. Check your connection and reopen this page.
         </div>
       )}
-      <div className="address-map-credit">
-        <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
-          © CARTO
-        </a>{' '}
-        ·{' '}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          © OSM
-        </a>
-      </div>
     </div>
   )
 }

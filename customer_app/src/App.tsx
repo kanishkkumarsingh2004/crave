@@ -309,7 +309,21 @@ function DishImage({ src, name }: { src?: string; name: string }) {
       {hasImage ? (
         <img src={src} alt={`${name} dish`} loading="lazy" onError={() => setFailed(true)} />
       ) : (
-        <span aria-hidden="true">🍽️</span>
+        <svg
+          className="dish-placeholder"
+          viewBox="0 0 48 48"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="24" cy="24" r="9" />
+          <path d="M9 7v11a3 3 0 0 0 6 0V7" />
+          <path d="M12 18v23" />
+          <path d="M39 7c-2.6 3-2.6 13 0 15v19" />
+        </svg>
       )}
     </div>
   )
@@ -320,11 +334,15 @@ function MenuScreen({
   onBack,
   onAdd,
   cart,
+  favourite,
+  onFavourite,
 }: {
   restaurant: Restaurant
   onBack: () => void
   onAdd: (item: MenuItem, v?: Variant) => void
   cart: CartItem[]
+  favourite: boolean
+  onFavourite: () => void
 }) {
   const [items, setItems] = useState<MenuItem[]>([]),
     [loading, setLoading] = useState(true),
@@ -356,6 +374,20 @@ function MenuScreen({
   )
   const count = (id: string) =>
     cart.filter((x) => x.itemId === id).reduce((n, x) => n + x.quantity, 0)
+  const facts = [
+    { icon: 'clock' as const, value: restaurant.eta || '25–35 min', label: 'Delivery time' },
+    {
+      icon: 'star' as const,
+      value: Number(restaurant.rating || 4.5).toFixed(1),
+      label: restaurant.rating_count ? `${restaurant.rating_count} ratings` : 'Customer rating',
+    },
+    ...(restaurant.distance
+      ? [{ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' }]
+      : []),
+    ...(restaurant.cost_for_two
+      ? [{ icon: 'tag' as const, value: money(Number(restaurant.cost_for_two)), label: 'For two' }]
+      : []),
+  ]
   const add = (item: MenuItem) => {
     const variants = (item.variants || []).filter((v) => v.in_stock !== false)
     if (
@@ -378,14 +410,21 @@ function MenuScreen({
             : 'var(--hero-fallback)',
         }}
       >
-        <button className="round" onClick={onBack}>
+        <button className="round" onClick={onBack} aria-label="Back">
           <Icon name="back" />
         </button>
-        <button className="round">
+        <button
+          className={`round${favourite ? ' liked' : ''}`}
+          onClick={onFavourite}
+          aria-label="Save restaurant"
+          aria-pressed={favourite}
+        >
           <Icon name="heart" />
         </button>
-        <div>
-          <span className="open-pill">{restaurant.is_open === false ? 'Closed' : 'Open now'}</span>
+        <div className="detail-hero-copy">
+          <span className={`open-pill${restaurant.is_open === false ? ' closed' : ''}`}>
+            {restaurant.is_open === false ? 'Closed' : 'Open now'}
+          </span>
           <h1>{restaurant.name}</h1>
           <p>
             {restaurant.cuisine || 'Fresh local food'} · {restaurant.eta || '25–35 min'}
@@ -393,35 +432,54 @@ function MenuScreen({
         </div>
       </header>
       <div className="detail-body">
-        <div className="delivery-note">
-          <Icon name="clock" />
-          <span>
-            <b>Fast delivery</b>
-            <small>Prepared fresh after you order</small>
-          </span>
-          <strong>{restaurant.rating || 4.5} ★</strong>
+        <div className="detail-facts">
+          {facts.map((fact) => (
+            <div className="fact" key={fact.label}>
+              <span className="fact-icon">
+                <Icon name={fact.icon} />
+              </span>
+              <span className="fact-text">
+                <b>{fact.value}</b>
+                <small>{fact.label}</small>
+              </span>
+            </div>
+          ))}
         </div>
-        <div className="search-field">
+        <div className="detail-search">
           <Icon name="search" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${restaurant.name}`}
+            aria-label={`Search ${restaurant.name} menu`}
           />
+          {query && (
+            <button
+              className="detail-search-clear"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+            >
+              <Icon name="close" />
+            </button>
+          )}
         </div>
-        <div className="chips">
+        <div className="detail-chips" role="group" aria-label="Menu categories">
           {categories.map((c) => (
             <button
               className={category === c ? 'active' : ''}
               onClick={() => setCategory(c)}
               key={c}
+              aria-pressed={category === c}
             >
               {c}
             </button>
           ))}
         </div>
         <h2 className="section-title">
-          Menu <span>{filtered.length} items</span>
+          Menu{' '}
+          <span>
+            {filtered.length} item{filtered.length === 1 ? '' : 's'}
+          </span>
         </h2>
         {loading ? (
           <div className="loading">
@@ -449,34 +507,52 @@ function MenuScreen({
               const from = variants.length
                 ? Math.min(...variants.map((v) => Number(v.price)))
                 : Number(item.price)
+              const description = (
+                item.description ||
+                item.detail ||
+                'Freshly prepared with quality ingredients.'
+              ).replace(/[·|]\s*$/, '')
               return (
-                <article className="menu-item" key={item.id}>
-                  <div className="veg-dot">
-                    <i className={(item.is_veg ?? item.veg) !== false ? 'veg' : 'nonveg'} />
-                  </div>
+                <article
+                  className={`menu-item${unavailable ? ' is-unavailable' : ''}`}
+                  key={item.id}
+                >
                   <div className="menu-copy">
-                    <small>{item.category || 'Popular'}</small>
+                    <div className="menu-meta">
+                      <span className="veg-dot">
+                        <i className={(item.is_veg ?? item.veg) !== false ? 'veg' : 'nonveg'} />
+                      </span>
+                      <small>{item.category || 'Popular'}</small>
+                    </div>
                     <h3>{item.name}</h3>
-                    <strong>
+                    <strong className="menu-price">
                       {variants.length > 1 ? 'From ' : ''}
                       {money(from)}
                     </strong>
-                    <p>
-                      {item.description ||
-                        item.detail ||
-                        'Freshly prepared with quality ingredients.'}
-                    </p>
+                    <p>{description}</p>
                   </div>
                   <div className="menu-action">
                     <DishImage src={image} name={item.name} />
-                    <button disabled={unavailable} onClick={() => add(item)}>
-                      {unavailable
-                        ? restaurant.is_open === false
-                          ? 'CLOSED'
-                          : 'SOLD OUT'
-                        : count(item.id)
-                          ? `ADD · ${count(item.id)}`
-                          : 'ADD +'}
+                    <button
+                      className={count(item.id) ? 'added' : ''}
+                      disabled={unavailable}
+                      onClick={() => add(item)}
+                      aria-label={`Add ${item.name} to bag`}
+                    >
+                      {unavailable ? (
+                        restaurant.is_open === false ? (
+                          'CLOSED'
+                        ) : (
+                          'SOLD OUT'
+                        )
+                      ) : count(item.id) ? (
+                        `ADD · ${count(item.id)}`
+                      ) : (
+                        <>
+                          ADD
+                          <Icon name="plus" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </article>
@@ -1179,11 +1255,23 @@ function OrdersPage({
           </small>
         </span>
       </div>
-      {o.delivery_otp && (
+      {o.delivery_otp ? (
         <div className="otp">
-          Delivery OTP <strong>{o.delivery_otp}</strong>
+          <span>
+            <b>Delivery code</b>
+            <small>Share this code with your delivery partner</small>
+          </span>
+          <strong>{o.delivery_otp}</strong>
         </div>
-      )}
+      ) : o.otp_consumed_at ? (
+        <div className="otp done">
+          <span>
+            <b>Delivery code verified</b>
+            <small>Your order was handed over successfully</small>
+          </span>
+          <Icon name="check" />
+        </div>
+      ) : null}
     </article>
   )
   return (
@@ -1889,6 +1977,10 @@ export default function App() {
   const previous = useRef<Record<string, string>>({})
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
+  const selectTab = (next: Tab) => {
+    setTab(next)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
   const handleTouchStart = (event: React.TouchEvent) => {
     touchStartX.current = event.targetTouches[0]?.clientX ?? 0
     touchEndX.current = touchStartX.current
@@ -1902,8 +1994,9 @@ export default function App() {
     if (Math.abs(distance) < 50) return
     const currentIndex = SWIPE_TABS.indexOf(tab)
     if (currentIndex < 0) return
-    if (distance > 0 && currentIndex < SWIPE_TABS.length - 1) setTab(SWIPE_TABS[currentIndex + 1])
-    if (distance < 0 && currentIndex > 0) setTab(SWIPE_TABS[currentIndex - 1])
+    if (distance > 0 && currentIndex < SWIPE_TABS.length - 1)
+      selectTab(SWIPE_TABS[currentIndex + 1])
+    if (distance < 0 && currentIndex > 0) selectTab(SWIPE_TABS[currentIndex - 1])
   }
   const showToast = (m: string) => {
     setToast(m)
@@ -2122,6 +2215,12 @@ export default function App() {
           onBack={() => setSelected(null)}
           onAdd={add}
           cart={cart}
+          favourite={favourites.includes(selected.id)}
+          onFavourite={() =>
+            setFavourites((f) =>
+              f.includes(selected.id) ? f.filter((x) => x !== selected.id) : [...f, selected.id]
+            )
+          }
         />
         {cart.length > 0 && (
           <button
@@ -2322,10 +2421,12 @@ export default function App() {
             ['account', 'You'],
           ] as [Tab, string][]
         ).map(([id, label]) => (
-          <div
+          <button
+            type="button"
             key={id}
             className={tab === id ? 'active' : ''}
             aria-current={tab === id ? 'page' : undefined}
+            onClick={() => selectTab(id)}
           >
             <span>
               <Icon name={id === 'account' ? 'user' : id} />
@@ -2334,7 +2435,7 @@ export default function App() {
               ) : null}
             </span>
             <small>{label}</small>
-          </div>
+          </button>
         ))}
       </nav>
       {toast && <div className="toast">{toast}</div>}

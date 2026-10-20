@@ -676,11 +676,6 @@ export default function App() {
   const ordersRef = useRef<RestaurantOrder[]>([])
   const updateCheckRunningRef = useRef(false)
   // Keep these refs mounted on every render, including the login screen.
-  // Declaring them below the auth guard changes the hook order after login
-  // and causes React to unmount the app with a blank screen.
-  const touchStartX = useRef<number>(0)
-  const touchEndX = useRef<number>(0)
-
   useEffect(() => {
     ordersRef.current = orders
   }, [orders])
@@ -1349,44 +1344,8 @@ export default function App() {
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
 
-  const minSwipeDistance = 50
-
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.targetTouches[0].clientX
-  }
-
-  function handleTouchMove(e: React.TouchEvent) {
-    touchEndX.current = e.changedTouches[0].clientX
-  }
-
-  function handleTouchEnd(e: React.TouchEvent) {
-    // Read the final touch directly so short, fast swipes work even when no
-    // touchmove event was emitted by the device.
-    touchEndX.current = e.changedTouches[0]?.clientX ?? touchEndX.current
-    const distance = touchStartX.current - touchEndX.current
-    if (distance > minSwipeDistance) {
-      // swipe left - next tab
-      const currentIndex = navItems.findIndex((item) => item.id === activeTab)
-      if (currentIndex < navItems.length - 1) {
-        setActiveTab(navItems[currentIndex + 1].id)
-      }
-    }
-    if (distance < -minSwipeDistance) {
-      // swipe right - prev tab
-      const currentIndex = navItems.findIndex((item) => item.id === activeTab)
-      if (currentIndex > 0) {
-        setActiveTab(navItems[currentIndex - 1].id)
-      }
-    }
-  }
-
   return (
-    <div
-      className="app-shell"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="app-shell">
       <header className="app-header">
         <div className="brand-lockup">
           <img className="brand-logo" src={appLogo} alt="Crave" />
@@ -2008,17 +1967,19 @@ export default function App() {
 
       <nav className="bottom-nav" aria-label="Restaurant app navigation">
         {navItems.map((item) => (
-          <div
+          <button
             key={item.id}
+            type="button"
             className={`bottom-nav-item ${activeTab === item.id ? 'active' : ''}`}
             aria-current={activeTab === item.id ? 'page' : undefined}
+            onClick={() => setActiveTab(item.id)}
           >
             <span className="nav-icon">
               <Icon name={item.icon} />
               {Boolean(item.badge) && <i>{item.badge! > 99 ? '99+' : item.badge}</i>}
             </span>
             <span>{item.label}</span>
-          </div>
+          </button>
         ))}
       </nav>
 

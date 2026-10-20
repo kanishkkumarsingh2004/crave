@@ -1076,7 +1076,10 @@ function OtpSheet({
             <Icon name="close" />
           </button>
         </header>
-        <p>Ask the customer for the 6-digit delivery code before handing over the order.</p>
+        <p>
+          Ask the customer for the 6-digit delivery code before handing over the order. The code
+          appears on their order screen from the moment you pick up the food.
+        </p>
         <input
           className="otp-input"
           inputMode="numeric"

@@ -5,9 +5,15 @@ import {
   requireAuth,
   requireRole,
 } from '@/lib/auth-helpers'
-import { canReadOrder, sanitizeOrderForActor } from '@/lib/auth/order-access'
+import { canReadOrder, sanitizeOrderForActor, stripOrderSecrets } from '@/lib/auth/order-access'
 import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
-import { dispatchPendingOutboxEvents, findOrderById, listOrders, updateOrder } from '@/lib/dal'
+import {
+  dispatchPendingOutboxEvents,
+  findOrderById,
+  invalidateOrdersCache,
+  listOrders,
+  updateOrder,
+} from '@/lib/dal'
 import { validateAndApplyCoupon } from '@/lib/dal/coupons'
 import { findMenuItemById, findMenuItemsByIds } from '@/lib/dal/menu-items'
 import { getActivePaymentConfig, updatePaymentReviewStatus } from '@/lib/dal/payments'
@@ -363,7 +369,7 @@ export async function POST(request: Request) {
             if (!['delivered', 'completed', 'cancelled'].includes(existingOrderById.status)) {
               return NextResponse.json({
                 success: true,
-                order: existingOrderById,
+                order: sanitizeOrderForActor(actor, existingOrderById),
                 orderId: existingOrderById.id,
                 message: 'Order already processed (idempotent)',
               })
@@ -385,7 +391,7 @@ export async function POST(request: Request) {
           if (existingByIdempotency) {
             return NextResponse.json({
               success: true,
-              order: existingByIdempotency,
+              order: sanitizeOrderForActor(actor, existingByIdempotency),
               orderId: existingByIdempotency.id,
               message: 'Order already processed (idempotent)',
             })
@@ -413,7 +419,7 @@ export async function POST(request: Request) {
           if (existingOrderWithUtr) {
             return NextResponse.json({
               success: true,
-              order: existingOrderWithUtr,
+              order: sanitizeOrderForActor(actor, existingOrderWithUtr),
               orderId: existingOrderWithUtr.id,
               message: 'Order already received and processing (deduplicated)',
             })
@@ -1382,21 +1388,22 @@ export async function POST(request: Request) {
       })
 
       // Broadcast real-time order creation to Admin WebSocket channels
+      const broadcastOrder = stripOrderSecrets(order as any)
       await broadcast('admin_stats', {
         type: 'new_order',
-        order,
+        order: broadcastOrder,
         orderId,
         timestamp: new Date().toISOString(),
       })
       await broadcast('admin_orders', {
         type: 'new_order',
-        order,
+        order: broadcastOrder,
         orderId,
         timestamp: new Date().toISOString(),
       })
       await broadcast('order_update', {
         type: 'new_order',
-        order,
+        order: broadcastOrder,
         orderId,
         timestamp: new Date().toISOString(),
       })
@@ -1412,7 +1419,9 @@ export async function POST(request: Request) {
       const responseData = {
         success: true,
         message: 'Order created successfully!',
-        order,
+        // The delivery code is only readable by the customer between pickup and
+        // delivery, so it is not part of the checkout response.
+        order: sanitizeOrderForActor(actor, order),
         orderId: order.id,
         billing: billingBreakdown,
       }
@@ -1771,6 +1780,10 @@ export async function PATCH(request: Request) {
         return dalResult && Object.keys(dalResult).length > 0 ? dalResult : orderUpdate
       })
 
+      // The order list is cached for a few seconds — drop it so the customer
+      // sees the delivery code (and its removal) right away.
+      invalidateOrdersCache()
+
       // Dispatch pending outbox events across WebSocket & Redis Pub/Sub
       dispatchPendingOutboxEvents().catch(() => {})
 
@@ -1796,12 +1809,24 @@ export async function PATCH(request: Request) {
       }
 
       // Broadcast order status update to subscribed clients.
+      // The handover code is stripped: the `order_update` channel is shared by
+      // the customer, the driver and the vendor, and only the customer may read
+      // it (through the authorised `GET /api/orders` response).
       if (status) {
-        await broadcast('order_update', { type: 'order_updated', order: updated, orderId })
-        await broadcast('admin_orders', { type: 'order_updated', order: updated, orderId })
+        const broadcastOrder = stripOrderSecrets(updated as any)
+        await broadcast('order_update', {
+          type: 'order_updated',
+          order: broadcastOrder,
+          orderId,
+        })
+        await broadcast('admin_orders', {
+          type: 'order_updated',
+          order: broadcastOrder,
+          orderId,
+        })
         await broadcast('vendor_orders', {
           type: 'order_updated',
-          order: updated,
+          order: broadcastOrder,
           orderId,
           restaurantId: updated.restaurant_id || existing.restaurant_id,
           timestamp: new Date().toISOString(),
@@ -1860,7 +1885,7 @@ export async function PATCH(request: Request) {
           packing: 'Your order is being packed.',
           ready_for_pickup: 'Your order is ready for pickup.',
           rider_assigned: 'A delivery partner has been assigned.',
-          picked_up: 'Your order has been picked up.',
+          picked_up: 'Your order has been picked up. Share your delivery code with your partner.',
           out_for_delivery: 'Your order is out for delivery.',
           delivered: 'Your order has been delivered.',
           completed: 'Your order is complete. Enjoy!',
@@ -1914,7 +1939,9 @@ export async function PATCH(request: Request) {
         })
       }
 
-      return NextResponse.json({ success: true, order: updated })
+      // The response is sanitised: a driver or vendor must never receive the
+      // customer's handover code, even in the mutation response.
+      return NextResponse.json({ success: true, order: sanitizeOrderForActor(actor, updated) })
     } catch (error) {
       return handleAuthError(error)
     }
