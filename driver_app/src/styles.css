@@ -1001,6 +1001,16 @@ b {
 .wallet-hero .light-button {
   margin-top: 25px;
 }
+.wallet-hero .wallet-hint {
+  margin-top: 10px;
+  padding: 8px 11px;
+  border-radius: 12px;
+  background: #09100c14;
+  color: #09100cd9;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
 .payout-list article > div {
   display: grid;
   gap: 3px;

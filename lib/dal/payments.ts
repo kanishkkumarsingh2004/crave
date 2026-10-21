@@ -206,6 +206,119 @@ export async function listDriverPayouts(driverId: string) {
   })
 }
 
+export async function getDriverAvailableBalance(driverId: string) {
+  const [payouts, completedOrders] = await Promise.all([
+    prisma.driverPayout.findMany({ where: { driver_id: driverId } }),
+    prisma.order.findMany({
+      where: {
+        rider_id: driverId,
+        status: { in: ['delivered', 'completed'] as any },
+      },
+      select: { tip: true, financial_snapshot: true },
+    }),
+  ])
+
+  let earned = 0
+  for (const order of completedOrders) {
+    const snapshot: any = order.financial_snapshot || {}
+    if (snapshot.riderPayablePaise != null) {
+      earned += Number(snapshot.riderPayablePaise) / 100
+      continue
+    }
+    earned += Number(order.tip || 0)
+  }
+
+  // Paid money has left the wallet. A pending request is only reserved, so it
+  // still belongs to the driver but can never be requested twice.
+  let withdrawn = 0
+  let reserved = 0
+  for (const payout of payouts) {
+    const amount = Number(payout.amount || 0)
+    if (payout.status === 'paid') withdrawn += amount
+    else if (payout.status === 'pending') reserved += amount
+  }
+
+  return Math.max(0, earned - withdrawn - reserved)
+}
+
+/**
+ * Books a payout request only when the driver really has the money.
+ *
+ * The check and the insert share one serializable transaction, so two
+ * concurrent requests can never both pass the balance check and take the same
+ * rupees.
+ */
+export async function createDriverPayoutIfWithinBalance(data: {
+  id: string
+  driver_id: string
+  amount: number
+  status?: 'pending' | 'paid' | 'failed'
+  transaction_ref?: string
+}) {
+  return await prisma.$transaction(
+    async (tx) => {
+      const [payouts, completedOrders] = await Promise.all([
+        tx.driverPayout.findMany({ where: { driver_id: data.driver_id } }),
+        tx.order.findMany({
+          where: {
+            rider_id: data.driver_id,
+            status: { in: ['delivered', 'completed'] as any },
+          },
+          select: { tip: true, financial_snapshot: true },
+        }),
+      ])
+
+      let earned = 0
+      for (const order of completedOrders) {
+        const snapshot: any = order.financial_snapshot || {}
+        if (snapshot.riderPayablePaise != null) {
+          earned += Number(snapshot.riderPayablePaise) / 100
+          continue
+        }
+        earned += Number(order.tip || 0)
+      }
+
+      let withdrawn = 0
+      let reserved = 0
+      for (const payout of payouts) {
+        const amount = Number(payout.amount || 0)
+        if (payout.status === 'paid') withdrawn += amount
+        else if (payout.status === 'pending') reserved += amount
+      }
+
+      const available = Math.max(0, earned - withdrawn - reserved)
+      if (data.amount > available) {
+        throw new Error('Insufficient available balance')
+      }
+
+      return await tx.driverPayout.create({ data: data as any })
+    },
+    { isolationLevel: 'Serializable' }
+  )
+}
+
+export async function listPendingDriverPayouts() {
+  return await prisma.driverPayout.findMany({
+    where: { status: 'pending' },
+    orderBy: { created_at: 'asc' },
+    include: { driver: { select: { id: true, name: true, email: true, phone: true } } },
+  })
+}
+
+export async function updateDriverPayoutStatus(
+  id: string,
+  status: 'pending' | 'paid' | 'failed',
+  transaction_ref?: string
+) {
+  return await prisma.driverPayout.update({
+    where: { id },
+    data: {
+      status: status as any,
+      ...(transaction_ref ? { transaction_ref } : {}),
+    },
+  })
+}
+
 // ─── Driver Incentives ───────────────────────────────────
 
 export async function listDriverIncentives(driverId?: string) {

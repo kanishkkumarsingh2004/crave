@@ -434,19 +434,40 @@ function EarningsPage({
   upi,
   busy,
   onCashout,
+  onAddUpiAccount,
 }: {
   trips: CompletedTrip[]
   payouts: PayoutLog[]
   upi: UpiAccount[]
   busy: boolean
   onCashout: (amount: number) => Promise<void>
+  onAddUpiAccount: () => void
 }) {
   const earned = trips.reduce((total, trip) => total + Number(trip.total || 0), 0)
-  const withdrawn = payouts.reduce((total, payout) => total + Number(payout.amount || 0), 0)
-  const balance = Math.max(0, earned - withdrawn)
+  const withdrawn = payouts
+    .filter((p) => {
+      const s = String(p.status || '').toLowerCase()
+      return (
+        s.includes('paid') ||
+        s.includes('transfer') ||
+        s.includes('complete') ||
+        s.includes('success')
+      )
+    })
+    .reduce((total, payout) => total + Number(payout.amount || 0), 0)
+  // A pending request is reserved, so it can never be requested a second time.
+  const reserved = payouts
+    .filter((p) =>
+      String(p.status || '')
+        .toLowerCase()
+        .includes('pending')
+    )
+    .reduce((total, payout) => total + Number(payout.amount || 0), 0)
+  const balance = Math.max(0, earned - withdrawn - reserved)
   const primary = upi.find((account) => account.isPrimary)
   const [amount, setAmount] = useState('')
   const [showCashout, setShowCashout] = useState(false)
+  const [hint, setHint] = useState('')
 
   return (
     <section className="page-section">
@@ -462,14 +483,24 @@ function EarningsPage({
         <p>{primary ? `Payout to ${primary.vpa}` : 'Add a UPI account from the Account page'}</p>
         <button
           className="light-button"
-          disabled={!primary || balance <= 0}
           onClick={() => {
-            setAmount(String(balance))
+            if (!primary) {
+              setHint('Add a UPI payout account to receive your money.')
+              onAddUpiAccount()
+              return
+            }
+            if (balance <= 0) {
+              setHint('No available balance yet. Earnings appear after a delivery is completed.')
+              return
+            }
+            setHint('')
+            setAmount(String(Math.floor(balance)))
             setShowCashout(true)
           }}
         >
           Request payout
         </button>
+        {hint && <p className="wallet-hint">{hint}</p>}
       </article>
       <div className="money-stats">
         <article>
@@ -2057,6 +2088,7 @@ export default function App() {
             upi={upi}
             busy={busyKey === 'cashout'}
             onCashout={cashout}
+            onAddUpiAccount={() => setTab('account')}
           />
         )}
         {tab === 'account' && (

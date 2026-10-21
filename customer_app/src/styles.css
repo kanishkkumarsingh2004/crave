@@ -1668,6 +1668,18 @@ textarea {
   min-width: 0;
   font: 800 16px 'Manrope';
 }
+.upi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 25px 0 10px;
+}
+.upi-header > h2 {
+  margin: 0;
+  min-width: 0;
+  font: 800 16px 'Manrope';
+}
 .text-link {
   flex: 0 0 auto;
   border: 0;

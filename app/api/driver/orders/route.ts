@@ -68,12 +68,19 @@ export async function GET(request: Request) {
         const tip = Number(o.tip || 0)
         const storedBreakdown =
           o.pricing_breakdown || (itemsArr.length > 0 ? itemsArr[0]?.billing_breakdown : null)
+        // The canonical snapshot is the source of truth for what the rider
+        // earned — never recalculate it from the visible order rows.
+        const snapshot: any = o.financial_snapshot || {}
 
         let basePay = 0
         let surgePay = 0
         let driverPayout = 0
 
-        if (
+        if (snapshot.riderPayablePaise != null) {
+          driverPayout = Number(snapshot.riderPayablePaise) / 100
+          basePay = Number(storedBreakdown?.driver_base_payout ?? Math.max(0, driverPayout - tip))
+          surgePay = Number(storedBreakdown?.driver_surge_payout ?? 0)
+        } else if (
           o.driver_payout != null &&
           !isNaN(Number(o.driver_payout)) &&
           Number(o.driver_payout) > 0

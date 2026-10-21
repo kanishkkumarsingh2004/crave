@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Settings,
   Store,
+  Truck,
   Users,
   Wifi,
   WifiOff,
@@ -44,7 +45,7 @@ import type { AddressMapPoint } from './AddressMap'
 const AddressMap = lazy(() => import('./AddressMap'))
 const BarcodeScanner = lazy(() => import('./BarcodeScanner'))
 
-type Tab = 'overview' | 'orders' | 'payments' | 'partners' | 'xp-store' | 'settings'
+type Tab = 'overview' | 'orders' | 'payments' | 'drivers' | 'partners' | 'xp-store' | 'settings'
 type IconName =
   | 'home'
   | 'orders'
@@ -63,6 +64,7 @@ type IconName =
   | 'lock'
   | 'chevron'
   | 'language'
+  | 'truck'
   | 'close'
   | 'check'
 
@@ -206,6 +208,16 @@ interface PaymentReview {
   created_at?: string
 }
 
+interface DriverPayoutRecord {
+  id: string
+  driver_id: string
+  amount: number | string
+  status: string
+  transaction_ref?: string | null
+  created_at?: string
+  driver?: { id: string; name?: string | null; email?: string | null; phone?: string | null }
+}
+
 interface DashboardData {
   stats: AdminStats
   orders: OrderRecord[]
@@ -233,6 +245,7 @@ const icons: Record<IconName, LucideIcon> = {
   language: Languages,
   close: X,
   check: Check,
+  truck: Truck,
 }
 
 function Icon({ name }: { name: IconName }) {
@@ -377,6 +390,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('overview')
   const [data, setData] = useState<DashboardData>({ stats: {}, orders: [], restaurants: [] })
   const [payments, setPayments] = useState<PaymentReview[]>([])
+  const [driverPayouts, setDriverPayouts] = useState<DriverPayoutRecord[]>([])
+  const [driverPayoutsLoading, setDriverPayoutsLoading] = useState(false)
   const [paymentBusy, setPaymentBusy] = useState('')
   const [networkConnected, setNetworkConnected] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -485,6 +500,12 @@ export default function App() {
   }, [tab])
 
   useEffect(() => {
+    if (user && tab === 'drivers') {
+      void loadDriverPayouts()
+    }
+  }, [tab, user, loadDriverPayouts])
+
+  useEffect(() => {
     if (!user) return
     const timer = window.setInterval(() => void loadDashboard(false), 20_000)
     return () => window.clearInterval(timer)
@@ -567,6 +588,20 @@ export default function App() {
     await saveAuthToken(sessionToken)
     setUser(sessionUser)
     await loadDashboard(false)
+  }
+
+  async function loadDriverPayouts() {
+    setDriverPayoutsLoading(true)
+    try {
+      const res = await apiRequest<{ success: boolean; payouts: DriverPayoutRecord[] }>(
+        '/api/admin/driver-payouts'
+      )
+      setDriverPayouts(res.payouts || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load driver payouts.')
+    } finally {
+      setDriverPayoutsLoading(false)
+    }
   }
 
   async function loadDashboard(showLoader = true) {
@@ -1072,6 +1107,12 @@ export default function App() {
     { id: 'overview', label: 'Home', icon: 'home' },
     { id: 'orders', label: 'Orders', icon: 'orders', badge: activeOrders.length },
     { id: 'payments', label: 'Payments', icon: 'money', badge: pendingPayments.length },
+    {
+      id: 'drivers',
+      label: 'Drivers',
+      icon: 'truck',
+      badge: driverPayouts.filter((p) => p.status === 'pending').length,
+    },
     { id: 'partners', label: 'Partners', icon: 'store' },
     { id: 'xp-store', label: 'XP Store', icon: 'package' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
@@ -1181,6 +1222,94 @@ export default function App() {
           </section>
         )}
 
+        {tab === 'drivers' && (
+          <section className="page">
+            <header className="page-header">
+              <div>
+                <p className="eyebrow">DRIVER PAYOUTS</p>
+                <h1>Request queue</h1>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => void loadDriverPayouts()}
+                disabled={driverPayoutsLoading}
+              >
+                <Icon name="refresh" />
+              </button>
+            </header>
+            {driverPayoutsLoading && driverPayouts.length === 0 ? (
+              <div className="loading-state">
+                <span className="loader" />
+                <p>Loading payout requests…</p>
+              </div>
+            ) : driverPayouts.length === 0 ? (
+              <EmptyState text="No pending driver payout requests." />
+            ) : (
+              <div className="payment-list">
+                {driverPayouts.map((payout) => (
+                  <article className="payment-card" key={payout.id}>
+                    <header>
+                      <div>
+                        <span className="payment-utr">#{payout.id.slice(-10).toUpperCase()}</span>
+                        <h3>{payout.driver?.name || payout.driver?.email || payout.driver_id}</h3>
+                        <p>{payout.driver?.phone || payout.driver?.email || ''}</p>
+                      </div>
+                      <div className="payment-amount">
+                        <strong>{money(payout.amount)}</strong>
+                        <span>{label(payout.status)}</span>
+                      </div>
+                    </header>
+                    {payout.status === 'pending' && (
+                      <div className="payment-actions">
+                        <button
+                          className="ghost-button"
+                          onClick={async () => {
+                            try {
+                              await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                method: 'PATCH',
+                                body: { status: 'failed' },
+                              })
+                              setNotice('Payout rejected.')
+                              void loadDriverPayouts()
+                            } catch (err) {
+                              setError(
+                                err instanceof Error ? err.message : 'Failed to reject payout.'
+                              )
+                            }
+                          }}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          className="primary-button"
+                          onClick={async () => {
+                            try {
+                              await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                method: 'PATCH',
+                                body: { status: 'paid', transaction_ref: `UPI_${Date.now()}` },
+                              })
+                              setNotice('Payout marked as paid.')
+                              void loadDriverPayouts()
+                            } catch (err) {
+                              setError(
+                                err instanceof Error ? err.message : 'Failed to approve payout.'
+                              )
+                            }
+                          }}
+                        >
+                          Mark as paid
+                        </button>
+                      </div>
+                    )}
+                    {payout.transaction_ref && (
+                      <p className="payment-note">Ref: {payout.transaction_ref}</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
         {tab === 'payments' && (
           <section className="page">
             <div className="page-heading">

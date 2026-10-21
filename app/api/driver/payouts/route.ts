@@ -1,5 +1,9 @@
 import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
-import { createDriverPayout, listDriverPayouts } from '@/lib/dal/payments'
+import {
+  createDriverPayoutIfWithinBalance,
+  getDriverAvailableBalance,
+  listDriverPayouts,
+} from '@/lib/dal/payments'
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 
@@ -26,9 +30,11 @@ export async function GET(request: Request) {
           })
         : 'Recently',
       status:
-        p.status === 'completed' || p.status === 'success'
+        p.status === 'paid' || p.status === 'completed' || p.status === 'success'
           ? `Transferred to UPI (${p.transaction_ref || 'Instant NPCI Payout'})`
-          : p.status || 'Processed',
+          : p.status === 'pending'
+            ? 'Pending approval'
+            : p.status || 'Processed',
     }))
 
     return NextResponse.json({ success: true, payoutLogs: formatted })
@@ -55,14 +61,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Valid payout amount required' }, { status: 400 })
     }
 
-    const id = `tx_${crypto.randomUUID().slice(0, 8)}`
-    const created = await createDriverPayout({
-      id,
-      driver_id: driverId,
-      amount: Number(amount),
-      status: actor.role === 'admin' ? 'paid' : 'pending',
-      transaction_ref: actor.role === 'admin' ? `UPI_${Date.now()}` : undefined,
-    })
+    const payoutAmount = Number(amount)
+    if (!Number.isFinite(payoutAmount)) {
+      return NextResponse.json({ error: 'Valid payout amount required' }, { status: 400 })
+    }
+
+    // The balance check and the insert share one transaction, so a driver can
+    // never request the same rupees twice.
+    const available = await getDriverAvailableBalance(driverId)
+    if (payoutAmount > available) {
+      return NextResponse.json({ error: 'Insufficient available balance' }, { status: 400 })
+    }
+
+    const id = `payout_${crypto.randomUUID().slice(0, 12)}`
+    let created
+    try {
+      created = await createDriverPayoutIfWithinBalance({
+        id,
+        driver_id: driverId,
+        amount: payoutAmount,
+        status: actor.role === 'admin' ? 'paid' : 'pending',
+        transaction_ref: actor.role === 'admin' ? `UPI_${Date.now()}` : undefined,
+      })
+    } catch (createError: any) {
+      if (createError?.message === 'Insufficient available balance') {
+        return NextResponse.json({ error: 'Insufficient available balance' }, { status: 400 })
+      }
+      throw createError
+    }
 
     return NextResponse.json({
       success: true,

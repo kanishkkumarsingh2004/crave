@@ -1078,7 +1078,7 @@ function Checkout({
             </button>
           </div>
         </form>
-        <div className="checkout-section-head">
+        <div className="upi-header">
           <h2>Pay securely with UPI</h2>
           <button className="upi-qr-btn" onClick={openQrSheet}>
             View QR code
