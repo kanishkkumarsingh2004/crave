@@ -86,23 +86,23 @@ Compose** — point `DATABASE_URL` at Neon or a local instance.
 
 ## 2. Technology Matrix
 
-| Layer                  | Technology                                                      | Notes                                                        |
-| :--------------------- | :-------------------------------------------------------------- | :----------------------------------------------------------- |
-| Web portal             | Next.js 16 (App Router, Turbopack), React 19, TypeScript strict  | Route handlers under `app/api/`                              |
-| Native clients        | Capacitor 6 + Vite 7 + React 19                                 | Four apps, each with its own bundle and native plugins        |
-| Styling & icons        | Tailwind CSS 4 (portal), plain CSS + Lucide React (native apps) | One icon language across the product                         |
-| Database & ORM         | PostgreSQL 16, Prisma 7 with `@prisma/adapter-pg`              | Integer-paise money columns                                  |
-| Cache, locks, pub/sub  | Redis 7 (`ioredis`)                                             | Atomic offer locks, rate limits, JWT revocation, WS fan-out  |
-| Geospatial dispatch    | `h3-js` (Uber H3), MapLibre GL                                  | H3 resolution 8, hex radar for rider search                  |
-| Realtime               | Node `ws` server, `ws-server.js`                                | Native WebSocket, no socket.io                               |
-| Authentication         | `jose` JWT (7-day), `scrypt` password hashing                   | HTTP-only cookie **or** bearer token for the native apps     |
-| Money                  | `lib/finance/` — integer paise, `Money` type                    | Canonical pricing, tax, double-entry ledger                  |
-| Translations           | `dictionary/` (en, kn)                                          | Typed against `Dictionary`, so a missing key fails the build |
-| Caching                | Service worker + per-account device cache                        | Static assets cache-first, API reads network-first            |
-| Testing                | `node:test` through `tsx`, `k6` for load and abuse             | 31 suites, 24 of them needing no database                   |
-| Task runner            | Turborepo (`build`, `typecheck`, `test`)                         | Single package at the root                                   |
-| Package manager        | pnpm 12.3.4 (pinned)                                            | Workspace projects for the four native apps                  |
-| Node                   | 20+                                                              | 22 in CI                                                     |
+| Layer                 | Technology                                                      | Notes                                                        |
+| :-------------------- | :-------------------------------------------------------------- | :----------------------------------------------------------- |
+| Web portal            | Next.js 16 (App Router, Turbopack), React 19, TypeScript strict | Route handlers under `app/api/`                              |
+| Native clients        | Capacitor 6 + Vite 7 + React 19                                 | Four apps, each with its own bundle and native plugins       |
+| Styling & icons       | Tailwind CSS 4 (portal), plain CSS + Lucide React (native apps) | One icon language across the product                         |
+| Database & ORM        | PostgreSQL 16, Prisma 7 with `@prisma/adapter-pg`               | Integer-paise money columns                                  |
+| Cache, locks, pub/sub | Redis 7 (`ioredis`)                                             | Atomic offer locks, rate limits, JWT revocation, WS fan-out  |
+| Geospatial dispatch   | `h3-js` (Uber H3), MapLibre GL                                  | H3 resolution 8, hex radar for rider search                  |
+| Realtime              | Node `ws` server, `ws-server.js`                                | Native WebSocket, no socket.io                               |
+| Authentication        | `jose` JWT (7-day), `scrypt` password hashing                   | HTTP-only cookie **or** bearer token for the native apps     |
+| Money                 | `lib/finance/` — integer paise, `Money` type                    | Canonical pricing, tax, double-entry ledger                  |
+| Translations          | `dictionary/` (en, kn)                                          | Typed against `Dictionary`, so a missing key fails the build |
+| Caching               | Service worker + per-account device cache                       | Static assets cache-first, API reads network-first           |
+| Testing               | `node:test` through `tsx`, `k6` for load and abuse              | 31 suites, 24 of them needing no database                    |
+| Task runner           | Turborepo (`build`, `typecheck`, `test`)                        | Single package at the root                                   |
+| Package manager       | pnpm 12.3.4 (pinned)                                            | Workspace projects for the four native apps                  |
+| Node                  | 20+                                                             | 22 in CI                                                     |
 
 ---
 
@@ -125,20 +125,20 @@ authenticated with `WS_INTERNAL_SECRET`.
 
 ### 3.2 L2 — API surface
 
-| Area                | Routes                                                        | What it owns                                       |
-| :------------------- | :------------------------------------------------------------ | :------------------------------------------------- |
-| `auth/`              | login, signup, logout, session, language                       | Identity, sessions, the saved locale               |
-| `orders/`            | create, list, patch, `sync/`                                   | The order lifecycle and its status transitions      |
-| `restaurants/`, `menu-items/` | catalogue reads and writes                               | Restaurants, dishes, variants, stock                |
-| `payments/`, `payment-config/` | UPI configuration, payment reviews, refunds          | The money trail around an order                    |
-| `dispatch/`          | H3 candidate search, driver assignment                          | Matching riders to a kitchen                      |
-| `driver/`, `drivers/` | offers, accept, telemetry, status, payouts                     | The rider's day                                    |
-| `admin/`             | stats, users, coupons, settlements, payment reviews, XP products | Everything only an admin may touch                |
-| `cravexp/`           | dark-store catalogue                                           | The grocery side                                   |
-| `calculator/`, `distance-pricing/`, `geocode/` | previews                            | Quotes and lookups — **never** authorisation        |
-| `push/`, `webhooks/` | push registration, provider callbacks                          | Outbound and inbound integrations                  |
-| `user/`              | addresses, profile                                             | Customer-owned data                                |
-| `health/`            | liveness and readiness                                          | `REDIS_REQUIRED=true` turns a Redis outage into 503 |
+| Area                                           | Routes                                                           | What it owns                                        |
+| :--------------------------------------------- | :--------------------------------------------------------------- | :-------------------------------------------------- |
+| `auth/`                                        | login, signup, logout, session, language                         | Identity, sessions, the saved locale                |
+| `orders/`                                      | create, list, patch, `sync/`                                     | The order lifecycle and its status transitions      |
+| `restaurants/`, `menu-items/`                  | catalogue reads and writes                                       | Restaurants, dishes, variants, stock                |
+| `payments/`, `payment-config/`                 | UPI configuration, payment reviews, refunds                      | The money trail around an order                     |
+| `dispatch/`                                    | H3 candidate search, driver assignment                           | Matching riders to a kitchen                        |
+| `driver/`, `drivers/`                          | offers, accept, telemetry, status, payouts                       | The rider's day                                     |
+| `admin/`                                       | stats, users, coupons, settlements, payment reviews, XP products | Everything only an admin may touch                  |
+| `cravexp/`                                     | dark-store catalogue                                             | The grocery side                                    |
+| `calculator/`, `distance-pricing/`, `geocode/` | previews                                                         | Quotes and lookups — **never** authorisation        |
+| `push/`, `webhooks/`                           | push registration, provider callbacks                            | Outbound and inbound integrations                   |
+| `user/`                                        | addresses, profile                                               | Customer-owned data                                 |
+| `health/`                                      | liveness and readiness                                           | `REDIS_REQUIRED=true` turns a Redis outage into 503 |
 
 **Authorisation** happens in two places: `lib/api-auth.ts` and `lib/auth-helpers.ts` resolve the
 actor, and `lib/auth/order-access.ts` decides what that actor may read. The handover code
@@ -148,6 +148,7 @@ customer, and the customer only sees the code between pickup and delivery.
 ### 3.3 L3 — Domain engines
 
 **Dispatch** (`lib/dispatch/`)
+
 1. `driver-tracker.ts` indexes every online rider's GPS into Redis as H3 cells (resolution 8).
 2. `h3-dispatch.ts` expands concentric k-rings from the kitchen and ranks candidates by
    distance, GPS freshness and vehicle match.
@@ -219,12 +220,12 @@ Android has not allowed it.
 
 **Static files** — the customer app ships a service worker (`customer_app/public/sw.js`):
 
-| Request                   | Strategy                                                        |
-| :------------------------ | :-------------------------------------------------------------- |
-| the shell (`/`)            | precached on install, served from the cache when the network is down |
-| static assets             | cache-first — their names are content-hashed, so they never rot  |
-| API reads                 | network-first, with the cached copy as the fallback              |
-| writes                    | never cached                                                    |
+| Request         | Strategy                                                             |
+| :-------------- | :------------------------------------------------------------------- |
+| the shell (`/`) | precached on install, served from the cache when the network is down |
+| static assets   | cache-first — their names are content-hashed, so they never rot      |
+| API reads       | network-first, with the cached copy as the fallback                  |
+| writes          | never cached                                                         |
 
 **Data** — the last good answer for every read is kept on the device
 (`cachedRequest` in `customer_app/src/api.ts`). When the network fails the app shows the saved
@@ -252,9 +253,9 @@ registry, so a new language appears everywhere at once.
 The customer app explains the three permissions it needs on the first launch and then asks:
 
 | Permission    | Why                                                         |
-| :------------ | :----------------------------------------------------------- |
-| Location      | Find you on the map, set your address, follow your delivery  |
-| Notifications | Order updates, payment alerts, delivery status               |
+| :------------ | :---------------------------------------------------------- |
+| Location      | Find you on the map, set your address, follow your delivery |
+| Notifications | Order updates, payment alerts, delivery status              |
 | App updates   | Install new builds so you always run the latest app         |
 
 "Install unknown apps" is a device setting rather than a runtime dialog, so that row opens the
@@ -262,13 +263,13 @@ right settings screen. The sheet is shown once and can be reopened from Settings
 
 ### 3.11 L12 — Quality and load
 
-| Suite                          | What it covers                                            |
-| :----------------------------- | :--------------------------------------------------------- |
-| `test/*.test.ts`               | 31 suites: pricing, coupons, security, concurrency, the DB harness |
-| `pnpm test`                    | The 24 that need no database                              |
-| `pnpm test:db`                 | All 31, with the database-backed races enabled            |
-| `load-tests/app-load-test.js`  | One k6 script, one scenario set per app, selected with `--app` |
-| `load-tests/abuse/`            | Double-clicks, timeouts with retries, capacity races, credential stuffing, OTP guessing, socket floods |
+| Suite                         | What it covers                                                                                         |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `test/*.test.ts`              | 31 suites: pricing, coupons, security, concurrency, the DB harness                                     |
+| `pnpm test`                   | The 24 that need no database                                                                           |
+| `pnpm test:db`                | All 31, with the database-backed races enabled                                                         |
+| `load-tests/app-load-test.js` | One k6 script, one scenario set per app, selected with `--app`                                         |
+| `load-tests/abuse/`           | Double-clicks, timeouts with retries, capacity races, credential stuffing, OTP guessing, socket floods |
 
 The abuse suite separates **integrity** failures (the data is wrong) from **usability** failures
 (the data is right but the customer is blocked), and the report says which expectation failed.
@@ -283,16 +284,16 @@ payment_pending → payment_submitted → payment_verified → sent_to_vendor
 → out_for_delivery → delivered → completed
 ```
 
-| Step                          | Layer touched                                                        |
-| :---------------------------- | :------------------------------------------------------------------- |
-| The customer checks out       | L2 `POST /api/orders` — the quote is priced in paise, the order stores a `financial_snapshot`, and a six-digit delivery OTP is generated server-side |
-| The customer pays by UPI      | The app hands over to a UPI app and collects the 12-digit UTR (`utr_ref`) |
-| The admin verifies            | L2 `PATCH /api/admin/payment-reviews` — the UTR is unique, so a replay is refused; the order becomes `sent_to_vendor` |
-| The kitchen accepts           | L2 `PATCH /api/orders` — guarded by `lib/catalog/order-state-machine.ts` and the optimistic lock `where: { id, status }` |
-| A rider is offered the order  | L3 dispatch — H3 k-ring search, ranked candidates, Redis atomic lock |
-| The rider accepts             | `rider_assigned` — one rider per order, enforced by the lock and a conditional update |
-| The handover                   | The customer reads the six-digit code from the order; the rider enters it to confirm `delivered` — the code is consumed exactly once |
-| The invoice                   | The customer app prints a till-slip receipt from the `financial_snapshot`; the portal exports a PDF tax invoice |
+| Step                         | Layer touched                                                                                                                                        |
+| :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The customer checks out      | L2 `POST /api/orders` — the quote is priced in paise, the order stores a `financial_snapshot`, and a six-digit delivery OTP is generated server-side |
+| The customer pays by UPI     | The app hands over to a UPI app and collects the 12-digit UTR (`utr_ref`)                                                                            |
+| The admin verifies           | L2 `PATCH /api/admin/payment-reviews` — the UTR is unique, so a replay is refused; the order becomes `sent_to_vendor`                                |
+| The kitchen accepts          | L2 `PATCH /api/orders` — guarded by `lib/catalog/order-state-machine.ts` and the optimistic lock `where: { id, status }`                             |
+| A rider is offered the order | L3 dispatch — H3 k-ring search, ranked candidates, Redis atomic lock                                                                                 |
+| The rider accepts            | `rider_assigned` — one rider per order, enforced by the lock and a conditional update                                                                |
+| The handover                 | The customer reads the six-digit code from the order; the rider enters it to confirm `delivered` — the code is consumed exactly once                 |
+| The invoice                  | The customer app prints a till-slip receipt from the `financial_snapshot`; the portal exports a PDF tax invoice                                      |
 
 **Money never moves without the snapshot.** The customer's bill, the rider's payout, the
 restaurant's settlement and the invoice all read the same persisted quote.
@@ -358,24 +359,24 @@ restaurant's settlement and the invoice all read the same persisted quote.
 
 ## 7. Documentation Index
 
-| Doc                                                             | Contents                                          |
-| :-------------------------------------------------------------- | :------------------------------------------------ |
-| [README.md](../README.md)                                        | Platform overview, setup, scripts, CI             |
-| [PRD.md](PRD.md)                                                 | Product requirements and the role matrix          |
-| [REALTIME_API_ARCHITECTURE.md](REALTIME_API_ARCHITECTURE.md)   | The HTTP and WebSocket channel matrix             |
-| [commercial-engine.md](commercial-engine.md)                     | Vendor contracts and the commercial engine        |
-| [financial-integrity.md](financial-integrity.md)                 | The money invariants                              |
-| [deployment-and-recovery.md](deployment-and-recovery.md)         | Deployment, database operations, runbooks         |
-| [billing/BILLING_ARCHITECTURE.md](billing/BILLING_ARCHITECTURE.md) | The finance module map                          |
-| [billing/PRICING_AND_FEE_SPECIFICATION.md](billing/PRICING_AND_FEE_SPECIFICATION.md) | Fees and GST                        |
-| [billing/FINANCIAL_LEDGER_SPECIFICATION.md](billing/FINANCIAL_LEDGER_SPECIFICATION.md) | Ledger accounts            |
-| [billing/PAYMENT_AND_REFUND_STATE_MACHINE.md](billing/PAYMENT_AND_REFUND_STATE_MACHINE.md) | Payment states  |
-| [billing/SETTLEMENT_AND_RECONCILIATION.md](billing/SETTLEMENT_AND_RECONCILIATION.md) | Settlement              |
-| [billing/TAX_RULE_MATRIX.md](billing/TAX_RULE_MATRIX.md)       | The tax matrix                                    |
-| [billing/MIGRATION_AND_ROLLBACK.md](billing/MIGRATION_AND_ROLLBACK.md) | Schema migration and rollback             |
-| [app_flow_documentation/APP_FLOW_AND_RULES.md](app_flow_documentation/APP_FLOW_AND_RULES.md) | Page catalogue and order rules |
-| [../load-tests/abuse/README.md](../load-tests/abuse/README.md)   | The abuse and concurrency suite                   |
-| [../android-builds/README.md](../android-builds/README.md)       | The published APKs and the release flow            |
+| Doc                                                                                          | Contents                                   |
+| :------------------------------------------------------------------------------------------- | :----------------------------------------- |
+| [README.md](../README.md)                                                                    | Platform overview, setup, scripts, CI      |
+| [PRD.md](PRD.md)                                                                             | Product requirements and the role matrix   |
+| [REALTIME_API_ARCHITECTURE.md](REALTIME_API_ARCHITECTURE.md)                                 | The HTTP and WebSocket channel matrix      |
+| [commercial-engine.md](commercial-engine.md)                                                 | Vendor contracts and the commercial engine |
+| [financial-integrity.md](financial-integrity.md)                                             | The money invariants                       |
+| [deployment-and-recovery.md](deployment-and-recovery.md)                                     | Deployment, database operations, runbooks  |
+| [billing/BILLING_ARCHITECTURE.md](billing/BILLING_ARCHITECTURE.md)                           | The finance module map                     |
+| [billing/PRICING_AND_FEE_SPECIFICATION.md](billing/PRICING_AND_FEE_SPECIFICATION.md)         | Fees and GST                               |
+| [billing/FINANCIAL_LEDGER_SPECIFICATION.md](billing/FINANCIAL_LEDGER_SPECIFICATION.md)       | Ledger accounts                            |
+| [billing/PAYMENT_AND_REFUND_STATE_MACHINE.md](billing/PAYMENT_AND_REFUND_STATE_MACHINE.md)   | Payment states                             |
+| [billing/SETTLEMENT_AND_RECONCILIATION.md](billing/SETTLEMENT_AND_RECONCILIATION.md)         | Settlement                                 |
+| [billing/TAX_RULE_MATRIX.md](billing/TAX_RULE_MATRIX.md)                                     | The tax matrix                             |
+| [billing/MIGRATION_AND_ROLLBACK.md](billing/MIGRATION_AND_ROLLBACK.md)                       | Schema migration and rollback              |
+| [app_flow_documentation/APP_FLOW_AND_RULES.md](app_flow_documentation/APP_FLOW_AND_RULES.md) | Page catalogue and order rules             |
+| [../load-tests/abuse/README.md](../load-tests/abuse/README.md)                               | The abuse and concurrency suite            |
+| [../android-builds/README.md](../android-builds/README.md)                                   | The published APKs and the release flow    |
 
 **Point-in-time reviews** — kept as the record of that review, with a banner saying what has
 changed since: [PRODUCTION_AUDIT.md](PRODUCTION_AUDIT.md),

@@ -1,5 +1,6 @@
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
+import { checksumsDiffer, getInstalledChecksum } from '../../lib/native/app-checksum'
 
 const MANIFEST =
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/version.json'
@@ -43,7 +44,7 @@ export async function checkForCustomerUpdate(): Promise<CustomerUpdate | null> {
     throw new Error(`Version check failed (${response.status}).`)
   const raw = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
   const update = raw?.apps?.customer
-  if (!update || Number(update.versionCode) <= current) return null
+  if (!update) return null
   const url = new URL(update.androidUrl)
   const sha = String(update.sha256 || '').toLowerCase()
   if (
@@ -54,6 +55,14 @@ export async function checkForCustomerUpdate(): Promise<CustomerUpdate | null> {
     url.searchParams.get('sha256') !== sha
   )
     throw new Error('The update file is not trusted.')
+
+  // The checksum of the build on the device decides: the same checksum means
+  // the device already runs the published build, a different one means a new
+  // build has been published.
+  const installedChecksum = await getInstalledChecksum()
+  if (installedChecksum && sha === installedChecksum) return null
+  if (Number(update.versionCode) <= current) return null
+
   return {
     versionCode: Number(update.versionCode),
     versionName: String(update.versionName),

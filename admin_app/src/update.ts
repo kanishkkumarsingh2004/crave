@@ -1,5 +1,6 @@
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
+import { checksumsDiffer, getInstalledChecksum } from '../../lib/native/app-checksum'
 
 const DEFAULT_MANIFEST_URL =
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/version.json'
@@ -60,7 +61,7 @@ export async function checkForAdminUpdate(): Promise<AdminUpdate | null> {
   }
 
   const update = parseManifestData(response.data)?.apps?.admin
-  if (!update || Number(update.versionCode) <= currentVersionCode) return null
+  if (!update) return null
   if (
     !Number.isInteger(Number(update.versionCode)) ||
     typeof update.versionName !== 'string' ||
@@ -70,6 +71,14 @@ export async function checkForAdminUpdate(): Promise<AdminUpdate | null> {
   ) {
     throw new Error('The update manifest is invalid or points to an untrusted file.')
   }
+
+  // The checksum of the build on the device decides: the same checksum means
+  // the device already runs the published build, a different one means a new
+  // build has been published.
+  const publishedChecksum = String(update.sha256).toLowerCase()
+  const installedChecksum = await getInstalledChecksum()
+  if (installedChecksum && !checksumsDiffer(installedChecksum, publishedChecksum)) return null
+  if (Number(update.versionCode) <= currentVersionCode) return null
 
   return {
     versionCode: Number(update.versionCode),

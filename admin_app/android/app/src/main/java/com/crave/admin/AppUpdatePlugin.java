@@ -12,6 +12,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -114,5 +115,32 @@ public class AppUpdatePlugin extends Plugin {
         StringBuilder result = new StringBuilder(bytes.length * 2);
         for (byte value : bytes) result.append(String.format(Locale.ROOT, "%02x", value));
         return result.toString();
+    }
+
+    /**
+     * The SHA-256 of the installed APK, so the app can tell whether the
+     * published build is the one already on the device.
+     */
+    @PluginMethod
+    public void getInstalledChecksum(PluginCall call) {
+        try {
+            android.content.pm.PackageInfo info = getContext().getPackageManager()
+                .getPackageInfo(getContext().getPackageName(), 0);
+            String source = info.applicationInfo.sourceDir;
+            if (source == null) { call.resolve(new JSObject().put("sha256", "")); return; }
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (FileInputStream stream = new FileInputStream(source)) {
+                byte[] buffer = new byte[65536];
+                int read;
+                while ((read = stream.read(buffer)) > 0) digest.update(buffer, 0, read);
+            }
+            StringBuilder hex = new StringBuilder(64);
+            for (byte value : digest.digest()) {
+                hex.append(String.format("%02x", value));
+            }
+            call.resolve(new JSObject().put("sha256", hex.toString()));
+        } catch (Exception error) {
+            call.resolve(new JSObject().put("sha256", ""));
+        }
     }
 }

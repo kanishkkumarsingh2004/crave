@@ -1410,6 +1410,21 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     void initializeNativeAppearance()
+    // On launch, compare the published build's checksum with the one on this
+    // device. A different checksum means a new build — tell the driver.
+    void (async () => {
+      try {
+        const available = await checkForDriverUpdate()
+        if (available) {
+          await notifyDriverAppUpdate(
+            `Crave Driver ${available.versionName} available`,
+            available.releaseNotes
+          )
+        }
+      } catch {
+        // A failed check must never block the app.
+      }
+    })()
     void (async () => {
       try {
         const mode = await loadTheme()

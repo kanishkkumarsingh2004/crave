@@ -2516,6 +2516,18 @@ export default function App() {
     void hasSeenPermissionSheet().then((seen) => {
       if (!seen) setPermissionSheet(true)
     })
+    // On launch, compare the checksum of the published build with the one on
+    // this device. A different checksum means a new build — tell the customer.
+    void (async () => {
+      try {
+        const available = await checkForCustomerUpdate()
+        if (available) {
+          await notifyAppUpdate(`CRAVE ${available.versionName} available`, available.releaseNotes)
+        }
+      } catch {
+        // A failed check must never block the app.
+      }
+    })()
     // The service worker keeps the shell and the static assets on the device,
     // so the app opens instantly and works without a network.
     if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {

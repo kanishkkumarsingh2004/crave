@@ -657,7 +657,7 @@ export default function App() {
   const [passwordSheet, setPasswordSheet] = useState(false)
   const [updateSheet, setUpdateSheet] = useState(false)
   const [languageSheet, setLanguageSheet] = useState(false)
-  const { locale: language, setLocale, languages } = useLanguage()
+  const { t, locale: language, setLocale, languages } = useLanguage()
   const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -769,6 +769,22 @@ export default function App() {
         if (isActive && restaurant) {
           void initializeNativeAppearance()
           void refreshAll(false)
+          // On launch, compare the published build's checksum with the one on
+          // this device. A different checksum means a new build — tell the
+          // restaurant partner.
+          void (async () => {
+            try {
+              const available = await checkForRestaurantUpdate()
+              if (available) {
+                await notifyRestaurantAppUpdate(
+                  `Crave Kitchen ${available.versionName} available`,
+                  available.releaseNotes
+                )
+              }
+            } catch {
+              // A failed check must never block the app.
+            }
+          })()
         }
       }),
       CapacitorApp.addListener('backButton', () => {
@@ -2120,4 +2136,3 @@ export default function App() {
     </div>
   )
 }
-const { t } = useLanguage()

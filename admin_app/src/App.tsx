@@ -414,7 +414,7 @@ export default function App() {
   const [passwordSheet, setPasswordSheet] = useState(false)
   const [updateSheet, setUpdateSheet] = useState(false)
   const [languageSheet, setLanguageSheet] = useState(false)
-  const { locale: language, setLocale, languages } = useLanguage()
+  const { t, locale: language, setLocale, languages } = useLanguage()
   const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
@@ -2102,8 +2102,6 @@ export default function App() {
     </div>
   )
 }
-const { t } = useLanguage()
-
 /** Languages the app can be switched to. */
 function OrderCard({ order }: { order: OrderRecord }) {
   return (
