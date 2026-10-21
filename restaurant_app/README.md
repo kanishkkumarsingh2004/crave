@@ -12,6 +12,13 @@ The standalone Profile tab has been removed. Restaurant account and business det
 editable from Settings, while live order updates and native kitchen notifications continue to
 work independently of the selected tab.
 
+## Settings
+
+The Settings tab carries the shared three-row block — _Check for updates_, _Change password_ and
+_Language_ — and the language list comes from `dictionary/`, so the picker follows the registry
+instead of a hard-coded list. The kitchen queue, the menu editor and the settlement history all
+read from the same Next.js APIs as the web portal.
+
 ## Configure and sync
 
 Use Node 22+, JDK 21, and an installed Android SDK (or Xcode on macOS). From the repository root:
@@ -29,3 +36,8 @@ or, on macOS, `pnpm ios`.
 Android uses immersive sticky mode to hide the status and navigation bars. iOS hides the status
 bar and automatically hides the home indicator. Users can reveal system navigation temporarily
 with the operating system gesture.
+
+Build the Android APK from the repository root with `pnpm build:android` — that raises the
+Android `versionCode` by one so installed apps recognise the new build. `KEEP_VERSION=1 pnpm
+build:android` publishes the version already in `build.gradle` unchanged, which is what a fresh
+`1.0.0` release wants.

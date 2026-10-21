@@ -78,21 +78,27 @@ export async function GET(request: Request) {
     const settlements = hasNextPage ? rawSettlements.slice(0, take) : rawSettlements
     const nextCursor = hasNextPage ? settlements[settlements.length - 1]?.id : null
 
-    const totalGrossSales = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.gross_sales ?? 0),
-      0
-    )
-    const totalCommission = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.commission_amount ?? 0),
-      0
-    )
-    const totalNetPayable = settlements.reduce(
-      (acc: number, s: any) => acc + Number(s.net_payout ?? 0),
-      0
-    )
-    const totalSettledAmount = settlements
-      .filter((s: any) => s.status === 'paid' || s.status === 'settled')
-      .reduce((acc: number, s: any) => acc + Number(s.net_payout ?? 0), 0)
+    // The summary covers EVERY settlement for the store, not just the rows on
+    // this page — otherwise the totals change with the page size.
+    const settlementFilter = restaurantId
+      ? { restaurant_id: restaurantId }
+      : { restaurant: { is: { is_dark_store: false } } }
+
+    const [totals, settledTotals] = await Promise.all([
+      prisma.vendorSettlement.aggregate({
+        where: settlementFilter,
+        _sum: { gross_sales: true, commission_amount: true, net_payout: true },
+      }),
+      prisma.vendorSettlement.aggregate({
+        where: { ...settlementFilter, status: 'paid' },
+        _sum: { net_payout: true },
+      }),
+    ])
+
+    const totalGrossSales = Number(totals._sum.gross_sales ?? 0)
+    const totalCommission = Number(totals._sum.commission_amount ?? 0)
+    const totalNetPayable = Number(totals._sum.net_payout ?? 0)
+    const totalSettledAmount = Number(settledTotals._sum?.net_payout ?? 0)
     const remainingBalance = Math.max(0, totalNetPayable - totalSettledAmount)
 
     return NextResponse.json({

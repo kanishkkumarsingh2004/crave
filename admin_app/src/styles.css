@@ -373,6 +373,101 @@ svg {
 }
 .order-card,
 .partner-card,
+/* A compact list of settings, each one opening a sheet. */
+.settings-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  margin-bottom: 22px;
+}
+.settings-list-heading {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.settings-list > button {
+  width: 100%;
+  min-height: 68px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+.settings-list > *:last-child {
+  border-bottom: 0;
+}
+.settings-list-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-content: center;
+  border-radius: 13px;
+  background: rgb(217 244 71 / 12%);
+  color: var(--lime);
+}
+.settings-list-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.settings-list > button > span:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-list b {
+  font-size: 14.5px;
+  font-weight: 800;
+}
+.settings-list small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.settings-list > button > svg:last-child {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+/* The language picker inside the sheet. */
+.language-list {
+  display: grid;
+  gap: 2px;
+}
+.language-list > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.language-list > button.selected {
+  background: rgb(217 244 71 / 12%);
+  color: var(--lime);
+}
+.language-list > button svg {
+  width: 18px;
+  height: 18px;
+}
 .settings-card {
   border: 1px solid var(--line);
   border-radius: 19px;
@@ -828,6 +923,9 @@ svg {
   max-height: calc(94dvh - env(safe-area-inset-top));
   margin: 0 auto;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   padding: 9px 18px calc(22px + env(safe-area-inset-bottom));
   border: 1px solid var(--line);
   border-bottom: 0;

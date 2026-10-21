@@ -634,6 +634,12 @@ export async function deleteOrder(
       await tx.adminOverrideLog.deleteMany({
         where: { order_id: orderId },
       })
+      // The settlement ledger links by transaction_ref, not a foreign key, so
+      // it has to be cleared by hand — otherwise the row outlives the order and
+      // the store's payout figures keep counting it.
+      await tx.vendorSettlement.deleteMany({
+        where: { transaction_ref: orderId },
+      })
       await tx.order.delete({
         where: { id: orderId },
       })

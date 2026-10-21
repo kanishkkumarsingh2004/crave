@@ -16,6 +16,7 @@ export interface Restaurant {
   cost_for_two?: number
   image?: string
   address?: string
+  fssai_license?: string
   offer?: string
   is_open?: boolean
   is_dark_store?: boolean
@@ -71,6 +72,18 @@ export interface Order {
   status: string
   payment_status?: string
   total_amount: number
+  subtotal?: number
+  packaging_fee?: number
+  delivery_fee?: number
+  platform_fee?: number
+  handling_fee?: number
+  gst?: number
+  discount_amount?: number
+  tip?: number
+  payment_method?: string
+  utr_ref?: string
+  customer_name?: string
+  financial_snapshot?: any
   created_at?: string
   items: any[]
   delivery_otp?: string | null

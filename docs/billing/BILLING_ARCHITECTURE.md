@@ -1,8 +1,15 @@
 # CRAVE Billing Engine 2.0 — Architecture Document
 
-**Version:** 2.0.0  
-**Date:** 2026-10-09  
+**Version:** 2.0.1  
+**Date:** 2026-10-21  
 **Status:** Phase 1 + 2 Implemented
+
+> **Current state — 21 October 2026.** The money model in this document is unchanged and
+> remains the source of truth. Two things moved since it was written: deleting an order now
+> removes its settlement row in the same transaction (`lib/dal/orders.ts`), and the settlements
+> summary is aggregated over **every** row for the store instead of the rows on the current
+> page (`app/api/admin/settlements/route.ts`). The delivery OTP is six digits and is consumed
+> exactly once.
 
 ---
 

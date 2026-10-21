@@ -1,5 +1,21 @@
 # Crave UI/UX Audit Report
 
+> **Snapshot — read with the current code in mind.**
+> This report was written on 12 October 2026. It is kept as the record of that review, not as a
+> description of the code today. What has changed since then:
+>
+> - The test suites run on `node:test` through `tsx`; the database-backed ones are opt-in
+>   (`pnpm test:db`). 31/31 suites pass today.
+> - The delivery OTP is six digits and is only ever exposed to the customer between pickup and
+>   delivery (`lib/auth/order-access.ts`).
+> - Checkout is UPI plus a 12-digit UTR, and the customer app shows a printed till-slip
+>   invoice, an itemised bill with a tip sheet, and a pinned payment bar.
+> - The four native apps are standalone Capacitor React applications released from
+>   `android-builds/`; they share the `dictionary/` translations with the web portal.
+> - A k6 abuse / concurrency suite (`load-tests/abuse/`) now runs beside the load test.
+>
+> Re-run the checks in `load-tests/` and `test/` rather than trusting the numbers below.
+
 **Project:** Crave — Food, Grocery, Restaurant, and Delivery Platform  
 **Repository:** https://github.com/kanishkkumarsingh2004/crave  
 **Audit date:** 12 October 2026  

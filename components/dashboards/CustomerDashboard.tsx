@@ -1085,7 +1085,10 @@ export default function CustomerDashboard({
         statusStep,
         statusText,
         rawStatus: active.status,
-        otp: active.delivery_otp || active.deliveryOtp || undefined,
+        // The code is only useful while the order is still on the way.
+        otp: ['delivered', 'completed', 'cancelled'].includes(String(active.status))
+          ? undefined
+          : active.delivery_otp || active.deliveryOtp || undefined,
         otpConsumed: Boolean(active.otp_consumed_at),
         driverName: active.driver_name || null,
         driverPhone: active.driver_phone || null,

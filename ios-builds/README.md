@@ -4,6 +4,10 @@ This folder contains debug IPA outputs for the Crave native applications. They
 connect to the production backend at `https://crave.apexonestudio.com` by default.
 
 The repository currently tracks Capacitor iOS projects for Admin, Driver, Restaurant and Customer.
+All four are on `1.0.0` with a build number of 1, matching the Android APKs in
+`android-builds/`. `KEEP_VERSION=1 pnpm build:ios` publishes the version already in the Xcode
+project unchanged; without it the build number is raised by one so installed apps recognise the
+new build.
 IPA compilation/export still requires macOS, Xcode, an Apple Developer team, and a registered
 device or distribution profile; Linux can only prepare and synchronize the projects.
 

@@ -38,6 +38,44 @@ public class AppUpdatePlugin extends Plugin {
         new Thread(() -> download(call, urlValue, expected), "crave-customer-update").start();
     }
 
+    /** Whether this app is already allowed to install packages. */
+    @PluginMethod
+    public void canInstallPackages(PluginCall call) {
+        boolean allowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+            || getContext().getPackageManager().canRequestPackageInstalls();
+        call.resolve(new JSObject().put("allowed", allowed));
+    }
+
+    /** Opens the "install unknown apps" screen for this app. */
+    @PluginMethod
+    public void openInstallSettings(PluginCall call) {
+        try {
+            Intent intent = new Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + getContext().getPackageName())
+            );
+            getActivity().startActivity(intent);
+            call.resolve(new JSObject().put("opened", true));
+        } catch (Exception error) {
+            call.reject("Android could not open the install settings.", error);
+        }
+    }
+
+    /** Opens this app's page in the device settings. */
+    @PluginMethod
+    public void openAppSettings(PluginCall call) {
+        try {
+            Intent intent = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getContext().getPackageName())
+            );
+            getActivity().startActivity(intent);
+            call.resolve(new JSObject().put("opened", true));
+        } catch (Exception error) {
+            call.reject("Android could not open the app settings.", error);
+        }
+    }
+
     private void download(PluginCall call, String urlValue, String expected) {
         File directory = new File(getContext().getCacheDir(), "updates");
         File apk = new File(directory, "crave-customer-" + expected.substring(0, 12) + ".apk");

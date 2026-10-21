@@ -1,5 +1,8 @@
 # CRAVE — Financial Integrity & Payment Systems Architecture
 
+> **Current state — 21 October 2026.**
+> The money model is unchanged: canonical paise maths in `lib/finance/`, the order's `financial_snapshot` as the source of truth, and the settlement ledger in `vendor_settlements`. Two fixes landed since: deleting an order now removes its settlement row in the same transaction, and the settlements summary is aggregated over every row instead of the rows on the current page. The delivery OTP is six digits and is consumed exactly once.
+
 **Date:** October 2026  
 **Auditor:** Principal Payment-Systems Engineer & Database Architect  
 **Classification:** Internal Financial Architecture & Engineering  

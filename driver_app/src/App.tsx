@@ -34,6 +34,7 @@ import {
 import { connectDriverEvents } from './realtime'
 import { checkForDriverUpdate, installDriverUpdate, type DriverUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type {
   AppTab,
   CompletedTrip,
@@ -602,10 +603,16 @@ function AccountPage({
   onInstallUpdate: () => Promise<void>
   onLogout: () => Promise<void>
 }) {
+  const { t } = useLanguage()
   const [draft, setDraft] = useState(profile)
   const [vpa, setVpa] = useState('')
   const [provider, setProvider] = useState('Google Pay / PhonePe UPI')
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [passwordSheet, setPasswordSheet] = useState(false)
+  const [updateSheet, setUpdateSheet] = useState(false)
+  const [languageSheet, setLanguageSheet] = useState(false)
+  const { locale: language, setLocale, languages } = useLanguage()
+  const setLanguage = (code: SupportedLocale) => void setLocale(code)
 
   useEffect(() => setDraft(profile), [profile])
 
@@ -650,44 +657,45 @@ function AccountPage({
           </button>
         </div>
       </article>
-      <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
-        <div className="settings-card-title">
-          <span className="settings-icon">
-            <Icon name="download" />
+      <h2 className="section-title">App</h2>
+      <div className="settings-list">
+        <button onClick={() => setUpdateSheet(true)}>
+          <span className="settings-list-icon">
+            <Icon name="refresh" />
           </span>
-          <div>
-            <h3>Driver app update</h3>
-            <p>
+          <span>
+            <b>{t.settings.checkForUpdates}</b>
+            <small>
               {checkingUpdate
                 ? 'Checking for the latest driver app…'
                 : availableUpdate
-                  ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                  ? `Version ${availableUpdate.versionName} is available`
                   : updateError || 'You are using the latest available version.'}
-            </p>
-          </div>
-        </div>
-        <div className="software-actions">
-          <button
-            className="secondary-button"
-            disabled={checkingUpdate || installingUpdate}
-            onClick={() => void onCheckUpdate()}
-          >
-            {checkingUpdate ? 'Checking…' : 'Check again'}
-          </button>
-          <button
-            className="primary-button"
-            disabled={!availableUpdate || checkingUpdate || installingUpdate}
-            onClick={() => void onInstallUpdate()}
-          >
-            {installingUpdate
-              ? 'Opening installer…'
-              : availableUpdate
-                ? `Update to ${availableUpdate.versionName}`
-                : 'App is up to date'}
-          </button>
-        </div>
-        {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
-      </article>
+            </small>
+          </span>
+          <Icon name="chevron" />
+        </button>
+        <button onClick={() => setPasswordSheet(true)}>
+          <span className="settings-list-icon">
+            <Icon name="shield" />
+          </span>
+          <span>
+            <b>{t.settings.changePassword}</b>
+            <small>{t.settings.changePasswordHint}</small>
+          </span>
+          <Icon name="chevron" />
+        </button>
+        <button onClick={() => setLanguageSheet(true)}>
+          <span className="settings-list-icon">
+            <Icon name="language" />
+          </span>
+          <span>
+            <b>{t.settings.language}</b>
+            <small>{language}</small>
+          </span>
+          <Icon name="chevron" />
+        </button>
+      </div>
       <article className="settings-card">
         <div className="settings-card-title">
           <span className="settings-icon">
@@ -712,7 +720,6 @@ function AccountPage({
           ))}
         </div>
       </article>
-      <ChangePasswordForm onChangePassword={onChangePassword} />
       <article className="settings-card">
         <div className="settings-card-title">
           <span className="settings-icon">
@@ -834,6 +841,126 @@ function AccountPage({
       <button className="logout-button" onClick={() => setConfirmLogout(true)}>
         <Icon name="logout" /> Sign out of driver app
       </button>
+      {updateSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setUpdateSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Driver app</span>
+                <h2>{t.settings.checkForUpdates}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setUpdateSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>
+              {checkingUpdate
+                ? 'Checking for the latest driver app…'
+                : availableUpdate
+                  ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                  : updateError || 'You are using the latest available version.'}
+            </p>
+            <div className="software-actions">
+              <button
+                className="secondary-button"
+                disabled={checkingUpdate || installingUpdate}
+                onClick={() => void onCheckUpdate()}
+              >
+                {checkingUpdate ? 'Checking…' : 'Check again'}
+              </button>
+              <button
+                className="primary-button"
+                disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                onClick={() => void onInstallUpdate()}
+              >
+                {installingUpdate
+                  ? 'Opening installer…'
+                  : availableUpdate
+                    ? `Update to ${availableUpdate.versionName}`
+                    : 'App is up to date'}
+              </button>
+            </div>
+            {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
+          </section>
+        </div>
+      )}
+
+      {passwordSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPasswordSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Account security</span>
+                <h2>{t.settings.changePassword}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setPasswordSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>Keep your driver account secure with a new sign-in password.</p>
+            <ChangePasswordForm onChangePassword={onChangePassword} />
+          </section>
+        </div>
+      )}
+
+      {languageSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setLanguageSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">App language</span>
+                <h2>{t.settings.chooseLanguage}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setLanguageSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <div className="language-list">
+              {languages.map((option) => (
+                <button
+                  key={option.code}
+                  className={language === option.code ? 'selected' : ''}
+                  onClick={() => {
+                    setLanguage(option.code)
+                    setLanguageSheet(false)
+                  }}
+                >
+                  <span>{option.nativeName}</span>
+                  {language === option.code && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       {confirmLogout && (
         <div
           className="modal-backdrop"
@@ -872,6 +999,7 @@ function AccountPage({
   )
 }
 
+/** Languages the app can be switched to. */
 function EmptyState({ icon, title, text }: { icon: IconName; title: string; text: string }) {
   return (
     <div className="empty-state">

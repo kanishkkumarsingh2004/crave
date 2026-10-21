@@ -1,5 +1,8 @@
 # Crave — Real-Time API & Live Connection Architecture
 
+> **Current state — 21 October 2026.**
+> The channel matrix still holds. The native apps connect to the same `/api/ws` endpoint, and the load and abuse suites in `load-tests/` exercise it.
+
 > **Document Version**: 1.0.0  
 > **Status**: Production Ready  
 > **Live Engine**: Native Standalone WebSocket Backend (`ws-server.js`) + `BroadcastChannel` Engine  

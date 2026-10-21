@@ -1,5 +1,8 @@
 # CRAVE — Deployment, Database Operations & Disaster Recovery Guide
 
+> **Current state — 21 October 2026.**
+> `pnpm build:android` builds and releases the four native apps and refreshes `android-builds/version.json`; `KEEP_VERSION=1 pnpm build:android` publishes the version in `build.gradle` unchanged, and `bash scripts/clean-native-builds.sh` wipes the build output and the published artefacts for a from-scratch release.
+
 **Date:** October 2026  
 **Auditor:** Principal SRE & Database Architect  
 **Classification:** Site Reliability Engineering & Operations  

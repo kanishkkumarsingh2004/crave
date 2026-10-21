@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import QRCodeSVG from 'react-qr-code'
 import { Network } from '@capacitor/network'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
@@ -7,6 +8,8 @@ import appLogo from '../assets/logo.svg'
 import {
   ApiError,
   apiRequest,
+  cachedRequest,
+  clearApiCache,
   clearAuthToken,
   COOKIE_SESSION_TOKEN,
   getAuthToken,
@@ -14,6 +17,8 @@ import {
   saveAuthToken,
 } from './api'
 import { Icon } from './Icon'
+import { PermissionSheet } from './PermissionSheet'
+import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
 import {
   enableNotifications,
   initializeNative,
@@ -29,15 +34,21 @@ import {
   type CustomerUpdate,
 } from './update'
 import { connectCustomerOrders } from './realtime'
-import { openUpiPayment, type UpiPaymentApp } from './payment'
+import { openUpiPayment, buildUpiPaymentUrl } from './payment'
 import { checkoutDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type { AddressMapPoint } from './AddressMap'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
 
 type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
 const SWIPE_TABS: Tab[] = ['home', 'orders', 'cart', 'account']
 const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
+/** Rupees with paise only when there are paise. */
+const rupees = (value: number) => {
+  const amount = Number(value) || 0
+  return `₹${amount % 1 === 0 ? amount : amount.toFixed(2)}`
+}
 const titleCase = (value: string) =>
   value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 const RESTAURANT_FALLBACK_COUNT = 5
@@ -60,16 +71,17 @@ function Empty({
   text,
 }: {
   icon: 'search' | 'orders' | 'cart'
-  title: string
-  text: string
+  title?: string
+  text?: string
 }) {
+  const { t } = useLanguage()
   return (
     <div className="empty">
       <div className="empty-icon">
         <Icon name={icon} />
       </div>
-      <h3>{title}</h3>
-      <p>{text}</p>
+      <h3>{title ?? t.customer.noOrdersYet}</h3>
+      <p>{text ?? t.customer.noOrdersYetHint}</p>
     </div>
   )
 }
@@ -246,17 +258,7 @@ function Auth({ onDone }: { onDone: (u: User) => void }) {
   )
 }
 
-function RestaurantCard({
-  restaurant,
-  onOpen,
-  favourite,
-  onFavourite,
-}: {
-  restaurant: Restaurant
-  onOpen: () => void
-  favourite: boolean
-  onFavourite: () => void
-}) {
+function RestaurantCard({ restaurant, onOpen }: { restaurant: Restaurant; onOpen: () => void }) {
   return (
     <article className="restaurant-card" onClick={onOpen}>
       <div
@@ -274,15 +276,6 @@ function RestaurantCard({
         }
       >
         {restaurant.offer && <span className="offer">{restaurant.offer}</span>}
-        <button
-          className={`heart ${favourite ? 'liked' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            onFavourite()
-          }}
-        >
-          <Icon name="heart" />
-        </button>
         {!restaurant.is_open && <span className="closed">Currently closed</span>}
       </div>
       <div className="restaurant-info">
@@ -290,16 +283,12 @@ function RestaurantCard({
           <h3>{restaurant.name}</h3>
           <p>{restaurant.cuisine || 'Fresh local food'}</p>
         </div>
-        <span className="rating">{Number(restaurant.rating || 4.5).toFixed(1)} ★</span>
-      </div>
-      <div className="meta">
-        <span>
-          <Icon name="clock" /> {restaurant.eta || '25–35 min'}
+        <span className="card-eta">
+          <span>
+            <Icon name="clock" /> {restaurant.eta || '25–35 min'}
+          </span>
+          <span>{restaurant.distance || 'Nearby'}</span>
         </span>
-        <span>•</span>
-        <span>{restaurant.distance || 'Nearby'}</span>
-        <span>•</span>
-        <span>{money(restaurant.cost_for_two || 300)} for two</span>
       </div>
     </article>
   )
@@ -339,15 +328,11 @@ function MenuScreen({
   onBack,
   onAdd,
   cart,
-  favourite,
-  onFavourite,
 }: {
   restaurant: Restaurant
   onBack: () => void
   onAdd: (item: MenuItem, v?: Variant) => void
   cart: CartItem[]
-  favourite: boolean
-  onFavourite: () => void
 }) {
   const [items, setItems] = useState<MenuItem[]>([]),
     [loading, setLoading] = useState(true),
@@ -417,14 +402,6 @@ function MenuScreen({
       >
         <button className="round" onClick={onBack} aria-label="Back">
           <Icon name="back" />
-        </button>
-        <button
-          className={`round${favourite ? ' liked' : ''}`}
-          onClick={onFavourite}
-          aria-label="Save restaurant"
-          aria-pressed={favourite}
-        >
-          <Icon name="heart" />
         </button>
         <div className="detail-hero-copy">
           <span className={`open-pill${restaurant.is_open === false ? ' closed' : ''}`}>
@@ -625,10 +602,9 @@ function CartPage({
   const subtotal = cart.reduce((n, x) => n + x.price * x.quantity, 0)
   return (
     <section className="page">
-      <header className="page-header">
-        <p className="eyebrow">YOUR ORDER</p>
+      <header className="bag-header">
         <h1>Bag</h1>
-        <span>{cart.reduce((n, x) => n + x.quantity, 0)} items</span>
+        <Logo compact />
       </header>
       {!cart.length ? (
         <>
@@ -673,12 +649,6 @@ function CartPage({
               </article>
             ))}
           </div>
-          <div className="bill-preview">
-            <span>
-              Item total <b>{money(subtotal)}</b>
-            </span>
-            <p>Delivery, packaging and taxes are calculated securely at checkout.</p>
-          </div>
           <div className="sticky-action">
             <div>
               <small>ITEM TOTAL</small>
@@ -701,6 +671,7 @@ function Checkout({
   addresses,
   onClose,
   onPlaced,
+  onManageAddresses,
 }: {
   cart: CartItem[]
   restaurant: Restaurant
@@ -708,6 +679,7 @@ function Checkout({
   addresses: Address[]
   onClose: () => void
   onPlaced: () => void
+  onManageAddresses?: () => void
 }) {
   const subtotal = cart.reduce((n, x) => n + x.price * x.quantity, 0),
     [selected, setSelected] = useState(
@@ -723,8 +695,10 @@ function Checkout({
     [tip, setTip] = useState(0),
     [tipInput, setTipInput] = useState(''),
     [busy, setBusy] = useState(false),
-    [paid, setPaid] = useState(false),
-    [paymentPicker, setPaymentPicker] = useState(false),
+    [awaitingUtr, setAwaitingUtr] = useState(false),
+    [qrSheet, setQrSheet] = useState(false),
+    [tipSheet, setTipSheet] = useState(false),
+    [addressSheet, setAddressSheet] = useState(false),
     [error, setError] = useState(''),
     [billing, setBilling] = useState<any>(null),
     [config, setConfig] = useState<any>(null),
@@ -809,9 +783,48 @@ function Checkout({
   // it from visible rows would double-count GST when menu prices are tax-inclusive.
   const totalToPay = billing?.grandTotal ?? subtotal
   const foodSubtotal = billing?.customerFoodSubtotal || subtotal
+  const selectedAddress = addresses.find((entry) => entry.id === selected)
+  // UPI deep link for the QR code shown on the payment card.
+  const upiQrPayload = useMemo(() => {
+    const vpa = config?.upiVpa || config?.merchant_vpa
+    if (!vpa) return ''
+    return buildUpiPaymentUrl({
+      vpa: String(vpa),
+      merchant: String(config?.merchantName || config?.merchant_name || 'CRAVE'),
+      amount: Number(totalToPay || 0),
+      note: `CRAVE order from ${restaurant?.name || 'CRAVE'}`,
+    })
+  }, [
+    config?.upiVpa,
+    config?.merchant_vpa,
+    config?.merchantName,
+    config?.merchant_name,
+    totalToPay,
+    restaurant?.name,
+  ])
+
+  /** Opens the QR sheet — the single place the payment starts from. */
+  const openQrSheet = () => {
+    setQrSheet(true)
+  }
+
+  /**
+   * Leaves the QR sheet. Whether the customer paid by scanning the QR or
+   * through a UPI app, they have to come back with the transaction reference,
+   * so the UTR step is always next.
+   */
+  const closeQrSheet = () => {
+    setQrSheet(false)
+    setAwaitingUtr(true)
+  }
   // The canonical engine splits GST into an embedded part (already inside menu prices) and a
   // platform-service part (18% on fees, charged on top). Present both so the bill reconciles.
   const taxSplit = billing?.taxSplit
+  // Every tax the order carries, whether it is already inside the item prices
+  // or charged on top.
+  const totalTax = taxSplit
+    ? Number(billing?.foodPackagingGst || 0) + Number(billing?.platformServiceGst || 0)
+    : Number(billing?.gstAmount || 0)
   const freeDeliveryThreshold = config?.freeDeliveryThreshold ?? 0
   const freeDeliveryProgress = (() => {
     if (!freeDeliveryThreshold || freeDeliveryThreshold <= 0) return null
@@ -853,7 +866,7 @@ function Checkout({
     setCouponInput('')
     if (removedCoupon) showCouponToast(`${removedCoupon} removed.`, 'success')
   }
-  const pay = async (app: UpiPaymentApp) => {
+  const pay = async () => {
     setError('')
     if (!config?.upiVpa) {
       setError('UPI payment is temporarily unavailable.')
@@ -873,10 +886,9 @@ function Checkout({
         merchant: config.merchantName || 'CRAVE',
         amount: Number(totalToPay),
         note: `CRAVE order from ${restaurant.name}`,
-        app,
       })
-      setPaymentPicker(false)
-      setPaid(true)
+      setQrSheet(false)
+      setAwaitingUtr(true)
     } catch (paymentError) {
       setError(
         paymentError instanceof Error ? paymentError.message : 'No UPI app could open this payment.'
@@ -889,7 +901,7 @@ function Checkout({
       return
     }
     if (utr.trim().length < 10) {
-      setError('Enter the UPI transaction reference after payment.')
+      setError('Enter the 12-digit UTR from your UPI app so we can verify the payment.')
       return
     }
     setBusy(true)
@@ -935,28 +947,32 @@ function Checkout({
           <Icon name="back" />
         </button>
         <Logo compact />
-        <span />
       </header>
       <main>
         <p className="eyebrow">SECURE CHECKOUT</p>
         <h1>Almost yours.</h1>
-        <h2>Delivery address</h2>
+        <div className="checkout-section-head">
+          <h2>Delivery address</h2>
+          {addresses.length > 0 && (
+            <button className="text-link" onClick={() => setAddressSheet(true)}>
+              Change
+            </button>
+          )}
+        </div>
         {addresses.length ? (
           <div className="address-list">
-            {addresses.map((a) => (
-              <button
-                className={selected === a.id ? 'selected' : ''}
-                onClick={() => setSelected(a.id)}
-                key={a.id}
-              >
+            {selectedAddress && (
+              <button className="selected" onClick={() => setAddressSheet(true)}>
                 <Icon name="pin" />
                 <span>
-                  <b>{a.label}</b>
-                  <small>{a.address}</small>
+                  <b>{selectedAddress.label}</b>
+                  <small>{selectedAddress.address}</small>
                 </span>
-                <i>{selected === a.id ? <Icon name="check" /> : null}</i>
+                <i>
+                  <Icon name="check" />
+                </i>
               </button>
-            ))}
+            )}
           </div>
         ) : (
           <div className="error-box">Add a delivery address from Account before ordering.</div>
@@ -993,22 +1009,18 @@ function Checkout({
             <b>{money((billing?.platformFee || 0) + (billing?.handlingFee || 0))}</b>
           </span>
           {taxSplit ? (
-            <>
-              {/* GST already baked into menu prices — informational, not added to the total */}
-              <span className="included-row">
-                Food &amp; packaging GST ({taxSplit}) · included in item prices
-                <b>{money(billing?.foodPackagingGst || 0)}</b>
+            <div className="bill-taxes">
+              <span>
+                GST &amp; Other Charges <b>{money(totalTax)}</b>
               </span>
-              {/* 18% GST on platform/handling fees is a separate supply and IS charged */}
-              {(billing?.platformServiceGst || 0) > 0 && (
-                <span>
-                  GST on platform &amp; handling (18%) <b>{money(billing.platformServiceGst)}</b>
-                </span>
-              )}
-            </>
+              <small>
+                {money(billing?.foodPackagingGst || 0)} already included in the item prices ·{' '}
+                {money(billing?.platformServiceGst || 0)} on platform &amp; handling
+              </small>
+            </div>
           ) : (
             <span>
-              Taxes (included where applicable) <b>{money(billing?.gstAmount || 0)}</b>
+              GST &amp; Other Charges <b>{money(billing?.gstAmount || 0)}</b>
             </span>
           )}
           {billing?.couponDiscount > 0 && (
@@ -1016,11 +1028,12 @@ function Checkout({
               Coupon discount <b>-{money(billing.couponDiscount)}</b>
             </span>
           )}
-          {billing?.tip > 0 && (
-            <span>
-              Tip <b>{money(billing.tip)}</b>
-            </span>
-          )}
+          <span className="bill-tip-row">
+            Delivery Tip{' '}
+            <button className="bill-tip-action" onClick={() => setTipSheet(true)}>
+              {billing?.tip > 0 ? `Edit · ${money(billing.tip)}` : 'Add tip'}
+            </button>
+          </span>
           <div>
             Total to pay <strong>{money(totalToPay)}</strong>
           </div>
@@ -1065,71 +1078,60 @@ function Checkout({
             </button>
           </div>
         </form>
-        <div className="tip-row">
-          <p className="tip-label">Add a tip for your delivery partner 🙏</p>
-          <div className="tip-presets">
-            {[0, 10, 20, 50].map((amt) => (
-              <button
-                key={amt}
-                className={`tip-preset${tip === amt ? ' active' : ''}`}
-                onClick={() => {
-                  setTip(amt)
-                  setTipInput(amt > 0 ? String(amt) : '')
-                }}
-              >
-                {amt === 0 ? 'No tip' : `₹${amt}`}
-              </button>
-            ))}
-          </div>
-          <div className="coupon-input">
-            <span className="tip-rupee">₹</span>
-            <input
-              className="tip-input"
-              type="number"
-              inputMode="numeric"
-              min="0"
-              placeholder="Custom amount"
-              value={tipInput}
-              onChange={(e) => {
-                const val = e.target.value
-                setTipInput(val)
-                const num = Math.max(0, Number(val) || 0)
-                setTip(num)
-              }}
-            />
-          </div>
+        <div className="checkout-section-head">
+          <h2>Pay securely with UPI</h2>
+          <button className="upi-qr-btn" onClick={openQrSheet}>
+            View QR code
+          </button>
         </div>
-        <h2>Pay securely with UPI</h2>
         <div className="upi-card">
           <Icon name="wallet" />
           <div>
             <b>UPI payment</b>
             <small>Google Pay, PhonePe, Paytm or any UPI app</small>
           </div>
-          <strong>UPI</strong>
         </div>
         {pricingError && <div className="error-box">{pricingError}</div>}
-        {!paid ? (
-          <button
-            className="primary wide"
-            disabled={!billing || !config || !!pricingError}
-            onClick={() => setPaymentPicker(true)}
-          >
-            {!billing && !pricingError ? (
-              <>
-                <Spinner /> Calculating final total
-              </>
-            ) : (
-              `Pay ${money(totalToPay)} with UPI`
-            )}
-          </button>
+        {!awaitingUtr ? (
+          <>
+            <p className="secure-note">
+              Your order starts only after CRAVE verifies the UPI transaction.
+            </p>
+            <div className="pay-bar">
+              <div className="pay-bar-info">
+                <span className="pay-bar-mark">
+                  <Icon name="wallet" />
+                </span>
+                <span>
+                  <small>Pay using ▲</small>
+                  <b>UPI</b>
+                </span>
+              </div>
+              <button
+                className="pay-bar-btn"
+                disabled={!billing || !config || !!pricingError}
+                onClick={openQrSheet}
+              >
+                {!billing && !pricingError ? (
+                  <>
+                    <Spinner /> Calculating
+                  </>
+                ) : (
+                  `Pay ${money(totalToPay)}`
+                )}
+              </button>
+            </div>
+          </>
         ) : (
           <div className="utr-box">
             <div className="success-line">
               <Icon name="check" />
               <span>
-                <b>Complete payment in your UPI app</b>
-                <small>Then return here and enter the transaction reference.</small>
+                <b>Enter the transaction reference</b>
+                <small>
+                  Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'} by scanning the QR
+                  code or any UPI app, then enter the 12-digit UTR from your UPI app below.
+                </small>
               </span>
             </div>
             <label>
@@ -1158,9 +1160,6 @@ function Checkout({
           </div>
         )}
         {error && <div className="error-box">{error}</div>}
-        <p className="secure-note">
-          Your order starts only after CRAVE verifies the UPI transaction.
-        </p>
       </main>
       {couponToast && (
         <div
@@ -1171,47 +1170,180 @@ function Checkout({
           {couponToast.message}
         </div>
       )}
-      {paymentPicker && (
-        <div className="modal-backdrop" onClick={() => setPaymentPicker(false)}>
+      {addressSheet && (
+        <div className="modal-backdrop" onClick={() => setAddressSheet(false)}>
           <section
-            className="bottom-sheet upi-picker"
+            className="bottom-sheet address-sheet"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="upi-picker-title"
+            aria-labelledby="address-sheet-title"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="sheet-handle" />
             <div className="sheet-title">
               <div>
-                <p className="eyebrow">PAY SECURELY</p>
-                <h2 id="upi-picker-title">Choose your UPI app</h2>
+                <p className="eyebrow">DELIVERY</p>
+                <h2 id="address-sheet-title">Change address</h2>
               </div>
-              <button className="round pale" onClick={() => setPaymentPicker(false)}>
+              <button
+                className="round pale"
+                onClick={() => setAddressSheet(false)}
+                aria-label="Close"
+              >
                 <Icon name="close" />
               </button>
             </div>
-            <p className="upi-picker-total">
-              Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'}
-            </p>
-            {error && <div className="error-box">{error}</div>}
-            <div className="upi-app-grid">
-              {(
-                [
-                  ['gpay', 'G', 'Google Pay'],
-                  ['phonepe', 'पे', 'PhonePe'],
-                  ['paytm', 'P', 'Paytm'],
-                  ['other', 'UPI', 'Other app'],
-                ] as [UpiPaymentApp, string, string][]
-              ).map(([app, mark, label]) => (
-                <button key={app} onClick={() => void pay(app)}>
-                  <span className={`upi-app-mark ${app}`}>{mark}</span>
-                  <b>{label}</b>
-                  <small>
-                    {app === 'other' ? 'Choose any installed UPI app' : `Open ${label}`}
-                  </small>
+            <div className="address-list">
+              {addresses.map((a) => (
+                <button
+                  className={selected === a.id ? 'selected' : ''}
+                  onClick={() => {
+                    setSelected(a.id)
+                    setAddressSheet(false)
+                  }}
+                  key={a.id}
+                >
+                  <Icon name="pin" />
+                  <span>
+                    <b>{a.label}</b>
+                    <small>{a.address}</small>
+                  </span>
+                  <i>{selected === a.id ? <Icon name="check" /> : null}</i>
                 </button>
               ))}
             </div>
+            {onManageAddresses && (
+              <button
+                className="secondary wide address-add"
+                onClick={() => {
+                  setAddressSheet(false)
+                  onManageAddresses()
+                }}
+              >
+                <Icon name="plus" />
+                Add a new address
+              </button>
+            )}
+          </section>
+        </div>
+      )}
+
+      {tipSheet && (
+        <div className="modal-backdrop" onClick={() => setTipSheet(false)}>
+          <section
+            className="bottom-sheet tip-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tip-sheet-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">DELIVERY PARTNER</p>
+                <h2 id="tip-sheet-title">Add a tip</h2>
+              </div>
+              <button className="round pale" onClick={() => setTipSheet(false)} aria-label="Close">
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div className="tip-bill">
+              <span className="tip-bill-rule" />
+              {[
+                [0, 'No tip'],
+                [10, 'Small tip'],
+                [20, 'Medium tip'],
+                [50, 'Large tip'],
+              ].map(([amount, label]) => (
+                <button
+                  key={String(amount)}
+                  className={tip === amount ? 'active' : ''}
+                  onClick={() => {
+                    setTip(amount as number)
+                    setTipInput(amount ? String(amount) : '')
+                  }}
+                >
+                  <span>{label}</span>
+                  <b>{amount ? `₹${amount}` : '₹0'}</b>
+                </button>
+              ))}
+              <span className="tip-bill-rule" />
+              <label className="tip-bill-custom">
+                <span>Custom amount</span>
+                <span className="coupon-input">
+                  <span className="tip-rupee">₹</span>
+                  <input
+                    className="tip-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    placeholder="0"
+                    value={tipInput}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setTipInput(val)
+                      setTip(Math.max(0, Number(val) || 0))
+                    }}
+                  />
+                </span>
+              </label>
+              <span className="tip-bill-rule" />
+              <span className="tip-bill-total">
+                <span>Tip added</span>
+                <b>{money(tip)}</b>
+              </span>
+            </div>
+
+            <button className="primary wide" onClick={() => setTipSheet(false)}>
+              Save tip
+            </button>
+          </section>
+        </div>
+      )}
+
+      {qrSheet && (
+        <div className="modal-backdrop" onClick={closeQrSheet}>
+          <section
+            className="bottom-sheet upi-qr-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upi-qr-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">UPI</p>
+                <h2 id="upi-qr-title">Pay securely</h2>
+              </div>
+              <button className="round pale" onClick={closeQrSheet} aria-label="Close">
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div className="qr-panel">
+              {upiQrPayload ? (
+                <QRCodeSVG
+                  value={upiQrPayload}
+                  size={200}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#111a15"
+                />
+              ) : (
+                <p className="qr-unavailable">UPI payments are unavailable right now.</p>
+              )}
+              <p className="qr-amount">
+                Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'}
+              </p>
+              {config?.upiVpa && <p className="qr-vpa">{config.upiVpa}</p>}
+            </div>
+
+            {error && <div className="error-box">{error}</div>}
+
+            <button className="primary wide" onClick={() => void pay()}>
+              Pay with UPI app
+            </button>
           </section>
         </div>
       )}
@@ -1219,18 +1351,32 @@ function Checkout({
   )
 }
 
+/**
+ * The delivery code is only useful while the order is still on the way. Once
+ * it is delivered, completed or cancelled it must never be shown again.
+ */
+const CLOSED_ORDER_STATUSES = ['delivered', 'completed', 'cancelled']
+/** The invoice is available once the order has actually been handed over. */
+const INVOICED_ORDER_STATUSES = ['delivered', 'completed']
+const showDeliveryCode = (o: Order) =>
+  Boolean(o.delivery_otp) && !CLOSED_ORDER_STATUSES.includes(o.status)
+
 function OrdersPage({
   orders,
   loading,
   error,
   onRefresh,
+  customer,
 }: {
   orders: Order[]
   loading: boolean
   error: string
   onRefresh: () => void
+  customer?: User | null
 }) {
-  const active = orders.filter((o) => !['delivered', 'completed', 'cancelled'].includes(o.status)),
+  const { t } = useLanguage()
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null)
+  const active = orders.filter((o) => !CLOSED_ORDER_STATUSES.includes(o.status)),
     past = orders.filter((o) => !active.includes(o))
   const card = (o: Order) => (
     <article className="order-card" key={o.id}>
@@ -1259,20 +1405,25 @@ function OrdersPage({
                   : 'We’ll keep this updated live'}
           </small>
         </span>
+        {INVOICED_ORDER_STATUSES.includes(o.status) && (
+          <button className="status-action" onClick={() => setInvoiceOrder(o)}>
+            {t.customer.viewInvoice}
+          </button>
+        )}
       </div>
-      {o.delivery_otp ? (
+      {showDeliveryCode(o) ? (
         <div className="otp">
           <span>
-            <b>Delivery code</b>
-            <small>Share this code with your delivery partner</small>
+            <b>{t.customer.deliveryCode}</b>
+            <small>{t.customer.shareCode}</small>
           </span>
           <strong>{o.delivery_otp}</strong>
         </div>
       ) : o.otp_consumed_at ? (
         <div className="otp done">
           <span>
-            <b>Delivery code verified</b>
-            <small>Your order was handed over successfully</small>
+            <b>{t.customer.codeVerified}</b>
+            <small>{t.customer.codeVerifiedHint}</small>
           </span>
           <Icon name="check" />
         </div>
@@ -1304,7 +1455,7 @@ function OrdersPage({
       ) : !orders.length ? (
         <Empty
           icon="orders"
-          title="No orders yet"
+          title={t.customer.noOrdersYet}
           text="Your first great meal is a few taps away."
         />
       ) : (
@@ -1325,10 +1476,206 @@ function OrdersPage({
           )}
         </>
       )}
+      {invoiceOrder && <InvoiceSheet order={invoiceOrder} onClose={() => setInvoiceOrder(null)} />}
     </section>
   )
 }
 
+/**
+ * The receipt for one order, laid out like a printed till slip: the shop, the
+ * items, the totals and the thank-you footer.
+ */
+function InvoiceSheet({
+  order,
+  customer,
+  onClose,
+}: {
+  order: Order
+  customer?: User | null
+  onClose: () => void
+}) {
+  const lines = Array.isArray(order.items) ? order.items : []
+  const subtotal = Number(order.subtotal ?? order.total_amount)
+  const total = Number(order.total_amount)
+  const created = order.created_at ? new Date(order.created_at) : null
+  const date = created
+    ? `${String(created.getDate()).padStart(2, '0')}/${String(created.getMonth() + 1).padStart(
+        2,
+        '0'
+      )}/${created.getFullYear()}`
+    : ''
+  const time = created
+    ? `${String(created.getHours()).padStart(2, '0')}:${String(created.getMinutes()).padStart(
+        2,
+        '0'
+      )}:${String(created.getSeconds()).padStart(2, '0')}`
+    : ''
+  const guestName = order.customer_name || customer?.name || 'Guest'
+
+  // Every charge that sits between the item total and the amount charged, so
+  // the receipt adds up the way the customer was billed.
+  // The restaurant's address and FSSAI licence live on the restaurant, not the
+  // order, so they are fetched when the receipt opens.
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    if (!order.restaurant_id) return undefined
+    apiRequest<{ restaurants: Restaurant[] }>('/api/restaurants')
+      .then((response) => {
+        if (cancelled) return
+        const match = (response.restaurants || []).find((entry) => entry.id === order.restaurant_id)
+        if (match) setRestaurant(match)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [order.restaurant_id])
+
+  const snapshot = (order as any).financial_snapshot || {}
+  const charges: [string, number][] = [
+    ['Packaging', Number(order.packaging_fee)],
+    ['Delivery', Number(order.delivery_fee)],
+    ['Platform fee', Number(order.platform_fee)],
+    ['Handling', Number(order.handling_fee)],
+    ['Service tax', Number(snapshot.platformServiceTaxBreakdown?.totalGstPaise || 0) / 100],
+  ].filter(([, value]) => Number(value) > 0) as [string, number][]
+
+  const charged = subtotal + charges.reduce((sum, [, value]) => sum + value, 0)
+  const rounding = Number((total - charged).toFixed(2))
+  if (rounding !== 0) charges.push(['Rounding', rounding])
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <section
+        className="bottom-sheet invoice-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invoice-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="sheet-handle" />
+        <button className="invoice-close" onClick={onClose} aria-label="Close">
+          <Icon name="close" />
+        </button>
+
+        <div className="receipt">
+          <div className="receipt-head">
+            <div>
+              <h2 id="invoice-title" className="receipt-title">
+                Order
+              </h2>
+              <p className="receipt-sub">Receipt #{order.id.slice(-8).toUpperCase()}</p>
+            </div>
+            <div className="receipt-head-right">
+              <p className="receipt-shop">{order.restaurant_name || 'CRAVE'}</p>
+              <span className="receipt-stamp">Paid</span>
+            </div>
+          </div>
+
+          <p className="receipt-line">
+            {date} {time}
+          </p>
+
+          <p className="receipt-label">Address</p>
+          <p className="receipt-line receipt-line-icon">
+            <Icon name="pin" />
+            <span>{order.customer_address || '—'}</span>
+          </p>
+
+          <div className="receipt-kv">
+            <span>
+              <Icon name="user" /> Client
+            </span>
+            <b>{guestName}</b>
+          </div>
+          <div className="receipt-kv">
+            <span>
+              <Icon name="tag" /> Transaction
+            </span>
+            <b>{order.utr_ref || '—'}</b>
+          </div>
+          <div className="receipt-kv">
+            <span>
+              <Icon name="wallet" /> Location
+            </span>
+            <b>{order.payment_method || 'UPI'}</b>
+          </div>
+
+          <table className="receipt-table">
+            <thead>
+              <tr>
+                <th>ITEM</th>
+                <th>QTY</th>
+                <th>DESCRIPTION</th>
+                <th>COST</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((item: any, index: number) => {
+                const quantity = Number(item.quantity) || 1
+                const cost = Number(item.lineTotal ?? (item.price || 0) * quantity)
+                return (
+                  <tr key={`${item.id || 'item'}-${index}`}>
+                    <td>{index + 1}</td>
+                    <td>{quantity}</td>
+                    <td>{item.name || 'Item'}</td>
+                    <td>{money(cost)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+
+          <div className="receipt-divider">
+            <span aria-hidden="true">✦</span>
+          </div>
+          <div className="receipt-total">
+            <span>Sub Total :</span>
+            <b>{rupees(subtotal)}</b>
+          </div>
+          {charges.map(([label, value]) => (
+            <div className="receipt-total" key={label}>
+              <span>{label} :</span>
+              <b>{rupees(value)}</b>
+            </div>
+          ))}
+          <div className="receipt-total receipt-grand">
+            <span>Order Total :</span>
+            <b>{rupees(total)}</b>
+          </div>
+          <div className="receipt-divider">
+            <span aria-hidden="true">✦</span>
+          </div>
+
+          <p className="receipt-thanks">
+            <span aria-hidden="true">✦</span> THANK YOU! <span aria-hidden="true">✦</span>
+          </p>
+          <div className="receipt-brand">
+            <b>CRAVE</b>
+            <i>.</i>
+          </div>
+          <p className="receipt-tagline">Delivered with care</p>
+          <div className="receipt-sign">
+            <span>RESTAURANT</span>
+            <b>{order.restaurant_name || 'CRAVE'}</b>
+          </div>
+          <div className="receipt-sign">
+            <span>ADDRESS</span>
+            <b>{restaurant?.address || '—'}</b>
+          </div>
+          <div className="receipt-sign">
+            <span>FSSAI LICENCE</span>
+            <b>{restaurant?.fssai_license || '—'}</b>
+          </div>
+          <div className="receipt-strip" aria-hidden="true" />
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** Languages the app can be switched to. */
 function Account({
   user,
   addresses,
@@ -1345,6 +1692,11 @@ function Account({
   onTheme: (theme: ThemeMode) => void
 }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [passwordSheet, setPasswordSheet] = useState(false)
+  const [languageSheet, setLanguageSheet] = useState(false)
+  const { t, locale, setLocale, languages } = useLanguage()
+  const language = locale
+  const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -1502,119 +1854,6 @@ function Account({
           <Icon name="chevron" />
         </button>
       </div>
-      <h2 className="section-title">Security</h2>
-      <form className="password-form" onSubmit={changePassword} noValidate>
-        <div className="password-card">
-          <div className="password-card-header">
-            <p className="eyebrow">ACCOUNT SECURITY</p>
-            <h3>Change password</h3>
-            <p>Choose a password you do not use anywhere else.</p>
-          </div>
-          <div className="password-fields">
-            <label>
-              Current password
-              <div className="password">
-                <input
-                  required
-                  minLength={8}
-                  maxLength={256}
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(event) => {
-                    setCurrentPassword(event.target.value)
-                    setPasswordFeedback(null)
-                  }}
-                  autoComplete="current-password"
-                  placeholder="Current password"
-                />
-                <button
-                  type="button"
-                  aria-label={
-                    showCurrentPassword ? 'Hide current password' : 'Show current password'
-                  }
-                  aria-pressed={showCurrentPassword}
-                  onClick={() => setShowCurrentPassword((visible) => !visible)}
-                >
-                  {showCurrentPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </label>
-            <label>
-              New password
-              <div className="password">
-                <input
-                  required
-                  minLength={8}
-                  maxLength={256}
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(event) => {
-                    setNewPassword(event.target.value)
-                    setPasswordFeedback(null)
-                  }}
-                  autoComplete="new-password"
-                  placeholder="8–256 characters"
-                />
-                <button
-                  type="button"
-                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                  aria-pressed={showNewPassword}
-                  onClick={() => setShowNewPassword((visible) => !visible)}
-                >
-                  {showNewPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </label>
-            <label>
-              Confirm new password
-              <div className="password">
-                <input
-                  required
-                  minLength={8}
-                  maxLength={256}
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(event) => {
-                    setConfirmPassword(event.target.value)
-                    setPasswordFeedback(null)
-                  }}
-                  autoComplete="new-password"
-                  placeholder="Re-enter new password"
-                />
-                <button
-                  type="button"
-                  aria-label={
-                    showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'
-                  }
-                  aria-pressed={showConfirmPassword}
-                  onClick={() => setShowConfirmPassword((visible) => !visible)}
-                >
-                  {showConfirmPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </label>
-          </div>
-          <p className="password-guidance">New passwords must be 8–256 characters long.</p>
-          {passwordFeedback && (
-            <div
-              className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
-              role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
-              aria-live="polite"
-            >
-              {passwordFeedback.message}
-            </div>
-          )}
-          <button className="primary wide" type="submit" disabled={changingPassword}>
-            {changingPassword ? (
-              <>
-                <Spinner /> Updating password
-              </>
-            ) : (
-              'Change password'
-            )}
-          </button>
-        </div>
-      </form>
       <h2 className="section-title">Appearance</h2>
       <div className="theme-control" role="group" aria-label="App theme">
         {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
@@ -1639,15 +1878,218 @@ function Account({
             <Icon name={update ? 'download' : 'refresh'} />
           </span>
           <span>
-            <b>{update ? 'Update CRAVE now' : 'Check for updates'}</b>
+            <b>{update ? 'Update CRAVE now' : t.customer.checkForUpdates}</b>
             <small>{checking ? 'Checking…' : message}</small>
           </span>
           {checking ? <Spinner /> : <Icon name="chevron" />}
+        </button>
+        <button onClick={() => setPasswordSheet(true)}>
+          <span className="setting-icon">
+            <Icon name="settings" />
+          </span>
+          <span>
+            <b>{t.customer.changePassword}</b>
+            <small>{t.customer.changePasswordHint}</small>
+          </span>
+          <Icon name="chevron" />
+        </button>
+        <button onClick={() => setLanguageSheet(true)}>
+          <span className="setting-icon">
+            <Icon name="language" />
+          </span>
+          <span>
+            <b>Language</b>
+            <small>{language}</small>
+          </span>
+          <Icon name="chevron" />
         </button>
       </div>
       <button className="logout-button" onClick={() => setConfirmLogout(true)}>
         <Icon name="logout" /> Sign out
       </button>
+      {passwordSheet && (
+        <div
+          className="modal-backdrop animated-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="change-password-title"
+          onClick={() => setPasswordSheet(false)}
+        >
+          <section
+            className="bottom-sheet animated-sheet password-sheet"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">ACCOUNT SECURITY</p>
+                <h2 id="change-password-title">{t.customer.changePassword}</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setPasswordSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <p className="confirm-note">Choose a password you do not use anywhere else.</p>
+            <form className="password-form" onSubmit={changePassword} noValidate>
+              <div className="password-card">
+                <div className="password-fields">
+                  <label>
+                    Current password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(event) => {
+                          setCurrentPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="current-password"
+                        placeholder="Current password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showCurrentPassword ? 'Hide current password' : 'Show current password'
+                        }
+                        aria-pressed={showCurrentPassword}
+                        onClick={() => setShowCurrentPassword((visible) => !visible)}
+                      >
+                        {showCurrentPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
+                  <label>
+                    New password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(event) => {
+                          setNewPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="new-password"
+                        placeholder="8–256 characters"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                        aria-pressed={showNewPassword}
+                        onClick={() => setShowNewPassword((visible) => !visible)}
+                      >
+                        {showNewPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
+                  <label>
+                    Confirm new password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(event) => {
+                          setConfirmPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="new-password"
+                        placeholder="Re-enter new password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showConfirmPassword
+                            ? 'Hide confirmed password'
+                            : 'Show confirmed password'
+                        }
+                        aria-pressed={showConfirmPassword}
+                        onClick={() => setShowConfirmPassword((visible) => !visible)}
+                      >
+                        {showConfirmPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
+                </div>
+                <p className="password-guidance">New passwords must be 8–256 characters long.</p>
+                {passwordFeedback && (
+                  <div
+                    className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
+                    role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
+                    aria-live="polite"
+                  >
+                    {passwordFeedback.message}
+                  </div>
+                )}
+                <button className="primary wide" type="submit" disabled={changingPassword}>
+                  {changingPassword ? (
+                    <>
+                      <Spinner /> Updating password
+                    </>
+                  ) : (
+                    'Change password'
+                  )}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+      {languageSheet && (
+        <div
+          className="modal-backdrop animated-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="language-sheet-title"
+          onClick={() => setLanguageSheet(false)}
+        >
+          <section
+            className="bottom-sheet animated-sheet language-sheet"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">{t.customer.accountSecurity}</p>
+                <h2 id="language-sheet-title">{t.customer.chooseLanguage}</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setLanguageSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <div className="language-list">
+              {languages.map((option) => (
+                <button
+                  key={option.code}
+                  className={locale === option.code ? 'selected' : ''}
+                  onClick={() => {
+                    setLanguage(option.code)
+                    setLanguageSheet(false)
+                  }}
+                >
+                  <span>{option.nativeName}</span>
+                  {locale === option.code && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
       {confirmLogout && (
         <div
           className="modal-backdrop animated-backdrop"
@@ -1674,19 +2116,19 @@ function Account({
                 <Icon name="close" />
               </button>
             </div>
-            <p className="upi-picker-total">
+            <p className="confirm-note">
               You will be signed out of the CRAVE app. You can sign back in anytime.
             </p>
-            <div className="upi-app-grid">
-              <button className="upi-app-card" onClick={() => setConfirmLogout(false)}>
-                <span className="upi-app-mark gpay">
+            <div className="confirm-grid">
+              <button onClick={() => setConfirmLogout(false)}>
+                <span className="confirm-icon cancel">
                   <Icon name="close" />
                 </span>
                 <b>Cancel</b>
                 <small>Stay signed in</small>
               </button>
-              <button className="upi-app-card" onClick={onLogout}>
-                <span className="upi-app-mark phonepe">
+              <button onClick={onLogout}>
+                <span className="confirm-icon signout">
                   <Icon name="logout" />
                 </span>
                 <b>Sign out</b>
@@ -1946,6 +2388,9 @@ function Addresses({
 }
 
 export default function App() {
+  const { t } = useLanguage()
+  const [permissionSheet, setPermissionSheet] = useState(false)
+  const [savedDataHint, setSavedDataHint] = useState(false)
   const [ready, setReady] = useState(false),
     [user, setUser] = useState<User | null>(null),
     [tab, setTab] = useState<Tab>('home'),
@@ -1974,13 +2419,6 @@ export default function App() {
     [checkout, setCheckout] = useState(false),
     [addressPage, setAddressPage] = useState(false),
     [search, setSearch] = useState(''),
-    [favourites, setFavourites] = useState<string[]>(() => {
-      try {
-        return JSON.parse(localStorage.getItem('crave_favourites') || '[]')
-      } catch {
-        return []
-      }
-    }),
     [toast, setToast] = useState('')
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
@@ -2023,19 +2461,36 @@ export default function App() {
       )
     }
   }, [])
-  const loadAddresses = useCallback(
-    () =>
-      apiRequest<{ addresses: Address[] }>('/api/user/addresses')
-        .then((r) => setAddresses(r.addresses || []))
-        .catch(() => setAddresses([])),
-    []
-  )
+  // The cache is scoped by the account; a ref keeps it current without making
+  // the loaders depend on the user object.
+  const userIdRef = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    userIdRef.current = user?.id
+  }, [user?.id])
+
+  const loadAddresses = useCallback(async () => {
+    try {
+      const result = await cachedRequest<{ addresses: Address[] }>('/api/user/addresses', {
+        maxAge: 12 * 60 * 60 * 1000,
+        scope: userIdRef.current,
+      })
+      setAddresses(result.data.addresses || [])
+      if (result.fromCache) setSavedDataHint(true)
+    } catch {
+      setAddresses([])
+    }
+  }, [])
+
   const loadOrders = useCallback(async (silent = false) => {
     if (!silent) setOrdersLoading(true)
     setOrdersError('')
     try {
-      const r = await apiRequest<{ orders: Order[] }>('/api/orders')
-      const next = r.orders || []
+      const result = await cachedRequest<{ orders: Order[] }>('/api/orders', {
+        maxAge: 5 * 60 * 1000,
+        scope: userIdRef.current,
+      })
+      const next = result.data.orders || []
+      if (result.fromCache) setSavedDataHint(true)
       for (const o of next) {
         if (previous.current[o.id] && previous.current[o.id] !== o.status)
           void notifyOrder(
@@ -2057,6 +2512,17 @@ export default function App() {
   useEffect(() => {
     void initializeNative()
     void loadTheme().then(setTheme)
+    // The permission sheet is shown once, on the first launch.
+    void hasSeenPermissionSheet().then((seen) => {
+      if (!seen) setPermissionSheet(true)
+    })
+    // The service worker keeps the shell and the static assets on the device,
+    // so the app opens instantly and works without a network.
+    if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js').catch(() => undefined)
+      })
+    }
     restoreAuthToken().then(async (token) => {
       if (!token) {
         setReady(true)
@@ -2112,9 +2578,6 @@ export default function App() {
   useEffect(() => {
     if (cart.length === 0) setCartRestaurant(null)
   }, [cart.length])
-  useEffect(() => {
-    localStorage.setItem('crave_favourites', JSON.stringify(favourites))
-  }, [favourites])
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     let listener: { remove: () => Promise<void> } | undefined
@@ -2175,6 +2638,8 @@ export default function App() {
     setConfirmLogout(false)
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
+    // The saved copies belong to this account only.
+    clearApiCache()
     setUser(null)
     setCart([])
     setCartRestaurant(null)
@@ -2208,6 +2673,7 @@ export default function App() {
         user={user}
         addresses={addresses}
         onClose={() => setCheckout(false)}
+        onManageAddresses={() => setAddressPage(true)}
         onPlaced={() => {
           setCheckout(false)
           setCart([])
@@ -2225,12 +2691,6 @@ export default function App() {
           onBack={() => setSelected(null)}
           onAdd={add}
           cart={cart}
-          favourite={favourites.includes(selected.id)}
-          onFavourite={() =>
-            setFavourites((f) =>
-              f.includes(selected.id) ? f.filter((x) => x !== selected.id) : [...f, selected.id]
-            )
-          }
         />
         {cart.length > 0 && (
           <button
@@ -2261,6 +2721,15 @@ export default function App() {
       {!online && (
         <div className="offline-banner">You’re offline. We’ll reconnect automatically.</div>
       )}
+      {online && savedDataHint && (
+        <div className="saved-data-banner">
+          <Icon name="download" />
+          <span>Showing the last saved copy. Pull to refresh when you are back online.</span>
+          <button onClick={() => setSavedDataHint(false)} aria-label="Dismiss">
+            <Icon name="close" />
+          </button>
+        </div>
+      )}
       <main className="content">
         {tab === 'home' && (
           <section className="page home">
@@ -2280,16 +2749,16 @@ export default function App() {
               <Logo compact />
             </header>
             <div className="welcome">
-              <p>Hey, {user.name.split(' ')[0]} 👋</p>
+              <p>
+                {t.customer.dashboard}, {user.name.split(' ')[0]} 👋
+              </p>
               <h1>
-                Good food.
-                <br />
-                <em>No waiting.</em>
+                Good food. <em>No waiting.</em>
               </h1>
             </div>
             <button className="search-launch" onClick={() => setTab('search')}>
               <Icon name="search" />
-              Search dishes, cuisines or restaurants
+              {t.customer.searchPlaceholder}
             </button>
             <div className="promo">
               <div>
@@ -2311,17 +2780,7 @@ export default function App() {
             </div>
             <div className="restaurant-list">
               {restaurants.slice(0, 6).map((r) => (
-                <RestaurantCard
-                  key={r.id}
-                  restaurant={r}
-                  onOpen={() => setSelected(r)}
-                  favourite={favourites.includes(r.id)}
-                  onFavourite={() =>
-                    setFavourites((f) =>
-                      f.includes(r.id) ? f.filter((x) => x !== r.id) : [...f, r.id]
-                    )
-                  }
-                />
+                <RestaurantCard key={r.id} restaurant={r} onOpen={() => setSelected(r)} />
               ))}
             </div>
             {catalogError && (
@@ -2361,17 +2820,7 @@ export default function App() {
             </h2>
             <div className="restaurant-list">
               {visible.map((r) => (
-                <RestaurantCard
-                  key={r.id}
-                  restaurant={r}
-                  onOpen={() => setSelected(r)}
-                  favourite={favourites.includes(r.id)}
-                  onFavourite={() =>
-                    setFavourites((f) =>
-                      f.includes(r.id) ? f.filter((x) => x !== r.id) : [...f, r.id]
-                    )
-                  }
-                />
+                <RestaurantCard key={r.id} restaurant={r} onOpen={() => setSelected(r)} />
               ))}
             </div>
             {catalogError && (
@@ -2397,6 +2846,7 @@ export default function App() {
             loading={ordersLoading}
             error={ordersError}
             onRefresh={() => loadOrders()}
+            customer={user}
           />
         )}{' '}
         {tab === 'cart' && (
@@ -2425,10 +2875,10 @@ export default function App() {
       <nav className="bottom-nav">
         {(
           [
-            ['home', 'Home'],
-            ['orders', 'Orders'],
-            ['cart', 'Bag'],
-            ['account', 'You'],
+            ['home', t.nav.home],
+            ['orders', t.nav.orders],
+            ['cart', t.nav.bag],
+            ['account', t.nav.you],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -2449,6 +2899,18 @@ export default function App() {
         ))}
       </nav>
       {toast && <div className="toast">{toast}</div>}
+      {permissionSheet && (
+        <PermissionSheet
+          onClose={() => {
+            setPermissionSheet(false)
+            void markPermissionSheetSeen()
+          }}
+          onDone={() => {
+            setPermissionSheet(false)
+            void markPermissionSheetSeen()
+          }}
+        />
+      )}
     </div>
   )
 }

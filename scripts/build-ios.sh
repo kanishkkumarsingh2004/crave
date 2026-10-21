@@ -24,7 +24,8 @@ for index in "${!app_directories[@]}"; do
   echo "==> Building ${app_name}"
 
   # Keep the iOS build number in step with the Android one.
-  if [[ -f "${ios_directory}/App/App.xcodeproj/project.pbxproj" ]]; then
+  # KEEP_VERSION=1 publishes the version already in the project as-is.
+  if [[ "${KEEP_VERSION:-0}" != "1" && -f "${ios_directory}/App/App.xcodeproj/project.pbxproj" ]]; then
     bump_ios_version "${ios_directory}/App/App.xcodeproj/project.pbxproj"
   fi
 

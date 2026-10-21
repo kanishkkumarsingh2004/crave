@@ -28,5 +28,9 @@ skills-lock.json
 load-test-results.json
 load-test-summary.local.json
 load-tests/results/
+load-tests/reports/
+load-tests/abuse/*.json
+load-tests/.env
+summary.json
 *.local.json
 junit.xml

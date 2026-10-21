@@ -3,6 +3,28 @@ import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { FormEvent, lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Bell,
+  Camera,
+  Check,
+  ChevronRight,
+  Download,
+  Home,
+  IndianRupee,
+  Languages,
+  ListOrdered,
+  Lock,
+  LogOut,
+  Package,
+  RefreshCw,
+  Settings,
+  Store,
+  Users,
+  Wifi,
+  WifiOff,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -15,6 +37,7 @@ import {
 } from './api'
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import { initializeNativeAppearance, notifyAdminAppUpdate } from './native'
 import type { AddressMapPoint } from './AddressMap'
 
@@ -38,6 +61,10 @@ type IconName =
   | 'package'
   | 'camera'
   | 'lock'
+  | 'chevron'
+  | 'language'
+  | 'close'
+  | 'check'
 
 interface AdminUser {
   id: string
@@ -185,53 +212,32 @@ interface DashboardData {
   restaurants: RestaurantRecord[]
 }
 
+/** Every icon in the app comes from Lucide, so the set stays consistent. */
+const icons: Record<IconName, LucideIcon> = {
+  home: Home,
+  orders: ListOrdered,
+  store: Store,
+  settings: Settings,
+  refresh: RefreshCw,
+  wifi: Wifi,
+  offline: WifiOff,
+  download: Download,
+  logout: LogOut,
+  users: Users,
+  money: IndianRupee,
+  bell: Bell,
+  package: Package,
+  camera: Camera,
+  lock: Lock,
+  chevron: ChevronRight,
+  language: Languages,
+  close: X,
+  check: Check,
+}
+
 function Icon({ name }: { name: IconName }) {
-  const paths: Record<IconName, React.ReactNode> = {
-    home: <path d="M3 11 12 3l9 8M5 10v11h14V10M9 21v-7h6v7" />,
-    orders: <path d="M6 3h12l2 5H4l2-5ZM5 8v13h14V8M9 12h6M9 16h6" />,
-    store: <path d="M4 10v11h16V10M3 4h18l-2 6H5L3 4ZM9 21v-6h6v6" />,
-    settings: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.8-1L14.4 3h-4.8l-.4 3a8 8 0 0 0-1.8 1L5 6.1 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a8 8 0 0 0 1.8 1l.4 3h4.8l.4-3a8 8 0 0 0 1.8-1l2.4 1 2-3.5-2.1-1.5a7 7 0 0 0 .1-1Z" />
-      </>
-    ),
-    refresh: <path d="M20 6v5h-5M18.5 9A8 8 0 1 0 20 15" />,
-    wifi: <path d="M4 9a12 12 0 0 1 16 0M7 13a8 8 0 0 1 10 0M10 17a3 3 0 0 1 4 0M12 20h.01" />,
-    offline: (
-      <path d="m3 3 18 18M7 13a8 8 0 0 1 4-2M4 9a12 12 0 0 1 3-2M14 11a8 8 0 0 1 3 2M10 17a3 3 0 0 1 3 0" />
-    ),
-    download: <path d="M12 3v12m-5-5 5 5 5-5M5 21h14" />,
-    logout: <path d="m10 17 5-5-5-5m5 5H3m11-9h7v18h-7" />,
-    users: (
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8m13 18v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
-    ),
-    money: <path d="M12 2v20m5-16H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />,
-    bell: (
-      <>
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-        <path d="M10 21h4" />
-      </>
-    ),
-    package: (
-      <>
-        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" />
-        <path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.2l8 4.5" />
-      </>
-    ),
-    camera: (
-      <>
-        <path d="M4 7h3l1.5-2h7L17 7h3v12H4V7Z" />
-        <circle cx="12" cy="13" r="3.5" />
-      </>
-    ),
-    lock: <path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10ZM12 14v3" />,
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      {paths[name]}
-    </svg>
-  )
+  const Glyph = icons[name]
+  return <Glyph strokeWidth={1.8} aria-hidden="true" />
 }
 
 function money(value: unknown): string {
@@ -405,6 +411,11 @@ export default function App() {
     message: string
   } | null>(null)
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [passwordSheet, setPasswordSheet] = useState(false)
+  const [updateSheet, setUpdateSheet] = useState(false)
+  const [languageSheet, setLanguageSheet] = useState(false)
+  const { locale: language, setLocale, languages } = useLanguage()
+  const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const updateCheckRunningRef = useRef(false)
   const touchStartX = useRef(0)
@@ -1380,73 +1391,6 @@ export default function App() {
                 <small>Platform administrator</small>
               </div>
             </article>
-            <article className="settings-card change-password-card">
-              <div className="settings-title">
-                <span>
-                  <Icon name="lock" />
-                </span>
-                <div>
-                  <h3>Change password</h3>
-                  <p>Update the password used to sign in to the admin app.</p>
-                </div>
-              </div>
-              <form
-                className="change-password-form"
-                noValidate
-                onSubmit={(event) => void changePassword(event)}
-              >
-                <div className="change-password-fields">
-                  <PasswordField
-                    label="Current password"
-                    value={currentPassword}
-                    onChange={setCurrentPassword}
-                    placeholder="Current password"
-                    autoComplete="current-password"
-                    visible={showCurrentPassword}
-                    onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
-                    minLength={8}
-                    maxLength={256}
-                  />
-                  <PasswordField
-                    label="New password"
-                    value={newPassword}
-                    onChange={setNewPassword}
-                    placeholder="8–256 characters"
-                    autoComplete="new-password"
-                    visible={showNewPassword}
-                    onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
-                    minLength={8}
-                    maxLength={256}
-                  />
-                  <PasswordField
-                    label="Confirm new password"
-                    value={confirmPassword}
-                    onChange={setConfirmPassword}
-                    placeholder="Re-enter new password"
-                    autoComplete="new-password"
-                    visible={showConfirmPassword}
-                    onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
-                    minLength={8}
-                    maxLength={256}
-                  />
-                </div>
-                {passwordFeedback && (
-                  <div
-                    className={`password-feedback ${passwordFeedback.type}`}
-                    role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
-                    aria-live="polite"
-                  >
-                    {passwordFeedback.message}
-                  </div>
-                )}
-                <div className="change-password-actions">
-                  <small>Password length: 8–256 characters.</small>
-                  <button className="primary-button" type="submit" disabled={passwordBusy}>
-                    {passwordBusy ? 'Updating password…' : 'Update password'}
-                  </button>
-                </div>
-              </form>
-            </article>
             <article className="settings-card">
               <div className="settings-title">
                 <span>
@@ -1484,49 +1428,220 @@ export default function App() {
                 ))}
               </div>
             </article>
-            <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
-              <div className="settings-title">
-                <span>
-                  <Icon name="download" />
+            <h3 className="settings-list-heading">App</h3>
+            <div className="settings-list">
+              <button onClick={() => setUpdateSheet(true)}>
+                <span className="settings-list-icon">
+                  <Icon name="refresh" />
                 </span>
-                <div>
-                  <h3>Admin app update</h3>
-                  <p>
+                <span>
+                  <b>{t.settings.checkForUpdates}</b>
+                  <small>
                     {checkingUpdate
                       ? 'Checking for the latest admin app…'
                       : availableUpdate
-                        ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                        ? `Version ${availableUpdate.versionName} is available`
                         : updateError || 'You are using the latest available version.'}
-                  </p>
-                </div>
-              </div>
-              <div className="software-actions">
-                <button
-                  className="secondary-button"
-                  disabled={checkingUpdate || installingUpdate}
-                  onClick={() => void refreshUpdateStatus()}
-                >
-                  {checkingUpdate ? 'Checking…' : 'Check again'}
-                </button>
-                <button
-                  className="primary-button"
-                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                  onClick={() => void installUpdate()}
-                >
-                  {installingUpdate
-                    ? 'Opening installer…'
-                    : availableUpdate
-                      ? `Update to ${availableUpdate.versionName}`
-                      : 'App is up to date'}
-                </button>
-              </div>
-              {updateError && availableUpdate && (
-                <div className="software-error">{updateError}</div>
-              )}
-            </article>
+                  </small>
+                </span>
+                <Icon name="chevron" />
+              </button>
+              <button onClick={() => setPasswordSheet(true)}>
+                <span className="settings-list-icon">
+                  <Icon name="lock" />
+                </span>
+                <span>
+                  <b>{t.settings.changePassword}</b>
+                  <small>{t.settings.changePasswordHint}</small>
+                </span>
+                <Icon name="chevron" />
+              </button>
+              <button onClick={() => setLanguageSheet(true)}>
+                <span className="settings-list-icon">
+                  <Icon name="language" />
+                </span>
+                <span>
+                  <b>{t.settings.language}</b>
+                  <small>{language}</small>
+                </span>
+                <Icon name="chevron" />
+              </button>
+            </div>
             <button className="logout-button" onClick={requestLogout}>
               <Icon name="logout" /> Sign out of admin app
             </button>
+            {updateSheet && (
+              <div
+                className="modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setUpdateSheet(false)}
+              >
+                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Admin app</span>
+                      <h2>{t.settings.checkForUpdates}</h2>
+                    </div>
+                    <button onClick={() => setUpdateSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <div>
+                    <div className="settings-title">
+                      <span>
+                        <Icon name="download" />
+                      </span>
+                      <div>
+                        <h3>Admin app update</h3>
+                        <p>
+                          {checkingUpdate
+                            ? 'Checking for the latest admin app…'
+                            : availableUpdate
+                              ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                              : updateError || 'You are using the latest available version.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="software-actions">
+                      <button
+                        className="secondary-button"
+                        disabled={checkingUpdate || installingUpdate}
+                        onClick={() => void refreshUpdateStatus()}
+                      >
+                        {checkingUpdate ? 'Checking…' : 'Check again'}
+                      </button>
+                      <button
+                        className="primary-button"
+                        disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                        onClick={() => void installUpdate()}
+                      >
+                        {installingUpdate
+                          ? 'Opening installer…'
+                          : availableUpdate
+                            ? `Update to ${availableUpdate.versionName}`
+                            : 'App is up to date'}
+                      </button>
+                    </div>
+                    {updateError && availableUpdate && (
+                      <div className="software-error">{updateError}</div>
+                    )}
+                  </div>
+                </article>
+              </div>
+            )}
+            {passwordSheet && (
+              <div
+                className="modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setPasswordSheet(false)}
+              >
+                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Account security</span>
+                      <h2>{t.settings.changePassword}</h2>
+                    </div>
+                    <button onClick={() => setPasswordSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <p>Update the password used to sign in to the admin app.</p>
+                  <form
+                    className="change-password-form"
+                    noValidate
+                    onSubmit={(event) => void changePassword(event)}
+                  >
+                    <div className="change-password-fields">
+                      <PasswordField
+                        label="Current password"
+                        value={currentPassword}
+                        onChange={setCurrentPassword}
+                        placeholder="Current password"
+                        autoComplete="current-password"
+                        visible={showCurrentPassword}
+                        onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                      <PasswordField
+                        label="New password"
+                        value={newPassword}
+                        onChange={setNewPassword}
+                        placeholder="8–256 characters"
+                        autoComplete="new-password"
+                        visible={showNewPassword}
+                        onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                      <PasswordField
+                        label="Confirm new password"
+                        value={confirmPassword}
+                        onChange={setConfirmPassword}
+                        placeholder="Re-enter new password"
+                        autoComplete="new-password"
+                        visible={showConfirmPassword}
+                        onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                    </div>
+                    {passwordFeedback && (
+                      <div
+                        className={`password-feedback ${passwordFeedback.type}`}
+                        role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                        aria-live="polite"
+                      >
+                        {passwordFeedback.message}
+                      </div>
+                    )}
+                    <div className="change-password-actions">
+                      <small>Password length: 8–256 characters.</small>
+                      <button className="primary-button" type="submit" disabled={passwordBusy}>
+                        {passwordBusy ? 'Updating password…' : 'Update password'}
+                      </button>
+                    </div>
+                  </form>{' '}
+                </article>
+              </div>
+            )}
+            {languageSheet && (
+              <div
+                className="modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setLanguageSheet(false)}
+              >
+                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">App language</span>
+                      <h2>{t.settings.chooseLanguage}</h2>
+                    </div>
+                    <button onClick={() => setLanguageSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <div className="language-list">
+                    {languages.map((option) => (
+                      <button
+                        key={option.code}
+                        className={language === option.code ? 'selected' : ''}
+                        onClick={() => {
+                          setLanguage(option.code)
+                          setLanguageSheet(false)
+                        }}
+                      >
+                        <span>{option.nativeName}</span>
+                        {language === option.code && <Icon name="check" />}
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              </div>
+            )}
             {confirmLogout && (
               <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
                 <article
@@ -1987,7 +2102,9 @@ export default function App() {
     </div>
   )
 }
+const { t } = useLanguage()
 
+/** Languages the app can be switched to. */
 function OrderCard({ order }: { order: OrderRecord }) {
   return (
     <article className="order-card">

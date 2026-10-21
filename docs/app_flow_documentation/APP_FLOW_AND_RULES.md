@@ -1,8 +1,8 @@
 # Crave — Platform Flow, Page Catalog & System Rules
 
-> **Directory**: `d:\crave\docs\app_flow_documentation\`  
-> **Audited & Verified**: October 2026  
-> **Status**: Full multi-role platform operational with H3 spatial dispatch, Redis atomic locks, and real-time WebSocket messaging.
+> **Directory**: `docs/app_flow_documentation/`  
+> **Audited & Verified**: 21 October 2026  
+> **Status**: Full multi-role platform operational with H3 spatial dispatch, Redis atomic locks, and real-time WebSocket messaging. The four native apps (Admin, Driver, Restaurant, Customer) are standalone Capacitor React applications built from this same API.
 
 ---
 

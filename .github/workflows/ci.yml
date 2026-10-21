@@ -252,8 +252,8 @@ jobs:
       - name: Run load test
         uses: grafana/k6-action@v0.2.0
         with:
-          filename: load-tests/checkout-load-test.js
-          env: BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000 CI_SMOKE=true SEED_ADMIN_EMAIL=${{ env.SEED_ADMIN_EMAIL }} SEED_CUSTOMER_EMAIL=${{ env.SEED_CUSTOMER_EMAIL }} SEED_VENDOR_EMAIL=${{ env.SEED_VENDOR_EMAIL }} SEED_RIDER_EMAIL=${{ env.SEED_RIDER_EMAIL }} SEED_PASSWORD=${{ env.SEED_PASSWORD }}
+          filename: load-tests/app-load-test.js
+          env: APP=all BASE_URL=http://localhost:3000 WS_URL=ws://localhost:8000 CI_SMOKE=true STRICT_AUTH=true SEED_ADMIN_EMAIL=${{ env.SEED_ADMIN_EMAIL }} SEED_CUSTOMER_EMAIL=${{ env.SEED_CUSTOMER_EMAIL }} SEED_VENDOR_EMAIL=${{ env.SEED_VENDOR_EMAIL }} SEED_RIDER_EMAIL=${{ env.SEED_RIDER_EMAIL }} SEED_PASSWORD=${{ env.SEED_PASSWORD }}
 
       - name: Upload load test results
         uses: actions/upload-artifact@v4
@@ -261,6 +261,38 @@ jobs:
         with:
           name: load-test-results
           path: load-test-results.json
+
+      - name: Install k6 for the abuse suite
+        run: |
+          K6_VERSION=v1.2.0
+          curl -sL "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-amd64.tar.gz" | tar xz
+          sudo mv "k6-v${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
+          k6 version
+
+      - name: Create abuse suite environment
+        run: |
+          cat > load-tests/.env << 'EOF'
+          SEED_CUSTOMER_EMAIL=${{ env.SEED_CUSTOMER_EMAIL }}
+          SEED_ADMIN_EMAIL=${{ env.SEED_ADMIN_EMAIL }}
+          SEED_VENDOR_EMAIL=${{ env.SEED_VENDOR_EMAIL }}
+          SEED_RIDER_EMAIL=${{ env.SEED_RIDER_EMAIL }}
+          SEED_PASSWORD=${{ env.SEED_PASSWORD }}
+          EOF
+
+      - name: Run abuse / concurrency suite
+        run: |
+          pnpm abuse-test -- \
+            --url http://localhost:3000 \
+            --ws-url ws://localhost:8000/api/ws \
+            --env-file load-tests/.env \
+            --fail-on integrity
+
+      - name: Upload abuse test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abuse-test-results
+          path: load-tests/reports/
 
   build:
     name: Production Build

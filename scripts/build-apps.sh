@@ -27,7 +27,11 @@ for index in "${!app_directories[@]}"; do
 
   # Raise the build number so installed apps recognise this build as newer.
   # Without it the in-app updater keeps every device on the previous APK.
-  bump_android_version "${android_directory}/app/build.gradle"
+  # KEEP_VERSION=1 publishes the version already in build.gradle as-is, which
+  # is what a fresh 1.0.0 release wants.
+  if [[ "${KEEP_VERSION:-0}" != "1" ]]; then
+    bump_android_version "${android_directory}/app/build.gradle"
+  fi
 
   pnpm --dir "${app_directory}" build
 

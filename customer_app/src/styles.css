@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 :root {
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
@@ -77,6 +77,15 @@
   --shadow-color: rgb(17 32 25 / 13%);
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
+  /* The raw inset, with no floor. Chrome that sits below the OS status bar
+     reports 0, so headers can centre their content instead of reserving a
+     phantom status-bar height. */
+  --safe-top-inset: env(safe-area-inset-top, 0px);
+  /* The colour behind the receipt's perforated edges — the sheet it sits on. */
+  --receipt-notch: #f7f7f2;
+  /* Content pages sit below the OS status bar, so they only need the real
+     inset plus a comfortable gap. */
+  --page-top: calc(var(--safe-top-inset) + 10px);
   /* Floating controls sit on top of artwork, so they must clear the OS status bar
      even when the browser reports no safe-area inset (desktop previews). */
   --safe-top-float: max(env(safe-area-inset-top), 56px);
@@ -370,6 +379,154 @@ textarea {
   font-size: 11px;
   font-weight: 800;
 }
+/* Shown when the data on screen came from the device instead of the network. */
+.saved-data-banner {
+  position: fixed;
+  z-index: 190;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: max(env(safe-area-inset-top), 8px) 14px 8px;
+  background: #2b3a20;
+  color: #e6f2c8;
+  font-size: 11px;
+  font-weight: 700;
+}
+.saved-data-banner svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+.saved-data-banner span {
+  flex: 1;
+  min-width: 0;
+}
+.saved-data-banner button {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 12%);
+  color: inherit;
+}
+.saved-data-banner button svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---- First-run permission sheet ---- */
+.permission-sheet {
+  max-width: 430px;
+}
+.permission-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.permission-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.permission-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.permission-row.granted {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+.permission-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-content: center;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.permission-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.permission-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.permission-copy b {
+  font: 800 14px 'Manrope';
+  color: var(--ink);
+}
+.permission-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.permission-action {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.permission-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.permission-state {
+  flex: 0 0 auto;
+  color: var(--success);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.permission-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.permission-actions .secondary,
+.permission-actions .primary {
+  flex: 1;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+.permission-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.permission-skip {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
 .app-shell {
   min-height: 100dvh;
 }
@@ -379,11 +536,11 @@ textarea {
   margin: auto;
 }
 .page {
-  padding: calc(var(--safe-top-float) + 10px) 19px 30px;
+  padding: var(--page-top) 19px 30px;
   min-height: calc(100dvh - 75px);
 }
 .home {
-  padding-top: var(--safe-top-float);
+  padding-top: var(--page-top);
 }
 .home-header {
   display: flex;
@@ -420,6 +577,11 @@ textarea {
   color: #616961;
   font-weight: 600;
 }
+.welcome h1 {
+  font-size: clamp(25px, 7vw, 38px);
+  letter-spacing: -1.2px;
+  white-space: nowrap;
+}
 .welcome h1 em {
   font-style: normal;
   color: #627b00;
@@ -453,7 +615,7 @@ textarea {
   z-index: 2;
 }
 .promo span {
-  color: var(--lime);
+  color: var(--accent-strong);
   font-weight: 800;
   font-size: 10px;
   letter-spacing: 2px;
@@ -527,7 +689,6 @@ textarea {
   background: #dce7c0;
   overflow: hidden;
 }
-.heart,
 .round {
   width: 42px;
   height: 42px;
@@ -538,21 +699,6 @@ textarea {
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--ink);
   border: 1px solid var(--line);
-}
-.heart {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-}
-.heart svg {
-  width: 20px;
-}
-.heart.liked {
-  background: var(--green);
-  color: var(--surface);
-}
-.heart.liked svg {
-  fill: currentColor;
 }
 .offer,
 .closed {
@@ -573,7 +719,8 @@ textarea {
   display: flex;
   align-items: start;
   justify-content: space-between;
-  padding: 14px 14px 5px;
+  gap: 12px;
+  padding: 14px;
 }
 .restaurant-info h3 {
   margin: 0 0 3px;
@@ -584,49 +731,61 @@ textarea {
   color: var(--muted);
   font-size: 13px;
 }
-.rating {
-  padding: 5px 8px;
-  border-radius: 8px;
-  background: #173c25;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
+/* Delivery time and distance, stacked on the right of the card. */
+.card-eta {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding-left: 12px;
+  color: #6e776f;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.meta {
+.card-eta > span:first-child {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 14px 15px;
-  color: #6e776f;
-  font-size: 11px;
+  gap: 5px;
 }
-.meta svg {
+.card-eta svg {
   width: 13px;
   height: 13px;
 }
-.meta span {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
 .page-header {
-  min-height: 75px;
+  min-height: 58px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 19px;
 }
 .page-header > span {
-  align-self: flex-end;
-  padding-bottom: 5px;
   color: var(--muted);
   font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .page-header h1 {
   font-size: 34px;
 }
 .page-header .eyebrow {
   margin-bottom: 4px;
+}
+/* The bag header pairs the page title with the app mark. */
+.bag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 19px;
+}
+.bag-header h1 {
+  margin: 0;
+  font: 800 30px/1.05 'Manrope';
+  letter-spacing: -1.4px;
+  color: var(--ink);
 }
 .round {
   padding: 0;
@@ -665,7 +824,7 @@ textarea {
 }
 .sticky-search {
   position: sticky;
-  top: var(--safe-top-float);
+  top: 0;
   z-index: 10;
   box-shadow: 0 8px 20px #f7f7f2;
 }
@@ -904,14 +1063,6 @@ textarea {
 }
 .open-pill.closed::before {
   background: #ff8e9d;
-}
-.round.liked {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
-}
-.round.liked svg {
-  fill: currentColor;
 }
 .detail-body {
   padding: 0 var(--gutter);
@@ -1273,6 +1424,9 @@ textarea {
 .animated-sheet {
   max-height: min(82dvh, 720px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   animation: sheet-slide-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes modal-fade-in {
@@ -1426,22 +1580,6 @@ textarea {
   text-align: center;
   font-size: 12px;
 }
-.bill-preview {
-  background: #fff;
-  border: 1px solid #e1e4df;
-  border-radius: 17px;
-  padding: 15px;
-}
-.bill-preview span {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-}
-.bill-preview p {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-}
 .sticky-action {
   position: fixed;
   z-index: 20;
@@ -1482,6 +1620,11 @@ textarea {
   min-height: 100dvh;
   background: #f7f7f2;
 }
+/* The payment bar is pinned to the screen, so the page keeps its scroll
+   height clear of it. */
+.checkout > main {
+  padding-bottom: calc(92px + var(--safe-bottom));
+}
 .checkout > header,
 .subpage > header {
   height: calc(68px + var(--safe-top-float));
@@ -1491,6 +1634,13 @@ textarea {
   justify-content: space-between;
   background: #fff;
   border-bottom: 1px solid #e2e4df;
+}
+/* The checkout chrome sits closer to the status bar: the row is only as tall as
+   its content, so the back button and logo are centred in the band. */
+.checkout > header,
+.subpage > header {
+  height: auto;
+  padding: calc(var(--safe-top-inset) + 8px) 18px 8px;
 }
 .checkout > main,
 .subpage > main {
@@ -1504,6 +1654,34 @@ textarea {
 .checkout main > h2 {
   margin: 25px 0 10px;
   font: 800 16px 'Manrope';
+}
+/* A section heading with an action on the right. */
+.checkout-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 25px 0 10px;
+}
+.checkout-section-head > h2 {
+  margin: 0;
+  min-width: 0;
+  font: 800 16px 'Manrope';
+}
+.text-link {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 4px 2px;
+  background: none;
+  color: #5a7000;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.text-link:active {
+  opacity: 0.6;
 }
 .address-list {
   display: grid;
@@ -1555,18 +1733,49 @@ textarea {
   border: 1px solid #e0e3dd;
   border-radius: 17px;
   background: #fff;
-  padding: 16px;
+  padding: 6px 16px 16px;
   display: grid;
-  gap: 11px;
+  gap: 0;
 }
-.bill-card span {
+/* Every row is separated by a dashed rule, the way a printed bill reads. */
+.bill-card > span {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #dfe3dc;
   color: #667066;
   font-size: 13px;
 }
+.bill-card > span:last-of-type {
+  border-bottom: 0;
+}
 .bill-card span b {
   color: #2a332b;
+}
+/* The tax line carries a small note under it. */
+.bill-card .bill-taxes {
+  display: block;
+  padding: 10px 0;
+  border-bottom: 1px dashed #dfe3dc;
+  border-top: 0;
+  font-weight: 400;
+}
+.bill-card .bill-taxes > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border-bottom: 0;
+  color: #667066;
+  font-size: 13px;
+}
+.bill-card .bill-taxes small {
+  display: block;
+  margin-top: 3px;
+  color: #8d968d;
+  font-size: 10.5px;
+  line-height: 1.35;
 }
 .bill-card div {
   display: flex;
@@ -1602,44 +1811,117 @@ textarea {
   margin-top: 13px;
 }
 /* Tip row */
-.tip-row {
-  margin-top: 13px;
-  border: 1px solid #e0e3dd;
-  border-radius: 17px;
-  background: #fff;
-  padding: 14px 16px;
+/* The tip row in the bill, with the action on the right. */
+.bill-card .bill-tip-row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
-.tip-label {
+.bill-tip-action {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #e2622a;
   font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.bill-tip-action:active {
+  opacity: 0.6;
+}
+/* ---- The tip sheet, laid out like a bill ---- */
+.tip-sheet {
+  max-width: 430px;
+}
+.tip-bill {
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.tip-bill-rule {
+  display: block;
+  border-top: 1px dashed #ccd1ca;
+}
+.tip-bill > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
   font-weight: 600;
-  color: #2a332b;
+  text-align: left;
+  cursor: pointer;
+}
+.tip-bill > button b {
+  font: 800 14px 'Manrope';
+  color: var(--ink);
+}
+.tip-bill > button.active {
+  background: #f2fac6;
+}
+html[data-theme='dark'] .tip-bill {
+  border-color: var(--line);
+  background: var(--surface);
+}
+html[data-theme='dark'] .tip-bill > button,
+html[data-theme='dark'] .tip-bill-custom,
+html[data-theme='dark'] .tip-bill-total b {
+  color: var(--ink);
+}
+html[data-theme='dark'] .tip-bill > button.active {
+  background: var(--accent-soft);
+}
+html[data-theme='dark'] .tip-bill > button.active b {
+  color: var(--accent-strong);
+}
+html[data-theme='dark'] .tip-bill-rule {
+  border-top-color: var(--line);
+}
+html[data-theme='dark'] .bill-tip-action,
+.tip-bill > button.active b {
+  color: #3f5c00;
+}
+.tip-bill-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.tip-bill-custom .coupon-input {
+  width: 116px;
   margin: 0;
 }
-.tip-presets {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+.tip-bill-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
-.tip-preset {
-  min-width: 0;
-  height: 36px;
-  border-radius: 10px;
-  border: 1.5px solid #dce0d9;
-  background: #f5f7f4;
-  font-size: 13px;
-  font-weight: 600;
-  color: #667066;
-  cursor: pointer;
-  transition: all 0.18s ease;
+.tip-bill-total b {
+  font: 800 15px 'Manrope';
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  text-transform: none;
 }
-.tip-preset.active {
-  border-color: #b5d43b;
-  background: #eef5cf;
-  color: #3a5a00;
-}
+
 .tip-rupee {
   color: #7f887f;
   flex-shrink: 0;
@@ -1780,19 +2062,6 @@ html[data-theme='dark'] .tip-row {
   background: var(--surface);
   border-color: var(--line);
 }
-html[data-theme='dark'] .tip-label {
-  color: var(--ink);
-}
-html[data-theme='dark'] .tip-preset {
-  background: var(--surface-2);
-  border-color: var(--line);
-  color: var(--muted);
-}
-html[data-theme='dark'] .tip-preset.active {
-  background: var(--accent-soft);
-  border-color: var(--accent-strong);
-  color: var(--accent-strong);
-}
 html[data-theme='dark'] .tip-rupee {
   color: var(--muted);
 }
@@ -1809,7 +2078,7 @@ html[data-theme='dark'] .meter-track {
 .upi-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 15px;
   margin-bottom: 11px;
   border: 1px solid #dce0da;
@@ -1820,35 +2089,114 @@ html[data-theme='dark'] .meter-track {
   padding: 8px;
   width: 43px;
   height: 43px;
+  flex: 0 0 auto;
   border-radius: 12px;
   background: #eaff87;
   color: #294000;
 }
 .upi-card div {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   flex-direction: column;
 }
 .upi-card small {
   color: var(--muted);
   font-size: 10px;
 }
-.upi-card > strong {
-  font-size: 10px;
-  color: #5a7000;
+.upi-qr-btn {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid #c2dc3a;
+  border-radius: 999px;
+  background: #f6ffd6;
+  color: #35510a;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 160ms ease;
 }
-.upi-picker-total {
+.upi-qr-btn:active {
+  transform: scale(0.96);
+}
+.upi-qr-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* ---- QR sheet ---- */
+.upi-qr-sheet {
+  max-width: 430px;
+}
+/* ---- Language picker ---- */
+.language-sheet {
+  max-width: 430px;
+}
+.language-list {
+  display: grid;
+  gap: 2px;
+}
+.language-list > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+}
+.language-list > button:active {
+  background: var(--surface-3);
+}
+.language-list > button.selected {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.language-list > button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+/* ---- Address picker sheet ---- */
+.address-sheet {
+  max-width: 430px;
+}
+.address-sheet .address-list {
+  margin-bottom: 14px;
+}
+.address-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.address-add svg {
+  width: 15px;
+  height: 15px;
+}
+/* ---- confirmation dialog (sign out) ---- */
+.confirm-note {
   color: var(--muted);
   margin: 9px 0 18px;
 }
-.upi-app-grid {
+.confirm-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
-.upi-app-grid > button {
+.confirm-grid > button {
   min-width: 0;
-  min-height: 128px;
+  min-height: 118px;
   border: 1px solid #dce1da;
   border-radius: 18px;
   background: #fff;
@@ -1859,16 +2207,20 @@ html[data-theme='dark'] .meter-track {
   gap: 4px;
   text-align: left;
 }
-.upi-app-grid > button:active {
+.confirm-grid > button:active {
   transform: scale(0.98);
   background: #f2f7e9;
 }
-.upi-app-grid small {
+.confirm-grid b {
+  font: 800 15px 'Manrope';
+  color: var(--ink);
+}
+.confirm-grid small {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.3;
 }
-.upi-app-mark {
+.confirm-icon {
   width: 42px;
   height: 42px;
   margin-bottom: 7px;
@@ -1879,22 +2231,51 @@ html[data-theme='dark'] .meter-track {
   color: #1b2920;
   font: 900 16px 'Manrope';
 }
-.upi-app-mark.gpay {
+.confirm-icon.cancel {
   color: #1769e0;
   background: #eef4ff;
 }
-.upi-app-mark.phonepe {
+.confirm-icon.signout {
   color: #5f259f;
   background: #f4ecff;
 }
-.upi-app-mark.paytm {
-  color: #00a7e8;
-  background: #eaf9ff;
+.qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 18px;
+  padding: 20px 16px 16px;
+  border: 1px solid #dce1da;
+  border-radius: 20px;
+  background: #fff;
 }
-.upi-app-mark.other {
-  color: #516900;
-  background: #efff91;
-  font-size: 11px;
+.qr-panel svg {
+  display: block;
+  width: 200px;
+  height: 200px;
+  padding: 8px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgb(17 32 25 / 8%);
+}
+.qr-amount {
+  margin: 14px 0 0;
+  font: 800 15px 'Manrope';
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  text-align: center;
+}
+.qr-vpa {
+  margin: 3px 0 0;
+  font: 600 11px 'DM Sans';
+  color: var(--muted);
+  letter-spacing: 0.4px;
+}
+.qr-unavailable {
+  margin: 40px 0;
+  font-size: 12px;
+  color: var(--muted);
 }
 .utr-box {
   display: grid;
@@ -1926,6 +2307,96 @@ html[data-theme='dark'] .meter-track {
   font-size: 10px;
   line-height: 1.4;
   margin: 16px;
+}
+/* ---- The payment bar, the way a UPI app shows the amount it is about to take ---- */
+.pay-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 20;
+  width: min(100%, 740px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 19px calc(12px + var(--safe-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 -10px 26px rgb(17 32 25 / 7%);
+}
+.pay-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.pay-bar-info > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.pay-bar-info small {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.pay-bar-info b {
+  font: 800 15px 'Manrope';
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pay-bar-mark {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-content: center;
+  border-radius: 9px;
+  background: #e7f7ee;
+  color: #0d7a3d;
+}
+.pay-bar-mark svg {
+  width: 16px;
+  height: 16px;
+}
+.pay-bar-btn {
+  flex: 0 0 auto;
+  min-width: 128px;
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #12a05a;
+  color: #fff;
+  font: 800 15px 'Manrope';
+  letter-spacing: -0.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+.pay-bar-btn:active {
+  transform: scale(0.97);
+}
+.pay-bar-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.pay-bar-btn svg {
+  width: 16px;
+  height: 16px;
 }
 .order-card {
   border: 1px solid #dfe3dd;
@@ -1962,6 +2433,368 @@ html[data-theme='dark'] .meter-track {
   padding: 12px;
   border-radius: 13px;
   background: #f1f4eb;
+}
+/* The action on the right of the order status row. */
+.status-action {
+  flex: 0 0 auto;
+  margin-left: auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #d6dcd3;
+  border-radius: 999px;
+  background: #fff;
+  color: #3f5c00;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 160ms ease;
+}
+.status-action:active {
+  transform: scale(0.96);
+  background: #f1f8cc;
+}
+/* ---- Invoice: a printed till slip ---- */
+.invoice-sheet {
+  max-width: 430px;
+  padding-bottom: 8px;
+}
+.invoice-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.invoice-close svg {
+  width: 17px;
+  height: 17px;
+}
+.receipt {
+  /* The slip has its own palette so the theme can flip it in one place. */
+  --receipt-ink: #1b2320;
+  --receipt-muted: #4a544d;
+  --receipt-faint: #6b756d;
+  --receipt-line: #e3e7df;
+  --receipt-rule: #c9cec7;
+  --receipt-paper: #fffdf6;
+  --receipt-accent: #3f5c00;
+  --receipt-accent-soft: #f2fac6;
+  --receipt-accent-bright: #b6cc3a;
+  --receipt-strip: #dfe3dc;
+  --receipt-row: #fbf8ee;
+  position: relative;
+  border: 1px solid var(--receipt-line);
+  border-radius: 10px;
+  padding: 18px 16px 20px;
+  background: var(--receipt-paper);
+  box-shadow:
+    0 18px 40px rgb(17 32 25 / 12%),
+    0 2px 6px rgb(17 32 25 / 6%);
+  color: var(--receipt-ink);
+  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+/* Perforated till-slip edges. */
+.receipt::before,
+.receipt::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  height: 9px;
+  background-image: radial-gradient(
+    circle at 4.5px 4.5px,
+    var(--receipt-notch) 4.5px,
+    transparent 5px
+  );
+  background-size: 9px 9px;
+  pointer-events: none;
+}
+.receipt::before {
+  top: -5px;
+  transform: rotate(180deg);
+}
+.receipt::after {
+  bottom: -5px;
+}
+.receipt-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: -4px -6px 0;
+  padding: 10px 12px 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--receipt-accent-soft), #e6f4a4);
+}
+.receipt-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.receipt-stamp {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1.5px solid var(--receipt-accent);
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgb(63 92 0 / 18%);
+  color: var(--receipt-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+  opacity: 0.85;
+}
+.receipt-title {
+  margin: 0;
+  font:
+    400 17px 'DM Mono',
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.5px;
+  color: var(--receipt-ink);
+}
+.receipt-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--receipt-muted);
+}
+.receipt-shop {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
+.receipt-line {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--receipt-muted);
+  word-break: break-word;
+}
+/* A row that carries a little pictogram. */
+.receipt-line-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+.receipt-line-icon svg {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+  color: var(--receipt-accent);
+}
+.receipt-line-icon span {
+  min-width: 0;
+}
+.receipt-label {
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--receipt-faint);
+}
+.receipt-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 3px;
+}
+.receipt-kv span {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--receipt-muted);
+}
+.receipt-kv span svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  color: var(--receipt-accent);
+}
+.receipt-kv b {
+  font-weight: 400;
+  text-align: right;
+  word-break: break-all;
+}
+.receipt-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.receipt-table th {
+  padding: 0 0 6px;
+  border-bottom: 1px solid #d7dcd5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-align: left;
+  color: var(--receipt-muted);
+}
+.receipt-table tbody tr:nth-child(odd) {
+  background: var(--receipt-row);
+}
+.receipt-table td {
+  padding: 5px 0;
+  vertical-align: top;
+  border-bottom: 1px dotted #e3e7e0;
+}
+.receipt-table td:first-child,
+.receipt-table th:first-child {
+  width: 34px;
+}
+.receipt-table td:nth-child(2),
+.receipt-table th:nth-child(2) {
+  width: 32px;
+  text-align: center;
+}
+.receipt-table td:last-child,
+.receipt-table th:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+.receipt-rule {
+  border-top: 1px dashed var(--receipt-rule);
+  margin: 12px 0 10px;
+}
+/* A section divider with a little sparkle in the middle. */
+.receipt-divider {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 10px;
+  color: var(--receipt-accent-bright);
+  font-size: 10px;
+  line-height: 1;
+}
+.receipt-divider::before,
+.receipt-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--receipt-rule);
+}
+/* The decorative strip at the foot of the slip. */
+.receipt-strip {
+  height: 24px;
+  margin-top: 16px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--receipt-strip) 0 2px,
+    transparent 2px 6px
+  );
+  opacity: 0.65;
+}
+.receipt-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11.5px;
+}
+.receipt-total b {
+  font-weight: 700;
+}
+.receipt-grand {
+  margin: 4px -6px 0;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: var(--receipt-accent-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.receipt-grand b {
+  font-size: 14px;
+}
+.receipt-thanks {
+  margin: 6px 0 8px;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--receipt-accent);
+  animation: receipt-pop 0.4s ease-out;
+}
+@keyframes receipt-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.receipt-thanks span {
+  color: var(--receipt-accent-bright);
+}
+.receipt-brand {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  margin: 2px 0 3px;
+  font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+.receipt-brand b {
+  font:
+    800 17px 'Manrope',
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 3px;
+  color: var(--receipt-ink);
+}
+.receipt-brand i {
+  font-style: normal;
+  font:
+    800 17px 'Manrope',
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  color: var(--receipt-accent-bright);
+}
+.receipt-tagline {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 10.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--receipt-faint);
+}
+.receipt-sign {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 3px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid var(--receipt-rule);
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+}
+.receipt-sign b {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-align: right;
+  word-break: break-all;
 }
 .status > i {
   width: 9px;
@@ -2117,16 +2950,14 @@ html[data-theme='dark'] .meter-track {
   border-radius: 18px;
   background: var(--surface);
 }
-.password-card-header h3 {
-  margin: 0;
-  font: 800 19px 'Manrope';
-  letter-spacing: -0.4px;
+/* Inside the sheet the card frame is redundant. */
+.password-sheet .password-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
-.password-card-header > p:last-child {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
+.password-sheet .password-fields {
+  margin-top: 0;
 }
 .password-fields {
   display: grid;
@@ -2230,14 +3061,57 @@ html[data-theme='dark'] textarea {
 html[data-theme='dark'] .bill-card span b,
 html[data-theme='dark'] .restaurant-card h3,
 html[data-theme='dark'] .order-card h3,
-html[data-theme='dark'] .upi-app-grid > button {
+html[data-theme='dark'] .confirm-grid > button {
   color: var(--ink);
 }
-html[data-theme='dark'] .upi-app-grid > button,
-html[data-theme='dark'] .variant-list button,
-html[data-theme='dark'] .address-suggestions button {
+html[data-theme='dark'] .confirm-grid > button {
   border-color: var(--line);
   background: var(--surface-2);
+}
+html[data-theme='dark'] {
+  --receipt-notch: var(--surface);
+}
+html[data-theme='dark'] .receipt {
+  --receipt-ink: #eef3ef;
+  --receipt-muted: #a8b4ab;
+  --receipt-faint: #8d998f;
+  --receipt-line: #2b3a31;
+  --receipt-rule: #35453b;
+  --receipt-paper: #141c17;
+  --receipt-accent: #d9f447;
+  --receipt-accent-soft: #243a10;
+  --receipt-accent-bright: #b6cc3a;
+  --receipt-strip: #3a4a40;
+  --receipt-row: rgb(255 255 255 / 4%);
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 45%),
+    0 2px 6px rgb(0 0 0 / 30%);
+}
+html[data-theme='dark'] .receipt-head {
+  background: linear-gradient(135deg, #243a10, #1b2a0c);
+}
+html[data-theme='dark'] .receipt-stamp {
+  border-color: var(--receipt-accent);
+  color: var(--receipt-accent);
+}
+html[data-theme='dark'] .receipt-thanks {
+  color: var(--receipt-accent);
+}
+html[data-theme='dark'] .receipt-brand b {
+  color: var(--receipt-ink);
+}
+html[data-theme='dark'] .receipt-brand i {
+  color: var(--receipt-accent);
+}
+html[data-theme='dark'] .receipt-grand {
+  background: var(--receipt-accent-soft);
+}
+html[data-theme='dark'] .receipt-grand b {
+  color: var(--receipt-accent);
+}
+html[data-theme='dark'] .bill-tip-action,
+html[data-theme='dark'] .tip-add-link {
+  color: #ff8b57;
 }
 html[data-theme='dark'] .address-list button.selected {
   border-color: var(--accent-strong);
@@ -2531,9 +3405,8 @@ html[data-theme='dark'] .saved-address {
   .promo-food {
     font-size: 88px;
   }
-  .meta {
-    gap: 4px;
-    font-size: 10px;
+  .card-eta {
+    font-size: 10.5px;
   }
   .auth-sheet {
     padding-left: 18px;
@@ -2595,7 +3468,6 @@ textarea::placeholder {
 .order-card,
 .settings-list,
 .bill-card,
-.bill-preview,
 .upi-card,
 .address-list button,
 .bottom-sheet,
@@ -2606,11 +3478,6 @@ textarea::placeholder {
 .cart-items,
 .search-field,
 .variant-list button,
-.upi-app-grid > button {
-  border-color: var(--line);
-  color: var(--ink);
-  background: var(--surface);
-}
 .round.pale,
 .secondary,
 .empty-icon,
@@ -2796,7 +3663,7 @@ html[data-theme='dark'] .address-map-fallback {
 .home-header p,
 .welcome p,
 .section-title span,
-.meta,
+.card-eta,
 .loading,
 .secure-note,
 .version {
@@ -2824,7 +3691,6 @@ html[data-theme='dark'] .address-map-fallback {
 .restaurant-card,
 .search-field,
 .cart-items,
-.bill-preview,
 .bill-card,
 .tip-row,
 .free-delivery-meter,
@@ -2835,11 +3701,6 @@ html[data-theme='dark'] .address-map-fallback {
 .address-form,
 .address-suggestions,
 .variant-list button,
-.upi-app-grid > button {
-  border-color: var(--line);
-  background: var(--surface);
-  color: var(--ink);
-}
 .restaurant-card {
   box-shadow: 0 7px 20px var(--shadow-color);
 }
@@ -2903,7 +3764,7 @@ html[data-theme='dark'] .address-map-fallback {
 .menu-copy p,
 .cart-restaurant small,
 .meter-text small,
-.upi-picker-total,
+.confirm-note,
 .profile-card p,
 .success-line small {
   color: var(--muted);
@@ -2998,22 +3859,8 @@ html[data-theme='dark'] .address-map-fallback {
 .free-delivery-meter {
   background: var(--surface);
 }
-.tip-row {
-  background: var(--surface);
-}
-.tip-label,
 .meter-text b {
   color: var(--ink);
-}
-.tip-preset {
-  border-color: var(--line);
-  background: var(--surface-2);
-  color: var(--muted);
-}
-.tip-preset.active {
-  border-color: var(--accent-strong);
-  background: var(--accent-soft);
-  color: var(--accent-strong);
 }
 .tip-rupee {
   color: var(--muted);
@@ -3026,23 +3873,26 @@ html[data-theme='dark'] .address-map-fallback {
 .meter-track {
   background: var(--surface-3);
 }
-.upi-card > strong {
+.upi-qr-btn {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
   color: var(--accent-strong);
 }
-.upi-app-grid > button {
+.text-link {
+  color: var(--accent-strong);
+}
+.qr-panel {
   border-color: var(--line);
   background: var(--surface);
 }
-.upi-app-grid > button:active {
-  background: var(--accent-soft);
+.qr-panel svg {
+  background: #fff;
 }
-.upi-app-mark {
-  background: var(--surface-2);
+.qr-panel .qr-amount {
   color: var(--ink);
 }
-.upi-app-mark.other {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+.qr-panel .qr-vpa {
+  color: var(--muted);
 }
 .success-line {
   background: var(--success-bg);
@@ -3134,6 +3984,10 @@ html[data-theme='dark'] .address-map-fallback {
 .address-map-toolbar button {
   background: var(--accent);
   color: var(--on-accent);
+}
+.saved-data-banner {
+  background: #22301f;
+  color: #d8e8b4;
 }
 .offline-banner {
   background: var(--surface-3);

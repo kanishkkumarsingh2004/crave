@@ -13,6 +13,12 @@ Standalone Capacitor application for Crave delivery partners. The APK packages i
 - Background offer polling, native push/local notifications, haptics and responsive bottom navigation
 - Android immersive fullscreen and iOS status/home-indicator hiding
 
+## Settings
+
+The Settings tab carries the shared three-row block — _Check for updates_, _Change password_ and
+_Language_. The language list comes from `dictionary/`, so the picker follows the registry instead
+of a hard-coded list, and the choice is kept on the device.
+
 ## Environment
 
 Copy `.env.example` to `.env.local` when backend origins differ from production:
@@ -30,7 +36,11 @@ pnpm --dir driver_app build
 pnpm --dir driver_app sync
 ```
 
-Build the Android APK from the repository root with `pnpm build:android`. iOS compilation requires Xcode on macOS after Capacitor synchronization.
+Build the Android APK from the repository root with `pnpm build:android` — that raises the
+Android `versionCode` (and the iOS `CURRENT_PROJECT_VERSION`) by one so installed apps recognise
+the new build. `KEEP_VERSION=1 pnpm build:android` publishes the version already in
+`build.gradle` unchanged, which is what a fresh `1.0.0` release wants. iOS compilation requires
+Xcode on macOS after Capacitor synchronization.
 
 While a driver is online, Android uses a foreground location service and iOS uses the background
 location mode. Both native services upload GPS directly to the authenticated production API and

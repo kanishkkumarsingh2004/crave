@@ -1,5 +1,10 @@
 # CRAVE Billing Engine 2.0 — Settlement & Reconciliation Specification
 
+> **Current state — 21 October 2026.** The formulas below are unchanged. The settlement
+> summary is now aggregated over every row for the store rather than the rows on the current
+> page, and deleting an order removes its settlement row with it — a settlement can no longer
+> outlive the order it belongs to.
+
 ---
 
 ## 1. Vendor Settlement Formula

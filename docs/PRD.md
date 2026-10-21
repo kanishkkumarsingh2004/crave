@@ -2,9 +2,9 @@
 
 # Crave / Blinkbite — Multi-Vendor Food & 10-Minute Dark Store Grocery Delivery
 
-**Version:** 3.0  
-**Status:** Active / Production-Ready (100% Test Coverage: 48/48 Suites, 265/265 Tests)  
-**Last Updated:** October 2026
+**Version:** 3.1  
+**Status:** Active / Production-Ready — 31/31 test suites pass (`pnpm test:db`)  
+**Last Updated:** 21 October 2026
 
 ---
 
@@ -25,13 +25,13 @@
 
 ## 2. Target User Roles & Use Cases
 
-| User Role                                         | Primary Objectives & Capabilities                                                                                                                                                       |
-| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Customer (`customer` / `user`)**                | Browse kitchens & CraveXP dark stores, apply coupons via 1-click modal, track driver live on map, manage saved doorstep addresses, export PDF tax invoices.                             |
-| **Restaurant Vendor (`restaurant_vendor`)**       | Kitchen console, live audio chimes, stage progression buttons (_Accept → Prepare → Pack → Ready_), menu editor, in-stock toggles.                                                       |
-| **CraveXP Store Vendor (`cravexp_store_vendor`)** | 10-minute dark store inventory control, fast item dispatch, stock availability switches.                                                                                                |
-| **Delivery Driver (`driver` / `rider`)**          | Fleet cockpit, online/offline duty toggle, H3 geofenced dispatch radar, live GPS location broadcasting, order pickup/dropoff workflows, 4-digit OTP verification, earnings ledger.      |
-| **Admin (`admin`)**                               | Command center, Uber H3 hexagonal cell live density map (`/admin/map-live-analytics`), payment UTR review queue, vendor onboarding, commercial contracts, platform financial analytics. |
+| User Role                                         | Primary Objectives & Capabilities                                                                                                                                                                                                                                                                                           |
+| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Customer (`customer` / `user`)**                | Browse kitchens & CraveXP dark stores, apply coupons via 1-click modal, track driver live on map, manage saved doorstep addresses, export PDF tax invoices, and on the native app: a till-slip invoice per delivered order, an itemised checkout bill with a tip, and UPI checkout with the 12-digit transaction reference. |
+| **Restaurant Vendor (`restaurant_vendor`)**       | Kitchen console, live audio chimes, stage progression buttons (_Accept → Prepare → Pack → Ready_), menu editor, in-stock toggles.                                                                                                                                                                                           |
+| **CraveXP Store Vendor (`cravexp_store_vendor`)** | 10-minute dark store inventory control, fast item dispatch, stock availability switches.                                                                                                                                                                                                                                    |
+| **Delivery Driver (`driver` / `rider`)**          | Fleet cockpit, online/offline duty toggle, H3 geofenced dispatch radar, live GPS location broadcasting, order pickup/dropoff workflows, 4-digit OTP verification, earnings ledger.                                                                                                                                          |
+| **Admin (`admin`)**                               | Command center, Uber H3 hexagonal cell live density map (`/admin/map-live-analytics`), payment UTR review queue, vendor onboarding, commercial contracts, platform financial analytics.                                                                                                                                     |
 
 ---
 

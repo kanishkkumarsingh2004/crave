@@ -26,6 +26,7 @@ import {
 import { connectRestaurantEvents } from './realtime'
 import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
+import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type {
   AppTab,
   MenuEditorValue,
@@ -330,6 +331,7 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
   )
 }
 
+/** Languages the app can be switched to. */
 function OrderCard({
   order,
   busy,
@@ -545,23 +547,6 @@ function MenuEditor({
               Your customer price is calculated automatically from the restaurant contract.
             </small>
           </label>
-          <label>
-            Image URL
-            <input
-              value={value.image}
-              onChange={(event) => onChange({ ...value, image: event.target.value })}
-              placeholder="https://..."
-            />
-          </label>
-          <label className="field-wide">
-            Description
-            <textarea
-              value={value.description}
-              onChange={(event) => onChange({ ...value, description: event.target.value })}
-              placeholder="Ingredients and short description"
-              rows={3}
-            />
-          </label>
           <div className="choice-row field-wide">
             <button
               className={value.isVeg ? 'choice active' : 'choice'}
@@ -606,6 +591,23 @@ function MenuEditor({
                 ))}
             </div>
           )}
+          <label>
+            Image URL
+            <input
+              value={value.image}
+              onChange={(event) => onChange({ ...value, image: event.target.value })}
+              placeholder="https://..."
+            />
+          </label>
+          <label className="field-wide">
+            Description
+            <textarea
+              value={value.description}
+              onChange={(event) => onChange({ ...value, description: event.target.value })}
+              placeholder="Ingredients and short description"
+              rows={3}
+            />
+          </label>
         </div>
         <footer className="sheet-footer">
           <button className="secondary-button" onClick={onClose}>
@@ -652,6 +654,11 @@ export default function App() {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [passwordSheet, setPasswordSheet] = useState(false)
+  const [updateSheet, setUpdateSheet] = useState(false)
+  const [languageSheet, setLanguageSheet] = useState(false)
+  const { locale: language, setLocale, languages } = useLanguage()
+  const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -1768,149 +1775,45 @@ export default function App() {
                     <b>{notificationEnabled ? 'Enabled on this device' : 'Enable notifications'}</b>
                   </button>
                 </article>
-                <article className="settings-card password-card">
-                  <div className="card-title">
-                    <span>
-                      <Icon name="settings" />
+                <h2 className="section-title">App</h2>
+                <div className="settings-list">
+                  <button onClick={() => setUpdateSheet(true)}>
+                    <span className="settings-list-icon">
+                      <Icon name="refresh" />
                     </span>
-                    <div>
-                      <h2>Change password</h2>
-                      <p>Keep your restaurant partner account secure.</p>
-                    </div>
-                  </div>
-                  <form className="password-form" onSubmit={changePassword} noValidate>
-                    <label>
-                      Current password
-                      <span className="password-field">
-                        <input
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={currentPassword}
-                          onChange={(event) => setCurrentPassword(event.target.value)}
-                          placeholder="Enter current password"
-                          autoComplete="current-password"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrentPassword((value) => !value)}
-                          aria-label={
-                            showCurrentPassword ? 'Hide current password' : 'Show current password'
-                          }
-                        >
-                          {showCurrentPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </span>
-                    </label>
-                    <label>
-                      New password
-                      <span className="password-field">
-                        <input
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={(event) => setNewPassword(event.target.value)}
-                          placeholder="8–256 characters"
-                          autoComplete="new-password"
-                          minLength={8}
-                          maxLength={256}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword((value) => !value)}
-                          aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                        >
-                          {showNewPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </span>
-                    </label>
-                    <label>
-                      Confirm new password
-                      <span className="password-field">
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                          placeholder="Re-enter new password"
-                          autoComplete="new-password"
-                          minLength={8}
-                          maxLength={256}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((value) => !value)}
-                          aria-label={
-                            showConfirmPassword
-                              ? 'Hide confirmation password'
-                              : 'Show confirmation password'
-                          }
-                        >
-                          {showConfirmPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </span>
-                    </label>
-                    <p className="password-helper">New passwords must be 8–256 characters long.</p>
-                    {passwordFeedback && (
-                      <p
-                        className={`password-feedback ${passwordFeedback.type}`}
-                        role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
-                      >
-                        {passwordFeedback.message}
-                      </p>
-                    )}
-                    <button className="primary-button" type="submit" disabled={changingPassword}>
-                      {changingPassword ? (
-                        <>
-                          <span className="button-spinner dark" /> Updating password…
-                        </>
-                      ) : (
-                        'Change password'
-                      )}
-                    </button>
-                  </form>
-                </article>
-                <article
-                  className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}
-                >
-                  <div className="card-title">
                     <span>
-                      <Icon name="download" />
-                    </span>
-                    <div>
-                      <h2>App update</h2>
-                      <p>
+                      <b>{t.settings.checkForUpdates}</b>
+                      <small>
                         {checkingUpdate
                           ? 'Checking for the latest restaurant app…'
                           : availableUpdate
-                            ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                            ? `Version ${availableUpdate.versionName} is available`
                             : updateError || 'You are using the latest available version.'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="software-actions">
-                    <button
-                      className="secondary-button"
-                      disabled={checkingUpdate || installingUpdate}
-                      onClick={() => void refreshUpdateStatus()}
-                    >
-                      {checkingUpdate ? 'Checking…' : 'Check again'}
-                    </button>
-                    <button
-                      className="primary-button"
-                      disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                      onClick={() => void installUpdate()}
-                    >
-                      {installingUpdate
-                        ? 'Opening installer…'
-                        : availableUpdate
-                          ? `Update to ${availableUpdate.versionName}`
-                          : 'App is up to date'}
-                    </button>
-                  </div>
-                  {updateError && availableUpdate && (
-                    <div className="software-error">{updateError}</div>
-                  )}
-                </article>
+                      </small>
+                    </span>
+                    <Icon name="chevron" />
+                  </button>
+                  <button onClick={() => setPasswordSheet(true)}>
+                    <span className="settings-list-icon">
+                      <Icon name="settings" />
+                    </span>
+                    <span>
+                      <b>{t.settings.changePassword}</b>
+                      <small>{t.settings.changePasswordHint}</small>
+                    </span>
+                    <Icon name="chevron" />
+                  </button>
+                  <button onClick={() => setLanguageSheet(true)}>
+                    <span className="settings-list-icon">
+                      <Icon name="language" />
+                    </span>
+                    <span>
+                      <b>{t.settings.language}</b>
+                      <small>{language}</small>
+                    </span>
+                    <Icon name="chevron" />
+                  </button>
+                </div>
                 <article className="settings-card account-card">
                   <div className="profile-avatar">
                     {user.name?.slice(0, 1).toUpperCase() || 'R'}
@@ -1929,6 +1832,227 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {updateSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setUpdateSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Restaurant app</span>
+                <h2>{t.settings.checkForUpdates}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setUpdateSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
+              <div className="card-title">
+                <span>
+                  <Icon name="download" />
+                </span>
+                <div>
+                  <h2>App update</h2>
+                  <p>
+                    {checkingUpdate
+                      ? 'Checking for the latest restaurant app…'
+                      : availableUpdate
+                        ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                        : updateError || 'You are using the latest available version.'}
+                  </p>
+                </div>
+              </div>
+              <div className="software-actions">
+                <button
+                  className="secondary-button"
+                  disabled={checkingUpdate || installingUpdate}
+                  onClick={() => void refreshUpdateStatus()}
+                >
+                  {checkingUpdate ? 'Checking…' : 'Check again'}
+                </button>
+                <button
+                  className="primary-button"
+                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                  onClick={() => void installUpdate()}
+                >
+                  {installingUpdate
+                    ? 'Opening installer…'
+                    : availableUpdate
+                      ? `Update to ${availableUpdate.versionName}`
+                      : 'App is up to date'}
+                </button>
+              </div>
+              {updateError && availableUpdate && (
+                <div className="software-error">{updateError}</div>
+              )}
+            </article>{' '}
+          </section>
+        </div>
+      )}
+
+      {passwordSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPasswordSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Account security</span>
+                <h2>{t.settings.changePassword}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setPasswordSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>Keep your restaurant partner account secure with a new sign-in password.</p>
+            <form className="password-form" onSubmit={changePassword} noValidate>
+              <label>
+                Current password
+                <span className="password-field">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    placeholder="Enter current password"
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword((value) => !value)}
+                    aria-label={
+                      showCurrentPassword ? 'Hide current password' : 'Show current password'
+                    }
+                  >
+                    {showCurrentPassword ? 'Hide' : 'Show'}
+                  </button>
+                </span>
+              </label>
+              <label>
+                New password
+                <span className="password-field">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="8–256 characters"
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={256}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((value) => !value)}
+                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                  >
+                    {showNewPassword ? 'Hide' : 'Show'}
+                  </button>
+                </span>
+              </label>
+              <label>
+                Confirm new password
+                <span className="password-field">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={256}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((value) => !value)}
+                    aria-label={
+                      showConfirmPassword
+                        ? 'Hide confirmation password'
+                        : 'Show confirmation password'
+                    }
+                  >
+                    {showConfirmPassword ? 'Hide' : 'Show'}
+                  </button>
+                </span>
+              </label>
+              <p className="password-helper">New passwords must be 8–256 characters long.</p>
+              {passwordFeedback && (
+                <p
+                  className={`password-feedback ${passwordFeedback.type}`}
+                  role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                >
+                  {passwordFeedback.message}
+                </p>
+              )}
+              <button className="primary-button" type="submit" disabled={changingPassword}>
+                {changingPassword ? (
+                  <>
+                    <span className="button-spinner dark" /> Updating password…
+                  </>
+                ) : (
+                  'Change password'
+                )}
+              </button>
+            </form>{' '}
+          </section>
+        </div>
+      )}
+
+      {languageSheet && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setLanguageSheet(false)}
+        >
+          <section className="sheet" onClick={(event) => event.stopPropagation()}>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">App language</span>
+                <h2>{t.settings.chooseLanguage}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setLanguageSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <div className="language-list">
+              {languages.map((option) => (
+                <button
+                  key={option.code}
+                  className={language === option.code ? 'selected' : ''}
+                  onClick={() => {
+                    setLanguage(option.code)
+                    setLanguageSheet(false)
+                  }}
+                >
+                  <span>{option.nativeName}</span>
+                  {language === option.code && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       {confirmLogout && (
         <div
@@ -1996,3 +2120,4 @@ export default function App() {
     </div>
   )
 }
+const { t } = useLanguage()

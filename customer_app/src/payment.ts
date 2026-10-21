@@ -1,19 +1,17 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
 interface UpiLauncherPlugin {
-  open(options: { url: string; app: UpiPaymentApp }): Promise<{ opened: boolean }>
+  open(options: { url: string }): Promise<{ opened: boolean }>
 }
-
-export type UpiPaymentApp = 'gpay' | 'phonepe' | 'paytm' | 'other'
 
 const UpiLauncher = registerPlugin<UpiLauncherPlugin>('UpiLauncher')
 
-export async function openUpiPayment(input: {
+/** Builds the standard UPI intent for a payment. */
+export function buildUpiPaymentUrl(input: {
   vpa: string
   merchant: string
   amount: number
   note: string
-  app: UpiPaymentApp
 }) {
   const params = new URLSearchParams({
     pa: input.vpa,
@@ -22,16 +20,24 @@ export async function openUpiPayment(input: {
     cu: 'INR',
     tn: input.note,
   })
-  const url = `upi://pay?${params.toString()}`
+  return `upi://pay?${params.toString()}`
+}
+
+/**
+ * Hands the payment to the device. The customer picks the UPI app from the
+ * system chooser, so every installed UPI app is available without us listing
+ * them ourselves.
+ */
+export async function openUpiPayment(input: {
+  vpa: string
+  merchant: string
+  amount: number
+  note: string
+}) {
+  const url = buildUpiPaymentUrl(input)
   if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
-    await UpiLauncher.open({ url, app: input.app })
+    await UpiLauncher.open({ url })
     return
   }
-  const schemes: Record<UpiPaymentApp, string> = {
-    gpay: 'gpay://upi/pay',
-    phonepe: 'phonepe://pay',
-    paytm: 'paytmmp://pay',
-    other: 'upi://pay',
-  }
-  window.location.href = `${schemes[input.app]}?${params.toString()}`
+  window.location.href = url
 }

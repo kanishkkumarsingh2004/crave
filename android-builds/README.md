@@ -16,8 +16,8 @@ GitHub URLs and each APK's SHA-256 must match the manifest before Android's inst
 
 Click any APK filename above to download it directly.
 
-The current versions are Admin `1.0.0` (code 15), Driver `1.0.0` (code 15), Restaurant `1.0.0`
-(code 15), and Customer `1.0.0` (code 15). The machine-readable update metadata and release
+The current versions are Admin `1.0.0` (code 1), Driver `1.0.0` (code 1), Restaurant `1.0.0`
+(code 1), and Customer `1.0.0` (code 1). The machine-readable update metadata and release
 notes are in [`version.json`](./version.json).
 
 These are development builds signed with the Android debug key. They are suitable for direct
@@ -33,6 +33,13 @@ hand-written, so a release can be labelled `1.0.0` while its build number keeps 
 If a build is published without raising the number, every installed app keeps reporting "you are on
 the latest version" and stays on the previous binary — even though a newer APK was pushed. If you
 build by hand, raise the number yourself or run `pnpm build:android`.
+
+To publish the version that is already in `build.gradle` without raising it — a fresh `1.0.0`
+release, for example — build with:
+
+```bash
+KEEP_VERSION=1 pnpm build:android
+```
 
 ## iOS builds
 
