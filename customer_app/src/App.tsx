@@ -35,7 +35,7 @@ import {
 } from './update'
 import { connectCustomerOrders } from './realtime'
 import { openUpiPayment, buildUpiPaymentUrl } from './payment'
-import { checkoutDistanceKm } from './pricing'
+import { checkoutDistanceKm, roadDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type { AddressMapPoint } from './AddressMap'
@@ -340,7 +340,9 @@ function MenuScreen({
     [retry, setRetry] = useState(0),
     [query, setQuery] = useState(''),
     [category, setCategory] = useState('All'),
-    [pick, setPick] = useState<MenuItem | null>(null)
+    [pick, setPick] = useState<MenuItem | null>(null),
+    [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(null),
+    [roadDistance, setRoadDistance] = useState<number | null>(null)
   useEffect(() => {
     setLoading(true)
     setLoadError('')
@@ -353,6 +355,45 @@ function MenuScreen({
       )
       .finally(() => setLoading(false))
   }, [restaurant.id, retry])
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const location = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setDeviceLoc(location)
+        // Persist device location to the mobile DB for offline distance calculation.
+        try {
+          localStorage.setItem(
+            'crave_device_location',
+            JSON.stringify({ ...location, updatedAt: Date.now() })
+          )
+        } catch {}
+      },
+      () => setDeviceLoc(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+  }, [restaurant.id])
+  useEffect(() => {
+    let cancelled = false
+    const compute = async () => {
+      if (!deviceLoc) {
+        setRoadDistance(null)
+        return
+      }
+      const restLat = Number(restaurant.latitude)
+      const restLng = Number(restaurant.longitude)
+      if (!Number.isFinite(restLat) || !Number.isFinite(restLng)) {
+        setRoadDistance(null)
+        return
+      }
+      const km = await roadDistanceKm(deviceLoc.lat, deviceLoc.lng, restLat, restLng)
+      if (!cancelled) setRoadDistance(km)
+    }
+    compute()
+    return () => {
+      cancelled = true
+    }
+  }, [deviceLoc, restaurant.latitude, restaurant.longitude])
   const categories = useMemo(
     () => ['All', ...Array.from(new Set(items.map((x) => x.category || 'Popular')))],
     [items]
@@ -364,20 +405,26 @@ function MenuScreen({
   )
   const count = (id: string) =>
     cart.filter((x) => x.itemId === id).reduce((n, x) => n + x.quantity, 0)
-  const facts = [
+  const facts: Array<{ icon: 'clock' | 'pin' | 'star' | 'tag'; value: string; label: string }> = [
     { icon: 'clock' as const, value: restaurant.eta || '25–35 min', label: 'Delivery time' },
-    {
+  ]
+  if (roadDistance != null) {
+    facts.push({ icon: 'pin' as const, value: `${roadDistance} km`, label: 'Distance' })
+  } else {
+    facts.push({
       icon: 'star' as const,
       value: Number(restaurant.rating || 4.5).toFixed(1),
       label: restaurant.rating_count ? `${restaurant.rating_count} ratings` : 'Customer rating',
-    },
-    ...(restaurant.distance
-      ? [{ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' }]
-      : []),
-    ...(restaurant.cost_for_two
-      ? [{ icon: 'tag' as const, value: money(Number(restaurant.cost_for_two)), label: 'For two' }]
-      : []),
-  ]
+    })
+    if (restaurant.distance)
+      facts.push({ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' })
+  }
+  if (restaurant.cost_for_two)
+    facts.push({
+      icon: 'tag' as const,
+      value: money(Number(restaurant.cost_for_two)),
+      label: 'For two',
+    })
   const add = (item: MenuItem) => {
     const variants = (item.variants || []).filter((v) => v.in_stock !== false)
     if (
@@ -2454,7 +2501,19 @@ export default function App() {
     setCatalogError('')
     try {
       const response = await apiRequest<{ restaurants: Restaurant[] }>('/api/restaurants')
-      setRestaurants((response.restaurants || []).filter((restaurant) => !restaurant.is_dark_store))
+      const list = (response.restaurants || []).filter((restaurant) => !restaurant.is_dark_store)
+      setRestaurants(list)
+      // Persist restaurant coordinates to the device so distance can be computed offline.
+      try {
+        const coords: Record<string, { latitude: number; longitude: number }> = {}
+        for (const r of list) {
+          const lat = Number(r.latitude)
+          const lng = Number(r.longitude)
+          if (Number.isFinite(lat) && Number.isFinite(lng))
+            coords[r.id] = { latitude: lat, longitude: lng }
+        }
+        localStorage.setItem('crave_restaurant_coords', JSON.stringify(coords))
+      } catch {}
     } catch (catalogFailure) {
       setCatalogError(
         catalogFailure instanceof Error ? catalogFailure.message : 'Could not load restaurants.'
