@@ -1,5 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
+import { apiErrorMessage, normalizeApiPayload } from '../../lib/native/api-payload'
 import { cacheApiResponse, clearMobileDataCache, readCachedApiResponse } from './mobileCache'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexonestudio.com').replace(
@@ -23,12 +24,7 @@ export class ApiError extends Error {
 }
 
 function normalizeResponseData(value: unknown): any {
-  if (typeof value !== 'string') return value ?? {}
-  try {
-    return JSON.parse(value)
-  } catch {
-    return { message: value }
-  }
+  return normalizeApiPayload(value)
 }
 
 export async function restoreAuthToken(): Promise<string> {
@@ -136,7 +132,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       const cached = await readCachedApiResponse<T>(path)
       if (cached !== null) return cached
     }
-    throw new ApiError(data?.error || data?.message || 'Unable to complete the request.', status)
+    throw new ApiError(apiErrorMessage(data, status, path), status)
   }
   if (cacheable) await cacheApiResponse(path, data)
   else if (Capacitor.isNativePlatform() && method !== 'GET') await clearMobileDataCache()

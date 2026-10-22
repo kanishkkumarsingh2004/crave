@@ -72,7 +72,8 @@ jobs:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
           POSTGRES_DB: crave_test
-        ports: 5432:5432
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd="pg_isready -U test -d crave_test"
           --health-interval=10s
@@ -80,7 +81,8 @@ jobs:
           --health-retries=5
       redis:
         image: redis:7-alpine
-        ports: 6379:6379
+        ports:
+          - 6379:6379
         options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
     steps:
       - name: Checkout repository
@@ -434,6 +436,26 @@ jobs:
         with:
           name: owasp-dependency-report
           path: reports/
+
+  deploy:
+    name: Deploy Production
+    # Opt-in. Set the RENDER_DEPLOY_HOOK repository secret to the deploy hook
+    # of the Render service (Service → Deploys → Deploy Hook). Without it this
+    # job leaves production untouched and only reports the missing secret.
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy production
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set — production was left untouched."
+            exit 0
+          fi
+          curl -fsSL -X POST "$RENDER_DEPLOY_HOOK"
+          echo "Render deploy triggered."
 
   summary:
     name: CI Summary

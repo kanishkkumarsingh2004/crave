@@ -1,5 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
+import { apiErrorMessage, normalizeApiPayload } from '../../lib/native/api-payload'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexonestudio.com').replace(
   /\/$/,
@@ -72,7 +73,7 @@ export async function apiRequest<T>(
       readTimeout: 25000,
     })
     status = response.status
-    data = typeof response.data === 'string' ? JSON.parse(response.data || '{}') : response.data
+    data = normalizeApiPayload(response.data)
   } else {
     const response = await fetch(path, {
       method,
@@ -81,15 +82,9 @@ export async function apiRequest<T>(
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
     status = response.status
-    const text = await response.text()
-    try {
-      data = JSON.parse(text)
-    } catch {
-      data = { error: text }
-    }
+    data = normalizeApiPayload(await response.text())
   }
-  if (status < 200 || status >= 300)
-    throw new ApiError(data?.error || data?.message || 'Something went wrong.', status)
+  if (status < 200 || status >= 300) throw new ApiError(apiErrorMessage(data, status, path), status)
   return data as T
 }
 

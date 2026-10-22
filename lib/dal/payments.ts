@@ -305,17 +305,42 @@ export async function listPendingDriverPayouts() {
   })
 }
 
+/**
+ * Settle a pending payout request.
+ *
+ * Only a request that is still pending can be settled. The status filter sits
+ * in the UPDATE itself, so two admins acting on the same request cannot both
+ * succeed and a settled payout can never be reopened.
+ */
 export async function updateDriverPayoutStatus(
   id: string,
   status: 'pending' | 'paid' | 'failed',
   transaction_ref?: string
 ) {
-  return await prisma.driverPayout.update({
-    where: { id },
+  const settled = await prisma.driverPayout.updateMany({
+    where: { id, status: 'pending' },
     data: {
       status: status as any,
       ...(transaction_ref ? { transaction_ref } : {}),
     },
+  })
+
+  if (settled.count === 0) {
+    const existing = await prisma.driverPayout.findUnique({
+      where: { id },
+      select: { status: true },
+    })
+    if (!existing) {
+      throw Object.assign(new Error('Payout request not found'), { statusCode: 404 })
+    }
+    throw Object.assign(new Error(`Payout request is already ${existing.status}`), {
+      statusCode: 409,
+    })
+  }
+
+  return await prisma.driverPayout.findUnique({
+    where: { id },
+    include: { driver: { select: { id: true, name: true, email: true, phone: true } } },
   })
 }
 

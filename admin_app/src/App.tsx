@@ -2,7 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
-import { FormEvent, lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bell,
   Camera,
@@ -392,6 +392,7 @@ export default function App() {
   const [payments, setPayments] = useState<PaymentReview[]>([])
   const [driverPayouts, setDriverPayouts] = useState<DriverPayoutRecord[]>([])
   const [driverPayoutsLoading, setDriverPayoutsLoading] = useState(false)
+  const [driverPayoutsError, setDriverPayoutsError] = useState('')
   const [paymentBusy, setPaymentBusy] = useState('')
   const [networkConnected, setNetworkConnected] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -500,12 +501,6 @@ export default function App() {
   }, [tab])
 
   useEffect(() => {
-    if (user && tab === 'drivers') {
-      void loadDriverPayouts()
-    }
-  }, [tab, user, loadDriverPayouts])
-
-  useEffect(() => {
     if (!user) return
     const timer = window.setInterval(() => void loadDashboard(false), 20_000)
     return () => window.clearInterval(timer)
@@ -590,19 +585,26 @@ export default function App() {
     await loadDashboard(false)
   }
 
-  async function loadDriverPayouts() {
+  const loadDriverPayouts = useCallback(async () => {
     setDriverPayoutsLoading(true)
+    setDriverPayoutsError('')
     try {
       const res = await apiRequest<{ success: boolean; payouts: DriverPayoutRecord[] }>(
         '/api/admin/driver-payouts'
       )
       setDriverPayouts(res.payouts || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load driver payouts.')
+      setDriverPayoutsError(err instanceof Error ? err.message : 'Unable to load driver payouts.')
     } finally {
       setDriverPayoutsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (user && tab === 'drivers') {
+      void loadDriverPayouts()
+    }
+  }, [tab, user?.id, loadDriverPayouts])
 
   async function loadDashboard(showLoader = true) {
     if (showLoader) setRefreshing(true)
@@ -1233,6 +1235,7 @@ export default function App() {
                 className="icon-button"
                 onClick={() => void loadDriverPayouts()}
                 disabled={driverPayoutsLoading}
+                aria-label="Refresh payout requests"
               >
                 <Icon name="refresh" />
               </button>
@@ -1242,71 +1245,92 @@ export default function App() {
                 <span className="loader" />
                 <p>Loading payout requests…</p>
               </div>
-            ) : driverPayouts.length === 0 ? (
-              <EmptyState text="No pending driver payout requests." />
             ) : (
-              <div className="payment-list">
-                {driverPayouts.map((payout) => (
-                  <article className="payment-card" key={payout.id}>
-                    <header>
-                      <div>
-                        <span className="payment-utr">#{payout.id.slice(-10).toUpperCase()}</span>
-                        <h3>{payout.driver?.name || payout.driver?.email || payout.driver_id}</h3>
-                        <p>{payout.driver?.phone || payout.driver?.email || ''}</p>
-                      </div>
-                      <div className="payment-amount">
-                        <strong>{money(payout.amount)}</strong>
-                        <span>{label(payout.status)}</span>
-                      </div>
-                    </header>
-                    {payout.status === 'pending' && (
-                      <div className="payment-actions">
-                        <button
-                          className="ghost-button"
-                          onClick={async () => {
-                            try {
-                              await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
-                                method: 'PATCH',
-                                body: { status: 'failed' },
-                              })
-                              setNotice('Payout rejected.')
-                              void loadDriverPayouts()
-                            } catch (err) {
-                              setError(
-                                err instanceof Error ? err.message : 'Failed to reject payout.'
-                              )
-                            }
-                          }}
-                        >
-                          Reject
-                        </button>
-                        <button
-                          className="primary-button"
-                          onClick={async () => {
-                            try {
-                              await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
-                                method: 'PATCH',
-                                body: { status: 'paid', transaction_ref: `UPI_${Date.now()}` },
-                              })
-                              setNotice('Payout marked as paid.')
-                              void loadDriverPayouts()
-                            } catch (err) {
-                              setError(
-                                err instanceof Error ? err.message : 'Failed to approve payout.'
-                              )
-                            }
-                          }}
-                        >
-                          Mark as paid
-                        </button>
-                      </div>
-                    )}
-                    {payout.transaction_ref && (
-                      <p className="payment-note">Ref: {payout.transaction_ref}</p>
-                    )}
-                  </article>
-                ))}
-              </div>
+              <>
+                {driverPayoutsError && (
+                  <div className="page-notice">
+                    <strong>
+                      {driverPayouts.length === 0
+                        ? 'The payout queue is unavailable'
+                        : 'The payout queue could not be refreshed'}
+                    </strong>
+                    <p>{driverPayoutsError}</p>
+                    <button className="secondary-button" onClick={() => void loadDriverPayouts()}>
+                      Try again
+                    </button>
+                  </div>
+                )}
+                {driverPayouts.length === 0 && !driverPayoutsError ? (
+                  <EmptyState text="No pending driver payout requests." />
+                ) : (
+                  <div className="payment-list">
+                    {driverPayouts.map((payout) => (
+                      <article className="payment-card pending" key={payout.id}>
+                        <div className="payment-card-head">
+                          <div>
+                            <span className="payment-utr">
+                              #{payout.id.slice(-10).toUpperCase()}
+                            </span>
+                            <h3>
+                              {payout.driver?.name || payout.driver?.email || payout.driver_id}
+                            </h3>
+                            <p>{payout.driver?.phone || payout.driver?.email || ''}</p>
+                          </div>
+                          <div className="payment-amount">
+                            <strong>{money(payout.amount)}</strong>
+                            <span>{label(payout.status)}</span>
+                          </div>
+                        </div>
+                        {payout.status === 'pending' && (
+                          <div className="payment-actions">
+                            <button
+                              className="ghost-button"
+                              onClick={async () => {
+                                try {
+                                  await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                    method: 'PATCH',
+                                    body: { status: 'failed' },
+                                  })
+                                  setNotice('Payout rejected.')
+                                  void loadDriverPayouts()
+                                } catch (err) {
+                                  setDriverPayoutsError(
+                                    err instanceof Error ? err.message : 'Failed to reject payout.'
+                                  )
+                                }
+                              }}
+                            >
+                              Reject
+                            </button>
+                            <button
+                              className="primary-button"
+                              onClick={async () => {
+                                try {
+                                  await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                    method: 'PATCH',
+                                    body: { status: 'paid', transaction_ref: `UPI_${Date.now()}` },
+                                  })
+                                  setNotice('Payout marked as paid.')
+                                  void loadDriverPayouts()
+                                } catch (err) {
+                                  setDriverPayoutsError(
+                                    err instanceof Error ? err.message : 'Failed to approve payout.'
+                                  )
+                                }
+                              }}
+                            >
+                              Mark as paid
+                            </button>
+                          </div>
+                        )}
+                        {payout.transaction_ref && (
+                          <p className="payment-note">Ref: {payout.transaction_ref}</p>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </section>
         )}

@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "node server.js",
     "dev:ws": "node ws-server.js",
+    "dev:admin": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/admin-app dev",
+    "dev:driver": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/driver-app dev",
+    "dev:restaurant": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/restaurant-app dev",
+    "dev:customer": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/customer-app dev",
     "build": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build @crave/customer-app#build",
     "build:android": "bash scripts/build-apps.sh",
     "build:ios": "bash scripts/build-ios.sh",
