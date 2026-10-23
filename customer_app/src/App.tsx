@@ -258,7 +258,15 @@ function Auth({ onDone }: { onDone: (u: User) => void }) {
   )
 }
 
-function RestaurantCard({ restaurant, onOpen }: { restaurant: Restaurant; onOpen: () => void }) {
+function RestaurantCard({
+  restaurant,
+  onOpen,
+  distanceKm,
+}: {
+  restaurant: Restaurant
+  onOpen: () => void
+  distanceKm?: number
+}) {
   return (
     <article className="restaurant-card" onClick={onOpen}>
       <div
@@ -287,7 +295,7 @@ function RestaurantCard({ restaurant, onOpen }: { restaurant: Restaurant; onOpen
           <span>
             <Icon name="clock" /> {restaurant.eta || '25–35 min'}
           </span>
-          <span>{restaurant.distance || 'Nearby'}</span>
+          <span>{distanceKm != null ? `${distanceKm} km` : restaurant.distance || 'Nearby'}</span>
         </span>
       </div>
     </article>
@@ -341,7 +349,22 @@ function MenuScreen({
     [query, setQuery] = useState(''),
     [category, setCategory] = useState('All'),
     [pick, setPick] = useState<MenuItem | null>(null),
-    [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(null),
+    [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(() => {
+      try {
+        const cached = localStorage.getItem('crave_device_location')
+        if (!cached) return null
+        const parsed = JSON.parse(cached)
+        if (
+          parsed &&
+          typeof parsed.lat === 'number' &&
+          typeof parsed.lng === 'number' &&
+          Number.isFinite(parsed.lat) &&
+          Number.isFinite(parsed.lng)
+        )
+          return { lat: parsed.lat, lng: parsed.lng }
+      } catch {}
+      return null
+    }),
     [roadDistance, setRoadDistance] = useState<number | null>(null)
   useEffect(() => {
     setLoading(true)
@@ -369,7 +392,10 @@ function MenuScreen({
           )
         } catch {}
       },
-      () => setDeviceLoc(null),
+      () => {
+        // Keep any cached device location so the distance chip still renders
+        // when geolocation is unavailable or permission is denied.
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }, [restaurant.id])
@@ -405,19 +431,13 @@ function MenuScreen({
   )
   const count = (id: string) =>
     cart.filter((x) => x.itemId === id).reduce((n, x) => n + x.quantity, 0)
-  const facts: Array<{ icon: 'clock' | 'pin' | 'star' | 'tag'; value: string; label: string }> = [
+  const facts: Array<{ icon: 'clock' | 'pin' | 'tag'; value: string; label: string }> = [
     { icon: 'clock' as const, value: restaurant.eta || '25–35 min', label: 'Delivery time' },
   ]
   if (roadDistance != null) {
     facts.push({ icon: 'pin' as const, value: `${roadDistance} km`, label: 'Distance' })
-  } else {
-    facts.push({
-      icon: 'star' as const,
-      value: Number(restaurant.rating || 4.5).toFixed(1),
-      label: restaurant.rating_count ? `${restaurant.rating_count} ratings` : 'Customer rating',
-    })
-    if (restaurant.distance)
-      facts.push({ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' })
+  } else if (restaurant.distance) {
+    facts.push({ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' })
   }
   if (restaurant.cost_for_two)
     facts.push({
@@ -2467,6 +2487,23 @@ export default function App() {
     [addressPage, setAddressPage] = useState(false),
     [search, setSearch] = useState(''),
     [toast, setToast] = useState('')
+  const [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(() => {
+    try {
+      const cached = localStorage.getItem('crave_device_location')
+      if (!cached) return null
+      const parsed = JSON.parse(cached)
+      if (
+        parsed &&
+        typeof parsed.lat === 'number' &&
+        typeof parsed.lng === 'number' &&
+        Number.isFinite(parsed.lat) &&
+        Number.isFinite(parsed.lng)
+      )
+        return { lat: parsed.lat, lng: parsed.lng }
+    } catch {}
+    return null
+  })
+  const [restaurantDistances, setRestaurantDistances] = useState<Map<string, number>>(new Map())
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>('system')
   const previous = useRef<Record<string, string>>({})
@@ -2520,6 +2557,51 @@ export default function App() {
       )
     }
   }, [])
+  // Fetch the device location once on app launch and persist it to the mobile DB.
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const location = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setDeviceLoc(location)
+        try {
+          localStorage.setItem(
+            'crave_device_location',
+            JSON.stringify({ ...location, updatedAt: Date.now() })
+          )
+        } catch {}
+      },
+      () => {
+        // Keep any cached device location so distance chips still render when
+        // geolocation is unavailable or permission is denied.
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+  }, [])
+  // Compute live road distance from the device to every listed restaurant.
+  useEffect(() => {
+    let cancelled = false
+    const compute = async () => {
+      const next = new Map<string, number>()
+      if (deviceLoc) {
+        await Promise.all(
+          restaurants.map(async (r) => {
+            const lat = Number(r.latitude)
+            const lng = Number(r.longitude)
+            if (Number.isFinite(lat) && Number.isFinite(lng)) {
+              const km = await roadDistanceKm(deviceLoc.lat, deviceLoc.lng, lat, lng)
+              if (km != null) next.set(r.id, km)
+            }
+          })
+        )
+      }
+      if (!cancelled) setRestaurantDistances(next)
+    }
+    compute()
+    return () => {
+      cancelled = true
+    }
+  }, [deviceLoc, restaurants])
   // The cache is scoped by the account; a ref keeps it current without making
   // the loaders depend on the user object.
   const userIdRef = useRef<string | undefined>(undefined)
@@ -2851,7 +2933,12 @@ export default function App() {
             </div>
             <div className="restaurant-list">
               {restaurants.slice(0, 6).map((r) => (
-                <RestaurantCard key={r.id} restaurant={r} onOpen={() => setSelected(r)} />
+                <RestaurantCard
+                  key={r.id}
+                  restaurant={r}
+                  onOpen={() => setSelected(r)}
+                  distanceKm={restaurantDistances.get(r.id)}
+                />
               ))}
             </div>
             {catalogError && (
@@ -2891,7 +2978,12 @@ export default function App() {
             </h2>
             <div className="restaurant-list">
               {visible.map((r) => (
-                <RestaurantCard key={r.id} restaurant={r} onOpen={() => setSelected(r)} />
+                <RestaurantCard
+                  key={r.id}
+                  restaurant={r}
+                  onOpen={() => setSelected(r)}
+                  distanceKm={restaurantDistances.get(r.id)}
+                />
               ))}
             </div>
             {catalogError && (

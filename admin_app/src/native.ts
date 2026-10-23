@@ -1,12 +1,18 @@
 import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Preferences } from '@capacitor/preferences'
+import { PushNotifications } from '@capacitor/push-notifications'
 import { StatusBar } from '@capacitor/status-bar'
-import { getApiOrigin } from './api'
+import { getApiOrigin, apiRequest } from './api'
 
 const CHANNEL_ID = 'admin-notifications'
 const NOTIFICATION_PREFERENCE_KEY = 'crave_admin_notifications_enabled'
+const PUSH_TOKEN_KEY = 'crave_admin_push_token'
+// Firebase registration is unsafe on Android until the packaged app contains a
+// valid google-services.json. Local notifications remain available without it.
+const REMOTE_PUSH_ENABLED = import.meta.env.VITE_FIREBASE_PUSH_ENABLED === 'true'
 
 function notificationId(value: string): number {
   let hash = 0
@@ -29,6 +35,37 @@ export async function initializeNativeAppearance(): Promise<void> {
     lights: true,
     lightColor: '#D9F447',
   }).catch(() => undefined)
+  // Register for remote push notifications if enabled
+  if (REMOTE_PUSH_ENABLED) {
+    try {
+      const permission = await PushNotifications.checkPermissions()
+      if (permission.receive === 'granted') {
+        await PushNotifications.addListener('registration', async (registration) => {
+          await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
+          const device = await Device.getId()
+          await apiRequest('/api/admin/push-token', {
+            method: 'POST',
+            body: {
+              token: registration.value,
+              platform: Capacitor.getPlatform(),
+              deviceId: device.identifier,
+            },
+          }).catch(() => undefined)
+        })
+        await PushNotifications.addListener('registrationError', () => undefined)
+        await PushNotifications.addListener('pushNotificationReceived', () => {
+          void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
+        })
+        await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+          const data = (action.notification.data || {}) as Record<string, unknown>
+          // Could deep-link based on data here
+        })
+        await PushNotifications.register()
+      }
+    } catch (error) {
+      console.warn('Remote push registration unavailable', error)
+    }
+  }
 }
 
 export async function getNotificationPermission(): Promise<boolean> {
@@ -59,8 +96,17 @@ export async function requestNotificationPermission(): Promise<boolean> {
     if (typeof Notification === 'undefined') return false
     return (await Notification.requestPermission()) === 'granted'
   }
-  const permission = await LocalNotifications.requestPermissions()
-  return permission.display === 'granted'
+  try {
+    const localPermission = await LocalNotifications.requestPermissions()
+    if (localPermission.display !== 'granted') return false
+    if (!REMOTE_PUSH_ENABLED) return true
+
+    const pushPermission = await PushNotifications.requestPermissions()
+    return pushPermission.receive === 'granted'
+  } catch (error) {
+    console.warn('Unable to request notification permission', error)
+    return false
+  }
 }
 
 export async function showAdminNotification(input: {

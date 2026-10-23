@@ -1041,6 +1041,157 @@ svg {
   background: rgb(2 7 4 / 78%);
   backdrop-filter: blur(4px);
 }
+
+/* ---- First-run permission sheet ---- */
+.permission-sheet {
+  max-width: 430px;
+}
+.permission-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.permission-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.permission-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.permission-row.granted {
+  border-color: var(--success);
+  background: var(--surface-2);
+}
+.permission-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-content: center;
+  border-radius: 12px;
+  background: rgb(217 244 71 / 12%);
+  color: var(--lime);
+}
+.permission-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.permission-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.permission-copy b {
+  font: 800 14px 'Manrope';
+  color: var(--ink);
+}
+.permission-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.permission-action {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.permission-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.permission-state {
+  flex: 0 0 auto;
+  color: var(--success);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.permission-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.permission-actions .secondary,
+.permission-actions .primary {
+  flex: 1;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+.permission-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.permission-skip {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sheet-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+.sheet-title h2 {
+  margin: 0;
+  font: 800 24px 'Manrope';
+}
+
+/* Close button (X) in permission sheet header */
+.round.pale {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.round.pale svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Bottom permission buttons */
+.permission-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+.permission-actions .primary {
+  background: var(--lime);
+  color: var(--on-accent);
+  border: 0;
+}
+
 .partner-sheet {
   width: min(100%, 680px);
   max-height: calc(94dvh - env(safe-area-inset-top));

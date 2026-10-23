@@ -25,6 +25,7 @@
 		"LocalNotificationsPlugin",
 		"CAPNetworkPlugin",
 		"PreferencesPlugin",
+		"PushNotificationsPlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"
 	]

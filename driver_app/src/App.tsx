@@ -13,6 +13,7 @@ import {
   saveAuthToken,
 } from './api'
 import { Icon, type IconName } from './Icon'
+import { PermissionSheet } from './PermissionSheet'
 import {
   getNotificationPreference,
   getStoredDutyStatus,
@@ -35,6 +36,7 @@ import { connectDriverEvents } from './realtime'
 import { checkForDriverUpdate, installDriverUpdate, type DriverUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
+import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
 import type {
   AppTab,
   CompletedTrip,
@@ -1294,6 +1296,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [otpOpen, setOtpOpen] = useState(false)
+  const [permissionSheet, setPermissionSheet] = useState(false)
   const activeOrder = useMemo(
     () => orders.find((order) => ACTIVE_STATUSES.has(order.status)) || null,
     [orders]
@@ -1456,6 +1459,10 @@ export default function App() {
         // A failed check must never block the app.
       }
     })()
+    // The permission sheet is shown once, on the first launch.
+    void hasSeenPermissionSheet().then((seen) => {
+      if (!seen) setPermissionSheet(true)
+    })
     void (async () => {
       try {
         const mode = await loadTheme()
@@ -2141,6 +2148,15 @@ export default function App() {
           busy={busyKey === 'complete'}
           onClose={() => setOtpOpen(false)}
           onSubmit={completeDelivery}
+        />
+      )}
+      {permissionSheet && (
+        <PermissionSheet
+          onClose={() => setPermissionSheet(false)}
+          onDone={() => {
+            void markPermissionSheetSeen()
+            setPermissionSheet(false)
+          }}
         />
       )}
     </div>

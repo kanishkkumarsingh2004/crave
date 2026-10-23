@@ -39,7 +39,9 @@ import {
 import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
+import { PermissionSheet } from './PermissionSheet'
 import { initializeNativeAppearance, notifyAdminAppUpdate } from './native'
+import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
 import type { AddressMapPoint } from './AddressMap'
 
 const AddressMap = lazy(() => import('./AddressMap'))
@@ -430,6 +432,7 @@ export default function App() {
   const [passwordSheet, setPasswordSheet] = useState(false)
   const [updateSheet, setUpdateSheet] = useState(false)
   const [languageSheet, setLanguageSheet] = useState(false)
+  const [permissionSheet, setPermissionSheet] = useState(false)
   const { t, locale: language, setLocale, languages } = useLanguage()
   const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
@@ -545,6 +548,10 @@ export default function App() {
       if (response.authenticated && response.user?.role === 'admin') {
         setUser(response.user)
         await loadDashboard(false)
+        // The permission sheet is shown once, on the first launch.
+        void hasSeenPermissionSheet().then((seen) => {
+          if (!seen) setPermissionSheet(true)
+        })
       } else {
         await clearAuthToken()
       }
@@ -2252,6 +2259,15 @@ export default function App() {
         </Suspense>
       )}
       {notice && <div className="toast">{notice}</div>}
+      {permissionSheet && (
+        <PermissionSheet
+          onClose={() => setPermissionSheet(false)}
+          onDone={() => {
+            void markPermissionSheetSeen()
+            setPermissionSheet(false)
+          }}
+        />
+      )}
     </div>
   )
 }

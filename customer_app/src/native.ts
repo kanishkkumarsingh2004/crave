@@ -1,12 +1,24 @@
 import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Preferences } from '@capacitor/preferences'
+import { PushNotifications } from '@capacitor/push-notifications'
 
 const CHANNEL = 'customer-orders'
 const PREF = 'crave_customer_notifications_enabled'
-const idFor = (value: string) =>
-  Math.max(1, [...value].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0) & 0x7fffffff)
+const PUSH_TOKEN_KEY = 'crave_customer_push_token'
+// Firebase registration is unsafe on Android until the packaged app contains a
+// valid google-services.json. Local notifications remain available without it.
+const REMOTE_PUSH_ENABLED = import.meta.env.VITE_FIREBASE_PUSH_ENABLED === 'true'
+
+function notificationId(value: string): number {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0
+  }
+  return Math.max(1, hash & 0x7fffffff)
+}
 
 export async function initializeNative() {
   if (!Capacitor.isNativePlatform()) return
@@ -20,6 +32,38 @@ export async function initializeNative() {
     lights: true,
     lightColor: '#F4FF52',
   }).catch(() => undefined)
+  // Register for remote push notifications if enabled
+  if (REMOTE_PUSH_ENABLED) {
+    try {
+      const permission = await PushNotifications.checkPermissions()
+      if (permission.receive === 'granted') {
+        await PushNotifications.addListener('registration', async (registration) => {
+          await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
+          const device = await Device.getId()
+          const { apiRequest } = await import('./api')
+          await apiRequest('/api/customer/push-token', {
+            method: 'POST',
+            body: {
+              token: registration.value,
+              platform: Capacitor.getPlatform(),
+              deviceId: device.identifier,
+            },
+          }).catch(() => undefined)
+        })
+        await PushNotifications.addListener('registrationError', () => undefined)
+        await PushNotifications.addListener('pushNotificationReceived', () => {
+          void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
+        })
+        await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+          const data = (action.notification.data || {}) as Record<string, unknown>
+          // Could deep-link based on data here
+        })
+        await PushNotifications.register()
+      }
+    } catch (error) {
+      console.warn('Remote push registration unavailable', error)
+    }
+  }
 }
 export async function notificationEnabled() {
   const stored = Capacitor.isNativePlatform()
@@ -30,18 +74,42 @@ export async function notificationEnabled() {
     return typeof Notification !== 'undefined' && Notification.permission === 'granted'
   return (await LocalNotifications.checkPermissions()).display === 'granted'
 }
+
+export async function getNotificationPermission(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) {
+    return typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  }
+  return (await LocalNotifications.checkPermissions()).display === 'granted'
+}
+
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) {
+    if (typeof Notification === 'undefined') return false
+    return (await Notification.requestPermission()) === 'granted'
+  }
+  try {
+    const localPermission = await LocalNotifications.requestPermissions()
+    if (localPermission.display !== 'granted') return false
+    if (!REMOTE_PUSH_ENABLED) return true
+
+    const pushPermission = await PushNotifications.requestPermissions()
+    return pushPermission.receive === 'granted'
+  } catch (error) {
+    console.warn('Unable to request notification permission', error)
+    return false
+  }
+}
+
 export async function enableNotifications(enabled: boolean) {
   let final = enabled
   if (enabled) {
-    final = Capacitor.isNativePlatform()
-      ? (await LocalNotifications.requestPermissions()).display === 'granted'
-      : typeof Notification !== 'undefined' &&
-        (await Notification.requestPermission()) === 'granted'
+    final = await requestNotificationPermission()
   }
   if (Capacitor.isNativePlatform()) await Preferences.set({ key: PREF, value: String(final) })
   else localStorage.setItem(PREF, String(final))
   return final
 }
+
 export async function notifyOrder(id: string, title: string, body: string) {
   await Haptics.impact({ style: ImpactStyle.Medium }).catch(() => undefined)
   if (!(await notificationEnabled())) return
@@ -49,7 +117,7 @@ export async function notifyOrder(id: string, title: string, body: string) {
     await LocalNotifications.schedule({
       notifications: [
         {
-          id: idFor(`${id}-${title}`),
+          id: notificationId(`${id}-${title}`),
           title,
           body,
           channelId: CHANNEL,
@@ -74,7 +142,7 @@ export async function notifyAppUpdate(title: string, body: string) {
   await LocalNotifications.schedule({
     notifications: [
       {
-        id: idFor('crave-app-update'),
+        id: notificationId('crave-app-update'),
         title,
         body,
         channelId: CHANNEL,

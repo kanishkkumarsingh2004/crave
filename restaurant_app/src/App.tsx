@@ -15,6 +15,7 @@ import {
   saveAuthToken,
 } from './api'
 import { Icon, type IconName } from './Icon'
+import { PermissionSheet } from './PermissionSheet'
 import {
   getNotificationPreference,
   initializeNativeAppearance,
@@ -27,6 +28,7 @@ import { connectRestaurantEvents } from './realtime'
 import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdate } from './update'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
+import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
 import type {
   AppTab,
   MenuEditorValue,
@@ -657,6 +659,7 @@ export default function App() {
   const [passwordSheet, setPasswordSheet] = useState(false)
   const [updateSheet, setUpdateSheet] = useState(false)
   const [languageSheet, setLanguageSheet] = useState(false)
+  const [permissionSheet, setPermissionSheet] = useState(false)
   const { t, locale: language, setLocale, languages } = useLanguage()
   const setLanguage = (code: SupportedLocale) => void setLocale(code)
   const [theme, setTheme] = useState<ThemeMode>('system')
@@ -816,6 +819,10 @@ export default function App() {
       await withTimeout(initializeNativeAppearance(), 4000)
       const token = await restoreAuthToken()
       setNotificationEnabled(await getNotificationPreference())
+      // The permission sheet is shown once, on the first launch.
+      void hasSeenPermissionSheet().then((seen) => {
+        if (!seen) setPermissionSheet(true)
+      })
       if (!token) return
       const result = await apiRequest<{ authenticated: boolean; user: RestaurantUser }>(
         '/api/auth/me',
@@ -2103,6 +2110,16 @@ export default function App() {
             </div>
           </section>
         </div>
+      )}
+
+      {permissionSheet && (
+        <PermissionSheet
+          onClose={() => setPermissionSheet(false)}
+          onDone={() => {
+            void markPermissionSheetSeen()
+            setPermissionSheet(false)
+          }}
+        />
       )}
 
       <nav className="bottom-nav" aria-label="Restaurant app navigation">
