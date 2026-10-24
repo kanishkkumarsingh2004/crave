@@ -90,7 +90,7 @@ export default function VendorSidebar() {
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
                   isActive
-                    ? 'bg-[#d9f447] text-[#121815] font-black shadow-xs'
+                    ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] font-bold shadow-xs'
                     : 'text-stone-600 dark:text-white/70 hover:bg-stone-100 dark:hover:bg-white/10 hover:text-stone-900 dark:hover:text-white'
                 }`}
               >

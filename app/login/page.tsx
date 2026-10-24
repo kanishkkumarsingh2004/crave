@@ -85,37 +85,36 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-stone-100 flex flex-col justify-between relative selection:bg-[#d9f447] selection:text-[#121815]">
-      {/* Ambient High-Fashion Glow & Dot Grid */}
-      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[560px] w-full max-w-5xl bg-gradient-to-b from-[#d9f447]/15 via-[#d9f447]/5 to-transparent blur-[140px]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.03] dark:opacity-[0.04]" />
+      {/* Ambient Glow & Dot Grid */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[480px] w-full max-w-4xl bg-gradient-to-b from-[#d9f447]/10 via-[#d9f447]/5 to-transparent blur-[100px]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.02] dark:opacity-[0.03]" />
 
       <Navbar />
 
       <main className="mx-auto my-8 sm:my-14 w-full max-w-4xl px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left Editorial Branding (Desktop) */}
+          {/* Left Branding (Desktop) */}
           <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] leading-[1.05] text-[#121815] dark:text-white">
-              Gastronomic mastery. <br />
+              Welcome back. <br />
               <span className="font-serif italic font-normal text-stone-500 dark:text-stone-400">
-                At your command.
+                Sign in to Crave.
               </span>
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Sign in to orchestrate artisan culinary deliveries, inspect live hearth queues, or
-              manage South Bengaluru&apos;s finest kitchens.
+              Order delicious food, track active deliveries in real time, or manage your restaurant and courier operations.
             </p>
 
-            {/* Editorial Provenance Accents */}
+            {/* Practical Service Highlights */}
             <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 dark:border-white/10 text-xs text-stone-500 dark:text-stone-400">
               <div className="flex items-center gap-2 font-medium justify-center lg:justify-start">
                 <ShieldCheck className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
-                <span>256-bit encryption</span>
+                <span>Verified Partners</span>
               </div>
               <div className="flex items-center gap-2 font-medium justify-center lg:justify-start">
                 <Sparkles className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
-                <span>Zero surcharge</span>
+                <span>Live GPS Tracking</span>
               </div>
             </div>
           </div>
@@ -128,7 +127,7 @@ export default function LoginPage() {
                 <div>
                   <CraveLogo variant="full" size="md" />
                   <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1">
-                    Sign in to your private Crave account
+                    Sign in to your account
                   </p>
                 </div>
                 <div className="size-9 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center border border-black/5 dark:border-white/5">
@@ -243,11 +242,11 @@ export default function LoginPage() {
                     {submitting ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        <span>Authenticating Credentials...</span>
+                        <span>Signing in...</span>
                       </>
                     ) : (
                       <>
-                        <span>Enter Crave Workspace</span>
+                        <span>Sign In</span>
                         <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                       </>
                     )}
@@ -270,10 +269,10 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* Editorial Footer */}
+      {/* Footer */}
       <footer className="py-6 text-center text-xs text-stone-400 dark:text-stone-600 border-t border-black/5 dark:border-white/5">
         <p className="font-mono tracking-wider">
-          © 2026 CRAVE GASTRONOMY • DISPATCH PROTOCOL 25-MIN • BANGALORE
+          © 2026 CRAVE • BENGALURU, INDIA
         </p>
       </footer>
     </div>

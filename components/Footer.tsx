@@ -17,12 +17,12 @@ export default function Footer({ className = '' }: { className?: string }) {
               <CraveLogo variant="full" size="lg" theme="light" />
             </Link>
             <p className="text-xs text-stone-400 max-w-sm leading-relaxed font-medium">
-              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store
-              essentials. Dispatched with temperature-controlled precision in 25 minutes.
+              Food delivery from your favorite neighbourhood restaurants and 15-minute essentials.
+              Fresh ingredients, transparent pricing, and fast doorstep delivery.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-mono tracking-wider text-stone-500 pt-1">
               <span className="size-1.5 rounded-full bg-[#d9f447]" />
-              <span>Kanakapura Road Corridor • Bengaluru</span>
+              <span>Bengaluru, Karnataka</span>
             </div>
           </div>
 
@@ -34,12 +34,12 @@ export default function Footer({ className = '' }: { className?: string }) {
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
                 <Link href="/user/explore" className="hover:text-white transition-colors">
-                  Food Delivery
+                  Restaurants
                 </Link>
               </li>
               <li>
                 <Link href="/user/cravexp" className="hover:text-white transition-colors">
-                  CraveXP Flash
+                  Instant Essentials
                 </Link>
               </li>
               <li>
@@ -57,18 +57,18 @@ export default function Footer({ className = '' }: { className?: string }) {
             </h4>
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
-                <Link href="/user/profile" className="hover:text-white transition-colors">
-                  Patron Account
+                <Link href="/user/dashboard" className="hover:text-white transition-colors">
+                  Customer Dashboard
                 </Link>
               </li>
               <li>
                 <Link href="/vendor/dashboard" className="hover:text-white transition-colors">
-                  Kitchen Partner Portal
+                  Restaurant Partner Portal
                 </Link>
               </li>
               <li>
                 <Link href="/driver/dashboard" className="hover:text-white transition-colors">
-                  Courier Fleet Portal
+                  Delivery Partner Portal
                 </Link>
               </li>
               <li>
@@ -82,12 +82,12 @@ export default function Footer({ className = '' }: { className?: string }) {
           {/* Column 4: Trust & Support (2 cols on lg) */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
-              Trust
+              Support
             </h4>
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
                 <Link href="/policies" className="hover:text-white transition-colors">
-                  Help &amp; Support
+                  Help Center
                 </Link>
               </li>
               <li>
@@ -107,13 +107,12 @@ export default function Footer({ className = '' }: { className?: string }) {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & Protocol */}
+        {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500 font-medium">
-          <p>© 2026 crave.™ Ltd. All rights reserved.</p>
+          <p>© 2026 Crave. All rights reserved.</p>
           <div className="flex items-center gap-2 text-stone-400">
-            <ShieldCheck className="size-3.5 text-[#d9f447]" />
             <span className="font-mono tracking-wider text-[10px] uppercase">
-              256-Bit TLS • Zero Surcharge Transparency
+              Fast Dispatch • Transparent Pricing
             </span>
           </div>
         </div>

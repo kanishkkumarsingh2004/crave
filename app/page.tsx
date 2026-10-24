@@ -207,13 +207,13 @@ export default function HomePage() {
     const targetDashboard = getTargetDashboard()
     return (
       <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#d9f447] selection:text-[#121815]">
-        {/* Ambient High-Fashion Glow */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 size-[520px] bg-gradient-to-b from-[#d9f447]/15 via-[#d9f447]/5 to-transparent blur-[140px]" />
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.03] dark:opacity-[0.04]" />
+        {/* Ambient Subtle Glow */}
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 size-[420px] bg-gradient-to-b from-[#d9f447]/10 via-[#d9f447]/5 to-transparent blur-[100px]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.02] dark:opacity-[0.03]" />
 
         <CravePagePreloader
-          title="Directing to Workspace"
-          subtitle="Routing you safely to your personalized Crave dashboard"
+          title="Taking you to your dashboard"
+          subtitle="One moment while we load your personalized Crave account"
           minHeight="min-h-[260px]"
         />
         {redirectTimeoutExceeded && (
@@ -267,26 +267,26 @@ export default function HomePage() {
       <Navbar />
 
       {/* =========================================================================
-          HERO SECTION: VOGUE EDITORIAL ARCHITECTURE × GASTRONOMY DISPATCH
+      {/* =========================================================================
+          HERO SECTION: FOOD DELIVERY & 15-MIN ESSENTIALS
          ========================================================================= */}
       <section className="relative overflow-hidden pt-8 sm:pt-14 pb-14 lg:pt-16 lg:pb-20">
-        {/* Subtle high-fashion ambient lighting */}
-        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[520px] w-[1100px] bg-gradient-to-b from-[#d9f447]/15 via-transparent to-transparent blur-[140px]" />
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03] dark:opacity-[0.04]" />
+        {/* Subtle ambient lighting */}
+        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[400px] w-[800px] bg-gradient-to-b from-[#d9f447]/10 via-transparent to-transparent blur-[100px]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.02] dark:opacity-[0.03]" />
 
         <div className="mx-auto max-w-[1240px] px-5 sm:px-6 lg:px-8">
-          {/* ── EDITORIAL MASTHEAD & SEARCH CONSOLE ── */}
+          {/* ── HERO HEADLINE & SEARCH CONSOLE ── */}
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-[-0.04em] text-[#121815] dark:text-white leading-[0.98]">
-              Epicurean Dining. <br />
+              Craving Good Food? <br />
               <span className="font-serif italic font-normal text-stone-500 dark:text-stone-400">
-                Dispatched in 25 minutes.
+                Delivered in 25 minutes.
               </span>
             </h1>
 
             <p className="text-sm sm:text-base lg:text-lg text-stone-600 dark:text-stone-300 font-medium leading-relaxed max-w-2xl mx-auto">
-              Curated gastronomy from South Bengaluru&apos;s master hearths and dark-store
-              essentials. Zero artificial markups. Transparent culinary craft.
+              From beloved local restaurants to 15-minute grocery essentials. Direct restaurant pricing, zero hidden fees, and rapid doorstep delivery across Bengaluru.
             </p>
 
             {/* Architectural Search Console */}
@@ -325,7 +325,7 @@ export default function HomePage() {
                     onClick={() => handleSearchSubmit()}
                     className="flex items-center justify-center gap-2 rounded-xl bg-[#121815] dark:bg-[#d9f447] px-6 py-3.5 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-98 shrink-0 shadow-xs"
                   >
-                    <span>Explore Curation</span>
+                    <span>Find Food</span>
                     <ArrowRight className="size-3.5" />
                   </button>
                 </div>
@@ -353,24 +353,24 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── EDITORIAL PROVENANCE TICKER ── */}
+          {/* ── TRUST & SPEED METRICS ── */}
           <div className="mt-8 sm:mt-16 pt-5 sm:pt-8 border-t border-black/5 dark:border-white/10">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-center lg:text-left text-[11px] sm:text-xs font-mono tracking-wider uppercase text-gray-500 dark:text-gray-400">
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">25 MIN</span>{' '}
-                AVERAGE DISPATCH
+                AVERAGE DELIVERY
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">120+</span> VERIFIED
-                HEARTHS
+                RESTAURANTS
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CLIENT
-                SATISFACTION
+                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CUSTOMER
+                RATING
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
                 <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span>{' '}
-                CONVENIENCE SURCHARGE
+                HIDDEN SURCHARGES
               </div>
             </div>
           </div>
@@ -498,16 +498,15 @@ export default function HomePage() {
               <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">
                   <Star className="size-2.5 fill-current" />
-                  Editorial Selection
+                  Top Rated
                 </span>
-                <span>Verified Kitchen Partners</span>
+                <span>Verified Partners</span>
               </div>
               <h2 className="text-xl sm:text-3xl font-black tracking-tight text-[#121815] dark:text-white">
-                Top Rated Culinary Partners
+                Featured Restaurants &amp; Kitchens
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                Curated spotlight from South Bengaluru hearths. Delivery times represent average
-                kitchen prep and dispatch windows.
+                Popular local kitchens and essentials with fast preparation and doorstep dispatch.
               </p>
             </div>
             <button
@@ -515,7 +514,7 @@ export default function HomePage() {
               onClick={() => handleNavigate('/user/explore')}
               className="text-xs font-black text-[#5e8210] dark:text-[#d9f447] hover:underline flex items-center gap-1 self-start sm:self-auto shrink-0"
             >
-              <span>Explore Live Catalog</span>
+              <span>Explore All Restaurants</span>
               <ChevronRight className="size-3.5" />
             </button>
           </div>

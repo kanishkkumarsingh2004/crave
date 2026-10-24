@@ -204,7 +204,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-2.5 group min-w-0"
                 title={sidebarCollapsed ? 'crave. Driver' : undefined}
               >
-                <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_4px_16px_rgba(217,244,71,0.35)] shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105">
                   <Bike className="size-5" />
                 </span>
                 <div
@@ -285,13 +285,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                         : 'justify-between px-3.5 py-2.5'
                     } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
                       isActive
-                        ? 'bg-[#d9f447] text-[#121815] font-bold shadow-md'
+                        ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] font-bold shadow-xs'
                         : 'text-[#44554b] dark:text-white/70 hover:bg-[#ebf0ec] dark:hover:bg-white/10 hover:text-[#121815] dark:hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon
-                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-[#121815] scale-105' : 'text-[#5e8210] dark:text-[#d9f447]'}`}
+                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-white dark:text-[#121815] scale-105' : 'text-[#5e8210] dark:text-[#d9f447]'}`}
                       />
                       <span
                         className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${

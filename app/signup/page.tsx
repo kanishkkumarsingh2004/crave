@@ -78,31 +78,30 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-stone-100 flex flex-col justify-between relative selection:bg-[#d9f447] selection:text-[#121815]">
-      {/* Ambient High-Fashion Glow & Dot Grid */}
-      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[560px] w-full max-w-5xl bg-gradient-to-b from-[#d9f447]/15 via-[#d9f447]/5 to-transparent blur-[140px]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.03] dark:opacity-[0.04]" />
+      {/* Ambient Glow & Dot Grid */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -z-10 h-[480px] w-full max-w-4xl bg-gradient-to-b from-[#d9f447]/10 via-[#d9f447]/5 to-transparent blur-[100px]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.02] dark:opacity-[0.03]" />
 
       <Navbar />
 
       <main className="mx-auto my-8 sm:my-14 w-full max-w-4xl px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left Editorial Column (Desktop) */}
+          {/* Left Column (Desktop) */}
           <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest uppercase text-stone-500 dark:text-stone-400">
               <span className="size-1.5 rounded-full bg-[#5e8210] dark:bg-[#d9f447]" />
-              <span>Membership Registration</span>
+              <span>Create an Account</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] leading-[1.05] text-[#121815] dark:text-white">
-              Join the epicurean circle. <br />
+              Delicious food. <br />
               <span className="font-serif italic font-normal text-stone-500 dark:text-stone-400">
-                Crafted for connoisseurs.
+                Delivered fast.
               </span>
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Create your complimentary patron profile to access secret menu drops, direct kitchen
-              dispatching, and doorstep delivery in under 25 minutes.
+              Create your Crave account to save favorite kitchens, track orders live, and get meals and daily essentials delivered in 25 minutes.
             </p>
 
             {/* Value Pillars */}
@@ -111,10 +110,10 @@ export default function SignupPage() {
                 <Clock className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
                   <p className="font-bold text-[#121815] dark:text-white">
-                    25-Minute Priority Dispatch
+                    25-Minute Doorstep Delivery
                   </p>
                   <p className="text-stone-500 dark:text-stone-400">
-                    Strict temperature-controlled delivery
+                    Fast, reliable dispatch across Bengaluru
                   </p>
                 </div>
               </div>
@@ -123,10 +122,10 @@ export default function SignupPage() {
                 <Flame className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
                   <p className="font-bold text-[#121815] dark:text-white">
-                    Verified Artisan Hearths
+                    Verified Partner Restaurants
                   </p>
                   <p className="text-stone-500 dark:text-stone-400">
-                    Award-winning sourdough, biryani &amp; grills
+                    Hand-picked local kitchens, cafes &amp; dark stores
                   </p>
                 </div>
               </div>
@@ -134,9 +133,9 @@ export default function SignupPage() {
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/5">
                 <Sparkles className="size-4 text-[#5e8210] dark:text-[#d9f447] shrink-0" />
                 <div className="text-xs text-left">
-                  <p className="font-bold text-[#121815] dark:text-white">Zero Inflated Markups</p>
+                  <p className="font-bold text-[#121815] dark:text-white">Transparent Pricing</p>
                   <p className="text-stone-500 dark:text-stone-400">
-                    Original restaurant dine-in pricing
+                    Direct restaurant pricing with no hidden fees
                   </p>
                 </div>
               </div>
@@ -328,11 +327,11 @@ export default function SignupPage() {
                   {submitting ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      <span>Creating Patron Account...</span>
+                      <span>Creating Account...</span>
                     </>
                   ) : (
                     <>
-                      <span>Complete Registration</span>
+                      <span>Create Account</span>
                       <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
@@ -354,10 +353,10 @@ export default function SignupPage() {
         </div>
       </main>
 
-      {/* Editorial Footer */}
+      {/* Footer */}
       <footer className="py-6 text-center text-xs text-stone-400 dark:text-stone-600 border-t border-black/5 dark:border-white/5">
         <p className="font-mono tracking-wider">
-          © 2026 CRAVE GASTRONOMY • DISPATCH PROTOCOL 25-MIN • BANGALORE
+          © 2026 CRAVE • BENGALURU, INDIA
         </p>
       </footer>
     </div>

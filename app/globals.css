@@ -142,6 +142,16 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  --badge-success-bg: #ecfdf5;
+  --badge-success-fg: #065f46;
+  --badge-warning-bg: #fffbeb;
+  --badge-warning-fg: #92400e;
+  --badge-error-bg: #fef2f2;
+  --badge-error-fg: #991b1b;
+  --badge-info-bg: #eff6ff;
+  --badge-info-fg: #1e40af;
+  --badge-neutral-bg: #f3f4f6;
+  --badge-neutral-fg: #374151;
 }
 
 :root.dark,
@@ -179,6 +189,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --badge-success-bg: rgba(16, 185, 129, 0.16);
+  --badge-success-fg: #6ee7b7;
+  --badge-warning-bg: rgba(245, 158, 11, 0.16);
+  --badge-warning-fg: #fcd34d;
+  --badge-error-bg: rgba(239, 68, 68, 0.16);
+  --badge-error-fg: #fca5a5;
+  --badge-info-bg: rgba(59, 130, 246, 0.16);
+  --badge-info-fg: #93c5fd;
+  --badge-neutral-bg: rgba(156, 163, 175, 0.16);
+  --badge-neutral-fg: #d1d5db;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -646,7 +666,6 @@ input[type='submit'],
   padding: 0.75rem 1.5rem 1rem;
   border-top: 1px solid var(--border);
   background-color: var(--muted);
-  opacity: 0.3;
 }
 
 /* =============================================================================
@@ -837,53 +856,28 @@ input[type='submit'],
 }
 
 .badge-success {
-  background-color: var(--emerald-100);
-  color: var(--emerald-900);
-}
-
-.dark .badge-success {
-  background-color: color-mix(in srgb, var(--emerald-900) 30%, transparent);
-  color: var(--emerald-300);
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-fg);
 }
 
 .badge-warning {
-  background-color: var(--amber-100);
-  color: var(--amber-900);
-}
-
-.dark .badge-warning {
-  background-color: color-mix(in srgb, var(--amber-900) 30%, transparent);
-  color: var(--amber-300);
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-fg);
 }
 
 .badge-error {
-  background-color: var(--red-100);
-  color: var(--red-900);
-}
-
-.dark .badge-error {
-  background-color: color-mix(in srgb, var(--red-900) 30%, transparent);
-  color: var(--red-300);
+  background-color: var(--badge-error-bg);
+  color: var(--badge-error-fg);
 }
 
 .badge-info {
-  background-color: var(--blue-100);
-  color: var(--blue-900);
-}
-
-.dark .badge-info {
-  background-color: color-mix(in srgb, var(--blue-900) 30%, transparent);
-  color: var(--blue-300);
+  background-color: var(--badge-info-bg);
+  color: var(--badge-info-fg);
 }
 
 .badge-neutral {
-  background-color: var(--gray-100);
-  color: var(--gray-700);
-}
-
-.dark .badge-neutral {
-  background-color: color-mix(in srgb, var(--gray-900) 30%, transparent);
-  color: var(--gray-300);
+  background-color: var(--badge-neutral-bg);
+  color: var(--badge-neutral-fg);
 }
 
 /* =============================================================================

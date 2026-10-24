@@ -165,7 +165,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="flex items-center gap-2.5 group min-w-0"
               title={sidebarCollapsed ? 'crave. Admin' : undefined}
             >
-              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-[0_0_20px_rgba(217,244,71,0.3)] shrink-0 transition-transform duration-300 group-hover:scale-105">
+              <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105">
                 <UtensilsCrossed className="size-5 fill-current" />
               </span>
               <div
