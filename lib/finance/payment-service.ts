@@ -25,7 +25,8 @@ export interface PaymentVerificationInput {
   orderId: string
   gatewayPaymentId?: string
   gateway?: string // 'UPI_MANUAL' | 'RAZORPAY' | 'CASHFREE' | 'STRIPE' | 'MOCK'
-  amount?: number // in rupees
+  amount?: number // in rupees (legacy manual flows)
+  amountPaise?: number // exact gateway amount in paise (100 = ₹1) — canonical for RAZORPAY
   actorId?: string
   idempotencyKey?: string
   rawPayload?: any
@@ -94,24 +95,76 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
       }
     }
 
-    // Financial Validation: Received amount cannot be lower than total payable
-    if (amount != null && amount > 0 && amount < order.total_amount) {
-      throw new Error(
-        `Underpayment detected: Received ₹${amount}, required ₹${order.total_amount} for order ${orderId}`
-      )
+    // ─── Canonical paise validation (exact equality, never underpayment-only) ───
+    const snapshot: CanonicalPriceResult | null = order.financial_snapshot as any
+    if (!snapshot) {
+      throw new Error(`Financial snapshot missing for order ${orderId}`)
+    }
+    const canonicalPaise = order.total_amount_paise ?? snapshot.customerPayablePaise
+    if (!Number.isSafeInteger(canonicalPaise) || canonicalPaise <= 0) {
+      throw new Error(`Invalid canonical payable amount for order ${orderId}`)
     }
 
-    // 2. Transition Order Status to payment_verified / sent_to_vendor
-    const updatedOrder = await tx.order.update({
-      where: { id: orderId },
+    if (input.amountPaise != null) {
+      if (!Number.isSafeInteger(input.amountPaise) || input.amountPaise !== canonicalPaise) {
+        throw new Error(
+          `Exact paise mismatch: gateway ${input.amountPaise} !== canonical ${canonicalPaise} for order ${orderId}`
+        )
+      }
+    } else if (amount != null && amount > 0) {
+      // Legacy manual flows: rupee amount must not underpay the canonical total.
+      // Exact paise equality is NOT enforced for non-gateway flows.
+      if (amount < Math.round(canonicalPaise / 100)) {
+        throw new Error(
+          `Underpayment detected: Received ₹${amount}, required ₹${Math.round(canonicalPaise / 100)} for order ${orderId}`
+        )
+      }
+    }
+
+    // ─── Concurrency-safe compare-and-set: only verify an order still pending payment ───
+    // This prevents simultaneous webhook and browser verification from racing.
+    const lockUpdate = await tx.order.updateMany({
+      where: {
+        id: orderId,
+        payment_status: 'pending',
+      },
       data: {
         payment_status: 'verified',
         status: 'sent_to_vendor',
         payment_reviewed_by: actorId,
         payment_reviewed_at: new Date(),
         ...(gatewayPaymentId ? { utr_ref: gatewayPaymentId } : {}),
+        ...(input.amountPaise != null ? { total_amount_paise: input.amountPaise } : {}),
       },
     })
+    if (lockUpdate.count === 0) {
+      // Either already verified/processing/rejected by a concurrent request, or missing.
+      const current = await tx.order.findUnique({ where: { id: orderId } })
+      if (current && current.payment_status === 'verified') {
+        return {
+          success: true,
+          order: current,
+          orderId,
+          alreadyVerified: true,
+          message: 'Order payment already verified (idempotent)',
+        }
+      }
+      throw new Error(`Payment verification race lost for order ${orderId}`)
+    }
+
+    const updatedOrder = await tx.order.findUnique({ where: { id: orderId } })!
+
+    // ─── Prevent gateway_payment_id from attaching to a different order ───
+    if (gatewayPaymentId) {
+      const existingTxForGateway = await tx.paymentTransaction.findFirst({
+        where: { gateway_payment_id: gatewayPaymentId },
+      })
+      if (existingTxForGateway && existingTxForGateway.order_id !== orderId) {
+        throw new Error(
+          `Gateway payment id ${gatewayPaymentId} already attached to order ${existingTxForGateway.order_id}`
+        )
+      }
+    }
 
     // 3. Update associated PaymentReview if one exists
     await tx.paymentReview.updateMany({
@@ -132,6 +185,7 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
           verified_at: new Date(),
           gateway,
           ...(gatewayPaymentId ? { gateway_payment_id: gatewayPaymentId } : {}),
+          ...(input.amountPaise != null ? { amount_paise: input.amountPaise } : {}),
           ...(rawPayload ? { raw_payload: rawPayload as any } : {}),
         },
       })
@@ -144,7 +198,9 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
           idempotency_key: txIdempotencyKey,
           gateway,
           gateway_payment_id: gatewayPaymentId || null,
-          amount: amount || order.total_amount,
+          amount: amount || Math.round(canonicalPaise / 100),
+          amount_paise: input.amountPaise ?? canonicalPaise,
+          currency: 'INR',
           status: 'verified',
           raw_payload: rawPayload || {},
           verified_at: new Date(),
@@ -188,7 +244,6 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     }
 
     // 6. Post Double-Entry Ledger Journal (ORDER_CONFIRMED)
-    const snapshot: CanonicalPriceResult | null = order.financial_snapshot as any
     if (!snapshot) {
       throw new Error(`Financial snapshot missing for order ${orderId}`)
     }
@@ -242,13 +297,13 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
   if (!result.alreadyVerified) {
     await broadcast('vendor_orders', {
       type: 'new_paid_order',
-      order: result.order,
+      order: result.order!,
       orderId,
-      restaurantId: result.order.restaurant_id,
+      restaurantId: result.order!.restaurant_id,
       timestamp: new Date().toISOString(),
     })
 
-    const customerId = result.order.customer_id
+    const customerId = result.order!.customer_id
     if (customerId) {
       await sendWebPushToUsers([customerId], {
         title: 'Payment verified',
@@ -261,17 +316,17 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
       )
     }
 
-    if (result.order.restaurant_id) {
+    if (result.order!.restaurant_id) {
       const restaurant = await prisma.restaurant
         .findUnique({
-          where: { id: result.order.restaurant_id },
+          where: { id: result.order!.restaurant_id },
           select: { owner_id: true },
         })
         .catch(() => null)
       if (restaurant?.owner_id) {
         await sendWebPushToUsers([restaurant.owner_id], {
           title: 'New paid order received',
-          body: `${result.order.customer_name} placed order #${orderId.slice(-8)} for ₹${Number(result.order.total_amount).toLocaleString('en-IN')}. Start preparing it now.`,
+          body: `${result.order!.customer_name} placed order #${orderId.slice(-8)} for ₹${Number(result.order!.total_amount).toLocaleString('en-IN')}. Start preparing it now.`,
           url: '/vendor/dashboard',
           tag: `new-order-${orderId}`,
           orderId,
@@ -376,8 +431,8 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
     return { success: true, order: updatedOrder }
   })
 
-  if (!result.alreadyRejected && result.order.customer_id) {
-    await sendWebPushToUsers([result.order.customer_id], {
+  if (!result.alreadyRejected && result.order!.customer_id) {
+    await sendWebPushToUsers([result.order!.customer_id], {
       title: 'Payment not verified',
       body: `Payment for order #${orderId.slice(-8)} was not approved. Open the app for details.`,
       url: `/user/orders/${encodeURIComponent(orderId)}`,

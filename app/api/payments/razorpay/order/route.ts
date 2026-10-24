@@ -1,0 +1,114 @@
+/**
+ * app/api/payments/razorpay/order/route.ts
+ *
+ * POST — create a Razorpay checkout order for an existing Crave order.
+ *
+ * Rules:
+ * - Accepts only Crave's internal order ID. The client cannot supply amount or
+ *   recipient allocations — the server derives them from the persisted snapshot.
+ * - Amount is read from order.total_amount_paise (canonical paise), falling back
+ *   to financial_snapshot.customerPayablePaise.
+ * - Reuses only a valid existing Razorpay attempt for this exact order + amount.
+ */
+
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/prisma'
+import { getRazorpayClient } from '@/lib/payments/razorpay-client'
+
+export const runtime = 'nodejs'
+
+export async function POST(request: Request) {
+  try {
+    const actor = await requireAuth(request)
+    const body = await request.json().catch(() => ({}))
+    const orderId = typeof body.orderId === 'string' ? body.orderId : ''
+    if (!orderId) {
+      return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } })
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (order.customer_id !== actor.id && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (['cancelled', 'delivered', 'completed'].includes(order.status)) {
+      return NextResponse.json({ error: 'Order is not payable' }, { status: 409 })
+    }
+    if (order.payment_status === 'verified') {
+      return NextResponse.json({ error: 'Order already paid' }, { status: 409 })
+    }
+
+    const snapshot = order.financial_snapshot as {
+      customerPayablePaise?: number
+      snapshotId?: string
+    } | null
+    const amountPaise = order.total_amount_paise ?? snapshot?.customerPayablePaise
+
+    if (!Number.isSafeInteger(amountPaise) || !amountPaise || amountPaise < 100) {
+      return NextResponse.json({ error: 'Invalid canonical payable amount' }, { status: 409 })
+    }
+    if (
+      snapshot?.customerPayablePaise != null &&
+      amountPaise !== snapshot.customerPayablePaise
+    ) {
+      return NextResponse.json({ error: 'Snapshot amount mismatch' }, { status: 409 })
+    }
+
+    // Reuse only a valid existing attempt for this exact order and amount.
+    const existing = await prisma.paymentTransaction.findFirst({
+      where: {
+        order_id: orderId,
+        gateway: 'RAZORPAY',
+        status: { in: ['pending', 'processing'] },
+        razorpay_order_id: { not: null },
+        amount_paise: amountPaise,
+      },
+      orderBy: { created_at: 'desc' },
+    })
+    if (existing?.razorpay_order_id) {
+      return NextResponse.json({
+        keyId: process.env.RAZORPAY_KEY_ID,
+        razorpayOrderId: existing.razorpay_order_id,
+        amount: amountPaise,
+        currency: 'INR',
+        internalOrderId: order.id,
+      })
+    }
+
+    const client = getRazorpayClient()
+    const rzpOrder = await client.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: `crave_${order.id}`.slice(0, 40),
+      notes: {
+        crave_order_id: order.id,
+        snapshot_id: String(snapshot?.snapshotId ?? '').slice(0, 200),
+      },
+    })
+
+    await prisma.paymentTransaction.create({
+      data: {
+        idempotency_key: `razorpay_order_${rzpOrder.id}`,
+        order_id: order.id,
+        gateway: 'RAZORPAY',
+        razorpay_order_id: rzpOrder.id,
+        amount: Math.round(amountPaise / 100), // legacy compatibility only
+        amount_paise: amountPaise,
+        currency: 'INR',
+        status: 'pending',
+      } as any,
+    })
+
+    return NextResponse.json({
+      keyId: process.env.RAZORPAY_KEY_ID,
+      razorpayOrderId: rzpOrder.id,
+      amount: amountPaise,
+      currency: 'INR',
+      internalOrderId: order.id,
+    })
+  } catch (error) {
+    console.error('[razorpay/order] Failed', error)
+    return NextResponse.json({ error: 'Unable to start payment' }, { status: 500 })
+  }
+}

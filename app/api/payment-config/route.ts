@@ -91,6 +91,14 @@ export async function GET(request: Request) {
           dbConfig.enable_upi_deep_link != null
             ? Boolean(dbConfig.enable_upi_deep_link)
             : DEFAULT_PAYMENT_CONFIG.enableUpiDeepLink,
+        razorpayEnabled:
+          dbConfig.razorpay_enabled != null
+            ? Boolean(dbConfig.razorpay_enabled)
+            : DEFAULT_PAYMENT_CONFIG.razorpayEnabled,
+        razorpayRouteEnabled:
+          dbConfig.razorpay_route_enabled != null
+            ? Boolean(dbConfig.razorpay_route_enabled)
+            : DEFAULT_PAYMENT_CONFIG.razorpayRouteEnabled,
         requireUtrNumber:
           dbConfig.require_utr_number != null
             ? Boolean(dbConfig.require_utr_number)
@@ -170,6 +178,8 @@ export async function POST(request: Request) {
       enable_cash_on_delivery: fullConfig.enableCashOnDelivery,
       enable_upi_deep_link: fullConfig.enableUpiDeepLink,
       require_utr_number: fullConfig.requireUtrNumber,
+      razorpay_enabled: fullConfig.razorpayEnabled,
+      razorpay_route_enabled: fullConfig.razorpayRouteEnabled,
       is_active: true,
     })
 

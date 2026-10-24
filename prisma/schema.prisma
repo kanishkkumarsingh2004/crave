@@ -231,6 +231,9 @@ model Order {
   // Contains the full CanonicalPriceResult in paise; source of truth for settlement & invoices
   financial_snapshot Json?
 
+  // Exact canonical customer payable in paise (100 = ₹1). Source of truth for gateway amounts.
+  total_amount_paise Int?
+
   // UTR reference from customer payment submission
   utr_ref String?
 
@@ -372,6 +375,11 @@ model PaymentConfig {
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
   gst_rate                Decimal? @db.Decimal(5, 2)
   gst_rate_percent        Decimal? @db.Decimal(5, 2) // Alias; use this field in new code
+
+  // Razorpay gateway controls (admin business controls; env flags are kill switches)
+  razorpay_enabled            Boolean @default(false)
+  razorpay_route_enabled      Boolean @default(false)
+  razorpay_transfer_release   String  @default("DELIVERY_COMPLETE") // DELIVERY_COMPLETE | ADMIN_APPROVAL
 
   @@map("payment_configs")
 }
@@ -663,7 +671,9 @@ model PaymentTransaction {
   idempotency_key    String          @unique
   gateway            String // "UPI_MANUAL" | "RAZORPAY" | "CASHFREE" | "STRIPE" | "MOCK"
   gateway_payment_id String?
-  amount             Int // in rupees
+  razorpay_order_id  String?         @unique
+  amount             Int // in rupees (legacy)
+  amount_paise       Int?            // exact gateway amount in paise
   currency           String          @default("INR")
   status             PaymentTxStatus @default(pending)
   failure_reason     String?
@@ -685,7 +695,8 @@ model Refund {
   id                String       @id @default(cuid())
   order_id          String
   idempotency_key   String       @unique
-  amount            Int // in rupees
+  amount            Int // in rupees (legacy)
+  amount_paise      Int?         // exact refund amount in paise
   reason            String
   status            RefundStatus @default(pending)
   gateway_refund_id String?      @unique
@@ -711,4 +722,68 @@ enum RefundStatus {
   processing
   completed
   failed
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Razorpay Gateway + Route split settlement models
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Server-controlled mapping of internal Crave entities (restaurants/drivers) to
+/// Razorpay Route linked account IDs. Only active mappings may receive transfers.
+model RazorpayLinkedAccount {
+  id                  String   @id @default(cuid())
+  entity_type         String   // RESTAURANT | DRIVER
+  entity_id           String
+  razorpay_account_id String   @unique
+  status              String   @default("pending") // pending | active | rejected | disabled
+  verified_at         DateTime? @db.Timestamptz(6)
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([entity_type, entity_id])
+  @@index([status, entity_type])
+  @@map("razorpay_linked_accounts")
+}
+
+/// Durable Razorpay Route transfer intent + provider-confirmed state.
+model RazorpayTransfer {
+  id                   String   @id @default(cuid())
+  order_id             String
+  recipient_type       String   // RESTAURANT | DRIVER
+  recipient_id         String
+  linked_account_id    String
+  razorpay_payment_id  String
+  razorpay_transfer_id String?  @unique
+  idempotency_key      String   @unique
+  amount_paise         Int
+  currency             String   @default("INR")
+  status               String   @default("pending")
+  // pending | processing | processed | failed | reversed
+  failure_reason       String?
+  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime @updatedAt @db.Timestamptz(6)
+  processed_at         DateTime? @db.Timestamptz(6)
+
+  @@index([order_id, status])
+  @@index([razorpay_payment_id])
+  @@index([recipient_type, recipient_id, status])
+  @@map("razorpay_transfers")
+}
+
+/// Durable webhook receipts for replay protection. Never use an in-memory set.
+model WebhookEvent {
+  id                String   @id @default(cuid())
+  provider          String
+  provider_event_id String
+  event_type        String
+  status            String @default("processing") // processing | processed | failed
+  payload           Json?
+  attempts          Int      @default(1)
+  last_error        String?
+  received_at       DateTime @default(now()) @db.Timestamptz(6)
+  processed_at      DateTime? @db.Timestamptz(6)
+
+  @@unique([provider, provider_event_id])
+  @@index([provider, status, received_at])
+  @@map("webhook_events")
 }
