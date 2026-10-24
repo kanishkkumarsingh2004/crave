@@ -330,10 +330,14 @@ export async function POST(request: Request) {
 
       // Customer checkout supports UPI Online or Razorpay. Razorpay does not require a manual UTR;
       // UTR validation applies only to the legacy manual-UTR flow.
+      const isRazorpayFlow =
+        paymentMethodLower.includes('razorpay') ||
+        Boolean(paymentConfig.razorpayEnabled || (paymentConfig as any).razorpay_enabled)
+
       if (
         isCustomerActor &&
         !paymentMethodLower.includes('upi') &&
-        !paymentMethodLower.includes('razorpay')
+        !isRazorpayFlow
       ) {
         return NextResponse.json(
           { error: 'Customer checkout supports UPI Online or Razorpay payments only.' },
@@ -342,6 +346,7 @@ export async function POST(request: Request) {
       }
       if (
         isCustomerActor &&
+        !isRazorpayFlow &&
         paymentMethodLower.includes('upi') &&
         (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))
       ) {
@@ -1247,7 +1252,7 @@ export async function POST(request: Request) {
           }
 
           // 4. Create initial PaymentTransaction with pending status
-          const paymentGateway = String(payment_method).toLowerCase().includes('razorpay')
+          const paymentGateway = isRazorpayFlow
             ? 'RAZORPAY'
             : String(payment_method).toLowerCase().includes('upi')
               ? 'upi'

@@ -343,6 +343,21 @@ export default function CartPage() {
     loadConfigAndCoupons()
   }, [])
 
+  // Preload Razorpay Checkout script so gateway opens instantly
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !(window as any).Razorpay) {
+      const existing = document.querySelector(
+        'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+      )
+      if (!existing) {
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        script.async = true
+        document.body.appendChild(script)
+      }
+    }
+  }, [])
+
   const [calculatorApiBreakdown, setCalculatorApiBreakdown] = useState<any>(null)
 
   // Calculate Subtotal & Fees via Admin Config & Distance Engine
@@ -688,7 +703,10 @@ export default function CartPage() {
     const idempotencyKey = `ord_user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('crave_token') || localStorage.getItem('crave_auth_token')
+          : null
 
       const restName = cart[0]?.restaurantName || 'Restaurant'
 
@@ -719,9 +737,9 @@ export default function CartPage() {
         platform_fee: platformFee,
         gst: exactGstValue,
         total_amount: exactNetPayable,
-        payment_method: paymentMethod,
+        payment_method: activeConfig?.razorpayEnabled ? 'razorpay' : paymentMethod,
         customer_vpa: activeConfig.upiVpa || 'crave@upi',
-        ...(paymentMethod === 'upi' ? { utr_ref: utrRef.trim() } : {}),
+        ...(!activeConfig?.razorpayEnabled && paymentMethod === 'upi' ? { utr_ref: utrRef.trim() } : {}),
         coupon_code: appliedCoupon?.code || undefined,
         discount_amount: couponDiscount || 0,
       }
@@ -733,6 +751,7 @@ export default function CartPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...(idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : {}),
         },
+        credentials: 'include',
         body: JSON.stringify(orderData),
       })
 
@@ -820,7 +839,10 @@ export default function CartPage() {
 
   // Razorpay Checkout flow: load script, create order, open Checkout, verify on server
   const startRazorpayCheckout = async (orderId: string, amount: number) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') || '' : ''
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('crave_token') || localStorage.getItem('crave_auth_token') || ''
+        : ''
     return new Promise<void>((resolve, reject) => {
       const loadScript = (): Promise<boolean> => {
         return new Promise((res) => {
@@ -861,6 +883,7 @@ export default function CartPage() {
         fetch('/api/payments/razorpay/order', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify({ orderId }),
         })
           .then(async (res) => {
@@ -871,22 +894,33 @@ export default function CartPage() {
             return json
           })
           .then((paymentOrder) => {
+            const checkoutKey = paymentOrder.keyId || 'rzp_test_TrT8Pg6Vpsi18B'
             const checkout = new (window as any).Razorpay({
-              key: paymentOrder.keyId,
+              key: checkoutKey,
               order_id: paymentOrder.razorpayOrderId,
               amount: paymentOrder.amount,
-              currency: paymentOrder.currency,
-              name: 'Crave',
-              description: `Order ${orderId}`,
+              currency: paymentOrder.currency || 'INR',
+              name: 'crave.',
+              description: `Order #${orderId.slice(-6).toUpperCase()}`,
+              prefill: {
+                name: user?.name || '',
+                contact: customerPhone.trim() || user?.phone || '',
+                email: user?.email || '',
+              },
+              theme: {
+                color: '#121815',
+              },
               notes: { crave_order_id: orderId },
               handler: async (result: any) => {
                 try {
+                  const verifyHeaders: Record<string, string> = {
+                    'Content-Type': 'application/json',
+                  }
+                  if (token) verifyHeaders['Authorization'] = `Bearer ${token}`
                   const verifyRes = await fetch('/api/payments/razorpay/verify', {
                     method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: verifyHeaders,
+                    credentials: 'include',
                     body: JSON.stringify({
                       orderId,
                       razorpay_order_id: result.razorpay_order_id,
@@ -1766,26 +1800,21 @@ export default function CartPage() {
                   {/* Payment Panel Container */}
                   <div className="mt-6 pt-5 border-t border-black/[0.06] dark:border-white/10 space-y-4">
                     {activeConfig?.razorpayEnabled ? (
-                      <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
+                      <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
-                              <ShieldCheck className="size-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-extrabold text-[#121815] dark:text-white">
-                                Pay via Razorpay
-                              </p>
-                              <p className="text-[10px] text-stone-400">
-                                Card, UPI, Net Banking & Wallets
-                              </p>
-                            </div>
-                          </div>
-
-                          <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
-                            No UTR needed — payment is verified automatically after checkout.
+                          <p className="text-sm font-bold text-[#121815] dark:text-white">
+                            Razorpay Online Checkout
                           </p>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            Instant Verification
+                          </span>
                         </div>
+                        <p className="text-xs text-stone-500 dark:text-stone-400">
+                          UPI (Google Pay, PhonePe, Paytm), Debit &amp; Credit Cards, Net Banking &amp; Wallets.
+                        </p>
+                        <p className="text-[11px] font-medium text-stone-400 dark:text-stone-500 pt-1 border-t border-black/[0.04] dark:border-white/5">
+                          No manual UTR required — payment is verified automatically by the gateway.
+                        </p>
                       </div>
                     ) : (
                       <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
@@ -1886,19 +1915,22 @@ export default function CartPage() {
                           isSubmittingOrder ||
                           (!activeConfig?.razorpayEnabled && utrRef.trim().length < 10)
                         }
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-sm font-bold text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         {isSubmittingOrder ? (
                           <CraveButtonLoader
-                            label="Placing your order..."
-                            sublabel="Sending details to restaurant"
+                            label={activeConfig?.razorpayEnabled ? "Connecting to Razorpay..." : "Placing your order..."}
+                            sublabel={activeConfig?.razorpayEnabled ? "Opening secure gateway modal" : "Sending details to restaurant"}
                             variant="dark"
                             size="md"
                           />
                         ) : (
                           <>
-                            <Lock className="size-3.5" />
-                            <span>Place Order (₹{formatPrice(exactNetPayable)})</span>
+                            <span>
+                              {activeConfig?.razorpayEnabled
+                                ? `Pay ₹${formatPrice(exactNetPayable)} via Razorpay`
+                                : `Place Order (₹${formatPrice(exactNetPayable)})`}
+                            </span>
                             <ArrowRight className="size-4" />
                           </>
                         )}
@@ -1932,9 +1964,9 @@ export default function CartPage() {
                   target.scrollIntoView({ behavior: 'smooth' })
                 }
               }}
-              className="rounded-xl bg-[#d9f447] dark:bg-[#121815] text-[#121815] dark:text-[#d9f447] px-4 py-2 text-xs font-black flex items-center gap-1.5 shadow-md"
+              className="rounded-xl bg-[#d9f447] dark:bg-[#121815] text-[#121815] dark:text-[#d9f447] px-4 py-2 text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer"
             >
-              <span>Proceed to Pay</span>
+              <span>{activeConfig?.razorpayEnabled ? 'Pay via Razorpay' : 'Proceed to Pay'}</span>
               <ArrowRight className="size-3.5" />
             </button>
           </div>
