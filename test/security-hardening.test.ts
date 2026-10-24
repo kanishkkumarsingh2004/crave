@@ -27,6 +27,8 @@ test('order reads require participant ownership for every non-admin role', () =>
   assert.equal(canReadOrder(actor('user', 'customer-2'), order), false)
   assert.equal(canReadOrder(actor('rider', 'rider-1'), order), true)
   assert.equal(canReadOrder(actor('rider', 'rider-2'), order), false)
+  assert.equal(canReadOrder(actor('driver', 'rider-1'), order), true)
+  assert.equal(canReadOrder(actor('driver', 'rider-2'), order), false)
   assert.equal(canReadOrder(actor('restaurant_vendor', 'vendor-1', 'restaurant-1'), order), true)
   assert.equal(canReadOrder(actor('restaurant_vendor', 'vendor-1', 'restaurant-2'), order), false)
 })
@@ -54,8 +56,13 @@ test('delivery OTP is only returned to its customer or an admin', () => {
   }
 
   assert.equal(sanitizeOrderForActor(actor('user', 'customer-1'), order).delivery_otp, '123456')
+  assert.equal(sanitizeOrderForActor(actor('customer', 'customer-1'), order).delivery_otp, '123456')
   assert.equal(sanitizeOrderForActor(actor('admin', 'admin-1'), order).delivery_otp, '123456')
   assert.equal('delivery_otp' in sanitizeOrderForActor(actor('rider', 'rider-1'), order), false)
+  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('driver', 'rider-1'), order), false)
+  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('restaurant_vendor', 'vendor-1', 'restaurant-1'), order), false)
+  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('user', 'customer-2'), order), false)
+  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('customer', 'customer-2'), order), false)
 })
 
 test('delivery OTP is only visible to the customer between pickup and delivery', () => {

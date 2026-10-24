@@ -155,6 +155,7 @@ export function handleAuthError(error: unknown): NextResponse {
  */
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   user: ['orders:create', 'orders:read:own', 'profile:read', 'profile:update'],
+  customer: ['orders:create', 'orders:read:own', 'profile:read', 'profile:update'],
   restaurant_vendor: [
     'orders:read:vendor',
     'orders:update:vendor',
@@ -169,7 +170,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'restaurant:update:own',
     'menu:manage',
   ],
+  vendor: [
+    'orders:read:vendor',
+    'orders:update:vendor',
+    'restaurant:read:own',
+    'restaurant:update:own',
+    'menu:manage',
+  ],
   rider: ['orders:read:assigned', 'orders:update:driver', 'location:publish'],
+  driver: ['orders:read:assigned', 'orders:update:driver', 'location:publish'],
   admin: ['*'], // All permissions
 }
 

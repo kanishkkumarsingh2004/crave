@@ -141,7 +141,7 @@ export async function GET(request: Request) {
     if (order) {
       const canRead =
         actor.role === 'admin' ||
-        (actor.role === 'rider' && order.rider_id === actor.id) ||
+        ((actor.role === 'rider' || actor.role === 'driver') && order.rider_id === actor.id) ||
         (actor.role === 'user' && order.customer_id === actor.id) ||
         ((actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
           order.restaurant?.owner_id === actor.id)

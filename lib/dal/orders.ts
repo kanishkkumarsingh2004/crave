@@ -608,15 +608,15 @@ export async function deleteOrder(
           return { success: false, error: 'Unauthorized to delete this order' }
         }
 
-        // Strict 30-second cancellation window restriction
+        // Strict 15-second cancellation window restriction: no cancellations after 15 seconds
         if (existing.created_at) {
           const orderAgeMs = Date.now() - new Date(existing.created_at).getTime()
-          const MAX_CANCELLATION_WINDOW_MS = 30 * 1000 // 30 seconds
+          const MAX_CANCELLATION_WINDOW_MS = 15 * 1000 // 15 seconds
           if (orderAgeMs > MAX_CANCELLATION_WINDOW_MS) {
             return {
               success: false,
               error:
-                'Order cancellation window expired. Orders can only be cancelled within 30 seconds of placement.',
+                'Order cancellation window expired. Orders can only be cancelled within 15 seconds of placement.',
             }
           }
         }

@@ -23,7 +23,16 @@ function getJwtSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
-export type JWTRole = 'user' | 'restaurant_vendor' | 'cravexp_store_vendor' | 'rider' | 'admin'
+export type JWTRole =
+  | 'user'
+  | 'customer'
+  | 'restaurant_vendor'
+  | 'cravexp_store_vendor'
+  | 'vendor'
+  | 'rider'
+  | 'driver'
+  | 'admin'
+
 
 export interface JWTPayload {
   id: string

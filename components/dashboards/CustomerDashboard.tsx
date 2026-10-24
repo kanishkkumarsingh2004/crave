@@ -1147,7 +1147,7 @@ export default function CustomerDashboard({
     toast(clean, isError ? 'error' : 'success')
   }
 
-  // 30-second cancellation window countdown
+  // 15-second cancellation window countdown
   const [cancelTimeRemaining, setCancelTimeRemaining] = useState<number>(0)
 
   useEffect(() => {
@@ -1160,7 +1160,7 @@ export default function CustomerDashboard({
       const orderCreatedTime = new Date(activeOrder.rawDate).getTime()
       if (isNaN(orderCreatedTime)) return 0
       const elapsedSeconds = Math.floor((Date.now() - orderCreatedTime) / 1000)
-      return Math.max(0, 30 - elapsedSeconds)
+      return Math.max(0, 15 - elapsedSeconds)
     }
 
     setCancelTimeRemaining(checkRemaining())
@@ -1178,7 +1178,7 @@ export default function CustomerDashboard({
 
   const handleCancelOrRemoveOrder = async (orderId: string) => {
     if (cancelTimeRemaining <= 0) {
-      triggerToast('Cancellation window expired. Orders can only be cancelled within 30 seconds.')
+      triggerToast('Cancellation window expired. Orders can only be cancelled within 15 seconds.')
       return
     }
     if (
@@ -3429,7 +3429,7 @@ export default function CustomerDashboard({
                               type="button"
                               onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
                               className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline transition cursor-pointer shrink-0"
-                              title={`Order can be cancelled within 30 seconds of placement (${cancelTimeRemaining}s remaining)`}
+                              title={`Order can be cancelled within 15 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
                               <Trash2 className="size-3.5 text-rose-400" /> Cancel Order ({cancelTimeRemaining}s)
                             </button>

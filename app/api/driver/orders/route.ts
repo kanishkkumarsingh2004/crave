@@ -26,7 +26,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const isDriverOrAdmin = actor.role === 'rider' || actor.role === 'admin'
+    const isDriverOrAdmin =
+      actor.role === 'rider' || actor.role === 'driver' || actor.role === 'admin'
     if (!isDriverOrAdmin) {
       return NextResponse.json({ error: 'Rider or administrator access required' }, { status: 403 })
     }
