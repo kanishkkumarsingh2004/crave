@@ -34,10 +34,7 @@ export function getRazorpayClient(): Razorpay {
 }
 
 export function isRouteEnabled(): boolean {
-  return (
-    process.env.RAZORPAY_ENABLED === 'true' &&
-    process.env.RAZORPAY_ROUTE_ENABLED === 'true'
-  )
+  return process.env.RAZORPAY_ENABLED === 'true' && process.env.RAZORPAY_ROUTE_ENABLED === 'true'
 }
 
 export function getWebhookSecret(): string {

@@ -23,7 +23,9 @@ declare global {
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) return resolve(true)
-    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')
+    const existing = document.querySelector(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    )
     if (existing) {
       existing.addEventListener('load', () => resolve(true))
       existing.addEventListener('error', () => resolve(false))

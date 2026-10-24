@@ -286,7 +286,8 @@ export default function HomePage() {
             </h1>
 
             <p className="text-sm sm:text-base lg:text-lg text-stone-600 dark:text-stone-300 font-medium leading-relaxed max-w-2xl mx-auto">
-              From beloved local restaurants to 15-minute grocery essentials. Direct restaurant pricing, zero hidden fees, and rapid doorstep delivery across Bengaluru.
+              From beloved local restaurants to 15-minute grocery essentials. Direct restaurant
+              pricing, zero hidden fees, and rapid doorstep delivery across Bengaluru.
             </p>
 
             {/* Architectural Search Console */}
@@ -365,12 +366,12 @@ export default function HomePage() {
                 RESTAURANTS
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span> CUSTOMER
-                RATING
+                <span className="text-[#121815] dark:text-white font-extrabold">4.9 ★</span>{' '}
+                CUSTOMER RATING
               </div>
               <div className="p-2 sm:p-0 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent">
-                <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span>{' '}
-                HIDDEN SURCHARGES
+                <span className="text-[#121815] dark:text-white font-extrabold">ZERO</span> HIDDEN
+                SURCHARGES
               </div>
             </div>
           </div>

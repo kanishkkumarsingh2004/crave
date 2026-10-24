@@ -60,31 +60,44 @@ async function scrubDatabase() {
     const CRAVE_STORE_ID = 'cravexp_dark_store_01'
 
     // Upsert Admin
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO "users" (id, name, email, role, password_hash, phone, locale)
       VALUES ($1, 'System Administrator', $2, 'admin', $3, '+919876543210', 'en')
       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'admin'
-    `, [ADMIN_ID, ADMIN_EMAIL, passwordHash])
+    `,
+      [ADMIN_ID, ADMIN_EMAIL, passwordHash]
+    )
 
     // Upsert Crave Store Vendor User
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO "users" (id, name, email, role, password_hash, restaurant_name, cuisine, phone, locale)
       VALUES ($1, 'CraveXP Store Operator', $2, 'cravexp_store_vendor', $3, 'craveXP 10 Store Hub', 'Instant Groceries & Daily Needs', '+919876543213', 'en')
       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'cravexp_store_vendor'
-    `, [STORE_USER_ID, STORE_USER_EMAIL, passwordHash])
+    `,
+      [STORE_USER_ID, STORE_USER_EMAIL, passwordHash]
+    )
 
     // Get actual user IDs for admin and store operator
-    const adminUserRes = await client.query('SELECT id FROM "users" WHERE email = $1', [ADMIN_EMAIL])
-    const storeUserRes = await client.query('SELECT id FROM "users" WHERE email = $1', [STORE_USER_EMAIL])
+    const adminUserRes = await client.query('SELECT id FROM "users" WHERE email = $1', [
+      ADMIN_EMAIL,
+    ])
+    const storeUserRes = await client.query('SELECT id FROM "users" WHERE email = $1', [
+      STORE_USER_EMAIL,
+    ])
     const finalAdminId = adminUserRes.rows[0].id
     const finalStoreUserId = storeUserRes.rows[0].id
 
     // Upsert Crave Dark Store Restaurant
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO "restaurants" (id, name, cuisine, address, latitude, longitude, is_open, is_dark_store, owner_id)
       VALUES ($1, 'craveXP 10 Store Hub', 'Instant Groceries & Daily Needs', 'Dark Store Hub 01, Indiranagar, Bengaluru', 12.9716, 77.6412, true, true, $2)
       ON CONFLICT (id) DO UPDATE SET owner_id = $2, is_dark_store = true, is_open = true
-    `, [CRAVE_STORE_ID, finalStoreUserId])
+    `,
+      [CRAVE_STORE_ID, finalStoreUserId]
+    )
 
     // 5. Delete all other menu items and restaurants
     console.log('5. Deleting all other restaurants and menu items...')
@@ -93,7 +106,10 @@ async function scrubDatabase() {
 
     // 6. Delete all other users
     console.log('6. Deleting all other user accounts...')
-    await client.query('DELETE FROM "users" WHERE id NOT IN ($1, $2)', [finalAdminId, finalStoreUserId])
+    await client.query('DELETE FROM "users" WHERE id NOT IN ($1, $2)', [
+      finalAdminId,
+      finalStoreUserId,
+    ])
 
     await client.query('COMMIT')
     console.log('✅ Scrub completed successfully!')
@@ -106,7 +122,7 @@ async function scrubDatabase() {
   }
 }
 
-scrubDatabase().catch(err => {
+scrubDatabase().catch((err) => {
   console.error(err)
   process.exit(1)
 })

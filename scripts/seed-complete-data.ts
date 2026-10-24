@@ -630,7 +630,9 @@ async function seedCompleteData() {
       },
       create: la,
     })
-    console.log(`  ✓ Razorpay Linked Account: ${la.entity_type} ${la.entity_id} -> ${la.razorpay_account_id}`)
+    console.log(
+      `  ✓ Razorpay Linked Account: ${la.entity_type} ${la.entity_id} -> ${la.razorpay_account_id}`
+    )
   }
 
   console.log('\n========================================================')

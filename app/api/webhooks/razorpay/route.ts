@@ -203,11 +203,7 @@ async function markWebhookEventProcessed(provider: string, eventId: string) {
   })
 }
 
-async function markWebhookEventFailed(
-  provider: string,
-  eventId: string,
-  lastError: string
-) {
+async function markWebhookEventFailed(provider: string, eventId: string, lastError: string) {
   await prisma.webhookEvent.updateMany({
     where: { provider, provider_event_id: eventId },
     data: {

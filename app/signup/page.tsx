@@ -101,7 +101,8 @@ export default function SignupPage() {
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Create your Crave account to save favorite kitchens, track orders live, and get meals and daily essentials delivered in 25 minutes.
+              Create your Crave account to save favorite kitchens, track orders live, and get meals
+              and daily essentials delivered in 25 minutes.
             </p>
 
             {/* Value Pillars */}
@@ -355,9 +356,7 @@ export default function SignupPage() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-xs text-stone-400 dark:text-stone-600 border-t border-black/5 dark:border-white/5">
-        <p className="font-mono tracking-wider">
-          © 2026 CRAVE • BENGALURU, INDIA
-        </p>
+        <p className="font-mono tracking-wider">© 2026 CRAVE • BENGALURU, INDIA</p>
       </footer>
     </div>
   )

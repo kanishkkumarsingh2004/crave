@@ -17,16 +17,16 @@ Crave pricing/finance services.
 
 Crave already has a strong starting point:
 
--   `POST /api/orders` computes prices server-side and persists
-    `Order.financial_snapshot`.
--   `lib/finance/pricing-engine.ts` calculates the customer payable,
-    restaurant payout, driver compensation, platform revenue and tax
-    components in paise.
--   Existing schema models include `PaymentTransaction`, `Refund`,
-    `VendorSettlement`, `DriverPayout`, `PaymentConfig` and
-    `LedgerEntry`.
--   `lib/finance/payment-service.ts` centralizes payment verification
-    and ledger posting.
+- `POST /api/orders` computes prices server-side and persists
+  `Order.financial_snapshot`.
+- `lib/finance/pricing-engine.ts` calculates the customer payable,
+  restaurant payout, driver compensation, platform revenue and tax
+  components in paise.
+- Existing schema models include `PaymentTransaction`, `Refund`,
+  `VendorSettlement`, `DriverPayout`, `PaymentConfig` and
+  `LedgerEntry`.
+- `lib/finance/payment-service.ts` centralizes payment verification
+  and ledger posting.
 
 Important gaps in the reviewed source:
 
@@ -49,16 +49,16 @@ Important gaps in the reviewed source:
 
 Use two distinct Razorpay products:
 
--   **Razorpay Payment Gateway:** collect the complete customer payable
-    amount once into Crave's merchant account.
--   **Razorpay Route:** transfer the restaurant's and driver's earned
-    amounts to their eligible linked accounts.
+- **Razorpay Payment Gateway:** collect the complete customer payable
+  amount once into Crave's merchant account.
+- **Razorpay Route:** transfer the restaurant's and driver's earned
+  amounts to their eligible linked accounts.
 
 The customer does not pay three different parties at checkout. Crave
 collects the checkout amount and then uses Route to transfer approved
 shares. A database payout record is not a real transfer.
 
-``` text
+```text
 Customer -> Razorpay Checkout -> Crave merchant account
                                   |
                                   +-> Restaurant linked account
@@ -69,12 +69,11 @@ Customer -> Razorpay Checkout -> Crave merchant account
 Use the existing immutable `Order.financial_snapshot` as the source of
 truth. Do not recalculate a historical order with today's config.
 
-``` ts
-const customerPaidPaise = snapshot.customerPayablePaise;
-const restaurantDuePaise = snapshot.vendorPayableNetPaise;
-const driverDuePaise = snapshot.riderPayablePaise;
-const platformRemainderPaise =
-  customerPaidPaise - restaurantDuePaise - driverDuePaise;
+```ts
+const customerPaidPaise = snapshot.customerPayablePaise
+const restaurantDuePaise = snapshot.vendorPayableNetPaise
+const driverDuePaise = snapshot.riderPayablePaise
+const platformRemainderPaise = customerPaidPaise - restaurantDuePaise - driverDuePaise
 
 if (
   !Number.isSafeInteger(customerPaidPaise) ||
@@ -85,7 +84,7 @@ if (
   driverDuePaise < 0 ||
   platformRemainderPaise < 0
 ) {
-  throw new Error("Invalid snapshot; do not transfer funds");
+  throw new Error('Invalid snapshot; do not transfer funds')
 }
 ```
 
@@ -95,27 +94,29 @@ and other liabilities.
 
 Example only:
 
-  Allocation                                           Amount
-  ------------------------------------------------- ---------
-  Customer pays                                       ₹500.00
-  Restaurant payable                                  ₹350.00
-  Driver payable                                       ₹50.00
-  Platform remainder before its liabilities/costs     ₹100.00
+Allocation Amount
+
+---
+
+Customer pays ₹500.00
+Restaurant payable ₹350.00
+Driver payable ₹50.00
+Platform remainder before its liabilities/costs ₹100.00
 
 ### What controls the shares?
 
 Use the existing configuration/pricing pipeline:
 
--   Restaurant `commercial_model`, `commission_rate`, `markup_rate`,
-    fixed commission/markup and `CommercialContract` determine
-    restaurant economics.
--   `PaymentConfig.driver_payout_share` and the existing
-    distance/surge/rain/night/tip inputs feed driver compensation.
--   Existing platform fees, tax settings, packaging, delivery, and
-    discount settings feed the customer total and platform economics.
--   Razorpay code only consumes the final snapshot fields:
-    `customerPayablePaise`, `vendorPayableNetPaise`,
-    `riderPayablePaise`.
+- Restaurant `commercial_model`, `commission_rate`, `markup_rate`,
+  fixed commission/markup and `CommercialContract` determine
+  restaurant economics.
+- `PaymentConfig.driver_payout_share` and the existing
+  distance/surge/rain/night/tip inputs feed driver compensation.
+- Existing platform fees, tax settings, packaging, delivery, and
+  discount settings feed the customer total and platform economics.
+- Razorpay code only consumes the final snapshot fields:
+  `customerPayablePaise`, `vendorPayableNetPaise`,
+  `riderPayablePaise`.
 
 Do not implement a second "percentage of entire order total" formula in
 the Razorpay transfer handler. Admin configuration changes apply to
@@ -140,7 +141,7 @@ In the Razorpay Dashboard:
 
 Add to `.env.local` and the production secret manager:
 
-``` dotenv
+```dotenv
 RAZORPAY_KEY_ID=rzp_test_REPLACE_ME
 RAZORPAY_KEY_SECRET=REPLACE_ME
 RAZORPAY_WEBHOOK_SECRET=REPLACE_ME
@@ -154,7 +155,7 @@ Never expose `RAZORPAY_KEY_SECRET` or `RAZORPAY_WEBHOOK_SECRET` through
 
 The current root `package.json` does not list the Razorpay SDK:
 
-``` bash
+```bash
 pnpm add razorpay
 pnpm add -D @types/razorpay
 ```
@@ -181,7 +182,7 @@ compatibility.
 Add fields to existing models, checking first that they do not already
 exist:
 
-``` prisma
+```prisma
 model Order {
   // Existing fields remain.
   total_amount_paise Int?
@@ -209,7 +210,7 @@ model PaymentConfig {
 
 Add server-controlled linked-account mapping:
 
-``` prisma
+```prisma
 model RazorpayLinkedAccount {
   id                  String   @id @default(cuid())
   entity_type         String   // RESTAURANT | DRIVER
@@ -228,7 +229,7 @@ model RazorpayLinkedAccount {
 
 Add durable transfer state:
 
-``` prisma
+```prisma
 model RazorpayTransfer {
   id                   String   @id @default(cuid())
   order_id             String
@@ -257,7 +258,7 @@ model RazorpayTransfer {
 Add durable webhook receipts; do not use an in-memory set for replay
 protection:
 
-``` prisma
+```prisma
 model WebhookEvent {
   id                String   @id @default(cuid())
   provider          String
@@ -278,7 +279,7 @@ model WebhookEvent {
 
 Generate and review a migration:
 
-``` bash
+```bash
 pnpm exec prisma format
 pnpm exec prisma validate
 pnpm exec prisma migrate dev --name razorpay_route_split_payments
@@ -292,7 +293,7 @@ missing/mismatched snapshots for reconciliation. Do not use
 
 At order creation, where the canonical snapshot is generated, persist:
 
-``` ts
+```ts
 total_amount_paise: canonicalPrice.customerPayablePaise,
 financial_snapshot: canonicalPrice as unknown as Prisma.InputJsonValue,
 ```
@@ -307,34 +308,31 @@ inventory checks.
 
 Create `lib/payments/razorpay-client.ts`:
 
-``` ts
-import Razorpay from "razorpay";
+```ts
+import Razorpay from 'razorpay'
 
 function requiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`Missing ${name}`);
-  return value;
+  const value = process.env[name]?.trim()
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
 }
 
 export function assertRazorpayEnabled() {
-  if (process.env.RAZORPAY_ENABLED !== "true") {
-    throw new Error("Razorpay payments are disabled");
+  if (process.env.RAZORPAY_ENABLED !== 'true') {
+    throw new Error('Razorpay payments are disabled')
   }
 }
 
 export function getRazorpayClient() {
-  assertRazorpayEnabled();
+  assertRazorpayEnabled()
   return new Razorpay({
-    key_id: requiredEnv("RAZORPAY_KEY_ID"),
-    key_secret: requiredEnv("RAZORPAY_KEY_SECRET"),
-  });
+    key_id: requiredEnv('RAZORPAY_KEY_ID'),
+    key_secret: requiredEnv('RAZORPAY_KEY_SECRET'),
+  })
 }
 
 export function isRouteEnabled() {
-  return (
-    process.env.RAZORPAY_ENABLED === "true" &&
-    process.env.RAZORPAY_ROUTE_ENABLED === "true"
-  );
+  return process.env.RAZORPAY_ENABLED === 'true' && process.env.RAZORPAY_ROUTE_ENABLED === 'true'
 }
 ```
 
@@ -349,105 +347,103 @@ Crave's internal order ID. The server calculates the amount from the
 persisted snapshot; the client cannot supply the amount or recipient
 allocations.
 
-``` ts
-import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
-import { getRazorpayClient } from "@/lib/payments/razorpay-client";
+```ts
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/prisma'
+import { getRazorpayClient } from '@/lib/payments/razorpay-client'
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireAuth(request);
-    const body = await request.json().catch(() => ({}));
-    const orderId = typeof body.orderId === "string" ? body.orderId : "";
+    const actor = await requireAuth(request)
+    const body = await request.json().catch(() => ({}))
+    const orderId = typeof body.orderId === 'string' ? body.orderId : ''
     if (!orderId) {
-      return NextResponse.json({ error: "orderId is required" }, { status: 400 });
+      return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
     }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    if (order.customer_id !== actor.id && actor.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const order = await prisma.order.findUnique({ where: { id: orderId } })
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (order.customer_id !== actor.id && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-    if (["cancelled", "delivered", "completed"].includes(order.status)) {
-      return NextResponse.json({ error: "Order is not payable" }, { status: 409 });
+    if (['cancelled', 'delivered', 'completed'].includes(order.status)) {
+      return NextResponse.json({ error: 'Order is not payable' }, { status: 409 })
     }
-    if (order.payment_status === "verified") {
-      return NextResponse.json({ error: "Order already paid" }, { status: 409 });
+    if (order.payment_status === 'verified') {
+      return NextResponse.json({ error: 'Order already paid' }, { status: 409 })
     }
 
     const snapshot = order.financial_snapshot as {
-      customerPayablePaise?: number; snapshotId?: string;
-    } | null;
-    const amountPaise = order.total_amount_paise ?? snapshot?.customerPayablePaise;
+      customerPayablePaise?: number
+      snapshotId?: string
+    } | null
+    const amountPaise = order.total_amount_paise ?? snapshot?.customerPayablePaise
 
     if (!Number.isSafeInteger(amountPaise) || !amountPaise || amountPaise < 100) {
-      return NextResponse.json({ error: "Invalid canonical payable amount" }, { status: 409 });
+      return NextResponse.json({ error: 'Invalid canonical payable amount' }, { status: 409 })
     }
-    if (
-      snapshot?.customerPayablePaise != null &&
-      amountPaise !== snapshot.customerPayablePaise
-    ) {
-      return NextResponse.json({ error: "Snapshot amount mismatch" }, { status: 409 });
+    if (snapshot?.customerPayablePaise != null && amountPaise !== snapshot.customerPayablePaise) {
+      return NextResponse.json({ error: 'Snapshot amount mismatch' }, { status: 409 })
     }
 
     // Reuse only a valid existing attempt for this exact order and amount.
     const existing = await prisma.paymentTransaction.findFirst({
       where: {
         order_id: orderId,
-        gateway: "RAZORPAY",
-        status: { in: ["pending", "processing"] },
+        gateway: 'RAZORPAY',
+        status: { in: ['pending', 'processing'] },
         razorpay_order_id: { not: null },
         amount_paise: amountPaise,
       },
-      orderBy: { created_at: "desc" },
-    });
+      orderBy: { created_at: 'desc' },
+    })
     if (existing?.razorpay_order_id) {
       return NextResponse.json({
         keyId: process.env.RAZORPAY_KEY_ID,
         razorpayOrderId: existing.razorpay_order_id,
         amount: amountPaise,
-        currency: "INR",
+        currency: 'INR',
         internalOrderId: order.id,
-      });
+      })
     }
 
-    const client = getRazorpayClient();
+    const client = getRazorpayClient()
     const rzpOrder = await client.orders.create({
       amount: amountPaise,
-      currency: "INR",
+      currency: 'INR',
       receipt: `crave_${order.id}`.slice(0, 40),
       notes: {
         crave_order_id: order.id,
-        snapshot_id: String(snapshot?.snapshotId ?? "").slice(0, 200),
+        snapshot_id: String(snapshot?.snapshotId ?? '').slice(0, 200),
       },
-    });
+    })
 
     await prisma.paymentTransaction.create({
       data: {
         idempotency_key: `razorpay_order_${rzpOrder.id}`,
         order_id: order.id,
-        gateway: "RAZORPAY",
+        gateway: 'RAZORPAY',
         razorpay_order_id: rzpOrder.id,
         amount: Math.round(amountPaise / 100), // legacy compatibility only
         amount_paise: amountPaise,
-        currency: "INR",
-        status: "pending",
+        currency: 'INR',
+        status: 'pending',
       } as any,
-    });
+    })
 
     return NextResponse.json({
       keyId: process.env.RAZORPAY_KEY_ID,
       razorpayOrderId: rzpOrder.id,
       amount: amountPaise,
-      currency: "INR",
+      currency: 'INR',
       internalOrderId: order.id,
-    });
+    })
   } catch (error) {
-    console.error("[razorpay/order] Failed", error);
-    return NextResponse.json({ error: "Unable to start payment" }, { status: 500 });
+    console.error('[razorpay/order] Failed', error)
+    return NextResponse.json({ error: 'Unable to start payment' }, { status: 500 })
   }
 }
 ```
@@ -464,61 +460,61 @@ client first calls the server create-order endpoint. The Checkout
 callback only asks the server to verify; it must never set the order to
 paid locally.
 
-``` ts
+```ts
 type CheckoutResult = {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-};
+  razorpay_payment_id: string
+  razorpay_order_id: string
+  razorpay_signature: string
+}
 
 declare global {
   interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => { open(): void };
+    Razorpay?: new (options: Record<string, unknown>) => { open(): void }
   }
 }
 
 export async function startRazorpayCheckout(orderId: string) {
   const loaded = await new Promise<boolean>((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-  if (!loaded || !window.Razorpay) throw new Error("Razorpay Checkout failed to load");
+    if (window.Razorpay) return resolve(true)
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+  if (!loaded || !window.Razorpay) throw new Error('Razorpay Checkout failed to load')
 
-  const response = await fetch("/api/payments/razorpay/order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const response = await fetch('/api/payments/razorpay/order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orderId }),
-  });
-  const paymentOrder = await response.json();
-  if (!response.ok) throw new Error(paymentOrder.error ?? "Unable to start payment");
+  })
+  const paymentOrder = await response.json()
+  if (!response.ok) throw new Error(paymentOrder.error ?? 'Unable to start payment')
 
   const checkout = new window.Razorpay({
     key: paymentOrder.keyId,
     order_id: paymentOrder.razorpayOrderId,
     amount: paymentOrder.amount,
     currency: paymentOrder.currency,
-    name: "Crave",
+    name: 'Crave',
     description: `Order ${orderId}`,
     notes: { crave_order_id: orderId },
     handler: async (result: CheckoutResult) => {
-      const verify = await fetch("/api/payments/razorpay/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const verify = await fetch('/api/payments/razorpay/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, ...result }),
-      });
-      const body = await verify.json();
+      })
+      const body = await verify.json()
       if (!verify.ok) {
         // Display error and refresh server-side order status; do not assume paid.
-        throw new Error(body.error ?? "Verification failed");
+        throw new Error(body.error ?? 'Verification failed')
       }
-      window.location.assign(`/user/orders/${encodeURIComponent(orderId)}`);
+      window.location.assign(`/user/orders/${encodeURIComponent(orderId)}`)
     },
-  });
-  checkout.open();
+  })
+  checkout.open()
 }
 ```
 
@@ -537,70 +533,72 @@ Then fetch the payment from Razorpay. Signature alone is not enough:
 verify provider order ID, exact amount in paise, currency, and captured
 status.
 
-``` ts
-import crypto from "node:crypto";
-import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
-import { getRazorpayClient } from "@/lib/payments/razorpay-client";
-import { processPaymentVerificationTx } from "@/lib/finance/payment-service";
+```ts
+import crypto from 'node:crypto'
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/prisma'
+import { getRazorpayClient } from '@/lib/payments/razorpay-client'
+import { processPaymentVerificationTx } from '@/lib/finance/payment-service'
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
 function signatureMatches(expectedHex: string, receivedHex: string) {
-  if (!/^[a-f0-9]+$/i.test(expectedHex) || !/^[a-f0-9]+$/i.test(receivedHex)) return false;
-  const a = Buffer.from(expectedHex, "hex");
-  const b = Buffer.from(receivedHex, "hex");
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (!/^[a-f0-9]+$/i.test(expectedHex) || !/^[a-f0-9]+$/i.test(receivedHex)) return false
+  const a = Buffer.from(expectedHex, 'hex')
+  const b = Buffer.from(receivedHex, 'hex')
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireAuth(request);
-    const body = await request.json();
-    const orderId = String(body.orderId ?? "");
-    const rzpOrderId = String(body.razorpay_order_id ?? "");
-    const paymentId = String(body.razorpay_payment_id ?? "");
-    const signature = String(body.razorpay_signature ?? "");
+    const actor = await requireAuth(request)
+    const body = await request.json()
+    const orderId = String(body.orderId ?? '')
+    const rzpOrderId = String(body.razorpay_order_id ?? '')
+    const paymentId = String(body.razorpay_payment_id ?? '')
+    const signature = String(body.razorpay_signature ?? '')
     if (!orderId || !rzpOrderId || !paymentId || !signature) {
-      return NextResponse.json({ error: "Missing verification fields" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing verification fields' }, { status: 400 })
     }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    if (order.customer_id !== actor.id && actor.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const order = await prisma.order.findUnique({ where: { id: orderId } })
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (order.customer_id !== actor.id && actor.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const attempt = await prisma.paymentTransaction.findFirst({
-      where: { order_id: orderId, gateway: "RAZORPAY", razorpay_order_id: rzpOrderId },
-    });
+      where: { order_id: orderId, gateway: 'RAZORPAY', razorpay_order_id: rzpOrderId },
+    })
     if (!attempt) {
-      return NextResponse.json({ error: "Payment attempt/order mismatch" }, { status: 409 });
+      return NextResponse.json({ error: 'Payment attempt/order mismatch' }, { status: 409 })
     }
 
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!secret) throw new Error("Razorpay secret missing");
-    const expected = crypto.createHmac("sha256", secret)
-      .update(`${rzpOrderId}|${paymentId}`).digest("hex");
+    const secret = process.env.RAZORPAY_KEY_SECRET
+    if (!secret) throw new Error('Razorpay secret missing')
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(`${rzpOrderId}|${paymentId}`)
+      .digest('hex')
     if (!signatureMatches(expected, signature)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
-    const payment: any = await getRazorpayClient().payments.fetch(paymentId);
-    const snapshot = order.financial_snapshot as { customerPayablePaise?: number } | null;
-    const expectedPaise = order.total_amount_paise ?? snapshot?.customerPayablePaise;
+    const payment: any = await getRazorpayClient().payments.fetch(paymentId)
+    const snapshot = order.financial_snapshot as { customerPayablePaise?: number } | null
+    const expectedPaise = order.total_amount_paise ?? snapshot?.customerPayablePaise
 
     if (
       payment.order_id !== rzpOrderId ||
-      payment.currency !== "INR" ||
+      payment.currency !== 'INR' ||
       Number(payment.amount) !== expectedPaise ||
       Number(attempt.amount_paise) !== expectedPaise
     ) {
-      return NextResponse.json({ error: "Payment does not match Crave order" }, { status: 409 });
+      return NextResponse.json({ error: 'Payment does not match Crave order' }, { status: 409 })
     }
-    if (payment.status !== "captured" || payment.captured !== true) {
-      return NextResponse.json({ error: "Payment is not captured" }, { status: 409 });
+    if (payment.status !== 'captured' || payment.captured !== true) {
+      return NextResponse.json({ error: 'Payment is not captured' }, { status: 409 })
     }
 
     // Patch payment-service first (Section 10) to enforce exact paise equality
@@ -608,23 +606,29 @@ export async function POST(request: Request) {
     const result = await processPaymentVerificationTx({
       orderId,
       gatewayPaymentId: paymentId,
-      gateway: "RAZORPAY",
+      gateway: 'RAZORPAY',
       amountPaise: Number(payment.amount),
-      actorId: "RAZORPAY_CHECKOUT_VERIFIED",
+      actorId: 'RAZORPAY_CHECKOUT_VERIFIED',
       idempotencyKey: `razorpay_verify_${paymentId}`,
       rawPayload: {
-        id: payment.id, order_id: payment.order_id, amount: payment.amount,
-        currency: payment.currency, status: payment.status, captured: payment.captured,
+        id: payment.id,
+        order_id: payment.order_id,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        captured: payment.captured,
       },
-    } as any);
+    } as any)
 
     return NextResponse.json({
-      success: true, orderId, paymentStatus: "verified",
+      success: true,
+      orderId,
+      paymentStatus: 'verified',
       alreadyVerified: result.alreadyVerified,
-    });
+    })
   } catch (error) {
-    console.error("[razorpay/verify] Failed", error);
-    return NextResponse.json({ error: "Payment verification failed" }, { status: 500 });
+    console.error('[razorpay/verify] Failed', error)
+    return NextResponse.json({ error: 'Payment verification failed' }, { status: 500 })
   }
 }
 ```
@@ -644,114 +648,117 @@ Create `app/api/webhooks/razorpay/route.ts`. Do not use the generic
 webhook's permissive signature behavior. Razorpay signs the **raw
 request body** using HMAC-SHA256 and the configured webhook secret.
 
-``` ts
-import crypto from "node:crypto";
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { processPaymentVerificationTx } from "@/lib/finance/payment-service";
+```ts
+import crypto from 'node:crypto'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { processPaymentVerificationTx } from '@/lib/finance/payment-service'
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
 function verifyRawBody(raw: string, signature: string, secret: string) {
-  if (!signature || !secret || !/^[a-f0-9]{64}$/i.test(signature)) return false;
-  const expected = crypto.createHmac("sha256", secret).update(raw, "utf8").digest();
-  const received = Buffer.from(signature, "hex");
-  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  if (!signature || !secret || !/^[a-f0-9]{64}$/i.test(signature)) return false
+  const expected = crypto.createHmac('sha256', secret).update(raw, 'utf8').digest()
+  const received = Buffer.from(signature, 'hex')
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected)
 }
 
 export async function POST(request: Request) {
-  const raw = await request.text();
-  const signature = request.headers.get("x-razorpay-signature") ?? "";
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "";
+  const raw = await request.text()
+  const signature = request.headers.get('x-razorpay-signature') ?? ''
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? ''
 
   // Fail closed if secret or signature is missing.
   if (!verifyRawBody(raw, signature, secret)) {
-    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 })
   }
 
-  let event: any;
-  try { event = JSON.parse(raw); }
-  catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+  let event: any
+  try {
+    event = JSON.parse(raw)
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 
-  const eventId = String(event.id ?? "");
-  const type = String(event.event ?? "");
+  const eventId = String(event.id ?? '')
+  const type = String(event.event ?? '')
   if (!eventId || !type) {
-    return NextResponse.json({ error: "Missing event ID/type" }, { status: 400 });
+    return NextResponse.json({ error: 'Missing event ID/type' }, { status: 400 })
   }
 
   // Implement WebhookEvent durable idempotency BEFORE production. Use a unique
   // (provider, provider_event_id) key, status transitions, retry state and audit.
   // If already processed, return 200; if in progress, return retryable 409/5xx.
-  await beginWebhookEvent("RAZORPAY", eventId, type, event);
+  await beginWebhookEvent('RAZORPAY', eventId, type, event)
 
-  const payment = event.payload?.payment?.entity;
-  if (type === "payment.captured" || type === "order.paid") {
-    const paymentId = String(payment?.id ?? "");
-    const rzpOrderId = String(payment?.order_id ?? "");
-    const amountPaise = Number(payment?.amount);
+  const payment = event.payload?.payment?.entity
+  if (type === 'payment.captured' || type === 'order.paid') {
+    const paymentId = String(payment?.id ?? '')
+    const rzpOrderId = String(payment?.order_id ?? '')
+    const amountPaise = Number(payment?.amount)
 
     if (!paymentId || !rzpOrderId || !Number.isSafeInteger(amountPaise)) {
-      return NextResponse.json({ error: "Invalid payment payload" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid payment payload' }, { status: 400 })
     }
 
     const attempt = await prisma.paymentTransaction.findFirst({
-      where: { gateway: "RAZORPAY", razorpay_order_id: rzpOrderId },
+      where: { gateway: 'RAZORPAY', razorpay_order_id: rzpOrderId },
       include: { order: true },
-    });
-    if (!attempt) return NextResponse.json({ error: "Unknown Razorpay order" }, { status: 500 });
+    })
+    if (!attempt) return NextResponse.json({ error: 'Unknown Razorpay order' }, { status: 500 })
 
-    const snapshot = attempt.order.financial_snapshot as { customerPayablePaise?: number } | null;
-    const expectedPaise = attempt.order.total_amount_paise ?? snapshot?.customerPayablePaise;
+    const snapshot = attempt.order.financial_snapshot as { customerPayablePaise?: number } | null
+    const expectedPaise = attempt.order.total_amount_paise ?? snapshot?.customerPayablePaise
     if (
       amountPaise !== expectedPaise ||
       amountPaise !== attempt.amount_paise ||
-      payment.currency !== "INR" ||
-      (payment.status && payment.status !== "captured")
+      payment.currency !== 'INR' ||
+      (payment.status && payment.status !== 'captured')
     ) {
-      return NextResponse.json({ error: "Payment does not match order" }, { status: 409 });
+      return NextResponse.json({ error: 'Payment does not match order' }, { status: 409 })
     }
 
     await processPaymentVerificationTx({
       orderId: attempt.order_id,
       gatewayPaymentId: paymentId,
-      gateway: "RAZORPAY",
+      gateway: 'RAZORPAY',
       amountPaise,
-      actorId: "RAZORPAY_WEBHOOK",
+      actorId: 'RAZORPAY_WEBHOOK',
       idempotencyKey: `razorpay_event_${eventId}`,
       rawPayload: event,
-    } as any);
-  } else if (type === "payment.failed") {
-    const rzpOrderId = String(payment?.order_id ?? "");
+    } as any)
+  } else if (type === 'payment.failed') {
+    const rzpOrderId = String(payment?.order_id ?? '')
     if (rzpOrderId) {
       await prisma.paymentTransaction.updateMany({
         where: {
-          gateway: "RAZORPAY",
+          gateway: 'RAZORPAY',
           razorpay_order_id: rzpOrderId,
-          status: { in: ["pending", "processing"] },
+          status: { in: ['pending', 'processing'] },
         },
         data: {
-          status: "failed",
+          status: 'failed',
           gateway_payment_id: payment?.id ? String(payment.id) : undefined,
-          failure_reason: String(payment?.error_description ?? "Payment failed"),
+          failure_reason: String(payment?.error_description ?? 'Payment failed'),
         } as any,
-      });
+      })
     }
   } else {
     // Refund and Route transfer events need separate handlers that update only
     // their matching refund/transfer record and verify the event payload.
   }
 
-  await markWebhookEventProcessed("RAZORPAY", eventId);
-  return NextResponse.json({ received: true });
+  await markWebhookEventProcessed('RAZORPAY', eventId)
+  return NextResponse.json({ received: true })
 }
 
 // These must be implemented against the WebhookEvent model in Section 4.
 // They must be durable database operations, not an in-memory cache.
 async function beginWebhookEvent(_provider: string, _id: string, _type: string, _payload: unknown) {
-  throw new Error("Implement durable webhook receipt/idempotency before enabling this endpoint");
+  throw new Error('Implement durable webhook receipt/idempotency before enabling this endpoint')
 }
 async function markWebhookEventProcessed(_provider: string, _id: string) {
-  throw new Error("Implement durable webhook receipt/idempotency before enabling this endpoint");
+  throw new Error('Implement durable webhook receipt/idempotency before enabling this endpoint')
 }
 ```
 
@@ -797,55 +804,57 @@ delivery.
 
 Core validation:
 
-``` ts
+```ts
 const snapshot = order.financial_snapshot as {
-  customerPayablePaise: number;
-  vendorPayableNetPaise: number;
-  riderPayablePaise: number;
-};
+  customerPayablePaise: number
+  vendorPayableNetPaise: number
+  riderPayablePaise: number
+}
 
 const allocations = [
-  { type: "RESTAURANT", recipientId: order.restaurant_id,
-    amountPaise: snapshot.vendorPayableNetPaise },
-  { type: "DRIVER", recipientId: order.rider_id,
-    amountPaise: snapshot.riderPayablePaise },
-].filter(x => x.amountPaise > 0);
+  {
+    type: 'RESTAURANT',
+    recipientId: order.restaurant_id,
+    amountPaise: snapshot.vendorPayableNetPaise,
+  },
+  { type: 'DRIVER', recipientId: order.rider_id, amountPaise: snapshot.riderPayablePaise },
+].filter((x) => x.amountPaise > 0)
 
-const totalTransfers = allocations.reduce((sum, x) => sum + x.amountPaise, 0);
+const totalTransfers = allocations.reduce((sum, x) => sum + x.amountPaise, 0)
 if (totalTransfers > snapshot.customerPayablePaise) {
-  throw new Error("Transfers exceed captured amount");
+  throw new Error('Transfers exceed captured amount')
 }
 if (!Number.isSafeInteger(totalTransfers)) {
-  throw new Error("Invalid paise amount");
+  throw new Error('Invalid paise amount')
 }
 ```
 
 Before calling Route:
 
--   Confirm order `payment_status === verified`.
--   Confirm the provider payment is captured and its ID maps to this
-    Crave order.
--   Check release condition (`delivered`/`completed`, or an explicit
-    audited admin approval).
--   Resolve restaurant and driver linked-account IDs from
-    `RazorpayLinkedAccount` using server-side IDs.
--   Require each mapping to be `active`.
--   Refuse split if cancelled/refund-held, snapshot missing, amounts
-    mismatch, or a previous transfer exists.
--   Create a durable `RazorpayTransfer` intent with a unique key such as
-    `order:{orderId}:recipient:{type}:{recipientId}:v1` **before**
-    calling Razorpay.
--   Call the currently supported Route API to create transfers from the
-    captured payment. Amounts are paise.
--   Persist the provider transfer ID and actual provider status.
--   If the API times out, treat it as an unknown outcome: fetch
-    transfers for the payment/order and reconcile before retrying.
--   Mark `processed` only when provider state confirms it. Do not mark a
-    payout paid because the API request merely started.
--   Handle `transfer.processed`, `transfer.failed`, and
-    `transfer.reversed` webhooks against the matching transfer ID.
--   Ensure cumulative transfers for one captured payment never exceed
-    its captured amount.
+- Confirm order `payment_status === verified`.
+- Confirm the provider payment is captured and its ID maps to this
+  Crave order.
+- Check release condition (`delivered`/`completed`, or an explicit
+  audited admin approval).
+- Resolve restaurant and driver linked-account IDs from
+  `RazorpayLinkedAccount` using server-side IDs.
+- Require each mapping to be `active`.
+- Refuse split if cancelled/refund-held, snapshot missing, amounts
+  mismatch, or a previous transfer exists.
+- Create a durable `RazorpayTransfer` intent with a unique key such as
+  `order:{orderId}:recipient:{type}:{recipientId}:v1` **before**
+  calling Razorpay.
+- Call the currently supported Route API to create transfers from the
+  captured payment. Amounts are paise.
+- Persist the provider transfer ID and actual provider status.
+- If the API times out, treat it as an unknown outcome: fetch
+  transfers for the payment/order and reconcile before retrying.
+- Mark `processed` only when provider state confirms it. Do not mark a
+  payout paid because the API request merely started.
+- Handle `transfer.processed`, `transfer.failed`, and
+  `transfer.reversed` webhooks against the matching transfer ID.
+- Ensure cumulative transfers for one captured payment never exceed
+  its captured amount.
 
 **SDK caution:** Route method signatures and transfer response shapes
 depend on the installed SDK/product. Validate the exact method against
@@ -858,10 +867,10 @@ an unverified `any` call.
 
 The transfer service uses these persisted fields, not new calculations:
 
--   Restaurant: `snapshot.vendorPayableNetPaise`
--   Driver: `snapshot.riderPayablePaise`
--   Platform remainder:
-    `snapshot.customerPayablePaise - vendorPayableNetPaise - riderPayablePaise`
+- Restaurant: `snapshot.vendorPayableNetPaise`
+- Driver: `snapshot.riderPayablePaise`
+- Platform remainder:
+  `snapshot.customerPayablePaise - vendorPayableNetPaise - riderPayablePaise`
 
 If the driver has not been assigned or lacks an active linked account,
 leave that amount as a pending driver liability. Do not transfer it to
@@ -896,31 +905,34 @@ Refund amounts must be stored in paise for new gateway refunds.
 
 Expose only business settings in the admin panel, never API secrets.
 
-  ------------------------------------------------------------------------------
-  Setting                       Purpose                  Control
-  ----------------------------- ------------------------ -----------------------
-  `razorpay_enabled`            Enable Checkout          Admin only, default
-                                                         false
+---
 
-  `razorpay_route_enabled`      Enable linked-account    Admin only, default
-                                transfers                false
+Setting Purpose Control
 
-  Existing restaurant contract  Commission/markup        Existing contract
-                                                         workflow; applies to
-                                                         new snapshots
+---
 
-  Existing                      Driver compensation      Validate allowed range
-  `driver_payout_share`         input                    
+`razorpay_enabled` Enable Checkout Admin only, default
+false
 
-  `razorpay_transfer_release`   `DELIVERY_COMPLETE` /    Allowlist enum
-                                `ADMIN_APPROVAL`         
+`razorpay_route_enabled` Enable linked-account Admin only, default
+transfers false
 
-  Linked-account status         Whether recipient can    Admin/provider workflow
-                                receive transfers        
+Existing restaurant contract Commission/markup Existing contract
+workflow; applies to
+new snapshots
 
-  Refund controls               Amount/reason/approval   Server-side limits and
-                                                         audit
-  ------------------------------------------------------------------------------
+Existing Driver compensation Validate allowed range
+`driver_payout_share` input
+
+`razorpay_transfer_release` `DELIVERY_COMPLETE` / Allowlist enum
+`ADMIN_APPROVAL`
+
+Linked-account status Whether recipient can Admin/provider workflow
+receive transfers
+
+Refund controls Amount/reason/approval Server-side limits and
+audit
+------------------------------------------------------------------------------
 
 Require admin authorization server-side, validate all values, and record
 actor, previous/new value, timestamp, and reason. Vendors/drivers must
@@ -932,15 +944,15 @@ transactionally.
 
 Build a scheduled worker/admin report for:
 
--   Captured Razorpay payments without verified Crave transactions.
--   Verified orders missing required ledger/outbox records.
--   Stale transfer intents without provider IDs.
--   Provider/local transfer status mismatches.
--   Pending refunds older than the expected SLA.
--   Duplicate provider IDs, amount mismatches, and cumulative transfers
-    greater than captured amount.
--   Orders where `total_amount_paise` and
-    `financial_snapshot.customerPayablePaise` disagree.
+- Captured Razorpay payments without verified Crave transactions.
+- Verified orders missing required ledger/outbox records.
+- Stale transfer intents without provider IDs.
+- Provider/local transfer status mismatches.
+- Pending refunds older than the expected SLA.
+- Duplicate provider IDs, amount mismatches, and cumulative transfers
+  greater than captured amount.
+- Orders where `total_amount_paise` and
+  `financial_snapshot.customerPayablePaise` disagree.
 
 Unknown provider outcome is not the same as failure. Query Razorpay
 first and reconcile by provider IDs, order IDs and notes. Use bounded
@@ -949,27 +961,27 @@ another transfer merely because the first response timed out.
 
 ## 15. Security checklist
 
--   [ ] API key secret and webhook secret are server-only.
--   [ ] Webhook rejects missing secret/signature and verifies exact raw
-    body.
--   [ ] Checkout signature verified with HMAC-SHA256.
--   [ ] Provider payment fetched and captured status confirmed.
--   [ ] Exact amount in paise, currency, Razorpay order ID and Crave
-    order ID match.
--   [ ] Ownership checked on create and verify endpoints.
--   [ ] Client financial values are ignored.
--   [ ] Frontend callback alone cannot mark an order paid.
--   [ ] Webhook event, payment, transfer, refund IDs and idempotency
-    keys have unique constraints.
--   [ ] Idempotency key replays compare payload hash/scope.
--   [ ] No fallback to success when DB/provider is unavailable.
--   [ ] Linked-account mapping is admin-controlled and active.
--   [ ] Snapshot allocation reconciles and transfers never exceed
-    captured amount.
--   [ ] Ledger errors abort financial state changes.
--   [ ] Refunds are completed only after provider confirmation.
--   [ ] Logs redact sensitive payment data.
--   [ ] Config changes and admin payouts are audited.
+- [ ] API key secret and webhook secret are server-only.
+- [ ] Webhook rejects missing secret/signature and verifies exact raw
+      body.
+- [ ] Checkout signature verified with HMAC-SHA256.
+- [ ] Provider payment fetched and captured status confirmed.
+- [ ] Exact amount in paise, currency, Razorpay order ID and Crave
+      order ID match.
+- [ ] Ownership checked on create and verify endpoints.
+- [ ] Client financial values are ignored.
+- [ ] Frontend callback alone cannot mark an order paid.
+- [ ] Webhook event, payment, transfer, refund IDs and idempotency
+      keys have unique constraints.
+- [ ] Idempotency key replays compare payload hash/scope.
+- [ ] No fallback to success when DB/provider is unavailable.
+- [ ] Linked-account mapping is admin-controlled and active.
+- [ ] Snapshot allocation reconciles and transfers never exceed
+      captured amount.
+- [ ] Ledger errors abort financial state changes.
+- [ ] Refunds are completed only after provider confirmation.
+- [ ] Logs redact sensitive payment data.
+- [ ] Config changes and admin payouts are audited.
 
 ## 16. Test Mode acceptance plan
 
@@ -1002,7 +1014,7 @@ another transfer merely because the first response timed out.
 
 Run:
 
-``` bash
+```bash
 pnpm exec prisma format
 pnpm exec prisma validate
 pnpm exec prisma generate
@@ -1057,19 +1069,19 @@ skipping them.
 
 Do not enable live payments until all are true:
 
--   Route is enabled and linked accounts are onboarded.
--   Migration is applied and reviewed.
--   The exact canonical paise amount is persisted.
--   Checkout and webhook signature verification fail closed.
--   The `WebhookEvent` placeholder handlers described above are
-    implemented with durable unique IDs.
--   Payment service enforces exact amount equality inside the
-    transaction.
--   Required ledger writes cannot be swallowed.
--   Transfer intents are idempotent and unknown outcomes are reconciled.
--   Refunds and transfer reversals are provider-confirmed.
--   Typecheck, tests, Prisma validation, build, and all Test Mode
-    scenarios pass.
+- Route is enabled and linked accounts are onboarded.
+- Migration is applied and reviewed.
+- The exact canonical paise amount is persisted.
+- Checkout and webhook signature verification fail closed.
+- The `WebhookEvent` placeholder handlers described above are
+  implemented with durable unique IDs.
+- Payment service enforces exact amount equality inside the
+  transaction.
+- Required ledger writes cannot be swallowed.
+- Transfer intents are idempotent and unknown outcomes are reconciled.
+- Refunds and transfer reversals are provider-confirmed.
+- Typecheck, tests, Prisma validation, build, and all Test Mode
+  scenarios pass.
 
 ## 19. Repository-specific cautions
 
@@ -1092,13 +1104,13 @@ Do not enable live payments until all are true:
 
 ## 20. Documentation
 
--   [Razorpay Orders API](https://razorpay.com/docs/api/orders/create/)
--   [Razorpay Checkout
-    integration](https://razorpay.com/docs/payments/server-integration/nodejs/payment-gateway/build-integration/)
--   [Webhook signature
-    validation](https://razorpay.com/docs/webhooks/validate-test/)
--   [Razorpay Route product](https://razorpay.com/route/)
--   [Razorpay Route API](https://razorpay.com/docs/api/payments/route/)
+- [Razorpay Orders API](https://razorpay.com/docs/api/orders/create/)
+- [Razorpay Checkout
+  integration](https://razorpay.com/docs/payments/server-integration/nodejs/payment-gateway/build-integration/)
+- [Webhook signature
+  validation](https://razorpay.com/docs/webhooks/validate-test/)
+- [Razorpay Route product](https://razorpay.com/route/)
+- [Razorpay Route API](https://razorpay.com/docs/api/payments/route/)
 
 **Bottom line:** This blueprint is tailored to Crave's existing finance
 engine. It is not yet production-ready by merely copying the snippets:

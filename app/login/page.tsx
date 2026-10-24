@@ -103,7 +103,8 @@ export default function LoginPage() {
             </h1>
 
             <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">
-              Order delicious food, track active deliveries in real time, or manage your restaurant and courier operations.
+              Order delicious food, track active deliveries in real time, or manage your restaurant
+              and courier operations.
             </p>
 
             {/* Practical Service Highlights */}
@@ -271,9 +272,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-xs text-stone-400 dark:text-stone-600 border-t border-black/5 dark:border-white/5">
-        <p className="font-mono tracking-wider">
-          © 2026 CRAVE • BENGALURU, INDIA
-        </p>
+        <p className="font-mono tracking-wider">© 2026 CRAVE • BENGALURU, INDIA</p>
       </footer>
     </div>
   )

@@ -68,7 +68,13 @@ services:
     expose:
       - '8000'
     healthcheck:
-      test: ['CMD', 'node', '-e', "const http=require('http');const r=http.get('http://localhost:8000/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const http=require('http');const r=http.get('http://localhost:8000/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -104,7 +110,13 @@ services:
     ports:
       - '3000:3000'
     healthcheck:
-      test: ['CMD', 'node', '-e', "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))",
+        ]
       interval: 20s
       timeout: 5s
       retries: 5

@@ -51,10 +51,7 @@ export async function POST(request: Request) {
     if (!Number.isSafeInteger(amountPaise) || !amountPaise || amountPaise < 100) {
       return NextResponse.json({ error: 'Invalid canonical payable amount' }, { status: 409 })
     }
-    if (
-      snapshot?.customerPayablePaise != null &&
-      amountPaise !== snapshot.customerPayablePaise
-    ) {
+    if (snapshot?.customerPayablePaise != null && amountPaise !== snapshot.customerPayablePaise) {
       return NextResponse.json({ error: 'Snapshot amount mismatch' }, { status: 409 })
     }
 

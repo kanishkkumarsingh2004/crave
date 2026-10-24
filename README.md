@@ -234,14 +234,14 @@ A complete Docker Compose test environment (`docker-compose.test.yml`) is provid
 
 ### What's included
 
-| Service | Container | Host Port | Purpose |
-|---------|-----------|-----------|---------|
-| PostgreSQL 16 | `crave-db-test` | 5433 | Database |
-| Redis 7 | `crave-redis-test` | 6380 | Caching, locks, pub-sub |
-| Backend (Next.js API) | `crave-backend-test` | 3000 | REST API on :3000 |
-| WebSocket Server | `crave-backend-test` | 8000 | Internal WS |
-| Frontend (Next.js) | `crave-frontend-test` | 3000 | Website on :3000 |
-| Migration runner | `crave-migrate-test` | — | One-shot schema migration |
+| Service               | Container             | Host Port | Purpose                   |
+| --------------------- | --------------------- | --------- | ------------------------- |
+| PostgreSQL 16         | `crave-db-test`       | 5433      | Database                  |
+| Redis 7               | `crave-redis-test`    | 6380      | Caching, locks, pub-sub   |
+| Backend (Next.js API) | `crave-backend-test`  | 3000      | REST API on :3000         |
+| WebSocket Server      | `crave-backend-test`  | 8000      | Internal WS               |
+| Frontend (Next.js)    | `crave-frontend-test` | 3000      | Website on :3000          |
+| Migration runner      | `crave-migrate-test`  | —         | One-shot schema migration |
 
 ### Start the test environment
 
@@ -293,13 +293,13 @@ The checkout page shows **Razorpay-only** payment (no UPI toggle, no UTR input r
 
 ### Test credentials (all password: `TestPass123!`)
 
-| Email | Role |
-|-------|------|
-| `admin@crave.test` | Admin — toggles Razorpay at `/admin/payment-config` |
-| `customer@crave.test` | Customer |
-| `vendor@crave.test` | Restaurant Vendor |
-| `store@crave.test` | Dark Store Vendor |
-| `rider@crave.test` | Driver |
+| Email                 | Role                                                |
+| --------------------- | --------------------------------------------------- |
+| `admin@crave.test`    | Admin — toggles Razorpay at `/admin/payment-config` |
+| `customer@crave.test` | Customer                                            |
+| `vendor@crave.test`   | Restaurant Vendor                                   |
+| `store@crave.test`    | Dark Store Vendor                                   |
+| `rider@crave.test`    | Driver                                              |
 
 ### Seeded test data
 
@@ -312,9 +312,9 @@ The checkout page shows **Razorpay-only** payment (no UPI toggle, no UTR input r
 
 Go to http://localhost:3000/admin/payment-config to toggle:
 
-| Setting | Purpose |
-|---------|---------|
-| Enable Razorpay Checkout | Turn Razorpay on/off for checkout |
+| Setting                        | Purpose                              |
+| ------------------------------ | ------------------------------------ |
+| Enable Razorpay Checkout       | Turn Razorpay on/off for checkout    |
 | Enable Route Split Settlements | Turn Razorpay Route transfers on/off |
 
 ### Test Mode credentials
@@ -333,19 +333,19 @@ RAZORPAY_ROUTE_ENABLED=true
 
 ### Razorpay implementation files
 
-| File | Purpose |
-|------|---------|
-| `lib/payments/razorpay-client.ts` | Server-only Razorpay SDK wrapper with kill switches |
-| `app/api/payments/razorpay/order/route.ts` | Create Razorpay checkout order (amount from canonical snapshot) |
-| `app/api/payments/razorpay/verify/route.ts` | HMAC-SHA256 signature + provider payment verification |
-| `app/api/webhooks/razorpay/route.ts` | Dedicated webhook with durable `WebhookEvent` idempotency |
-| `lib/payments/razorpay-split.ts` | Route split transfers to restaurant/driver linked accounts |
-| `app/api/payment-config/route.ts` | Exposes `razorpayEnabled` / `razorpayRouteEnabled` flags |
-| `lib/catalog/payment-config.ts` | `PaymentConfig` type with Razorpay fields |
-| `lib/dal/payments.ts` | `upsertPaymentConfig` accepts Razorpay flags |
-| `app/admin/payment-config/page.tsx` | Admin toggles for Razorpay Checkout + Route |
-| `customer_app/src/razorpay.ts` | Razorpay Checkout integration |
-| `prisma/schema.prisma` | `total_amount_paise`, `amount_paise`, `razorpay_order_id`, `RazorpayLinkedAccount`, `RazorpayTransfer`, `WebhookEvent` models |
+| File                                        | Purpose                                                                                                                       |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `lib/payments/razorpay-client.ts`           | Server-only Razorpay SDK wrapper with kill switches                                                                           |
+| `app/api/payments/razorpay/order/route.ts`  | Create Razorpay checkout order (amount from canonical snapshot)                                                               |
+| `app/api/payments/razorpay/verify/route.ts` | HMAC-SHA256 signature + provider payment verification                                                                         |
+| `app/api/webhooks/razorpay/route.ts`        | Dedicated webhook with durable `WebhookEvent` idempotency                                                                     |
+| `lib/payments/razorpay-split.ts`            | Route split transfers to restaurant/driver linked accounts                                                                    |
+| `app/api/payment-config/route.ts`           | Exposes `razorpayEnabled` / `razorpayRouteEnabled` flags                                                                      |
+| `lib/catalog/payment-config.ts`             | `PaymentConfig` type with Razorpay fields                                                                                     |
+| `lib/dal/payments.ts`                       | `upsertPaymentConfig` accepts Razorpay flags                                                                                  |
+| `app/admin/payment-config/page.tsx`         | Admin toggles for Razorpay Checkout + Route                                                                                   |
+| `customer_app/src/razorpay.ts`              | Razorpay Checkout integration                                                                                                 |
+| `prisma/schema.prisma`                      | `total_amount_paise`, `amount_paise`, `razorpay_order_id`, `RazorpayLinkedAccount`, `RazorpayTransfer`, `WebhookEvent` models |
 
 ---
 
