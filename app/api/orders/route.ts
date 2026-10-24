@@ -34,6 +34,7 @@ import { withTiming } from '@/lib/instrumentation'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
 import { sendDriverPushToAll, sendDriverPushToUsers } from '@/lib/notifications/driver-push'
 import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
+import { maybeTriggerRouteSettlement } from '@/lib/payments/razorpay-split'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
@@ -329,7 +330,11 @@ export async function POST(request: Request) {
 
       // Customer checkout supports UPI Online or Razorpay. Razorpay does not require a manual UTR;
       // UTR validation applies only to the legacy manual-UTR flow.
-      if (isCustomerActor && !paymentMethodLower.includes('upi') && !paymentMethodLower.includes('razorpay')) {
+      if (
+        isCustomerActor &&
+        !paymentMethodLower.includes('upi') &&
+        !paymentMethodLower.includes('razorpay')
+      ) {
         return NextResponse.json(
           { error: 'Customer checkout supports UPI Online or Razorpay payments only.' },
           { status: 400 }
@@ -1242,12 +1247,11 @@ export async function POST(request: Request) {
           }
 
           // 4. Create initial PaymentTransaction with pending status
-          const paymentGateway =
-            String(payment_method).toLowerCase().includes('razorpay')
-              ? 'RAZORPAY'
-              : String(payment_method).toLowerCase().includes('upi')
-                ? 'upi'
-                : 'cash_on_delivery'
+          const paymentGateway = String(payment_method).toLowerCase().includes('razorpay')
+            ? 'RAZORPAY'
+            : String(payment_method).toLowerCase().includes('upi')
+              ? 'upi'
+              : 'cash_on_delivery'
           await tx.paymentTransaction.create({
             data: {
               id: `tx_${orderId}`,
@@ -1802,6 +1806,16 @@ export async function PATCH(request: Request) {
 
       // Dispatch pending outbox events across WebSocket & Redis Pub/Sub
       dispatchPendingOutboxEvents().catch(() => {})
+
+      // Trigger Razorpay Route split settlement for this order — the restaurant
+      // and driver receive their share, the platform retains the remainder. This
+      // is fire-and-forget: idempotent (transfer intents are keyed per order +
+      // recipient) and resilient (failures are logged + left for reconciliation),
+      // so it never blocks or fails the order transition. Only relevant when
+      // Route is enabled in the server env and the order is paid + delivered.
+      if (status === 'delivered' || status === 'completed') {
+        maybeTriggerRouteSettlement(orderId).catch(() => {})
+      }
 
       // Sync payment status atomically via payment-service
       const newPaymentStatus = payment_status || paymentStatus

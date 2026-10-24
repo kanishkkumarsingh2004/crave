@@ -72,6 +72,11 @@ export default function AdminPaymentConfigPage() {
   const [requireUtrNumber, setRequireUtrNumber] = useState(true)
   const [razorpayEnabled, setRazorpayEnabled] = useState(false)
   const [razorpayRouteEnabled, setRazorpayRouteEnabled] = useState(false)
+  const [razorpayTransferRelease, setRazorpayTransferRelease] = useState<
+    'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL'
+  >('DELIVERY_COMPLETE')
+  const [razorpayEnvEnabled, setRazorpayEnvEnabled] = useState(false)
+  const [razorpayRouteEnvEnabled, setRazorpayRouteEnvEnabled] = useState(false)
 
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -109,6 +114,10 @@ export default function AdminPaymentConfigPage() {
       setRequireUtrNumber(cfg.requireUtrNumber)
       setRazorpayEnabled(cfg.razorpayEnabled)
       setRazorpayRouteEnabled(cfg.razorpayRouteEnabled)
+      setRazorpayTransferRelease(cfg.razorpayTransferRelease ?? 'DELIVERY_COMPLETE')
+      // Env kill-switch status (server-only flags surfaced by /api/payment-config)
+      setRazorpayEnvEnabled((cfg as any).razorpayEnvEnabled ?? false)
+      setRazorpayRouteEnvEnabled((cfg as any).razorpayRouteEnvEnabled ?? false)
     })
   }, [])
 
@@ -209,6 +218,7 @@ export default function AdminPaymentConfigPage() {
       requireUtrNumber,
       razorpayEnabled,
       razorpayRouteEnabled,
+      razorpayTransferRelease,
     }
     setSaveError('')
     const saved = await savePaymentConfig(fullConfig)
@@ -611,7 +621,9 @@ export default function AdminPaymentConfigPage() {
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#18201c] dark:text-white">Enable Razorpay Checkout</span>
+                  <span className="text-xs font-bold text-[#18201c] dark:text-white">
+                    Enable Razorpay Checkout
+                  </span>
                   <AppleToggle
                     checked={razorpayEnabled}
                     onChange={setRazorpayEnabled}
@@ -621,7 +633,9 @@ export default function AdminPaymentConfigPage() {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#18201c] dark:text-white">Enable Route Split Settlements</span>
+                  <span className="text-xs font-bold text-[#18201c] dark:text-white">
+                    Enable Route Split Settlements
+                  </span>
                   <AppleToggle
                     checked={razorpayRouteEnabled}
                     onChange={setRazorpayRouteEnabled}
@@ -630,6 +644,63 @@ export default function AdminPaymentConfigPage() {
                     ariaLabel="Enable Razorpay Route transfers"
                   />
                 </div>
+              </div>
+
+              {/* Server env kill-switch status (read-only; reflects RAZORPAY_ENABLED in env) */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                    razorpayEnvEnabled
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  }`}
+                >
+                  <span
+                    className={`size-1.5 rounded-full ${razorpayEnvEnabled ? 'bg-emerald-500' : 'bg-red-500'}`}
+                  />
+                  Gateway env: {razorpayEnvEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                    razorpayRouteEnvEnabled
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                  }`}
+                >
+                  <span
+                    className={`size-1.5 rounded-full ${razorpayRouteEnvEnabled ? 'bg-emerald-500' : 'bg-gray-400'}`}
+                  />
+                  Route env: {razorpayRouteEnvEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+
+              {/* Transfer release condition (only relevant when Route is enabled) */}
+              <div className="mt-3 flex flex-col gap-1.5">
+                <label
+                  htmlFor="razorpay-transfer-release"
+                  className="text-xs font-bold text-[#18201c] dark:text-white"
+                >
+                  Transfer release condition
+                </label>
+                <select
+                  id="razorpay-transfer-release"
+                  value={razorpayTransferRelease}
+                  onChange={(e) =>
+                    setRazorpayTransferRelease(
+                      e.target.value as 'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL'
+                    )
+                  }
+                  className="rounded-xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#121815] px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                  <option value="DELIVERY_COMPLETE">On delivery complete (auto-release)</option>
+                  <option value="ADMIN_APPROVAL">
+                    On admin approval (hold for manual release)
+                  </option>
+                </select>
+                <p className="text-[10px] text-amber-700 dark:text-amber-300">
+                  When Route is enabled, this controls when split transfers are sent to the
+                  restaurant and driver linked accounts. The platform always retains the remainder.
+                </p>
               </div>
             </div>
           </div>

@@ -84,12 +84,15 @@ export async function POST(request: Request) {
       actorId: 'RAZORPAY_CHECKOUT_VERIFIED',
       idempotencyKey: `razorpay_verify_${paymentId}`,
       rawPayload: {
-        id: payment.id,
-        order_id: payment.order_id,
-        amount: payment.amount,
-        currency: payment.currency,
-        status: payment.status,
-        captured: payment.captured,
+        // Persist the complete transaction record for audit / dispute resolution:
+        // the cryptographic signature, both gateway IDs, and the full payment
+        // entity returned by Razorpay. Stored on PaymentTransaction.raw_payload.
+        razorpay_order_id: rzpOrderId,
+        razorpay_payment_id: paymentId,
+        razorpay_signature: signature,
+        payment,
+        verifiedAt: new Date().toISOString(),
+        actor: 'RAZORPAY_CHECKOUT_VERIFIED',
       },
     } as any)
 

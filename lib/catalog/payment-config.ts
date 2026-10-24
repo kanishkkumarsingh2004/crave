@@ -27,6 +27,11 @@ export interface PaymentConfig {
   requireUtrNumber: boolean
   razorpayEnabled: boolean
   razorpayRouteEnabled: boolean
+  /// When Razorpay Route is enabled, when should split transfers be released to
+  /// the restaurant/driver linked accounts? DELIVERY_COMPLETE = auto-release once
+  /// the order reaches delivered/completed. ADMIN_APPROVAL = hold until an admin
+  /// explicitly triggers settlement from the admin panel.
+  razorpayTransferRelease: 'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL'
 }
 
 export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -57,6 +62,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   requireUtrNumber: true,
   razorpayEnabled: false,
   razorpayRouteEnabled: false,
+  razorpayTransferRelease: 'DELIVERY_COMPLETE',
 }
 
 export const STORAGE_KEY = 'crave_admin_payment_config'

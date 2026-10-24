@@ -88,6 +88,7 @@ export async function upsertPaymentConfig(data: {
   require_utr_number?: boolean
   razorpay_enabled?: boolean
   razorpay_route_enabled?: boolean
+  razorpay_transfer_release?: string
   is_active?: boolean
 }) {
   const { gst_rate_percent, ...rest } = data

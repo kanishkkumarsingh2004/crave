@@ -226,6 +226,129 @@ pnpm dc:up
 - Health: [http://localhost:3000/api/health](http://localhost:3000/api/health)
 - WebSocket (from the browser, via the frontend proxy): `ws://localhost:3000/api/ws`
 
+---
+
+## Razorpay Payment Gateway — Test Docker Environment
+
+A complete Docker Compose test environment (`docker-compose.test.yml`) is provided for local Razorpay integration testing. It uses **`.env.test` only** — **production `.env.production` is never touched**.
+
+### What's included
+
+| Service | Container | Host Port | Purpose |
+|---------|-----------|-----------|---------|
+| PostgreSQL 16 | `crave-db-test` | 5433 | Database |
+| Redis 7 | `crave-redis-test` | 6380 | Caching, locks, pub-sub |
+| Backend (Next.js API) | `crave-backend-test` | 3000 | REST API on :3000 |
+| WebSocket Server | `crave-backend-test` | 8000 | Internal WS |
+| Frontend (Next.js) | `crave-frontend-test` | 3000 | Website on :3000 |
+| Migration runner | `crave-migrate-test` | — | One-shot schema migration |
+
+### Start the test environment
+
+```bash
+# Full start (builds images, runs migrations, starts services)
+bash crave-docker-test.sh
+
+# Or step by step:
+docker compose -f docker-compose.test.yml up migrate --wait
+docker compose -f docker-compose.test.yml up -d backend frontend
+```
+
+### Stop / reset
+
+```bash
+# Stop all services
+docker compose -f docker-compose.test.yml down
+
+# Reset everything (wipes database volumes)
+docker compose -f docker-compose.test.yml down -v
+
+# Re-run migrations only
+docker compose -f docker-compose.test.yml up migrate
+```
+
+### Verify it's running
+
+```bash
+# All containers healthy
+docker compose -f docker-compose.test.yml ps
+
+# Health API with DB + Redis status
+curl http://localhost:3000/api/health
+# {"status":"operational","services":{"database":{"status":"operational",...},"redis":{"status":"connected",...}}}
+
+# Razorpay config enabled
+curl http://localhost:3000/api/payment-config | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['config']['razorpayEnabled'])"
+# True
+```
+
+### Razorpay Checkout flow
+
+The checkout page shows **Razorpay-only** payment (no UPI toggle, no UTR input required) when `razorpay_enabled` is ON in the admin config:
+
+1. **Login**: http://localhost:3000/login → `customer@crave.test` / `TestPass123!`
+2. **Cart**: http://localhost:3000/user/cart → Razorpay panel ("Card, UPI, Net Banking & Wallets — No UTR needed")
+3. **Place Order**: Click "Place Order (₹962.26)" → Order created → Razorpay Checkout opens → Server verifies signature → `payment_status = 'verified'`
+4. **Track**: Order sent to vendor → After delivery, Route splits transfers to restaurant/driver linked accounts
+
+### Test credentials (all password: `TestPass123!`)
+
+| Email | Role |
+|-------|------|
+| `admin@crave.test` | Admin — toggles Razorpay at `/admin/payment-config` |
+| `customer@crave.test` | Customer |
+| `vendor@crave.test` | Restaurant Vendor |
+| `store@crave.test` | Dark Store Vendor |
+| `rider@crave.test` | Driver |
+
+### Seeded test data
+
+- **7 restaurants**: Spice Garden, Milano Artisanal Pizzeria, Meghana Biryani House, Rameshwaram Tiffin Room, Zen Dimsum & Wok, Green Harvest Bowls, craveXP
+- **18 menu items** with prices
+- **7 Razorpay linked accounts** (6 restaurants + 1 driver)
+- **Payment Config**: `razorpay_enabled: true`, `razorpay_route_enabled: true`, `razorpay_transfer_release: DELIVERY_COMPLETE`
+
+### Admin configuration
+
+Go to http://localhost:3000/admin/payment-config to toggle:
+
+| Setting | Purpose |
+|---------|---------|
+| Enable Razorpay Checkout | Turn Razorpay on/off for checkout |
+| Enable Route Split Settlements | Turn Razorpay Route transfers on/off |
+
+### Test Mode credentials
+
+The `.env.test` file contains Test Mode Razorpay API keys:
+
+```
+RAZORPAY_KEY_ID=rzp_test_TrT8Pg6Vpsi18B
+RAZORPAY_KEY_SECRET=6tA1GzJZn74SUTcVmHsg2iQU
+RAZORPAY_WEBHOOK_SECRET=0d13271f854eb210d5d62a14bedfr8df4f1d948f9b6r4rbb53a7d0d496v139g6
+RAZORPAY_ENABLED=true
+RAZORPAY_ROUTE_ENABLED=true
+```
+
+**Test Mode only.** Enable live payments only after Razorpay Route is approved for your merchant account and the Test Mode checklist in `docs/payment/crave_razorpay_full_implementation.md` passes.
+
+### Razorpay implementation files
+
+| File | Purpose |
+|------|---------|
+| `lib/payments/razorpay-client.ts` | Server-only Razorpay SDK wrapper with kill switches |
+| `app/api/payments/razorpay/order/route.ts` | Create Razorpay checkout order (amount from canonical snapshot) |
+| `app/api/payments/razorpay/verify/route.ts` | HMAC-SHA256 signature + provider payment verification |
+| `app/api/webhooks/razorpay/route.ts` | Dedicated webhook with durable `WebhookEvent` idempotency |
+| `lib/payments/razorpay-split.ts` | Route split transfers to restaurant/driver linked accounts |
+| `app/api/payment-config/route.ts` | Exposes `razorpayEnabled` / `razorpayRouteEnabled` flags |
+| `lib/catalog/payment-config.ts` | `PaymentConfig` type with Razorpay fields |
+| `lib/dal/payments.ts` | `upsertPaymentConfig` accepts Razorpay flags |
+| `app/admin/payment-config/page.tsx` | Admin toggles for Razorpay Checkout + Route |
+| `customer_app/src/razorpay.ts` | Razorpay Checkout integration |
+| `prisma/schema.prisma` | `total_amount_paise`, `amount_paise`, `razorpay_order_id`, `RazorpayLinkedAccount`, `RazorpayTransfer`, `WebhookEvent` models |
+
+---
+
 ### Local processes (no Docker)
 
 Need Node 20+, pnpm 12.3.4, Redis, and PostgreSQL (Neon or local).
