@@ -30,6 +30,24 @@ export interface SplitOrderParams {
 }
 
 /**
+ * Read the active transfer-release condition from the canonical PaymentConfig
+ * (the Order model has no such field). Falls back to DELIVERY_COMPLETE.
+ */
+async function getTransferReleaseCondition(): Promise<'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL'> {
+  try {
+    const cfg = await prisma.paymentConfig.findFirst({
+      where: { is_active: true },
+      select: { razorpay_transfer_release: true },
+    })
+    return cfg?.razorpay_transfer_release === 'ADMIN_APPROVAL'
+      ? 'ADMIN_APPROVAL'
+      : 'DELIVERY_COMPLETE'
+  } catch {
+    return 'DELIVERY_COMPLETE'
+  }
+}
+
+/**
  * Create split Route transfers for an order after the release condition is met.
  * Idempotent: creates one RazorpayTransfer per recipient per order.
  */
@@ -50,24 +68,16 @@ export async function createRouteSplits(params: SplitOrderParams) {
     throw new Error(`Order ${orderId} payment not verified`)
   }
 
-  // Check release condition
-  const releaseCondition = (
-    order as any
-  ).razorpay_transfer_release || 'DELIVERY_COMPLETE'
+  // Check release condition (read from the canonical PaymentConfig, not Order)
+  const releaseCondition = await getTransferReleaseCondition()
   if (releaseCondition === 'DELIVERY_COMPLETE') {
-    if (
-      order.status !== 'delivered' &&
-      order.status !== 'completed'
-    ) {
+    if (order.status !== 'delivered' && order.status !== 'completed') {
       throw new Error(`Order ${orderId} not yet delivered — release condition not met`)
     }
   } else if (releaseCondition === 'ADMIN_APPROVAL') {
     // Admin approval gate would be checked against an audit record.
     // For now require order status delivered/completed as a safe default.
-    if (
-      order.status !== 'delivered' &&
-      order.status !== 'completed'
-    ) {
+    if (order.status !== 'delivered' && order.status !== 'completed') {
       throw new Error(`Order ${orderId} not yet delivered — admin approval required`)
     }
   } else {
@@ -89,10 +99,18 @@ export async function createRouteSplits(params: SplitOrderParams) {
   // Build allocations (only positive amounts)
   const allocations: Allocation[] = []
   if (Number.isSafeInteger(vendorPayableNetPaise) && vendorPayableNetPaise > 0) {
-    allocations.push({ type: 'RESTAURANT', recipientId: order.restaurant_id!, amountPaise: vendorPayableNetPaise })
+    allocations.push({
+      type: 'RESTAURANT',
+      recipientId: order.restaurant_id!,
+      amountPaise: vendorPayableNetPaise,
+    })
   }
   if (Number.isSafeInteger(riderPayablePaise) && riderPayablePaise > 0) {
-    allocations.push({ type: 'DRIVER', recipientId: order.rider_id!, amountPaise: riderPayablePaise })
+    allocations.push({
+      type: 'DRIVER',
+      recipientId: order.rider_id!,
+      amountPaise: riderPayablePaise,
+    })
   }
 
   const totalTransfers = allocations.reduce((sum, x) => sum + x.amountPaise, 0)
@@ -110,36 +128,55 @@ export async function createRouteSplits(params: SplitOrderParams) {
         where: { entity_type: alloc.type, entity_id: alloc.recipientId },
       })
       if (!linked || linked.status !== 'active') {
-        throw new Error(
-          `No active Razorpay linked account for ${alloc.type} ${alloc.recipientId}`
-        )
+        throw new Error(`No active Razorpay linked account for ${alloc.type} ${alloc.recipientId}`)
       }
 
       // Idempotency key: order:{orderId}:recipient:{type}:{recipientId}:v1
       const idempotencyKey = `order:${orderId}:recipient:${alloc.type}:${alloc.recipientId}:v1`
 
-      // Check if a transfer already exists for this recipient/order
+      // Check if a transfer intent already exists for this recipient/order
       const existing = await prisma.razorpayTransfer.findFirst({
         where: { idempotency_key: idempotencyKey },
       })
+
+      // Already settled at the provider — idempotent no-op.
       if (existing && existing.razorpay_transfer_id && existing.status === 'processed') {
-        return existing // already done
+        return { transfer: existing, linked, alloc, idempotencyKey }
       }
 
-      // Create durable transfer intent BEFORE calling Razorpay
-      const transfer = await prisma.razorpayTransfer.create({
-        data: {
-          order_id: orderId,
-          recipient_type: alloc.type,
-          recipient_id: alloc.recipientId,
-          linked_account_id: linked.razorpay_account_id,
-          razorpay_payment_id: '', // filled below after payment lookup
-          idempotency_key: idempotencyKey,
-          amount_paise: alloc.amountPaise,
-          currency: 'INR',
-          status: 'processing',
-        },
-      })
+      // A prior attempt already reached the provider (it has a transfer id) but
+      // isn't confirmed processed. Do NOT create another transfer — that would
+      // double-pay. Leave it for the transfer webhook / reconcile to resolve.
+      if (existing && existing.razorpay_transfer_id) {
+        return { transfer: existing, linked, alloc, idempotencyKey }
+      }
+
+      // No provider transfer id yet: safe to (re)issue the intent. Reuse the row
+      // when one exists (e.g. a prior attempt threw before the API responded) so we
+      // never collide on the unique idempotency_key constraint on retry.
+      const transfer = existing
+        ? await prisma.razorpayTransfer.update({
+            where: { id: existing.id },
+            data: {
+              status: 'processing',
+              failure_reason: null,
+              linked_account_id: linked.razorpay_account_id,
+              updated_at: new Date(),
+            },
+          })
+        : await prisma.razorpayTransfer.create({
+            data: {
+              order_id: orderId,
+              recipient_type: alloc.type,
+              recipient_id: alloc.recipientId,
+              linked_account_id: linked.razorpay_account_id,
+              razorpay_payment_id: '', // filled below after payment lookup
+              idempotency_key: idempotencyKey,
+              amount_paise: alloc.amountPaise,
+              currency: 'INR',
+              status: 'processing',
+            },
+          })
 
       return { transfer, linked, alloc, idempotencyKey }
     })
@@ -160,10 +197,7 @@ export async function createRouteSplits(params: SplitOrderParams) {
   const existingTransfers = await prisma.razorpayTransfer.findMany({
     where: { order_id: orderId, razorpay_payment_id: razorpayPaymentId },
   })
-  const cumulativePaise = existingTransfers.reduce(
-    (sum, t) => sum + t.amount_paise,
-    0
-  )
+  const cumulativePaise = existingTransfers.reduce((sum, t) => sum + t.amount_paise, 0)
   if (cumulativePaise + totalTransfers > customerPayablePaise) {
     throw new Error('Cumulative transfers would exceed captured amount')
   }
@@ -177,6 +211,22 @@ export async function createRouteSplits(params: SplitOrderParams) {
       transfer: any
       linked: any
       alloc: Allocation
+    }
+
+    // Skip recipients whose transfer already reached the provider (settled or
+    // in-flight — handled above). Never re-call the API for these or we risk
+    // creating a duplicate transfer (double-pay).
+    if (transfer.razorpay_transfer_id) {
+      results.push({
+        transferId: transfer.id,
+        recipientType: alloc.type,
+        recipientId: alloc.recipientId,
+        amountPaise: alloc.amountPaise,
+        providerTransferId: transfer.razorpay_transfer_id,
+        status: transfer.status,
+        skipped: true,
+      })
+      continue
     }
 
     // Attach the payment ID to the transfer record
@@ -220,9 +270,7 @@ export async function createRouteSplits(params: SplitOrderParams) {
       data: {
         razorpay_transfer_id: providerTransferId,
         status: providerStatus === 'processed' ? 'processed' : 'pending',
-        ...(providerStatus === 'processed'
-          ? { processed_at: new Date() }
-          : {}),
+        ...(providerStatus === 'processed' ? { processed_at: new Date() } : {}),
         updated_at: new Date(),
       },
     })
@@ -267,9 +315,7 @@ export async function handleRouteTransferWebhook(event: any) {
 
   // Verify amount matches
   if (amount !== transfer.amount_paise) {
-    throw new Error(
-      `Transfer amount mismatch: webhook ${amount} vs local ${transfer.amount_paise}`
-    )
+    throw new Error(`Transfer amount mismatch: webhook ${amount} vs local ${transfer.amount_paise}`)
   }
 
   const statusMap: Record<string, string> = {
@@ -284,7 +330,9 @@ export async function handleRouteTransferWebhook(event: any) {
     data: {
       status: newStatus,
       ...(newStatus === 'processed' ? { processed_at: new Date() } : {}),
-      ...(newStatus === 'failed' ? { failure_reason: String(transferEntity?.failure_reason ?? '') } : {}),
+      ...(newStatus === 'failed'
+        ? { failure_reason: String(transferEntity?.failure_reason ?? '') }
+        : {}),
       updated_at: new Date(),
     },
   })
@@ -320,9 +368,7 @@ export async function reconcileStaleTransfers() {
       })
 
       const match = transfers.items.find(
-        (item: any) =>
-          item.notes?.crave_order_id === t.order_id &&
-          item.amount === t.amount_paise
+        (item: any) => item.notes?.crave_order_id === t.order_id && item.amount === t.amount_paise
       )
 
       if (match) {
@@ -345,4 +391,65 @@ export async function reconcileStaleTransfers() {
   }
 
   return { reconciledCount: results.length, results }
+}
+
+/**
+ * Fire-and-forget settlement entry point. Called after an order reaches
+ * delivered/completed (and optionally by an admin "release settlement" action).
+ *
+ * Reads the release condition from the canonical PaymentConfig. Only releases
+ * automatically when the condition is DELIVERY_COMPLETE; ADMIN_APPROVAL is held
+ * for explicit admin release. Never throws — failures are logged and left for
+ * reconciliation. Safe to call repeatedly: transfer intents are keyed per
+ * order+recipient, so duplicates short-circuit.
+ */
+export async function maybeTriggerRouteSettlement(orderId: string): Promise<{
+  triggered: boolean
+  skipped?: boolean
+  reason?: string
+  result?: any
+  error?: string
+}> {
+  if (!isRouteEnabled()) {
+    return { triggered: false, skipped: true, reason: 'route_disabled' }
+  }
+
+  try {
+    const releaseCondition = await getTransferReleaseCondition()
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { payment_status: true, status: true },
+    })
+    if (!order) {
+      return { triggered: false, skipped: true, reason: 'order_not_found' }
+    }
+    if (order.payment_status !== 'verified') {
+      return { triggered: false, skipped: true, reason: 'payment_not_verified' }
+    }
+
+    // ADMIN_APPROVAL never auto-releases; the admin settlement route calls
+    // createRouteSplits directly once approved.
+    if (releaseCondition === 'ADMIN_APPROVAL') {
+      return { triggered: false, skipped: true, reason: 'admin_approval_required' }
+    }
+
+    // DELIVERY_COMPLETE: require delivered/completed before releasing.
+    if (order.status !== 'delivered' && order.status !== 'completed') {
+      return { triggered: false, skipped: true, reason: 'release_condition_not_met' }
+    }
+
+    const result = await createRouteSplits({ orderId })
+    console.log(
+      `[razorpay-split] Route settlement triggered for order ${orderId}: ${result.results?.length ?? 0} transfer(s)`
+    )
+    return { triggered: true, result }
+  } catch (err: any) {
+    // Non-fatal: durable transfer intents (if created) + reconciliation recover.
+    console.error(
+      `[razorpay-split] Route settlement trigger failed for order ${orderId}:`,
+      err?.message
+    )
+    return { triggered: false, skipped: true, reason: 'error', error: err?.message }
+  }
 }

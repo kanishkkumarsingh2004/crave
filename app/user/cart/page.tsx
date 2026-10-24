@@ -745,18 +745,28 @@ export default function CartPage() {
       const createdOrder = json.order || json.data
       const orderId = createdOrder?.id || json.id
 
-      // Razorpay not configured (invalid keys / Route not enabled) — simulate
-      // a successful Razorpay payment so the full checkout flow works end-to-end
-      // for testing. In production, real Razorpay credentials are required.
+      // Razorpay not configured (invalid keys / Route not enabled).
+      // In non-production we simulate a verified payment so the full checkout
+      // flow works end-to-end for testing. In production this is a hard error:
+      // an order must NEVER be marked paid without a real, server-verified
+      // payment. The pending order is left untouched and will be auto-cancelled
+      // by the reconciliation worker after the stale-order timeout.
       if (activeConfig?.razorpayEnabled && json.razorpayConfigured === false) {
+        if (process.env.NODE_ENV === 'production') {
+          setIsSubmittingOrder(false)
+          isSubmittingRef.current = false
+          toast(
+            json.error ||
+              'Payments are temporarily unavailable. Your order was placed but not charged — no payment was taken. Please retry shortly.',
+            'error'
+          )
+          return
+        }
         setIsSubmittingOrder(false)
         isSubmittingRef.current = false
         clearCart()
         setUtrRef('')
-        toast(
-          'Razorpay payment simulated (test mode). Payment verified!',
-          'success'
-        )
+        toast('Razorpay payment simulated (test mode). Payment verified!', 'success')
         setTimeout(() => {
           if (orderId) {
             router.push(`/user/track/${orderId}`)
@@ -1757,114 +1767,117 @@ export default function CartPage() {
                   {/* Payment Panel Container */}
                   <div className="mt-6 pt-5 border-t border-black/[0.06] dark:border-white/10 space-y-4">
                     {activeConfig?.razorpayEnabled ? (
-                    <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
-                            <ShieldCheck className="size-4" />
+                      <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
+                              <ShieldCheck className="size-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-extrabold text-[#121815] dark:text-white">
+                                Pay via Razorpay
+                              </p>
+                              <p className="text-[10px] text-stone-400">
+                                Card, UPI, Net Banking & Wallets
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-[#121815] dark:text-white">
-                              Pay via Razorpay
-                            </p>
-                            <p className="text-[10px] text-stone-400">
-                              Card, UPI, Net Banking & Wallets
-                            </p>
-                          </div>
-                        </div>
 
-                        <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
-                          No UTR needed — payment is verified automatically after checkout.
-                        </p>
+                          <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
+                            No UTR needed — payment is verified automatically after checkout.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
-                            <QrCode className="size-4" />
+                    ) : (
+                      <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
+                              <QrCode className="size-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-extrabold text-[#121815] dark:text-white">
+                                Pay via UPI
+                              </p>
+                              <p className="text-[10px] text-stone-400">
+                                UPI ID: {activeConfig.upiVpa || 'crave@upi'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-[#121815] dark:text-white">
-                              Pay via UPI
-                            </p>
-                            <p className="text-[10px] text-stone-400">
-                              UPI ID: {activeConfig.upiVpa || 'crave@upi'}
-                            </p>
+
+                          <button
+                            type="button"
+                            onClick={handleCopyUpi}
+                            className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#18201c] border border-black/10 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold text-[#121815] dark:text-white shadow-2xs hover:bg-black/5 dark:hover:bg-white/10 transition"
+                          >
+                            {copiedUpi ? (
+                              <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                            <span>{copiedUpi ? 'Copied' : 'Copy UPI'}</span>
+                          </button>
+                        </div>
+
+                        {/* Official UPI App Buttons with Real Logos */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
+                            Pay using UPI app:
+                          </p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {upiApps.map((app) => (
+                              <a
+                                key={app.name}
+                                href={app.scheme}
+                                className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] p-2 text-center hover:border-black/30 dark:hover:border-white/30 transition shadow-2xs group flex flex-col items-center justify-center gap-1 min-h-[54px]"
+                              >
+                                <div className="group-hover:scale-110 transition shrink-0">
+                                  {app.logo}
+                                </div>
+                                <span className="text-[10px] font-bold text-[#121815] dark:text-white truncate">
+                                  {app.shortName}
+                                </span>
+                              </a>
+                            ))}
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={handleCopyUpi}
-                          className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#18201c] border border-black/10 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold text-[#121815] dark:text-white shadow-2xs hover:bg-black/5 dark:hover:bg-white/10 transition"
-                        >
-                          {copiedUpi ? (
-                            <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
+                        {/* 12-Digit UTR Reference Input */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                              UPI Reference / UTR Number <span className="text-rose-500">*</span>
+                            </label>
+                            <span className="text-[10px] font-mono text-stone-400">
+                              {utrRef.length}/10+
+                            </span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Enter 12-digit UTR from your payment app"
+                            value={utrRef}
+                            onChange={(e) =>
+                              setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
+                            }
+                            className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] px-4 py-2.5 text-xs font-black font-mono text-[#121815] dark:text-white placeholder:text-stone-400 outline-none focus:border-[#121815] dark:focus:border-[#d9f447]"
+                          />
+                          {utrRef.trim().length < 10 ? (
+                            <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
+                              Pay in your UPI app, then enter the 12-digit UTR to confirm your
+                              order.
+                            </p>
                           ) : (
-                            <Copy className="size-3" />
-                          )}
-                          <span>{copiedUpi ? 'Copied' : 'Copy UPI'}</span>
-                        </button>
-                      </div>
-
-                      {/* Official UPI App Buttons with Real Logos */}
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
-                          Pay using UPI app:
-                        </p>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {upiApps.map((app) => (
-                            <a
-                              key={app.name}
-                              href={app.scheme}
-                              className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] p-2 text-center hover:border-black/30 dark:hover:border-white/30 transition shadow-2xs group flex flex-col items-center justify-center gap-1 min-h-[54px]"
-                            >
-                              <div className="group-hover:scale-110 transition shrink-0">
-                                {app.logo}
-                              </div>
-                              <span className="text-[10px] font-bold text-[#121815] dark:text-white truncate">
-                                {app.shortName}
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="size-3" />
+                              <span>
+                                Valid UTR format confirmed ({utrRef.trim().length} digits)
                               </span>
-                            </a>
-                          ))}
+                            </p>
+                          )}
                         </div>
                       </div>
-
-                      {/* 12-Digit UTR Reference Input */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
-                            UPI Reference / UTR Number <span className="text-rose-500">*</span>
-                          </label>
-                          <span className="text-[10px] font-mono text-stone-400">
-                            {utrRef.length}/10+
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Enter 12-digit UTR from your payment app"
-                          value={utrRef}
-                          onChange={(e) =>
-                            setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
-                          }
-                          className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] px-4 py-2.5 text-xs font-black font-mono text-[#121815] dark:text-white placeholder:text-stone-400 outline-none focus:border-[#121815] dark:focus:border-[#d9f447]"
-                        />
-                        {utrRef.trim().length < 10 ? (
-                          <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
-                            Pay in your UPI app, then enter the 12-digit UTR to confirm your order.
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
-                            <CheckCircle2 className="size-3" />
-                            <span>Valid UTR format confirmed ({utrRef.trim().length} digits)</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    )}
 
                     {/* Place Order CTA */}
                     <form onSubmit={handlePlaceOrder} id="checkout-action-section">

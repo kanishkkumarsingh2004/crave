@@ -99,6 +99,11 @@ export async function GET(request: Request) {
           dbConfig.razorpay_route_enabled != null
             ? Boolean(dbConfig.razorpay_route_enabled)
             : DEFAULT_PAYMENT_CONFIG.razorpayRouteEnabled,
+        razorpayTransferRelease: ['DELIVERY_COMPLETE', 'ADMIN_APPROVAL'].includes(
+          dbConfig.razorpay_transfer_release as string
+        )
+          ? (dbConfig.razorpay_transfer_release as 'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL')
+          : DEFAULT_PAYMENT_CONFIG.razorpayTransferRelease,
         requireUtrNumber:
           dbConfig.require_utr_number != null
             ? Boolean(dbConfig.require_utr_number)
@@ -111,6 +116,13 @@ export async function GET(request: Request) {
       merged.ifscCode = ''
       merged.mccCode = ''
     }
+
+    // Surface the server env kill-switches so the admin UI can show whether the
+    // gateway is actually live, independent of the DB business toggles above.
+    // (Keys remain server-only; these are booleans only.)
+    merged.razorpayEnvEnabled = process.env.RAZORPAY_ENABLED === 'true'
+    merged.razorpayRouteEnvEnabled =
+      process.env.RAZORPAY_ENABLED === 'true' && process.env.RAZORPAY_ROUTE_ENABLED === 'true'
 
     return NextResponse.json({ success: true, config: merged })
   } catch (error: any) {
@@ -150,6 +162,15 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+    if (
+      fullConfig.razorpayTransferRelease !== 'DELIVERY_COMPLETE' &&
+      fullConfig.razorpayTransferRelease !== 'ADMIN_APPROVAL'
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid Razorpay transfer release condition' },
+        { status: 400 }
+      )
+    }
 
     await upsertPaymentConfig({
       id: 'default_config',
@@ -180,6 +201,7 @@ export async function POST(request: Request) {
       require_utr_number: fullConfig.requireUtrNumber,
       razorpay_enabled: fullConfig.razorpayEnabled,
       razorpay_route_enabled: fullConfig.razorpayRouteEnabled,
+      razorpay_transfer_release: fullConfig.razorpayTransferRelease,
       is_active: true,
     })
 

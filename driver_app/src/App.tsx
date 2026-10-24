@@ -1443,7 +1443,11 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
-    void initializeNativeAppearance()
+    try {
+      void initializeNativeAppearance()
+    } catch {
+      // Native appearance init must never block the app.
+    }
     // On launch, compare the published build's checksum with the one on this
     // device. A different checksum means a new build — tell the driver.
     void (async () => {
@@ -1472,6 +1476,11 @@ export default function App() {
         setTheme('system')
       }
     })()
+    // Bootstrap auth session with a hard timeout so the splash screen never
+    // stays visible indefinitely, even if the API is unreachable.
+    const bootTimeout = setTimeout(() => {
+      if (!cancelled) setBooting(false)
+    }, 5000)
     void (async () => {
       try {
         const token = await restoreAuthToken()
@@ -1486,11 +1495,15 @@ export default function App() {
           await clearAuthToken()
         }
       } finally {
-        if (!cancelled) setBooting(false)
+        if (!cancelled) {
+          clearTimeout(bootTimeout)
+          setBooting(false)
+        }
       }
     })()
     return () => {
       cancelled = true
+      clearTimeout(bootTimeout)
     }
   }, [])
 

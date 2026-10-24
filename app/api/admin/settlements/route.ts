@@ -78,13 +78,62 @@ export async function GET(request: Request) {
     const settlements = hasNextPage ? rawSettlements.slice(0, take) : rawSettlements
     const nextCursor = hasNextPage ? settlements[settlements.length - 1]?.id : null
 
+    // ── Reconcile with actual Razorpay Route transfers ──────────────────────
+    // Auto-created settlements use transaction_ref = order id. Batch-fetch the
+    // Route transfers for this page's orders and attach them (paise → rupees) so
+    // the admin sees the real gateway payout state, not just the manual status.
+    const pageOrderIds = settlements
+      .map((s) => s.transaction_ref)
+      .filter((x): x is string => !!x && !x.startsWith('UTR'))
+
+    const pageTransfers = pageOrderIds.length
+      ? await prisma.razorpayTransfer.findMany({
+          where: { order_id: { in: pageOrderIds } },
+          orderBy: { created_at: 'asc' },
+          select: {
+            id: true,
+            order_id: true,
+            recipient_type: true,
+            recipient_id: true,
+            razorpay_transfer_id: true,
+            amount_paise: true,
+            status: true,
+            failure_reason: true,
+            processed_at: true,
+            created_at: true,
+          },
+        })
+      : []
+
+    const transfersByOrder = new Map<string, any[]>()
+    for (const t of pageTransfers) {
+      const list = transfersByOrder.get(t.order_id) ?? []
+      list.push({
+        id: t.id,
+        recipient_type: t.recipient_type,
+        recipient_id: t.recipient_id,
+        razorpay_transfer_id: t.razorpay_transfer_id,
+        amount: Math.round(t.amount_paise / 100), // paise → rupees for display
+        status: t.status,
+        failure_reason: t.failure_reason,
+        processed_at: t.processed_at,
+        created_at: t.created_at,
+      })
+      transfersByOrder.set(t.order_id, list)
+    }
+
+    const settlementsWithRoute = settlements.map((s) => ({
+      ...s,
+      route_transfers: transfersByOrder.get(s.transaction_ref ?? '') ?? [],
+    }))
+
     // The summary covers EVERY settlement for the store, not just the rows on
     // this page — otherwise the totals change with the page size.
     const settlementFilter = restaurantId
       ? { restaurant_id: restaurantId }
       : { restaurant: { is: { is_dark_store: false } } }
 
-    const [totals, settledTotals] = await Promise.all([
+    const [totals, settledTotals, scopeRows] = await Promise.all([
       prisma.vendorSettlement.aggregate({
         where: settlementFilter,
         _sum: { gross_sales: true, commission_amount: true, net_payout: true },
@@ -92,6 +141,11 @@ export async function GET(request: Request) {
       prisma.vendorSettlement.aggregate({
         where: { ...settlementFilter, status: 'paid' },
         _sum: { net_payout: true },
+      }),
+      // Every order id in scope, used to aggregate the Route transfer totals.
+      prisma.vendorSettlement.findMany({
+        where: settlementFilter,
+        select: { transaction_ref: true },
       }),
     ])
 
@@ -101,9 +155,51 @@ export async function GET(request: Request) {
     const totalSettledAmount = Number(settledTotals._sum?.net_payout ?? 0)
     const remainingBalance = Math.max(0, totalNetPayable - totalSettledAmount)
 
+    // Route transfer aggregate across the scoped orders (paise → rupees).
+    const scopeOrderIds = scopeRows
+      .map((r) => r.transaction_ref)
+      .filter((x): x is string => !!x && !x.startsWith('UTR'))
+
+    const routeAgg = scopeOrderIds.length
+      ? await prisma.razorpayTransfer.groupBy({
+          by: ['status'],
+          where: { order_id: { in: scopeOrderIds } },
+          _sum: { amount_paise: true },
+          _count: true,
+        })
+      : []
+
+    const routeSummary = {
+      settled_amount: 0,
+      pending_amount: 0,
+      failed_amount: 0,
+      reversed_amount: 0,
+      settled_count: 0,
+      pending_count: 0,
+      failed_count: 0,
+      reversed_count: 0,
+    }
+    for (const g of routeAgg) {
+      const amt = Math.round(Number(g._sum.amount_paise ?? 0) / 100)
+      const cnt = Number(g._count ?? 0)
+      if (g.status === 'processed') {
+        routeSummary.settled_amount += amt
+        routeSummary.settled_count += cnt
+      } else if (g.status === 'pending' || g.status === 'processing') {
+        routeSummary.pending_amount += amt
+        routeSummary.pending_count += cnt
+      } else if (g.status === 'failed') {
+        routeSummary.failed_amount += amt
+        routeSummary.failed_count += cnt
+      } else if (g.status === 'reversed') {
+        routeSummary.reversed_amount += amt
+        routeSummary.reversed_count += cnt
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      settlements,
+      settlements: settlementsWithRoute,
       pagination: {
         nextCursor,
         hasNextPage,
@@ -115,6 +211,7 @@ export async function GET(request: Request) {
         total_net_payable: totalNetPayable,
         total_settled_amount: totalSettledAmount,
         remaining_balance: remainingBalance,
+        route: routeSummary,
       },
     })
   } catch (error: any) {

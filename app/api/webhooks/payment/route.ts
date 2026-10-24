@@ -33,14 +33,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
     }
 
-    // 1. Signature Verification (if webhook secret configured)
+    // 1. Signature Verification — fail closed. A webhook that can flip an order
+    // to "paid" must always be authenticated. If a secret is configured, a valid
+    // signature is mandatory (missing or invalid -> reject). If no secret is
+    // configured at all, unverified payment events are unsafe to process in
+    // production, so we refuse them; the dedicated /api/webhooks/razorpay route
+    // is the strict, secret-authenticated path for Razorpay.
     const secret = process.env.PAYMENT_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET
     const signature =
       request.headers.get('x-webhook-signature') ||
       request.headers.get('x-razorpay-signature') ||
       request.headers.get('x-signature')
 
-    if (secret && signature) {
+    if (secret) {
+      if (!signature) {
+        console.warn('[webhook/payment] Missing signature header — rejecting')
+        return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 })
+      }
       const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
       const isValid =
         signature.length === expectedSignature.length &&
@@ -50,6 +59,9 @@ export async function POST(request: Request) {
         console.warn('[webhook/payment] Invalid webhook signature rejected')
         return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 })
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      console.error('[webhook/payment] No webhook secret configured — refusing unverified event')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 503 })
     }
 
     // 2. Extract Event Data
