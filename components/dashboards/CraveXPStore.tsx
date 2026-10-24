@@ -282,9 +282,7 @@ export default function CraveXPStore() {
                     {CRAVEXP_DARK_STORE_INFO.address}
                   </span>
                 </div>
-                <span className="text-xs font-bold text-emerald-400">
-                  Verified Hub
-                </span>
+                <span className="text-xs font-bold text-emerald-400">Verified Hub</span>
               </div>
 
               {/* Service Badges */}

@@ -1617,9 +1617,6 @@ textarea {
 }
 /* The payment bar is pinned to the screen, so the page keeps its scroll
    height clear of it. */
-.checkout > main {
-  padding-bottom: calc(92px + var(--safe-bottom));
-}
 .checkout > header,
 .subpage > header {
   height: calc(68px + var(--safe-top-float));
@@ -1642,6 +1639,9 @@ textarea {
   max-width: 740px;
   margin: auto;
   padding: 25px 19px calc(35px + var(--safe-bottom));
+}
+.checkout > main {
+  padding-bottom: calc(150px + var(--safe-bottom));
 }
 .checkout h1 {
   margin-bottom: 28px;
@@ -2377,15 +2377,14 @@ html[data-theme='dark'] .meter-track {
   height: 16px;
 }
 .pay-bar-btn {
-  flex: 0 0 auto;
-  min-width: 128px;
-  height: 46px;
+  flex: 1;
+  height: 52px;
   padding: 0 22px;
   border: 0;
-  border-radius: 12px;
-  background: #12a05a;
-  color: #fff;
-  font: 800 15px 'Manrope';
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: 800 16px 'Manrope';
   letter-spacing: -0.2px;
   display: inline-flex;
   align-items: center;
@@ -2416,42 +2415,51 @@ html[data-theme='dark'] .meter-track {
 /* ---- Payment method selector ---- */
 .payment-method-selector {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 .method-btn {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface);
-  color: var(--muted);
-  font: 700 12px 'Manrope';
+  color: var(--ink);
   cursor: pointer;
   transition: all 150ms ease;
+  min-height: 118px;
 }
-.method-btn.active {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--surface-alt);
-}
-.method-btn.razorpay.active {
-  color: #070707;
-  border-color: #070707;
-  background: #fff5f5;
-}
-.method-mark {
+.method-btn .method-mark {
   font: 700 11px 'Manrope';
   letter-spacing: 0.4px;
   text-transform: uppercase;
+  color: var(--accent-strong);
+  font-weight: 800;
 }
-.method-btn .method-mark {
-  color: inherit;
+.method-btn span:last-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.method-btn.active {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.method-btn.active .method-mark {
+  color: var(--accent-strong);
+}
+.method-btn.razorpay.active {
+  border-color: #070707;
+  background: #fff5f5;
+}
+.method-btn.razorpay.active .method-mark {
+  color: #070707;
 }
 .order-card {
   border: 1px solid #dfe3dd;

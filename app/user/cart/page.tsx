@@ -443,8 +443,9 @@ export default function CartPage() {
       const isTaxInclusive =
         canonicalSnapshot.items?.every((it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE') ?? true
       const addedTaxPaise =
-        (!isTaxInclusive ? canonicalSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise || 0 : 0) +
-        (canonicalSnapshot.platformServiceTaxBreakdown?.totalGstPaise || 0)
+        (!isTaxInclusive
+          ? canonicalSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise || 0
+          : 0) + (canonicalSnapshot.platformServiceTaxBreakdown?.totalGstPaise || 0)
       const exactGst = Number((addedTaxPaise / 100).toFixed(2))
 
       return {
@@ -479,7 +480,14 @@ export default function CartPage() {
     }
 
     return localBreakdown
-  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount, canonicalSnapshot, calculatorApiBreakdown])
+  }, [
+    cartSubtotal,
+    roadDistanceKm,
+    activeConfig,
+    couponDiscount,
+    canonicalSnapshot,
+    calculatorApiBreakdown,
+  ])
 
   const deliveryFee = pricingBreakdown.deliveryFee
   const packagingFee = pricingBreakdown.packagingFee
@@ -821,7 +829,10 @@ export default function CartPage() {
         setIsSubmittingOrder(false)
         isSubmittingRef.current = false
         clearCart()
-        toast('Razorpay payment verified (test mode)! Your order has been placed and sent to the kitchen.', 'success')
+        toast(
+          'Razorpay payment verified (test mode)! Your order has been placed and sent to the kitchen.',
+          'success'
+        )
         setTimeout(() => {
           if (orderId) {
             router.push(`/user/track/${orderId}`)
@@ -986,8 +997,6 @@ export default function CartPage() {
   }, [user, authLoading, router, toast])
 
   const restaurantName = cart[0]?.restaurantName || 'Spice Garden'
-
-
 
   if (authLoading || !user) {
     return (

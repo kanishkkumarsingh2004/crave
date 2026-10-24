@@ -183,7 +183,11 @@ export function calculateFullBreakdown(
   if (isTaxInclusive) {
     // Food & packaging prices already contain food GST; only platform convenience fees carry additive 18% GST
     foodPackagingGst = Number(
-      ((taxableFoodSubtotal + packagingFee) - (taxableFoodSubtotal + packagingFee) / (1 + gstRate)).toFixed(2)
+      (
+        taxableFoodSubtotal +
+        packagingFee -
+        (taxableFoodSubtotal + packagingFee) / (1 + gstRate)
+      ).toFixed(2)
     )
     exactGst = platformServiceGst
   } else {
@@ -195,7 +199,15 @@ export function calculateFullBreakdown(
 
   // 4. Grand Total Collected from Customer
   const exactTotal = Number(
-    (taxableFoodSubtotal + packagingFee + netDeliveryFee + platformFee + handlingFee + exactGst + tip).toFixed(2)
+    (
+      taxableFoodSubtotal +
+      packagingFee +
+      netDeliveryFee +
+      platformFee +
+      handlingFee +
+      exactGst +
+      tip
+    ).toFixed(2)
   )
   const grandTotal = exactTotal
   const roundingAdjustment = 0

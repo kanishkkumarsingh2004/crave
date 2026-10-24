@@ -306,9 +306,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.badge && !sidebarCollapsed && (
                       <span
                         className={`text-[10px] font-bold shrink-0 ${
-                          isActive
-                            ? 'text-white'
-                            : 'text-[#5e8210] dark:text-[#d9f447]'
+                          isActive ? 'text-white' : 'text-[#5e8210] dark:text-[#d9f447]'
                         }`}
                       >
                         {item.badge}

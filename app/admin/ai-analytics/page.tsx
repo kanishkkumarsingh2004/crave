@@ -191,9 +191,7 @@ export default function AIAnalyticsPage() {
                     <div className="grid size-11 place-items-center rounded-2xl bg-[#f5f8ec] dark:bg-[#121815] text-[#738814] dark:text-[#d9f447] border border-[#e1ebbd] dark:border-[#27342d]">
                       <Icon className="size-5" />
                     </div>
-                    <span className={`text-xs font-bold ${feat.badgeColor}`}>
-                      {feat.status}
-                    </span>
+                    <span className={`text-xs font-bold ${feat.badgeColor}`}>{feat.status}</span>
                   </div>
 
                   <h4 className="mt-4 font-bold text-base text-[#18201c] dark:text-white group-hover:text-[#687e11] dark:group-hover:text-[#d9f447] transition">

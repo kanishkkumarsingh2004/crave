@@ -476,9 +476,7 @@ export default function AdminCraveXPPage() {
                   </span>
                   <span
                     className={`text-xs font-bold uppercase ${
-                      store.is_open
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-gray-400'
+                      store.is_open ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
                     }`}
                   >
                     {store.is_open ? 'Open' : 'Offline'}

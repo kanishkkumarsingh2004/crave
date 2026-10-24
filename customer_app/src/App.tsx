@@ -1,6 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import QRCodeSVG from 'react-qr-code'
 import { Network } from '@capacitor/network'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
@@ -34,7 +33,6 @@ import {
   type CustomerUpdate,
 } from './update'
 import { connectCustomerOrders } from './realtime'
-import { openUpiPayment, buildUpiPaymentUrl } from './payment'
 import { startRazorpayCheckout } from './razorpay'
 import { checkoutDistanceKm, roadDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
@@ -753,7 +751,6 @@ function Checkout({
     [selected, setSelected] = useState(
       addresses.find((x) => x.is_default)?.id || addresses[0]?.id || ''
     ),
-    [utr, setUtr] = useState(''),
     [coupon, setCoupon] = useState(''),
     [couponInput, setCouponInput] = useState(''),
     [couponApplying, setCouponApplying] = useState(false),
@@ -763,9 +760,6 @@ function Checkout({
     [tip, setTip] = useState(0),
     [tipInput, setTipInput] = useState(''),
     [busy, setBusy] = useState(false),
-    [awaitingUtr, setAwaitingUtr] = useState(false),
-    [paymentMethod, setPaymentMethod] = useState<'upi' | 'razorpay'>('upi'),
-    [qrSheet, setQrSheet] = useState(false),
     [tipSheet, setTipSheet] = useState(false),
     [addressSheet, setAddressSheet] = useState(false),
     [error, setError] = useState(''),
@@ -853,41 +847,6 @@ function Checkout({
   const totalToPay = billing?.grandTotal ?? subtotal
   const foodSubtotal = billing?.customerFoodSubtotal || subtotal
   const selectedAddress = addresses.find((entry) => entry.id === selected)
-  // UPI deep link for the QR code shown on the payment card.
-  const upiQrPayload = useMemo(() => {
-    const vpa = config?.upiVpa || config?.merchant_vpa
-    if (!vpa) return ''
-    return buildUpiPaymentUrl({
-      vpa: String(vpa),
-      merchant: String(config?.merchantName || config?.merchant_name || 'CRAVE'),
-      amount: Number(totalToPay || 0),
-      note: `CRAVE order from ${restaurant?.name || 'CRAVE'}`,
-    })
-  }, [
-    config?.upiVpa,
-    config?.merchant_vpa,
-    config?.merchantName,
-    config?.merchant_name,
-    totalToPay,
-    restaurant?.name,
-  ])
-
-  /** Opens the QR sheet — the single place the payment starts from. */
-  const openQrSheet = () => {
-    setQrSheet(true)
-  }
-
-  /**
-   * Leaves the QR sheet. Whether the customer paid by scanning the QR or
-   * through a UPI app, they have to come back with the transaction reference,
-   * so the UTR step is always next.
-   */
-  const closeQrSheet = () => {
-    setQrSheet(false)
-    setAwaitingUtr(true)
-  }
-  // The canonical engine splits GST into an embedded part (already inside menu prices) and a
-  // platform-service part (18% on fees, charged on top). Present both so the bill reconciles.
   const taxSplit = billing?.taxSplit
   // Every tax the order carries, whether it is already inside the item prices
   // or charged on top.
@@ -934,80 +893,6 @@ function Checkout({
     setCoupon('')
     setCouponInput('')
     if (removedCoupon) showCouponToast(`${removedCoupon} removed.`, 'success')
-  }
-  const pay = async () => {
-    setError('')
-    if (!config?.upiVpa) {
-      setError('UPI payment is temporarily unavailable.')
-      return
-    }
-    if (!billing) {
-      setError('Please wait while CRAVE calculates the final total.')
-      return
-    }
-    if (config.enableUpiDeepLink === false) {
-      setError('UPI checkout is temporarily unavailable.')
-      return
-    }
-    try {
-      await openUpiPayment({
-        vpa: config.upiVpa,
-        merchant: config.merchantName || 'CRAVE',
-        amount: Number(totalToPay),
-        note: `CRAVE order from ${restaurant.name}`,
-      })
-      setQrSheet(false)
-      setAwaitingUtr(true)
-    } catch (paymentError) {
-      setError(
-        paymentError instanceof Error ? paymentError.message : 'No UPI app could open this payment.'
-      )
-    }
-  }
-  const place = async () => {
-    if (!selected) {
-      setError('Add a delivery address first.')
-      return
-    }
-    if (utr.trim().length < 10) {
-      setError('Enter the 12-digit UTR from your UPI app so we can verify the payment.')
-      return
-    }
-    setBusy(true)
-    setError('')
-    try {
-      const idempotency = crypto.randomUUID()
-      await apiRequest('/api/orders', {
-        method: 'POST',
-        body: {
-          idempotency_key: idempotency,
-          customer_name: user.name,
-          customer_phone: user.phone,
-          restaurant_id: restaurant.id,
-          restaurant_name: restaurant.name,
-          address_id: selected,
-          items: cart.map((x) => ({
-            id: x.itemId,
-            menuItemId: x.itemId,
-            variantId: x.variantId,
-            quantity: x.quantity,
-            qty: x.quantity,
-            name: x.name,
-            price: x.price,
-          })),
-          payment_method: 'UPI Online',
-          utr_ref: utr.trim(),
-          customer_vpa: user.email,
-          coupon_code: coupon || undefined,
-          tip,
-        },
-      })
-      onPlaced()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not place the order.')
-    } finally {
-      setBusy(false)
-    }
   }
   return (
     <div className="checkout">
@@ -1107,15 +992,7 @@ function Checkout({
             Total to pay <strong>{money(totalToPay)}</strong>
           </div>
         </div>
-        {taxSplit && (
-          <p className="bill-note">
-            Your total adds up like this: item prices already include food &amp; packaging GST, so
-            only the 18% tax on platform &amp; handling fees is charged on top. Menu price +
-            packaging + delivery + platform &amp; handling + platform GST
-            {billing?.couponDiscount > 0 ? ' − coupon' : ''}
-            {billing?.tip > 0 ? ' + tip' : ''} = total.
-          </p>
-        )}
+        {pricingError && <div className="error-box">{pricingError}</div>}
         <form
           className="coupon-row"
           onSubmit={(event) => {
@@ -1147,166 +1024,69 @@ function Checkout({
             </button>
           </div>
         </form>
-        <div className="upi-header">
-          <h2>Pay securely</h2>
-          <div className="payment-method-selector">
-            <button
-              className={`method-btn ${paymentMethod === 'upi' ? 'active' : ''}`}
-              onClick={() => setPaymentMethod('upi')}
-            >
-              <span className="method-mark">UPI</span>
-              <span>Google Pay, PhonePe, Paytm, Any UPI</span>
-            </button>
-            {config?.razorpayEnabled && (
-              <button
-                className={`method-btn ${paymentMethod === 'razorpay' ? 'active' : ''} razorpay`}
-                onClick={() => setPaymentMethod('razorpay')}
-              >
-                <span className="method-mark">Razorpay</span>
-                <span>Credit Card, Debit Card, Net Banking, UPI</span>
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="upi-card">
-          <Icon name="wallet" />
-          <div>
-            <b>UPI payment</b>
-            <small>Google Pay, PhonePe, Paytm or any UPI app</small>
-          </div>
-        </div>
-        {pricingError && <div className="error-box">{pricingError}</div>}
-        {paymentMethod === 'upi' && !awaitingUtr ? (
-          <>
-            <p className="secure-note">
-              Your order starts only after CRAVE verifies the UPI transaction.
-            </p>
-            <div className="pay-bar">
-              <div className="pay-bar-info">
-                <span className="pay-bar-mark">
-                  <Icon name="wallet" />
-                </span>
-                <span>
-                  <small>Pay using ▲</small>
-                  <b>UPI</b>
-                </span>
-              </div>
-              <button
-                className="pay-bar-btn"
-                disabled={!billing || !config || !!pricingError}
-                onClick={openQrSheet}
-              >
-                {!billing && !pricingError ? (
-                  <>
-                    <Spinner /> Calculating
-                  </>
-                ) : (
-                  `Pay ${money(totalToPay)}`
-                )}
-              </button>
-            </div>
-          </>
-        ) : paymentMethod === 'razorpay' ? (
-          <div className="pay-bar">
-            <div className="pay-bar-info">
-              <span className="pay-bar-mark">
-                <Icon name="wallet" />
-              </span>
-              <span>
-                <small>Pay using ▲</small>
-                <b>Razorpay</b>
-              </span>
-            </div>
-            <button
-              className="pay-bar-btn pay-bar-btn-razorpay"
-              disabled={!billing || !config || !!pricingError || busy}
-              onClick={async () => {
-                setBusy(true)
-                setError('')
-                try {
-                  const idempotency = crypto.randomUUID()
-                  const created = await apiRequest<any>('/api/orders', {
-                    method: 'POST',
-                    body: {
-                      idempotency_key: idempotency,
-                      customer_name: user.name,
-                      customer_phone: user.phone,
-                      restaurant_id: restaurant.id,
-                      restaurant_name: restaurant.name,
-                      address_id: selected,
-                      items: cart.map((x) => ({
-                        id: x.itemId,
-                        menuItemId: x.itemId,
-                        variantId: x.variantId,
-                        quantity: x.quantity,
-                        qty: x.quantity,
-                        name: x.name,
-                        price: x.price,
-                      })),
-                      payment_method: 'RAZORPAY',
-                      coupon_code: coupon || undefined,
-                      tip,
-                    },
-                  })
-                  const orderId = created?.orderId || created?.id
-                  if (!orderId) throw new Error('No order ID returned from server')
-                  await startRazorpayCheckout({
-                    orderId,
-                    apiRequest: (path, options) => apiRequest(path, options),
-                  })
-                } catch (e) {
-                  setError(e instanceof Error ? e.message : 'Razorpay checkout failed.')
-                } finally {
-                  setBusy(false)
-                }
-              }}
-            >
-              {busy ? (
-                <>
-                  <Spinner /> Processing
-                </>
-              ) : (
-                `Pay ${money(totalToPay)}`
-              )}
-            </button>
-          </div>
-        ) : (
-          <div className="utr-box">
-            <div className="success-line">
-              <Icon name="check" />
-              <span>
-                <b>Enter the transaction reference</b>
-                <small>
-                  Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'} by scanning the QR
-                  code or any UPI app, then enter the 12-digit UTR from your UPI app below.
-                </small>
-              </span>
-            </div>
-            <label>
-              UPI transaction reference (UTR)
-              <input
-                value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))}
-                inputMode="numeric"
-                placeholder="Enter 12-digit UTR from your UPI app"
-                maxLength={18}
-              />
-            </label>
-            <button
-              className="primary wide"
-              disabled={busy || !addresses.length || utr.trim().length < 10}
-              onClick={place}
-            >
-              {busy ? (
-                <>
-                  <Spinner /> Submitting
-                </>
-              ) : (
-                'Submit payment for verification'
-              )}
-            </button>
-          </div>
+        {taxSplit && (
+          <p className="bill-note">
+            Your total adds up like this: item prices already include food &amp; packaging GST, so
+            only the 18% tax on platform &amp; handling fees is charged on top. Menu price +
+            packaging + delivery + platform &amp; handling + platform GST
+            {billing?.couponDiscount > 0 ? ' − coupon' : ''}
+            {billing?.tip > 0 ? ' + tip' : ''} = total.
+          </p>
         )}
+        <div className="pay-bar">
+          <button
+            className="pay-bar-btn pay-bar-btn-razorpay"
+            disabled={!billing || !config || !!pricingError || busy}
+            onClick={async () => {
+              setBusy(true)
+              setError('')
+              try {
+                const idempotency = crypto.randomUUID()
+                const created = await apiRequest<any>('/api/orders', {
+                  method: 'POST',
+                  body: {
+                    idempotency_key: idempotency,
+                    customer_name: user.name,
+                    customer_phone: user.phone,
+                    restaurant_id: restaurant.id,
+                    restaurant_name: restaurant.name,
+                    address_id: selected,
+                    items: cart.map((x) => ({
+                      id: x.itemId,
+                      menuItemId: x.itemId,
+                      variantId: x.variantId,
+                      quantity: x.quantity,
+                      qty: x.quantity,
+                      name: x.name,
+                      price: x.price,
+                    })),
+                    payment_method: 'RAZORPAY',
+                    coupon_code: coupon || undefined,
+                    tip,
+                  },
+                })
+                const orderId = created?.orderId || created?.id
+                if (!orderId) throw new Error('No order ID returned from server')
+                await startRazorpayCheckout({
+                  orderId,
+                  apiRequest: (path, options) => apiRequest(path, options),
+                })
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Razorpay checkout failed.')
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            {busy ? (
+              <>
+                <Spinner /> Processing
+              </>
+            ) : (
+              `Pay ${money(totalToPay)} via Razorpay`
+            )}
+          </button>
+        </div>
         {error && <div className="error-box">{error}</div>}
       </main>
       {couponToast && (
@@ -1445,52 +1225,6 @@ function Checkout({
 
             <button className="primary wide" onClick={() => setTipSheet(false)}>
               Save tip
-            </button>
-          </section>
-        </div>
-      )}
-
-      {qrSheet && (
-        <div className="modal-backdrop" onClick={closeQrSheet}>
-          <section
-            className="bottom-sheet upi-qr-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="upi-qr-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">UPI</p>
-                <h2 id="upi-qr-title">Pay securely</h2>
-              </div>
-              <button className="round pale" onClick={closeQrSheet} aria-label="Close">
-                <Icon name="close" />
-              </button>
-            </div>
-
-            <div className="qr-panel">
-              {upiQrPayload ? (
-                <QRCodeSVG
-                  value={upiQrPayload}
-                  size={200}
-                  level="M"
-                  bgColor="#ffffff"
-                  fgColor="#111a15"
-                />
-              ) : (
-                <p className="qr-unavailable">UPI payments are unavailable right now.</p>
-              )}
-              <p className="qr-amount">
-                Pay {money(totalToPay)} to {config?.merchantName || 'CRAVE'}
-              </p>
-              {config?.upiVpa && <p className="qr-vpa">{config.upiVpa}</p>}
-            </div>
-
-            {error && <div className="error-box">{error}</div>}
-
-            <button className="primary wide" onClick={() => void pay()}>
-              Pay with UPI app
             </button>
           </section>
         </div>

@@ -340,11 +340,7 @@ export async function POST(request: Request) {
         paymentMethodLower.includes('razorpay') ||
         Boolean(paymentConfig.razorpayEnabled || (paymentConfig as any).razorpay_enabled)
 
-      if (
-        isCustomerActor &&
-        !paymentMethodLower.includes('upi') &&
-        !isRazorpayFlow
-      ) {
+      if (isCustomerActor && !paymentMethodLower.includes('upi') && !isRazorpayFlow) {
         return NextResponse.json(
           { error: 'Customer checkout supports UPI Online or Razorpay payments only.' },
           { status: 400 }

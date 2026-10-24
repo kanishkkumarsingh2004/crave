@@ -662,9 +662,7 @@ function AccountPage({
         <div>
           <h2>{profile.name}</h2>
           <p>{profile.email}</p>
-          <span>
-            {profile.kycStatus || 'Verified delivery partner'}
-          </span>
+          <span>{profile.kycStatus || 'Verified delivery partner'}</span>
         </div>
       </article>
       <article className="settings-card">
@@ -1429,12 +1427,9 @@ export default function App() {
   }
 
   async function startSession(sessionUser: DriverUser, token: string) {
-    if (!['rider', 'driver'].includes(sessionUser.role)) {
-      throw new Error('Please sign in with an approved delivery partner account.')
-    }
     await saveAuthToken(token)
-    setUser(sessionUser)
     await loadData(token)
+    setUser(sessionUser)
     const storedOnline = await getStoredDutyStatus()
     setOnline(storedOnline)
     setNotificationsEnabled(await getNotificationPreference())
@@ -1480,19 +1475,43 @@ export default function App() {
     // stays visible indefinitely, even if the API is unreachable.
     const bootTimeout = setTimeout(() => {
       if (!cancelled) setBooting(false)
-    }, 5000)
+    }, 3000)
     void (async () => {
       try {
         const token = await restoreAuthToken()
-        if (!token) return
+        if (!token) {
+          if (!cancelled) {
+            clearTimeout(bootTimeout)
+            setBooting(false)
+          }
+          return
+        }
         const response = await apiRequest<{ profile: DriverProfile }>('/api/driver/profile', {
           token,
         })
         if (cancelled) return
-        await startSession(response.profile, token)
+        // Race startSession against a timeout so the splash screen can never
+        // stick if an API call hangs (fetch has no timeout on the web).
+        await Promise.race([
+          startSession(response.profile, token),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Session startup timed out.')), 10000)
+          }),
+        ])
       } catch (bootstrapError) {
-        if (bootstrapError instanceof ApiError && bootstrapError.status === 401) {
-          await clearAuthToken()
+        if (!cancelled) {
+          if (bootstrapError instanceof ApiError && bootstrapError.status === 401) {
+            await clearAuthToken()
+          }
+          // A failed session start means no valid user — clear anything partial
+          // so the login screen renders cleanly instead of a blank state.
+          setUser(null)
+          setProfile(null)
+          setError(
+            bootstrapError instanceof Error
+              ? bootstrapError.message
+              : 'Unable to start your session. Please try again.'
+          )
         }
       } finally {
         if (!cancelled) {
@@ -1641,11 +1660,15 @@ export default function App() {
       sessionUser = cookieSession.user
       sessionToken = COOKIE_SESSION_TOKEN
     }
+    if (!['rider', 'driver'].includes(sessionUser.role)) {
+      throw new Error('Please sign in with an approved delivery partner account.')
+    }
     try {
       await startSession(sessionUser, sessionToken)
     } catch (sessionError) {
       await clearAuthToken()
       setUser(null)
+      setProfile(null)
       throw sessionError
     }
   }
