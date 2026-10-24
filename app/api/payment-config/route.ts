@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 import { getApiActor, requireAdmin, handleApiAuthError } from '@/lib/api-auth'
 import { DEFAULT_PAYMENT_CONFIG, type PaymentConfig } from '@/lib/payment-config'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(request: Request) {
   try {
     const actor = await getApiActor(request)
@@ -44,7 +47,9 @@ export async function GET(request: Request) {
         gstRatePercent:
           dbConfig.gst_rate_percent != null
             ? Number(dbConfig.gst_rate_percent)
-            : DEFAULT_PAYMENT_CONFIG.gstRatePercent,
+            : dbConfig.gst_rate != null
+              ? Number(dbConfig.gst_rate)
+              : DEFAULT_PAYMENT_CONFIG.gstRatePercent,
         baseDeliveryFee:
           dbConfig.delivery_fee != null
             ? Number(dbConfig.delivery_fee)
@@ -119,7 +124,6 @@ export async function GET(request: Request) {
 
     // Surface the server env kill-switches so the admin UI can show whether the
     // gateway is actually live, independent of the DB business toggles above.
-    // (Keys remain server-only; these are booleans only.)
     merged.razorpayEnvEnabled = process.env.RAZORPAY_ENABLED === 'true'
     merged.razorpayRouteEnvEnabled =
       process.env.RAZORPAY_ENABLED === 'true' && process.env.RAZORPAY_ROUTE_ENABLED === 'true'
@@ -135,10 +139,24 @@ export async function POST(request: Request) {
   try {
     await requireAdmin(request)
 
-    const body: PaymentConfig = await request.json()
+    const rawBody = await request.json().catch(() => ({}))
+    const body: any = rawBody || {}
     const fullConfig: PaymentConfig = {
       ...DEFAULT_PAYMENT_CONFIG,
       ...body,
+      platformFee: Number(body.platformFee ?? body.platform_fee ?? DEFAULT_PAYMENT_CONFIG.platformFee),
+      handlingFee: Number(body.handlingFee ?? body.handling_fee ?? DEFAULT_PAYMENT_CONFIG.handlingFee),
+      vendorCommission: Number(body.vendorCommission ?? body.vendor_commission ?? DEFAULT_PAYMENT_CONFIG.vendorCommission),
+      packagingCap: Number(body.packagingCap ?? body.packaging_cap ?? DEFAULT_PAYMENT_CONFIG.packagingCap),
+      gstRatePercent: Number(body.gstRatePercent ?? body.gst_rate_percent ?? body.gst_rate ?? DEFAULT_PAYMENT_CONFIG.gstRatePercent),
+      baseDeliveryFee: Number(body.baseDeliveryFee ?? body.delivery_fee ?? DEFAULT_PAYMENT_CONFIG.baseDeliveryFee),
+      baseDistanceKm: Number(body.baseDistanceKm ?? body.base_distance_km ?? DEFAULT_PAYMENT_CONFIG.baseDistanceKm),
+      perKmRate: Number(body.perKmRate ?? body.per_km_rate ?? DEFAULT_PAYMENT_CONFIG.perKmRate),
+      freeDeliveryThreshold: Number(body.freeDeliveryThreshold ?? body.free_delivery_threshold ?? DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold),
+      driverPayoutShare: Number(body.driverPayoutShare ?? body.driver_payout_share ?? DEFAULT_PAYMENT_CONFIG.driverPayoutShare),
+      surgeMultiplier: Number(body.surgeMultiplier ?? body.surge_multiplier ?? DEFAULT_PAYMENT_CONFIG.surgeMultiplier),
+      rainFee: Number(body.rainFee ?? body.rain_fee ?? DEFAULT_PAYMENT_CONFIG.rainFee),
+      nightSurgeFee: Number(body.nightSurgeFee ?? body.night_surge_fee ?? DEFAULT_PAYMENT_CONFIG.nightSurgeFee),
     }
 
     const numericFields: Array<keyof PaymentConfig> = [
@@ -166,10 +184,7 @@ export async function POST(request: Request) {
       fullConfig.razorpayTransferRelease !== 'DELIVERY_COMPLETE' &&
       fullConfig.razorpayTransferRelease !== 'ADMIN_APPROVAL'
     ) {
-      return NextResponse.json(
-        { error: 'Invalid Razorpay transfer release condition' },
-        { status: 400 }
-      )
+      fullConfig.razorpayTransferRelease = DEFAULT_PAYMENT_CONFIG.razorpayTransferRelease
     }
 
     await upsertPaymentConfig({

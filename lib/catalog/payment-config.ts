@@ -92,12 +92,19 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
     const res = await fetch('/api/payment-config', {
       method: 'POST',
       headers,
+      credentials: 'include',
       body: JSON.stringify(config),
     })
-    if (!res.ok) return false
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null)
+      console.warn('API payment config save rejected:', res.status, errData)
+      return false
+    }
+    const data = await res.json().catch(() => null)
+    const savedConfig = data?.config || config
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-      window.dispatchEvent(new Event('crave_payment_config_updated'))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedConfig))
+      window.dispatchEvent(new CustomEvent('crave_payment_config_updated', { detail: savedConfig }))
     }
     return true
   } catch (e) {
@@ -109,7 +116,10 @@ export async function savePaymentConfig(config: PaymentConfig): Promise<boolean>
 export async function loadPaymentConfig(): Promise<PaymentConfig> {
   const local = getLocalPaymentConfig()
   try {
-    const res = await fetch('/api/payment-config')
+    const res = await fetch('/api/payment-config', {
+      cache: 'no-store',
+      credentials: 'include',
+    })
     if (res.ok) {
       const data = await res.json()
       if (data?.config) {

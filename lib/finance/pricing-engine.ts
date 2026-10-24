@@ -313,7 +313,8 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
         grossAmountPaise,
         priceTaxMode,
         supplierState,
-        customerState
+        customerState,
+        item.taxRatePercent
       )
     }
 
@@ -632,7 +633,12 @@ export function calculateOrderPrice(input: OrderPriceInput): CanonicalPriceResul
 import type { FullCalculatorResult } from './calculator'
 
 export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculatorResult {
-  const toRupees = (paise: number) => Math.round(paise / 100)
+  const toRupees = (paise: number) => Number((paise / 100).toFixed(2))
+  const isTaxInclusive = r.items?.every((it) => it.priceTaxMode !== 'TAX_EXCLUSIVE') ?? true
+  const addedGstPaise =
+    (!isTaxInclusive ? r.restaurantServiceTaxBreakdown.totalGstPaise : 0) +
+    r.platformServiceTaxBreakdown.totalGstPaise
+
   return {
     input: {
       subtotal: toRupees(r.grossSubtotalPaise),
@@ -656,13 +662,8 @@ export function tolegacyCalculatorResult(r: CanonicalPriceResult): FullCalculato
       platformFee: toRupees(r.platformFeePaise),
       handlingFee: toRupees(r.handlingFeePaise),
       couponDiscount: toRupees(r.couponDiscountPaise),
-      gstAmount: toRupees(
-        r.restaurantServiceTaxBreakdown.totalGstPaise + r.platformServiceTaxBreakdown.totalGstPaise
-      ),
-      exactGst:
-        (r.restaurantServiceTaxBreakdown.totalGstPaise +
-          r.platformServiceTaxBreakdown.totalGstPaise) /
-        100,
+      gstAmount: toRupees(addedGstPaise),
+      exactGst: toRupees(addedGstPaise),
       roundingAdjustment: 0,
       tip: toRupees(r.tipPaise),
       grandTotal: toRupees(r.customerPayablePaise),

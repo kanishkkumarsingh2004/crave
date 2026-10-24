@@ -173,15 +173,32 @@ export function calculateFullBreakdown(
   couponDiscount = Math.min(customerFoodSubtotal, Math.ceil(couponDiscount))
 
   // 3. GST Calculation
+  const isTaxInclusive = (input.priceTaxMode || 'TAX_INCLUSIVE') !== 'TAX_EXCLUSIVE'
   const taxableFoodSubtotal = Math.max(0, customerFoodSubtotal - couponDiscount)
-  const exactGst = (taxableFoodSubtotal + packagingFee) * gstRate
-  const gstAmount = Math.ceil(exactGst)
+  const platformServicesTotal = platformFee + handlingFee
+  const platformServiceGst = Number((platformServicesTotal * 0.18).toFixed(2))
+
+  let exactGst = 0
+  let foodPackagingGst = 0
+  if (isTaxInclusive) {
+    // Food & packaging prices already contain food GST; only platform convenience fees carry additive 18% GST
+    foodPackagingGst = Number(
+      ((taxableFoodSubtotal + packagingFee) - (taxableFoodSubtotal + packagingFee) / (1 + gstRate)).toFixed(2)
+    )
+    exactGst = platformServiceGst
+  } else {
+    // Tax-exclusive mode: food GST is added on top of food + packaging
+    foodPackagingGst = Number(((taxableFoodSubtotal + packagingFee) * gstRate).toFixed(2))
+    exactGst = Number((foodPackagingGst + platformServiceGst).toFixed(2))
+  }
+  const gstAmount = exactGst
 
   // 4. Grand Total Collected from Customer
-  const exactTotal =
-    taxableFoodSubtotal + packagingFee + netDeliveryFee + platformFee + handlingFee + exactGst + tip
-  const grandTotal = Math.ceil(exactTotal)
-  const roundingAdjustment = Math.max(0, Number((grandTotal - exactTotal).toFixed(2)))
+  const exactTotal = Number(
+    (taxableFoodSubtotal + packagingFee + netDeliveryFee + platformFee + handlingFee + exactGst + tip).toFixed(2)
+  )
+  const grandTotal = exactTotal
+  const roundingAdjustment = 0
 
   const customerBilling: CustomerBillingBreakdown = {
     subtotal,

@@ -80,6 +80,12 @@ async function getActiveConfig(): Promise<PaymentConfig> {
       dbConfig.packaging_cap != null
         ? Number(dbConfig.packaging_cap)
         : DEFAULT_PAYMENT_CONFIG.packagingCap,
+    gstRatePercent:
+      dbConfig.gst_rate_percent != null
+        ? Number(dbConfig.gst_rate_percent)
+        : dbConfig.gst_rate != null
+          ? Number(dbConfig.gst_rate)
+          : DEFAULT_PAYMENT_CONFIG.gstRatePercent,
     baseDeliveryFee:
       dbConfig.delivery_fee != null
         ? Number(dbConfig.delivery_fee)
@@ -678,7 +684,7 @@ export async function POST(request: Request) {
         const isAlcohol = itemCategory.includes('alcohol') || itemCategory.includes('liquor')
         const isPackaged = itemCategory.includes('packaged') || itemCategory.includes('grocery')
 
-        let taxRate = 5 // Default: restaurant food services — 5% GST
+        let taxRate = paymentConfig.gstRatePercent ?? 5 // Default: configured admin GST or 5% restaurant GST
         if (isAlcohol) taxRate = 28
         else if (isPackaged) taxRate = 18
         else if (isBeverage) taxRate = 12

@@ -333,6 +333,24 @@ export default function CartPage() {
     }
 
     loadConfigAndCoupons()
+
+    const onConfigUpdated = (e?: any) => {
+      if (e?.detail) {
+        setPaymentConfig(e.detail)
+      } else {
+        loadConfigAndCoupons()
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('crave_payment_config_updated', onConfigUpdated)
+      window.addEventListener('storage', onConfigUpdated)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('crave_payment_config_updated', onConfigUpdated)
+        window.removeEventListener('storage', onConfigUpdated)
+      }
+    }
   }, [])
 
   // Preload Razorpay Checkout script so gateway opens instantly
@@ -351,6 +369,7 @@ export default function CartPage() {
   }, [])
 
   const [calculatorApiBreakdown, setCalculatorApiBreakdown] = useState<any>(null)
+  const [canonicalSnapshot, setCanonicalSnapshot] = useState<any>(null)
 
   // Calculate Subtotal & Fees via Admin Config & Distance Engine
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
@@ -367,6 +386,7 @@ export default function CartPage() {
   useEffect(() => {
     if (cart.length === 0) {
       setCalculatorApiBreakdown(null)
+      setCanonicalSnapshot(null)
       return
     }
     let isMounted = true
@@ -382,12 +402,24 @@ export default function CartPage() {
         restaurantId: restId,
         couponCode: appliedCoupon?.code,
         couponDiscount: couponDiscount,
+        itemsAreCustomerPrices: true,
+        items: cart.map((i) => ({
+          id: i.menuItemId || i.id,
+          name: i.name,
+          quantity: i.qty,
+          price: i.price,
+        })),
       }),
     })
       .then((res) => res.json())
       .then((data) => {
-        if (isMounted && data.success && data.breakdown?.customerBilling) {
-          setCalculatorApiBreakdown(data.breakdown.customerBilling)
+        if (isMounted && data.success) {
+          if (data.canonical) {
+            setCanonicalSnapshot(data.canonical)
+          }
+          if (data.breakdown?.customerBilling) {
+            setCalculatorApiBreakdown(data.breakdown.customerBilling)
+          }
         }
       })
       .catch((err) => {
@@ -397,7 +429,7 @@ export default function CartPage() {
     return () => {
       isMounted = false
     }
-  }, [cartSubtotal, roadDistanceKm, cart, appliedCoupon, couponDiscount])
+  }, [cartSubtotal, roadDistanceKm, cart, appliedCoupon, couponDiscount, paymentConfig])
 
   const pricingBreakdown = useMemo(() => {
     const localBreakdown = calculateCheckoutPricing({
@@ -406,6 +438,30 @@ export default function CartPage() {
       config: activeConfig,
       couponDiscount,
     })
+
+    if (canonicalSnapshot) {
+      const isTaxInclusive =
+        canonicalSnapshot.items?.every((it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE') ?? true
+      const addedTaxPaise =
+        (!isTaxInclusive ? canonicalSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise || 0 : 0) +
+        (canonicalSnapshot.platformServiceTaxBreakdown?.totalGstPaise || 0)
+      const exactGst = Number((addedTaxPaise / 100).toFixed(2))
+
+      return {
+        ...localBreakdown,
+        deliveryFee: Number((canonicalSnapshot.deliveryFeePaise / 100).toFixed(2)),
+        isFreeDelivery:
+          canonicalSnapshot.deliveryFeePaise === 0 && canonicalSnapshot.grossDeliveryFeePaise > 0,
+        packagingFee: Number((canonicalSnapshot.packagingFeePaise / 100).toFixed(2)),
+        handlingFee: Number((canonicalSnapshot.handlingFeePaise / 100).toFixed(2)),
+        platformFee: Number((canonicalSnapshot.platformFeePaise / 100).toFixed(2)),
+        couponDiscount: Number((canonicalSnapshot.couponDiscountPaise / 100).toFixed(2)),
+        gstAmount: exactGst,
+        exactGst: exactGst,
+        roundingAdjustment: 0,
+        grandTotal: Number((canonicalSnapshot.customerPayablePaise / 100).toFixed(2)),
+      }
+    }
 
     if (calculatorApiBreakdown) {
       return {
@@ -423,7 +479,7 @@ export default function CartPage() {
     }
 
     return localBreakdown
-  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount, calculatorApiBreakdown])
+  }, [cartSubtotal, roadDistanceKm, activeConfig, couponDiscount, canonicalSnapshot, calculatorApiBreakdown])
 
   const deliveryFee = pricingBreakdown.deliveryFee
   const packagingFee = pricingBreakdown.packagingFee
@@ -457,8 +513,14 @@ export default function CartPage() {
     return Number((pricingBreakdown.gstAmount ?? 0).toFixed(2))
   }, [pricingBreakdown.exactGst, pricingBreakdown.gstAmount])
 
-  // Exact Final Amount To Pay (Strictly NEVER rounded off)
+  // Exact Final Amount To Pay (Strictly NEVER recalculated on client — sourced from snapshot)
   const exactNetPayable = useMemo(() => {
+    if (canonicalSnapshot?.customerPayablePaise != null) {
+      return Number((canonicalSnapshot.customerPayablePaise / 100).toFixed(2))
+    }
+    if (pricingBreakdown.grandTotal != null && pricingBreakdown.grandTotal > 0) {
+      return Number(pricingBreakdown.grandTotal.toFixed(2))
+    }
     const raw =
       cartSubtotal +
       (deliveryFee || 0) +
@@ -469,6 +531,8 @@ export default function CartPage() {
       couponDiscount
     return Number(Math.max(0, raw).toFixed(2))
   }, [
+    canonicalSnapshot,
+    pricingBreakdown.grandTotal,
     cartSubtotal,
     deliveryFee,
     packagingFee,
@@ -852,9 +916,6 @@ export default function CartPage() {
           .then((paymentOrder) => {
             const checkoutKey = paymentOrder.keyId || 'rzp_test_TrT8Pg6Vpsi18B'
             const appOrigin = typeof window !== 'undefined' ? window.location.origin : ''
-            const isMobile =
-              typeof navigator !== 'undefined' &&
-              /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
             const checkout = new (window as any).Razorpay({
               key: checkoutKey,
               order_id: paymentOrder.razorpayOrderId,
@@ -871,44 +932,6 @@ export default function CartPage() {
               theme: {
                 color: '#18241c',
                 backdrop_color: 'rgba(18, 24, 21, 0.85)',
-              },
-              ...(isMobile ? { upi: { flow: 'intent' } } : {}),
-              config: {
-                display: {
-                  blocks: {
-                    upi: {
-                      name: isMobile ? 'Instant UPI App' : 'Pay via UPI / QR',
-                      instruments: [
-                        {
-                          method: 'upi',
-                          flows: isMobile ? ['intent'] : ['intent', 'qr'],
-                          apps: ['google_pay', 'phonepe', 'paytm', 'cred', 'bhim'],
-                        },
-                      ],
-                    },
-                    cards: {
-                      name: 'Cards & Net Banking',
-                      instruments: [
-                        {
-                          method: 'card',
-                        },
-                        {
-                          method: 'netbanking',
-                        },
-                      ],
-                    },
-                  },
-                  sequence: ['block.upi', 'block.cards'],
-                  preferences: {
-                    show_default_blocks: false,
-                  },
-                  hide: [
-                    {
-                      method: 'upi',
-                      flow: 'collect',
-                    },
-                  ],
-                },
               },
               notes: { crave_order_id: orderId },
               handler: async (result: any) => {
@@ -1694,7 +1717,16 @@ export default function CartPage() {
                     {/* Taxes & GST (Only if > 0) */}
                     {exactGstValue > 0 && (
                       <div className="flex justify-between text-stone-600 dark:text-stone-300">
-                        <span>Taxes &amp; GST</span>
+                        <div>
+                          <span>Taxes &amp; GST</span>
+                          {canonicalSnapshot?.items?.every(
+                            (it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE'
+                          ) && (
+                            <span className="block text-[10px] text-stone-400">
+                              (Restaurant GST included in items)
+                            </span>
+                          )}
+                        </div>
                         <span className="font-extrabold text-[#121815] dark:text-white">
                           ₹{formatPrice(exactGstValue)}
                         </span>

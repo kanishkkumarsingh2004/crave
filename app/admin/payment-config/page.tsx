@@ -808,7 +808,12 @@ export default function AdminPaymentConfigPage() {
               </div>
 
               <div className="flex justify-between text-[#d9f447]/90 font-semibold">
-                <span>GST ({getNum(gstRatePercent)}% Tax)</span>
+                <div>
+                  <span>Taxes &amp; GST</span>
+                  <span className="block text-[10px] text-white/50 font-normal">
+                    (18% platform tax; restaurant GST in food)
+                  </span>
+                </div>
                 <span>₹{playgroundCalc.gstAmount}</span>
               </div>
 

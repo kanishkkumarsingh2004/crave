@@ -152,11 +152,16 @@ export function calculateRestaurantServiceGst(
   netMerchandisePaise: number,
   priceTaxMode: PriceTaxMode,
   supplierState: string,
-  customerState: string
+  customerState: string,
+  customTaxRatePercent?: number
 ): TaxBreakdown {
+  const rate =
+    typeof customTaxRatePercent === 'number' && Number.isFinite(customTaxRatePercent)
+      ? customTaxRatePercent
+      : TAX_RATE_MAP.RESTAURANT_SERVICE
   return calculateTaxBreakdown(
     netMerchandisePaise,
-    TAX_RATE_MAP.RESTAURANT_SERVICE,
+    rate,
     priceTaxMode,
     supplierState,
     customerState

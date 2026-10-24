@@ -5,6 +5,7 @@ import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(request: Request) {
@@ -48,6 +49,12 @@ export async function GET(request: Request) {
         paymentConfig?.packaging_cap != null
           ? Number(paymentConfig.packaging_cap)
           : DEFAULT_PAYMENT_CONFIG.packagingCap,
+      gstRatePercent:
+        paymentConfig?.gst_rate_percent != null
+          ? Number(paymentConfig.gst_rate_percent)
+          : paymentConfig?.gst_rate != null
+            ? Number(paymentConfig.gst_rate)
+            : DEFAULT_PAYMENT_CONFIG.gstRatePercent,
       baseDeliveryFee:
         paymentConfig?.delivery_fee != null
           ? Number(paymentConfig.delivery_fee)

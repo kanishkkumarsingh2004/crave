@@ -27,6 +27,7 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 interface CouponDetailsInput {
@@ -317,6 +318,13 @@ export async function POST(req: Request) {
         restaurantGstin: restConfig.gstin,
       }
 
+      const resolvedDefaultGst =
+        gstRatePercent != null
+          ? Number(gstRatePercent)
+          : paymentConfig?.gst_rate_percent != null
+            ? Number(paymentConfig.gst_rate_percent)
+            : (DEFAULT_PAYMENT_CONFIG.gstRatePercent ?? 5)
+
       // If item-level data provided (v2 callers), use it; otherwise synthesise a single item
       const pricingItems =
         Array.isArray(items) && items.length > 0
@@ -333,6 +341,8 @@ export async function POST(req: Request) {
                 ...(itemsAreCustomerPrices ? { restaurantUnitPricePaise: unitPricePaise } : {}),
                 hsnSacCode: it.hsnSacCode || '996331',
                 priceTaxMode: (it.priceTaxMode || contractInput.priceTaxMode) as any,
+                taxRatePercent:
+                  it.taxRatePercent != null ? Number(it.taxRatePercent) : resolvedDefaultGst,
                 customCommissionRatePercent: it.customCommissionRatePercent,
                 customMarkupRatePercent: it.customMarkupRatePercent,
               }
@@ -344,6 +354,7 @@ export async function POST(req: Request) {
                 unitPricePaise: subtotalPaise,
                 hsnSacCode: '996331',
                 priceTaxMode: contractInput.priceTaxMode as any,
+                taxRatePercent: resolvedDefaultGst,
               },
             ]
 
@@ -376,7 +387,7 @@ export async function POST(req: Request) {
       }
 
       canonical = calculateOrderPrice(priceInput)
-      if (itemsAreCustomerPrices) breakdown = tolegacyCalculatorResult(canonical)
+      breakdown = tolegacyCalculatorResult(canonical)
     } catch (canonicalErr) {
       console.error(
         '[Calculator] Canonical engine error (non-fatal, legacy result returned):',
