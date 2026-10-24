@@ -148,7 +148,7 @@ export async function GET(request: Request) {
       if (!canRead) {
         return NextResponse.json({ error: 'Forbidden: order access denied' }, { status: 403 })
       }
-    } else if (actor.role !== 'admin' && (actor.role !== 'rider' || driverId !== actor.id)) {
+    } else if (actor.role !== 'admin' && (actor.role !== 'rider' && actor.role !== 'driver' || driverId !== actor.id)) {
       return NextResponse.json(
         { error: 'Forbidden: driver location access denied' },
         { status: 403 }

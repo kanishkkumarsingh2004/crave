@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    if (actor.role !== 'rider' && actor.role !== 'admin') {
+    if (actor.role !== 'rider' && actor.role !== 'driver' && actor.role !== 'admin') {
       return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
     }
 

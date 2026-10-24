@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   try {
     const actor = await requireAuthApi(request)
-    if (actor.role !== 'rider' && actor.role !== 'admin') {
+    if (actor.role !== 'rider' && actor.role !== 'driver' && actor.role !== 'admin') {
       return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
     }
 
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await requireAuthApi(request)
-    if (actor.role !== 'rider' && actor.role !== 'admin') {
+    if (actor.role !== 'rider' && actor.role !== 'driver' && actor.role !== 'admin') {
       return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
     }
 

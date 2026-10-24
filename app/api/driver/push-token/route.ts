@@ -7,7 +7,7 @@ const ALLOWED_PLATFORMS = new Set(['ios', 'android'])
 export async function POST(request: Request) {
   try {
     const actor = await requireAuthApi(request)
-    if (actor.role !== 'rider' && actor.role !== 'admin') {
+    if (actor.role !== 'rider' && actor.role !== 'driver' && actor.role !== 'admin') {
       return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const actor = await requireAuthApi(request)
-    if (actor.role !== 'rider' && actor.role !== 'admin') {
+    if (actor.role !== 'rider' && actor.role !== 'driver' && actor.role !== 'admin') {
       return NextResponse.json({ error: 'Rider access required' }, { status: 403 })
     }
 
