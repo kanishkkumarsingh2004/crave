@@ -96,9 +96,7 @@ export default function CartPage() {
   // Order & Payment State
   const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '')
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '')
-  const [utrRef, setUtrRef] = useState('')
-  const [copiedUpi, setCopiedUpi] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'razorpay'>('razorpay')
+  const [paymentMethod] = useState<'razorpay'>('razorpay')
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
   const isSubmittingRef = useRef(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
@@ -304,14 +302,8 @@ export default function CartPage() {
         const configJson = await configRes.json()
         if (configJson.success && configJson.config) {
           setPaymentConfig(configJson.config)
-          if (configJson.config.razorpayEnabled) {
-            setPaymentMethod('razorpay')
-          } else {
-            setPaymentMethod('upi')
-          }
         } else {
           setPaymentConfig(getLocalPaymentConfig())
-          setPaymentMethod('upi')
         }
 
         const couponsRes = await fetch('/api/admin/coupons', { cache: 'no-store' })
@@ -632,14 +624,6 @@ export default function CartPage() {
     }
   }
 
-  const handleCopyUpi = () => {
-    const vpa = activeConfig.upiVpa || 'crave@upi'
-    navigator.clipboard.writeText(vpa)
-    setCopiedUpi(true)
-    toast('UPI ID copied to clipboard!', 'success')
-    setTimeout(() => setCopiedUpi(false), 2500)
-  }
-
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -666,16 +650,6 @@ export default function CartPage() {
     if (!customerPhone.trim() || customerPhone.trim().length < 10) {
       toast('Please enter a valid 10-digit phone number', 'error')
       const target = document.getElementById('address-section')
-      if (target) target.scrollIntoView({ behavior: 'smooth' })
-      return
-    }
-
-    if (!activeConfig?.razorpayEnabled && (!utrRef.trim() || utrRef.trim().length < 10)) {
-      toast(
-        'Please enter the 12-digit UPI reference number (UTR) from your payment receipt',
-        'error'
-      )
-      const target = document.getElementById('payment-section')
       if (target) target.scrollIntoView({ behavior: 'smooth' })
       return
     }
@@ -737,9 +711,8 @@ export default function CartPage() {
         platform_fee: platformFee,
         gst: exactGstValue,
         total_amount: exactNetPayable,
-        payment_method: activeConfig?.razorpayEnabled ? 'razorpay' : paymentMethod,
+        payment_method: 'razorpay',
         customer_vpa: activeConfig.upiVpa || 'crave@upi',
-        ...(!activeConfig?.razorpayEnabled && paymentMethod === 'upi' ? { utr_ref: utrRef.trim() } : {}),
         coupon_code: appliedCoupon?.code || undefined,
         discount_amount: couponDiscount || 0,
       }
@@ -784,8 +757,7 @@ export default function CartPage() {
         setIsSubmittingOrder(false)
         isSubmittingRef.current = false
         clearCart()
-        setUtrRef('')
-        toast('Razorpay payment simulated (test mode). Payment verified!', 'success')
+        toast('Razorpay payment verified (test mode)! Your order has been placed and sent to the kitchen.', 'success')
         setTimeout(() => {
           if (orderId) {
             router.push(`/user/track/${orderId}`)
@@ -796,32 +768,12 @@ export default function CartPage() {
         return
       }
 
-      if (activeConfig?.razorpayEnabled) {
-        setIsSubmittingOrder(false)
-        isSubmittingRef.current = false
-        try {
-          await startRazorpayCheckout(orderId, exactNetPayable)
-          clearCart()
-          setUtrRef('')
-          toast('Payment verified successfully!', 'success')
-          setTimeout(() => {
-            if (orderId) {
-              router.push(`/user/track/${orderId}`)
-            } else {
-              router.push('/user/track')
-            }
-          }, 1500)
-        } catch (err: any) {
-          toast(err?.message || 'Razorpay checkout failed. Please try again.', 'error')
-          setIsSubmittingOrder(false)
-          isSubmittingRef.current = false
-        }
-      } else {
-        setOrderSuccess(true)
+      setIsSubmittingOrder(false)
+      isSubmittingRef.current = false
+      try {
+        await startRazorpayCheckout(orderId, exactNetPayable)
         clearCart()
-        setUtrRef('')
-        toast('Order placed successfully! Verifying payment...', 'success')
-
+        toast('Payment verified! Your order has been placed and sent to the kitchen.', 'success')
         setTimeout(() => {
           if (orderId) {
             router.push(`/user/track/${orderId}`)
@@ -829,6 +781,10 @@ export default function CartPage() {
             router.push('/user/track')
           }
         }, 1500)
+      } catch (err: any) {
+        toast(err?.message || 'Razorpay checkout cancelled or failed. Please try again.', 'error')
+        setIsSubmittingOrder(false)
+        isSubmittingRef.current = false
       }
     } catch (err: any) {
       toast(err?.message || 'Error processing your order. Please try again.', 'error')
@@ -895,20 +851,64 @@ export default function CartPage() {
           })
           .then((paymentOrder) => {
             const checkoutKey = paymentOrder.keyId || 'rzp_test_TrT8Pg6Vpsi18B'
+            const appOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+            const isMobile =
+              typeof navigator !== 'undefined' &&
+              /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
             const checkout = new (window as any).Razorpay({
               key: checkoutKey,
               order_id: paymentOrder.razorpayOrderId,
               amount: paymentOrder.amount,
               currency: paymentOrder.currency || 'INR',
               name: 'crave.',
-              description: `Order #${orderId.slice(-6).toUpperCase()}`,
+              description: `Order #${orderId.slice(-6).toUpperCase()} • Fresh Delivery`,
+              image: appOrigin ? `${appOrigin}/icons/icon-192x192.png` : undefined,
               prefill: {
                 name: user?.name || '',
                 contact: customerPhone.trim() || user?.phone || '',
                 email: user?.email || '',
               },
               theme: {
-                color: '#121815',
+                color: '#18241c',
+                backdrop_color: 'rgba(18, 24, 21, 0.85)',
+              },
+              ...(isMobile ? { upi: { flow: 'intent' } } : {}),
+              config: {
+                display: {
+                  blocks: {
+                    upi: {
+                      name: isMobile ? 'Instant UPI App' : 'Pay via UPI / QR',
+                      instruments: [
+                        {
+                          method: 'upi',
+                          flows: isMobile ? ['intent'] : ['intent', 'qr'],
+                          apps: ['google_pay', 'phonepe', 'paytm', 'cred', 'bhim'],
+                        },
+                      ],
+                    },
+                    cards: {
+                      name: 'Cards & Net Banking',
+                      instruments: [
+                        {
+                          method: 'card',
+                        },
+                        {
+                          method: 'netbanking',
+                        },
+                      ],
+                    },
+                  },
+                  sequence: ['block.upi', 'block.cards'],
+                  preferences: {
+                    show_default_blocks: false,
+                  },
+                  hide: [
+                    {
+                      method: 'upi',
+                      flow: 'collect',
+                    },
+                  ],
+                },
               },
               notes: { crave_order_id: orderId },
               handler: async (result: any) => {
@@ -939,6 +939,7 @@ export default function CartPage() {
                 }
               },
               modal: {
+                confirm_close: true,
                 ondismiss: () => {
                   reject(new Error('Checkout was dismissed'))
                 },
@@ -963,82 +964,7 @@ export default function CartPage() {
 
   const restaurantName = cart[0]?.restaurantName || 'Spice Garden'
 
-  // Official UPI App Logos and Deep Links
-  const upiApps = [
-    {
-      name: 'Google Pay',
-      shortName: 'GPay',
-      scheme: `tez://upi/pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${exactNetPayable}&cu=INR&tn=${encodeURIComponent('Crave Order')}`,
-      logo: (
-        <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none">
-          <path
-            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            fill="#4285F4"
-          />
-          <path
-            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            fill="#34A853"
-          />
-          <path
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            fill="#FBBC05"
-          />
-          <path
-            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            fill="#EA4335"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: 'PhonePe',
-      shortName: 'PhonePe',
-      scheme: `phonepe://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${exactNetPayable}&cu=INR&tn=${encodeURIComponent('Crave Order')}`,
-      logo: (
-        <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none">
-          <rect width="24" height="24" rx="6" fill="#5f259f" />
-          <path
-            d="M15.4 11.6c-.7-.2-1.5-.2-2.3-.2h-1.3v2.8h1.2c.8 0 1.6-.1 2.2-.2.5-.2.9-.6.9-1.1 0-.7-.4-1.1-.7-1.3zm.2-3.3c-.5-.1-1.1-.2-1.9-.2h-2v2.3h1.9c.7 0 1.3-.1 1.7-.2.4-.1.7-.4.7-1 0-.5-.3-.9-.4-1zm3.3 3.4c0 1.3-.7 2.3-2 2.9-.9.4-2.1.5-3.4.5h-1.7v3.3c0 .4-.4.8-.8.8h-1.1c-.4 0-.8-.4-.8-.8V6.7c0-.4.4-.8.8-.8h4.5c1.3 0 2.3.2 3.2.5 1.2.5 1.9 1.4 1.9 2.7 0 1-.4 1.8-1.2 2.3 1.1.5 1.7 1.4 1.7 2.5z"
-            fill="#FFFFFF"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: 'Paytm',
-      shortName: 'Paytm',
-      scheme: `paytmmp://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${exactNetPayable}&cu=INR&tn=${encodeURIComponent('Crave Order')}`,
-      logo: (
-        <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none">
-          <rect width="24" height="24" rx="6" fill="#002970" />
-          <path
-            d="M5 8h3.2c1.6 0 2.6.9 2.6 2.3 0 1.4-1 2.3-2.6 2.3H6.8v3.2H5V8zm3.1 3.2c.7 0 1.2-.4 1.2-.9s-.4-.9-1.2-.9H6.8v1.8h1.3z"
-            fill="#FFFFFF"
-          />
-          <path
-            d="M11.5 13.3c0-1.6 1.2-2.5 2.8-2.5 1.6 0 2.7 1 2.7 2.5v2.5h-1.4v-.7c-.4.5-1 .8-1.6.8-1.1 0-2-.7-2-1.8 0-1.1.9-1.8 2.3-1.9l1.4-.1v-.2c0-.7-.5-1.1-1.3-1.1-.7 0-1.1.3-1.3.8l-1.6-.3zm4.1 1.1v-.5l-1.1.1c-.7.1-1.1.3-1.1.8 0 .5.4.8 1 .8.7 0 1.2-.5 1.2-1.2z"
-            fill="#00BAF2"
-          />
-          <path
-            d="M17.5 10.9h1.6l1.4 3.3 1.4-3.3h1.6l-2.5 5.3c-.5 1.1-1.2 1.6-2.1 1.6-.3 0-.6-.1-.8-.1v-1.3c.2.1.4.1.5.1.5 0 .8-.2 1-.8l-2.1-4.8z"
-            fill="#00BAF2"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: 'Any UPI App',
-      shortName: 'Any UPI',
-      scheme: `upi://pay?pa=${encodeURIComponent(activeConfig.upiVpa || 'crave@upi')}&pn=${encodeURIComponent(activeConfig.merchantName || 'crave Food Delivery')}&mc=${activeConfig.mccCode || '5812'}&am=${exactNetPayable}&cu=INR&tn=${encodeURIComponent('Crave Order')}`,
-      logo: (
-        <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none">
-          <rect width="24" height="24" rx="6" fill="#121815" />
-          <path d="M6 12l4.5-7.5h4.5l-4.5 7.5 4.5 7.5h-4.5L6 12z" fill="#097939" />
-          <path d="M12 12l4.5-7.5h4.5l-4.5 7.5 4.5 7.5h-4.5L12 12z" fill="#ED752E" />
-        </svg>
-      ),
-    },
-  ]
+
 
   if (authLoading || !user) {
     return (
@@ -1797,145 +1723,41 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  {/* Payment Panel Container */}
-                  <div className="mt-6 pt-5 border-t border-black/[0.06] dark:border-white/10 space-y-4">
-                    {activeConfig?.razorpayEnabled ? (
-                      <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-[#121815] dark:text-white">
-                            Razorpay Online Checkout
-                          </p>
-                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            Instant Verification
-                          </span>
-                        </div>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">
-                          UPI (Google Pay, PhonePe, Paytm), Debit &amp; Credit Cards, Net Banking &amp; Wallets.
-                        </p>
-                        <p className="text-[11px] font-medium text-stone-400 dark:text-stone-500 pt-1 border-t border-black/[0.04] dark:border-white/5">
-                          No manual UTR required — payment is verified automatically by the gateway.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-black/[0.06] dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] p-4 text-xs space-y-3.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="size-8 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] grid place-items-center">
-                              <QrCode className="size-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-extrabold text-[#121815] dark:text-white">
-                                Pay via UPI
-                              </p>
-                              <p className="text-[10px] text-stone-400">
-                                UPI ID: {activeConfig.upiVpa || 'crave@upi'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleCopyUpi}
-                            className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#18201c] border border-black/10 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold text-[#121815] dark:text-white shadow-2xs hover:bg-black/5 dark:hover:bg-white/10 transition"
-                          >
-                            {copiedUpi ? (
-                              <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
-                            ) : (
-                              <Copy className="size-3" />
-                            )}
-                            <span>{copiedUpi ? 'Copied' : 'Copy UPI'}</span>
-                          </button>
-                        </div>
-
-                        {/* Official UPI App Buttons with Real Logos */}
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">
-                            Pay using UPI app:
-                          </p>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {upiApps.map((app) => (
-                              <a
-                                key={app.name}
-                                href={app.scheme}
-                                className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] p-2 text-center hover:border-black/30 dark:hover:border-white/30 transition shadow-2xs group flex flex-col items-center justify-center gap-1 min-h-[54px]"
-                              >
-                                <div className="group-hover:scale-110 transition shrink-0">
-                                  {app.logo}
-                                </div>
-                                <span className="text-[10px] font-bold text-[#121815] dark:text-white truncate">
-                                  {app.shortName}
-                                </span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* 12-Digit UTR Reference Input */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
-                              UPI Reference / UTR Number <span className="text-rose-500">*</span>
-                            </label>
-                            <span className="text-[10px] font-mono text-stone-400">
-                              {utrRef.length}/10+
-                            </span>
-                          </div>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Enter 12-digit UTR from your payment app"
-                            value={utrRef}
-                            onChange={(e) =>
-                              setUtrRef(e.target.value.replace(/\D/g, '').slice(0, 25))
-                            }
-                            className="w-full rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18201c] px-4 py-2.5 text-xs font-black font-mono text-[#121815] dark:text-white placeholder:text-stone-400 outline-none focus:border-[#121815] dark:focus:border-[#d9f447]"
-                          />
-                          {utrRef.trim().length < 10 ? (
-                            <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
-                              Pay in your UPI app, then enter the 12-digit UTR to confirm your
-                              order.
-                            </p>
-                          ) : (
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
-                              <CheckCircle2 className="size-3" />
-                              <span>
-                                Valid UTR format confirmed ({utrRef.trim().length} digits)
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                  {/* Payment Method Container */}
+                  <div className="mt-6 pt-5 border-t border-black/[0.06] dark:border-white/10 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 px-1">
+                      <span>Payment Method</span>
+                      <span className="font-semibold text-[#121815] dark:text-white">
+                        Online (UPI / Cards / Net Banking)
+                      </span>
+                    </div>
 
                     {/* Place Order CTA */}
                     <form onSubmit={handlePlaceOrder} id="checkout-action-section">
                       <button
                         type="submit"
-                        disabled={
-                          isSubmittingOrder ||
-                          (!activeConfig?.razorpayEnabled && utrRef.trim().length < 10)
-                        }
+                        disabled={isSubmittingOrder}
                         className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-sm font-bold text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         {isSubmittingOrder ? (
                           <CraveButtonLoader
-                            label={activeConfig?.razorpayEnabled ? "Connecting to Razorpay..." : "Placing your order..."}
-                            sublabel={activeConfig?.razorpayEnabled ? "Opening secure gateway modal" : "Sending details to restaurant"}
+                            label="Processing payment..."
+                            sublabel="Opening checkout"
                             variant="dark"
                             size="md"
                           />
                         ) : (
                           <>
-                            <span>
-                              {activeConfig?.razorpayEnabled
-                                ? `Pay ₹${formatPrice(exactNetPayable)} via Razorpay`
-                                : `Place Order (₹${formatPrice(exactNetPayable)})`}
-                            </span>
+                            <span>Pay ₹{formatPrice(exactNetPayable)}</span>
                             <ArrowRight className="size-4" />
                           </>
                         )}
                       </button>
                     </form>
+
+                    <p className="text-center text-[11px] text-stone-400 dark:text-stone-500">
+                      100% secure payment &bull; 256-bit encryption
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1966,7 +1788,7 @@ export default function CartPage() {
               }}
               className="rounded-xl bg-[#d9f447] dark:bg-[#121815] text-[#121815] dark:text-[#d9f447] px-4 py-2 text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer"
             >
-              <span>{activeConfig?.razorpayEnabled ? 'Pay via Razorpay' : 'Proceed to Pay'}</span>
+              <span>Pay ₹{formatPrice(exactNetPayable)}</span>
               <ArrowRight className="size-3.5" />
             </button>
           </div>

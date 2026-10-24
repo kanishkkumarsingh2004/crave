@@ -1266,7 +1266,7 @@ function Checkout({
                   <Spinner /> Processing
                 </>
               ) : (
-                `Pay ${money(totalToPay)} via Razorpay`
+                `Pay ${money(totalToPay)}`
               )}
             </button>
           </div>

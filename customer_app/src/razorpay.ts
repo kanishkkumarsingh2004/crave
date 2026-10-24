@@ -72,13 +72,61 @@ export async function startRazorpayCheckout({
 
   // Step 2: Open Razorpay Checkout
   return new Promise<void>((resolve, reject) => {
+    const appOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+    const isMobile =
+      typeof navigator !== 'undefined' &&
+      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window as any).Capacitor != null)
+
     const checkout = new Razorpay({
       key: paymentOrder.keyId,
       order_id: paymentOrder.razorpayOrderId,
       amount: paymentOrder.amount,
       currency: paymentOrder.currency,
-      name: 'Crave',
-      description: `Order ${orderId}`,
+      name: 'crave.',
+      description: `Order #${orderId.slice(-6).toUpperCase()} • Fresh Delivery`,
+      image: appOrigin ? `${appOrigin}/icons/icon-192x192.png` : undefined,
+      theme: {
+        color: '#18241c',
+        backdrop_color: 'rgba(18, 24, 21, 0.85)',
+      },
+      ...(isMobile ? { upi: { flow: 'intent' } } : {}),
+      config: {
+        display: {
+          blocks: {
+            upi: {
+              name: isMobile ? 'Instant UPI App' : 'Pay via UPI / QR',
+              instruments: [
+                {
+                  method: 'upi',
+                  flows: isMobile ? ['intent'] : ['intent', 'qr'],
+                  apps: ['google_pay', 'phonepe', 'paytm', 'cred', 'bhim'],
+                },
+              ],
+            },
+            cards: {
+              name: 'Cards & Net Banking',
+              instruments: [
+                {
+                  method: 'card',
+                },
+                {
+                  method: 'netbanking',
+                },
+              ],
+            },
+          },
+          sequence: ['block.upi', 'block.cards'],
+          preferences: {
+            show_default_blocks: false,
+          },
+          hide: [
+            {
+              method: 'upi',
+              flow: 'collect',
+            },
+          ],
+        },
+      },
       notes: { crave_order_id: orderId },
       handler: async (result: RazorpayCheckoutResult) => {
         try {
@@ -97,6 +145,7 @@ export async function startRazorpayCheckout({
         }
       },
       modal: {
+        confirm_close: true,
         ondismiss: () => {
           reject(new Error('Checkout was dismissed'))
         },

@@ -1276,8 +1276,8 @@ export async function POST(request: Request) {
             },
           })
 
-          // 5. Create payment review (if UTR provided)
-          if (utr_ref) {
+          // 5. Create payment review (if UTR provided in legacy manual flow)
+          if (utr_ref && !isRazorpayFlow) {
             await tx.paymentReview.create({
               data: {
                 id: crypto.randomUUID(),
