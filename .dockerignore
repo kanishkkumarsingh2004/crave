@@ -8,6 +8,7 @@ docker-compose.yml
 .env.local
 .env.development
 .env.production
+.env.test
 *.log
 logs
 test

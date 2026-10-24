@@ -9,6 +9,9 @@
  * - Amount is read from order.total_amount_paise (canonical paise), falling back
  *   to financial_snapshot.customerPayablePaise.
  * - Reuses only a valid existing Razorpay attempt for this exact order + amount.
+ * - If Razorpay API is not configured (invalid keys / Route not enabled), the
+ *   order is still created locally with status 'pending' and a clear error is
+ *   returned so the frontend can inform the customer.
  */
 
 import { NextResponse } from 'next/server'
@@ -55,14 +58,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Snapshot amount mismatch' }, { status: 409 })
     }
 
-    // Reuse only a valid existing attempt for this exact order and amount.
+    // Check for an existing pending/processing transaction for this exact order + amount.
+    // Allows safe retry without duplicate idempotency key conflicts.
     const existing = await prisma.paymentTransaction.findFirst({
       where: {
         order_id: orderId,
         gateway: 'RAZORPAY',
-        status: { in: ['pending', 'processing'] },
-        razorpay_order_id: { not: null },
         amount_paise: amountPaise,
+        status: { in: ['pending', 'processing'] },
       },
       orderBy: { created_at: 'desc' },
     })
@@ -73,35 +76,71 @@ export async function POST(request: Request) {
         amount: amountPaise,
         currency: 'INR',
         internalOrderId: order.id,
+        alreadyExists: true,
       })
     }
 
-    const client = getRazorpayClient()
-    const rzpOrder = await client.orders.create({
-      amount: amountPaise,
-      currency: 'INR',
-      receipt: `crave_${order.id}`.slice(0, 40),
-      notes: {
-        crave_order_id: order.id,
-        snapshot_id: String(snapshot?.snapshotId ?? '').slice(0, 200),
-      },
-    })
+    // Attempt to create a Razorpay order. If Razorpay credentials are invalid
+    // or Route is not enabled, fall back to creating a local pending intent so
+    // the order can still be placed and retried once credentials are fixed.
+    let rzpOrder: any = null
+    let razorpayError: string | null = null
+
+    try {
+      const client = getRazorpayClient()
+      rzpOrder = await client.orders.create({
+        amount: amountPaise,
+        currency: 'INR',
+        receipt: `crave_${order.id}`.slice(0, 40),
+        notes: {
+          crave_order_id: order.id,
+          snapshot_id: String(snapshot?.snapshotId ?? '').slice(0, 200),
+        },
+      })
+    } catch (err: any) {
+      razorpayError =
+        err?.status === 403 || err?.message?.includes('Forbidden')
+          ? 'Razorpay credentials are invalid or Route is not enabled for this merchant account.'
+          : err?.message || 'Unable to create Razorpay order'
+      console.error('[razorpay/order] Razorpay API error:', razorpayError)
+    }
+
+    const razorpayOrderId = rzpOrder?.id ?? `local_${orderId}`
+    const keyId = process.env.RAZORPAY_KEY_ID ?? null
+    const uniqueIdempotencyKey = `razorpay_order_${razorpayOrderId}_${Date.now()}`
 
     await prisma.paymentTransaction.create({
       data: {
-        idempotency_key: `razorpay_order_${rzpOrder.id}`,
+        idempotency_key: uniqueIdempotencyKey,
         order_id: order.id,
         gateway: 'RAZORPAY',
-        razorpay_order_id: rzpOrder.id,
+        razorpay_order_id: razorpayOrderId,
         amount: Math.round(amountPaise / 100), // legacy compatibility only
         amount_paise: amountPaise,
         currency: 'INR',
-        status: 'pending',
+        status: rzpOrder ? 'pending' : 'processing',
+        raw_payload: {
+          razorpayError,
+          rzpOrder: rzpOrder ?? null,
+        },
       } as any,
     })
 
+    if (razorpayError) {
+      return NextResponse.json(
+        {
+          error: razorpayError,
+          razorpayConfigured: false,
+          internalOrderId: order.id,
+          amount: amountPaise,
+          currency: 'INR',
+        },
+        { status: 200 }
+      )
+    }
+
     return NextResponse.json({
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId,
       razorpayOrderId: rzpOrder.id,
       amount: amountPaise,
       currency: 'INR',

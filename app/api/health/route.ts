@@ -26,14 +26,56 @@ function formatUptime(seconds: number): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
 
+  // Public liveness probe with DB and Redis status (no auth required)
   if (searchParams.get('details') !== 'true') {
+    // Check DB connectivity
+    let dbStatus: 'operational' | 'error' = 'error'
+    let dbLatency = -1
+    try {
+      if (prisma) {
+        const dbStart = Date.now()
+        await prisma.$queryRaw`SELECT 1`
+        dbLatency = Date.now() - dbStart
+        dbStatus = 'operational'
+      }
+    } catch {}
+
+    // Check Redis connectivity
+    let redisStatus: 'connected' | 'degraded' | 'disabled' = 'disabled'
+    let redisLatency = -1
+    try {
+      const redisConfig = resolveRedisConfig()
+      if (redisConfig.mode !== 'disabled' && redisConfig.mode !== 'test' && redis) {
+        const rStart = Date.now()
+        const pingResult = await Promise.race([
+          redis.ping(),
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000)),
+        ])
+        redisLatency = Date.now() - rStart
+        redisStatus = pingResult === 'PONG' ? 'connected' : 'degraded'
+      }
+    } catch {}
+
+    const overallStatus = dbStatus === 'operational' ? 'operational' : 'degraded'
+
     return NextResponse.json(
       {
-        status: 'ok',
+        status: overallStatus,
         timestamp: new Date().toISOString(),
+        services: {
+          database: {
+            status: dbStatus,
+            engine: 'PostgreSQL 16 (Neon / Prisma)',
+            latencyMs: dbLatency,
+          },
+          redis: {
+            status: redisStatus,
+            latencyMs: redisLatency,
+          },
+        },
       },
       {
-        status: 200,
+        status: overallStatus === 'operational' ? 200 : 503,
         headers: { 'Cache-Control': 'no-store, max-age=0' },
       }
     )

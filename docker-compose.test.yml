@@ -1,0 +1,143 @@
+name: crave-food-delivery-test
+
+services:
+  # ─── 1. PostgreSQL Database (Neon-compatible local) ─────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: crave-db-test
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      POSTGRES_USER: neondb_owner
+      POSTGRES_PASSWORD: npg_Uze0LoxIBW5b
+      POSTGRES_DB: neondb
+    ports:
+      - '5433:5432'
+    volumes:
+      - crave_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U neondb_owner -d neondb']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crave-test-network
+
+  # ─── 2. Redis (caching, idempotency, rate limiting) ─────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: crave-redis-test
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - '6380:6379'
+    volumes:
+      - crave_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crave-test-network
+
+  # ─── 3. Backend WebSocket Server ─────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crave-backend-test
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+      DATABASE_URL_UNPOOLED: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      WS_PORT: 8000
+      REDIS_DISABLED: 'false'
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ['node', 'ws-server.js']
+    expose:
+      - '8000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "const http=require('http');const r=http.get('http://localhost:8000/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - crave-test-network
+
+  # ─── 4. Frontend Next.js Web App ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crave-frontend-test
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+      DATABASE_URL_UNPOOLED: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+      WS_PORT: 8000
+      WS_HOST: backend
+      WS_BROADCAST_PORT: 8000
+      WS_BROADCAST_HOST: backend
+      REDIS_DISABLED: 'false'
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ['node', 'server.js']
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "const http=require('http');const r=http.get('http://localhost:3000/api/health',{timeout:5000},(res)=>{process.exit(res.statusCode===200?0:1)});r.on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - crave-test-network
+
+  # ─── 5. Database Migration Runner (one-shot) ─────────────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crave-migrate-test
+    env_file:
+      - .env.test
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+      DATABASE_URL_UNPOOLED: postgresql://neondb_owner:npg_Uze0LoxIBW5b@db:5432/neondb?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ['sh', '-c', 'npx prisma migrate deploy && npx prisma generate']
+    networks:
+      - crave-test-network
+
+# ─── Networks ─────────────────────────────────────────────────────────────
+networks:
+  crave-test-network:
+    name: crave-test-network
+    driver: bridge
+
+# ─── Volumes ─────────────────────────────────────────────────────────────
+volumes:
+  crave_db_data:
+  crave_redis_data:
