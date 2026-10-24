@@ -10,6 +10,7 @@ import {
   Calculator,
   ChevronLeft,
   ChevronRight,
+  Coins,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -129,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/cravexp', label: 'Manage XP Store', icon: PackageOpen },
     { href: '/admin/coupons', label: t.admin.couponsDiscounts, icon: Tag },
     { href: '/admin/vendor-settlements', label: t.admin.vendorSettlements, icon: Store },
-    { href: '/admin/payment-config', label: t.admin.paymentConfigs, icon: QrCode },
+    { href: '/admin/payment-config', label: t.admin.paymentConfigs, icon: Coins },
     { href: '/admin/settings', label: t.admin.adminSettings, icon: Settings },
   ]
 

@@ -4269,9 +4269,9 @@ export default function CustomerDashboard({
                 <div className="mx-auto grid size-14 place-items-center rounded-full bg-[#d9f447] text-[#121815]">
                   <Check className="size-8" />
                 </div>
-                <h4 className="mt-4 text-xl font-bold text-white">Payment Submitted!</h4>
+                <h4 className="mt-4 text-xl font-bold text-white">Payment Received!</h4>
                 <p className="mt-1 text-xs text-[#9eb3a4]">
-                  Your 12-digit UTR reference has been logged for verification.
+                  Your payment has been received and your order is being prepared.
                 </p>
               </div>
             ) : (
@@ -4477,12 +4477,12 @@ export default function CustomerDashboard({
                     :{(verifyingModal.timer % 60).toString().padStart(2, '0')}
                   </p>
                   <p className="mt-2 text-[11px] text-[#9eb3a4]">
-                    Cross-referencing your 12-digit UTR reference with bank records.
+                    Confirming transaction details with payment gateway records.
                   </p>
                 </div>
 
                 <p className="text-center text-xs text-[#9eb3a4]">
-                  Payment status updates automatically after an administrator verifies the UTR.
+                  Payment status updates automatically as soon as the transaction is confirmed.
                 </p>
               </div>
             )}
