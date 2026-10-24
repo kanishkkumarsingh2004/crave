@@ -1,12 +1,6 @@
 import 'dotenv/config'
 import { prisma } from '../lib/prisma'
-import { hashPassword, validatePassword } from '../lib/password'
-
-function requiredEnvironmentValue(name: string): string {
-  const value = process.env[name]?.trim()
-  if (!value) throw new Error(`${name} must be set explicitly for test-data seeding`)
-  return value
-}
+import { hashPassword } from '../lib/password'
 
 async function seedCompleteData() {
   if (!prisma) {
@@ -18,13 +12,14 @@ async function seedCompleteData() {
   console.log('🌱 CRAVE Complete Test Database Seeder')
   console.log('========================================================\n')
 
-  const seedPassword = validatePassword(requiredEnvironmentValue('SEED_PASSWORD'))
+  // Hardcoded test credentials for example/test purposes only
+  const seedPassword = 'TestPass123!'
   const seedEmails = {
-    admin: requiredEnvironmentValue('SEED_ADMIN_EMAIL').toLowerCase(),
-    customer: requiredEnvironmentValue('SEED_CUSTOMER_EMAIL').toLowerCase(),
-    vendor: requiredEnvironmentValue('SEED_VENDOR_EMAIL').toLowerCase(),
-    store: requiredEnvironmentValue('SEED_STORE_EMAIL').toLowerCase(),
-    rider: requiredEnvironmentValue('SEED_RIDER_EMAIL').toLowerCase(),
+    admin: 'admin@crave.test',
+    customer: 'customer@crave.test',
+    vendor: 'vendor@crave.test',
+    store: 'store@crave.test',
+    rider: 'rider@crave.test',
   }
 
   // 1. Seed Core Users Across All 5 Roles
@@ -548,6 +543,9 @@ async function seedCompleteData() {
       vendor_commission: 15,
       driver_payout_share: 70,
       is_active: true,
+      razorpay_enabled: true,
+      razorpay_route_enabled: true,
+      razorpay_transfer_release: 'DELIVERY_COMPLETE',
     },
     create: {
       id: 'default_config',
@@ -561,9 +559,79 @@ async function seedCompleteData() {
       vendor_commission: 15,
       driver_payout_share: 70,
       is_active: true,
+      razorpay_enabled: true,
+      razorpay_route_enabled: true,
+      razorpay_transfer_release: 'DELIVERY_COMPLETE',
     },
   })
-  console.log('  ✓ Payment Config: crave@upi with base fees and surge multipliers')
+  console.log('  ✓ Payment Config: crave@upi with Razorpay enabled + Route split')
+
+  // 7. Seed Razorpay Linked Accounts (Restaurant + Driver linked accounts)
+  console.log('\n🏦 Seeding Razorpay Route Linked Accounts...')
+  const linkedAccounts = [
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_01',
+      razorpay_account_id: 'ra_rest_spicegarden_01',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_02',
+      razorpay_account_id: 'ra_rest_milano_02',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_03',
+      razorpay_account_id: 'ra_rest_meghana_03',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_04',
+      razorpay_account_id: 'ra_rest_rameshwaram_04',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_05',
+      razorpay_account_id: 'ra_rest_zen_05',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'RESTAURANT',
+      entity_id: 'rest_06',
+      razorpay_account_id: 'ra_rest_greenharvest_06',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+    {
+      entity_type: 'DRIVER',
+      entity_id: 'usr_rider_01',
+      razorpay_account_id: 'ra_driver_rahul_01',
+      status: 'active' as const,
+      verified_at: new Date(),
+    },
+  ]
+
+  for (const la of linkedAccounts) {
+    await prisma.razorpayLinkedAccount.upsert({
+      where: { entity_type_entity_id: { entity_type: la.entity_type, entity_id: la.entity_id } },
+      update: {
+        razorpay_account_id: la.razorpay_account_id,
+        status: la.status,
+        verified_at: la.verified_at,
+      },
+      create: la,
+    })
+    console.log(`  ✓ Razorpay Linked Account: ${la.entity_type} ${la.entity_id} -> ${la.razorpay_account_id}`)
+  }
 
   console.log('\n========================================================')
   console.log('🎉 Seeding Complete! The database is fully populated and ready.')
