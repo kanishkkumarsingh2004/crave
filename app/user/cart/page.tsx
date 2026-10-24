@@ -101,7 +101,6 @@ export default function CartPage() {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'razorpay'>('razorpay')
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
   const isSubmittingRef = useRef(false)
-  const idempotencyKeyRef = useRef<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState(false)
 
   // Saved Addresses State & Inline Add Mechanism
@@ -686,10 +685,7 @@ export default function CartPage() {
     setIsSubmittingOrder(true)
     isSubmittingRef.current = true
 
-    if (!idempotencyKeyRef.current) {
-      idempotencyKeyRef.current = `ord_user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    }
-    const idempotencyKey = idempotencyKeyRef.current
+    const idempotencyKey = `ord_user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null
