@@ -217,7 +217,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   <span className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white leading-none">
                     crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
                   </span>
-                  <span className="rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 px-1.5 py-0.5 text-[9px] font-extrabold uppercase border border-emerald-200 dark:border-emerald-500/30">
+                  <span className="text-xs font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                     Driver
                   </span>
                 </div>
@@ -305,10 +305,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                     {item.badge && !sidebarCollapsed && (
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[9px] font-bold shrink-0 ${
+                        className={`text-[10px] font-bold shrink-0 ${
                           isActive
-                            ? 'bg-[#121815] text-white'
-                            : 'bg-[#eef2ee] dark:bg-white/15 text-[#5e8210] dark:text-[#d9f447]'
+                            ? 'text-white'
+                            : 'text-[#5e8210] dark:text-[#d9f447]'
                         }`}
                       >
                         {item.badge}
@@ -404,23 +404,21 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2.5">
             {/* Background Worker Sync Badge */}
             {isBackgroundWorkerActive && (
-              <div
-                className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-3 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30"
+              <span
+                className="hidden sm:inline text-xs font-bold text-emerald-600 dark:text-emerald-400"
                 title={`Background Web Worker active in recent apps / background tab (Last sync: ${workerLastSyncTime})`}
               >
-                <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                <span>Background GPS: Active (3s)</span>
-              </div>
+                Background GPS: Active (3s)
+              </span>
             )}
 
             {/* Test Simulation Radar Trigger */}
             <button
               onClick={triggerSimulatedOffer}
-              className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 hover:bg-amber-200 dark:hover:bg-amber-500/30 transition"
+              className="hidden sm:inline-flex text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
               title="Test Delivery Radar"
             >
-              <Radio className="size-4 text-amber-600 dark:text-amber-400 animate-pulse" />
-              <span>Scan Nearby Orders</span>
+              Scan Nearby Orders
             </button>
 
             <ThemeToggle />
@@ -450,14 +448,14 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Navigation className="size-5 animate-pulse" />
+                      <Navigation className="size-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-sm text-white">
                           GPS Location Access Required
                         </h4>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 uppercase">
+                        <span className="text-xs font-bold text-amber-300 uppercase">
                           {gpsStatus === 'denied' || gpsPermissionState === 'denied'
                             ? 'Permission Denied'
                             : 'Access Needed'}
@@ -610,7 +608,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#d9f447] animate-ping" />
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#d9f447]">
                   New Delivery Offer ({offerTimer}s)
                 </span>
@@ -688,9 +685,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               <CheckCircle2 className="size-8" />
             </div>
 
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
               Delivery Complete
-            </span>
+            </p>
             <h3 className="mt-1.5 text-xl font-extrabold text-[#18201c]">
               Order {completedSummaryModal.order}
             </h3>

@@ -66,17 +66,13 @@ export default function DriverDashboardPage() {
 
       {/* STATE B: DRIVER ONLINE & SEARCHING FOR ORDERS */}
       {isOnline && !activeTask && (
-        <div className="rounded-3xl border border-[#d9f447]/40 bg-[#1c2620] p-8 shadow-xl text-white flex flex-col items-center justify-center min-h-[340px] text-center relative overflow-hidden">
-          {/* Pulsing Background Rings */}
-          <div className="absolute size-64 rounded-full border border-[#d9f447]/20 animate-ping" />
-          <div className="absolute size-48 rounded-full border border-[#d9f447]/30 animate-pulse" />
-
+        <div className="rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-8 shadow-xl text-white flex flex-col items-center justify-center min-h-[300px] text-center relative">
           <div className="relative z-10 flex flex-col items-center">
-            <div className="size-16 rounded-full bg-[#d9f447] text-[#121815] grid place-items-center shadow-lg mb-4 animate-bounce">
-              <Radio className="size-8" />
+            <div className="size-12 rounded-xl bg-white/5 text-[#d9f447] grid place-items-center mb-3">
+              <Radio className="size-6" />
             </div>
-            <span className="rounded-full bg-[#d9f447]/20 px-3 py-1 text-[10px] font-extrabold uppercase text-[#d9f447] border border-[#d9f447]/40 tracking-wider">
-              Radar Active • Searching Orders
+            <span className="text-xs font-bold uppercase text-[#d9f447] tracking-wider">
+              RADAR ACTIVE · SEARCHING ORDERS
             </span>
             <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-white">
               Looking for nearby delivery orders...
@@ -89,7 +85,7 @@ export default function DriverDashboardPage() {
             <div className="mt-6 flex flex-wrap items-center gap-3 justify-center">
               <button
                 onClick={triggerSimulatedOffer}
-                className="rounded-full bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center gap-2"
+                className="rounded-full bg-[#d9f447] px-6 py-3 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition flex items-center gap-2 cursor-pointer"
               >
                 <Sparkles className="size-4" /> Find Nearby Order Request
               </button>
@@ -105,10 +101,11 @@ export default function DriverDashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#25332a] pb-3 sm:pb-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="inline-block rounded-full bg-sky-500/20 border border-sky-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold text-sky-400 uppercase tracking-wider">
-                  Active Task Workflow
+                <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">
+                  Active Task
                 </span>
-                <span className="text-xs font-bold text-[#d9f447] bg-[#d9f447]/10 px-2.5 py-0.5 rounded-full border border-[#d9f447]/30">
+                <span className="text-stone-400">·</span>
+                <span className="text-xs font-bold text-[#d9f447]">
                   {activeTask.step === 'assigned' && 'Step 1: Going to Pickup'}
                   {activeTask.step === 'at_restaurant' && 'Step 2: Arrived at Kitchen'}
                   {activeTask.step === 'picked_up' && 'Step 3: En Route to Drop-off'}

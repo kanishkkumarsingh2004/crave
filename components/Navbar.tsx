@@ -288,7 +288,7 @@ export default function Navbar() {
                     >
                       <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
                       <span>craveXP</span>
-                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-black uppercase">
+                      <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                         10m
                       </span>
                     </Link>
@@ -663,7 +663,7 @@ export default function Navbar() {
                       {user.email}
                     </p>
                   </div>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                     {isCustomer ? 'Customer' : user?.role || role}
                   </span>
                 </div>
@@ -701,7 +701,7 @@ export default function Navbar() {
                 className="flex items-center justify-between rounded-xl px-4 py-3 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
                 <span>Dashboard</span>
-                <span className="rounded-md bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-300 capitalize">
+                <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 capitalize">
                   Overview
                 </span>
               </Link>
@@ -726,7 +726,7 @@ export default function Navbar() {
                   <Zap className="size-5 text-emerald-600 fill-emerald-600" />
                   <span>craveXP Instamart</span>
                 </span>
-                <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                   10 MIN
                 </span>
               </Link>

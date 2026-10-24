@@ -251,10 +251,10 @@ export default function VendorSettingsPage() {
                 ariaLabel="Accepting orders status"
               />
               <span
-                className={`text-[11px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full ${
+                className={`text-xs font-bold tracking-wider uppercase ${
                   kitchenOpen
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                    : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {kitchenOpen ? 'ONLINE' : 'OFFLINE'}

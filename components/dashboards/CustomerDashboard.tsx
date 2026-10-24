@@ -1806,9 +1806,6 @@ export default function CustomerDashboard({
             >
               <Bike className="size-4" />
               <span>Track Drop</span>
-              {activeOrder && activeOrder.statusStep < 4 && (
-                <span className="size-2 rounded-full bg-[#86a018] dark:bg-[#d9f447] animate-pulse" />
-              )}
             </button>
 
             <button
@@ -2010,8 +2007,7 @@ export default function CustomerDashboard({
               Track Drop
             </span>
             {activeOrder && activeOrder.statusStep < 4 && (
-              <span className="flex items-center gap-1 rounded-full bg-[#d9f447] px-2.5 py-0.5 text-[10px] font-black text-[#18201c]">
-                <span className="size-1.5 rounded-full bg-emerald-700 animate-ping" />
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                 Live
               </span>
             )}
@@ -2525,8 +2521,8 @@ export default function CustomerDashboard({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
 
                           {rest.isOpen === false && (
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-                              <span className="rounded-full bg-red-600/90 text-white px-3 py-1 text-[11px] font-black uppercase tracking-wider shadow-md">
+                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
+                              <span className="text-xs font-bold uppercase tracking-wider text-rose-500">
                                 Currently Closed
                               </span>
                             </div>
@@ -2534,33 +2530,33 @@ export default function CustomerDashboard({
 
                           <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap">
                             {rest.tag && (
-                              <span className="rounded-full bg-white/95 dark:bg-[#18201c]/95 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#4f5f15] dark:text-[#d9f447] backdrop-blur-md shadow-xs">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-200 bg-black/60 px-2 py-0.5">
                                 {rest.tag}
                               </span>
                             )}
                             {rest.isPureVeg && (
-                              <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-black uppercase text-white shadow-xs">
+                              <span className="text-[10px] font-bold uppercase text-emerald-400 bg-black/60 px-2 py-0.5">
                                 Pure Veg
                               </span>
                             )}
                           </div>
 
                           {rest.rating && (
-                            <div className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs flex items-center gap-1">
+                            <div className="absolute right-3 top-3 text-[10px] font-bold text-emerald-400 bg-black/60 px-2 py-0.5 flex items-center gap-1">
                               <Award className="size-3" />
                               <span>{rest.rating}</span>
                             </div>
                           )}
 
                           {rest.eta && (
-                            <span className="absolute bottom-3 right-3 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
+                            <span className="absolute bottom-3 right-3 text-[10px] font-medium text-white bg-black/60 px-2 py-0.5 flex items-center gap-1">
                               <Clock className="size-3 text-[#d9f447]" />
                               {rest.eta}
                             </span>
                           )}
 
                           {rest.offer && (
-                            <span className="absolute bottom-3 left-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1 text-[10px] font-black text-[#18201c] shadow-md flex items-center gap-1">
+                            <span className="absolute bottom-3 left-3 text-[10px] font-bold text-amber-300 bg-black/75 px-2 py-0.5 flex items-center gap-1">
                               <Tag className="size-3" /> {rest.offer}
                             </span>
                           )}
@@ -2688,27 +2684,19 @@ export default function CustomerDashboard({
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            className={`text-xs font-bold uppercase ${
                               order.status === 'Delivered'
-                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                                ? 'text-emerald-600 dark:text-emerald-400'
                                 : order.status === 'In Progress'
-                                  ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 animate-pulse'
-                                  : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-rose-600 dark:text-rose-400'
                             }`}
                           >
-                            {order.status === 'Delivered' ? (
-                              <span className="flex items-center gap-1">
-                                <CheckCircle2 className="size-3" /> Delivered
-                              </span>
-                            ) : order.status === 'In Progress' ? (
-                              <span className="flex items-center gap-1">
-                                <Bike className="size-3" /> Out for Delivery
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1">
-                                <X className="size-3" /> Cancelled
-                              </span>
-                            )}
+                            {order.status === 'Delivered'
+                              ? 'Delivered'
+                              : order.status === 'In Progress'
+                                ? 'Out for Delivery'
+                                : 'Cancelled'}
                           </span>
                           <span className="text-[10px] text-gray-400">#{order.id}</span>
                         </div>
@@ -2801,12 +2789,12 @@ export default function CustomerDashboard({
                   </div>
 
                   <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                        <ShieldCheck className="size-3" /> Verified Customer Account
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        Verified Customer Account
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60">
-                        <Crown className="size-2.5" /> Crave Member
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        Crave Member
                       </span>
                     </div>
 
@@ -3011,8 +2999,8 @@ export default function CustomerDashboard({
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-center">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                    <ShieldCheck className="size-3.5" /> Scrypt Encrypted
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    Scrypt Encrypted
                   </span>
                 </div>
               </div>
@@ -3215,8 +3203,8 @@ export default function CustomerDashboard({
                     anytime.
                   </p>
                 </div>
-                <span className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-full bg-[#f4f7ed] dark:bg-[#27342d] px-3 py-1 text-[11px] font-bold text-[#b5de28] dark:text-[#d9f447]">
-                  <Sparkles className="size-3" /> Live Switching
+                <span className="self-start sm:self-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  Live Switching
                 </span>
               </div>
               <ThemeSelector />
@@ -3291,7 +3279,7 @@ export default function CustomerDashboard({
 
                             <div className="flex items-center gap-1.5">
                               {isSelected && (
-                                <span className="rounded-full bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-wide">
+                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
                                   Active
                                 </span>
                               )}
@@ -3415,28 +3403,24 @@ export default function CustomerDashboard({
 
                     <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
                       <div className="space-y-2.5 sm:space-y-3 min-w-0">
-                        {/* Status Badges */}
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold text-white/90 tracking-wide uppercase">
-                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        {/* Status Indicators */}
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-xs font-semibold text-white/80 uppercase">
                             Order #
                             {typeof activeOrder.id === 'string' && activeOrder.id.length > 10
                               ? activeOrder.id.slice(0, 8).toUpperCase()
                               : activeOrder.id}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-1 text-[10px] sm:text-xs font-semibold text-emerald-300 backdrop-blur-xs">
+                          <span className="text-xs font-bold text-emerald-400">
                             {activeOrder.statusText || 'Order Confirmed'}
                           </span>
                           {activeOrder.otp && (
-                            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] sm:text-xs font-mono font-bold text-emerald-400 shadow-xs">
-                              <span className="text-[9px] sm:text-[10px] uppercase font-sans font-semibold tracking-wider text-emerald-400/80">
-                                Delivery OTP
-                              </span>
-                              <span className="tracking-widest">{activeOrder.otp}</span>
+                            <span className="text-xs font-mono font-bold text-emerald-400">
+                              Delivery OTP: {activeOrder.otp}
                             </span>
                           )}
                           {activeOrder.paymentStatus === 'pending' && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/20 border border-amber-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-amber-200">
+                            <span className="text-xs font-bold text-amber-400">
                               Payment Pending
                             </span>
                           )}
@@ -3444,11 +3428,10 @@ export default function CustomerDashboard({
                             <button
                               type="button"
                               onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold text-rose-300 shadow-xs transition cursor-pointer shrink-0 animate-pulse"
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline transition cursor-pointer shrink-0"
                               title={`Order can be cancelled within 30 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
-                              <Trash2 className="size-3 sm:size-3.5 text-rose-300" /> Cancel Order (
-                              {cancelTimeRemaining}s)
+                              <Trash2 className="size-3.5 text-rose-400" /> Cancel Order ({cancelTimeRemaining}s)
                             </button>
                           )}
                           {(activeOrder.statusStep === 4 ||
@@ -3870,11 +3853,7 @@ export default function CustomerDashboard({
             ) : inProgressOrders.length > 0 ? (
               <div className="flex flex-col gap-3 rounded-2xl sm:rounded-3xl border border-[#dfe5db] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-4 sm:p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white flex items-center gap-2">
-                    <span className="relative flex size-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full size-2.5 bg-emerald-500"></span>
-                    </span>
+                  <h3 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white">
                     Active Orders Under Process ({inProgressOrders.length})
                   </h3>
                   <span className="text-[10px] sm:text-xs text-gray-500 font-medium hidden sm:inline">
@@ -3946,10 +3925,10 @@ export default function CustomerDashboard({
                             </h4>
                           </div>
                           <span
-                            className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                            className={`text-xs font-bold shrink-0 ${
                               isCurrentSelected
-                                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
-                                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                ? 'text-emerald-400'
+                                : 'text-emerald-600 dark:text-emerald-400'
                             }`}
                           >
                             {ordStatusText}
@@ -4474,10 +4453,8 @@ export default function CustomerDashboard({
       {verifyingModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white text-center animate-in zoom-in-95 duration-200">
-            <div className="relative mx-auto flex items-center justify-center size-20">
-              <div className="absolute inset-0 rounded-full bg-[#d9f447]/20 blur-xl animate-pulse" />
-              <div className="absolute inset-0 rounded-full border border-[#d9f447]/30 animate-ping opacity-40" />
-              <div className="relative size-16 grid place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-lg">
+            <div className="relative mx-auto flex items-center justify-center size-16 mb-2">
+              <div className="relative size-16 grid place-items-center rounded-2xl bg-[#d9f447] text-[#121815]">
                 <Sparkles className="size-8 fill-current" />
               </div>
             </div>

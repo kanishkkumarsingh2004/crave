@@ -43,9 +43,9 @@ export default function DriverIncentivesPage() {
       <div className="rounded-3xl border border-[#d9f447]/30 bg-[#121815] p-6 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#d9f447]/20 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#d9f447] border border-[#d9f447]/40">
-              <Flame className="size-3.5 text-[#d9f447]" /> Peak Surge &amp; Daily Quests
-            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#d9f447]">
+              Peak Surge &amp; Daily Quests
+            </p>
             <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
               Earn Bonus Payouts &amp; Milestone Rewards
             </h2>
@@ -73,7 +73,7 @@ export default function DriverIncentivesPage() {
               Live incentive campaigns verified for your account zone.
             </p>
           </div>
-          <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-xl border border-emerald-300">
+          <span className="text-xs font-bold text-emerald-600">
             {incentives.length} Campaigns Active
           </span>
         </div>
@@ -91,7 +91,7 @@ export default function DriverIncentivesPage() {
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800 border border-emerald-200">
+                    <span className="text-xs font-bold uppercase text-emerald-600">
                       Verified Surge
                     </span>
                     <span className="text-xs font-mono font-bold text-gray-400 flex items-center gap-1">

@@ -282,10 +282,9 @@ export default function CraveXPStore() {
                     {CRAVEXP_DARK_STORE_INFO.address}
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-xl border border-emerald-500/20">
-                  <CheckCircle2 className="size-3" />
+                <span className="text-xs font-bold text-emerald-400">
                   Verified Hub
-                </div>
+                </span>
               </div>
 
               {/* Service Badges */}
@@ -521,18 +520,17 @@ export default function CraveXPStore() {
                   key={item.id}
                   className="group relative flex flex-col justify-between rounded-3xl bg-white dark:bg-[#141b17] p-3.5 sm:p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 border border-gray-200/80 dark:border-white/10 hover:border-[#86a018]/50 dark:hover:border-[#d9f447]/40"
                 >
-                  {/* Top Badges Row */}
+                  {/* Top Status & Offers */}
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wider">
-                      <Zap className="size-2.5 fill-current text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
                       10 MINS
                     </span>
                     {item.discount ? (
-                      <span className="rounded-full bg-[#d9f447] px-2 py-0.5 text-[9px] font-black uppercase text-[#18201c] shadow-xs">
+                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
                         {item.discount}
                       </span>
                     ) : hasDiscount ? (
-                      <span className="rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300 px-2 py-0.5 text-[9px] font-black uppercase">
+                      <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">
                         Save ₹{item.mrp - item.price}
                       </span>
                     ) : null}

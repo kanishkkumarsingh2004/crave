@@ -218,9 +218,8 @@ export default function DriverAcceptedOrdersPage() {
         <div className="rounded-3xl border-2 border-emerald-500/60 bg-[#1c2620] p-6 shadow-2xl space-y-6 text-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d3b32] pb-4">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> Active Trip in
-                Progress
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                Active Trip in Progress
               </span>
               <h3 className="text-xl font-bold text-white mt-2">Order {activeTask.orderNumber}</h3>
             </div>
@@ -466,10 +465,10 @@ export default function DriverAcceptedOrdersPage() {
                       <span className="font-mono text-xs font-bold text-[#a0ab9f]">
                         {order.orderNumber}
                       </span>
-                      <span className="rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase">
+                      <span className="text-xs font-bold uppercase text-blue-400">
                         {order.status}
                       </span>
-                      <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold font-mono">
+                      <span className="text-xs font-medium text-amber-400 font-mono">
                         OSRM: {order.distanceStr}
                       </span>
                     </div>
@@ -553,7 +552,7 @@ export default function DriverAcceptedOrdersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-block font-mono text-[11px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                        <span className="font-mono text-xs font-medium text-amber-400">
                           {order.distanceStr}
                         </span>
                       </td>
@@ -567,7 +566,7 @@ export default function DriverAcceptedOrdersPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-block rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 text-[10px] font-extrabold uppercase">
+                        <span className="text-xs font-bold text-blue-400 uppercase">
                           {order.status}
                         </span>
                       </td>

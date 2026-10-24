@@ -84,7 +84,19 @@ export default function AppleProgressBar({
 
           {showValue && (
             <span
-              className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-black border ${colorConfig.badge}`}
+              className={`font-mono text-xs font-bold ${
+                color === 'emerald'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : color === 'amber'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : color === 'blue'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : color === 'purple'
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : color === 'rose'
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-[#6a8014] dark:text-[#d9f447]'
+              }`}
             >
               {percentage}%
             </span>

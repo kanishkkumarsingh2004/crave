@@ -292,15 +292,12 @@ export default function VendorDashboard() {
         )}
 
         {/* Welcome Kitchen Banner */}
-        <div className="rounded-2xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-4 sm:p-5 shadow-sm dark:shadow-xl relative overflow-hidden w-full min-w-0">
+        <div className="rounded-2xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-[#121815] p-4 sm:p-5 shadow-sm dark:shadow-xl relative overflow-hidden w-full min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 min-w-0">
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse shrink-0" />
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
-                  Kitchen Active • Accepting Orders
-                </span>
-              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
+                Kitchen Active · Accepting Orders
+              </span>
               <h2 className="mt-1.5 text-xl sm:text-2xl font-black text-[#121815] dark:text-white tracking-tight truncate">
                 Welcome back,{' '}
                 <span className="text-emerald-600 dark:text-emerald-400">
@@ -374,7 +371,7 @@ export default function VendorDashboard() {
                   Customer orders requiring food preparation &amp; dispatch
                 </p>
               </div>
-              <span className="self-start sm:self-auto shrink-0 rounded-lg bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="self-start sm:self-auto shrink-0 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 Active Orders ({openCount})
               </span>
             </div>
@@ -397,7 +394,7 @@ export default function VendorDashboard() {
                             #{order.id.slice(0, 8)}...
                           </span>
                           {order.paymentStatus === 'verified' && (
-                            <span className="rounded-full px-2 py-0.5 text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                            <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 shrink-0">
                               Payment Verified
                             </span>
                           )}
@@ -471,8 +468,7 @@ export default function VendorDashboard() {
                           {(order.status === 'ready' ||
                             order.status === 'ready_for_pickup' ||
                             order.status === 'rider_assigned') && (
-                            <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" />{' '}
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                               Ready
                             </span>
                           )}
@@ -480,20 +476,19 @@ export default function VendorDashboard() {
                           {(order.status === 'picked_up' ||
                             order.status === 'out_for_delivery' ||
                             order.status === 'arrived_customer') && (
-                            <span className="rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                               Out for Delivery
                             </span>
                           )}
 
                           {(order.status === 'delivered' || order.status === 'completed') && (
-                            <span className="rounded-full bg-stone-100 dark:bg-[#243028] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#304036] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                              <CheckCircle2 className="size-2.5 text-emerald-600 dark:text-emerald-400" />{' '}
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                               Delivered
                             </span>
                           )}
 
                           {order.status === 'cancelled' && (
-                            <span className="rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                               Cancelled
                             </span>
                           )}

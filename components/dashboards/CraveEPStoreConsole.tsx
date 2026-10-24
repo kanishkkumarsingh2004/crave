@@ -1163,7 +1163,7 @@ export default function CraveXPStoreConsole() {
                         </div>
 
                         {item.expiryDate && (
-                          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                          <span className="text-[11px] font-bold text-emerald-600">
                             Expires {new Date(item.expiryDate).toLocaleDateString()}
                           </span>
                         )}

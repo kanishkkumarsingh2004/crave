@@ -127,7 +127,7 @@ export default function VendorSidebar() {
             >
               crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
             </Link>
-            <span className="rounded-md bg-stone-100 dark:bg-white/10 border border-stone-200 dark:border-transparent px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-white/90">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
               VENDOR
             </span>
 

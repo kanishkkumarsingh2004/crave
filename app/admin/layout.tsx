@@ -178,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="text-lg font-extrabold tracking-tight text-[#18201c] dark:text-white leading-none">
                   crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
                 </span>
-                <span className="rounded-md bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300 px-1.5 py-0.5 text-[9px] font-extrabold uppercase border border-purple-200 dark:border-purple-500/30">
+                <span className="text-[10px] font-extrabold uppercase text-purple-700 dark:text-purple-400">
                   Admin
                 </span>
               </div>

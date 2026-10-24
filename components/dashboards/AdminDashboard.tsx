@@ -1151,11 +1151,8 @@ export default function AdminDashboard() {
                           Status
                         </span>
                         <span
-                          className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase ${account.status === 'active' ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}
+                          className={`text-xs font-bold uppercase ${account.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                         >
-                          <span
-                            className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-rose-500 dark:bg-rose-400'}`}
-                          />
                           {account.status}
                         </span>
                       </div>
@@ -1311,15 +1308,12 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            className={`text-xs font-bold uppercase ${
                               account.status === 'active'
-                                ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-rose-50 dark:bg-rose-500/20 border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-rose-600 dark:text-rose-400'
                             }`}
                           >
-                            <span
-                              className={`size-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-rose-500 dark:bg-rose-400'}`}
-                            />
                             {account.status}
                           </span>
                         </td>
@@ -1495,10 +1489,10 @@ export default function AdminDashboard() {
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                          className={`text-xs font-bold uppercase ${
                             account.status === 'active'
-                              ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-rose-50 dark:bg-rose-500/20 border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
                           {account.status}
@@ -1585,7 +1579,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shrink-0 ${driver.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300'}`}
+                      className={`text-xs font-bold uppercase shrink-0 ${driver.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                     >
                       {driver.status === 'active' ? 'Active' : driver.status}
                     </span>
@@ -1690,19 +1684,12 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                          className={`text-xs font-bold uppercase ${
                             driver.status === 'active'
-                              ? 'bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-rose-50 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
-                          <span
-                            className={`size-1.5 rounded-full ${
-                              driver.status === 'active'
-                                ? 'bg-emerald-500 dark:bg-emerald-400'
-                                : 'bg-rose-500 dark:bg-rose-400'
-                            }`}
-                          />
                           {driver.status === 'active' ? 'Active Partner' : driver.status}
                         </span>
                       </td>
@@ -3114,10 +3101,10 @@ export default function AdminDashboard() {
 
                               <td className="px-4 py-3 whitespace-nowrap">
                                 <span
-                                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                  className={`text-xs font-bold uppercase ${
                                     product.status === 'ACTIVE'
-                                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-900/50'
-                                      : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-transparent dark:border-rose-900/50'
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : 'text-rose-600 dark:text-rose-400'
                                   }`}
                                 >
                                   {product.status}

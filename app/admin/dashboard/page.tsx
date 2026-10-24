@@ -115,17 +115,13 @@ export default function AdminDashboardPage() {
       {/* Platform Real-Time Control & Heartbeat Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="relative flex size-3.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-3.5 rounded-full bg-emerald-500" />
-          </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-extrabold text-[#18201c] dark:text-white">
                 Platform Operations & Telemetry Center
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <Wifi className="size-2.5" /> WebSocket Live
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                WebSocket Live
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -159,10 +155,6 @@ export default function AdminDashboardPage() {
       {liveNotice && (
         <div className="rounded-2xl border border-emerald-500/40 bg-[#121815] p-3.5 text-white shadow-xl flex items-center justify-between animate-in fade-in duration-300">
           <div className="flex items-center gap-2.5">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
-            </span>
             <p className="text-xs font-bold text-emerald-300">{liveNotice}</p>
           </div>
           <button
@@ -281,12 +273,12 @@ export default function AdminDashboardPage() {
                           ₹{Number(order.total_amount ?? 0).toLocaleString()}
                         </p>
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          className={`text-xs font-bold uppercase tracking-wider ${
                             order.status === 'DELIVERED'
-                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              ? 'text-emerald-600 dark:text-emerald-400'
                               : order.status === 'OUT_FOR_DELIVERY'
-                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-amber-600 dark:text-amber-400'
                           }`}
                         >
                           {order.status || 'PROCESSING'}
@@ -314,7 +306,6 @@ export default function AdminDashboardPage() {
                   <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                     <Database className="size-3.5 text-blue-500" /> Database Cluster
                   </span>
-                  <span className="size-2 rounded-full bg-emerald-500" />
                 </div>
                 <p className="mt-2 font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
                   HEALTHY
@@ -327,7 +318,6 @@ export default function AdminDashboardPage() {
                   <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                     <Layers className="size-3.5 text-amber-500" /> In-Memory Cache
                   </span>
-                  <span className="size-2 rounded-full bg-emerald-500" />
                 </div>
                 <p className="mt-2 font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
                   SYNCHRONIZED
@@ -340,7 +330,6 @@ export default function AdminDashboardPage() {
                   <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                     <Wifi className="size-3.5 text-emerald-500" /> WebSocket Node
                   </span>
-                  <span className="size-2 rounded-full bg-emerald-500" />
                 </div>
                 <p className="mt-2 font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
                   STREAMING

@@ -759,26 +759,16 @@ export default function VendorMenuPage() {
                     )}
 
                     {/* Category Tag */}
-                    <span className="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-[#18201c]/90 px-3 py-1 text-[10px] font-black uppercase text-[#86a018] dark:text-[#d9f447] border border-stone-200 dark:border-[#27342d] backdrop-blur-md shadow-xs">
+                    <span className="absolute top-2.5 left-2.5 text-[10px] font-extrabold uppercase text-[#121815] dark:text-white">
                       {item.category}
                     </span>
 
                     {/* Veg / Non-Veg Indicator Badge */}
-                    <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 dark:bg-[#18201c]/90 px-2.5 py-1 text-[10px] font-bold border border-stone-200 dark:border-[#27342d] backdrop-blur-md shadow-xs">
+                    <span className="absolute top-2.5 right-2.5 text-[10px] font-extrabold uppercase tracking-wide">
                       {item.veg !== false ? (
-                        <>
-                          <span className="inline-block size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30" />
-                          <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">
-                            VEG
-                          </span>
-                        </>
+                        <span className="text-emerald-600 dark:text-emerald-400">VEG</span>
                       ) : (
-                        <>
-                          <span className="inline-block size-2 rounded-full bg-rose-500 ring-2 ring-rose-500/30" />
-                          <span className="text-rose-700 dark:text-rose-400 font-extrabold">
-                            NON-VEG
-                          </span>
-                        </>
+                        <span className="text-rose-600 dark:text-rose-400">NON-VEG</span>
                       )}
                     </span>
 
