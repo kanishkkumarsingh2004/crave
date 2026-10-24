@@ -1038,31 +1038,26 @@ textarea {
   font-weight: 500;
 }
 .open-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--lime);
-  color: #182014;
-  border-radius: 99px;
-  padding: 6px 11px;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.9px;
+  display: inline-block;
+  background: transparent;
+  color: var(--lime);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 .open-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #182014;
+  display: none;
 }
 .open-pill.closed {
-  background: #172019;
-  color: #fff;
+  background: transparent;
+  color: #ef4444;
 }
 .open-pill.closed::before {
-  background: #ff8e9d;
+  display: none;
 }
 .detail-body {
   padding: 0 var(--gutter);

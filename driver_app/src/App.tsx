@@ -663,7 +663,7 @@ function AccountPage({
           <h2>{profile.name}</h2>
           <p>{profile.email}</p>
           <span>
-            <Icon name="shield" /> {profile.kycStatus || 'Verified delivery partner'}
+            {profile.kycStatus || 'Verified delivery partner'}
           </span>
         </div>
       </article>

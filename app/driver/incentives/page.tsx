@@ -109,7 +109,7 @@ export default function DriverIncentivesPage() {
                   <span className="text-[11px] font-semibold text-gray-500">
                     Reward Cash Credit
                   </span>
-                  <span className="text-base font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
+                  <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
                     +₹{item.rewardAmount} Extra
                   </span>
                 </div>

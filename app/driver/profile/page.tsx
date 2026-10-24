@@ -87,8 +87,8 @@ export default function DriverProfilePage() {
               Registered delivery partner vehicle specifications, contact details, and KYC status.
             </p>
           </div>
-          <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-300 flex items-center gap-1 self-start sm:self-auto">
-            <ShieldCheck className="size-4 text-emerald-700" /> Verified Delivery Partner
+          <span className="text-xs font-bold text-emerald-600 self-start sm:self-auto">
+            Verified Delivery Partner
           </span>
         </div>
 

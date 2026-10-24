@@ -60,9 +60,8 @@ export default function DriverSettingsPage() {
               Configure NPCI-verified UPI IDs for 1-click instant earnings settlement.
             </p>
           </div>
-          <span className="mt-2 sm:mt-0 text-xs font-extrabold text-[#5e700a] dark:text-[#d9f447] bg-emerald-500/15 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1 self-start sm:self-auto">
-            <ShieldCheck className="size-4 text-emerald-600 dark:text-[#d9f447]" /> NPCI Instant
-            Transfer Active
+          <span className="mt-2 sm:mt-0 text-xs font-bold text-emerald-600 dark:text-[#d9f447] self-start sm:self-auto">
+            NPCI Instant Transfer Active
           </span>
         </div>
 
@@ -181,12 +180,12 @@ export default function DriverSettingsPage() {
                         {upi.vpa}
                       </span>
                       {upi.isPrimary && (
-                        <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                           Default Payout
                         </span>
                       )}
                       {upi.isVerified && (
-                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                           NPCI Verified
                         </span>
                       )}

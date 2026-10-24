@@ -545,10 +545,10 @@ export default function VendorSettlementsPage() {
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                    className={`text-xs font-bold uppercase ${
                       v.settlementStatus === 'settled'
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-amber-600 dark:text-amber-400'
                     }`}
                   >
                     {v.settlementStatus}
@@ -643,7 +643,7 @@ export default function VendorSettlementsPage() {
                       ₹{v.weeklyGrossSales.toLocaleString()}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/50 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
                         {v.commissionRate}%
                       </span>
                     </td>
@@ -667,10 +667,10 @@ export default function VendorSettlementsPage() {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span
-                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${
+                        className={`text-xs font-bold capitalize ${
                           v.settlementStatus === 'settled'
-                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-amber-600 dark:text-amber-400'
                         }`}
                       >
                         {v.settlementStatus}
@@ -707,7 +707,7 @@ export default function VendorSettlementsPage() {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-gray-200 dark:border-[#202b24] pb-4">
               <div>
-                <span className="rounded-full bg-emerald-50 dark:bg-[#d9f447]/10 px-3 py-1 text-[10px] font-extrabold text-emerald-700 dark:text-[#d9f447] border border-emerald-200 dark:border-[#d9f447]/30 uppercase tracking-wider">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                   Vendor Pricing Playground &amp; Monitor
                 </span>
                 <h3 className="mt-2 text-2xl font-black text-[#18201c] dark:text-white">
@@ -950,7 +950,7 @@ export default function VendorSettlementsPage() {
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-gray-200 dark:border-[#202b24] pb-3.5">
               <div>
-                <span className="rounded-full bg-emerald-50 dark:bg-[#d9f447]/10 px-3 py-1 text-[10px] font-extrabold text-emerald-700 dark:text-[#d9f447] border border-emerald-200 dark:border-[#d9f447]/30 uppercase tracking-wider">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                   Custom Settlement Disbursement
                 </span>
                 <h3 className="mt-2 text-xl font-black text-[#18201c] dark:text-white">

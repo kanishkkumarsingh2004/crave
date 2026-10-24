@@ -356,7 +356,7 @@ export default function CalculatorPlaygroundPage() {
                 <h3 className="text-xs font-extrabold text-emerald-700 dark:text-[#d9f447] flex items-center gap-2 uppercase tracking-wider">
                   <Database className="size-4" /> Load Real Data from Database
                 </h3>
-                <span className="text-[10px] bg-gray-100 dark:bg-[#1e2722] px-2.5 py-1 rounded-full font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/5">
+                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">
                   Preset Loader
                 </span>
               </div>
@@ -676,7 +676,7 @@ export default function CalculatorPlaygroundPage() {
                     <DollarSign className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Customer
                     Bill
                   </span>
-                  <span className="text-xs font-mono font-black text-[#18201c] bg-gray-100 border border-gray-200 dark:text-[#d9f447] dark:bg-[#d9f447]/10 dark:border-[#d9f447]/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-mono font-bold text-[#18201c] dark:text-[#d9f447]">
                     ₹{customerBilling.grandTotal}
                   </span>
                 </div>
@@ -781,7 +781,7 @@ export default function CalculatorPlaygroundPage() {
                     <Truck className="size-4 text-emerald-500 dark:text-emerald-400" /> Driver
                     Earnings
                   </span>
-                  <span className="text-xs font-mono font-black text-emerald-600 bg-emerald-50 border border-emerald-200 dark:text-emerald-400 dark:bg-emerald-400/10 dark:border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     ₹{driverEarnings.totalDriverEarnings}
                   </span>
                 </div>
@@ -1062,7 +1062,7 @@ export default function CalculatorPlaygroundPage() {
                       ₹{ord.total_amount}
                     </td>
                     <td className="py-2.5 px-3">
-                      <span className="bg-gray-100 dark:bg-[#242f29] px-2 py-0.5 rounded text-gray-700 dark:text-gray-300 text-[10px]">
+                      <span className="font-mono text-gray-700 dark:text-gray-300 text-[10px] uppercase font-bold">
                         {ord.status}
                       </span>
                     </td>

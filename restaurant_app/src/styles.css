@@ -718,13 +718,12 @@ svg {
 }
 .status-pill,
 .settlement-status {
-  display: inline-flex;
-  padding: 6px 8px;
-  border: 1px solid #425147;
-  border-radius: 99px;
-  background: #202a23;
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: #c5cec8;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -732,29 +731,29 @@ svg {
 }
 .status-ready,
 .status-ready_for_pickup {
-  border-color: rgb(70 219 137 / 28%);
-  background: rgb(70 219 137 / 10%);
-  color: #73dda2;
+  border: none;
+  background: transparent;
+  color: #22c55e;
 }
 .status-preparing,
 .status-packing,
 .status-cooking {
-  border-color: rgb(245 171 53 / 28%);
-  background: rgb(245 171 53 / 10%);
-  color: #f4bb60;
+  border: none;
+  background: transparent;
+  color: #f59e0b;
 }
 .status-delivered,
 .status-completed,
 .status-picked_up,
 .status-out_for_delivery {
-  color: #8ab9ff;
-  border-color: rgb(73 147 255 / 25%);
-  background: rgb(73 147 255 / 9%);
+  border: none;
+  background: transparent;
+  color: #3b82f6;
 }
 .status-cancelled {
-  color: #ff9ca5;
-  border-color: rgb(255 107 119 / 25%);
-  background: rgb(255 107 119 / 9%);
+  border: none;
+  background: transparent;
+  color: #ef4444;
 }
 .order-items {
   display: grid;

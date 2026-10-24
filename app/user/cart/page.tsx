@@ -1110,9 +1110,8 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5e8210]/10 dark:bg-[#d9f447]/10 px-3 py-1 text-[11px] font-black text-[#5e8210] dark:text-[#d9f447] border border-[#5e8210]/20 dark:border-[#d9f447]/20">
-                          <Zap className="size-3 fill-current" />
-                          <span>20-25 mins delivery</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          20-25 mins delivery
                         </span>
                       </div>
                     </div>
@@ -1692,7 +1691,7 @@ export default function CartPage() {
                     <div className="flex justify-between text-stone-600 dark:text-stone-300 items-center">
                       <span>Delivery Fee</span>
                       {pricingBreakdown.isFreeDelivery ? (
-                        <span className="font-black text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full text-[10px]">
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs uppercase">
                           FREE
                         </span>
                       ) : (

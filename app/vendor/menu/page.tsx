@@ -809,18 +809,18 @@ export default function VendorMenuPage() {
                     {item.variants.map((variant) => (
                       <span
                         key={variant.id}
-                        className="rounded-md bg-[#d9f447]/15 px-2 py-0.5 font-bold text-[#65780d] dark:text-[#d9f447]"
+                        className="font-bold text-[#65780d] dark:text-[#d9f447] text-xs"
                       >
                         {variant.name}: ₹{variant.price}
                       </span>
                     ))}
                     {item.stock_count != null && (
-                      <span className="rounded-md bg-stone-100 dark:bg-[#1a231e] px-2 py-0.5 font-bold text-stone-600 dark:text-gray-300 border border-stone-200 dark:border-[#28372e]">
+                      <span className="font-bold text-stone-600 dark:text-gray-300 text-xs">
                         Stock: {item.stock_count} units
                       </span>
                     )}
                     {item.sku_code && (
-                      <span className="rounded-md bg-stone-100 dark:bg-[#1a231e] px-2 py-0.5 font-mono font-bold text-stone-500 dark:text-gray-400 border border-stone-200 dark:border-[#28372e]">
+                      <span className="font-mono font-bold text-stone-500 dark:text-gray-400 text-xs">
                         SKU: {item.sku_code}
                       </span>
                     )}
@@ -831,10 +831,10 @@ export default function VendorMenuPage() {
                   <button
                     type="button"
                     onClick={() => handleToggleStock(item.id, item.in_stock)}
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold transition border cursor-pointer ${
+                    className={`text-xs font-bold uppercase transition hover:underline cursor-pointer ${
                       item.in_stock
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-rose-600 dark:text-rose-400'
                     }`}
                   >
                     {item.in_stock ? 'In Stock' : 'Out of Stock'}

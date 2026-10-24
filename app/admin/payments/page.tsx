@@ -250,12 +250,12 @@ export default function AdminPaymentsPage() {
                   {p.customer_vpa}
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                  className={`text-xs font-bold uppercase ${
                     p.status === 'verified'
-                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                      ? 'text-emerald-600 dark:text-emerald-400'
                       : p.status === 'rejected'
-                        ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
-                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                        ? 'text-rose-600 dark:text-rose-400'
+                        : 'text-amber-600 dark:text-amber-400'
                   }`}
                 >
                   {p.status}
@@ -320,8 +320,7 @@ export default function AdminPaymentsPage() {
                     {p.customer_vpa}
                   </td>
                   <td className="px-5 py-4 text-xs whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-[#121815] px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
-                      <Clock className="size-3" />
+                    <span className="text-xs text-gray-500">
                       {formatTimeAgo(p.created_at)}
                     </span>
                   </td>

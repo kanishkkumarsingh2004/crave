@@ -281,13 +281,12 @@ export default function MapLiveAnalyticsPage() {
                   Live Map & Address Analytics
                 </h3>
                 {autoSyncInterval > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     {autoSyncInterval === 1 ? 'Real-Time Live (1s)' : `Auto ${autoSyncInterval}s`}
                   </span>
                 )}
                 {lastSyncedAt && !syncError && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400">
+                  <span className="text-xs font-mono text-stone-500 dark:text-stone-400">
                     Synced{' '}
                     {lastSyncedAt.toLocaleTimeString([], {
                       hour: '2-digit',
@@ -297,7 +296,7 @@ export default function MapLiveAnalyticsPage() {
                   </span>
                 )}
                 {syncError && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                  <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
                     Stale Telemetry ({syncError})
                   </span>
                 )}
@@ -607,7 +606,7 @@ export default function MapLiveAnalyticsPage() {
                   <Building className="size-4 text-purple-600" />
                   <h4 className="font-extrabold text-sm text-[#18201c]">Address Directory</h4>
                 </div>
-                <span className="text-[10px] font-extrabold font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full border border-purple-200">
+                <span className="text-[10px] font-bold font-mono text-purple-700">
                   {addressPins.length} Locations
                 </span>
               </div>
@@ -645,7 +644,7 @@ export default function MapLiveAnalyticsPage() {
                               {addr.name}
                             </span>
                           </div>
-                          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">
+                          <span className="text-[9px] font-mono text-gray-500 font-bold uppercase shrink-0">
                             {addr.status}
                           </span>
                         </div>

@@ -647,29 +647,23 @@ export default function AdminPaymentConfigPage() {
               </div>
 
               {/* Server env kill-switch status (read-only; reflects RAZORPAY_ENABLED in env) */}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                  className={
                     razorpayEnvEnabled
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  }`}
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }
                 >
-                  <span
-                    className={`size-1.5 rounded-full ${razorpayEnvEnabled ? 'bg-emerald-500' : 'bg-red-500'}`}
-                  />
                   Gateway env: {razorpayEnvEnabled ? 'Enabled' : 'Disabled'}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                  className={
                     razorpayRouteEnvEnabled
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`}
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-gray-500'
+                  }
                 >
-                  <span
-                    className={`size-1.5 rounded-full ${razorpayRouteEnvEnabled ? 'bg-emerald-500' : 'bg-gray-400'}`}
-                  />
                   Route env: {razorpayRouteEnvEnabled ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
@@ -717,10 +711,9 @@ export default function AdminPaymentConfigPage() {
         <div className="lg:col-span-5 flex flex-col gap-6">
           <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-md sticky top-24">
             <div className="flex items-center justify-between">
-              <span className="rounded-full bg-[#f1f6d9] dark:bg-[#121815] px-3 py-1 text-[10px] font-bold uppercase text-[#6a8014] dark:text-[#d9f447] border border-transparent dark:border-[#27342d]">
+              <span className="text-xs font-bold uppercase text-[#6a8014] dark:text-[#d9f447]">
                 Interactive Simulator
               </span>
-              <Sparkles className="size-4 text-amber-500 animate-pulse" />
             </div>
             <h3 className="mt-2 text-xl font-bold text-[#18201c] dark:text-white">
               Dynamic Pricing Playground
@@ -851,7 +844,7 @@ export default function AdminPaymentConfigPage() {
                   <ShieldCheck className="size-4 text-emerald-700 dark:text-emerald-400" /> Live
                   Customer Checkout Preview
                 </span>
-                <span className="rounded-full bg-emerald-200/70 dark:bg-emerald-900/60 px-2 py-0.5 text-[9px] font-extrabold text-emerald-900 dark:text-emerald-300 uppercase">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                   Active
                 </span>
               </div>

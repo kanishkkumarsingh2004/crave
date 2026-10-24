@@ -380,7 +380,16 @@ b {
   align-items: center;
   gap: 9px;
 }
-.connection-pill,
+.connection-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #8f9b93;
+  font-size: 11px;
+  font-weight: 800;
+}
 .duty-toggle {
   display: flex;
   align-items: center;
@@ -398,7 +407,6 @@ b {
 }
 .connection-pill.connected {
   color: var(--green);
-  border-color: rgb(83 224 140 / 25%);
 }
 .duty-toggle span {
   width: 9px;
@@ -480,11 +488,11 @@ b {
   letter-spacing: -0.04em;
 }
 .count-badge {
-  border: 1px solid #304037;
-  border-radius: 99px;
-  padding: 8px 12px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   color: #a8b2ab;
-  background: var(--surface);
+  background: transparent;
   font-size: 11px;
   font-weight: 800;
 }
@@ -851,11 +859,11 @@ b {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border-radius: 99px;
-  padding: 7px 9px;
+  border-radius: 0;
+  padding: 0;
   color: #9eaaa2;
-  background: #19241d;
-  font-size: 10px;
+  background: transparent;
+  font-size: 11px;
   font-weight: 700;
 }
 .offer-facts svg {
@@ -863,7 +871,7 @@ b {
 }
 .offer-facts .tip-chip {
   color: var(--green);
-  background: rgb(83 224 140 / 10%);
+  background: transparent;
 }
 .offer-accept {
   width: 100%;

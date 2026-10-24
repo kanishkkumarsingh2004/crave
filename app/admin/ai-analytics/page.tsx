@@ -36,8 +36,7 @@ export default function AIAnalyticsPage() {
         'Time-series neural transformers that forecast meal order spikes 48 hours in advance based on weather, local events, and historical demand.',
       icon: LineChart,
       status: 'In Neural Training (85%)',
-      badgeColor:
-        'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800/50',
+      badgeColor: 'text-purple-600 dark:text-purple-400',
       progress: 85,
     },
     {
@@ -47,8 +46,7 @@ export default function AIAnalyticsPage() {
         'AI agents analyzing item profit margins and elasticity, suggesting optimal menu prices and high-yield dish bundles to kitchen vendors.',
       icon: TrendingUp,
       status: 'Model Fine-Tuning (70%)',
-      badgeColor:
-        'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/50',
+      badgeColor: 'text-amber-600 dark:text-amber-400',
       progress: 70,
     },
     {
@@ -58,8 +56,7 @@ export default function AIAnalyticsPage() {
         'Graph neural networks (GNNs) grouping multi-drop delivery orders to slash rider trip times and reduce fuel footprint by up to 34%.',
       icon: MapPin,
       status: 'Simulation Mode (90%)',
-      badgeColor:
-        'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800/50',
+      badgeColor: 'text-blue-600 dark:text-blue-400',
       progress: 90,
     },
     {
@@ -69,8 +66,7 @@ export default function AIAnalyticsPage() {
         'Hyper-personalized grocery & dish recommendation engine predicting customer cravings and triggering smart discount triggers.',
       icon: Zap,
       status: 'Data Pipeline Ready (95%)',
-      badgeColor:
-        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50',
+      badgeColor: 'text-emerald-600 dark:text-emerald-400',
       progress: 95,
     },
   ]
@@ -80,12 +76,12 @@ export default function AIAnalyticsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#738814] dark:text-[#d9f447] bg-[#f0f6d6] dark:bg-[#121815] px-2.5 py-0.5 rounded-full border border-[#dce8b0] dark:border-[#27342d]">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#738814] dark:text-[#d9f447]">
               Admin Intelligence
             </span>
-            <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800/50">
-              <Sparkles className="size-3" /> Crave AI v2.0
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+              Crave AI v2.0
             </span>
           </div>
           <h1 className="mt-2 text-2xl font-black text-[#18201c] dark:text-white sm:text-3xl tracking-tight">
@@ -105,10 +101,9 @@ export default function AIAnalyticsPage() {
         <div className="absolute -bottom-24 -left-24 size-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-xs font-bold text-[#d9f447] backdrop-blur-md mb-4">
-            <Bot className="size-4 animate-bounce" />
-            <span>Feature Under Active Neural Training</span>
-          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#d9f447] mb-3">
+            Feature Under Active Neural Training
+          </p>
 
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
             Something Extraordinary is <span className="text-[#d9f447]">Coming Soon</span>
@@ -161,7 +156,7 @@ export default function AIAnalyticsPage() {
               Overall Neural Model Pipeline Readiness
             </h3>
           </div>
-          <span className="font-mono text-sm font-black text-[#86a018] dark:text-[#d9f447] bg-[#f0f6d6] dark:bg-[#121815] px-3 py-1 rounded-full border border-[#dce8b0] dark:border-[#27342d]">
+          <span className="font-mono text-xs font-bold text-[#86a018] dark:text-[#d9f447]">
             88% Complete
           </span>
         </div>
@@ -196,9 +191,7 @@ export default function AIAnalyticsPage() {
                     <div className="grid size-11 place-items-center rounded-2xl bg-[#f5f8ec] dark:bg-[#121815] text-[#738814] dark:text-[#d9f447] border border-[#e1ebbd] dark:border-[#27342d]">
                       <Icon className="size-5" />
                     </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[10px] font-extrabold border ${feat.badgeColor}`}
-                    >
+                    <span className={`text-xs font-bold ${feat.badgeColor}`}>
                       {feat.status}
                     </span>
                   </div>

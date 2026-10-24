@@ -291,7 +291,7 @@ export default function AdminCouponsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
               Admin Promotional Engine
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -429,8 +429,7 @@ export default function AdminCouponsPage() {
                   className="hover:bg-gray-50/60 dark:hover:bg-[#202923]/60 transition"
                 >
                   <td className="py-4 px-4 font-bold text-sm">
-                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 font-mono tracking-wider">
-                      <Tag className="size-3.5 text-purple-600 dark:text-purple-400" />
+                    <span className="font-mono font-bold text-sm text-purple-700 dark:text-purple-300 tracking-wider">
                       {c.code}
                     </span>
                   </td>
@@ -438,8 +437,7 @@ export default function AdminCouponsPage() {
                     {c.description}
                   </td>
                   <td className="py-4 px-4">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-900 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1 rounded-xl border border-purple-200 dark:border-purple-800/50">
-                      <Store className="size-3.5 text-purple-600 dark:text-purple-400" />
+                    <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
                       {!c.restaurantIds || c.restaurantIds.length === 0
                         ? 'All Stores'
                         : c.restaurantIds.length === 1
@@ -482,13 +480,12 @@ export default function AdminCouponsPage() {
                   <td className="py-4 px-4">
                     <button
                       onClick={() => toggleCouponActive(c.id)}
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition ${
+                      className={`text-xs font-bold uppercase transition hover:underline ${
                         c.isActive
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
-                          : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 hover:bg-rose-200'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-rose-600 dark:text-rose-400'
                       }`}
                     >
-                      {c.isActive ? <Check className="size-3" /> : <X className="size-3" />}
                       {c.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
@@ -535,16 +532,15 @@ export default function AdminCouponsPage() {
             className="rounded-3xl border border-[#e1e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-5 shadow-sm flex flex-col gap-3"
           >
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-3">
-              <span className="rounded-xl bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 font-mono flex items-center gap-1.5">
-                <Tag className="size-3.5 text-purple-700 dark:text-purple-400" />
+              <span className="font-mono font-bold text-xs text-purple-700 dark:text-purple-300">
                 {c.code}
               </span>
               <button
                 onClick={() => toggleCouponActive(c.id)}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                className={`text-xs font-bold uppercase transition hover:underline ${
                   c.isActive
-                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {c.isActive ? 'Active' : 'Inactive'}
@@ -812,8 +808,7 @@ export default function AdminCouponsPage() {
 
                 <div className="pt-1">
                   {selectedRestaurantIds.length === 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50">
-                      <Sparkles className="size-3 text-emerald-600 dark:text-emerald-400" />{' '}
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                       Platform-Wide (All Restaurants Allowed)
                     </span>
                   ) : (
@@ -939,7 +934,7 @@ export default function AdminCouponsPage() {
                   Deselect All
                 </button>
               </div>
-              <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1 rounded-full border border-purple-200 dark:border-purple-800/50">
+              <span className="text-xs font-bold text-purple-700 dark:text-purple-300">
                 {selectedRestaurantIds.length} Selected
               </span>
             </div>

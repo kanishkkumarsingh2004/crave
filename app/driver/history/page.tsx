@@ -18,7 +18,7 @@ export default function DriverHistoryPage() {
             Detailed logs of all completed drops and payouts.
           </p>
         </div>
-        <span className="mt-2 sm:mt-0 text-xs font-extrabold text-[#d9f447] bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 self-start sm:self-auto">
+        <span className="mt-2 sm:mt-0 text-xs font-bold text-[#d9f447] self-start sm:self-auto">
           {completedTrips.length} Total Deliveries Completed Today
         </span>
       </div>

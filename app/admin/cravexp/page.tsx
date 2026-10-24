@@ -475,10 +475,10 @@ export default function AdminCraveXPPage() {
                     <Store className="size-5" />
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${
+                    className={`text-xs font-bold uppercase ${
                       store.is_open
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                        : 'bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-gray-400'
                     }`}
                   >
                     {store.is_open ? 'Open' : 'Offline'}
@@ -489,7 +489,7 @@ export default function AdminCraveXPPage() {
                   {store.address || 'Address not configured'}
                 </p>
                 {store.id === CUSTOMER_CATALOG_STORE_ID && (
-                  <span className="mt-3 inline-flex rounded-lg bg-purple-100 px-2 py-1 text-[9px] font-black uppercase text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                  <span className="mt-3 block text-[10px] font-bold uppercase text-purple-600 dark:text-purple-400">
                     Customer catalog hub
                   </span>
                 )}
@@ -570,9 +570,10 @@ export default function AdminCraveXPPage() {
                         </p>
                       </div>
                       <span
-                        className={`size-2.5 shrink-0 rounded-full ${product.inStock ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                        title={product.inStock ? 'Available' : 'Out of stock'}
-                      />
+                        className={`text-[10px] font-bold shrink-0 ${product.inStock ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+                      >
+                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                      </span>
                     </div>
                     <div className="mt-3 flex items-end justify-between">
                       <div>

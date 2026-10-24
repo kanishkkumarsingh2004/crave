@@ -497,8 +497,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-8 gap-2.5">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">
-                  <Star className="size-2.5 fill-current" />
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
                   Top Rated
                 </span>
                 <span>Verified Partners</span>

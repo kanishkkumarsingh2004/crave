@@ -118,12 +118,12 @@ svg {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 11px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  color: #b9c5bc;
-  background: #101914;
-  font-size: 9px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  color: var(--lime);
+  background: transparent;
+  font-size: 10px;
   font-weight: 800;
 }
 .connection-chip svg {
@@ -793,12 +793,12 @@ svg {
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 5px 8px;
-  border-radius: 99px;
+  padding: 0;
+  border-radius: 0;
   color: var(--muted);
-  background: var(--chrome-bg);
-  box-shadow: 0 4px 12px var(--shadow-color);
-  font-size: 7px;
+  background: transparent;
+  box-shadow: none;
+  font-size: 8px;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -1589,16 +1589,17 @@ html[data-theme='light'] .partner-sheet-heading > button {
 }
 .health-pill {
   width: max-content;
-  padding: 7px 10px;
-  border-radius: 99px;
-  color: #f5c4cb;
-  background: #32181d;
-  font-size: 9px;
+  padding: 0;
+  border-radius: 0;
+  color: #ef4444;
+  background: transparent;
+  font-size: 11px;
   font-weight: 800;
+  text-transform: uppercase;
 }
 .health-pill.healthy {
-  color: #78e5a4;
-  background: rgb(72 191 118 / 10%);
+  color: #22c55e;
+  background: transparent;
 }
 .software-card.ready {
   border-color: rgb(217 244 71 / 35%);
