@@ -1390,17 +1390,28 @@ export default function App() {
 
   async function loadData(token?: string) {
     const authToken = token || getAuthToken()
-    const [profileResult, ordersResult, payoutsResult, upiResult] = await Promise.all([
-      apiRequest<{ profile: DriverProfile }>('/api/driver/profile', { token: authToken }),
+    // Profile is critical — let it throw on failure so the caller can react.
+    // Orders, payouts, and UPI are secondary: a failed endpoint must not block
+    // the dashboard from rendering after a successful login.
+    const profileResult = await apiRequest<{ profile: DriverProfile }>('/api/driver/profile', {
+      token: authToken,
+    })
+    setProfile(profileResult.profile)
+    const [ordersResult, payoutsResult, upiResult] = await Promise.allSettled([
       apiRequest<DriverOrdersResponse>('/api/driver/orders', { token: authToken }),
       apiRequest<{ payoutLogs: PayoutLog[] }>('/api/driver/payouts', { token: authToken }),
       apiRequest<{ savedUpiList: UpiAccount[] }>('/api/driver/upi', { token: authToken }),
     ])
-    setProfile(profileResult.profile)
-    setOrders(ordersResult.allAssignedOrders || [])
-    setCompletedTrips(ordersResult.completedTrips || [])
-    setPayouts(payoutsResult.payoutLogs || [])
-    setUpi(upiResult.savedUpiList || [])
+    if (ordersResult.status === 'fulfilled') {
+      setOrders(ordersResult.value.allAssignedOrders || [])
+      setCompletedTrips(ordersResult.value.completedTrips || [])
+    }
+    if (payoutsResult.status === 'fulfilled') {
+      setPayouts(payoutsResult.value.payoutLogs || [])
+    }
+    if (upiResult.status === 'fulfilled') {
+      setUpi(upiResult.value.savedUpiList || [])
+    }
   }
 
   async function loadOffers() {
@@ -1428,12 +1439,19 @@ export default function App() {
 
   async function startSession(sessionUser: DriverUser, token: string) {
     await saveAuthToken(token)
-    await loadData(token)
+    // Set both user and profile immediately from the already-authenticated
+    // sessionUser so the render guard (`!user || !profile`) clears right away,
+    // before the secondary data calls (orders/payouts/upi) complete.
+    // loadData will overwrite profile with the full server copy shortly after.
     setUser(sessionUser)
+    setProfile(sessionUser as DriverProfile)
     const storedOnline = await getStoredDutyStatus()
     setOnline(storedOnline)
     setNotificationsEnabled(await getNotificationPreference())
-    if (storedOnline) await loadOffers()
+    // Load full data in the background — secondary failures must not prevent
+    // the dashboard from rendering.
+    void loadData(token).catch(() => undefined)
+    if (storedOnline) void loadOffers().catch(() => undefined)
   }
 
   useEffect(() => {
