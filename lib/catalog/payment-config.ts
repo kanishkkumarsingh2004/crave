@@ -25,6 +25,8 @@ export interface PaymentConfig {
   enableCashOnDelivery: boolean
   enableUpiDeepLink: boolean
   requireUtrNumber: boolean
+  razorpayEnabled: boolean
+  razorpayRouteEnabled: boolean
 }
 
 export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -53,6 +55,8 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   enableCashOnDelivery: false,
   enableUpiDeepLink: true,
   requireUtrNumber: true,
+  razorpayEnabled: false,
+  razorpayRouteEnabled: false,
 }
 
 export const STORAGE_KEY = 'crave_admin_payment_config'

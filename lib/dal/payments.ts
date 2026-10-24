@@ -86,6 +86,8 @@ export async function upsertPaymentConfig(data: {
   enable_cash_on_delivery?: boolean
   enable_upi_deep_link?: boolean
   require_utr_number?: boolean
+  razorpay_enabled?: boolean
+  razorpay_route_enabled?: boolean
   is_active?: boolean
 }) {
   const { gst_rate_percent, ...rest } = data

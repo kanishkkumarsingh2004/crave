@@ -35,6 +35,7 @@ import {
 } from './update'
 import { connectCustomerOrders } from './realtime'
 import { openUpiPayment, buildUpiPaymentUrl } from './payment'
+import { startRazorpayCheckout } from './razorpay'
 import { checkoutDistanceKm, roadDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
@@ -763,6 +764,7 @@ function Checkout({
     [tipInput, setTipInput] = useState(''),
     [busy, setBusy] = useState(false),
     [awaitingUtr, setAwaitingUtr] = useState(false),
+    [paymentMethod, setPaymentMethod] = useState<'upi' | 'razorpay'>('upi'),
     [qrSheet, setQrSheet] = useState(false),
     [tipSheet, setTipSheet] = useState(false),
     [addressSheet, setAddressSheet] = useState(false),
@@ -1146,10 +1148,25 @@ function Checkout({
           </div>
         </form>
         <div className="upi-header">
-          <h2>Pay securely with UPI</h2>
-          <button className="upi-qr-btn" onClick={openQrSheet}>
-            View QR code
-          </button>
+          <h2>Pay securely</h2>
+          <div className="payment-method-selector">
+            <button
+              className={`method-btn ${paymentMethod === 'upi' ? 'active' : ''}`}
+              onClick={() => setPaymentMethod('upi')}
+            >
+              <span className="method-mark">UPI</span>
+              <span>Google Pay, PhonePe, Paytm, Any UPI</span>
+            </button>
+            {config?.razorpayEnabled && (
+              <button
+                className={`method-btn ${paymentMethod === 'razorpay' ? 'active' : ''} razorpay`}
+                onClick={() => setPaymentMethod('razorpay')}
+              >
+                <span className="method-mark">Razorpay</span>
+                <span>Credit Card, Debit Card, Net Banking, UPI</span>
+              </button>
+            )}
+          </div>
         </div>
         <div className="upi-card">
           <Icon name="wallet" />
@@ -1159,7 +1176,7 @@ function Checkout({
           </div>
         </div>
         {pricingError && <div className="error-box">{pricingError}</div>}
-        {!awaitingUtr ? (
+        {paymentMethod === 'upi' && !awaitingUtr ? (
           <>
             <p className="secure-note">
               Your order starts only after CRAVE verifies the UPI transaction.
@@ -1189,6 +1206,70 @@ function Checkout({
               </button>
             </div>
           </>
+        ) : paymentMethod === 'razorpay' ? (
+          <div className="pay-bar">
+            <div className="pay-bar-info">
+              <span className="pay-bar-mark">
+                <Icon name="wallet" />
+              </span>
+              <span>
+                <small>Pay using ▲</small>
+                <b>Razorpay</b>
+              </span>
+            </div>
+            <button
+              className="pay-bar-btn pay-bar-btn-razorpay"
+              disabled={!billing || !config || !!pricingError || busy}
+              onClick={async () => {
+                setBusy(true)
+                setError('')
+                try {
+                  const idempotency = crypto.randomUUID()
+                  const created = await apiRequest<any>('/api/orders', {
+                    method: 'POST',
+                    body: {
+                      idempotency_key: idempotency,
+                      customer_name: user.name,
+                      customer_phone: user.phone,
+                      restaurant_id: restaurant.id,
+                      restaurant_name: restaurant.name,
+                      address_id: selected,
+                      items: cart.map((x) => ({
+                        id: x.itemId,
+                        menuItemId: x.itemId,
+                        variantId: x.variantId,
+                        quantity: x.quantity,
+                        qty: x.quantity,
+                        name: x.name,
+                        price: x.price,
+                      })),
+                      payment_method: 'RAZORPAY',
+                      coupon_code: coupon || undefined,
+                      tip,
+                    },
+                  })
+                  const orderId = created?.orderId || created?.id
+                  if (!orderId) throw new Error('No order ID returned from server')
+                  await startRazorpayCheckout({
+                    orderId,
+                    apiRequest: (path, options) => apiRequest(path, options),
+                  })
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'Razorpay checkout failed.')
+                } finally {
+                  setBusy(false)
+                }
+              }}
+            >
+              {busy ? (
+                <>
+                  <Spinner /> Processing
+                </>
+              ) : (
+                `Pay ${money(totalToPay)} via Razorpay`
+              )}
+            </button>
+          </div>
         ) : (
           <div className="utr-box">
             <div className="success-line">

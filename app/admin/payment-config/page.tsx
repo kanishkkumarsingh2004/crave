@@ -7,6 +7,7 @@ import { loadPaymentConfig, PaymentConfig, savePaymentConfig } from '@/lib/payme
 import {
   CheckCircle2,
   CloudRain,
+  CreditCard,
   Flame,
   Percent,
   QrCode,
@@ -69,6 +70,8 @@ export default function AdminPaymentConfigPage() {
   const [enableCashOnDelivery, setEnableCashOnDelivery] = useState(false)
   const [enableUpiDeepLink, setEnableUpiDeepLink] = useState(true)
   const [requireUtrNumber, setRequireUtrNumber] = useState(true)
+  const [razorpayEnabled, setRazorpayEnabled] = useState(false)
+  const [razorpayRouteEnabled, setRazorpayRouteEnabled] = useState(false)
 
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -104,6 +107,8 @@ export default function AdminPaymentConfigPage() {
       setEnableCashOnDelivery(cfg.enableCashOnDelivery)
       setEnableUpiDeepLink(cfg.enableUpiDeepLink)
       setRequireUtrNumber(cfg.requireUtrNumber)
+      setRazorpayEnabled(cfg.razorpayEnabled)
+      setRazorpayRouteEnabled(cfg.razorpayRouteEnabled)
     })
   }, [])
 
@@ -202,6 +207,8 @@ export default function AdminPaymentConfigPage() {
       enableCashOnDelivery,
       enableUpiDeepLink,
       requireUtrNumber,
+      razorpayEnabled,
+      razorpayRouteEnabled,
     }
     setSaveError('')
     const saved = await savePaymentConfig(fullConfig)
@@ -590,6 +597,39 @@ export default function AdminPaymentConfigPage() {
                   Custom message shown to customers after completing payment and submitting their
                   12-digit UTR reference.
                 </p>
+              </div>
+            </div>
+
+            {/* SECTION 4b: Razorpay Gateway Configuration */}
+            <div className="mt-6 rounded-2xl border border-[#dfe4dc] dark:border-[#27342d] bg-amber-50/50 dark:bg-amber-900/10 p-4 shadow-sm">
+              <h4 className="font-bold text-sm text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                <CreditCard className="size-4" /> Razorpay Gateway
+              </h4>
+              <p className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5">
+                Enable Razorpay Checkout and Route split settlement. Requires RAZORPAY_KEY_ID and
+                RAZORPAY_KEY_SECRET in server environment.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#18201c] dark:text-white">Enable Razorpay Checkout</span>
+                  <AppleToggle
+                    checked={razorpayEnabled}
+                    onChange={setRazorpayEnabled}
+                    iconVariant="power"
+                    activeColor="bg-amber-600"
+                    ariaLabel="Enable Razorpay payments"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#18201c] dark:text-white">Enable Route Split Settlements</span>
+                  <AppleToggle
+                    checked={razorpayRouteEnabled}
+                    onChange={setRazorpayRouteEnabled}
+                    iconVariant="shield"
+                    activeColor="bg-amber-600"
+                    ariaLabel="Enable Razorpay Route transfers"
+                  />
+                </div>
               </div>
             </div>
           </div>

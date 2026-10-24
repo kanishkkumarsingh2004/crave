@@ -2410,6 +2410,54 @@ html[data-theme='dark'] .meter-track {
   width: 16px;
   height: 16px;
 }
+.pay-bar-btn-razorpay {
+  background: #070707;
+  color: #fff;
+}
+.pay-bar-btn-razorpay:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* ---- Payment method selector ---- */
+.payment-method-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.method-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 12px 'Manrope';
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.method-btn.active {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-alt);
+}
+.method-btn.razorpay.active {
+  color: #070707;
+  border-color: #070707;
+  background: #fff5f5;
+}
+.method-mark {
+  font: 700 11px 'Manrope';
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.method-btn .method-mark {
+  color: inherit;
+}
 .order-card {
   border: 1px solid #dfe3dd;
   border-radius: 19px;

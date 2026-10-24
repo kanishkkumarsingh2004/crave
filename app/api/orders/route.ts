@@ -325,13 +325,21 @@ export async function POST(request: Request) {
       const orderId = id || crypto.randomUUID()
       const paymentConfig = await getActiveConfig()
       const isCustomerActor = actor.role === 'user' || (actor.role as string) === 'customer'
-      if (isCustomerActor && !String(payment_method).toLowerCase().includes('upi')) {
+      const paymentMethodLower = String(payment_method || 'UPI Online').toLowerCase()
+
+      // Customer checkout supports UPI Online or Razorpay. Razorpay does not require a manual UTR;
+      // UTR validation applies only to the legacy manual-UTR flow.
+      if (isCustomerActor && !paymentMethodLower.includes('upi') && !paymentMethodLower.includes('razorpay')) {
         return NextResponse.json(
-          { error: 'Customer checkout supports UPI payments only.' },
+          { error: 'Customer checkout supports UPI Online or Razorpay payments only.' },
           { status: 400 }
         )
       }
-      if (isCustomerActor && (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))) {
+      if (
+        isCustomerActor &&
+        paymentMethodLower.includes('upi') &&
+        (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))
+      ) {
         return NextResponse.json(
           { error: 'Enter a valid 10–18 digit UPI transaction reference (UTR).' },
           { status: 400 }
@@ -1212,6 +1220,7 @@ export async function POST(request: Request) {
               platform_revenue: platformProfit,
               utr_ref: utr_ref ? String(utr_ref).trim() : undefined,
               financial_snapshot: canonicalResult as any,
+              total_amount_paise: canonicalResult.customerPayablePaise,
               idempotency_key: idempotencyKey || undefined,
             },
           })
@@ -1233,13 +1242,20 @@ export async function POST(request: Request) {
           }
 
           // 4. Create initial PaymentTransaction with pending status
+          const paymentGateway =
+            String(payment_method).toLowerCase().includes('razorpay')
+              ? 'RAZORPAY'
+              : String(payment_method).toLowerCase().includes('upi')
+                ? 'upi'
+                : 'cash_on_delivery'
           await tx.paymentTransaction.create({
             data: {
               id: `tx_${orderId}`,
               order_id: orderId,
-              gateway: payment_method.toLowerCase().includes('upi') ? 'upi' : 'cash_on_delivery',
+              gateway: paymentGateway,
               gateway_payment_id: utr_ref ? String(utr_ref).trim() : null,
               amount: calcResult.customerBilling.grandTotal,
+              amount_paise: canonicalResult.customerPayablePaise,
               currency: 'INR',
               status: 'pending',
               idempotency_key: idempotencyKey ? `tx_${idempotencyKey}` : `tx_key_${orderId}`,
