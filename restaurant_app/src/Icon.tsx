@@ -9,6 +9,7 @@ import {
   Languages,
   ListOrdered,
   LogOut,
+  MapPin,
   Menu,
   Pencil,
   Plus,
@@ -27,6 +28,7 @@ import type { SVGProps } from 'react'
 export type IconName =
   | 'home'
   | 'orders'
+  | 'pin'
   | 'menu'
   | 'sales'
   | 'settings'
@@ -51,6 +53,7 @@ export type IconName =
 const icons: Record<IconName, LucideIcon> = {
   home: Home,
   orders: ListOrdered,
+  pin: MapPin,
   menu: Menu,
   sales: BarChart3,
   settings: Settings,

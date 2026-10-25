@@ -12,7 +12,7 @@ interface AppUpdatePlugin {
   }>
 }
 
-const AppUpdate = registerPlugin<AppUpdatePlugin>('AppUpdate')
+export const AppUpdate = registerPlugin<AppUpdatePlugin>('AppUpdate')
 
 export interface RestaurantUpdate {
   versionCode: number

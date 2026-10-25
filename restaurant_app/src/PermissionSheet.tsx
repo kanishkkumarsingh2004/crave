@@ -9,6 +9,12 @@ import {
   type PermissionState,
 } from './permissions'
 
+const GRANTED_ICON: Record<PermissionId, IconName> = {
+  location: 'pin',
+  notifications: 'bell',
+  updates: 'download',
+}
+
 /**
  * The first-run permission sheet for the restaurant app.
  */
@@ -60,22 +66,22 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <section
-        className="bottom-sheet permission-sheet"
+        className="sheet permission-sheet"
         role="dialog"
         aria-modal="true"
         aria-labelledby="permission-title"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="sheet-handle" />
-        <div className="sheet-title">
+        <header className="sheet-header">
           <div>
             <p className="eyebrow">WELCOME TO CRAVE KITCHEN</p>
             <h2 id="permission-title">A few permissions</h2>
           </div>
-          <button className="round pale" onClick={onClose} aria-label="Close">
+          <button className="icon-button" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>
-        </div>
+        </header>
         <p className="permission-note">
           These keep the app fast and the right information on screen. You can change them any time
           in your device settings.
@@ -85,21 +91,25 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
           {PERMISSION_REQUESTS.map((request) => {
             const state = states[request.id] || 'prompt'
             const granted = state === 'granted'
+            const iconName = GRANTED_ICON[request.id]
             return (
-              <div className={`permission-row${granted ? ' granted' : ''}`} key={request.id}>
-                <span className="permission-icon">
-                  <Icon name={request.icon as IconName} />
+              <div className="permission-row" key={request.id}>
+                <span className={`permission-icon ${granted ? 'granted' : ''}`}>
+                  <Icon name={iconName} />
                 </span>
-                <span className="permission-copy">
+                <div className="permission-copy">
                   <b>{request.title}</b>
                   <small>{request.reason}</small>
-                </span>
+                </div>
                 {request.id === 'updates' ? (
-                  <button className="permission-action" onClick={() => void ask(request.id)}>
+                  <button
+                    className="permission-action updates"
+                    onClick={() => void ask(request.id)}
+                  >
                     {granted ? 'Allowed' : 'Open settings'}
                   </button>
                 ) : granted ? (
-                  <span className="permission-state">Allowed</span>
+                  <span className="permission-state allowed">Allowed</span>
                 ) : (
                   <button
                     className="permission-action"
@@ -115,10 +125,10 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
         </div>
 
         <div className="permission-actions">
-          <button className="secondary" onClick={() => void openAppSettings()}>
+          <button className="secondary-button" onClick={() => void openAppSettings()}>
             Open device settings
           </button>
-          <button className="primary" onClick={() => void grantAll()}>
+          <button className="primary-button" onClick={() => void grantAll()}>
             Allow all
           </button>
         </div>
