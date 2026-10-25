@@ -20,7 +20,7 @@ interface AppChecksumPlugin {
   getInstalledChecksum(): Promise<{ sha256: string }>
 }
 
-const AppChecksum = registerPlugin<AppChecksumPlugin>('AppUpdate')
+const AppChecksum = registerPlugin<AppChecksumPlugin>('AppChecksum')
 
 const STORAGE_KEY = 'crave_installed_checksum'
 
