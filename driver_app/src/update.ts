@@ -14,6 +14,8 @@ interface AppUpdatePlugin {
 
 const AppUpdate = registerPlugin<AppUpdatePlugin>('AppUpdate')
 
+export { AppUpdate }
+
 export interface DriverUpdate {
   versionCode: number
   versionName: string

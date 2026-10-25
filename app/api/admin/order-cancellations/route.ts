@@ -10,10 +10,7 @@ export async function GET(request: Request) {
     // Fetch cancelled orders or orders that have a refund entry
     const cancelledOrders = await prisma.order.findMany({
       where: {
-        OR: [
-          { status: 'cancelled' },
-          { refunds: { some: {} } },
-        ],
+        OR: [{ status: 'cancelled' }, { refunds: { some: {} } }],
       },
       include: {
         customer: {
@@ -55,7 +52,9 @@ export async function GET(request: Request) {
       const refundStatus = activeRefund ? activeRefund.status : 'not_requested'
       const amountPaise =
         order.total_amount_paise || (order.total_amount ? order.total_amount * 100 : 0)
-      const refundAmountPaise = activeRefund?.amount_paise || (activeRefund?.amount ? activeRefund.amount * 100 : amountPaise)
+      const refundAmountPaise =
+        activeRefund?.amount_paise ||
+        (activeRefund?.amount ? activeRefund.amount * 100 : amountPaise)
 
       if (refundStatus === 'pending') {
         pendingRefundsCount++
@@ -157,17 +156,11 @@ export async function POST(request: Request) {
     const { orderId, refundId, action, notes } = body
 
     if (!orderId || !action) {
-      return NextResponse.json(
-        { error: 'orderId and action are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'orderId and action are required' }, { status: 400 })
     }
 
     if (action !== 'approve' && action !== 'reject') {
-      return NextResponse.json(
-        { error: 'action must be approve or reject' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'action must be approve or reject' }, { status: 400 })
     }
 
     const order = await prisma.order.findUnique({
@@ -179,9 +172,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    let targetRefund = refundId
-      ? order.refunds.find((r) => r.id === refundId)
-      : order.refunds[0]
+    let targetRefund = refundId ? order.refunds.find((r) => r.id === refundId) : order.refunds[0]
 
     const amountPaise =
       order.total_amount_paise || (order.total_amount ? order.total_amount * 100 : 0)
@@ -219,7 +210,8 @@ export async function POST(request: Request) {
           admin_id: admin.id,
           order_id: orderId,
           action: action === 'approve' ? 'REFUND_APPROVED' : 'REFUND_REJECTED',
-          reason: notes || (action === 'approve' ? 'Refund approved from queue' : 'Refund rejected'),
+          reason:
+            notes || (action === 'approve' ? 'Refund approved from queue' : 'Refund rejected'),
         },
       })
 

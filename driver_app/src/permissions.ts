@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { Geolocation } from '@capacitor/geolocation'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Preferences } from '@capacitor/preferences'
-import { registerPlugin } from '@capacitor/core'
+import { AppUpdate } from './update'
 
 /**
  * The permissions the driver app can ask for, and what each one is for.
@@ -128,7 +128,7 @@ export async function permissionState(id: PermissionId): Promise<PermissionState
   // device setting rather than a runtime dialog.
   if (!Capacitor.isNativePlatform()) return 'unavailable'
   try {
-    const result = await AppUpdateBridge.canInstallPackages()
+    const result = await (AppUpdate as unknown as AppUpdateBridgePlugin).canInstallPackages()
     return result?.allowed ? 'granted' : 'prompt'
   } catch {
     return 'unavailable'
@@ -182,7 +182,7 @@ export async function requestPermission(id: PermissionId): Promise<PermissionSta
 
   if (!Capacitor.isNativePlatform()) return 'unavailable'
   try {
-    await AppUpdateBridge.openInstallSettings()
+    await (AppUpdate as unknown as AppUpdateBridgePlugin).openInstallSettings()
     return 'prompt'
   } catch {
     return 'unavailable'
@@ -193,7 +193,7 @@ export async function requestPermission(id: PermissionId): Promise<PermissionSta
 export async function openAppSettings(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   try {
-    await AppUpdateBridge.openAppSettings()
+    await (AppUpdate as unknown as AppUpdateBridgePlugin).openAppSettings()
   } catch {
     // ignore
   }
@@ -206,5 +206,3 @@ interface AppUpdateBridgePlugin {
   openInstallSettings(): Promise<void>
   openAppSettings(): Promise<void>
 }
-
-const AppUpdateBridge = registerPlugin<AppUpdateBridgePlugin>('AppUpdate')

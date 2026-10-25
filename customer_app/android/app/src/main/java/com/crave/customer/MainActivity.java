@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(AppUpdatePlugin.class);
         registerPlugin(UpiLauncherPlugin.class);
+        registerPlugin(OrderPollingPlugin.class);
         super.onCreate(savedInstanceState);
         hideSystemBars();
     }

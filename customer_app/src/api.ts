@@ -6,6 +6,10 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
   /\/$/,
   ''
 )
+
+export function getApiOrigin(): string {
+  return API_ORIGIN
+}
 const TOKEN_KEY = 'crave_customer_auth_token'
 export const COOKIE_SESSION_TOKEN = 'cookie-session'
 let currentToken = ''

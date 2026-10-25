@@ -264,7 +264,8 @@ export default function AdminPaymentConfigPage() {
             Payment & Pricing Engine
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-[#63716a] dark:text-[#97a59d]">
-            Configure customer platform fees, delivery tariffs, restaurant revenue split, surge rules, and gateway settlements.
+            Configure customer platform fees, delivery tariffs, restaurant revenue split, surge
+            rules, and gateway settlements.
           </p>
         </div>
 
@@ -296,7 +297,8 @@ export default function AdminPaymentConfigPage() {
                   Platform Service Fees & Revenue Split
                 </h2>
                 <p className="text-xs text-[#717f77] dark:text-[#97a59d] mt-0.5">
-                  Set baseline order convenience fees, kitchen commission, packaging limits, and GST rate.
+                  Set baseline order convenience fees, kitchen commission, packaging limits, and GST
+                  rate.
                 </p>
               </div>
             </div>
@@ -306,9 +308,7 @@ export default function AdminPaymentConfigPage() {
               <div className="rounded-2xl border border-[#e8ece5] dark:border-[#1e2722] bg-[#fbfcfb] dark:bg-[#0e1310] p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#18201c] dark:text-white">
-                      Platform Fee
-                    </span>
+                    <span className="font-bold text-[#18201c] dark:text-white">Platform Fee</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#86a018]/15 text-[#5e730f] dark:text-[#d9f447]">
                       Per Order
                     </span>
@@ -362,9 +362,7 @@ export default function AdminPaymentConfigPage() {
               <div className="rounded-2xl border border-[#e8ece5] dark:border-[#1e2722] bg-[#fbfcfb] dark:bg-[#0e1310] p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#18201c] dark:text-white">
-                      Vendor Cut
-                    </span>
+                    <span className="font-bold text-[#18201c] dark:text-white">Vendor Cut</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       Commission
                     </span>
@@ -390,9 +388,7 @@ export default function AdminPaymentConfigPage() {
               <div className="rounded-2xl border border-[#e8ece5] dark:border-[#1e2722] bg-[#fbfcfb] dark:bg-[#0e1310] p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#18201c] dark:text-white">
-                      Packaging Cap
-                    </span>
+                    <span className="font-bold text-[#18201c] dark:text-white">Packaging Cap</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-500/10 text-stone-600 dark:text-stone-400">
                       Container
                     </span>
@@ -559,7 +555,8 @@ export default function AdminPaymentConfigPage() {
                   maxLabel="100% (Full)"
                 />
                 <p className="mt-2 text-[11px] text-[#717f77] dark:text-[#88968e]">
-                  Couriers receive {driverPayoutShare}% of delivery fee + 100% of customer tips directly. Platform retains {100 - driverPayoutShare}%.
+                  Couriers receive {driverPayoutShare}% of delivery fee + 100% of customer tips
+                  directly. Platform retains {100 - driverPayoutShare}%.
                 </p>
               </div>
             </div>
@@ -616,7 +613,8 @@ export default function AdminPaymentConfigPage() {
                 <div className="rounded-2xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-4 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-blue-950 dark:text-blue-200 flex items-center gap-1.5 text-xs">
-                      <CloudRain className="size-4 text-blue-600 dark:text-blue-400" /> Rain Weather Fee
+                      <CloudRain className="size-4 text-blue-600 dark:text-blue-400" /> Rain Weather
+                      Fee
                     </span>
                     <AppleToggle
                       checked={isRainModeActive}
@@ -642,7 +640,8 @@ export default function AdminPaymentConfigPage() {
                 <div className="rounded-2xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/20 p-4 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-purple-950 dark:text-purple-200 flex items-center gap-1.5 text-xs">
-                      <Flame className="size-4 text-purple-600 dark:text-purple-400" /> Late Night Rush
+                      <Flame className="size-4 text-purple-600 dark:text-purple-400" /> Late Night
+                      Rush
                     </span>
                     <AppleToggle
                       checked={isNightSurgeActive}
@@ -679,7 +678,8 @@ export default function AdminPaymentConfigPage() {
                   Payment Gateway & Payee Settings
                 </h2>
                 <p className="text-xs text-[#717f77] dark:text-[#97a59d] mt-0.5">
-                  Configure Razorpay gateway controls, automated route settlements, and merchant identity.
+                  Configure Razorpay gateway controls, automated route settlements, and merchant
+                  identity.
                 </p>
               </div>
             </div>
@@ -823,7 +823,9 @@ export default function AdminPaymentConfigPage() {
             className="flex items-center justify-center gap-2.5 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] py-4 px-6 text-sm font-extrabold text-[#d9f447] dark:text-[#121815] shadow-lg hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 cursor-pointer"
           >
             <Save className="size-4.5" />
-            <span>{isSaving ? 'Synchronizing Engine...' : 'Save & Activate Pricing Configuration'}</span>
+            <span>
+              {isSaving ? 'Synchronizing Engine...' : 'Save & Activate Pricing Configuration'}
+            </span>
           </button>
         </form>
 
@@ -843,7 +845,8 @@ export default function AdminPaymentConfigPage() {
               Dynamic Pricing Playground
             </h3>
             <p className="text-xs text-[#717f77] dark:text-[#97a59d] mt-0.5">
-              Simulate an order to test live customer breakdown, kitchen payouts, and platform margin.
+              Simulate an order to test live customer breakdown, kitchen payouts, and platform
+              margin.
             </p>
 
             {/* Test Controls */}
@@ -899,9 +902,12 @@ export default function AdminPaymentConfigPage() {
               {testDistanceKm > getNum(baseDistanceKm) && (
                 <div className="flex justify-between text-white/70">
                   <span>
-                    Extra Distance ({Math.ceil(testDistanceKm - getNum(baseDistanceKm))} km @ ₹{getNum(perKmRate)}/km)
+                    Extra Distance ({Math.ceil(testDistanceKm - getNum(baseDistanceKm))} km @ ₹
+                    {getNum(perKmRate)}/km)
                   </span>
-                  <span className="font-extrabold text-white">+₹{playgroundCalc.extraDistanceFee}</span>
+                  <span className="font-extrabold text-white">
+                    +₹{playgroundCalc.extraDistanceFee}
+                  </span>
                 </div>
               )}
 
@@ -995,7 +1001,9 @@ export default function AdminPaymentConfigPage() {
                     <span className="size-2 rounded-full bg-emerald-400" />
                     Platform Net Margin ({playgroundCalc.platformMarginPct}%):
                   </span>
-                  <span className="font-black text-emerald-400">₹{playgroundCalc.platformNetProfit}</span>
+                  <span className="font-black text-emerald-400">
+                    ₹{playgroundCalc.platformNetProfit}
+                  </span>
                 </div>
               </div>
             </div>

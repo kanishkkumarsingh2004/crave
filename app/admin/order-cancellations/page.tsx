@@ -97,7 +97,9 @@ export default function OrderCancellationsPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'failed' | 'no_refund'>('all')
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'pending' | 'completed' | 'failed' | 'no_refund'
+  >('all')
   const [selectedOrder, setSelectedOrder] = useState<CancelledOrder | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [rejectModalOrder, setRejectModalOrder] = useState<CancelledOrder | null>(null)
@@ -125,7 +127,11 @@ export default function OrderCancellationsPage() {
     loadData()
   }, [])
 
-  const handleProcessRefund = async (order: CancelledOrder, action: 'approve' | 'reject', notes?: string) => {
+  const handleProcessRefund = async (
+    order: CancelledOrder,
+    action: 'approve' | 'reject',
+    notes?: string
+  ) => {
     setActionLoading(true)
     try {
       const res = await apiFetch('/api/admin/order-cancellations', {
@@ -135,7 +141,9 @@ export default function OrderCancellationsPage() {
           orderId: order.id,
           refundId: order.refund?.id,
           action,
-          notes: notes || (action === 'approve' ? 'Approved by Admin from Review Queue' : 'Rejected by Admin'),
+          notes:
+            notes ||
+            (action === 'approve' ? 'Approved by Admin from Review Queue' : 'Rejected by Admin'),
         }),
       })
       const json = await res.json()
@@ -212,7 +220,8 @@ export default function OrderCancellationsPage() {
             Order Cancellations &amp; Refund Queue
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Review customer cancellations placed within the 15-second window, verify payments, and approve refunds safely.
+            Review customer cancellations placed within the 15-second window, verify payments, and
+            approve refunds safely.
           </p>
         </div>
 
@@ -258,7 +267,8 @@ export default function OrderCancellationsPage() {
             {formatInr(metrics.pendingRefundsRupees)}
           </p>
           <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80 mt-1">
-            {metrics.pendingRefundsCount} {metrics.pendingRefundsCount === 1 ? 'order' : 'orders'} waiting in queue
+            {metrics.pendingRefundsCount} {metrics.pendingRefundsCount === 1 ? 'order' : 'orders'}{' '}
+            waiting in queue
           </p>
         </div>
 
@@ -288,9 +298,7 @@ export default function OrderCancellationsPage() {
               <ShieldCheck className="size-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-[#18201c] dark:text-white mt-2">
-            Strict 15s Lock
-          </p>
+          <p className="text-2xl font-black text-[#18201c] dark:text-white mt-2">Strict 15s Lock</p>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
             Zero vendor losses post kitchen prep
           </p>
@@ -454,7 +462,9 @@ export default function OrderCancellationsPage() {
                             <span>Refund Declined</span>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-gray-400 italic">No refund queued (Unpaid)</span>
+                          <span className="text-[11px] text-gray-400 italic">
+                            No refund queued (Unpaid)
+                          </span>
                         )}
                       </td>
 
@@ -517,9 +527,7 @@ export default function OrderCancellationsPage() {
                   <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                     Cancelled Order
                   </span>
-                  <span className="text-xs text-gray-400 font-mono">
-                    #{selectedOrder.id}
-                  </span>
+                  <span className="text-xs text-gray-400 font-mono">#{selectedOrder.id}</span>
                 </div>
                 <h3 className="text-xl font-extrabold text-[#18201c] dark:text-white mt-1">
                   Cancellation &amp; Audit Inspection
@@ -548,10 +556,16 @@ export default function OrderCancellationsPage() {
                     {selectedOrder.customer.name}
                   </p>
                   <p className="text-gray-500 dark:text-gray-400 mt-0.5">
-                    Email: <span className="text-[#18201c] dark:text-white font-mono">{selectedOrder.customer.email}</span>
+                    Email:{' '}
+                    <span className="text-[#18201c] dark:text-white font-mono">
+                      {selectedOrder.customer.email}
+                    </span>
                   </p>
                   <p className="text-gray-500 dark:text-gray-400 mt-0.5">
-                    Phone: <span className="text-[#18201c] dark:text-white font-mono">{selectedOrder.customer.phone}</span>
+                    Phone:{' '}
+                    <span className="text-[#18201c] dark:text-white font-mono">
+                      {selectedOrder.customer.phone}
+                    </span>
                   </p>
                 </div>
 
@@ -574,13 +588,16 @@ export default function OrderCancellationsPage() {
               {/* Items List */}
               <div className="rounded-2xl bg-gray-50 dark:bg-[#18201c] p-4 border border-gray-200 dark:border-[#25332a]">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5 mb-3">
-                  <UtensilsCrossed className="size-3 text-[#d9f447]" /> Ordered Dishes ({selectedOrder.items.length})
+                  <UtensilsCrossed className="size-3 text-[#d9f447]" /> Ordered Dishes (
+                  {selectedOrder.items.length})
                 </p>
                 <div className="divide-y divide-gray-200 dark:divide-[#25332a]">
                   {selectedOrder.items.map((item, idx) => (
                     <div key={idx} className="py-2 flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-[#18201c] dark:text-white">{item.name}</span>
+                        <span className="font-bold text-[#18201c] dark:text-white">
+                          {item.name}
+                        </span>
                         {item.variantName && (
                           <span className="ml-1.5 text-gray-400">({item.variantName})</span>
                         )}
@@ -601,11 +618,15 @@ export default function OrderCancellationsPage() {
                 </p>
                 <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Items Subtotal</span>
-                  <span className="font-mono text-[#18201c] dark:text-white">₹{selectedOrder.subtotal}</span>
+                  <span className="font-mono text-[#18201c] dark:text-white">
+                    ₹{selectedOrder.subtotal}
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Delivery Partner Fee</span>
-                  <span className="font-mono text-[#18201c] dark:text-white">₹{selectedOrder.deliveryFee}</span>
+                  <span className="font-mono text-[#18201c] dark:text-white">
+                    ₹{selectedOrder.deliveryFee}
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Packaging &amp; Handling</span>
@@ -615,11 +636,15 @@ export default function OrderCancellationsPage() {
                 </div>
                 <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Platform Fee</span>
-                  <span className="font-mono text-[#18201c] dark:text-white">₹{selectedOrder.platformFee}</span>
+                  <span className="font-mono text-[#18201c] dark:text-white">
+                    ₹{selectedOrder.platformFee}
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>GST &amp; Taxes</span>
-                  <span className="font-mono text-[#18201c] dark:text-white">₹{selectedOrder.gst}</span>
+                  <span className="font-mono text-[#18201c] dark:text-white">
+                    ₹{selectedOrder.gst}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t border-gray-200 dark:border-[#25332a] pt-2 text-sm font-black text-[#18201c] dark:text-white">
                   <span>Total Order Value</span>
@@ -655,14 +680,18 @@ export default function OrderCancellationsPage() {
                 {selectedOrder.refund && (
                   <div className="mt-3 space-y-1">
                     <p className="text-xs text-gray-300">
-                      Refund Amount: <strong className="text-[#d9f447] text-sm">₹{selectedOrder.refund.amount}</strong>
+                      Refund Amount:{' '}
+                      <strong className="text-[#d9f447] text-sm">
+                        ₹{selectedOrder.refund.amount}
+                      </strong>
                     </p>
                     <p className="text-[11px] text-gray-400">
                       Reason: <span className="text-white">{selectedOrder.refund.reason}</span>
                     </p>
                     {selectedOrder.refund.processedAt && (
                       <p className="text-[11px] text-gray-400">
-                        Processed At: {new Date(selectedOrder.refund.processedAt).toLocaleString('en-IN')}
+                        Processed At:{' '}
+                        {new Date(selectedOrder.refund.processedAt).toLocaleString('en-IN')}
                       </p>
                     )}
                   </div>
@@ -685,7 +714,9 @@ export default function OrderCancellationsPage() {
                       onClick={() => handleProcessRefund(selectedOrder, 'approve')}
                       className="rounded-xl bg-[#d9f447] hover:bg-[#c8e434] text-[#18201c] px-5 py-2 text-xs font-extrabold transition shadow-md disabled:opacity-50"
                     >
-                      {actionLoading ? 'Processing…' : `Approve & Refund ₹${selectedOrder.refund.amount}`}
+                      {actionLoading
+                        ? 'Processing…'
+                        : `Approve & Refund ₹${selectedOrder.refund.amount}`}
                     </button>
                   </div>
                 )}
@@ -704,7 +735,8 @@ export default function OrderCancellationsPage() {
               <h3 className="text-lg font-black">Decline Customer Refund</h3>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Please specify the audit reason for rejecting this refund request for Order #{rejectModalOrder.id.slice(0, 8).toUpperCase()}.
+              Please specify the audit reason for rejecting this refund request for Order #
+              {rejectModalOrder.id.slice(0, 8).toUpperCase()}.
             </p>
 
             <textarea

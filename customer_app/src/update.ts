@@ -11,6 +11,8 @@ interface UpdatePlugin {
   }): Promise<{ permissionRequired?: boolean }>
 }
 const AppUpdate = registerPlugin<UpdatePlugin>('AppUpdate')
+
+export { AppUpdate }
 export interface CustomerUpdate {
   versionCode: number
   versionName: string

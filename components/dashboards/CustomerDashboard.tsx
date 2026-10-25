@@ -13,7 +13,10 @@ import { useCart } from '@/lib/cart-context'
 import { getCachedLocation } from '@/lib/client-location'
 import { useToast } from '@/lib/toast-context'
 import { useApprovalUpdates, useDriverLocation, useOrderUpdates } from '@/lib/websocket'
-import { getOrderStatusNotification, showBrowserNotification } from '@/lib/notifications/web-notification'
+import {
+  getOrderStatusNotification,
+  showBrowserNotification,
+} from '@/lib/notifications/web-notification'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -3417,7 +3420,14 @@ export default function CustomerDashboard({
                     Need help with an ongoing order?
                   </h4>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                    Call priority helpline at <a href="tel:+919625694673" className="font-bold text-[#18201c] dark:text-[#d9f447] underline">-9625694673</a> (24/7).
+                    Call priority helpline at{' '}
+                    <a
+                      href="tel:+919625694673"
+                      className="font-bold text-[#18201c] dark:text-[#d9f447] underline"
+                    >
+                      -9625694673
+                    </a>{' '}
+                    (24/7).
                   </p>
                 </div>
               </div>
@@ -3460,7 +3470,8 @@ export default function CustomerDashboard({
                   Need Help with an Order? Reach Out Directly
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-                  Have an urgent question about a live order, cancellation window, refund queue, or delivery partner? Reach our dedicated customer desk directly.
+                  Have an urgent question about a live order, cancellation window, refund queue, or
+                  delivery partner? Reach our dedicated customer desk directly.
                 </p>
 
                 {/* Primary Contact CTA Buttons */}
@@ -3671,7 +3682,10 @@ export default function CustomerDashboard({
                     Still need help?
                   </h4>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                    Call our customer assistance team directly at <strong className="text-[#18201c] dark:text-white font-mono">-9625694673</strong>
+                    Call our customer assistance team directly at{' '}
+                    <strong className="text-[#18201c] dark:text-white font-mono">
+                      -9625694673
+                    </strong>
                   </p>
                 </div>
               </div>
@@ -3753,7 +3767,8 @@ export default function CustomerDashboard({
                               className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline transition cursor-pointer shrink-0"
                               title={`Order can be cancelled within 15 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
-                              <Trash2 className="size-3.5 text-rose-400" /> Cancel Order ({cancelTimeRemaining}s)
+                              <Trash2 className="size-3.5 text-rose-400" /> Cancel Order (
+                              {cancelTimeRemaining}s)
                             </button>
                           )}
                           {(activeOrder.statusStep === 4 ||

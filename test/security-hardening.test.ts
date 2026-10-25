@@ -60,9 +60,16 @@ test('delivery OTP is only returned to its customer or an admin', () => {
   assert.equal(sanitizeOrderForActor(actor('admin', 'admin-1'), order).delivery_otp, '123456')
   assert.equal('delivery_otp' in sanitizeOrderForActor(actor('rider', 'rider-1'), order), false)
   assert.equal('delivery_otp' in sanitizeOrderForActor(actor('driver', 'rider-1'), order), false)
-  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('restaurant_vendor', 'vendor-1', 'restaurant-1'), order), false)
+  assert.equal(
+    'delivery_otp' in
+      sanitizeOrderForActor(actor('restaurant_vendor', 'vendor-1', 'restaurant-1'), order),
+    false
+  )
   assert.equal('delivery_otp' in sanitizeOrderForActor(actor('user', 'customer-2'), order), false)
-  assert.equal('delivery_otp' in sanitizeOrderForActor(actor('customer', 'customer-2'), order), false)
+  assert.equal(
+    'delivery_otp' in sanitizeOrderForActor(actor('customer', 'customer-2'), order),
+    false
+  )
 })
 
 test('delivery OTP is only visible to the customer between pickup and delivery', () => {
@@ -150,4 +157,3 @@ test('JWT tokens default to 24h expiration and contain unique jti for revocation
   const ttlSec = (verified.exp || 0) - nowSec
   assert.ok(ttlSec > 0 && ttlSec <= 86400, `Expected TTL <= 86400s (24h), got ${ttlSec}s`)
 })
-

@@ -113,7 +113,9 @@ export default function AdminPaymentLedgerPage() {
           const handlingFee = Number(o.handling_fee) || 5
           const packagingFee = Number(o.packaging_fee) || 0
           const gst = Number(o.gst) || 0
-          const totalAmount = Number(o.total_amount) || subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst
+          const totalAmount =
+            Number(o.total_amount) ||
+            subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst
 
           // Estimated splits based on platform engine defaults
           const vendorCut = Math.round(subtotal * 0.85) // 15% commission retained
@@ -131,7 +133,8 @@ export default function AdminPaymentLedgerPage() {
 
           let paymentStatus: TransactionRecord['paymentStatus'] = 'paid'
           if (isCod) {
-            paymentStatus = o.status === 'completed' || o.status === 'delivered' ? 'paid' : 'pending'
+            paymentStatus =
+              o.status === 'completed' || o.status === 'delivered' ? 'paid' : 'pending'
           } else if (o.payment_status === 'rejected') {
             paymentStatus = 'rejected'
           } else if (o.payment_status === 'pending' && !o.razorpay_payment_id) {
@@ -153,8 +156,12 @@ export default function AdminPaymentLedgerPage() {
             packagingFee,
             gst,
             paymentMethod,
-            gatewayPaymentId: o.razorpay_payment_id || (paymentMethod === 'razorpay' ? `pay_${o.id.slice(-10)}` : undefined),
-            gatewayOrderId: o.razorpay_order_id || (paymentMethod === 'razorpay' ? `order_${o.id.slice(-8)}` : undefined),
+            gatewayPaymentId:
+              o.razorpay_payment_id ||
+              (paymentMethod === 'razorpay' ? `pay_${o.id.slice(-10)}` : undefined),
+            gatewayOrderId:
+              o.razorpay_order_id ||
+              (paymentMethod === 'razorpay' ? `order_${o.id.slice(-8)}` : undefined),
             paymentStatus,
             orderStatus: o.status || 'sent_to_vendor',
             createdAt: o.createdAt || o.created_at || new Date().toISOString(),
@@ -198,7 +205,8 @@ export default function AdminPaymentLedgerPage() {
       }
     })
 
-    const successRate = transactions.length > 0 ? ((paidCount / transactions.length) * 100).toFixed(1) : '100.0'
+    const successRate =
+      transactions.length > 0 ? ((paidCount / transactions.length) * 100).toFixed(1) : '100.0'
 
     return {
       totalGross,
@@ -214,7 +222,11 @@ export default function AdminPaymentLedgerPage() {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       // Status filter
-      if (statusFilter === 'paid' && tx.paymentStatus !== 'paid' && tx.paymentStatus !== 'verified') {
+      if (
+        statusFilter === 'paid' &&
+        tx.paymentStatus !== 'paid' &&
+        tx.paymentStatus !== 'verified'
+      ) {
         return false
       }
       if (statusFilter === 'cod' && tx.paymentMethod !== 'cod') {
@@ -236,7 +248,13 @@ export default function AdminPaymentLedgerPage() {
         const matchesGateway = tx.gatewayPaymentId?.toLowerCase().includes(query)
         const matchesPhone = tx.customerPhone?.toLowerCase().includes(query)
 
-        if (!matchesId && !matchesCustomer && !matchesRestaurant && !matchesGateway && !matchesPhone) {
+        if (
+          !matchesId &&
+          !matchesCustomer &&
+          !matchesRestaurant &&
+          !matchesGateway &&
+          !matchesPhone
+        ) {
           return false
         }
       }
@@ -279,7 +297,8 @@ export default function AdminPaymentLedgerPage() {
             Payment Transactions &amp; Gateway Ledger
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-[#63716a] dark:text-[#97a59d]">
-            Real-time audit log of all customer transactions, Razorpay gateway settlements, three-way splits, and cash collections.
+            Real-time audit log of all customer transactions, Razorpay gateway settlements,
+            three-way splits, and cash collections.
           </p>
         </div>
 
@@ -289,13 +308,23 @@ export default function AdminPaymentLedgerPage() {
             disabled={loading || isRefreshing}
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-[#151d18] border border-[#d6ddd3] dark:border-[#27342d] text-xs font-bold text-[#18201c] dark:text-white shadow-xs hover:bg-[#f6f8f5] dark:hover:bg-[#1a231e] transition active:scale-95 disabled:opacity-50"
           >
-            <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin text-[#86a018]' : ''}`} />
+            <RefreshCw
+              className={`size-3.5 ${isRefreshing ? 'animate-spin text-[#86a018]' : ''}`}
+            />
             <span>{isRefreshing ? 'Refreshing...' : 'Live Sync'}</span>
           </button>
 
           <button
             onClick={() => {
-              const headers = ['Order ID', 'Customer', 'Restaurant', 'Amount', 'Payment Method', 'Status', 'Date']
+              const headers = [
+                'Order ID',
+                'Customer',
+                'Restaurant',
+                'Amount',
+                'Payment Method',
+                'Status',
+                'Date',
+              ]
               const rows = filteredTransactions.map((t) => [
                 t.orderId,
                 t.customerName,
@@ -305,11 +334,16 @@ export default function AdminPaymentLedgerPage() {
                 t.paymentStatus,
                 t.createdAt,
               ])
-              const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
+              const csvContent =
+                'data:text/csv;charset=utf-8,' +
+                [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
               const encodedUri = encodeURI(csvContent)
               const link = document.createElement('a')
               link.setAttribute('href', encodedUri)
-              link.setAttribute('download', `crave_ledger_${new Date().toISOString().slice(0, 10)}.csv`)
+              link.setAttribute(
+                'download',
+                `crave_ledger_${new Date().toISOString().slice(0, 10)}.csv`
+              )
               document.body.appendChild(link)
               link.click()
               document.body.removeChild(link)
@@ -441,9 +475,23 @@ export default function AdminPaymentLedgerPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs font-extrabold scrollbar-none">
           {[
             { id: 'all', label: 'All Transactions', count: transactions.length },
-            { id: 'paid', label: 'Captured Online', count: transactions.filter((t) => t.paymentMethod === 'razorpay' && t.paymentStatus === 'paid').length },
-            { id: 'cod', label: 'Cash on Delivery', count: transactions.filter((t) => t.paymentMethod === 'cod').length },
-            { id: 'pending', label: 'Pending', count: transactions.filter((t) => t.paymentStatus === 'pending').length },
+            {
+              id: 'paid',
+              label: 'Captured Online',
+              count: transactions.filter(
+                (t) => t.paymentMethod === 'razorpay' && t.paymentStatus === 'paid'
+              ).length,
+            },
+            {
+              id: 'cod',
+              label: 'Cash on Delivery',
+              count: transactions.filter((t) => t.paymentMethod === 'cod').length,
+            },
+            {
+              id: 'pending',
+              label: 'Pending',
+              count: transactions.filter((t) => t.paymentStatus === 'pending').length,
+            },
           ].map((pill) => (
             <button
               key={pill.id}
@@ -471,7 +519,9 @@ export default function AdminPaymentLedgerPage() {
         ) : filteredTransactions.length === 0 ? (
           <div className="py-20 text-center text-xs text-[#717f77] dark:text-[#97a59d] space-y-2">
             <CreditCard className="size-8 mx-auto text-[#88968e] opacity-40" />
-            <p className="font-bold text-sm text-[#18201c] dark:text-white">No transactions match your search</p>
+            <p className="font-bold text-sm text-[#18201c] dark:text-white">
+              No transactions match your search
+            </p>
             <p className="text-[11px]">Try adjusting your search query or status filter.</p>
           </div>
         ) : (

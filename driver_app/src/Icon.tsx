@@ -33,6 +33,7 @@ export type IconName =
   | 'bell'
   | 'bike'
   | 'pin'
+  | 'map-pin'
   | 'navigation'
   | 'phone'
   | 'clock'
@@ -58,6 +59,7 @@ const icons: Record<IconName, LucideIcon> = {
   bell: Bell,
   bike: Bike,
   pin: MapPin,
+  'map-pin': MapPin,
   navigation: Navigation,
   phone: Phone,
   clock: Clock,

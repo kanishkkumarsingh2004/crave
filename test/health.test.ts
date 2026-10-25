@@ -9,7 +9,7 @@ test('GET /api/health returns liveness probe with database and redis statuses', 
   })
   const res = await healthGet(req)
   assert.ok(res.status === 200 || res.status === 503, `Expected 200 or 503, got ${res.status}`)
-  
+
   const data = await res.json()
   assert.ok(data.status, 'Expected status in health probe response')
   assert.ok(data.timestamp, 'Expected timestamp in health probe response')
@@ -23,15 +23,21 @@ test('GET /api/health?details=true rejects unauthenticated callers', async () =>
     method: 'GET',
   })
   const res = await healthGet(req)
-  assert.ok(res.status === 401 || res.status === 403, `Expected 401/403 for unauthenticated details, got ${res.status}`)
-  
+  assert.ok(
+    res.status === 401 || res.status === 403,
+    `Expected 401/403 for unauthenticated details, got ${res.status}`
+  )
+
   const data = await res.json()
   assert.ok(data.error, 'Expected error message in response')
 })
 
 test('GET /api/health/ready returns readiness checks with dependency details', async () => {
   const res = await readyGet()
-  assert.ok(res.status === 200 || res.status === 503, `Expected 200 or 503 for readiness, got ${res.status}`)
+  assert.ok(
+    res.status === 200 || res.status === 503,
+    `Expected 200 or 503 for readiness, got ${res.status}`
+  )
 
   const data = await res.json()
   assert.ok(data.status, 'Expected status in readiness response')

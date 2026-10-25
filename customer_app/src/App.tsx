@@ -2050,24 +2050,39 @@ function Account({
                 <p className="eyebrow">24/7 CUSTOMER CARE</p>
                 <h2 id="help-sheet-title">Help &amp; Support</h2>
               </div>
-              <button
-                className="round pale"
-                onClick={() => setHelpSheet(false)}
-                aria-label="Close"
-              >
+              <button className="round pale" onClick={() => setHelpSheet(false)} aria-label="Close">
                 <Icon name="close" />
               </button>
             </div>
 
-            <div style={{ padding: '16px', background: '#18201c', color: '#fff', borderRadius: '18px', margin: '8px 16px' }}>
-              <p style={{ fontSize: '11px', color: '#d9f447', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div
+              style={{
+                padding: '16px',
+                background: '#18201c',
+                color: '#fff',
+                borderRadius: '18px',
+                margin: '8px 16px',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '11px',
+                  color: '#d9f447',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 Priority Assistance Desk
               </p>
               <h3 style={{ fontSize: '20px', fontWeight: 900, margin: '6px 0', color: '#fff' }}>
                 Reach out to: -9625694673
               </h3>
-              <p style={{ fontSize: '12px', color: '#ccc', margin: '4px 0 14px 0', lineHeight: 1.5 }}>
-                Our Bengaluru support team is online 24/7 to resolve cancellations, refund status, or delivery partner tracking queries.
+              <p
+                style={{ fontSize: '12px', color: '#ccc', margin: '4px 0 14px 0', lineHeight: 1.5 }}
+              >
+                Our Bengaluru support team is online 24/7 to resolve cancellations, refund status,
+                or delivery partner tracking queries.
               </p>
               <a
                 href="tel:+919625694673"
@@ -2089,43 +2104,141 @@ function Account({
             </div>
 
             <div style={{ padding: '12px 16px 32px 16px' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-secondary, #666)', marginBottom: '12px', letterSpacing: '0.04em' }}>
+              <h4
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  color: 'var(--text-secondary, #666)',
+                  marginBottom: '12px',
+                  letterSpacing: '0.04em',
+                }}
+              >
                 Pre-Questions &amp; Policy FAQs
               </h4>
 
-              <div style={{ background: 'var(--surface-subtle, #f5f6f4)', padding: '14px', borderRadius: '14px', marginBottom: '10px' }}>
-                <b style={{ fontSize: '13px', display: 'block', color: 'var(--text-primary, #18201c)', marginBottom: '4px' }}>
+              <div
+                style={{
+                  background: 'var(--surface-subtle, #f5f6f4)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--text-primary, #18201c)',
+                    marginBottom: '4px',
+                  }}
+                >
                   Can I cancel my order? What is the cancellation window?
                 </b>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #666)', margin: 0, lineHeight: 1.5 }}>
-                  Orders can be cancelled strictly within the first 15 seconds after placement. After 15 seconds, the restaurant kitchen immediately begins food preparation and cancellation is locked.
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary, #666)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Orders can be cancelled strictly within the first 15 seconds after placement.
+                  After 15 seconds, the restaurant kitchen immediately begins food preparation and
+                  cancellation is locked.
                 </p>
               </div>
 
-              <div style={{ background: 'var(--surface-subtle, #f5f6f4)', padding: '14px', borderRadius: '14px', marginBottom: '10px' }}>
-                <b style={{ fontSize: '13px', display: 'block', color: 'var(--text-primary, #18201c)', marginBottom: '4px' }}>
+              <div
+                style={{
+                  background: 'var(--surface-subtle, #f5f6f4)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--text-primary, #18201c)',
+                    marginBottom: '4px',
+                  }}
+                >
                   I cancelled within 15 seconds. Where is my refund?
                 </b>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #666)', margin: 0, lineHeight: 1.5 }}>
-                  Cancelled orders enter our Admin Review Queue. Once approved, refunds are credited back to your original payment method (UPI / Card / NetBanking) within 2-4 business days.
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary, #666)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Cancelled orders enter our Admin Review Queue. Once approved, refunds are credited
+                  back to your original payment method (UPI / Card / NetBanking) within 2-4 business
+                  days.
                 </p>
               </div>
 
-              <div style={{ background: 'var(--surface-subtle, #f5f6f4)', padding: '14px', borderRadius: '14px', marginBottom: '10px' }}>
-                <b style={{ fontSize: '13px', display: 'block', color: 'var(--text-primary, #18201c)', marginBottom: '4px' }}>
+              <div
+                style={{
+                  background: 'var(--surface-subtle, #f5f6f4)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--text-primary, #18201c)',
+                    marginBottom: '4px',
+                  }}
+                >
                   Where is my 6-digit Delivery OTP?
                 </b>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #666)', margin: 0, lineHeight: 1.5 }}>
-                  Your delivery OTP is revealed on your order screen once the rider picks up your package. Share this 6-digit code only at your doorstep when receiving the food.
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary, #666)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Your delivery OTP is revealed on your order screen once the rider picks up your
+                  package. Share this 6-digit code only at your doorstep when receiving the food.
                 </p>
               </div>
 
-              <div style={{ background: 'var(--surface-subtle, #f5f6f4)', padding: '14px', borderRadius: '14px' }}>
-                <b style={{ fontSize: '13px', display: 'block', color: 'var(--text-primary, #18201c)', marginBottom: '4px' }}>
+              <div
+                style={{
+                  background: 'var(--surface-subtle, #f5f6f4)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--text-primary, #18201c)',
+                    marginBottom: '4px',
+                  }}
+                >
                   What if an item is missing or spoiled?
                 </b>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #666)', margin: 0, lineHeight: 1.5 }}>
-                  Please call our direct support line at -9625694673 within 30 minutes of delivery with your Order ID for instant assistance and resolution.
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary, #666)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Please call our direct support line at -9625694673 within 30 minutes of delivery
+                  with your Order ID for instant assistance and resolution.
                 </p>
               </div>
             </div>

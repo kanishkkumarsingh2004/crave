@@ -33,7 +33,6 @@ export type JWTRole =
   | 'driver'
   | 'admin'
 
-
 export interface JWTPayload {
   id: string
   name: string

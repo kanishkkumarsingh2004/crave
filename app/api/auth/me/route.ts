@@ -132,7 +132,11 @@ export async function GET(request: Request) {
       if (!dbUser) {
         // User record was deleted or scrubbed -> purge session immediately
         const res = NextResponse.json(
-          { authenticated: false, user: null, message: 'Account no longer exists or was deactivated' },
+          {
+            authenticated: false,
+            user: null,
+            message: 'Account no longer exists or was deactivated',
+          },
           { status: 401 }
         )
         clearAllAuthCookies(res, isSecure)

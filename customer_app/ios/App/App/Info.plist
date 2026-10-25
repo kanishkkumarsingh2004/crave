@@ -26,6 +26,13 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CRAVE uses your location to place the delivery pin accurately.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>CRAVE sends you order status updates, estimated arrival times, and delivery confirmations.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

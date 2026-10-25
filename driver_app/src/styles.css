@@ -1112,7 +1112,113 @@ b {
   color: #758178;
   font-size: 11px;
 }
-/* A compact list of settings, each one opening a sheet. */
+/* Permission sheet — matches the app's dark Crave design system. */
+.permission-sheet .sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.permission-note {
+  margin: 16px 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.permission-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.permission-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.permission-row svg {
+  width: 18px;
+  height: 18px;
+}
+.permission-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: var(--acid);
+  background: rgb(217 255 56 / 10%);
+}
+.permission-icon.granted {
+  color: var(--green);
+  background: rgb(83 224 140 / 10%);
+}
+.permission-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.permission-copy b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+.permission-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.permission-state {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+}
+.permission-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--raised);
+  font-size: 11px;
+  font-weight: 800;
+}
+.permission-action.updates {
+  border-color: rgb(217 255 56 / 35%);
+  color: var(--acid);
+  background: rgb(217 255 56 / 8%);
+}
+.permission-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.permission-skip {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 14px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .settings-list {
   overflow: hidden;
   border: 1px solid var(--line);

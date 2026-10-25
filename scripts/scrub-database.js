@@ -132,11 +132,21 @@ async function scrubDatabase() {
     )
 
     // Fetch actual database IDs
-    const [adminRow] = (await client.query('SELECT id FROM "users" WHERE email = $1', [ADMIN_EMAIL])).rows
-    const [customerRow] = (await client.query('SELECT id FROM "users" WHERE email = $1', [CUSTOMER_EMAIL])).rows
-    const [vendorRow] = (await client.query('SELECT id FROM "users" WHERE email = $1', [VENDOR_EMAIL])).rows
-    const [storeRow] = (await client.query('SELECT id FROM "users" WHERE email = $1', [STORE_USER_EMAIL])).rows
-    const [driverRow] = (await client.query('SELECT id FROM "users" WHERE email = $1', [DRIVER_EMAIL])).rows
+    const [adminRow] = (
+      await client.query('SELECT id FROM "users" WHERE email = $1', [ADMIN_EMAIL])
+    ).rows
+    const [customerRow] = (
+      await client.query('SELECT id FROM "users" WHERE email = $1', [CUSTOMER_EMAIL])
+    ).rows
+    const [vendorRow] = (
+      await client.query('SELECT id FROM "users" WHERE email = $1', [VENDOR_EMAIL])
+    ).rows
+    const [storeRow] = (
+      await client.query('SELECT id FROM "users" WHERE email = $1', [STORE_USER_EMAIL])
+    ).rows
+    const [driverRow] = (
+      await client.query('SELECT id FROM "users" WHERE email = $1', [DRIVER_EMAIL])
+    ).rows
 
     const keptUserIds = [adminRow.id, customerRow.id, vendorRow.id, storeRow.id, driverRow.id]
 
@@ -163,15 +173,76 @@ async function scrubDatabase() {
 
     // 6. Seed canonical dishes for the partner restaurant
     console.log('6. Seeding dishes for Partner Restaurant...')
-    await client.query('DELETE FROM "menu_items" WHERE restaurant_id NOT IN ($1, $2)', [RESTAURANT_ID, CRAVE_STORE_ID])
-    await client.query('DELETE FROM "restaurants" WHERE id NOT IN ($1, $2)', [RESTAURANT_ID, CRAVE_STORE_ID])
+    await client.query('DELETE FROM "menu_items" WHERE restaurant_id NOT IN ($1, $2)', [
+      RESTAURANT_ID,
+      CRAVE_STORE_ID,
+    ])
+    await client.query('DELETE FROM "restaurants" WHERE id NOT IN ($1, $2)', [
+      RESTAURANT_ID,
+      CRAVE_STORE_ID,
+    ])
 
     const dishes = [
-      ['dish_demo_01', RESTAURANT_ID, 'Dum Hyderabadi Chicken Biryani', 'Dum Biryani', 349, 299, 'Authentic fragrant basmati rice layered with tender marinated chicken and rich spices.', true, false, 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500'],
-      ['dish_demo_02', RESTAURANT_ID, 'Paneer Butter Masala Gourmet Box', 'North Indian', 289, 249, 'Slow-simmered rich creamy tomato makhani with artisanal paneer cubes.', true, true, 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500'],
-      ['dish_demo_03', RESTAURANT_ID, 'Tandoori Garlic Naan (2 Pcs)', 'Breads', 89, 69, 'Fluffy clay-oven baked flatbread brushed with garlic infused butter.', true, true, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500'],
-      ['dish_demo_04', RESTAURANT_ID, 'Smoked BBQ Chicken Wings', 'Starters', 279, 239, 'Crispy glazed wings tossed in house smoky barbecue glaze.', true, false, 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500'],
-      ['dish_demo_05', RESTAURANT_ID, 'Gulab Jamun with Rabdi', 'Desserts', 149, 119, 'Golden fried dumplings soaked in cardamom saffron syrup.', true, true, 'https://images.unsplash.com/photo-1589119908995-c6837fa14d48?w=500'],
+      [
+        'dish_demo_01',
+        RESTAURANT_ID,
+        'Dum Hyderabadi Chicken Biryani',
+        'Dum Biryani',
+        349,
+        299,
+        'Authentic fragrant basmati rice layered with tender marinated chicken and rich spices.',
+        true,
+        false,
+        'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500',
+      ],
+      [
+        'dish_demo_02',
+        RESTAURANT_ID,
+        'Paneer Butter Masala Gourmet Box',
+        'North Indian',
+        289,
+        249,
+        'Slow-simmered rich creamy tomato makhani with artisanal paneer cubes.',
+        true,
+        true,
+        'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500',
+      ],
+      [
+        'dish_demo_03',
+        RESTAURANT_ID,
+        'Tandoori Garlic Naan (2 Pcs)',
+        'Breads',
+        89,
+        69,
+        'Fluffy clay-oven baked flatbread brushed with garlic infused butter.',
+        true,
+        true,
+        'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500',
+      ],
+      [
+        'dish_demo_04',
+        RESTAURANT_ID,
+        'Smoked BBQ Chicken Wings',
+        'Starters',
+        279,
+        239,
+        'Crispy glazed wings tossed in house smoky barbecue glaze.',
+        true,
+        false,
+        'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500',
+      ],
+      [
+        'dish_demo_05',
+        RESTAURANT_ID,
+        'Gulab Jamun with Rabdi',
+        'Desserts',
+        149,
+        119,
+        'Golden fried dumplings soaked in cardamom saffron syrup.',
+        true,
+        true,
+        'https://images.unsplash.com/photo-1589119908995-c6837fa14d48?w=500',
+      ],
     ]
 
     for (const d of dishes) {

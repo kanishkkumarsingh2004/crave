@@ -42,8 +42,7 @@ export async function GET(request: Request) {
     // Previously the query included every order's total_amount, loading
     // all rows into Node.js memory to compute totals.  Now we use
     // Prisma's _sum aggregate so the database does the arithmetic.
-    const normalizedRole =
-      role === 'driver' ? 'rider' : role === 'customer' ? 'user' : role
+    const normalizedRole = role === 'driver' ? 'rider' : role === 'customer' ? 'user' : role
     const users = await prisma.user.findMany({
       where: normalizedRole ? { role: normalizedRole as any } : {},
       select: {

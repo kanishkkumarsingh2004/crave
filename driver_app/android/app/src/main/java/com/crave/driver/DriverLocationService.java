@@ -84,7 +84,8 @@ public class DriverLocationService extends Service implements LocationListener {
             stopTracking();
             return START_NOT_STICKY;
         }
-
+        // Both START and UPDATE persist configuration and (re)start tracking.
+        // UPDATE is called when the active order changes mid-trip without stopping the service.
         if (intent != null) persistConfiguration(intent);
         startForeground(NOTIFICATION_ID, buildNotification());
         startLocationUpdates();
