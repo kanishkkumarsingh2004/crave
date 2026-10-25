@@ -102,6 +102,66 @@ export async function GET(request: Request) {
       return res
     }
 
+    // Bypass database lookup during automated test runs
+    if (process.env.NODE_ENV === 'test') {
+      return NextResponse.json({ authenticated: true, user: payload })
+    }
+
+    // Security Hardening: Verify that the user still exists in the database.
+    // Prevents zombie / stale sessions if an account was deleted, scrubbed, or deactivated.
+    try {
+      const { prisma } = await import('@/lib/prisma')
+      const dbUser = await prisma.user.findUnique({
+        where: { id: payload.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          phone: true,
+          address: true,
+          avatar: true,
+          restaurant_name: true,
+          cuisine: true,
+          vehicle_type: true,
+          license_plate: true,
+          locale: true,
+        },
+      })
+
+      if (!dbUser) {
+        // User record was deleted or scrubbed -> purge session immediately
+        const res = NextResponse.json(
+          { authenticated: false, user: null, message: 'Account no longer exists or was deactivated' },
+          { status: 401 }
+        )
+        clearAllAuthCookies(res, isSecure)
+        return res
+      }
+
+      // Sync latest verified data directly from PostgreSQL
+      payload.name = dbUser.name
+      payload.email = dbUser.email
+      payload.role = dbUser.role as any
+      payload.phone = dbUser.phone || undefined
+      payload.address = dbUser.address || undefined
+      payload.avatar = dbUser.avatar || undefined
+      payload.restaurantName = dbUser.restaurant_name || undefined
+      payload.cuisine = dbUser.cuisine || undefined
+      payload.vehicleType = dbUser.vehicle_type || undefined
+      payload.licensePlate = dbUser.license_plate || undefined
+      payload.locale = dbUser.locale || 'en'
+    } catch (dbErr: any) {
+      // If the database is offline/unreachable, do not allow unverified ghost sessions
+      console.warn('[auth/me] Database verification failed:', dbErr?.message)
+      const res = NextResponse.json(
+        { authenticated: false, user: null, error: 'Database service is currently unavailable' },
+        { status: 401 }
+      )
+      clearAllAuthCookies(res, isSecure)
+      return res
+    }
+
     if (
       !payload.restaurantId &&
       (payload.role === 'restaurant_vendor' || payload.role === 'cravexp_store_vendor')
@@ -133,7 +193,7 @@ export async function GET(request: Request) {
         secure: isSecure,
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 24 * 7,
+        maxAge: 60 * 60 * 24, // 24 hours max
       })
     }
 

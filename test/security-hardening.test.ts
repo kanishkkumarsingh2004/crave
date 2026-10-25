@@ -130,3 +130,24 @@ test('password hashing rejects oversized inputs before scrypt work', () => {
   assert.throws(() => validatePassword('x'.repeat(257)), /no more than 256/)
   assert.equal(verifyPassword('x'.repeat(257), validHash), false)
 })
+
+test('JWT tokens default to 24h expiration and contain unique jti for revocation', async () => {
+  const { createToken, verifyToken } = await import('../lib/jwt')
+  const token = await createToken({
+    id: 'user-security-test',
+    email: 'sec@test.com',
+    name: 'Security Test',
+    role: 'user',
+  })
+
+  const verified = await verifyToken(token)
+  assert.ok(verified, 'Token should verify')
+  assert.ok(verified.jti, 'Token should contain cryptographic JTI')
+  assert.ok(verified.exp, 'Token should contain expiration timestamp')
+
+  // Expiration should be within 24h (86400s) from now, not 7 days
+  const nowSec = Math.floor(Date.now() / 1000)
+  const ttlSec = (verified.exp || 0) - nowSec
+  assert.ok(ttlSec > 0 && ttlSec <= 86400, `Expected TTL <= 86400s (24h), got ${ttlSec}s`)
+})
+

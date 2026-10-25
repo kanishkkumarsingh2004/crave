@@ -5,6 +5,7 @@ import VendorSidebar from '@/components/VendorSidebar'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { playChimeSound, useVendorOrderUpdates } from '@/lib/websocket'
+import { showBrowserNotification } from '@/lib/notifications/web-notification'
 import {
   Bell,
   ChartColumn,
@@ -190,6 +191,12 @@ export default function VendorDashboard() {
         id: o.id,
         customerName: o.customer_name || 'Customer',
         totalAmount: Number(o.total_amount || 0),
+      })
+      void showBrowserNotification({
+        title: 'New Kitchen Order! 🔔',
+        body: `${o.customer_name || 'Customer'} placed an order (#${o.id.slice(-6).toUpperCase()}) for ₹${Number(o.total_amount || 0).toLocaleString('en-IN')}`,
+        tag: `vendor-order-${o.id}`,
+        sound: false, // chime is already played above
       })
     }
   })

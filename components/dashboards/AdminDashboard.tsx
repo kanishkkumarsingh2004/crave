@@ -5,6 +5,7 @@ import { UserRole } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import { useAdminStatsUpdates } from '@/lib/websocket'
+import { showBrowserNotification } from '@/lib/notifications/web-notification'
 import {
   CheckCircle2,
   Crown,
@@ -452,6 +453,12 @@ export default function AdminDashboard() {
   useAdminStatsUpdates(() => {
     fetchAccountsAndVendors()
     fetchPayments()
+    void showBrowserNotification({
+      title: 'Platform Activity Update ⚡',
+      body: 'New live activity detected across orders or settlements.',
+      tag: 'admin-stats-update',
+      sound: true,
+    })
   })
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
 import { initializeNativeAdminBridge } from '@/lib/native-admin'
 import {
+  AlertCircle,
   BarChart3,
   Calculator,
   ChevronLeft,
@@ -126,6 +127,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: Calculator,
     },
     { href: '/admin/payments', label: t.admin.paymentReviewQueue, icon: CreditCard },
+    {
+      href: '/admin/order-cancellations',
+      label: t.admin.orderCancellations,
+      icon: AlertCircle,
+    },
     { href: '/admin/users', label: t.admin.userAccounts, icon: Users },
     { href: '/admin/cravexp', label: 'Manage XP Store', icon: PackageOpen },
     { href: '/admin/coupons', label: t.admin.couponsDiscounts, icon: Tag },

@@ -121,6 +121,7 @@ const kn: Dictionary = {
     mapLiveAnalytics: 'ಲೈವ್ ಮ್ಯಾಪ್ ವಿಶ್ಲೇಷಣೆ',
     aiAnalytics: 'AI ವಿಶ್ಲೇಷಣೆ',
     paymentReviewQueue: 'ಪಾವತಿ ವಹಿವಾಟುಗಳು & ಲೆಡ್ಜರ್',
+    orderCancellations: 'ಆರ್ಡರ್ ರದ್ದತಿಗಳು & ಮರುಪಾವತಿಗಳು',
     userAccounts: 'ಬಳಕೆದಾರ ಖಾತೆಗಳು',
     couponsDiscounts: 'ಕೂಪನ್ ಮತ್ತು ರಿಯಾಯಿತಿ',
     vendorSettlements: 'ವೆಂಡರ್ ಸೆಟ್ಲ್‌ಮೆಂಟ್‌ಗಳು',

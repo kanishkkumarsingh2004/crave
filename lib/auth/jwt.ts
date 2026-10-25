@@ -59,14 +59,17 @@ export interface JWTPayload {
   exp?: number
 }
 
-export async function createToken(payload: JWTPayload): Promise<string> {
+export async function createToken(
+  payload: JWTPayload,
+  expiresIn: string = process.env.JWT_EXPIRY || '24h'
+): Promise<string> {
   const jti = payload.jti || crypto.randomUUID()
   const invalidBefore = inMemoryUserInvalidBefore.get(payload.id) || 0
   const issuedAtMs = Math.max(Date.now(), invalidBefore + 1)
   const token = await new SignJWT({ ...payload, jti, issuedAtMs })
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime(expiresIn)
     .sign(getJwtSecretKey())
 
   return token

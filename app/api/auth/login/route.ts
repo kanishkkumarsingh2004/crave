@@ -16,7 +16,7 @@ function setCookies(response: ReturnType<typeof NextResponse.json>, token: strin
     secure: isSecure,
     sameSite: 'lax' as const,
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24, // 24 hours
   }
   response.cookies.set('crave_auth_token', token, cookieOptions)
   response.cookies.set('drop_auth_token', token, cookieOptions)

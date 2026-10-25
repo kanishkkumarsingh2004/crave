@@ -2008,19 +2008,27 @@ export async function DELETE(request: Request) {
 
       await broadcast('order_update', {
         orderId,
-        type: 'order_deleted',
+        type: 'order_cancelled',
         status: 'cancelled',
         deleted: true,
+        refundQueued: result.refundQueued,
       }).catch(() => {})
 
       await broadcast('admin_orders', {
         orderId,
-        type: 'order_deleted',
+        type: 'order_cancelled',
         status: 'cancelled',
         deleted: true,
+        refundQueued: result.refundQueued,
       }).catch(() => {})
 
-      return NextResponse.json({ success: true, message: 'Order successfully deleted' })
+      return NextResponse.json({
+        success: true,
+        message: result.refundQueued
+          ? 'Order cancelled within 15-second window. Refund queued for admin review.'
+          : 'Order successfully cancelled.',
+        refundQueued: result.refundQueued,
+      })
     } catch (error) {
       return handleAuthError(error)
     }

@@ -6,11 +6,13 @@ import {
   Clock,
   Download,
   Globe,
+  HelpCircle,
   Home,
   Languages,
   LogOut,
   MapPin,
   Minus,
+  Phone,
   Plus,
   Receipt,
   RefreshCw,
@@ -52,6 +54,8 @@ export type IconName =
   | 'utensils'
   | 'truck'
   | 'language'
+  | 'help'
+  | 'phone'
 
 /** Every icon in the app comes from Lucide, so the set stays consistent. */
 const icons: Record<IconName, LucideIcon> = {
@@ -79,6 +83,8 @@ const icons: Record<IconName, LucideIcon> = {
   utensils: Utensils,
   truck: Truck,
   language: Languages,
+  help: HelpCircle,
+  phone: Phone,
 }
 
 export function Icon({

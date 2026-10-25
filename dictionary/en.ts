@@ -113,6 +113,7 @@ const en = {
     mapLiveAnalytics: 'Map Live Analytics',
     aiAnalytics: 'AI Analytics',
     paymentReviewQueue: 'Payment Transactions & Ledger',
+    orderCancellations: 'Order Cancellations & Refunds',
     userAccounts: 'User Accounts',
     couponsDiscounts: 'Coupons & Discounts',
     vendorSettlements: 'Vendor Settlements',

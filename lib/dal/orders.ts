@@ -592,7 +592,7 @@ export async function deleteOrder(
   orderId: string,
   actorId?: string,
   actorRole?: string
-): Promise<{ success: boolean; error?: string; deletedOrder?: any }> {
+): Promise<{ success: boolean; error?: string; deletedOrder?: any; refundQueued?: boolean }> {
   try {
     const existing = await prisma.order.findUnique({
       where: { id: orderId },
@@ -623,32 +623,71 @@ export async function deleteOrder(
       }
     }
 
-    // Clean up related non-cascading or outbox records in transaction
+    // Determine if refund should be placed in the review queue
+    const amountPaise = existing.total_amount_paise || existing.total_amount * 100
+    const isPaid =
+      existing.payment_status === 'verified' ||
+      existing.payment_method?.toLowerCase().includes('online') ||
+      existing.payment_method?.toLowerCase().includes('upi') ||
+      Boolean(existing.utr_ref)
+
+    // Preserve the cancelled order in DB for audit trail & financial queue
     await prisma.$transaction(async (tx) => {
-      await tx.paymentReview.deleteMany({
-        where: { order_id: orderId },
-      })
-      await tx.orderOutbox.deleteMany({
-        where: { order_id: orderId },
-      })
-      await tx.adminOverrideLog.deleteMany({
-        where: { order_id: orderId },
-      })
-      // The settlement ledger links by transaction_ref, not a foreign key, so
-      // it has to be cleared by hand — otherwise the row outlives the order and
-      // the store's payout figures keep counting it.
-      await tx.vendorSettlement.deleteMany({
-        where: { transaction_ref: orderId },
-      })
-      await tx.order.delete({
+      // 1. Update order status to cancelled
+      await tx.order.update({
         where: { id: orderId },
+        data: {
+          status: 'cancelled' as OrderStatus,
+        },
+      })
+
+      // 2. Cancel any scheduled vendor settlements so vendor is not credited
+      await tx.vendorSettlement.updateMany({
+        where: { transaction_ref: orderId, status: 'scheduled' },
+        data: { status: 'cancelled' },
+      })
+
+      // 3. Put refund into the admin review queue if order was paid or has payment intent
+      if (isPaid && amountPaise > 0) {
+        const existingRefund = await tx.refund.findFirst({
+          where: { order_id: orderId },
+        })
+
+        if (!existingRefund) {
+          await tx.refund.create({
+            data: {
+              order_id: orderId,
+              idempotency_key: `refund_cancel_${orderId}_${Date.now()}`,
+              amount: Math.round(amountPaise / 100),
+              amount_paise: amountPaise,
+              reason: 'Customer cancelled within 15-second window',
+              status: 'pending',
+            },
+          })
+        }
+      }
+
+      // 4. Log event in outbox
+      await tx.orderOutbox.create({
+        data: {
+          order_id: orderId,
+          event_type: 'ORDER_CANCELLED',
+          payload: {
+            orderId,
+            refundQueued: isPaid,
+            refundAmountPaise: isPaid ? amountPaise : 0,
+            cancelledBy: actorRole || 'user',
+          },
+          status: 'pending',
+        },
       })
     })
 
     listOrdersCache.clear()
-    return { success: true, deletedOrder: existing }
+    return { success: true, deletedOrder: existing, refundQueued: isPaid }
   } catch (err: any) {
-    console.error('[deleteOrder] Error deleting order:', err)
-    return { success: false, error: err?.message || 'Failed to delete order' }
+    console.error('[deleteOrder] Error cancelling order:', err)
+    return { success: false, error: err?.message || 'Failed to cancel order' }
   }
 }
+
