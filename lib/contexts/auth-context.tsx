@@ -119,6 +119,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
               setIsLoading(false)
               return
+            } else if (!cancelled) {
+              setUser(null)
+              setToken(null)
+              setIsLoading(false)
+              return
             }
           } else if (res.status === 401) {
             // Token rejected by server: clear local state to prevent broken redirect loops
@@ -160,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: email.trim(), password }),
       })
       const text = await response.text()

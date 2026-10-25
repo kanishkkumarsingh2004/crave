@@ -78,7 +78,11 @@ const AddressModal = dynamic(() => import('@/components/AddressModal'), {
 })
 
 import { Coupon, fetchCoupons, validateCoupon } from '@/lib/coupons'
-import { calculateCheckoutPricing, calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
+import {
+  calculateCheckoutPricing,
+  calculateRoadTravelDistanceKm,
+  calculateExactDeliveryEta,
+} from '@/lib/distance-pricing'
 import { loadPaymentConfig } from '@/lib/payment-config'
 
 const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
@@ -109,6 +113,8 @@ type Restaurant = {
   isPureVeg?: boolean
   latitude?: number | string | null
   longitude?: number | string | null
+  deliveryMinutes?: number | null
+  delivery_minutes?: number | null
   isOpen?: boolean
 }
 
@@ -553,6 +559,8 @@ export default function CustomerDashboard({
               isOpen: r.is_open ?? true,
               latitude: r.latitude != null ? Number(r.latitude) : undefined,
               longitude: r.longitude != null ? Number(r.longitude) : undefined,
+              delivery_minutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
+              deliveryMinutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
             }))
         }
         setRestaurantsList(parsed)
@@ -1130,9 +1138,61 @@ export default function CustomerDashboard({
         })
       }
 
+      const matchedRestaurant = restaurantsList.find(
+        (r) =>
+          (active.restaurant_id && r.id === active.restaurant_id) ||
+          (active.restaurant?.id && r.id === active.restaurant.id) ||
+          (active.restaurant_name && r.name.toLowerCase() === active.restaurant_name.toLowerCase()) ||
+          (active.restaurantName && r.name.toLowerCase() === active.restaurantName.toLowerCase()) ||
+          (active.restaurant_name && r.name.toLowerCase().includes(active.restaurant_name.toLowerCase()))
+      )
+
+      const restLat =
+        active.restaurant?.latitude != null
+          ? Number(active.restaurant.latitude)
+          : matchedRestaurant?.latitude != null
+            ? Number(matchedRestaurant.latitude)
+            : active.restaurant_lat != null
+              ? Number(active.restaurant_lat)
+              : active.restaurant_latitude != null
+                ? Number(active.restaurant_latitude)
+                : null
+
+      const restLng =
+        active.restaurant?.longitude != null
+          ? Number(active.restaurant.longitude)
+          : matchedRestaurant?.longitude != null
+            ? Number(matchedRestaurant.longitude)
+            : active.restaurant_lng != null
+              ? Number(active.restaurant_lng)
+              : active.restaurant_longitude != null
+                ? Number(active.restaurant_longitude)
+                : null
+
+      const deliveryMins =
+        active.restaurant?.delivery_minutes != null
+          ? Number(active.restaurant.delivery_minutes)
+          : matchedRestaurant?.delivery_minutes != null
+            ? Number(matchedRestaurant.delivery_minutes)
+            : active.delivery_minutes != null
+              ? Number(active.delivery_minutes)
+              : null
+
+      const resolvedRestaurantName =
+        active.restaurant?.name ||
+        (active.restaurant_name && active.restaurant_name !== 'test'
+          ? active.restaurant_name
+          : matchedRestaurant?.name || 'Crave Kitchen & Gourmet Grills')
+
       setActiveOrder({
         id: active.id,
-        restaurantName: active.restaurant_name || active.restaurantName || 'Crave Kitchen Store',
+        restaurantId:
+          active.restaurant_id ||
+          active.restaurantId ||
+          active.restaurant?.id ||
+          matchedRestaurant?.id ||
+          null,
+        restaurantName: resolvedRestaurantName,
         items: itemsArr,
         subtotal: Number(active.subtotal || 0),
         total: Number(active.total_amount || 0),
@@ -1148,10 +1208,13 @@ export default function CustomerDashboard({
         driverPhone: active.driver_phone || null,
         driverLat: liveDriverPos?.lat ?? active.driver_lat ?? active.driver_latitude ?? null,
         driverLng: liveDriverPos?.lng ?? active.driver_lng ?? active.driver_longitude ?? null,
-        restaurantLat: active.restaurant_lat ?? active.restaurant_latitude ?? null,
-        restaurantLng: active.restaurant_lng ?? active.restaurant_longitude ?? null,
-        customerLat: active.customer_lat ?? active.delivery_lat ?? active.latitude ?? null,
-        customerLng: active.customer_lng ?? active.delivery_lng ?? active.longitude ?? null,
+        restaurantLat: restLat,
+        restaurantLng: restLng,
+        deliveryMinutes: deliveryMins,
+        customerLat:
+          active.customer_lat ?? active.delivery_lat ?? active.latitude ?? active.delivery_latitude ?? null,
+        customerLng:
+          active.customer_lng ?? active.delivery_lng ?? active.longitude ?? active.delivery_longitude ?? null,
         timestamp: formattedTime,
         rawDate: rawDateVal || active.created_at || active.createdAt || new Date().toISOString(),
         paymentStatus: active.payment_status || 'pending',
@@ -1159,7 +1222,26 @@ export default function CustomerDashboard({
     } else {
       setActiveOrder(null)
     }
-  }, [user?.id, ordersData, selectedOrderId, liveDriverPos])
+  }, [user?.id, ordersData, selectedOrderId, liveDriverPos, restaurantsList])
+
+  // Real-time authoritative delivery ETA from restaurant to user
+  const activeOrderEta = useMemo(() => {
+    if (!activeOrder) return null
+    return calculateExactDeliveryEta({
+      restaurantLat: activeOrder.restaurantLat,
+      restaurantLng: activeOrder.restaurantLng,
+      customerLat: activeOrder.customerLat ?? selectedMapPin?.lat ?? null,
+      customerLng: activeOrder.customerLng ?? selectedMapPin?.lng ?? null,
+      driverLat: activeOrder.driverLat,
+      driverLng: activeOrder.driverLng,
+      statusStep: activeOrder.statusStep,
+      deliveryMinutes: activeOrder.deliveryMinutes,
+      isDarkStore:
+        activeOrder.restaurantName?.toLowerCase().includes('dark') ||
+        activeOrder.restaurantName?.toLowerCase().includes('cravexp'),
+      orderCreatedAt: activeOrder.rawDate,
+    })
+  }, [activeOrder, selectedMapPin])
 
   // Fetch Company UPI Config dynamically & listen for admin updates
   useEffect(() => {
@@ -4152,59 +4234,34 @@ export default function CustomerDashboard({
                                 </span>
                               </>
                             )}
+                            {activeOrderEta && activeOrderEta.distanceKm > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-[#d9f447] font-semibold">
+                                  {activeOrderEta.distanceKm <= 20
+                                    ? `${activeOrderEta.distanceKm} km from kitchen`
+                                    : 'City Express Delivery'}
+                                </span>
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
 
-                      <div className="shrink-0 rounded-xl sm:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md p-3 sm:px-5 sm:py-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shadow-inner">
+                      <div className="shrink-0 rounded-xl sm:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md p-3 sm:px-5 sm:py-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shadow-inner text-right min-w-[140px]">
                         <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
                           Estimated Delivery
                         </p>
                         <p className="text-lg sm:text-2xl font-black text-white sm:mt-0.5 tracking-tight">
                           {activeOrder.statusStep === 4
                             ? 'Delivered'
-                            : `${Math.max(
-                                10,
-                                Math.round(
-                                  calculateRoadTravelDistanceKm(
-                                    activeOrder.restaurantLat
-                                      ? Number(activeOrder.restaurantLat)
-                                      : 12.9716,
-                                    activeOrder.restaurantLng
-                                      ? Number(activeOrder.restaurantLng)
-                                      : 77.5946,
-                                    activeOrder.customerLat
-                                      ? Number(activeOrder.customerLat)
-                                      : (selectedMapPin?.lat ?? 12.9716),
-                                    activeOrder.customerLng
-                                      ? Number(activeOrder.customerLng)
-                                      : (selectedMapPin?.lng ?? 77.5946)
-                                  ) *
-                                    3 +
-                                    10
-                                )
-                              )} - ${Math.max(
-                                15,
-                                Math.round(
-                                  calculateRoadTravelDistanceKm(
-                                    activeOrder.restaurantLat
-                                      ? Number(activeOrder.restaurantLat)
-                                      : 12.9716,
-                                    activeOrder.restaurantLng
-                                      ? Number(activeOrder.restaurantLng)
-                                      : 77.5946,
-                                    activeOrder.customerLat
-                                      ? Number(activeOrder.customerLat)
-                                      : (selectedMapPin?.lat ?? 12.9716),
-                                    activeOrder.customerLng
-                                      ? Number(activeOrder.customerLng)
-                                      : (selectedMapPin?.lng ?? 77.5946)
-                                  ) *
-                                    3 +
-                                    15
-                                )
-                              )} mins`}
+                            : activeOrderEta?.displayText || '25 mins'}
                         </p>
+                        {activeOrder.statusStep !== 4 && activeOrderEta?.arrivalSubtitle && (
+                          <p className="text-[10px] sm:text-[11px] font-semibold text-emerald-300 sm:mt-0.5">
+                            {activeOrderEta.arrivalSubtitle}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

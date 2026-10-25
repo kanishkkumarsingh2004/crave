@@ -191,3 +191,126 @@ export function calculateCheckoutPricing(params: {
     },
   }
 }
+
+export interface ExactDeliveryEta {
+  exactMinutes: number
+  displayText: string
+  arrivalSubtitle: string
+  distanceKm: number
+  isDelivered: boolean
+}
+
+/**
+ * Calculates the exact delivery time and arrival SLA from the kitchen/driver to the customer.
+ * Uses realistic kitchen prep time + road transit at ~30 km/h.
+ * Clamps reasonable city delivery window (max 35-45 mins) even if coordinates span across regions in test mode.
+ */
+export function calculateExactDeliveryEta(params: {
+  restaurantLat?: number | null
+  restaurantLng?: number | null
+  customerLat?: number | null
+  customerLng?: number | null
+  driverLat?: number | null
+  driverLng?: number | null
+  statusStep?: number
+  deliveryMinutes?: number | null
+  isDarkStore?: boolean
+  orderCreatedAt?: string | number | Date | null
+}): ExactDeliveryEta {
+  const statusStep = params.statusStep ?? 1
+  if (statusStep >= 4) {
+    return {
+      exactMinutes: 0,
+      displayText: 'Delivered',
+      arrivalSubtitle: 'Delivered to doorstep',
+      distanceKm: 0,
+      isDelivered: true,
+    }
+  }
+
+  // 1. Resolve coordinates with defaults (Bengaluru central coords if unspecified)
+  const restLat =
+    params.restaurantLat != null && !isNaN(params.restaurantLat) && params.restaurantLat !== 0
+      ? params.restaurantLat
+      : 12.9716
+  const restLng =
+    params.restaurantLng != null && !isNaN(params.restaurantLng) && params.restaurantLng !== 0
+      ? params.restaurantLng
+      : 77.6412
+  const custLat =
+    params.customerLat != null && !isNaN(params.customerLat) && params.customerLat !== 0
+      ? params.customerLat
+      : 12.9716
+  const custLng =
+    params.customerLng != null && !isNaN(params.customerLng) && params.customerLng !== 0
+      ? params.customerLng
+      : 77.5946
+
+  // 2. Road travel distance from kitchen to customer
+  const distanceKm = calculateRoadTravelDistanceKm(restLat, restLng, custLat, custLng)
+
+  // 3. Baseline prep & transit SLA
+  const baselineSlaMinutes = params.deliveryMinutes ?? (params.isDarkStore ? 10 : 25)
+  const prepTimeMinutes = params.isDarkStore ? 5 : Math.max(8, Math.round(baselineSlaMinutes * 0.6))
+
+  // Real transit time at city scooter speed (~30 km/h = 2 min/km)
+  const calculatedTransitMinutes = Math.max(3, Math.round(distanceKm * 2))
+
+  // In food delivery, if distance is within normal delivery radius (<= 15 km),
+  // total SLA is prep time + transit time.
+  // If distance exceeds 15 km (e.g. cross-district or demo/test address),
+  // delivery apps cap the estimate to the kitchen's guaranteed SLA window (e.g. 25-30 mins)
+  // rather than projecting absurd multi-hour times.
+  const fullTripMinutes =
+    distanceKm <= 15
+      ? Math.max(10, Math.min(45, prepTimeMinutes + calculatedTransitMinutes))
+      : Math.max(10, Math.min(35, baselineSlaMinutes))
+
+  let exactMinutes: number
+
+  if (statusStep === 3) {
+    // Rider on the way: kitchen prep is done, only remaining road travel matters
+    if (
+      params.driverLat != null &&
+      params.driverLng != null &&
+      !isNaN(params.driverLat) &&
+      !isNaN(params.driverLng)
+    ) {
+      const driverDistKm = calculateRoadTravelDistanceKm(
+        params.driverLat,
+        params.driverLng,
+        custLat,
+        custLng
+      )
+      exactMinutes =
+        driverDistKm <= 15
+          ? Math.max(3, Math.min(25, Math.round(driverDistKm * 2)))
+          : Math.max(5, Math.min(15, Math.round(fullTripMinutes * 0.4)))
+    } else {
+      exactMinutes = Math.max(5, Math.min(18, Math.round(calculatedTransitMinutes)))
+    }
+  } else if (statusStep === 2) {
+    // Cooking / preparing in kitchen
+    exactMinutes = Math.max(10, Math.round(fullTripMinutes * 0.75))
+  } else {
+    // Step 1: Confirmed / Payment verified
+    exactMinutes = fullTripMinutes
+  }
+
+  // Arrival clock time
+  const arrivalDate = new Date(Date.now() + exactMinutes * 60 * 1000)
+  const arrivalTimeString = arrivalDate.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+
+  return {
+    exactMinutes,
+    displayText: `${exactMinutes} mins`,
+    arrivalSubtitle: `Arriving by ${arrivalTimeString}`,
+    distanceKm: Number(distanceKm.toFixed(1)),
+    isDelivered: false,
+  }
+}
+

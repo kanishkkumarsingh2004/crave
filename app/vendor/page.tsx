@@ -11,7 +11,7 @@ export default function VendorIndexPage() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace('/login?logout=1')
+      router.replace('/login')
     } else {
       router.replace('/vendor/dashboard')
     }

@@ -81,7 +81,9 @@ export default function LiveDriverMap({
           if (data.routes && data.routes[0] && isMounted) {
             const rawCoords: [number, number][] = data.routes[0].geometry.coordinates // [lng, lat]
             const distMeters = data.routes[0].distance || 1800
-            setDistanceText(`~${(distMeters / 1000).toFixed(1)} km along street route`)
+            const km = Number((distMeters / 1000).toFixed(1))
+            const driveMins = Math.max(2, Math.round(km * 2))
+            setDistanceText(`~${km} km (${driveMins} mins drive)`)
             setRoutePoints(rawCoords)
             setIsLoadingRoute(false)
             return
@@ -110,7 +112,8 @@ export default function LiveDriverMap({
         customerLat,
         customerLng
       )
-      setDistanceText(`~${realDist} km along street route`)
+      const driveMins = Math.max(2, Math.round(realDist * 2))
+      setDistanceText(`~${realDist} km (${driveMins} mins drive)`)
       setIsLoadingRoute(false)
     }
 

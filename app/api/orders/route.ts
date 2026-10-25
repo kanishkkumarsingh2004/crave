@@ -1234,6 +1234,8 @@ export async function POST(request: Request) {
               financial_snapshot: canonicalResult as any,
               total_amount_paise: canonicalResult.customerPayablePaise,
               idempotency_key: idempotencyKey || undefined,
+              delivery_latitude: customerLat != null ? customerLat : undefined,
+              delivery_longitude: customerLng != null ? customerLng : undefined,
             },
           })
 

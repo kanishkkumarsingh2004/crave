@@ -159,7 +159,9 @@ export async function GET(request: Request) {
 
     if (
       !payload.restaurantId &&
-      (payload.role === 'restaurant_vendor' || payload.role === 'cravexp_store_vendor')
+      (payload.role === 'restaurant_vendor' ||
+        payload.role === 'cravexp_store_vendor' ||
+        (payload.role as string) === 'vendor')
     ) {
       try {
         const { prisma } = await import('@/lib/prisma')

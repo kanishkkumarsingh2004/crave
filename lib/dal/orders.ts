@@ -157,6 +157,7 @@ export async function listOrders(filters?: {
 
   const orders = await prisma.order.findMany({
     where,
+    include: { restaurant: true },
     orderBy: { created_at: 'desc' },
     take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
