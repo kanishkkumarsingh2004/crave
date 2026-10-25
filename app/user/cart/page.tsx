@@ -1668,6 +1668,37 @@ export default function CartPage() {
                     </span>
                   </div>
 
+                  {/* Dynamic Free Delivery Progress Indicator */}
+                  {activeConfig?.freeDeliveryThreshold ? (
+                    <div className="mb-5 rounded-2xl bg-[#f8faf4] dark:bg-[#18221b] border border-emerald-500/20 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-[#121815] dark:text-white flex items-center gap-1.5">
+                          <Zap className="size-3.5 text-emerald-600 dark:text-[#d9f447] fill-emerald-600 dark:fill-[#d9f447]" />
+                          {cartSubtotal >= activeConfig.freeDeliveryThreshold ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                              Free Delivery Unlocked!
+                            </span>
+                          ) : (
+                            <span>
+                              Add <strong className="font-mono text-emerald-700 dark:text-[#d9f447]">₹{(activeConfig.freeDeliveryThreshold - cartSubtotal).toFixed(0)}</strong> more for <span className="font-black text-emerald-600 dark:text-emerald-400">FREE Delivery</span>
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[10px] font-mono text-stone-400">
+                          ₹{cartSubtotal}/₹{activeConfig.freeDeliveryThreshold}
+                        </span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#d9f447] transition-all duration-500 ease-out"
+                          style={{
+                            width: `${Math.min(100, Math.round((cartSubtotal / activeConfig.freeDeliveryThreshold) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="space-y-3.5 text-xs">
                     {/* Item Total */}
                     <div className="flex justify-between text-stone-600 dark:text-stone-300">

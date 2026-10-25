@@ -441,6 +441,19 @@ export default function CustomerDashboard({
   const isSubmittingCheckoutRef = useRef(false)
   const checkoutIdempotencyKeyRef = useRef<string | null>(null)
 
+  // Creative Hero Carousel State
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0)
+  const [heroAutoplayPaused, setHeroAutoplayPaused] = useState(false)
+  const [copiedPromoCode, setCopiedPromoCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (heroAutoplayPaused) return
+    const timer = setInterval(() => {
+      setHeroSlideIndex((prev) => (prev + 1) % 3)
+    }, 5500)
+    return () => clearInterval(timer)
+  }, [heroAutoplayPaused])
+
   useEffect(() => {
     if (showMobileSideMenu) {
       document.body.style.overflow = 'hidden'
@@ -1217,6 +1230,17 @@ export default function CustomerDashboard({
     return () => clearInterval(interval)
   }, [activeOrder?.rawDate, activeOrder?.id])
 
+  const [otpCopied, setOtpCopied] = useState<boolean>(false)
+
+  const handleCopyOtp = (otp: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(otp)
+      setOtpCopied(true)
+      triggerToast('Delivery OTP copied to clipboard!')
+      setTimeout(() => setOtpCopied(false), 2500)
+    }
+  }
+
   const handleCancelOrRemoveOrder = async (orderId: string) => {
     if (cancelTimeRemaining <= 0) {
       triggerToast('Cancellation window expired. Orders can only be cancelled within 15 seconds.')
@@ -1232,12 +1256,16 @@ export default function CustomerDashboard({
       const res = await fetch(`/api/orders?orderId=${orderId}`, {
         method: 'DELETE',
       })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setOrdersData((prev) => prev.filter((o) => o.id !== orderId))
         setActiveOrder(null)
-        triggerToast('Order cancelled successfully')
+        if (data.refundQueued) {
+          triggerToast('Order cancelled! Refund submitted to the admin review queue.')
+        } else {
+          triggerToast('Order cancelled successfully.')
+        }
       } else {
-        const data = await res.json().catch(() => ({}))
         triggerToast(data.error || 'Failed to cancel order')
       }
     } catch {
@@ -2191,46 +2219,309 @@ export default function CustomerDashboard({
       <div className="mx-auto w-full max-w-[1600px] px-3.5 pt-4 sm:px-6 sm:pt-6 lg:px-8 2xl:px-10">
         {activeTab === 'explore' && (
           <div className="flex flex-col gap-6 sm:gap-8">
-            {/* craveXP 10-Min Dark Store Hero Banner (Clean & Aesthetic with Vector Illustration) */}
+            {/* Creative Dynamic Hero Showcase Banner Carousel */}
             <div
-              onClick={() => router.push('/user/cravexp')}
-              className="group relative grid cursor-pointer grid-cols-1 items-center gap-6 overflow-hidden rounded-3xl border border-white/[0.12] bg-gradient-to-br from-[#0c120f] via-[#131d17] to-[#090d0b] p-5 text-white shadow-2xl transition-all duration-300 hover:border-[#d9f447]/40 sm:p-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] lg:min-h-[280px] lg:gap-10 lg:p-10 xl:grid-cols-[minmax(0,1fr)_minmax(340px,40%)] 2xl:min-h-[300px] 2xl:px-12"
+              onMouseEnter={() => setHeroAutoplayPaused(true)}
+              onMouseLeave={() => setHeroAutoplayPaused(false)}
+              className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-white/[0.12] bg-[#0d120f] transition-all duration-500 group/hero"
             >
-              {/* Luxury Ambient Lighting Glows */}
-              <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none group-hover:bg-[#d9f447]/18 transition duration-700" />
-              <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+              {/* Slides Container */}
+              <div className="relative min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[480px] w-full flex items-center">
+                {/* Slide 0: Gourmet Cloud Kitchens Feasts */}
+                <div
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+                    heroSlideIndex === 0
+                      ? 'opacity-100 z-10 pointer-events-auto'
+                      : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  {/* Background Gradient & Glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#170e0a] via-[#24140d]/95 to-[#150c08] -z-10" />
+                  <div className="absolute -left-20 -top-20 size-80 rounded-full bg-orange-600/15 blur-3xl pointer-events-none" />
+                  <div className="absolute right-0 top-0 size-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
 
-              {/* Left Content Column */}
-              <div className="relative z-10 min-w-0 w-full max-w-[680px]">
-                {/* Branding Header Bar */}
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3">
-                  <CraveLogo variant="cravexp" size="lg" theme="light" />
+                  {/* Left Text & Action Column */}
+                  <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+                    {/* Tags row */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md shadow-orange-950/40">
+                        <Sparkles className="size-3" />
+                        50% OFF UP TO ₹120
+                      </span>
+
+                      {/* Clickable Coupon Code Pill */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                            navigator.clipboard.writeText('CRAVEFEAST')
+                            setCopiedPromoCode('CRAVEFEAST')
+                            triggerToast('Promo code CRAVEFEAST copied!')
+                            setTimeout(() => setCopiedPromoCode(null), 3000)
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-orange-200 text-[11px] font-mono font-black transition cursor-pointer backdrop-blur-md active:scale-95"
+                        title="Click to copy coupon code"
+                      >
+                        {copiedPromoCode === 'CRAVEFEAST' ? (
+                          <>
+                            <Check className="size-3 text-emerald-400 stroke-[3]" />
+                            <span className="text-emerald-300">COPIED!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3 text-orange-300" />
+                            <span>CODE: CRAVEFEAST</span>
+                          </>
+                        )}
+                      </button>
+
+                      <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest text-orange-400/80">
+                        • GOURMET EXPRESS
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+                      Savor Gourmet Feasts Delivered Fresh In 25 Mins
+                    </h2>
+                    <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+                      Steaming dum biryani in copper handis, woodfired pizzas with bubbling mozzarella, smash burgers &amp; sizzling fries cooked fresh on order.
+                    </p>
+
+                    {/* Action Button & Badges */}
+                    <div className="pt-2 flex flex-wrap items-center gap-3.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById('dishes-section')
+                          if (el) el.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-stone-950 font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl shadow-orange-950/50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Explore Signature Dishes</span>
+                        <ArrowRight className="size-4 text-stone-950" />
+                      </button>
+
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-orange-200/90 bg-white/5 border border-white/10 px-3 py-2 rounded-xl backdrop-blur-sm">
+                        <span>⭐ 4.9 Master Chef Rated</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Visual Image with Seamless Artistic Gradient Blend */}
+                  <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+                    <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
+                      <img
+                        src="/banners/gourmet-feast.jpg"
+                        alt="Gourmet Dum Biryani, Woodfired Pizza & Burgers"
+                        className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl transform transition-transform duration-700 group-hover/hero:scale-105"
+                      />
+                      {/* Left Gradient Mask for Seamless Integration */}
+                      <div className="absolute inset-y-0 left-0 w-24 md:w-44 bg-gradient-to-r from-[#170e0a] via-[#170e0a]/80 to-transparent hidden md:block pointer-events-none" />
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#170e0a] via-[#170e0a]/80 to-transparent md:hidden pointer-events-none" />
+
+                      {/* Floating Glassmorphic Badges */}
+                      <div className="absolute top-4 right-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-amber-300 shadow-xl flex items-center gap-1.5">
+                        <Clock className="size-3.5" />
+                        <span>20-25 Mins</span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-white shadow-xl flex items-center gap-1.5">
+                        <Award className="size-3.5 text-orange-400" />
+                        <span>Woodfired &amp; Dum</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <h2 className="text-xl font-black leading-tight tracking-tight text-white sm:text-2xl lg:text-3xl xl:text-4xl">
-                  Ultra-Fast Grocery &amp; Daily Essentials
-                </h2>
-                <p className="mt-1.5 max-w-2xl text-xs font-normal leading-relaxed text-gray-300 sm:mt-2 sm:text-sm lg:text-base">
-                  Farm eggs, chilled dairy, artisanal bread, fresh berries &amp; pantry snacks
-                  delivered to your doorstep in 10 minutes.
-                </p>
+                {/* Slide 1: craveXP 10-Min Dark Store Grocery */}
+                <div
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+                    heroSlideIndex === 1
+                      ? 'opacity-100 z-10 pointer-events-auto'
+                      : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  {/* Background Gradient & Glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#07140e] via-[#0d2217]/95 to-[#050f0a] -z-10" />
+                  <div className="absolute -left-20 -top-20 size-80 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+                  <div className="absolute right-0 top-0 size-96 rounded-full bg-[#d9f447]/12 blur-3xl pointer-events-none" />
 
-                {/* Direct Action Button */}
-                <div className="mt-4 sm:mt-5">
-                  <Link
-                    href="/user/cravexp"
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] px-6 sm:px-7 py-3 sm:py-3.5 text-xs font-black shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group/btn"
-                  >
-                    <span>Open CraveXP Store</span>
-                    <ArrowRight className="size-4 group-hover/btn:translate-x-1 transition duration-200" />
-                  </Link>
+                  {/* Left Text Column */}
+                  <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                      <CraveLogo variant="cravexp" size="lg" theme="light" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#d9f447] text-[#0d1410] text-[11px] font-black uppercase tracking-wider shadow-md shadow-[#d9f447]/20">
+                        <span className="size-2 rounded-full bg-[#0d1410] animate-ping" />
+                        10-Min Flash Drop
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+                      Ultra-Fast Grocery &amp; Daily Essentials
+                    </h2>
+                    <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+                      Farm eggs, chilled milk, organic avocados, fresh berries, sourdough bread &amp; pantry snacks delivered to your doorstep in 10 minutes flat.
+                    </p>
+
+                    <div className="pt-2 flex flex-wrap items-center gap-3.5">
+                      <button
+                        type="button"
+                        onClick={() => router.push('/user/cravexp')}
+                        className="inline-flex items-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl shadow-[#d9f447]/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Open CraveXP Store</span>
+                        <ArrowRight className="size-4 text-[#0d1410]" />
+                      </button>
+
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-300 bg-white/5 border border-white/10 px-3 py-2 rounded-xl backdrop-blur-sm">
+                        <span>⚡ Zero Delay Guarantee</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Visual Image */}
+                  <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+                    <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
+                      <img
+                        src="/banners/cravexp-grocery.jpg"
+                        alt="10-Minute Grocery Delivery Items"
+                        className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl transform transition-transform duration-700 group-hover/hero:scale-105"
+                      />
+                      <div className="absolute inset-y-0 left-0 w-24 md:w-44 bg-gradient-to-r from-[#07140e] via-[#07140e]/80 to-transparent hidden md:block pointer-events-none" />
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#07140e] via-[#07140e]/80 to-transparent md:hidden pointer-events-none" />
+
+                      <div className="absolute top-4 right-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-[#d9f447] shadow-xl flex items-center gap-1.5">
+                        <Clock className="size-3.5" />
+                        <span>&lt; 10 Mins</span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-white shadow-xl flex items-center gap-1.5">
+                        <Leaf className="size-3.5 text-emerald-400" />
+                        <span>100% Farm Fresh</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Slide 2: Midnight Cravings Fest */}
+                <div
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+                    heroSlideIndex === 2
+                      ? 'opacity-100 z-10 pointer-events-auto'
+                      : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  {/* Background Gradient & Glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0f081c] via-[#1a0e2e]/95 to-[#0b0514] -z-10" />
+                  <div className="absolute -left-20 -top-20 size-80 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+                  <div className="absolute right-0 top-0 size-96 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+                  {/* Left Text Column */}
+                  <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md shadow-purple-950/40">
+                        🌙 OPEN TILL 4 AM
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-200 text-[11px] font-extrabold backdrop-blur-md">
+                        Zero Surge Fees
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+                      Satisfy Your Late-Night Cravings
+                    </h2>
+                    <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+                      Crispy glazed buffalo wings, loaded cheesy nachos, warm chocolate lava cakes &amp; iced boba teas delivered throughout the night.
+                    </p>
+
+                    <div className="pt-2 flex flex-wrap items-center gap-3.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('Wings')
+                          const el = document.getElementById('dishes-section')
+                          if (el) el.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                        className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl shadow-purple-950/50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Order Late Night Munchies</span>
+                        <ArrowRight className="size-4 text-white" />
+                      </button>
+
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-purple-200 bg-white/5 border border-white/10 px-3 py-2 rounded-xl backdrop-blur-sm">
+                        <span>🚀 Free Late Delivery 11PM-4AM</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Visual Image */}
+                  <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+                    <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
+                      <img
+                        src="/banners/midnight-feast.jpg"
+                        alt="Midnight Wings, Boba & Nachos"
+                        className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl transform transition-transform duration-700 group-hover/hero:scale-105"
+                      />
+                      <div className="absolute inset-y-0 left-0 w-24 md:w-44 bg-gradient-to-r from-[#0f081c] via-[#0f081c]/80 to-transparent hidden md:block pointer-events-none" />
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f081c] via-[#0f081c]/80 to-transparent md:hidden pointer-events-none" />
+
+                      <div className="absolute top-4 right-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-cyan-300 shadow-xl flex items-center gap-1.5">
+                        <Sparkles className="size-3.5 text-cyan-300" />
+                        <span>Hot &amp; Crispy</span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-white shadow-xl flex items-center gap-1.5">
+                        <span>🍫 Molten Desserts</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Column: Custom Express Delivery Illustration */}
-              <div className="relative z-10 flex min-w-0 w-full items-center justify-center transition-transform duration-500 group-hover:scale-[1.03]">
-                <CraveXPDeliveryIllustration className="h-auto w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[380px] xl:max-w-[430px]" />
+              {/* Prev / Next Navigation Arrows */}
+              <button
+                type="button"
+                onClick={() => setHeroSlideIndex((prev) => (prev === 0 ? 2 : prev - 1))}
+                aria-label="Previous Slide"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 grid size-9 sm:size-10 place-items-center rounded-full bg-black/60 hover:bg-black/90 text-white/80 hover:text-white border border-white/20 backdrop-blur-md shadow-lg transition hover:scale-110 active:scale-90 cursor-pointer opacity-70 group-hover/hero:opacity-100"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setHeroSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))}
+                aria-label="Next Slide"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 grid size-9 sm:size-10 place-items-center rounded-full bg-black/60 hover:bg-black/90 text-white/80 hover:text-white border border-white/20 backdrop-blur-md shadow-lg transition hover:scale-110 active:scale-90 cursor-pointer opacity-70 group-hover/hero:opacity-100"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+
+              {/* Sleek Floated Carousel Indicator Dock */}
+              <div className="absolute bottom-4 sm:bottom-5 left-6 sm:left-12 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-xl pointer-events-auto">
+                {[
+                  { label: 'Gourmet Feasts', activeColor: 'bg-gradient-to-r from-orange-500 to-amber-400' },
+                  { label: 'CraveXP 10m', activeColor: 'bg-[#d9f447]' },
+                  { label: 'Midnight Fest', activeColor: 'bg-gradient-to-r from-purple-500 to-pink-500' },
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setHeroSlideIndex(idx)}
+                    style={{
+                      width: heroSlideIndex === idx ? '28px' : '8px',
+                      height: '6px',
+                      minWidth: '8px',
+                      minHeight: '6px',
+                      padding: 0,
+                    }}
+                    className={`rounded-full transition-all duration-300 cursor-pointer block border-none outline-none ${
+                      heroSlideIndex === idx
+                        ? `${item.activeColor} shadow-md ring-1 ring-white/50`
+                        : 'bg-white/35 hover:bg-white/70'
+                    }`}
+                    title={item.label}
+                    aria-label={`Jump to slide ${idx + 1}: ${item.label}`}
+                  />
+                ))}
               </div>
             </div>
 
@@ -2402,7 +2693,7 @@ export default function CustomerDashboard({
 
             {/* Trending Quick-Add Dishes */}
             {(menuItemsList.length > 0 || selectedRestaurant) && (
-              <div>
+              <div id="dishes-section">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white flex items-center gap-2">
@@ -2495,13 +2786,55 @@ export default function CustomerDashboard({
                               {item.variants?.length ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
                             </span>
                           </div>
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Plus className="size-3.5 stroke-[3]" />
-                            <span>Add to Cart</span>
-                          </button>
+                          {(() => {
+                            const hasVariants = Boolean(item.variants?.length)
+                            const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+                            if (hasVariants) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => openVariantPicker(item)}
+                                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Plus className="size-3.5 stroke-[3]" />
+                                  <span>Options</span>
+                                </button>
+                              )
+                            }
+                            if (inCart) {
+                              return (
+                                <div className="flex items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-2.5 py-1 text-xs font-bold text-white dark:text-[#18201c] shadow-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItemQty(item.id, -1)}
+                                    className="p-1 hover:opacity-80 active:scale-90 transition cursor-pointer"
+                                    title="Decrease quantity"
+                                  >
+                                    <Minus className="size-3.5 stroke-[3]" />
+                                  </button>
+                                  <span className="font-black px-1">{inCart.qty}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItemQty(item.id, 1)}
+                                    className="p-1 hover:opacity-80 active:scale-90 transition cursor-pointer"
+                                    title="Increase quantity"
+                                  >
+                                    <Plus className="size-3.5 stroke-[3]" />
+                                  </button>
+                                </div>
+                              )
+                            }
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => addToCart(item)}
+                                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Plus className="size-3.5 stroke-[3]" />
+                                <span>Add to Cart</span>
+                              </button>
+                            )
+                          })()}
                         </div>
                         {item.variants && item.variants.length > 0 && (
                           <p className="mt-2 text-[10px] font-bold text-[#86a018] dark:text-[#d9f447]">
@@ -3764,11 +4097,10 @@ export default function CustomerDashboard({
                             <button
                               type="button"
                               onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline transition cursor-pointer shrink-0"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 border border-rose-500/30 px-2.5 py-0.5 text-[11px] font-black text-rose-300 hover:bg-rose-500/30 transition cursor-pointer shrink-0"
                               title={`Order can be cancelled within 15 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
-                              <Trash2 className="size-3.5 text-rose-400" /> Cancel Order (
-                              {cancelTimeRemaining}s)
+                              <Trash2 className="size-3 text-rose-300" /> Cancel Order ({cancelTimeRemaining}s)
                             </button>
                           )}
                           {(activeOrder.statusStep === 4 ||
@@ -3876,6 +4208,72 @@ export default function CustomerDashboard({
                       </div>
                     </div>
                   </div>
+
+                  {/* 15-Second Instant Cancellation Grace Window Widget */}
+                  {cancelTimeRemaining > 0 ? (
+                    <div className="bg-gradient-to-r from-rose-950/90 via-zinc-900 to-rose-950/90 border-b border-rose-500/30 p-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white backdrop-blur-md">
+                      <div className="flex items-center gap-3.5">
+                        {/* Animated SVG Circular Countdown Ring */}
+                        <div className="relative size-12 sm:size-14 shrink-0 grid place-items-center">
+                          <svg className="size-full -rotate-90 transform" viewBox="0 0 44 44">
+                            <circle
+                              cx="22"
+                              cy="22"
+                              r="18"
+                              className="stroke-white/15 fill-none"
+                              strokeWidth="3.5"
+                            />
+                            <circle
+                              cx="22"
+                              cy="22"
+                              r="18"
+                              className="stroke-rose-400 fill-none transition-all duration-1000 ease-linear"
+                              strokeWidth="3.5"
+                              strokeDasharray={113.1}
+                              strokeDashoffset={113.1 * (1 - cancelTimeRemaining / 15)}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute font-mono font-black text-xs sm:text-sm text-rose-300">
+                            {cancelTimeRemaining}s
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="size-2 rounded-full bg-rose-400 animate-ping" />
+                            <p className="text-xs sm:text-sm font-black text-rose-200 tracking-tight">
+                              15-Second Cancellation Window Active
+                            </p>
+                          </div>
+                          <p className="text-[11px] text-white/70 mt-0.5 max-w-lg leading-relaxed">
+                            Change of mind? Cancel now for an immediate 100% refund routed directly to our admin settlement queue.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCancelOrRemoveOrder(activeOrder.id)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-2 sm:py-2.5 text-xs font-black text-white shadow-lg shadow-rose-950/50 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                      >
+                        <Trash2 className="size-3.5 text-white" />
+                        <span>Cancel Order &amp; Refund</span>
+                      </button>
+                    </div>
+                  ) : activeOrder.statusStep < 4 ? (
+                    <div className="bg-[#121815] border-b border-[#27342d] px-4 py-2 sm:px-6 flex items-center justify-between gap-2 text-white">
+                      <div className="flex items-center gap-2 text-[11px] text-gray-300">
+                        <span className="text-emerald-400 font-extrabold flex items-center gap-1.5">
+                          <span className="size-1.5 rounded-full bg-emerald-400" />
+                          Kitchen Locked
+                        </span>
+                        <span className="text-gray-400">•</span>
+                        <span>Food is actively being prepared fresh. 15-second grace window concluded.</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:inline font-mono">
+                        Freshness Guaranteed
+                      </span>
+                    </div>
+                  ) : null}
 
                   {/* Progress Stepper Section */}
                   <div className="p-4 sm:p-8 border-b border-gray-100 dark:border-[#27342d] bg-white dark:bg-[#18201c]">
@@ -4006,17 +4404,17 @@ export default function CustomerDashboard({
                   </div>
 
                   {/* Live Rider Delivery Route View */}
-                  <div className="p-4 sm:p-6 bg-[#f8f9f6] border-b border-gray-200 flex flex-col gap-3 sm:gap-4">
+                  <div className="p-4 sm:p-6 bg-[#f8f9f6] dark:bg-[#151c18] border-b border-gray-200 dark:border-[#27342d] flex flex-col gap-3 sm:gap-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <h4 className="font-extrabold text-sm sm:text-base text-[#18201c] flex items-center gap-2">
+                        <h4 className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white flex items-center gap-2">
                           <Compass
-                            className="size-4 sm:size-5 text-emerald-600 animate-spin"
+                            className="size-4 sm:size-5 text-emerald-600 dark:text-[#d9f447] animate-spin"
                             style={{ animationDuration: '8s' }}
                           />
                           Live Rider Delivery Route
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-[#737e77] mt-0.5">
+                        <p className="text-[11px] sm:text-xs text-[#737e77] dark:text-gray-400 mt-0.5">
                           {activeOrder.driverName && activeOrder.driverName !== 'Unassigned'
                             ? `Tracking rider moving live on road from kitchen counter to ${deliveryAddress}.`
                             : 'Live GPS route mapping will activate once a driver accepts your pickup.'}
@@ -4056,15 +4454,15 @@ export default function CustomerDashboard({
                         isStale={isDriverGpsStale}
                       />
                     ) : (
-                      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-2.5 sm:gap-3 shadow-xs">
-                        <div className="size-11 sm:size-12 rounded-2xl bg-[#f0f5db] text-[#7f9815] flex items-center justify-center shadow-xs">
+                      <div className="rounded-2xl border border-dashed border-gray-300 dark:border-[#28372e] bg-white dark:bg-[#121815] p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-2.5 sm:gap-3 shadow-xs">
+                        <div className="size-11 sm:size-12 rounded-2xl bg-[#f0f5db] dark:bg-[#d9f447]/10 text-[#7f9815] dark:text-[#d9f447] flex items-center justify-center shadow-xs">
                           <Bike className="size-5 sm:size-6 animate-pulse" />
                         </div>
                         <div>
-                          <h5 className="font-extrabold text-xs sm:text-sm text-[#18201c]">
+                          <h5 className="font-extrabold text-xs sm:text-sm text-[#18201c] dark:text-white">
                             Awaiting Driver Acceptance
                           </h5>
-                          <p className="text-[11px] sm:text-xs text-[#737e77] max-w-md mt-1 leading-relaxed">
+                          <p className="text-[11px] sm:text-xs text-[#737e77] dark:text-gray-400 max-w-md mt-1 leading-relaxed">
                             Your order is confirmed and being prepared. The live GPS map will be
                             displayed here as soon as a delivery partner accepts the pickup request.
                           </p>
@@ -4105,25 +4503,58 @@ export default function CustomerDashboard({
                     </div>
                   </div>
 
-                  {/* Customer Delivery OTP Card */}
+                  {/* Customer Delivery OTP Card (High-End 6-Digit Monospace Security Card) */}
                   {activeOrder.otp && (
-                    <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-[#27342d] bg-[#f7faef] dark:bg-[#1f2822] flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-b-3xl">
-                      <div className="flex items-center gap-3">
-                        <div className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c] shrink-0 shadow-xs">
-                          <KeyRound className="size-5 font-bold" />
+                    <div className="p-4 sm:p-6 border-t border-gray-100 dark:border-[#27342d] bg-gradient-to-r from-[#f7faef] via-white to-[#f7faef] dark:from-[#1b251e] dark:via-[#161f19] dark:to-[#1b251e] flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-b-3xl">
+                      <div className="flex items-center gap-3.5">
+                        <div className="grid size-11 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shrink-0 shadow-md">
+                          <KeyRound className="size-5 stroke-[2.5]" />
                         </div>
                         <div>
-                          <p className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[#7a9317] dark:text-[#d9f447] tracking-wider">
-                            Delivery Verification OTP
-                          </p>
-                          <p className="text-xs font-bold text-[#18201c] dark:text-gray-200 mt-0.5">
-                            Share this OTP with driver upon arrival
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] sm:text-[11px] font-black uppercase text-[#5e8210] dark:text-[#d9f447] tracking-wider">
+                              Delivery Verification OTP
+                            </span>
+                            <span className="rounded-full bg-emerald-500/10 dark:bg-[#d9f447]/10 text-emerald-700 dark:text-[#d9f447] text-[9px] font-extrabold px-2 py-0.5 border border-emerald-500/20 dark:border-[#d9f447]/30">
+                              CONFIDENTIAL
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-[#18201c] dark:text-gray-200 mt-0.5 leading-relaxed">
+                            Share this 6-digit code only upon driver arrival with your food
                           </p>
                         </div>
                       </div>
-                      <span className="font-mono font-bold text-base sm:text-lg text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#121815] border border-emerald-500/30 px-4 py-1.5 rounded-xl shadow-xs tracking-widest text-center self-start sm:self-auto">
-                        {activeOrder.otp}
-                      </span>
+
+                      <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+                        <div className="flex items-center gap-1 sm:gap-1.5" aria-label="Delivery OTP digits">
+                          {String(activeOrder.otp).padStart(6, '0').split('').map((digit, i) => (
+                            <span
+                              key={i}
+                              className="grid size-8 sm:size-9 place-items-center rounded-xl bg-white dark:bg-[#101713] border-2 border-emerald-500/30 dark:border-[#d9f447]/40 font-mono font-black text-sm sm:text-base text-emerald-700 dark:text-[#d9f447] shadow-sm select-all"
+                            >
+                              {digit}
+                            </span>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyOtp(activeOrder.otp)}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#18201c] border border-gray-200 dark:border-[#27342d] px-3 py-2 text-xs font-black text-[#18201c] dark:text-white hover:bg-gray-50 dark:hover:bg-[#232f28] active:scale-95 transition shadow-xs cursor-pointer ml-1"
+                          title="Copy OTP to clipboard"
+                        >
+                          {otpCopied ? (
+                            <>
+                              <Check className="size-3.5 text-emerald-500 stroke-[3]" />
+                              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3.5 text-gray-500" />
+                              <span>Copy OTP</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 

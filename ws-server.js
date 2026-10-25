@@ -231,6 +231,7 @@ if (REDIS_URL && process.env.REDIS_DISABLED !== 'true' && process.env.NODE_ENV !
 
     redisPub.on('error', (err) => handleRedisError('Publisher', err))
     redisSub.on('error', (err) => handleRedisError('Subscriber', err))
+    redisBlacklist.on('error', (err) => handleRedisError('Blacklist', err))
     redisAssignments.on('error', (err) => handleRedisError('Assignments', err))
 
     // CR-15: When the assignments client reconnects, replay the Hash so the local
