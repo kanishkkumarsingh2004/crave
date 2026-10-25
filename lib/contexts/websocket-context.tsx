@@ -70,11 +70,14 @@ export function useWebSocket({
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const defaultPort = process.env.NEXT_PUBLIC_WS_PORT || '8000'
     const wsUrl =
       process.env.NEXT_PUBLIC_WS_URL ||
       (typeof window !== 'undefined'
-        ? `${protocol}//${window.location.host}/api/ws`
-        : `ws://localhost:3000/api/ws`)
+        ? window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? `${protocol}//${window.location.hostname}:${defaultPort}`
+          : `${protocol}//${window.location.host}/api/ws`
+        : `ws://localhost:8000`)
 
     let attemptCount = 0
 

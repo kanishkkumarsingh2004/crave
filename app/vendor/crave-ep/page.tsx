@@ -20,11 +20,11 @@ export default function CraveXPStorePage() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      window.location.replace('/login')
+      router.replace('/login')
     } else if (user.role !== 'cravexp_store_vendor' && user.role !== 'admin') {
-      window.location.replace(user.role === 'user' ? '/user/dashboard' : '/dashboard')
+      router.replace(user.role === 'user' ? '/user/dashboard' : '/dashboard')
     }
-  }, [user, isLoading])
+  }, [user, isLoading, router])
 
   if (isLoading) {
     return (

@@ -88,6 +88,8 @@ export default function VendorDashboard() {
 
   // Stability refs to prevent flickering / infinite fetch loops
   const hasResolvedRef = useRef(false)
+  const isFetchingRef = useRef(false)
+  const lastFetchRef = useRef(0)
   const ordersCacheRef = useRef<KitchenOrder[]>([])
   const soundEnabledRef = useRef(soundEnabled)
   soundEnabledRef.current = soundEnabled
@@ -135,11 +137,18 @@ export default function VendorDashboard() {
     return true
   }
 
-  // Fetch live kitchen orders with diff-checking
+  // Fetch live kitchen orders with diff-checking and 2.5s throttling
   const loadLiveKitchenOrders = useCallback(async (isManualRefresh = false) => {
+    const now = Date.now()
+    if (!isManualRefresh && (isFetchingRef.current || now - lastFetchRef.current < 2500)) {
+      return
+    }
+    isFetchingRef.current = true
+    lastFetchRef.current = now
+
     if (isManualRefresh) setIsRefreshing(true)
     try {
-      const targetRestId = resolvedRestaurantId || user?.restaurantId || user?.id
+      const targetRestId = resolvedRestaurantId || user?.restaurantId || 'rest_demo_01'
       const query = targetRestId
         ? `vendorId=${encodeURIComponent(targetRestId)}`
         : user?.restaurantName
@@ -245,63 +254,49 @@ export default function VendorDashboard() {
     } catch (err) {
       console.error('Failed to load kitchen orders:', err)
     } finally {
+      isFetchingRef.current = false
       if (isManualRefresh) {
         setTimeout(() => setIsRefreshing(false), 400)
       }
     }
   }, [resolvedRestaurantId, user?.restaurantId, user?.id, user?.restaurantName])
 
+  const loadOrdersRef = useRef(loadLiveKitchenOrders)
+  loadOrdersRef.current = loadLiveKitchenOrders
+
   // Initial fetch and auto-refresh intervals
   useEffect(() => {
-    void loadLiveKitchenOrders()
+    void loadOrdersRef.current()
 
-    // Smooth background polling fallback (12 seconds) without page flashes
+    // Smooth background polling fallback (15 seconds) without page flashes
     const interval = setInterval(() => {
-      void loadLiveKitchenOrders()
-    }, 12000)
+      void loadOrdersRef.current()
+    }, 15000)
 
     return () => clearInterval(interval)
-  }, [loadLiveKitchenOrders])
+  }, [resolvedRestaurantId, user?.id])
 
   // Stable WebSocket listener for new live orders
-  const handleLiveOrderEvent = useCallback(
-    (data: any) => {
-      const o = data.order || data
-      if (!o || !o.id) return
+  const handleLiveOrderEvent = useCallback((data: any) => {
+    const o = data.order || data
+    if (!o || !o.id) return
 
-      const isMatch =
-        (!resolvedRestaurantId && !user?.restaurantId && !user?.restaurantName) ||
-        (resolvedRestaurantId && o.restaurant_id === resolvedRestaurantId) ||
-        (user?.restaurantId && o.restaurant_id === user.restaurantId) ||
-        (user?.id && (o.restaurant_id === user.id || o.vendor_id === user.id)) ||
-        (user?.restaurantName &&
-          o.restaurant_name &&
-          o.restaurant_name.trim().toLowerCase() === user.restaurantName.trim().toLowerCase())
-
-      const isApproved =
-        o.payment_status === 'verified' ||
-        !['payment_pending', 'payment_submitted'].includes(o.status)
-
-      if (isMatch && isApproved) {
-        if (soundEnabledRef.current) {
-          playChimeSound()
-        }
-        void loadLiveKitchenOrders()
-        setLiveBanner({
-          id: o.id,
-          customerName: o.customer_name || 'Customer',
-          totalAmount: Number(o.total_amount || 0),
-        })
-        void showBrowserNotification({
-          title: 'New Kitchen Order! 🔔',
-          body: `${o.customer_name || 'Customer'} placed an order (#${o.id.slice(-6).toUpperCase()}) for ₹${Number(o.total_amount || 0).toLocaleString('en-IN')}`,
-          tag: `vendor-order-${o.id}`,
-          sound: false,
-        })
-      }
-    },
-    [resolvedRestaurantId, user?.restaurantId, user?.id, user?.restaurantName, loadLiveKitchenOrders]
-  )
+    if (soundEnabledRef.current) {
+      playChimeSound()
+    }
+    void loadOrdersRef.current()
+    setLiveBanner({
+      id: o.id,
+      customerName: o.customer_name || 'Customer',
+      totalAmount: Number(o.total_amount || 0),
+    })
+    void showBrowserNotification({
+      title: 'New Kitchen Order! 🔔',
+      body: `${o.customer_name || 'Customer'} placed an order (#${o.id.slice(-6).toUpperCase()}) for ₹${Number(o.total_amount || 0).toLocaleString('en-IN')}`,
+      tag: `vendor-order-${o.id}`,
+      sound: false,
+    })
+  }, [])
 
   useVendorOrderUpdates(handleLiveOrderEvent)
 

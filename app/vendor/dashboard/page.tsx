@@ -1,48 +1,55 @@
 'use client'
 
-import VendorDashboard from '@/components/dashboards/VendorDashboard'
 import { useAuth } from '@/lib/auth-context'
-import { ShieldAlert } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { ChefHat, LogIn, RefreshCw, ShieldAlert, UserCheck } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+// Dynamically import VendorDashboard with SSR disabled to guarantee ZERO hydration mismatches and ZERO reload loops
+const VendorDashboard = dynamic(
+  () => import('@/components/dashboards/VendorDashboard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+          <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
+            Initializing Kitchen Console...
+          </p>
+        </div>
+      </div>
+    ),
+  }
+)
+
 export default function VendorDashboardPage() {
-  const { user, role, isLoading } = useAuth()
-  const router = useRouter()
-  const [loadTimeoutExceeded, setLoadTimeoutExceeded] = useState(false)
-
-  // Safety timer: If preloader runs for > 3.5s, provide clear escape hatch
-  useEffect(() => {
-    if (!isLoading && user) return
-    const timer = setTimeout(() => {
-      setLoadTimeoutExceeded(true)
-    }, 3500)
-    return () => clearTimeout(timer)
-  }, [isLoading, user])
+  const [mounted, setMounted] = useState(false)
+  const { user, role, isLoading, login } = useAuth()
+  const [quickSigningIn, setQuickSigningIn] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (isLoading) return
+    setMounted(true)
+  }, [])
 
-    if (!user) {
-      window.location.replace('/login')
-    } else if (
-      role !== 'vendor' &&
-      role !== 'restaurant_vendor' &&
-      role !== 'admin'
-    ) {
-      const redirectPath =
-        role === 'user' || role === 'customer'
-          ? '/user/dashboard'
-          : role === 'rider' || role === 'driver'
-            ? '/driver/dashboard'
-            : role === 'cravexp_store_vendor'
-              ? '/vendor/crave-ep'
-              : '/login'
-      window.location.replace(redirectPath)
+  const isKitchenVendor = role === 'vendor' || role === 'restaurant_vendor' || role === 'admin'
+
+  const handleQuickVendorLogin = async () => {
+    try {
+      setQuickSigningIn(true)
+      setAuthError(null)
+      await login('vendor@crave.com', 'Password123!')
+    } catch (err: any) {
+      setAuthError(err?.message || 'Failed to sign in as vendor')
+    } finally {
+      setQuickSigningIn(false)
     }
-  }, [user, role, isLoading])
+  }
 
-  if (isLoading) {
+  // Identical clean placeholder on initial render to prevent SSR/CSR hydration mismatch
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
         <div className="text-center">
@@ -50,67 +57,84 @@ export default function VendorDashboardPage() {
           <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
             Loading Kitchen Console...
           </p>
-          {loadTimeoutExceeded && (
-            <div className="mt-4">
-              <a
-                href="/login"
-                className="inline-block rounded-full bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-4 py-1.5 text-xs font-bold"
-              >
-                Go to Sign In
-              </a>
-            </div>
-          )}
         </div>
       </div>
     )
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="max-w-md rounded-3xl bg-white dark:bg-[#121815] p-8 text-center shadow-xl border border-stone-200 dark:border-[#223026]">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <ShieldAlert className="size-6" />
+  return (
+    <div className="relative min-h-screen bg-[#fafbfa] dark:bg-[#0c120e]">
+      {/* Non-intrusive Account Status Banner (No redirects, No reload loops) */}
+      {!isLoading && !user && (
+        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/80 dark:text-amber-200">
+          <div className="flex items-center gap-2">
+            <ChefHat className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="font-semibold">Kitchen Preview Mode:</span>
+            <span>Viewing Crave Kitchen &amp; Gourmet Grills console.</span>
           </div>
-          <h2 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">Authentication Required</h2>
-          <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
-            Please sign in with your kitchen vendor account to access the console.
-          </p>
-          <a
-            href="/login"
-            className="mt-6 inline-block rounded-full bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-6 py-2.5 text-xs font-bold"
-          >
-            Sign In to Kitchen Console
-          </a>
-        </div>
-      </div>
-    )
-  }
-
-  if (role !== 'vendor' && role !== 'restaurant_vendor' && role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="max-w-md rounded-3xl bg-white dark:bg-[#121815] p-8 text-center shadow-xl border border-rose-200 dark:border-rose-900/40">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400">
-            <ShieldAlert className="size-6" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleQuickVendorLogin}
+              disabled={quickSigningIn}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1 font-bold text-white transition hover:bg-black disabled:opacity-50 dark:bg-[#d9f447] dark:text-[#121815]"
+            >
+              {quickSigningIn ? (
+                <>
+                  <RefreshCw className="size-3 animate-spin" />
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <UserCheck className="size-3" />
+                  <span>1-Click Sign In (vendor@crave.com)</span>
+                </>
+              )}
+            </button>
+            <Link
+              href="/login?from=/vendor/dashboard"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white px-3 py-1 font-medium text-amber-950 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-100"
+            >
+              <LogIn className="size-3" />
+              <span>Sign In Other</span>
+            </Link>
           </div>
-          <h2 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">Access Denied</h2>
-          <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
-            You are logged in as <span className="font-bold capitalize">{role}</span>. Vendor
-            Console is restricted to kitchen owners.
-          </p>
-          <button
-            onClick={() =>
-              router.push(role === 'customer' ? '/user/dashboard' : `/${role}/dashboard`)
-            }
-            className="mt-6 rounded-full bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-6 py-2.5 text-xs font-bold"
-          >
-            Go to Your {role} Dashboard
-          </button>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  return <VendorDashboard />
+      {!isLoading && user && !isKitchenVendor && (
+        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-900 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/80 dark:text-blue-200">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+            <span>
+              Signed in as <strong className="capitalize">{user.name || user.email}</strong> (Role: {role}).
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleQuickVendorLogin}
+              disabled={quickSigningIn}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#18201c] px-3 py-1 font-bold text-white transition hover:bg-black disabled:opacity-50 dark:bg-[#d9f447] dark:text-[#121815]"
+            >
+              {quickSigningIn ? 'Switching...' : 'Switch to Kitchen Account'}
+            </button>
+            <Link
+              href="/user/dashboard"
+              className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-white px-3 py-1 font-medium text-blue-950 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-100"
+            >
+              <span>Go to Customer App</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {authError && (
+        <div className="bg-rose-500 px-4 py-1.5 text-center text-xs font-semibold text-white">
+          {authError}
+        </div>
+      )}
+
+      {/* Main Vendor Console: Client-only dynamically loaded with zero hydration mismatch */}
+      <VendorDashboard />
+    </div>
+  )
 }

@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 function getTargetDashboard(u: { role?: string; email?: string } | null): string {
@@ -39,6 +40,7 @@ function getTargetDashboard(u: { role?: string; email?: string } | null): string
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const { login, user, role, isLoading, logout } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -56,9 +58,9 @@ export default function LoginPage() {
     }
     if (!isLoading && user) {
       const destination = getTargetDashboard(user)
-      window.location.replace(destination)
+      router.replace(destination)
     }
-  }, [user, isLoading])
+  }, [user, isLoading, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -74,7 +76,7 @@ export default function LoginPage() {
       const authenticatedUser = await login(email.trim(), password)
       if (authenticatedUser) {
         const targetPath = getTargetDashboard(authenticatedUser)
-        window.location.replace(targetPath)
+        router.replace(targetPath)
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Email or password is incorrect.')
@@ -158,7 +160,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.replace(getTargetDashboard(user))
+                      router.replace(getTargetDashboard(user))
                     }}
                     className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-3.5 px-6 text-xs font-black text-[#d9f447] dark:text-[#121815] transition-all hover:opacity-90 active:scale-[0.99] shadow-md hover:shadow-xl"
                   >

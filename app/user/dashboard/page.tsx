@@ -41,7 +41,7 @@ export default function UserDashboardPage() {
     if (isLoading) return
 
     if (!user) {
-      window.location.replace('/login?logout=1')
+      router.replace('/login')
     } else if (role !== 'user' && role !== 'customer') {
       router.replace(`/${getDashboardPath(role)}`)
     }
@@ -95,7 +95,7 @@ export default function UserDashboardPage() {
           </p>
           <button
             type="button"
-            onClick={() => window.location.replace('/login')}
+            onClick={() => router.replace('/login')}
             className="px-5 py-2.5 rounded-xl bg-[#121815] text-[#d9f447] text-xs font-bold hover:opacity-90 transition shadow-sm"
           >
             Click here if not redirected automatically
