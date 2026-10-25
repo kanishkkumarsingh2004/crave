@@ -3,18 +3,31 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 const contentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://*.razorpay.com ${isDevelopment ? " 'unsafe-eval'" : ''};
-  style-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://*.razorpay.com ${isDevelopment ? "'unsafe-eval'" : ''};
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: blob: https:;
-  font-src 'self' data:;
-  connect-src 'self' https://*.razorpay.com https://api.razorpay.com https:${isDevelopment ? ' ws:' : ''};
-  frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com;
-  child-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com blob:;
+  font-src 'self' data: https://fonts.gstatic.com;
+  connect-src 'self' 
+    https://*.razorpay.com 
+    https://api.razorpay.com 
+    https://checkout.razorpay.com
+    ${isDevelopment ? 'http://localhost:* ws://localhost:* wss://localhost:*' : ''}
+    https://crave.apexonestudio.com 
+    wss://crave.apexonestudio.com;
+  frame-src 'self' 
+    https://api.razorpay.com 
+    https://checkout.razorpay.com 
+    https://*.razorpay.com;
+  child-src 'self' 
+    https://api.razorpay.com 
+    https://checkout.razorpay.com 
+    https://*.razorpay.com 
+    blob:;
   worker-src 'self' blob:;
   manifest-src 'self';
   object-src 'none';
   base-uri 'self';
-  form-action 'self';
+  form-action 'self' https://*.razorpay.com https://api.razorpay.com https://checkout.razorpay.com;
   frame-ancestors 'self';
   ${isProduction ? 'upgrade-insecure-requests;' : ''}
 `
@@ -76,7 +89,7 @@ const nextConfig = {
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
+            value: 'same-origin-allow-popups', // Important for Razorpay
           },
           ...(isProduction
             ? [
