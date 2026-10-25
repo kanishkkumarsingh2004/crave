@@ -12,7 +12,7 @@ export default function DashboardRedirectPage() {
     if (isLoading) return
 
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
       return
     }
 

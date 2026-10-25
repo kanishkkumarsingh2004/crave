@@ -39,31 +39,23 @@ export default function PwaInstallPrompt() {
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent)
     setIsIos(isIosDevice)
 
-    // Register service worker
-    if ('serviceWorker' in navigator && process.env.NODE_ENV !== 'test') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((registration) => {
-            // Check for updates
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing
-              if (installingWorker) {
-                installingWorker.onstatechange = () => {
-                  if (
-                    installingWorker.state === 'installed' &&
-                    navigator.serviceWorker.controller
-                  ) {
-                    // New service worker installed
-                  }
-                }
-              }
-            }
-          })
-          .catch((err) => {
-            console.error('PWA ServiceWorker registration failed:', err)
-          })
-      })
+    // Register service worker only in production; unregister in development
+    if ('serviceWorker' in navigator) {
+      if (process.env.NODE_ENV === 'production') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .catch((err) => {
+              console.error('PWA ServiceWorker registration failed:', err)
+            })
+        })
+      } else {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister()
+          }
+        }).catch(() => {})
+      }
     }
 
     // Listen for beforeinstallprompt event (Chrome, Android, Edge, Opera)

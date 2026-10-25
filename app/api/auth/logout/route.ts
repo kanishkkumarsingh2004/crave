@@ -9,7 +9,6 @@ function getIsSecure(): boolean {
 function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
   const cookieNames = ['crave_auth_token', 'drop_auth_token', 'crave_token']
   for (const name of cookieNames) {
-    // 1. Expire with HttpOnly and secure if applicable
     response.cookies.set(name, '', {
       path: '/',
       maxAge: 0,
@@ -18,16 +17,6 @@ function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
       secure: isSecure,
       sameSite: 'lax',
     })
-    // 2. Expire non-HttpOnly version (in case set by client document.cookie)
-    response.cookies.set(name, '', {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      httpOnly: false,
-      secure: isSecure,
-      sameSite: 'lax',
-    })
-    // 3. Fallback without secure flag (for mixed or localhost proxies)
     if (isSecure) {
       response.cookies.set(name, '', {
         path: '/',
@@ -38,7 +27,6 @@ function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
         sameSite: 'lax',
       })
     }
-    response.cookies.delete(name)
   }
 }
 

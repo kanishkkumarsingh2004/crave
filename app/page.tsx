@@ -168,7 +168,7 @@ export default function HomePage() {
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
   const [showAppPopup, setShowAppPopup] = useState(false)
 
-  // Compute target dashboard URL based on user role or URL redirect param
+  // Compute target dashboard URL based on operational user role or URL redirect param
   const getTargetDashboard = () => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
@@ -185,26 +185,28 @@ export default function HomePage() {
           ? '/vendor/dashboard'
           : role === 'cravexp_store_vendor'
             ? '/vendor/crave-ep'
-            : '/user/dashboard'
+            : null
   }
 
   // Preserve authentication redirects to designated operational cockpits
   useEffect(() => {
     if (!isLoading && user) {
       const targetDashboard = getTargetDashboard()
-      router.replace(targetDashboard)
+      if (targetDashboard) {
+        router.replace(targetDashboard)
 
-      // Safety timeout: prevent indefinite spinner if routing delays or hits edge case (UIX-004)
-      const timer = setTimeout(() => {
-        setRedirectTimeoutExceeded(true)
-      }, 3500)
+        // Safety timeout: prevent indefinite spinner if routing delays or hits edge case (UIX-004)
+        const timer = setTimeout(() => {
+          setRedirectTimeoutExceeded(true)
+        }, 3500)
 
-      return () => clearTimeout(timer)
+        return () => clearTimeout(timer)
+      }
     }
   }, [user, role, isLoading, router])
 
-  if (!isLoading && user) {
-    const targetDashboard = getTargetDashboard()
+  const targetDashboard = getTargetDashboard()
+  if (!isLoading && user && targetDashboard) {
     return (
       <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#d9f447] selection:text-[#121815]">
         {/* Ambient Subtle Glow */}

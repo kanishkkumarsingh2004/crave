@@ -11,7 +11,7 @@ export default function AdminIndexPage() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
     } else {
       router.replace('/admin/dashboard')
     }

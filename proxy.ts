@@ -31,14 +31,6 @@ function clearAuthCookies(response: NextResponse, isSecure: boolean) {
       secure: isSecure,
       sameSite: 'lax',
     })
-    response.cookies.set(name, '', {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      httpOnly: false,
-      secure: isSecure,
-      sameSite: 'lax',
-    })
     if (isSecure) {
       response.cookies.set(name, '', {
         path: '/',
@@ -49,7 +41,6 @@ function clearAuthCookies(response: NextResponse, isSecure: boolean) {
         sameSite: 'lax',
       })
     }
-    response.cookies.delete(name)
   }
 }
 
@@ -89,30 +80,19 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isExplicitLogout =
-    searchParams.has('logout') || searchParams.has('signout') || searchParams.has('switch')
+    searchParams.has('logout') || searchParams.has('signout') || searchParams.has('switch') || searchParams.has('error')
 
-  // If user explicitly navigated with logout/switch intent, do NOT redirect to dashboard!
-  // Instead, wipe any lingering cookies on response and serve login/signup cleanly.
+  // If user navigated with logout/switch/error intent, wipe any lingering cookies
   if (isAuthPage && isExplicitLogout) {
     const res = NextResponse.next()
     clearAuthCookies(res, isSecure)
     return res
   }
 
-  // If visiting /login or /signup
+  // On login/signup: do not blindly redirect at middleware level based only on stateless JWT
+  // signature. Let the client page query /api/auth/me to verify user exists in DB, preventing
+  // infinite redirect loops if the user account was scrubbed or deleted.
   if (isAuthPage) {
-    if (token) {
-      const payload = await verifyToken(token)
-      if (payload) {
-        const targetDashboard = getDashboardForRole(payload.role as string)
-        return NextResponse.redirect(new URL(targetDashboard, request.url))
-      } else {
-        // Token was present on login page but is invalid/expired/blacklisted: clean it up
-        const res = NextResponse.next()
-        clearAuthCookies(res, isSecure)
-        return res
-      }
-    }
     return NextResponse.next()
   }
 

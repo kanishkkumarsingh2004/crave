@@ -30,8 +30,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true)
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
-      if (stored && (stored === 'light' || stored === 'dark' || stored === 'system')) {
-        setThemeState(stored)
+      if (stored === 'dark') {
+        setThemeState('dark')
+      } else if (stored === 'system') {
+        setThemeState('system')
       } else {
         setThemeState('light')
       }

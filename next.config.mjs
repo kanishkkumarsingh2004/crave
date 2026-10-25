@@ -1,5 +1,5 @@
-const isDevelopment = process.env.NODE_ENV === 'development'
 const isProduction = process.env.NODE_ENV === 'production'
+const isDevelopment = !isProduction
 
 const contentSecurityPolicy = `
   default-src 'self';
@@ -7,7 +7,7 @@ const contentSecurityPolicy = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: https:;
   font-src 'self' data:;
-  connect-src 'self' https://*.razorpay.com https://api.razorpay.com https:${isDevelopment ? ' ws:' : ''};
+  connect-src 'self' https://*.razorpay.com https://api.razorpay.com https:${isDevelopment ? ' http: ws: wss:' : ''};
   frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com;
   child-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com blob:;
   worker-src 'self' blob:;

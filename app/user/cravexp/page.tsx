@@ -13,7 +13,7 @@ export default function UserCraveXPPage() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
     }
   }, [user, isLoading, router])
 

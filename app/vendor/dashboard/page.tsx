@@ -14,7 +14,7 @@ export default function VendorDashboardPage() {
     if (isLoading) return
 
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
     } else if (role !== 'vendor' && role !== 'restaurant_vendor') {
       const redirectPath =
         role === 'user' || role === 'customer'

@@ -4,6 +4,10 @@ const { createServer } = require('http')
 const next = require('next')
 const net = require('net')
 
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development'
+}
+
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
@@ -13,11 +17,11 @@ app.prepare().then(() => {
     handle(req, res)
   })
 
-  // Proxy WebSocket upgrade requests (/api/ws) to backend container
+  // Proxy WebSocket upgrade requests (/api/ws) to backend container or local daemon
   server.on('upgrade', (req, socket, head) => {
     if (req.url && req.url.startsWith('/api/ws')) {
       const targetPort = process.env.WS_PORT || 8000
-      const targetHost = process.env.WS_HOST || 'backend'
+      const targetHost = process.env.WS_HOST || '127.0.0.1'
       const targetSocket = net.connect(targetPort, targetHost, () => {
         let rawReq = `${req.method} ${req.url} HTTP/${req.httpVersion}\r\n`
         if (req.rawHeaders) {

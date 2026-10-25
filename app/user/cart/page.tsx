@@ -992,7 +992,7 @@ export default function CartPage() {
   useEffect(() => {
     if (!authLoading && !user) {
       toast('Please log in to access your cart', 'error')
-      router.replace('/login')
+      router.replace('/login?logout=1')
     }
   }, [user, authLoading, router, toast])
 

@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (isLoading) return
 
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
     } else if (role !== 'admin') {
       const redirectPath =
         role === 'customer' || role === 'user'

@@ -17,14 +17,6 @@ function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
       secure: isSecure,
       sameSite: 'lax',
     })
-    response.cookies.set(name, '', {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      httpOnly: false,
-      secure: isSecure,
-      sameSite: 'lax',
-    })
     if (isSecure) {
       response.cookies.set(name, '', {
         path: '/',
@@ -35,7 +27,6 @@ function clearAllAuthCookies(response: NextResponse, isSecure: boolean) {
         sameSite: 'lax',
       })
     }
-    response.cookies.delete(name)
   }
 }
 

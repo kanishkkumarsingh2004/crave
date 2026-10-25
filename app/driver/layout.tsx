@@ -59,7 +59,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
     if (isLoading) return
 
     if (!user) {
-      router.replace('/login')
+      router.replace('/login?logout=1')
     } else if (role !== 'driver' && role !== 'rider') {
       const redirectPath =
         role === 'user' || role === 'customer'
