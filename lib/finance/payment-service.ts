@@ -19,6 +19,7 @@ import {
 import { prisma } from '@/lib/prisma'
 import { sendWebPushToUsers } from '@/lib/web-push'
 import { broadcast } from '@/lib/ws-server'
+import { stripOrderSecrets } from '@/lib/auth/order-access'
 import { PaymentStatus, type OrderStatus } from '@prisma/client'
 
 export interface PaymentVerificationInput {
@@ -114,9 +115,11 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     } else if (amount != null && amount > 0) {
       // Legacy manual flows: rupee amount must not underpay the canonical total.
       // Exact paise equality is NOT enforced for non-gateway flows.
-      if (amount < Math.round(canonicalPaise / 100)) {
+      // Allow for integer rupee rounding/truncation (within ₹1) between paise calculations and rupee storage.
+      const requiredRupees = Math.floor(canonicalPaise / 100)
+      if (amount < requiredRupees) {
         throw new Error(
-          `Underpayment detected: Received ₹${amount}, required ₹${Math.round(canonicalPaise / 100)} for order ${orderId}`
+          `Underpayment detected: Received ₹${amount}, required ₹${requiredRupees} for order ${orderId}`
         )
       }
     }
@@ -294,13 +297,32 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     }
   })
 
-  if (!result.alreadyVerified) {
+  if (!result.alreadyVerified && result.order) {
+    const safeOrder = stripOrderSecrets(result.order as any)
+
     await broadcast('vendor_orders', {
       type: 'new_paid_order',
-      order: result.order!,
+      order: safeOrder,
       orderId,
-      restaurantId: result.order!.restaurant_id,
+      restaurantId: result.order.restaurant_id,
       timestamp: new Date().toISOString(),
+    })
+
+    await broadcast('approval_update', {
+      status: 'verified',
+      orderId,
+    })
+
+    await broadcast('order_update', {
+      type: 'order_updated',
+      order: safeOrder,
+      orderId,
+    })
+
+    await broadcast('admin_orders', {
+      type: 'order_updated',
+      order: safeOrder,
+      orderId,
     })
 
     const customerId = result.order!.customer_id
@@ -431,16 +453,34 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
     return { success: true, order: updatedOrder }
   })
 
-  if (!result.alreadyRejected && result.order!.customer_id) {
-    await sendWebPushToUsers([result.order!.customer_id], {
-      title: 'Payment not verified',
-      body: `Payment for order #${orderId.slice(-8)} was not approved. Open the app for details.`,
-      url: `/user/orders/${encodeURIComponent(orderId)}`,
-      tag: `order-${orderId}`,
+  if (!result.alreadyRejected && result.order) {
+    const safeOrder = stripOrderSecrets(result.order as any)
+    await broadcast('approval_update', {
+      status: 'rejected',
       orderId,
-    }).catch((pushError) =>
-      console.error('[payment-service] Payment rejection Web Push failed:', pushError)
-    )
+    })
+    await broadcast('order_update', {
+      type: 'order_updated',
+      order: safeOrder,
+      orderId,
+    })
+    await broadcast('admin_orders', {
+      type: 'order_updated',
+      order: safeOrder,
+      orderId,
+    })
+
+    if (result.order.customer_id) {
+      await sendWebPushToUsers([result.order.customer_id], {
+        title: 'Payment not verified',
+        body: `Payment for order #${orderId.slice(-8)} was not approved. Open the app for details.`,
+        url: `/user/orders/${encodeURIComponent(orderId)}`,
+        tag: `order-${orderId}`,
+        orderId,
+      }).catch((pushError) =>
+        console.error('[payment-service] Payment rejection Web Push failed:', pushError)
+      )
+    }
   }
 
   return result
