@@ -20,6 +20,7 @@ import {
   Settings,
   ShoppingCart,
   Star,
+  Store,
   Tag,
   Truck,
   User,
@@ -56,6 +57,7 @@ export type IconName =
   | 'language'
   | 'help'
   | 'phone'
+  | 'store'
 
 /** Every icon in the app comes from Lucide, so the set stays consistent. */
 const icons: Record<IconName, LucideIcon> = {
@@ -85,6 +87,7 @@ const icons: Record<IconName, LucideIcon> = {
   language: Languages,
   help: HelpCircle,
   phone: Phone,
+  store: Store,
 }
 
 export function Icon({

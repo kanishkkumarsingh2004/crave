@@ -187,7 +187,7 @@ type PastOrder = {
   couponCode?: string
   date: string
   time: string
-  status: 'Delivered' | 'Cancelled' | 'In Progress'
+  status: 'Delivered' | 'Cancelled' | 'In Progress' | 'Pending'
   deliveryTime: string
   trackStep?: number
   otp?: string
@@ -682,6 +682,9 @@ export default function CustomerDashboard({
       ready: 'In Progress',
       accepted: 'In Progress',
       out_for_delivery: 'In Progress',
+      payment_pending: 'Pending',
+      payment_submitted: 'Pending',
+      payment_verified: 'In Progress',
     }
 
     const parsed: Array<PastOrder> = ordersData.map((o: any) => {
@@ -1285,6 +1288,116 @@ export default function CustomerDashboard({
       setAvailableCoupons(coupons.filter((c) => c.isActive))
     })
   }, [])
+
+  // Pay Now for pending orders via Razorpay Checkout (amount from canonical snapshot)
+  const handlePayNow = useCallback(
+    async (orderId: string, amount: number) => {
+      if (!user?.id) {
+        toast('Please log in to pay', 'error')
+        return
+      }
+
+      const loadScript = (): Promise<boolean> => {
+        return new Promise((res) => {
+          if (typeof window !== 'undefined' && (window as any).Razorpay) {
+            return res(true)
+          }
+          const existing = document.querySelector(
+            'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+          )
+          if (existing) {
+            existing.addEventListener('load', () => res(true))
+            existing.addEventListener('error', () => res(false))
+            return
+          }
+          const script = document.createElement('script')
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+          script.async = true
+          script.crossOrigin = 'anonymous'
+          script.onload = () => res(true)
+          script.onerror = () => res(false)
+          document.body.appendChild(script)
+        })
+      }
+
+      try {
+        const loaded = await loadScript()
+        if (!loaded || !(window as any).Razorpay) {
+          throw new Error('Razorpay Checkout failed to load')
+        }
+
+        const res = await apiFetch('/api/payments/razorpay/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId }),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          throw new Error(json.error || 'Unable to start payment')
+        }
+        if (json.razorpayConfigured === false) {
+          toast(json.error || 'Payment gateway not configured', 'error')
+          return
+        }
+
+        const checkout = new (window as any).Razorpay({
+          key: json.keyId || 'rzp_test_TrT8Pg6Vpsi18B',
+          order_id: json.razorpayOrderId,
+          amount: json.amount,
+          currency: json.currency || 'INR',
+          name: 'crave.',
+          description: `Order #${String(orderId).slice(-6).toUpperCase()} • Fresh Delivery`,
+          image: `${window.location.origin}/icons/icon-192x192.png`,
+          prefill: {
+            name: user.name || '',
+            contact: user.phone || '',
+            email: user.email || '',
+          },
+          theme: {
+            color: '#18241c',
+            backdrop_color: 'rgba(18, 24, 21, 0.85)',
+          },
+          notes: { crave_order_id: orderId },
+          handler: async (result: any) => {
+            try {
+              const verifyRes = await apiFetch('/api/payments/razorpay/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId,
+                  razorpay_order_id: result.razorpay_order_id,
+                  razorpay_payment_id: result.razorpay_payment_id,
+                  razorpay_signature: result.razorpay_signature,
+                }),
+              })
+              const verifyJson = await verifyRes.json()
+              if (!verifyRes.ok || !verifyJson.success) {
+                throw new Error(verifyJson.error || 'Verification failed')
+              }
+              toast('Payment successful! Your order is being prepared.', 'success')
+              const refreshRes = await fetch(`/api/orders?customerId=${user!.id}`)
+              const refreshJson = await refreshRes.json()
+              if (refreshJson.success && Array.isArray(refreshJson.orders)) {
+                setOrdersData(refreshJson.orders)
+              }
+            } catch (err: any) {
+              toast(err?.message || 'Verification failed', 'error')
+            }
+          },
+          modal: {
+            confirm_close: true,
+            ondismiss: () => {
+              toast('Checkout was cancelled', 'error')
+            },
+          },
+        })
+        checkout.open()
+      } catch (err: any) {
+        toast(err?.message || 'Unable to start payment', 'error')
+      }
+    },
+    [user, toast, setOrdersData]
+  )
 
   function triggerToast(msg: string) {
     // Strip leading emoji/special chars for cleaner display; variant is auto-detected below.
@@ -3201,14 +3314,18 @@ export default function CustomerDashboard({
                                 ? 'text-emerald-600 dark:text-emerald-400'
                                 : order.status === 'In Progress'
                                   ? 'text-blue-600 dark:text-blue-400'
-                                  : 'text-rose-600 dark:text-rose-400'
+                                  : order.status === 'Pending'
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-rose-600 dark:text-rose-400'
                             }`}
                           >
                             {order.status === 'Delivered'
                               ? 'Delivered'
                               : order.status === 'In Progress'
                                 ? 'Out for Delivery'
-                                : 'Cancelled'}
+                                : order.status === 'Pending'
+                                  ? 'Payment Pending'
+                                  : 'Cancelled'}
                           </span>
                           <span className="text-[10px] text-gray-400">#{order.id}</span>
                         </div>
@@ -3233,6 +3350,15 @@ export default function CustomerDashboard({
                             className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
                           >
                             <Bike className="size-3" /> Track Live Order
+                          </button>
+                        )}
+                        {order.status === 'Pending' && (
+                          <button
+                            type="button"
+                            onClick={() => handlePayNow(String(order.id), order.total)}
+                            className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#c8e434] px-2.5 py-1 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                          >
+                            <Zap className="size-3" /> Pay Now ₹{order.total}
                           </button>
                         )}
                         {(order.status === 'Delivered' ||

@@ -38,10 +38,19 @@ import { checkoutDistanceKm, roadDistanceKm } from './pricing'
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type { AddressMapPoint } from './AddressMap'
+import { XPStorePage } from './XPStorePage'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
 
-type Tab = 'home' | 'search' | 'orders' | 'cart' | 'account'
-const SWIPE_TABS: Tab[] = ['home', 'orders', 'cart', 'account']
+type Tab = 'home' | 'xp' | 'search' | 'orders' | 'cart' | 'account'
+const SWIPE_TABS: Tab[] = ['home', 'xp', 'orders', 'cart', 'account']
+/** Full ordered list used to derive slide direction for any tab change. */
+const TAB_ORDER: Tab[] = ['home', 'search', 'xp', 'orders', 'cart', 'account']
+const getDirection = (from: Tab, to: Tab): 'next' | 'prev' | null => {
+  const fromIdx = TAB_ORDER.indexOf(from)
+  const toIdx = TAB_ORDER.indexOf(to)
+  if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return null
+  return toIdx > fromIdx ? 'next' : 'prev'
+}
 const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
 /** Rupees with paise only when there are paise. */
 const rupees = (value: number) => {
@@ -1258,6 +1267,19 @@ function OrdersPage({
 }) {
   const { t } = useLanguage()
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null)
+  const payOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        await startRazorpayCheckout({ orderId, apiRequest })
+        onRefresh()
+      } catch {
+        // Razorpay surfaces dismiss/verification errors inside its modal.
+        // Leave the card unchanged so the customer can retry.
+      }
+    },
+    [apiRequest, onRefresh]
+  )
+  const [visibleCount, setVisibleCount] = useState(5)
   const active = orders.filter((o) => !CLOSED_ORDER_STATUSES.includes(o.status)),
     past = orders.filter((o) => !active.includes(o))
   const card = (o: Order) => (
@@ -1290,6 +1312,11 @@ function OrdersPage({
         {INVOICED_ORDER_STATUSES.includes(o.status) && (
           <button className="status-action" onClick={() => setInvoiceOrder(o)}>
             {t.customer.viewInvoice}
+          </button>
+        )}
+        {(o.status === 'payment_pending' || o.status === 'payment_submitted') && (
+          <button className="status-action" onClick={() => void payOrder(o.id)}>
+            Pay Now
           </button>
         )}
       </div>
@@ -1346,15 +1373,22 @@ function OrdersPage({
             Active <span>{active.length}</span>
           </h2>
           {active.length ? (
-            active.map(card)
+            active.slice(0, visibleCount).map(card)
           ) : (
             <p className="muted">No active deliveries right now.</p>
           )}
           {past.length > 0 && (
             <>
               <h2 className="section-title spaced">Past orders</h2>
-              {past.map(card)}
+              {past.slice(0, visibleCount).map(card)}
             </>
+          )}
+          {visibleCount < orders.length && (
+            <div className="text-center mt-6">
+              <button className="secondary" onClick={() => setVisibleCount((c) => c + 5)}>
+                {t.customer.loadMore}
+              </button>
+            </div>
           )}
         </>
       )}
@@ -2501,6 +2535,8 @@ export default function App() {
   const [ready, setReady] = useState(false),
     [user, setUser] = useState<User | null>(null),
     [tab, setTab] = useState<Tab>('home'),
+    [direction, setDirection] = useState<'next' | 'prev' | null>(null),
+    [sliding, setSliding] = useState(false),
     [restaurants, setRestaurants] = useState<Restaurant[]>([]),
     [selected, setSelected] = useState<Restaurant | null>(null),
     [cartRestaurant, setCartRestaurant] = useState<Restaurant | null>(() => {
@@ -2549,9 +2585,22 @@ export default function App() {
   const previous = useRef<Record<string, string>>({})
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
-  const selectTab = (next: Tab) => {
+  const prevTabRef = useRef<Tab>(tab)
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const selectTab = (next: Tab, dir: 'next' | 'prev' | null = null) => {
+    if (transitionTimer.current) clearTimeout(transitionTimer.current)
+    prevTabRef.current = tab
+    const direction = dir ?? getDirection(tab, next)
+    setDirection(direction)
     setTab(next)
+    setSliding(false)
     window.scrollTo({ top: 0, behavior: 'auto' })
+    if (direction) {
+      transitionTimer.current = setTimeout(() => {
+        setDirection(null)
+        setSliding(false)
+      }, 350)
+    }
   }
   const handleTouchStart = (event: React.TouchEvent) => {
     touchStartX.current = event.targetTouches[0]?.clientX ?? 0
@@ -2567,9 +2616,14 @@ export default function App() {
     const currentIndex = SWIPE_TABS.indexOf(tab)
     if (currentIndex < 0) return
     if (distance > 0 && currentIndex < SWIPE_TABS.length - 1)
-      selectTab(SWIPE_TABS[currentIndex + 1])
-    if (distance < 0 && currentIndex > 0) selectTab(SWIPE_TABS[currentIndex - 1])
+      selectTab(SWIPE_TABS[currentIndex + 1], 'next')
+    if (distance < 0 && currentIndex > 0) selectTab(SWIPE_TABS[currentIndex - 1], 'prev')
   }
+  useEffect(() => {
+    if (!direction) return
+    const raf = requestAnimationFrame(() => setSliding(true))
+    return () => cancelAnimationFrame(raf)
+  }, [direction])
   const showToast = (m: string) => {
     setToast(m)
     window.setTimeout(() => setToast(''), 2200)
@@ -2778,7 +2832,7 @@ export default function App() {
       if (addressPage) setAddressPage(false)
       else if (checkout) setCheckout(false)
       else if (selected) setSelected(null)
-      else if (tab !== 'home') setTab('home')
+      else if (tab !== 'home') selectTab('home')
       else void CapacitorApp.minimizeApp()
     }).then((handle) => {
       listener = handle
@@ -2827,7 +2881,6 @@ export default function App() {
         .filter((x) => x.quantity > 0)
     )
   const logout = async () => {
-    if (!confirmLogout) return
     setConfirmLogout(false)
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
@@ -2870,7 +2923,7 @@ export default function App() {
         onPlaced={() => {
           setCheckout(false)
           setCart([])
-          setTab('orders')
+          selectTab('orders')
           void loadOrders()
           showToast('Payment submitted for verification')
         }}
@@ -2890,7 +2943,7 @@ export default function App() {
             className="floating-cart"
             onClick={() => {
               setSelected(null)
-              setTab('cart')
+              selectTab('cart')
             }}
           >
             <span>{cart.reduce((n, x) => n + x.quantity, 0)}</span>
@@ -2901,6 +2954,191 @@ export default function App() {
         {toast && <div className="toast">{toast}</div>}
       </>
     )
+  const renderTabPage = (
+    pageTab: Tab,
+    mode: 'active' | 'enter' | 'exit',
+    dir: 'next' | 'prev' | null
+  ) => {
+    const isNext = dir === 'next'
+    const frameStyle: React.CSSProperties = {}
+    let frameClass = 'page-frame'
+    if (mode === 'active') {
+      frameClass += ' active'
+      frameStyle.transform = 'translateX(0)'
+      frameStyle.opacity = '1'
+    } else if (mode === 'enter') {
+      frameClass += ` enter-${isNext ? 'next' : 'prev'}`
+      frameStyle.transition = 'none'
+      frameStyle.transform = isNext ? 'translateX(100%)' : 'translateX(-100%)'
+      frameStyle.opacity = '1'
+    } else {
+      frameClass += ` exit-${isNext ? 'next' : 'prev'}`
+      frameStyle.transform = 'translateX(0)'
+      frameStyle.opacity = '1'
+    }
+    if (sliding) {
+      frameStyle.transition = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease'
+      if (mode === 'enter') frameStyle.transform = 'translateX(0)'
+      if (mode === 'exit') frameStyle.transform = isNext ? 'translateX(-100%)' : 'translateX(100%)'
+    }
+
+    const content =
+      pageTab === 'home' ? (
+        <section className="page home">
+          <header className="home-header">
+            <div>
+              <p>DELIVERING TO</p>
+              <button onClick={() => setAddressPage(true)}>
+                <Icon name="pin" />
+                <span>
+                  {addresses.find((a) => a.is_default)?.label ||
+                    addresses[0]?.label ||
+                    'Add address'}
+                </span>
+                <Icon name="chevron" />
+              </button>
+            </div>
+            <Logo compact />
+          </header>
+          <div className="welcome">
+            <p>
+              {t.customer.dashboard}, {user.name.split(' ')[0]} 👋
+            </p>
+            <h1>
+              Good food. <em>No waiting.</em>
+            </h1>
+          </div>
+          <button className="search-launch" onClick={() => selectTab('search')}>
+            <Icon name="search" />
+            {t.customer.searchPlaceholder}
+          </button>
+          <div className="promo">
+            <div>
+              <span>FIRST BITE</span>
+              <h2>Tonight’s sorted.</h2>
+              <p>Local favourites, delivered fresh.</p>
+              <button onClick={() => selectTab('search')}>
+                Explore food <Icon name="chevron" />
+              </button>
+            </div>
+            <div className="promo-food">🍱</div>
+          </div>
+          <div className="title-row">
+            <div>
+              <p className="eyebrow">NEAR YOU</p>
+              <h2>Popular right now</h2>
+            </div>
+            <button onClick={() => selectTab('search')}>See all</button>
+          </div>
+          <div className="restaurant-list">
+            {restaurants.slice(0, 6).map((r) => (
+              <RestaurantCard
+                key={r.id}
+                restaurant={r}
+                onOpen={() => setSelected(r)}
+                distanceKm={restaurantDistances.get(r.id)}
+              />
+            ))}
+          </div>
+          {catalogError && (
+            <div className="inline-retry">
+              <div className="error-box">{catalogError}</div>
+              <button className="secondary" onClick={loadRestaurants}>
+                Try again
+              </button>
+            </div>
+          )}
+        </section>
+      ) : pageTab === 'search' ? (
+        <section className="page">
+          <header className="page-header">
+            <div>
+              <p className="eyebrow">DISCOVER</p>
+              <h1>Find your food</h1>
+            </div>
+          </header>
+          <div className="search-field sticky-search">
+            <Icon name="search" />
+            <input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search restaurants or cuisines"
+            />
+            {search && (
+              <button onClick={() => setSearch('')}>
+                <Icon name="close" />
+              </button>
+            )}
+          </div>
+          <h2 className="section-title">
+            {search ? `Results for “${search}”` : 'All restaurants'} <span>{visible.length}</span>
+          </h2>
+          <div className="restaurant-list">
+            {visible.map((r) => (
+              <RestaurantCard
+                key={r.id}
+                restaurant={r}
+                onOpen={() => setSelected(r)}
+                distanceKm={restaurantDistances.get(r.id)}
+              />
+            ))}
+          </div>
+          {catalogError && (
+            <div className="inline-retry">
+              <div className="error-box">{catalogError}</div>
+              <button className="secondary" onClick={loadRestaurants}>
+                Try again
+              </button>
+            </div>
+          )}
+          {!visible.length && (
+            <Empty
+              icon="search"
+              title="Nothing matched"
+              text="Try another dish, restaurant or cuisine."
+            />
+          )}
+        </section>
+      ) : pageTab === 'xp' ? (
+        <XPStorePage onBrowse={() => selectTab('home')} />
+      ) : pageTab === 'orders' ? (
+        <OrdersPage
+          orders={orders}
+          loading={ordersLoading}
+          error={ordersError}
+          onRefresh={() => loadOrders()}
+          customer={user}
+        />
+      ) : pageTab === 'cart' ? (
+        <CartPage
+          cart={cart}
+          restaurant={cartRestaurant || undefined}
+          onQuantity={quantity}
+          onBrowse={() => selectTab('home')}
+          onCheckout={() => setCheckout(true)}
+        />
+      ) : (
+        <Account
+          user={user}
+          addresses={addresses}
+          onAddresses={() => setAddressPage(true)}
+          onLogout={logout}
+          theme={theme}
+          onTheme={(mode) => {
+            setTheme(mode)
+            void saveTheme(mode)
+          }}
+        />
+      )
+
+    return (
+      <div className={frameClass} style={frameStyle}>
+        {content}
+      </div>
+    )
+  }
+
   const visible = restaurants.filter((r) =>
     `${r.name} ${r.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
   )
@@ -2924,161 +3162,20 @@ export default function App() {
         </div>
       )}
       <main className="content">
-        {tab === 'home' && (
-          <section className="page home">
-            <header className="home-header">
-              <div>
-                <p>DELIVERING TO</p>
-                <button onClick={() => setAddressPage(true)}>
-                  <Icon name="pin" />
-                  <span>
-                    {addresses.find((a) => a.is_default)?.label ||
-                      addresses[0]?.label ||
-                      'Add address'}
-                  </span>
-                  <Icon name="chevron" />
-                </button>
-              </div>
-              <Logo compact />
-            </header>
-            <div className="welcome">
-              <p>
-                {t.customer.dashboard}, {user.name.split(' ')[0]} 👋
-              </p>
-              <h1>
-                Good food. <em>No waiting.</em>
-              </h1>
-            </div>
-            <button className="search-launch" onClick={() => setTab('search')}>
-              <Icon name="search" />
-              {t.customer.searchPlaceholder}
-            </button>
-            <div className="promo">
-              <div>
-                <span>FIRST BITE</span>
-                <h2>Tonight’s sorted.</h2>
-                <p>Local favourites, delivered fresh.</p>
-                <button onClick={() => setTab('search')}>
-                  Explore food <Icon name="chevron" />
-                </button>
-              </div>
-              <div className="promo-food">🍱</div>
-            </div>
-            <div className="title-row">
-              <div>
-                <p className="eyebrow">NEAR YOU</p>
-                <h2>Popular right now</h2>
-              </div>
-              <button onClick={() => setTab('search')}>See all</button>
-            </div>
-            <div className="restaurant-list">
-              {restaurants.slice(0, 6).map((r) => (
-                <RestaurantCard
-                  key={r.id}
-                  restaurant={r}
-                  onOpen={() => setSelected(r)}
-                  distanceKm={restaurantDistances.get(r.id)}
-                />
-              ))}
-            </div>
-            {catalogError && (
-              <div className="inline-retry">
-                <div className="error-box">{catalogError}</div>
-                <button className="secondary" onClick={loadRestaurants}>
-                  Try again
-                </button>
-              </div>
-            )}
-          </section>
-        )}
-        {tab === 'search' && (
-          <section className="page">
-            <header className="page-header">
-              <div>
-                <p className="eyebrow">DISCOVER</p>
-                <h1>Find your food</h1>
-              </div>
-            </header>
-            <div className="search-field sticky-search">
-              <Icon name="search" />
-              <input
-                autoFocus
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search restaurants or cuisines"
-              />
-              {search && (
-                <button onClick={() => setSearch('')}>
-                  <Icon name="close" />
-                </button>
-              )}
-            </div>
-            <h2 className="section-title">
-              {search ? `Results for “${search}”` : 'All restaurants'} <span>{visible.length}</span>
-            </h2>
-            <div className="restaurant-list">
-              {visible.map((r) => (
-                <RestaurantCard
-                  key={r.id}
-                  restaurant={r}
-                  onOpen={() => setSelected(r)}
-                  distanceKm={restaurantDistances.get(r.id)}
-                />
-              ))}
-            </div>
-            {catalogError && (
-              <div className="inline-retry">
-                <div className="error-box">{catalogError}</div>
-                <button className="secondary" onClick={loadRestaurants}>
-                  Try again
-                </button>
-              </div>
-            )}
-            {!visible.length && (
-              <Empty
-                icon="search"
-                title="Nothing matched"
-                text="Try another dish, restaurant or cuisine."
-              />
-            )}
-          </section>
-        )}
-        {tab === 'orders' && (
-          <OrdersPage
-            orders={orders}
-            loading={ordersLoading}
-            error={ordersError}
-            onRefresh={() => loadOrders()}
-            customer={user}
-          />
-        )}{' '}
-        {tab === 'cart' && (
-          <CartPage
-            cart={cart}
-            restaurant={cartRestaurant || undefined}
-            onQuantity={quantity}
-            onBrowse={() => setTab('home')}
-            onCheckout={() => setCheckout(true)}
-          />
-        )}{' '}
-        {tab === 'account' && (
-          <Account
-            user={user}
-            addresses={addresses}
-            onAddresses={() => setAddressPage(true)}
-            onLogout={logout}
-            theme={theme}
-            onTheme={(mode) => {
-              setTheme(mode)
-              void saveTheme(mode)
-            }}
-          />
+        {direction ? (
+          <>
+            {renderTabPage(prevTabRef.current, 'exit', direction)}
+            {renderTabPage(tab, 'enter', direction)}
+          </>
+        ) : (
+          renderTabPage(tab, 'active', null)
         )}
       </main>
       <nav className="bottom-nav">
         {(
           [
             ['home', t.nav.home],
+            ['xp', t.nav.xp],
             ['orders', t.nav.orders],
             ['cart', t.nav.bag],
             ['account', t.nav.you],
@@ -3092,7 +3189,7 @@ export default function App() {
             onClick={() => selectTab(id)}
           >
             <span>
-              <Icon name={id === 'account' ? 'user' : id} />
+              <Icon name={id === 'account' ? 'user' : id === 'xp' ? 'store' : id} />
               {id === 'cart' && cart.length > 0 ? (
                 <i>{cart.reduce((n, x) => n + x.quantity, 0)}</i>
               ) : null}
