@@ -7,22 +7,19 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 // Dynamically import VendorDashboard with SSR disabled to guarantee ZERO hydration mismatches and ZERO reload loops
-const VendorDashboard = dynamic(
-  () => import('@/components/dashboards/VendorDashboard'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
-            Initializing Kitchen Console...
-          </p>
-        </div>
+const VendorDashboard = dynamic(() => import('@/components/dashboards/VendorDashboard'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
+        <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
+          Initializing Kitchen Console...
+        </p>
       </div>
-    ),
-  }
-)
+    </div>
+  ),
+})
 
 export default function VendorDashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -106,7 +103,8 @@ export default function VendorDashboardPage() {
           <div className="flex items-center gap-2">
             <ShieldAlert className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
             <span>
-              Signed in as <strong className="capitalize">{user.name || user.email}</strong> (Role: {role}).
+              Signed in as <strong className="capitalize">{user.name || user.email}</strong> (Role:{' '}
+              {role}).
             </span>
           </div>
           <div className="flex items-center gap-2">

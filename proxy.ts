@@ -80,7 +80,10 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isExplicitLogout =
-    searchParams.has('logout') || searchParams.has('signout') || searchParams.has('switch') || searchParams.has('error')
+    searchParams.has('logout') ||
+    searchParams.has('signout') ||
+    searchParams.has('switch') ||
+    searchParams.has('error')
 
   // If user navigated with logout/switch/error intent, wipe any lingering cookies
   if (isAuthPage && isExplicitLogout) {

@@ -138,128 +138,131 @@ export default function VendorDashboard() {
   }
 
   // Fetch live kitchen orders with diff-checking and 2.5s throttling
-  const loadLiveKitchenOrders = useCallback(async (isManualRefresh = false) => {
-    const now = Date.now()
-    if (!isManualRefresh && (isFetchingRef.current || now - lastFetchRef.current < 2500)) {
-      return
-    }
-    isFetchingRef.current = true
-    lastFetchRef.current = now
-
-    if (isManualRefresh) setIsRefreshing(true)
-    try {
-      const targetRestId = resolvedRestaurantId || user?.restaurantId || 'rest_demo_01'
-      const query = targetRestId
-        ? `vendorId=${encodeURIComponent(targetRestId)}`
-        : user?.restaurantName
-          ? `vendorName=${encodeURIComponent(user.restaurantName)}`
-          : ''
-      const res = await fetch(query ? `/api/orders?${query}` : '/api/orders')
-      if (!res.ok) return
-
-      const json = await res.json()
-      let ordersData: any[] = []
-      if (json.success && Array.isArray(json.orders)) {
-        ordersData = json.orders
+  const loadLiveKitchenOrders = useCallback(
+    async (isManualRefresh = false) => {
+      const now = Date.now()
+      if (!isManualRefresh && (isFetchingRef.current || now - lastFetchRef.current < 2500)) {
+        return
       }
+      isFetchingRef.current = true
+      lastFetchRef.current = now
 
-      // Filter orders belonging to this vendor
-      const vendorFiltered = ordersData.filter((o) => {
-        if (resolvedRestaurantId && o.restaurant_id === resolvedRestaurantId) return true
-        if (user?.restaurantId && o.restaurant_id === user.restaurantId) return true
-        if (user?.id && (o.restaurant_id === user.id || o.vendor_id === user.id)) return true
-        if (
-          user?.restaurantName &&
-          o.restaurant_name &&
-          o.restaurant_name.trim().toLowerCase() === user.restaurantName.trim().toLowerCase()
-        ) {
-          return true
+      if (isManualRefresh) setIsRefreshing(true)
+      try {
+        const targetRestId = resolvedRestaurantId || user?.restaurantId || 'rest_demo_01'
+        const query = targetRestId
+          ? `vendorId=${encodeURIComponent(targetRestId)}`
+          : user?.restaurantName
+            ? `vendorName=${encodeURIComponent(user.restaurantName)}`
+            : ''
+        const res = await fetch(query ? `/api/orders?${query}` : '/api/orders')
+        if (!res.ok) return
+
+        const json = await res.json()
+        let ordersData: any[] = []
+        if (json.success && Array.isArray(json.orders)) {
+          ordersData = json.orders
         }
-        return false
-      })
 
-      if (
-        vendorFiltered.length > 0 ||
-        (ordersData.length > 0 && (resolvedRestaurantId || user?.restaurantId))
-      ) {
-        ordersData = vendorFiltered
-      }
-
-      // Approved & active orders in kitchen queue
-      const approvedOrders = ordersData.filter(
-        (o) =>
-          o.payment_status === 'verified' ||
-          [
-            'sent_to_vendor',
-            'new',
-            'accepted',
-            'preparing',
-            'cooking',
-            'packing',
-            'ready',
-            'ready_for_pickup',
-            'rider_assigned',
-            'picked_up',
-            'out_for_delivery',
-            'delivered',
-            'completed',
-          ].includes(o.status)
-      )
-
-      const parsed: KitchenOrder[] = approvedOrders.map((o: any) => {
-        let itemsList: KitchenItem[] = []
-        let itemNames = 'Order Items'
-        try {
-          const arr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-          if (Array.isArray(arr)) {
-            itemsList = arr.map((i: any) => ({
-              name: i.name || 'Dish',
-              qty: Number(i.qty || 1),
-              price: Number(i.price || 0),
-            }))
-            itemNames = itemsList.map((i) => `${i.qty}x ${i.name}`).join(', ')
+        // Filter orders belonging to this vendor
+        const vendorFiltered = ordersData.filter((o) => {
+          if (resolvedRestaurantId && o.restaurant_id === resolvedRestaurantId) return true
+          if (user?.restaurantId && o.restaurant_id === user.restaurantId) return true
+          if (user?.id && (o.restaurant_id === user.id || o.vendor_id === user.id)) return true
+          if (
+            user?.restaurantName &&
+            o.restaurant_name &&
+            o.restaurant_name.trim().toLowerCase() === user.restaurantName.trim().toLowerCase()
+          ) {
+            return true
           }
-        } catch {}
+          return false
+        })
 
-        const rawDate = o.createdAt || o.created_at
-        const formattedTime = rawDate
-          ? new Date(rawDate).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : 'Just now'
-
-        return {
-          id: o.id,
-          customerName: o.customer_name || 'Customer',
-          customerPhone: o.customer_phone || undefined,
-          itemsText: itemNames,
-          itemsList,
-          subtotal: Number(o.subtotal || 0),
-          totalAmount: Number(o.total_amount || 0),
-          status: o.status || 'new',
-          paymentStatus: o.payment_status || 'pending',
-          time: formattedTime,
-          createdAt: rawDate,
-          address: o.customer_address || 'Bengaluru',
-          utrRef: o.utrRef || o.utr_ref || undefined,
+        if (
+          vendorFiltered.length > 0 ||
+          (ordersData.length > 0 && (resolvedRestaurantId || user?.restaurantId))
+        ) {
+          ordersData = vendorFiltered
         }
-      })
 
-      // Only update state if order data changed (prevent layout repaints & flickering)
-      if (!areOrdersIdentical(ordersCacheRef.current, parsed)) {
-        ordersCacheRef.current = parsed
-        setKitchenOrders(parsed)
+        // Approved & active orders in kitchen queue
+        const approvedOrders = ordersData.filter(
+          (o) =>
+            o.payment_status === 'verified' ||
+            [
+              'sent_to_vendor',
+              'new',
+              'accepted',
+              'preparing',
+              'cooking',
+              'packing',
+              'ready',
+              'ready_for_pickup',
+              'rider_assigned',
+              'picked_up',
+              'out_for_delivery',
+              'delivered',
+              'completed',
+            ].includes(o.status)
+        )
+
+        const parsed: KitchenOrder[] = approvedOrders.map((o: any) => {
+          let itemsList: KitchenItem[] = []
+          let itemNames = 'Order Items'
+          try {
+            const arr = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+            if (Array.isArray(arr)) {
+              itemsList = arr.map((i: any) => ({
+                name: i.name || 'Dish',
+                qty: Number(i.qty || 1),
+                price: Number(i.price || 0),
+              }))
+              itemNames = itemsList.map((i) => `${i.qty}x ${i.name}`).join(', ')
+            }
+          } catch {}
+
+          const rawDate = o.createdAt || o.created_at
+          const formattedTime = rawDate
+            ? new Date(rawDate).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'Just now'
+
+          return {
+            id: o.id,
+            customerName: o.customer_name || 'Customer',
+            customerPhone: o.customer_phone || undefined,
+            itemsText: itemNames,
+            itemsList,
+            subtotal: Number(o.subtotal || 0),
+            totalAmount: Number(o.total_amount || 0),
+            status: o.status || 'new',
+            paymentStatus: o.payment_status || 'pending',
+            time: formattedTime,
+            createdAt: rawDate,
+            address: o.customer_address || 'Bengaluru',
+            utrRef: o.utrRef || o.utr_ref || undefined,
+          }
+        })
+
+        // Only update state if order data changed (prevent layout repaints & flickering)
+        if (!areOrdersIdentical(ordersCacheRef.current, parsed)) {
+          ordersCacheRef.current = parsed
+          setKitchenOrders(parsed)
+        }
+      } catch (err) {
+        console.error('Failed to load kitchen orders:', err)
+      } finally {
+        isFetchingRef.current = false
+        if (isManualRefresh) {
+          setTimeout(() => setIsRefreshing(false), 400)
+        }
       }
-    } catch (err) {
-      console.error('Failed to load kitchen orders:', err)
-    } finally {
-      isFetchingRef.current = false
-      if (isManualRefresh) {
-        setTimeout(() => setIsRefreshing(false), 400)
-      }
-    }
-  }, [resolvedRestaurantId, user?.restaurantId, user?.id, user?.restaurantName])
+    },
+    [resolvedRestaurantId, user?.restaurantId, user?.id, user?.restaurantName]
+  )
 
   const loadOrdersRef = useRef(loadLiveKitchenOrders)
   loadOrdersRef.current = loadLiveKitchenOrders
@@ -363,7 +366,8 @@ export default function VendorDashboard() {
   const readyOrders = useMemo(
     () =>
       kitchenOrders.filter(
-        (o) => o.status === 'ready' || o.status === 'ready_for_pickup' || o.status === 'rider_assigned'
+        (o) =>
+          o.status === 'ready' || o.status === 'ready_for_pickup' || o.status === 'rider_assigned'
       ),
     [kitchenOrders]
   )
@@ -382,11 +386,7 @@ export default function VendorDashboard() {
 
   const activeOrdersCount = newOrders.length + prepOrders.length
   const totalDailyRevenue = useMemo(
-    () =>
-      kitchenOrders.reduce(
-        (acc, o) => acc + (o.subtotal > 0 ? o.subtotal : o.totalAmount),
-        0
-      ),
+    () => kitchenOrders.reduce((acc, o) => acc + (o.subtotal > 0 ? o.subtotal : o.totalAmount), 0),
     [kitchenOrders]
   )
 
@@ -654,7 +654,10 @@ export default function VendorDashboard() {
               </div>
               <div className="mt-1.5 sm:mt-2">
                 <span className="text-base sm:text-2xl font-black text-[#121815] dark:text-white tracking-tight block truncate">
-                  ₹{totalDailyRevenue > 999 ? `${(totalDailyRevenue / 1000).toFixed(1)}k` : totalDailyRevenue}
+                  ₹
+                  {totalDailyRevenue > 999
+                    ? `${(totalDailyRevenue / 1000).toFixed(1)}k`
+                    : totalDailyRevenue}
                 </span>
                 <span className="text-[8px] sm:text-[10px] text-stone-500 dark:text-gray-400 font-semibold truncate block">
                   Today Total
@@ -1045,7 +1048,10 @@ export default function VendorDashboard() {
                       {order.itemsList.length > 0 ? (
                         <div className="divide-y divide-stone-200/60 dark:divide-[#202b23]">
                           {order.itemsList.map((item, idx) => (
-                            <div key={idx} className="py-1 flex items-center justify-between text-xs">
+                            <div
+                              key={idx}
+                              className="py-1 flex items-center justify-between text-xs"
+                            >
                               <span className="font-bold text-[#121815] dark:text-stone-200">
                                 <span className="font-mono font-black text-amber-600 dark:text-[#d9f447] mr-1.5">
                                   {item.qty}×
@@ -1135,7 +1141,10 @@ export default function VendorDashboard() {
                 <div className="pt-2 border-t border-stone-200 dark:border-[#202b23] flex items-center justify-between font-black text-sm">
                   <span>Total Amount</span>
                   <span className="text-emerald-600 dark:text-[#d9f447]">
-                    ₹{selectedOrder.subtotal > 0 ? selectedOrder.subtotal : selectedOrder.totalAmount}
+                    ₹
+                    {selectedOrder.subtotal > 0
+                      ? selectedOrder.subtotal
+                      : selectedOrder.totalAmount}
                   </span>
                 </div>
               </div>

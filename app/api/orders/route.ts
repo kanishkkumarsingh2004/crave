@@ -1580,8 +1580,11 @@ export async function PATCH(request: Request) {
         (isRiderOrDriver &&
           isAssignedRider &&
           requestedStatus &&
-          riderStatuses.includes(requestedStatus))
-      // Note: Owner (customer) CANNOT update order status - only driver/admin can
+          riderStatuses.includes(requestedStatus)) ||
+        // Customer may cancel their own payment-pending order when payment fails
+        (requestedStatus === 'cancelled' &&
+          existing.customer_id === actor.id &&
+          existing.status === 'payment_pending')
 
       const canUpdatePaymentStatus = actor.role === 'admin'
 

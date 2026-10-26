@@ -1142,9 +1142,11 @@ export default function CustomerDashboard({
         (r) =>
           (active.restaurant_id && r.id === active.restaurant_id) ||
           (active.restaurant?.id && r.id === active.restaurant.id) ||
-          (active.restaurant_name && r.name.toLowerCase() === active.restaurant_name.toLowerCase()) ||
+          (active.restaurant_name &&
+            r.name.toLowerCase() === active.restaurant_name.toLowerCase()) ||
           (active.restaurantName && r.name.toLowerCase() === active.restaurantName.toLowerCase()) ||
-          (active.restaurant_name && r.name.toLowerCase().includes(active.restaurant_name.toLowerCase()))
+          (active.restaurant_name &&
+            r.name.toLowerCase().includes(active.restaurant_name.toLowerCase()))
       )
 
       const restLat =
@@ -1212,9 +1214,17 @@ export default function CustomerDashboard({
         restaurantLng: restLng,
         deliveryMinutes: deliveryMins,
         customerLat:
-          active.customer_lat ?? active.delivery_lat ?? active.latitude ?? active.delivery_latitude ?? null,
+          active.customer_lat ??
+          active.delivery_lat ??
+          active.latitude ??
+          active.delivery_latitude ??
+          null,
         customerLng:
-          active.customer_lng ?? active.delivery_lng ?? active.longitude ?? active.delivery_longitude ?? null,
+          active.customer_lng ??
+          active.delivery_lng ??
+          active.longitude ??
+          active.delivery_longitude ??
+          null,
         timestamp: formattedTime,
         rawDate: rawDateVal || active.created_at || active.createdAt || new Date().toISOString(),
         paymentStatus: active.payment_status || 'pending',
@@ -2368,7 +2378,8 @@ export default function CustomerDashboard({
                       Savor Gourmet Feasts Delivered Fresh In 25 Mins
                     </h2>
                     <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
-                      Steaming dum biryani in copper handis, woodfired pizzas with bubbling mozzarella, smash burgers &amp; sizzling fries cooked fresh on order.
+                      Steaming dum biryani in copper handis, woodfired pizzas with bubbling
+                      mozzarella, smash burgers &amp; sizzling fries cooked fresh on order.
                     </p>
 
                     {/* Action Button & Badges */}
@@ -2443,7 +2454,8 @@ export default function CustomerDashboard({
                       Ultra-Fast Grocery &amp; Daily Essentials
                     </h2>
                     <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
-                      Farm eggs, chilled milk, organic avocados, fresh berries, sourdough bread &amp; pantry snacks delivered to your doorstep in 10 minutes flat.
+                      Farm eggs, chilled milk, organic avocados, fresh berries, sourdough bread
+                      &amp; pantry snacks delivered to your doorstep in 10 minutes flat.
                     </p>
 
                     <div className="pt-2 flex flex-wrap items-center gap-3.5">
@@ -2513,7 +2525,8 @@ export default function CustomerDashboard({
                       Satisfy Your Late-Night Cravings
                     </h2>
                     <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
-                      Crispy glazed buffalo wings, loaded cheesy nachos, warm chocolate lava cakes &amp; iced boba teas delivered throughout the night.
+                      Crispy glazed buffalo wings, loaded cheesy nachos, warm chocolate lava cakes
+                      &amp; iced boba teas delivered throughout the night.
                     </p>
 
                     <div className="pt-2 flex flex-wrap items-center gap-3.5">
@@ -2580,9 +2593,15 @@ export default function CustomerDashboard({
               {/* Sleek Floated Carousel Indicator Dock */}
               <div className="absolute bottom-4 sm:bottom-5 left-6 sm:left-12 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-xl pointer-events-auto">
                 {[
-                  { label: 'Gourmet Feasts', activeColor: 'bg-gradient-to-r from-orange-500 to-amber-400' },
+                  {
+                    label: 'Gourmet Feasts',
+                    activeColor: 'bg-gradient-to-r from-orange-500 to-amber-400',
+                  },
                   { label: 'CraveXP 10m', activeColor: 'bg-[#d9f447]' },
-                  { label: 'Midnight Fest', activeColor: 'bg-gradient-to-r from-purple-500 to-pink-500' },
+                  {
+                    label: 'Midnight Fest',
+                    activeColor: 'bg-gradient-to-r from-purple-500 to-pink-500',
+                  },
                 ].map((item, idx) => (
                   <button
                     key={idx}
@@ -2870,7 +2889,9 @@ export default function CustomerDashboard({
                           </div>
                           {(() => {
                             const hasVariants = Boolean(item.variants?.length)
-                            const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+                            const inCart = hasVariants
+                              ? undefined
+                              : cart.find((i) => i.id === item.id)
                             if (hasVariants) {
                               return (
                                 <button
@@ -4182,7 +4203,8 @@ export default function CustomerDashboard({
                               className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 border border-rose-500/30 px-2.5 py-0.5 text-[11px] font-black text-rose-300 hover:bg-rose-500/30 transition cursor-pointer shrink-0"
                               title={`Order can be cancelled within 15 seconds of placement (${cancelTimeRemaining}s remaining)`}
                             >
-                              <Trash2 className="size-3 text-rose-300" /> Cancel Order ({cancelTimeRemaining}s)
+                              <Trash2 className="size-3 text-rose-300" /> Cancel Order (
+                              {cancelTimeRemaining}s)
                             </button>
                           )}
                           {(activeOrder.statusStep === 4 ||
@@ -4303,7 +4325,8 @@ export default function CustomerDashboard({
                             </p>
                           </div>
                           <p className="text-[11px] text-white/70 mt-0.5 max-w-lg leading-relaxed">
-                            Change of mind? Cancel now for an immediate 100% refund routed directly to our admin settlement queue.
+                            Change of mind? Cancel now for an immediate 100% refund routed directly
+                            to our admin settlement queue.
                           </p>
                         </div>
                       </div>
@@ -4324,7 +4347,9 @@ export default function CustomerDashboard({
                           Kitchen Locked
                         </span>
                         <span className="text-gray-400">•</span>
-                        <span>Food is actively being prepared fresh. 15-second grace window concluded.</span>
+                        <span>
+                          Food is actively being prepared fresh. 15-second grace window concluded.
+                        </span>
                       </div>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:inline font-mono">
                         Freshness Guaranteed
@@ -4583,15 +4608,21 @@ export default function CustomerDashboard({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
-                        <div className="flex items-center gap-1 sm:gap-1.5" aria-label="Delivery OTP digits">
-                          {String(activeOrder.otp).padStart(6, '0').split('').map((digit, i) => (
-                            <span
-                              key={i}
-                              className="grid size-8 sm:size-9 place-items-center rounded-xl bg-white dark:bg-[#101713] border-2 border-emerald-500/30 dark:border-[#d9f447]/40 font-mono font-black text-sm sm:text-base text-emerald-700 dark:text-[#d9f447] shadow-sm select-all"
-                            >
-                              {digit}
-                            </span>
-                          ))}
+                        <div
+                          className="flex items-center gap-1 sm:gap-1.5"
+                          aria-label="Delivery OTP digits"
+                        >
+                          {String(activeOrder.otp)
+                            .padStart(6, '0')
+                            .split('')
+                            .map((digit, i) => (
+                              <span
+                                key={i}
+                                className="grid size-8 sm:size-9 place-items-center rounded-xl bg-white dark:bg-[#101713] border-2 border-emerald-500/30 dark:border-[#d9f447]/40 font-mono font-black text-sm sm:text-base text-emerald-700 dark:text-[#d9f447] shadow-sm select-all"
+                              >
+                                {digit}
+                              </span>
+                            ))}
                         </div>
                         <button
                           type="button"
@@ -4602,7 +4633,9 @@ export default function CustomerDashboard({
                           {otpCopied ? (
                             <>
                               <Check className="size-3.5 text-emerald-500 stroke-[3]" />
-                              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                Copied!
+                              </span>
                             </>
                           ) : (
                             <>

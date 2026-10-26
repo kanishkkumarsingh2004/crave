@@ -56,7 +56,9 @@ export default function CraveXPStorePage() {
           <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <ShieldAlert className="size-6" />
           </div>
-          <h2 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">Store Vendor Access Only</h2>
+          <h2 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">
+            Store Vendor Access Only
+          </h2>
           <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
             This console is reserved for CraveXP dark store operators.
           </p>

@@ -43,18 +43,19 @@ export default function PwaInstallPrompt() {
     if ('serviceWorker' in navigator) {
       if (process.env.NODE_ENV === 'production') {
         window.addEventListener('load', () => {
-          navigator.serviceWorker
-            .register('/sw.js')
-            .catch((err) => {
-              console.error('PWA ServiceWorker registration failed:', err)
-            })
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.error('PWA ServiceWorker registration failed:', err)
+          })
         })
       } else {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (const registration of registrations) {
-            registration.unregister()
-          }
-        }).catch(() => {})
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((registrations) => {
+            for (const registration of registrations) {
+              registration.unregister()
+            }
+          })
+          .catch(() => {})
       }
     }
 

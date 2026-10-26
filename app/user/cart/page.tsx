@@ -858,6 +858,20 @@ export default function CartPage() {
         }, 1500)
       } catch (err: any) {
         toast(err?.message || 'Razorpay checkout cancelled or failed. Please try again.', 'error')
+        // Cancel the pending order so no order is placed without confirmed payment
+        try {
+          await fetch('/api/orders', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            credentials: 'include',
+            body: JSON.stringify({ orderId, status: 'cancelled' }),
+          })
+        } catch {
+          // Best-effort cancel; order will be cleaned up by reconciliation
+        }
         setIsSubmittingOrder(false)
         isSubmittingRef.current = false
       }
@@ -1680,7 +1694,14 @@ export default function CartPage() {
                             </span>
                           ) : (
                             <span>
-                              Add <strong className="font-mono text-emerald-700 dark:text-[#d9f447]">₹{(activeConfig.freeDeliveryThreshold - cartSubtotal).toFixed(0)}</strong> more for <span className="font-black text-emerald-600 dark:text-emerald-400">FREE Delivery</span>
+                              Add{' '}
+                              <strong className="font-mono text-emerald-700 dark:text-[#d9f447]">
+                                ₹{(activeConfig.freeDeliveryThreshold - cartSubtotal).toFixed(0)}
+                              </strong>{' '}
+                              more for{' '}
+                              <span className="font-black text-emerald-600 dark:text-emerald-400">
+                                FREE Delivery
+                              </span>
                             </span>
                           )}
                         </span>

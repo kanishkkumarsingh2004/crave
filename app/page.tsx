@@ -19,7 +19,8 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-const CUSTOMER_ANDROID_APK_URL = 'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
+const CUSTOMER_ANDROID_APK_URL =
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
 
 function AppDownloadPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null
@@ -67,6 +68,9 @@ function AppDownloadPopup({ open, onClose }: { open: boolean; onClose: () => voi
             <span className="flex flex-col">
               <b className="text-sm">Android</b>
               <span className="text-[11px] opacity-80">Download the CRAVE app</span>
+              <p className="text-[8.5px] font-medium text-orange-500 dark:text-orange-400 mt-0.5 leading-tight">
+                ⚠️ Beta version — under development, may contain bugs
+              </p>
             </span>
             <ArrowRight className="size-4 ml-auto" />
           </a>
