@@ -49,17 +49,17 @@ export default function ThemeSelector({ className = '', variant = 'cards' }: The
               key={opt.id}
               type="button"
               onClick={() => setTheme(opt.id)}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-[#d9f447] text-[#121815] shadow-xs ring-2 ring-[#86a018]/40 dark:ring-[#d9f447]/60'
-                  : 'bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#27342d] hover:bg-gray-50 dark:hover:bg-[#202923]'
+                  ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] shadow-xs'
+                  : 'bg-stone-100 dark:bg-white/[0.06] text-stone-700 dark:text-stone-300 border border-black/[0.06] dark:border-white/[0.06] hover:bg-stone-200 dark:hover:bg-white/10'
               }`}
             >
               <Icon
-                className={`size-4 ${isSelected ? 'text-[#121815]' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`size-4 ${isSelected ? 'text-white dark:text-[#1D1D1F]' : 'text-stone-500 dark:text-stone-400'}`}
               />
               <span>{opt.label}</span>
-              {isSelected && <CheckCircle2 className="size-3.5 text-[#121815]" />}
+              {isSelected && <CheckCircle2 className="size-3.5 text-white dark:text-[#1D1D1F]" />}
             </button>
           )
         })}
@@ -76,18 +76,18 @@ export default function ThemeSelector({ className = '', variant = 'cards' }: The
           <div
             key={opt.id}
             onClick={() => setTheme(opt.id)}
-            className={`relative flex flex-col justify-between rounded-2xl p-4 cursor-pointer border transition-all duration-200 ${
+            className={`relative flex flex-col justify-between rounded-3xl p-4 cursor-pointer border transition-all duration-200 ${
               isSelected
-                ? 'border-[#86a018] dark:border-[#d9f447] bg-white dark:bg-[#141d18] text-[#18201c] dark:text-white shadow-md ring-2 ring-[#86a018]/30 dark:ring-[#d9f447]/60 scale-[1.02]'
-                : 'border-gray-200 dark:border-[#27342d] bg-white/70 dark:bg-[#18201c] text-[#18201c] dark:text-white hover:border-gray-300 dark:hover:border-[#384a40] hover:bg-white dark:hover:bg-[#202923] shadow-xs'
+                ? 'border-black dark:border-white bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white shadow-md ring-2 ring-black/10 dark:ring-white/20 scale-[1.02]'
+                : 'border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#161617] text-[#1D1D1F] dark:text-white hover:border-black/20 dark:hover:border-white/20 hover:bg-white shadow-xs'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div
-                className={`grid size-10 place-items-center rounded-xl transition ${
+                className={`grid size-10 place-items-center rounded-2xl transition ${
                   isSelected
-                    ? 'bg-[#d9f447] text-[#121815] shadow-xs font-bold'
-                    : 'bg-gray-100 dark:bg-[#121815] text-gray-700 dark:text-gray-300 border border-transparent dark:border-[#27342d]'
+                    ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] shadow-xs font-bold'
+                    : 'bg-stone-100 dark:bg-white/10 text-stone-700 dark:text-stone-300'
                 }`}
               >
                 <Icon className="size-5" />

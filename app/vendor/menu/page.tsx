@@ -241,28 +241,28 @@ export default function VendorMenuPage() {
 
       <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8 space-y-6">
         {/* Menu Catalog Hero */}
-        <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-6 shadow-sm dark:shadow-xl">
+        <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-6 sm:p-8 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                 Restaurant Menu Management
               </span>
-              <h2 className="mt-1 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
+              <h2 className="mt-1.5 text-2xl sm:text-3xl font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.02em]">
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
-              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 font-normal">
                 Manage dishes, categories, dietary types, portion sizes, pricing &amp; live kitchen inventory.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => setShowBulkImportModal(true)}
                 disabled={!restaurantId}
-                className="inline-flex items-center gap-2 rounded-full border border-stone-300 dark:border-[#334238] bg-white dark:bg-[#171f1b] px-5 py-3 text-xs font-black text-stone-700 dark:text-white shadow-sm hover:border-[#86a018] dark:hover:border-[#d9f447] disabled:opacity-50 transition cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full border border-stone-200/80 dark:border-white/15 bg-white dark:bg-white/10 px-5 py-2.5 text-xs font-semibold text-[#1D1D1F] dark:text-white shadow-2xs hover:bg-stone-50 dark:hover:bg-white/15 active:scale-95 disabled:opacity-50 transition cursor-pointer"
               >
-                <FileSpreadsheet className="size-4" /> Bulk Import CSV
+                <FileSpreadsheet className="size-4 stroke-[1.8]" /> Bulk Import CSV
               </button>
               <button
                 type="button"
@@ -271,25 +271,25 @@ export default function VendorMenuPage() {
                   setShowItemModal(true)
                 }}
                 disabled={!restaurantId}
-                className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 disabled:opacity-50 transition cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white px-5 sm:px-6 py-2.5 text-xs font-semibold text-white dark:text-[#1D1D1F] shadow-sm hover:bg-[#2C2C2E] dark:hover:bg-stone-200 active:scale-95 disabled:opacity-50 transition cursor-pointer"
               >
-                <Plus className="size-4 text-[#0d1310]" /> Add New Dish
+                <Plus className="size-4 stroke-[2.5]" /> Add New Dish
               </button>
             </div>
           </div>
         </div>
 
         {/* Filter Chips & Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border cursor-pointer ${
+                className={`rounded-full px-4 py-2 text-xs transition-all shrink-0 cursor-pointer ${
                   selectedCategory === cat
-                    ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447] font-black'
-                    : 'bg-stone-100 dark:bg-[#141c17] text-stone-700 dark:text-gray-300 border-stone-200 dark:border-[#233228] hover:bg-stone-200/80 dark:hover:bg-[#1c2720]'
+                    ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] font-semibold shadow-xs'
+                    : 'bg-stone-100 hover:bg-stone-200/80 text-stone-600 dark:bg-white/[0.06] dark:hover:bg-white/[0.12] dark:text-stone-300 font-medium'
                 }`}
               >
                 {cat}
@@ -298,13 +298,13 @@ export default function VendorMenuPage() {
           </div>
 
           <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3.5 top-2.5 size-4 text-stone-400 dark:text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
             <input
               type="text"
               placeholder="Search dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-stone-200 dark:border-[#233228] bg-white dark:bg-[#141c17] py-2 pl-9 pr-4 text-xs font-medium text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447] shadow-xs"
+              className="w-full rounded-full border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] py-2.5 pl-10 pr-4 text-xs font-normal text-[#1D1D1F] dark:text-white placeholder:text-stone-400 outline-none focus:border-[#86a018] shadow-xs transition"
             />
           </div>
         </div>

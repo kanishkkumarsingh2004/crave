@@ -309,16 +309,16 @@ export default function BulkMenuImportModal({
       aria-modal="true"
       aria-labelledby="bulk-menu-import-title"
     >
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-stone-200 bg-white p-6 text-[#18201c] shadow-2xl dark:border-[#27342d] dark:bg-[#18201c] dark:text-white">
-        <div className="flex items-start justify-between gap-4 border-b border-stone-200 pb-4 dark:border-[#27342d]">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-black/[0.08] bg-white p-6 text-[#1D1D1F] shadow-2xl dark:border-white/[0.08] dark:bg-[#161617] dark:text-white">
+        <div className="flex items-start justify-between gap-4 border-b border-black/[0.06] pb-4 dark:border-white/[0.06]">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               Bulk menu import
             </span>
-            <h2 id="bulk-menu-import-title" className="mt-1 text-xl font-black">
+            <h2 id="bulk-menu-import-title" className="mt-1 text-xl font-bold">
               Import dishes for {restaurantName}
             </h2>
-            <p className="mt-1 text-xs text-stone-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
               Upload up to 500 dishes. The whole file is validated before anything is saved.
             </p>
           </div>
@@ -327,16 +327,16 @@ export default function BulkMenuImportModal({
             onClick={closeModal}
             disabled={importing}
             aria-label="Close bulk import"
-            className="grid size-9 place-items-center rounded-full bg-stone-100 text-stone-500 dark:bg-[#121815] dark:text-gray-400"
+            className="grid size-9 place-items-center rounded-full bg-stone-100 text-stone-500 dark:bg-white/10 dark:text-stone-400 hover:bg-stone-200 transition"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-dashed border-[#86a018]/50 bg-[#d9f447]/10 p-5 text-center">
-          <FileSpreadsheet className="mx-auto size-9 text-[#6f840f] dark:text-[#d9f447]" />
-          <p className="mt-2 text-sm font-extrabold">Start with the official CSV template</p>
-          <p className="mt-1 text-xs text-stone-500 dark:text-gray-400">
+        <div className="mt-5 rounded-2xl border border-dashed border-black/[0.12] dark:border-white/[0.12] bg-stone-50 dark:bg-white/[0.03] p-5 text-center">
+          <FileSpreadsheet className="mx-auto size-9 text-stone-400 dark:text-stone-500" />
+          <p className="mt-2 text-sm font-bold">Start with the official CSV template</p>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             Restaurant price is the MRP/restaurant amount. Keep column names unchanged; variant
             lists use the | separator.
           </p>
@@ -344,14 +344,14 @@ export default function BulkMenuImportModal({
             <button
               type="button"
               onClick={downloadTemplate}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#86a018] bg-white px-4 py-2 text-xs font-bold text-[#65780d] dark:bg-[#121815] dark:text-[#d9f447]"
+              className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] dark:border-white/[0.08] bg-white px-4 py-2 text-xs font-semibold text-stone-800 dark:bg-white/10 dark:text-white hover:bg-stone-50 transition"
             >
               <Download className="size-4" /> Download template
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#18201c] px-4 py-2 text-xs font-bold text-white dark:bg-[#d9f447] dark:text-[#18201c]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#1D1D1F] px-4 py-2 text-xs font-semibold text-white dark:bg-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 transition"
             >
               <Upload className="size-4" /> Choose CSV file
             </button>
@@ -382,12 +382,12 @@ export default function BulkMenuImportModal({
           </p>
         )}
 
-        <div className="mt-5 flex justify-end gap-3 border-t border-stone-200 pt-4 dark:border-[#27342d]">
+        <div className="mt-5 flex justify-end gap-3 border-t border-stone-200/80 pt-4 dark:border-white/10">
           <button
             type="button"
             onClick={closeModal}
             disabled={importing}
-            className="rounded-xl border border-stone-300 px-4 py-2 text-xs font-bold dark:border-[#27342d]"
+            className="rounded-full border border-stone-200 px-5 py-2 text-xs font-semibold text-stone-700 dark:border-white/15 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/10 transition cursor-pointer"
           >
             Cancel
           </button>
@@ -395,9 +395,9 @@ export default function BulkMenuImportModal({
             type="button"
             onClick={() => void importItems()}
             disabled={items.length === 0 || importing}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#d9f447] px-5 py-2 text-xs font-black text-[#18201c] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white px-6 py-2 text-xs font-semibold text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 shadow-sm disabled:cursor-not-allowed disabled:opacity-50 transition cursor-pointer"
           >
-            <Upload className="size-4" />
+            <Upload className="size-4 stroke-[2]" />
             {importing ? 'Importing…' : `Import ${items.length || ''} items`}
           </button>
         </div>

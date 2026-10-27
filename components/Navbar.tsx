@@ -105,13 +105,13 @@ export default function Navbar() {
             <div className="hidden items-center gap-2 sm:flex">
               <Link
                 href="/login"
-                className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-semibold text-[#18201c] dark:text-white transition hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="rounded-full border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.06] px-4 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white transition hover:bg-stone-50 dark:hover:bg-white/10"
               >
                 Log in
               </Link>
               <Link
                 href="/signup"
-                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
+                className="rounded-full bg-[#1D1D1F] dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-[#1D1D1F] transition hover:bg-[#2C2C2E] dark:hover:bg-stone-200"
               >
                 Sign up
               </Link>
@@ -166,13 +166,13 @@ export default function Navbar() {
               <>
                 <Link
                   href="/user/cart"
-                  className="hidden sm:flex relative items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] shadow-xs hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+                  className="hidden sm:flex relative items-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-[#1D1D1F] shadow-xs hover:bg-[#2C2C2E] dark:hover:bg-stone-200 transition cursor-pointer"
                   title="View Cart"
                 >
-                  <ShoppingCart className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
+                  <ShoppingCart className="size-3.5 text-white/90 dark:text-[#1D1D1F]" />
                   <span>Cart ({cartCount})</span>
                   {cartSubtotal > 0 && (
-                    <span className="text-[#d9f447] dark:text-[#18201c] font-black">
+                    <span className="text-white/70 dark:text-[#1D1D1F]/70 font-semibold">
                       &bull; ₹{cartSubtotal}
                     </span>
                   )}
@@ -205,13 +205,13 @@ export default function Navbar() {
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
                   href="/login"
-                  className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-semibold text-[#18201c] dark:text-white transition hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                  className="rounded-full border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.06] px-4 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white transition hover:bg-stone-50 dark:hover:bg-white/10"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
+                  className="rounded-full bg-[#1D1D1F] dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-[#1D1D1F] transition hover:bg-[#2C2C2E] dark:hover:bg-stone-200"
                 >
                   Sign up
                 </Link>

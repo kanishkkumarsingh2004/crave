@@ -40,12 +40,12 @@ export function UserDropdown({
     <div className="relative hidden sm:block">
       <button
         onClick={() => setShowDropdown((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-[#dbe1d7] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-1 pr-2.5 transition hover:bg-[#f4f7f1] dark:hover:bg-[#27342d] cursor-pointer"
+        className="flex items-center gap-2 rounded-full border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.06] p-1 pr-2.5 transition hover:bg-stone-50 dark:hover:bg-white/10 cursor-pointer"
       >
         {user.avatar ? (
           <img src={user.avatar} alt={user.name} className="size-7 rounded-full object-cover" />
         ) : (
-          <span className="grid size-7 place-items-center rounded-full bg-[#d9f447] text-xs font-bold text-[#18201c]">
+          <span className="grid size-7 place-items-center rounded-full bg-stone-100 dark:bg-white/15 text-xs font-semibold text-[#1D1D1F] dark:text-white">
             {user.name.charAt(0)}
           </span>
         )}

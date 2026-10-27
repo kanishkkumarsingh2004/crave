@@ -458,14 +458,14 @@ export default function VendorDashboard() {
               </button>
 
               {/* View mode toggle (4x4 Grid vs Ticket List) */}
-              <div className="flex items-center rounded-xl bg-stone-100 dark:bg-[#1a241e] border border-stone-200 dark:border-[#27352d] p-0.5">
+              <div className="flex items-center rounded-full bg-stone-100 dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.08] p-0.5">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
+                  className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-all ${
                     viewMode === 'grid'
-                      ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-xs'
-                      : 'text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                      ? 'bg-white dark:bg-[#2C2C2E] text-[#1D1D1F] dark:text-white shadow-xs'
+                      : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white'
                   }`}
                   title="Compact 4x4 Grid Board"
                 >
@@ -475,10 +475,10 @@ export default function VendorDashboard() {
                 <button
                   type="button"
                   onClick={() => setViewMode('tickets')}
-                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
+                  className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-all ${
                     viewMode === 'tickets'
-                      ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-xs'
-                      : 'text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                      ? 'bg-white dark:bg-[#2C2C2E] text-[#1D1D1F] dark:text-white shadow-xs'
+                      : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white'
                   }`}
                   title="Detailed Ticket View"
                 >
@@ -492,7 +492,7 @@ export default function VendorDashboard() {
                 type="button"
                 onClick={() => void loadLiveKitchenOrders(true)}
                 disabled={isRefreshing}
-                className="grid size-8 place-items-center rounded-xl bg-stone-100 dark:bg-[#1a241e] border border-stone-200 dark:border-[#27352d] text-stone-700 dark:text-gray-300 hover:text-stone-900 dark:hover:text-white transition active:scale-95 disabled:opacity-60"
+                className="grid size-8 place-items-center rounded-full bg-stone-100 dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.08] text-stone-700 dark:text-gray-300 hover:text-stone-900 dark:hover:text-white transition active:scale-95 disabled:opacity-60"
                 title="Refresh Kitchen Queue"
               >
                 <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -501,7 +501,7 @@ export default function VendorDashboard() {
               {/* Menu link */}
               <Link
                 href="/vendor/menu"
-                className="hidden sm:flex items-center gap-1 rounded-xl bg-[#d9f447] text-[#0d1310] px-3 py-1.5 text-[11px] font-black hover:bg-[#cbe638] transition shadow-xs active:scale-95"
+                className="hidden sm:flex items-center gap-1.5 rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 px-3.5 py-1.5 text-xs font-semibold transition active:scale-95 shadow-xs"
               >
                 <UtensilsCrossed className="size-3.5" />
                 <span>Menu</span>
@@ -527,10 +527,10 @@ export default function VendorDashboard() {
           <button
             type="button"
             onClick={() => setActiveFilter('all')}
-            className={`rounded-xl py-1.5 px-2 sm:px-3.5 text-center text-[10px] sm:text-xs font-black transition-all ${
+            className={`rounded-full py-1.5 px-3 sm:px-4 text-center text-[10px] sm:text-xs font-semibold transition-all ${
               activeFilter === 'all'
-                ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] shadow-xs'
-                : 'bg-white dark:bg-[#141b17] border border-stone-200 dark:border-[#202c24] text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] shadow-xs'
+                : 'bg-white dark:bg-[#161617] border border-black/[0.08] dark:border-white/[0.08] text-stone-600 dark:text-stone-400 hover:border-black/20 dark:hover:border-white/20'
             }`}
           >
             All ({kitchenOrders.length})
@@ -538,10 +538,10 @@ export default function VendorDashboard() {
           <button
             type="button"
             onClick={() => setActiveFilter('new')}
-            className={`rounded-xl py-1.5 px-2 sm:px-3.5 text-center text-[10px] sm:text-xs font-black transition-all ${
+            className={`rounded-full py-1.5 px-3 sm:px-4 text-center text-[10px] sm:text-xs font-semibold transition-all ${
               activeFilter === 'new'
                 ? 'bg-amber-500 text-white shadow-xs'
-                : 'bg-white dark:bg-[#141b17] border border-stone-200 dark:border-[#202c24] text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                : 'bg-white dark:bg-[#161617] border border-black/[0.08] dark:border-white/[0.08] text-stone-600 dark:text-stone-400 hover:border-black/20 dark:hover:border-white/20'
             }`}
           >
             New ({newOrders.length})
@@ -549,10 +549,10 @@ export default function VendorDashboard() {
           <button
             type="button"
             onClick={() => setActiveFilter('preparing')}
-            className={`rounded-xl py-1.5 px-2 sm:px-3.5 text-center text-[10px] sm:text-xs font-black transition-all ${
+            className={`rounded-full py-1.5 px-3 sm:px-4 text-center text-[10px] sm:text-xs font-semibold transition-all ${
               activeFilter === 'preparing'
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-white dark:bg-[#141b17] border border-stone-200 dark:border-[#202c24] text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                : 'bg-white dark:bg-[#161617] border border-black/[0.08] dark:border-white/[0.08] text-stone-600 dark:text-stone-400 hover:border-black/20 dark:hover:border-white/20'
             }`}
           >
             Cooking ({prepOrders.length})
@@ -560,10 +560,10 @@ export default function VendorDashboard() {
           <button
             type="button"
             onClick={() => setActiveFilter('ready')}
-            className={`rounded-xl py-1.5 px-2 sm:px-3.5 text-center text-[10px] sm:text-xs font-black transition-all ${
+            className={`rounded-full py-1.5 px-3 sm:px-4 text-center text-[10px] sm:text-xs font-semibold transition-all ${
               activeFilter === 'ready'
                 ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-white dark:bg-[#141b17] border border-stone-200 dark:border-[#202c24] text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                : 'bg-white dark:bg-[#161617] border border-black/[0.08] dark:border-white/[0.08] text-stone-600 dark:text-stone-400 hover:border-black/20 dark:hover:border-white/20'
             }`}
           >
             Ready ({readyOrders.length})

@@ -112,13 +112,13 @@ export default function WebPushPrompt() {
       aria-labelledby="push-notification-title"
       aria-describedby="push-notification-description"
     >
-      <div className="rounded-2xl border border-white/10 bg-[#18201c] p-4 text-white shadow-2xl">
+      <div className="rounded-3xl border border-white/10 bg-[#161617] p-4 text-white shadow-2xl">
         <div className="flex items-start gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
+          <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-white">
             <BellRing className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 id="push-notification-title" className="text-sm font-extrabold">
+            <h2 id="push-notification-title" className="text-sm font-bold">
               Get important order updates
             </h2>
             <p id="push-notification-description" className="mt-1 text-xs text-white/70">
@@ -131,14 +131,14 @@ export default function WebPushPrompt() {
                 type="button"
                 onClick={() => void enableNotifications()}
                 disabled={submitting}
-                className="rounded-xl bg-[#d9f447] px-3.5 py-2 text-xs font-extrabold text-[#18201c] transition hover:bg-[#c8e434] disabled:cursor-wait disabled:opacity-60"
+                className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#1D1D1F] transition hover:bg-stone-100 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
               >
                 {submitting ? 'Enabling…' : 'Enable notifications'}
               </button>
               <button
                 type="button"
                 onClick={dismissPrompt}
-                className="rounded-xl px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 hover:text-white"
+                className="rounded-full px-3.5 py-2 text-xs font-medium text-white/70 hover:bg-white/10 hover:text-white transition cursor-pointer"
               >
                 Not now
               </button>

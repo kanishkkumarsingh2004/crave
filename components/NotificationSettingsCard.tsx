@@ -173,29 +173,29 @@ export default function NotificationSettingsCard() {
           : 'Off on this device'
 
   return (
-    <div className="rounded-3xl border border-[#dfe4dc] bg-white p-6 shadow-xs dark:border-[#27342d] dark:bg-[#18201c] sm:p-7">
+    <div className="rounded-3xl border border-black/[0.08] bg-white p-6 shadow-xs dark:border-white/[0.08] dark:bg-[#161617] sm:p-7">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-start gap-3">
           <div
             className={`grid size-11 shrink-0 place-items-center rounded-2xl ${
               enabled
-                ? 'bg-[#d9f447] text-[#18201c]'
-                : 'bg-[#f0f3eb] text-[#66756c] dark:bg-[#27342d] dark:text-gray-300'
+                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                : 'bg-stone-100 text-stone-500 dark:bg-white/10 dark:text-gray-300'
             }`}
           >
             {enabled ? <BellRing className="size-5" /> : <BellOff className="size-5" />}
           </div>
           <div>
-            <h3 className="flex items-center gap-2 text-base font-black text-[#18201c] dark:text-white">
+            <h3 className="flex items-center gap-2 text-base font-bold text-[#1D1D1F] dark:text-white">
               Order Notifications
-              {enabled && <ShieldCheck className="size-4 text-emerald-600" />}
+              {enabled && <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />}
             </h3>
-            <p className="mt-1 max-w-xl text-xs font-medium text-[#55635a] dark:text-gray-400">
+            <p className="mt-1 max-w-xl text-xs font-medium text-stone-500 dark:text-stone-400">
               Receive popup notifications for payment approval, kitchen preparation, rider pickup
               and delivery—even when Crave is in the background.
             </p>
             <p
-              className={`mt-2 text-[11px] font-bold ${
+              className={`mt-2 text-[11px] font-semibold ${
                 enabled
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : permission === 'denied'
@@ -215,8 +215,8 @@ export default function NotificationSettingsCard() {
           aria-label="Toggle order notifications"
           disabled={loading || submitting || (unavailable && permission !== 'denied')}
           onClick={() => void (enabled ? disableNotifications() : enableNotifications())}
-          className={`relative h-8 w-14 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#b5de28] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-            enabled ? 'bg-[#b5de28]' : 'bg-gray-300 dark:bg-gray-600'
+          className={`relative h-8 w-14 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${
+            enabled ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-stone-700'
           }`}
         >
           <span

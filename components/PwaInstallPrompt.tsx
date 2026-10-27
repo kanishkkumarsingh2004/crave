@@ -148,9 +148,9 @@ export default function PwaInstallPrompt() {
           <div className="flex items-center gap-2">
             <button
               onClick={isIos ? () => setShowIosGuide(true) : handleInstallClick}
-              className="px-3.5 py-2 bg-[#d9f447] hover:bg-[#c8e434] active:scale-95 text-[#18201c] font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-[#d9f447]/10"
+              className="px-4 py-2 bg-white hover:bg-stone-100 active:scale-95 text-[#1D1D1F] font-semibold text-xs rounded-full transition flex items-center gap-1.5 shadow-sm"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Install</span>
             </button>
             <button
@@ -170,10 +170,8 @@ export default function PwaInstallPrompt() {
           <div className="bg-[#1e2621] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-white shadow-2xl animate-in slide-in-from-bottom-6 duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center border border-white/10">
-                  <span className="text-white font-black text-xl">
-                    c<span className="w-1 h-1 bg-[#d9f447] inline-block ml-0.5 rounded-xs" />
-                  </span>
+                <div className="size-10 rounded-xl bg-black/40 flex items-center justify-center border border-white/10 shrink-0">
+                  <CraveLogo variant="small" size="sm" theme="light" />
                 </div>
                 <div>
                   <h3 className="font-bold text-base leading-tight">Install Crave on iOS</h3>
@@ -233,7 +231,7 @@ export default function PwaInstallPrompt() {
 
             <button
               onClick={() => setShowIosGuide(false)}
-              className="w-full py-3 bg-[#d9f447] text-[#18201c] font-bold text-sm rounded-xl hover:bg-[#c8e434] transition"
+              className="w-full py-3 bg-white text-[#1D1D1F] font-semibold text-sm rounded-full hover:bg-stone-100 transition cursor-pointer"
             >
               Got it
             </button>

@@ -80,20 +80,20 @@ export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeT
         type="button"
         onClick={toggleTheme}
         aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-        className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold border transition-all duration-200 active:scale-95 ${
+        className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all duration-200 active:scale-95 ${
           isDark
-            ? 'bg-[#18201c] text-[#d9f447] border-[#27342d] hover:bg-[#202b25]'
-            : 'bg-white text-[#18201c] border-gray-200 hover:bg-gray-100 shadow-xs'
+            ? 'bg-white/[0.08] text-white border-white/[0.1] hover:bg-white/[0.12]'
+            : 'bg-white text-[#1D1D1F] border-black/[0.08] hover:bg-stone-50 shadow-xs'
         } ${className}`}
       >
         {isDark ? (
           <>
-            <SunIcon className="size-3.5 text-[#d9f447]" />
+            <SunIcon className="size-3.5 text-amber-400" />
             <span>Light Mode</span>
           </>
         ) : (
           <>
-            <MoonIcon className="size-3.5 text-[#18201c]" />
+            <MoonIcon className="size-3.5 text-stone-700" />
             <span>Dark Mode</span>
           </>
         )}
@@ -107,16 +107,16 @@ export default function ThemeToggle({ className = '', variant = 'icon' }: ThemeT
       onClick={toggleTheme}
       aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
       title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-      className={`relative grid size-9 place-items-center rounded-xl border transition-all duration-200 active:scale-95 ${
+      className={`relative grid size-9 place-items-center rounded-full border transition-all duration-200 active:scale-95 ${
         isDark
-          ? 'border-[#27342d] bg-[#18201c] text-[#d9f447] hover:border-[#384a40] hover:bg-[#202b25] shadow-sm'
-          : 'border-gray-200 bg-white text-[#18201c] hover:border-gray-300 hover:bg-gray-100 shadow-xs'
+          ? 'border-white/[0.1] bg-white/[0.08] text-white hover:bg-white/[0.12]'
+          : 'border-black/[0.08] bg-stone-100 text-[#1D1D1F] hover:bg-stone-200 shadow-xs'
       } ${className}`}
     >
       {isDark ? (
-        <SunIcon className="size-4 text-[#d9f447] transition-transform duration-200 hover:rotate-45" />
+        <SunIcon className="size-4 text-amber-400 transition-transform duration-200 hover:rotate-45" />
       ) : (
-        <MoonIcon className="size-4 text-[#18201c] transition-transform duration-200 hover:-rotate-12" />
+        <MoonIcon className="size-4 text-stone-700 transition-transform duration-200 hover:-rotate-12" />
       )}
     </button>
   )

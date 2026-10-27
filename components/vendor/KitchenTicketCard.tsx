@@ -28,30 +28,30 @@ export default function KitchenTicketCard({
     order.status === 'rider_assigned'
 
   return (
-    <div className="rounded-2xl border border-stone-200 dark:border-[#222e26] bg-white dark:bg-[#141b17] p-4 sm:p-5 shadow-xs space-y-3 transition-all hover:border-[#86a018]/40 dark:hover:border-[#34463a]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 dark:border-[#202b23] pb-3">
+    <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-4 sm:p-5 shadow-xs space-y-3 transition-all hover:border-black/20 dark:hover:border-white/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/[0.06] dark:border-white/[0.06] pb-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-black text-stone-900 dark:text-white">
+            <span className="font-mono text-xs font-semibold text-[#1D1D1F] dark:text-white">
               #{order.id.slice(0, 8)}
             </span>
-            <span className="text-[10px] font-semibold text-stone-500 dark:text-gray-400">
+            <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">
               · {order.time}
             </span>
             {order.paymentStatus === 'verified' && (
-              <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400">
+              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[9px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">
                 Payment Verified
               </span>
             )}
           </div>
-          <h4 className="text-sm sm:text-base font-black text-[#121815] dark:text-white mt-0.5">
+          <h4 className="text-sm sm:text-base font-bold text-[#1D1D1F] dark:text-white mt-0.5">
             {order.customerName}
           </h4>
-          <p className="text-xs text-stone-500 dark:text-gray-400 truncate">{order.address}</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400 truncate">{order.address}</p>
         </div>
 
         <div className="flex items-center sm:flex-col sm:items-end justify-between gap-1.5 shrink-0">
-          <span className="text-base sm:text-lg font-black text-[#5e700a] dark:text-[#d9f447]">
+          <span className="text-base sm:text-lg font-bold text-[#1D1D1F] dark:text-white">
             ₹{order.subtotal > 0 ? order.subtotal : order.totalAmount}
           </span>
 
@@ -61,7 +61,7 @@ export default function KitchenTicketCard({
                 type="button"
                 disabled={isPending}
                 onClick={() => onStatusUpdate(order.id, 'preparing')}
-                className="rounded-xl bg-[#d9f447] px-3.5 py-1.5 text-xs font-black text-[#0d1310] hover:bg-[#cbe638] active:scale-95 transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                className="rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 px-4 py-1.5 text-xs font-semibold active:scale-95 transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
               >
                 {isPending ? (
                   <CraveSpinner size="xs" variant="dark" />
@@ -79,7 +79,7 @@ export default function KitchenTicketCard({
                 type="button"
                 disabled={isPending}
                 onClick={() => onStatusUpdate(order.id, 'ready_for_pickup')}
-                className="rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-black text-white hover:bg-orange-600 active:scale-95 transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                className="rounded-full bg-orange-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 active:scale-95 transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
               >
                 {isPending ? (
                   <CraveSpinner size="xs" variant="white" />
@@ -93,7 +93,7 @@ export default function KitchenTicketCard({
             )}
 
             {isReady && (
-              <span className="rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400">
+              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 Ready for Driver
               </span>
             )}
@@ -102,16 +102,16 @@ export default function KitchenTicketCard({
       </div>
 
       {/* Itemized Recipe Ticket */}
-      <div className="rounded-xl bg-stone-50 dark:bg-[#0f1512] border border-stone-200/80 dark:border-[#202b23] p-3 space-y-1.5">
-        <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 dark:text-gray-400">
+      <div className="rounded-2xl bg-stone-50 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] p-3.5 space-y-1.5">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
           Kitchen Ticket Items
         </p>
         {order.itemsList.length > 0 ? (
-          <div className="divide-y divide-stone-200/60 dark:divide-[#202b23]">
+          <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
             {order.itemsList.map((item, idx) => (
-              <div key={idx} className="py-1 flex items-center justify-between text-xs">
-                <span className="font-bold text-[#121815] dark:text-stone-200">
-                  <span className="font-mono font-black text-amber-600 dark:text-[#d9f447] mr-1.5">
+              <div key={idx} className="py-1.5 flex items-center justify-between text-xs">
+                <span className="font-medium text-[#1D1D1F] dark:text-stone-200">
+                  <span className="font-mono font-bold text-[#1D1D1F] dark:text-white mr-1.5">
                     {item.qty}×
                   </span>
                   {item.name}

@@ -397,10 +397,10 @@ export default function AddEditDishModal({
                     key={preset}
                     type="button"
                     onClick={() => setUnit(preset)}
-                    className={`rounded-md px-2 py-0.5 text-[10px] font-bold transition border cursor-pointer ${
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition border cursor-pointer ${
                       unit === preset
-                        ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447]'
-                        : 'bg-stone-100 dark:bg-[#1a231e] text-stone-600 dark:text-gray-400 border-stone-200 dark:border-[#28372e]'
+                        ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] border-transparent shadow-xs'
+                        : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-stone-300 border-stone-200/80 dark:border-white/10 hover:bg-stone-200'
                     }`}
                   >
                     {preset}
@@ -413,7 +413,7 @@ export default function AddEditDishModal({
           {/* Pricing */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-stone-700 dark:text-gray-200">
+              <label className="font-semibold text-xs text-stone-700 dark:text-stone-200">
                 Restaurant Price / MRP (₹) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -426,14 +426,14 @@ export default function AddEditDishModal({
                 onChange={(e) =>
                   setRestaurantPrice(e.target.value === '' ? '' : Number(e.target.value))
                 }
-                className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-black text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                className="mt-1.5 w-full rounded-xl border border-stone-200/80 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3 font-semibold text-[#1D1D1F] dark:text-white outline-none focus:border-[#86a018] text-sm"
               />
               <span className="mt-1 block text-[10px] text-stone-400">
                 Restaurant amount used for payout
               </span>
             </div>
             <div>
-              <label className="font-bold text-stone-700 dark:text-gray-200">
+              <label className="font-semibold text-xs text-stone-700 dark:text-stone-200">
                 App Selling Price (₹) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -444,7 +444,7 @@ export default function AddEditDishModal({
                 placeholder="e.g. 110"
                 value={price}
                 onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-black text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                className="mt-1.5 w-full rounded-xl border border-stone-200/80 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3 font-semibold text-[#1D1D1F] dark:text-white outline-none focus:border-[#86a018] text-sm"
               />
               <span className="mt-1 block text-[10px] text-stone-400">
                 Customer price on the app
@@ -453,11 +453,11 @@ export default function AddEditDishModal({
           </div>
 
           {/* Variants */}
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 dark:border-[#233027] dark:bg-[#0d1210]">
+          <div className="rounded-2xl border border-stone-200/80 bg-stone-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="font-extrabold text-stone-800 dark:text-white">Sizes / Variants</p>
-                <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                <p className="font-semibold text-sm text-stone-800 dark:text-white">Sizes / Variants</p>
+                <p className="text-[10px] text-stone-500 dark:text-stone-400">
                   Optional. Each size has its own restaurant and app price.
                 </p>
               </div>
@@ -466,7 +466,7 @@ export default function AddEditDishModal({
                   <button
                     type="button"
                     onClick={addStandardSizes}
-                    className="rounded-lg border border-[#86a018] px-3 py-1.5 font-bold text-[#6f840f] dark:border-[#d9f447] dark:text-[#d9f447] cursor-pointer"
+                    className="rounded-full border border-stone-200 dark:border-white/15 bg-white dark:bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-white/15 transition cursor-pointer"
                   >
                     + Small / Medium / Large
                   </button>
@@ -486,7 +486,7 @@ export default function AddEditDishModal({
                       },
                     ])
                   }
-                  className="rounded-lg bg-[#18201c] px-3 py-1.5 font-bold text-white dark:bg-[#d9f447] dark:text-[#18201c] cursor-pointer"
+                  className="rounded-full bg-[#1D1D1F] dark:bg-white px-3.5 py-1.5 text-xs font-semibold text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 transition cursor-pointer shadow-xs"
                 >
                   + Add size
                 </button>
@@ -645,10 +645,10 @@ export default function AddEditDishModal({
                     key={preset.name}
                     type="button"
                     onClick={() => setImage(preset.url)}
-                    className={`rounded-lg px-2 py-1 text-[10px] font-bold transition border cursor-pointer ${
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition border cursor-pointer ${
                       image === preset.url
-                        ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447]'
-                        : 'bg-white dark:bg-[#171f1b] text-stone-700 dark:text-gray-300 border-stone-200 dark:border-[#27352d]'
+                        ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] border-transparent shadow-xs'
+                        : 'bg-white dark:bg-white/5 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-white/10 hover:bg-stone-50'
                     }`}
                   >
                     {preset.name}
@@ -659,41 +659,42 @@ export default function AddEditDishModal({
           </div>
 
           {/* In-Stock Toggle */}
-          <div className="flex items-center justify-between rounded-2xl bg-stone-50 dark:bg-[#171f1b] p-4 border border-stone-200 dark:border-[#233027]">
+          <div className="flex items-center justify-between rounded-2xl bg-stone-50 dark:bg-white/[0.04] p-4 border border-stone-200/80 dark:border-white/10">
             <div>
-              <span className="font-extrabold text-sm text-[#121815] dark:text-white block">
+              <span className="font-semibold text-sm text-[#1D1D1F] dark:text-white block">
                 Live In-Stock Availability
               </span>
-              <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5">
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
                 When active, customers can order this dish immediately.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setInStock(!inStock)}
-              className={`px-5 py-2 rounded-full font-black text-xs transition cursor-pointer shadow-sm ${
+              className={`px-4 py-1.5 rounded-full font-medium text-xs transition cursor-pointer shadow-2xs flex items-center gap-1.5 ${
                 inStock
-                  ? 'bg-emerald-500 text-[#0d1310] hover:bg-emerald-400'
-                  : 'bg-rose-500 text-white hover:bg-rose-600'
+                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                  : 'bg-stone-200 dark:bg-white/10 text-stone-600 dark:text-stone-400 border border-stone-300 dark:border-white/10'
               }`}
             >
-              {inStock ? '✓ In Stock' : '✕ Out of Stock'}
+              <span className={`size-1.5 rounded-full ${inStock ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'}`} />
+              <span>{inStock ? 'In Stock' : 'Out of Stock'}</span>
             </button>
           </div>
 
           {/* Actions */}
-          <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-stone-100 dark:border-[#202b24]">
+          <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-stone-100 dark:border-white/10">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-stone-200 dark:border-[#2a382e] bg-stone-100 dark:bg-[#1a231e] px-6 py-2.5 font-bold text-stone-700 dark:text-gray-300 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+              className="rounded-full border border-stone-200 dark:border-white/15 bg-stone-100 dark:bg-white/10 px-6 py-2.5 font-semibold text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition cursor-pointer text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-full bg-[#d9f447] px-8 py-2.5 font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 transition cursor-pointer text-xs"
+              className="rounded-full bg-[#1D1D1F] dark:bg-white px-7 py-2.5 font-semibold text-white dark:text-[#1D1D1F] shadow-sm hover:bg-[#2C2C2E] dark:hover:bg-stone-200 active:scale-95 transition cursor-pointer text-xs disabled:opacity-50"
             >
               {submitting ? 'Saving...' : editingItem ? 'Save Dish Changes' : 'Add Dish to Menu'}
             </button>

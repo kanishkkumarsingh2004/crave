@@ -31,10 +31,10 @@ export default function KitchenMetrics({
         <button
           type="button"
           onClick={() => onFilterChange(activeFilter === 'new' ? 'all' : 'new')}
-          className={`rounded-xl sm:rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
+          className={`rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
             activeFilter === 'new'
               ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/15 ring-2 ring-amber-500/30'
-              : 'border-stone-200 dark:border-[#202c24] bg-white dark:bg-[#121815] hover:border-amber-500/40'
+              : 'border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] hover:border-amber-500/40'
           }`}
         >
           <div className="flex items-center justify-between gap-1 w-full">
@@ -59,10 +59,10 @@ export default function KitchenMetrics({
         <button
           type="button"
           onClick={() => onFilterChange(activeFilter === 'preparing' ? 'all' : 'preparing')}
-          className={`rounded-xl sm:rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
+          className={`rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
             activeFilter === 'preparing'
               ? 'border-orange-500 bg-orange-500/10 dark:bg-orange-500/15 ring-2 ring-orange-500/30'
-              : 'border-stone-200 dark:border-[#202c24] bg-white dark:bg-[#121815] hover:border-orange-500/40'
+              : 'border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] hover:border-orange-500/40'
           }`}
         >
           <div className="flex items-center justify-between gap-1 w-full">
@@ -87,10 +87,10 @@ export default function KitchenMetrics({
         <button
           type="button"
           onClick={() => onFilterChange(activeFilter === 'ready' ? 'all' : 'ready')}
-          className={`rounded-xl sm:rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
+          className={`rounded-2xl border p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs group cursor-pointer ${
             activeFilter === 'ready'
               ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 ring-2 ring-emerald-500/30'
-              : 'border-stone-200 dark:border-[#202c24] bg-white dark:bg-[#121815] hover:border-emerald-500/40'
+              : 'border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] hover:border-emerald-500/40'
           }`}
         >
           <div className="flex items-center justify-between gap-1 w-full">
@@ -112,12 +112,12 @@ export default function KitchenMetrics({
         </button>
 
         {/* Card 4: Daily Sales Revenue */}
-        <div className="rounded-xl sm:rounded-2xl border border-stone-200 dark:border-[#202c24] bg-white dark:bg-[#121815] p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs">
+        <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-2 sm:p-3.5 text-left transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs">
           <div className="flex items-center justify-between gap-1 w-full">
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-[#d9f447] truncate">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">
               Sales
             </span>
-            <div className="grid size-5 sm:size-7 place-items-center rounded-lg bg-blue-500/10 dark:bg-[#d9f447]/15 text-blue-600 dark:text-[#d9f447] shrink-0">
+            <div className="grid size-5 sm:size-7 place-items-center rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 shrink-0">
               <DollarSign className="size-2.5 sm:size-3.5" />
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function KitchenMetrics({
       {/* Row 2: Secondary Performance Metrics (4-Column Grid on Mobile) */}
       <div className="grid grid-cols-4 gap-1.5 sm:gap-3 w-full min-w-0">
         {/* Card 5: Avg Prep Time */}
-        <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 dark:border-[#1d2720] bg-white/70 dark:bg-[#0f1512] p-2 sm:p-3 text-left flex flex-col justify-between">
+        <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#161617] p-2 sm:p-3 text-left flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
               Prep SLA
@@ -156,12 +156,12 @@ export default function KitchenMetrics({
         </div>
 
         {/* Card 6: Fulfillment Rate */}
-        <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 dark:border-[#1d2720] bg-white/70 dark:bg-[#0f1512] p-2 sm:p-3 text-left flex flex-col justify-between">
+        <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#161617] p-2 sm:p-3 text-left flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
               Accuracy
             </span>
-            <Sparkles className="size-2.5 sm:size-3 text-[#86a018] dark:text-[#d9f447] shrink-0" />
+            <Sparkles className="size-2.5 sm:size-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
           </div>
           <div className="mt-1">
             <span className="text-xs sm:text-sm font-black text-[#121815] dark:text-white block">
@@ -174,7 +174,7 @@ export default function KitchenMetrics({
         </div>
 
         {/* Card 7: Rider Dispatches */}
-        <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 dark:border-[#1d2720] bg-white/70 dark:bg-[#0f1512] p-2 sm:p-3 text-left flex flex-col justify-between">
+        <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#161617] p-2 sm:p-3 text-left flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
               Dispatched
@@ -192,7 +192,7 @@ export default function KitchenMetrics({
         </div>
 
         {/* Card 8: Rating */}
-        <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 dark:border-[#1d2720] bg-white/70 dark:bg-[#0f1512] p-2 sm:p-3 text-left flex flex-col justify-between">
+        <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#161617] p-2 sm:p-3 text-left flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-gray-400 truncate">
               Rating

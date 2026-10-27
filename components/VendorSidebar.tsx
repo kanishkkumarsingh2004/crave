@@ -61,16 +61,17 @@ export default function VendorSidebar() {
   return (
     <>
       {/* Desktop Left Fixed Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-stone-200 dark:border-[#202923] bg-white dark:bg-[#121815] text-[#121815] dark:text-white lg:flex transition-colors duration-200">
-        <div className="border-b border-stone-200 dark:border-white/10 p-6">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-stone-200/80 dark:border-white/[0.08] bg-white dark:bg-[#121815] text-[#121815] dark:text-white lg:flex transition-colors duration-200">
+        <div className="border-b border-stone-200/80 dark:border-white/[0.08] p-6">
           <Link href="/vendor/dashboard" className="flex items-center gap-2.5" aria-label="crave vendor dashboard">
             <CraveLogo variant="full" size="md" />
           </Link>
-          <div className="mt-5 rounded-xl bg-stone-100 dark:bg-white/5 border border-stone-200/80 dark:border-transparent px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
-              Vendor
-            </p>
-            <p className="mt-1 truncate text-sm font-bold text-stone-900 dark:text-white">
+          <div className="mt-5 rounded-2xl bg-stone-100/80 dark:bg-white/[0.04] border border-stone-200/60 dark:border-white/10 p-3.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Vendor Live</span>
+            </div>
+            <p className="mt-1 truncate text-sm font-semibold text-[#1D1D1F] dark:text-white">
               {user?.restaurantName || 'The Green Table'}
             </p>
           </div>
@@ -84,27 +85,27 @@ export default function VendorSidebar() {
                 key={href}
                 href={href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs transition ${
                   isActive
-                    ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] font-bold shadow-xs'
-                    : 'text-stone-600 dark:text-white/70 hover:bg-stone-100 dark:hover:bg-white/10 hover:text-stone-900 dark:hover:text-white'
+                    ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] font-semibold shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-white/[0.06] hover:text-[#1D1D1F] dark:hover:text-white font-medium'
                 }`}
               >
-                <Icon className="size-4 shrink-0" />
+                <Icon className="size-4 shrink-0 stroke-[2]" />
                 <span>{label}</span>
               </Link>
             )
           })}
         </nav>
 
-        <div className="border-t border-stone-200 dark:border-white/10 p-4 space-y-2">
+        <div className="border-t border-stone-200/80 dark:border-white/[0.08] p-4 space-y-2">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-bold text-stone-500 dark:text-gray-400">Theme</span>
+            <span className="text-[11px] font-medium text-stone-500 dark:text-stone-400">Theme</span>
             <ThemeToggle />
           </div>
           <button
             onClick={() => logout()}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-rose-600 dark:text-rose-300 transition hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
           >
             <LogOut className="size-4" />
             Sign out
@@ -113,10 +114,10 @@ export default function VendorSidebar() {
       </aside>
 
       {/* Top Header Navigation Bar */}
-      <div className="sticky top-0 z-30 border-b border-stone-200 dark:border-[#202d25] bg-white/90 dark:bg-[#0f1512]/90 backdrop-blur-xl px-4 py-3.5 sm:px-8 shadow-xs dark:shadow-lg w-full max-w-full overflow-hidden transition-colors duration-200">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full min-w-0">
+      <div className="sticky top-0 z-30 border-b border-stone-200/80 dark:border-white/[0.08] bg-white/85 dark:bg-[#0c100e]/85 backdrop-blur-xl px-4 py-3 sm:px-8 shadow-xs w-full max-w-full overflow-hidden transition-colors duration-200">
+        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 w-full min-w-0">
           {/* Brand Logo & Kitchen Name */}
-          <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/"
               className="shrink-0 lg:hidden flex items-center"
@@ -124,14 +125,14 @@ export default function VendorSidebar() {
             >
               <CraveLogo variant="full" size="md" />
             </Link>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               VENDOR
             </span>
 
-            <div className="hidden sm:block h-6 w-px bg-stone-200 dark:bg-[#202d25] mx-1 shrink-0" />
+            <div className="hidden sm:block h-4 w-px bg-stone-200 dark:bg-white/10 mx-1 shrink-0" />
 
-            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-stone-800 dark:text-gray-200 truncate">
-              <Store className="size-4 text-[#86a018] dark:text-[#d9f447] shrink-0" />
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-stone-700 dark:text-stone-300 truncate">
+              <Store className="size-3.5 text-[#86a018] shrink-0" />
               <span className="truncate max-w-[200px]">
                 {user?.restaurantName || 'The Green Table'}
               </span>
@@ -139,39 +140,41 @@ export default function VendorSidebar() {
 
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden grid size-9 place-items-center rounded-xl bg-stone-100 dark:bg-[#18201c] text-stone-700 dark:text-white hover:bg-stone-200 dark:hover:bg-[#222e27] transition border border-stone-200 dark:border-[#27342d]"
+              className="lg:hidden grid size-9 place-items-center rounded-full bg-stone-100 dark:bg-white/10 text-stone-700 dark:text-white hover:bg-stone-200 dark:hover:bg-white/15 transition border border-stone-200 dark:border-white/10"
               aria-label="Open menu"
             >
-              <Menu className="size-5" />
+              <Menu className="size-4" />
             </button>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="no-scrollbar hidden items-center gap-2 overflow-x-auto text-xs font-bold lg:hidden xl:flex">
-            {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`rounded-2xl px-4 py-2 transition shrink-0 flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-[#d9f447] text-[#0d1310] font-black shadow-xs ring-1 ring-[#86a018]/30 dark:ring-transparent'
-                      : 'bg-stone-100 dark:bg-[#161d19] text-stone-700 dark:text-gray-300 border border-stone-200 dark:border-[#27342d] hover:bg-stone-200/80 dark:hover:bg-[#1f2923] hover:text-stone-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Icon className="size-3.5" />
-                  <span>{label}</span>
-                </Link>
-              )
-            })}
+          {/* Desktop Navigation Links - Apple Segmented Control */}
+          <div className="hidden lg:flex items-center gap-2">
+            <nav className="flex items-center gap-1 text-xs justify-center bg-stone-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-stone-200/60 dark:border-white/10 backdrop-blur-xl">
+              {navItems.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition shrink-0 ${
+                      isActive
+                        ? 'bg-white dark:bg-[#2C2C2E] text-[#1D1D1F] dark:text-white font-semibold shadow-xs'
+                        : 'text-stone-600 dark:text-stone-400 hover:text-[#1D1D1F] dark:hover:text-white font-medium'
+                    }`}
+                  >
+                    <Icon className="size-3.5 stroke-[2]" />
+                    <span>{label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
             <ThemeToggle />
             <button
               onClick={() => logout()}
-              className="rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3.5 py-2 transition shrink-0 hover:bg-rose-100 dark:hover:bg-rose-500/20 flex items-center gap-1 cursor-pointer"
+              className="size-9 rounded-full bg-stone-100 hover:bg-rose-50 dark:bg-white/5 dark:hover:bg-rose-500/10 text-stone-500 hover:text-rose-600 dark:text-stone-400 dark:hover:text-rose-400 border border-stone-200/60 dark:border-white/10 grid place-items-center transition cursor-pointer"
               title="Sign Out"
             >
-              <LogOut className="size-3.5" />
+              <LogOut className="size-4" />
             </button>
           </div>
         </div>
@@ -204,10 +207,10 @@ export default function VendorSidebar() {
                   href={href}
                   onClick={() => setMobileMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold transition ${
+                  className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-xs transition ${
                     isActive
-                      ? 'bg-[#d9f447] text-[#0d1310] font-black'
-                      : 'text-stone-700 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-[#1d2621] hover:text-stone-900 dark:hover:text-white'
+                      ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] font-semibold shadow-xs'
+                      : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/10 hover:text-[#1D1D1F] dark:hover:text-white font-medium'
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />
@@ -253,17 +256,17 @@ export default function VendorSidebar() {
               key={href}
               href={href}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-1.5 transition-all text-[10px] font-bold min-w-[64px] ${
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-1.5 transition-all text-[10px] min-w-[64px] ${
                 isActive
-                  ? 'text-[#86a018] dark:text-[#d9f447] font-black scale-105'
-                  : 'text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                  ? 'text-[#1D1D1F] dark:text-white font-semibold'
+                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white font-medium'
               }`}
             >
               <div
                 className={`grid size-7 place-items-center rounded-xl transition-all ${
                   isActive
-                    ? 'bg-[#d9f447] text-[#0d1310] shadow-md shadow-[#d9f447]/20 ring-2 ring-[#d9f447]/30'
-                    : 'bg-transparent text-stone-500 dark:text-gray-400'
+                    ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] shadow-xs'
+                    : 'bg-transparent text-stone-500 dark:text-stone-400'
                 }`}
               >
                 <Icon className="size-4 shrink-0" />
