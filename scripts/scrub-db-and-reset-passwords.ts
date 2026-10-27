@@ -173,6 +173,21 @@ async function scrubDbAndResetPasswords() {
     console.log(`    ✓ Deleted user account: ${otherUser.email}`)
   }
 
+  console.log('\n📦 4. Restocking all active menu items and CraveXP products...')
+  await prisma.menuItem.updateMany({
+    data: {
+      in_stock: true,
+      stock_count: 50,
+    },
+  })
+  await prisma.craveXPProduct.updateMany({
+    data: {
+      in_stock: true,
+      stock_count: 50,
+    },
+  })
+  console.log('  ✓ All items restocked with 50 units (in_stock: true).')
+
   // Summary counts
   const remainingUsers = await prisma.user.findMany({
     select: { id: true, email: true, role: true, name: true },
