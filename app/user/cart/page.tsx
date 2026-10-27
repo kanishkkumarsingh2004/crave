@@ -42,6 +42,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), { ssr: false })
+import CartUpsellStrip from '@/components/customer/CartUpsellStrip'
 
 interface Coupon {
   id: string
@@ -63,7 +64,7 @@ interface SavedAddress {
 
 export default function CartPage() {
   const { user, isLoading: authLoading } = useAuth()
-  const { items: cart, removeItem, updateItemQty, clearCart, totalCount } = useCart()
+  const { items: cart, removeItem, updateItemQty, clearCart, totalCount, addItem } = useCart()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -876,6 +877,16 @@ export default function CartPage() {
                       </Link>
                     </div>
                   </div>
+
+                  {/* Recommendations: Frequently Paired Cross-Sell */}
+                  {cart.length > 0 && cart[0]?.restaurantId && (
+                    <CartUpsellStrip
+                      restaurantId={cart[0].restaurantId}
+                      restaurantName={cart[0].restaurantName}
+                      cartItemIds={cart.map((i) => i.id || i.menuItemId || '')}
+                      onAddToCart={(item) => addItem(item)}
+                    />
+                  )}
 
                   {/* Delivery Address Section */}
                   <div

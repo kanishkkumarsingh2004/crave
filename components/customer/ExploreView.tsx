@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
 import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
 import RestaurantProfileView from './RestaurantProfileView'
+import OrderAgainStrip from './OrderAgainStrip'
 
 const CATEGORY_LIST = [
   { id: 'All', label: 'All Cravings', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80' },
@@ -441,6 +442,9 @@ export default function ExploreView({
             </button>
           </div>
         </div>
+
+        {/* Personalized Reorder Carousel: Order Again */}
+        <OrderAgainStrip triggerToast={triggerToast} />
 
         {/* Cuisine Categories Scroll */}
         <div className="pt-1">
