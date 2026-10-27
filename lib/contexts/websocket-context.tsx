@@ -197,44 +197,7 @@ export function useOrderUpdates(
         .then((data) => {
           if (data?.serverTime) lastSyncTimeRef.current = data.serverTime
           if (data?.order) {
-            const o = data.order
-            const statusMap: Record<string, string> = {
-              completed: 'Delivered',
-              delivered: 'Delivered',
-              cancelled: 'Cancelled',
-              new: 'In Progress',
-              preparing: 'In Progress',
-              ready: 'In Progress',
-              accepted: 'In Progress',
-              out_for_delivery: 'In Progress',
-            }
-            onOrders([
-              {
-                id: o.id,
-                restaurantName: o.restaurant_name || 'Crave Kitchen Store',
-                items: (() => {
-                  try {
-                    const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-                    return Array.isArray(raw)
-                      ? raw.map((i: any) => ({
-                          name: i.name,
-                          qty: i.qty ?? 1,
-                          price: i.price ?? 0,
-                        }))
-                      : []
-                  } catch {
-                    return []
-                  }
-                })(),
-                subtotal: Number(o.subtotal || 0),
-                discount: Number(o.discount_amount || 0),
-                total: Number(o.total_amount || 0),
-                status: statusMap[o.status] || 'In Progress',
-                deliveryTime: '',
-                driverName: o.driver_name || undefined,
-                driverPhone: o.driver_phone || undefined,
-              },
-            ])
+            onOrders([data.order])
           }
         })
         .catch(() => {})
@@ -249,6 +212,14 @@ export function useOrderUpdates(
         .catch(() => {})
     }
   }
+
+  // Periodic polling fallback ensuring continuous live status updates even without WebSockets
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    syncState()
+    const timer = setInterval(syncState, 3500)
+    return () => clearInterval(timer)
+  }, [customerId, orderId])
 
   return useWebSocket({
     channels: ['order_update'],
@@ -267,46 +238,15 @@ export function useOrderUpdates(
         ) {
           return
         }
-        if (data.orders) {
+        if (data.orders && Array.isArray(data.orders)) {
           const filtered = customerId
             ? data.orders.filter((o: any) => !o.customer_id || o.customer_id === customerId)
             : data.orders
           if (filtered.length > 0) onOrders(filtered)
         } else if (data.order) {
-          const o = data.order
-          const statusMap: Record<string, string> = {
-            completed: 'Delivered',
-            delivered: 'Delivered',
-            cancelled: 'Cancelled',
-            new: 'In Progress',
-            preparing: 'In Progress',
-            ready: 'In Progress',
-            accepted: 'In Progress',
-            out_for_delivery: 'In Progress',
-          }
-
-          const parsed = {
-            id: o.id,
-            restaurantName: o.restaurant_name || 'Crave Kitchen Store',
-            items: (() => {
-              try {
-                const raw = typeof o.items === 'string' ? JSON.parse(o.items) : o.items
-                return Array.isArray(raw)
-                  ? raw.map((i: any) => ({ name: i.name, qty: i.qty ?? 1, price: i.price ?? 0 }))
-                  : []
-              } catch {
-                return []
-              }
-            })(),
-            subtotal: Number(o.subtotal || 0),
-            discount: Number(o.discount_amount || 0),
-            total: Number(o.total_amount || 0),
-            status: statusMap[o.status] || 'In Progress',
-            deliveryTime: '',
-            driverName: o.driver_name || undefined,
-            driverPhone: o.driver_phone || undefined,
-          }
-          onOrders([parsed])
+          onOrders([data.order])
+        } else if (data.orderId && data.status) {
+          onOrders([{ id: data.orderId, status: data.status, driver_name: data.driver_name, driver_phone: data.driver_phone }])
         }
       }
     },
@@ -357,18 +297,26 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
             onLocation({
               orderId,
               driverId: data.driverLocation.driverId,
-              lat: data.driverLocation.lat,
-              lng: data.driverLocation.lng,
+              lat: Number(data.driverLocation.lat),
+              lng: Number(data.driverLocation.lng),
               status: data.driverLocation.status,
               isStale: data.driverLocation.isStale || false,
               staleDurationSeconds: data.driverLocation.staleDurationSeconds || 0,
-              timestamp: new Date(data.driverLocation.lastUpdated).toISOString(),
+              timestamp: new Date(data.driverLocation.lastUpdated || Date.now()).toISOString(),
             })
           }
         })
         .catch(() => {})
     }
   }
+
+  // Periodic polling fallback ensuring continuous live driver coordinates
+  useEffect(() => {
+    if (!orderId || typeof window === 'undefined') return
+    syncLocation()
+    const timer = setInterval(syncLocation, 3000)
+    return () => clearInterval(timer)
+  }, [orderId])
 
   return useWebSocket({
     channels: ['driver_location'],
@@ -379,13 +327,18 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
     onMessage: (msg) => {
       if (msg.channel === 'driver_location') {
         const data = msg.data as any
-        if (!data.orderId || !orderId || data.orderId === orderId) {
-          onLocation(data)
+        if (!data.orderId || !orderId || data.orderId === orderId || (data.lat != null && data.lng != null)) {
+          onLocation({
+            ...data,
+            lat: Number(data.lat),
+            lng: Number(data.lng),
+          })
         }
       }
     },
   })
 }
+
 
 export function useAdminStatsUpdates(onEvent: (data: any) => void) {
   return useWebSocket({

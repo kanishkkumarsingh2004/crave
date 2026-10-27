@@ -2,11 +2,13 @@ import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { calculateHaversineDistanceKm } from '@/lib/utils'
 import type { BroadcastOrderOffer } from './driver-types'
 
-// Default coordinates for fallback (Koramangala, Bengaluru)
-export const DEFAULT_DRIVER_LAT = 12.679898
-export const DEFAULT_DRIVER_LNG = 77.469493
-export const DEFAULT_RESTAURANT_LAT = 12.9352
-export const DEFAULT_RESTAURANT_LNG = 77.6245
+// Default coordinates for fallback (Indiranagar / Bengaluru central)
+export const DEFAULT_DRIVER_LAT = 12.9716
+export const DEFAULT_DRIVER_LNG = 77.6412
+export const DEFAULT_RESTAURANT_LAT = 12.9716
+export const DEFAULT_RESTAURANT_LNG = 77.6412
+export const DEFAULT_CUSTOMER_LAT = 12.9716
+export const DEFAULT_CUSTOMER_LNG = 77.5946
 
 export const ELIGIBLE_DRIVER_OFFER_STATUSES = [
   'ready_for_pickup',
@@ -59,9 +61,9 @@ export function getDriverPayoutDetails(order: any): {
       storedBreakdown.driver_payout ?? storedBreakdown.totalDriverEarnings
     )
     const basePayout = Number(
-      storedBreakdown.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
+      storedBreakdown?.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
     )
-    const surgeBonus = Number(storedBreakdown.driver_surge_payout ?? 0)
+    const surgeBonus = Number(storedBreakdown?.driver_surge_payout ?? 0)
     return { basePayout, surgeBonus, tip, totalDriverPayout }
   }
 
@@ -109,13 +111,35 @@ export function createBroadcastOfferFromOrder(
     return null
   }
 
-  const driverLat = driverGpsCoords ? driverGpsCoords[0] : DEFAULT_DRIVER_LAT
-  const driverLng = driverGpsCoords ? driverGpsCoords[1] : DEFAULT_DRIVER_LNG
+  const rLat = target.restaurant?.latitude != null
+    ? Number(target.restaurant.latitude)
+    : target.restaurant_latitude != null
+    ? Number(target.restaurant_latitude)
+    : DEFAULT_RESTAURANT_LAT
+  const rLng = target.restaurant?.longitude != null
+    ? Number(target.restaurant.longitude)
+    : target.restaurant_longitude != null
+    ? Number(target.restaurant_longitude)
+    : DEFAULT_RESTAURANT_LNG
+
+  const cLat = target.delivery_latitude != null
+    ? Number(target.delivery_latitude)
+    : target.customer_lat != null
+    ? Number(target.customer_lat)
+    : DEFAULT_CUSTOMER_LAT
+  const cLng = target.delivery_longitude != null
+    ? Number(target.delivery_longitude)
+    : target.customer_lng != null
+    ? Number(target.customer_lng)
+    : DEFAULT_CUSTOMER_LNG
+
+  const driverLat = driverGpsCoords ? driverGpsCoords[0] : rLat
+  const driverLng = driverGpsCoords ? driverGpsCoords[1] : rLng
   const distKm = calculateHaversineDistanceKm(
     driverLat,
     driverLng,
-    DEFAULT_RESTAURANT_LAT,
-    DEFAULT_RESTAURANT_LNG
+    rLat,
+    rLng
   )
 
   let itemsArr: any[] = []
@@ -128,17 +152,23 @@ export function createBroadcastOfferFromOrder(
   return {
     id: target.id,
     orderNumber: `#${target.id.slice(0, 8)}`,
-    restaurantName: target.restaurant_name || 'Crave Kitchen Store',
+    restaurantName: target.restaurant_name || target.restaurant?.name || 'Crave Kitchen Store',
     restaurantAddress: target.customer_address
       ? `Kitchen near ${target.customer_address}`
-      : 'Koramangala 5th Block, Bengaluru',
+      : 'Indiranagar 100ft Rd, Bengaluru',
     customerName: target.customer_name || 'Customer',
-    customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
+    customerAddress: target.customer_address || 'Brigade Road, Bengaluru',
     basePayout,
     surgeBonus,
     tip: tipVal,
     distance: `${distKm || 1.8} km`,
     itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
     customerPhone: target.customer_phone || undefined,
+    otp: target.delivery_otp || undefined,
+    restaurantLat: rLat,
+    restaurantLng: rLng,
+    customerLat: cLat,
+    customerLng: cLng,
   }
 }
+

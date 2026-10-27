@@ -155,7 +155,7 @@ async function scrubDbAndResetPasswords() {
     })
 
     // Remove push tokens and driver settings if any
-    await prisma.driverPushToken.deleteMany({ where: { user_id: otherUser.id } }).catch(() => {})
+    await prisma.driverPushToken.deleteMany({ where: { driver_id: otherUser.id } }).catch(() => {})
     await prisma.driverCurrentLocation.deleteMany({ where: { driver_id: otherUser.id } }).catch(() => {})
     await prisma.driverUpiAccount.deleteMany({ where: { driver_id: otherUser.id } }).catch(() => {})
 

@@ -1,8 +1,8 @@
 'use client'
 
-import { Map, MapControls, MapMarker, MapRoute, MarkerContent } from '@/components/ui/map'
+import { Map, MapControls, MapMarker, MapRoute, MarkerContent, useMap } from '@/components/ui/map'
 import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
-import { Bike, MapPin, Navigation, RefreshCw, Store } from 'lucide-react'
+import { Bike, MapPin, Navigation, Store } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 interface LiveDriverMapProps {
@@ -18,29 +18,116 @@ interface LiveDriverMapProps {
   isStale?: boolean
 }
 
+/**
+ * Camera controller that frames the entire trip initially and smoothly tracks rider
+ */
+function MapCameraController({
+  driverPos,
+  restaurantLng,
+  restaurantLat,
+  customerLng,
+  customerLat,
+  hasLiveGps,
+}: {
+  driverPos: [number, number]
+  restaurantLng: number
+  restaurantLat: number
+  customerLng: number
+  customerLat: number
+  hasLiveGps: boolean
+}) {
+  const { map, isLoaded } = useMap()
+  const initialFitRef = useRef(false)
+
+  // Fit bounds once so user sees pickup, dropoff, and rider on screen
+  useEffect(() => {
+    if (!map || !isLoaded || initialFitRef.current) return
+    try {
+      const minLng = Math.min(restaurantLng, customerLng, driverPos[0]) - 0.003
+      const maxLng = Math.max(restaurantLng, customerLng, driverPos[0]) + 0.003
+      const minLat = Math.min(restaurantLat, customerLat, driverPos[1]) - 0.003
+      const maxLat = Math.max(restaurantLat, customerLat, driverPos[1]) + 0.003
+
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 50, maxZoom: 15, duration: 1000 }
+      )
+      initialFitRef.current = true
+    } catch (e) {}
+  }, [map, isLoaded, restaurantLng, restaurantLat, customerLng, customerLat, driverPos])
+
+  // Smoothly follow driver position when live GPS moves
+  useEffect(() => {
+    if (!map || !isLoaded || !hasLiveGps) return
+    map.easeTo({
+      center: driverPos,
+      duration: 1000,
+    })
+  }, [map, isLoaded, driverPos, hasLiveGps])
+
+  return null
+}
+
 export default function LiveDriverMap({
-  restaurantLat = 12.6817,
-  restaurantLng = 77.4729,
+  restaurantLat = 12.9716,
+  restaurantLng = 77.6412,
   restaurantName = 'Crave Kitchen Store',
-  customerLat = 12.679898,
-  customerLng = 77.469493,
+  customerLat = 12.9716,
+  customerLng = 77.5946,
   driverLat = null,
   driverLng = null,
   driverName = null,
   statusStep = 1,
   isStale = false,
 }: LiveDriverMapProps) {
+  // Target position from incoming GPS stream
+  const targetPosRef = useRef<[number, number]>([
+    driverLng != null ? Number(driverLng) : restaurantLng,
+    driverLat != null ? Number(driverLat) : restaurantLat,
+  ])
+  // Current animated position interpolated smoothly at 60fps
+  const [driverPos, setDriverPos] = useState<[number, number]>([
+    driverLng != null ? Number(driverLng) : restaurantLng,
+    driverLat != null ? Number(driverLat) : restaurantLat,
+  ])
+
+  // Geographic compass heading in degrees: 0=North, 90=East, 180=South, 270=West
+  const [headingAngle, setHeadingAngle] = useState<number>(0)
   const [routePoints, setRoutePoints] = useState<[number, number][]>([])
-  const [driverPos, setDriverPos] = useState<[number, number]>([restaurantLng, restaurantLat])
-  const [headingAngle, setHeadingAngle] = useState<number>(45)
   const [distanceText, setDistanceText] = useState<string>('Calculating road route...')
-  const [isLoadingRoute, setIsLoadingRoute] = useState<boolean>(true)
+  const [, setIsLoadingRoute] = useState<boolean>(true)
   const [driverAddress, setDriverAddress] = useState<string>('Locating rider address...')
   const [lastGpsUpdate, setLastGpsUpdate] = useState<Date | null>(null)
+  const prevPosRef = useRef<[number, number] | null>(null)
 
   const hasLiveGps = driverLat != null && driverLng != null
 
-  // Reverse geocode driver current position
+  // 60fps Smooth Motion Interpolation loop
+  useEffect(() => {
+    let animId: number
+    const animate = () => {
+      setDriverPos((curr) => {
+        const [targetLng, targetLat] = targetPosRef.current
+        const diffLng = targetLng - curr[0]
+        const diffLat = targetLat - curr[1]
+        const dist = Math.hypot(diffLng, diffLat)
+        if (dist < 0.000001) {
+          return curr
+        }
+        // Smooth lerp: moves 12% of remaining distance each frame (~0.5s smooth transition)
+        const lerpFactor = 0.12
+        return [curr[0] + diffLng * lerpFactor, curr[1] + diffLat * lerpFactor]
+      })
+      animId = requestAnimationFrame(animate)
+    }
+    animId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animId)
+  }, [])
+
+  // Reverse geocode driver position
   useEffect(() => {
     let active = true
     const fetchAddr = async () => {
@@ -60,7 +147,7 @@ export default function LiveDriverMap({
       } catch (e) {}
     }
 
-    const timer = setTimeout(fetchAddr, 800)
+    const timer = setTimeout(fetchAddr, 1000)
     return () => {
       active = false
       clearTimeout(timer)
@@ -123,34 +210,35 @@ export default function LiveDriverMap({
     }
   }, [restaurantLat, restaurantLng, customerLat, customerLng])
 
-  const prevPosRef = useRef<[number, number] | null>(null)
-
-  // Update Rider position directly from driver account GPS access (no mock interval movement loop)
+  // Update target position and compass bearing from live GPS
   useEffect(() => {
     if (driverLat != null && driverLng != null) {
-      const newPos: [number, number] = [driverLng, driverLat]
+      const nextLng = Number(driverLng)
+      const nextLat = Number(driverLat)
+      targetPosRef.current = [nextLng, nextLat]
       setLastGpsUpdate(new Date())
+
+      // True compass bearing: 0° = North, 90° = East, 180° = South, 270° = West
       if (prevPosRef.current) {
         const [prevLng, prevLat] = prevPosRef.current
-        if (Math.abs(prevLat - driverLat) > 0.00001 || Math.abs(prevLng - driverLng) > 0.00001) {
-          const dLat = driverLat - prevLat
-          const dLng = driverLng - prevLng
-          const angleRad = Math.atan2(dLng, dLat)
-          const angleDeg = (angleRad * 180) / Math.PI
-          setHeadingAngle(angleDeg)
+        const dLng = nextLng - prevLng
+        const dLat = nextLat - prevLat
+        if (Math.hypot(dLng, dLat) > 0.000005) {
+          const rad = Math.atan2(dLng, dLat)
+          const deg = (rad * 180 / Math.PI + 360) % 360
+          setHeadingAngle(deg)
         }
       } else if (customerLat != null && customerLng != null) {
-        const dLat = customerLat - driverLat
-        const dLng = customerLng - driverLng
-        const angleRad = Math.atan2(dLng, dLat)
-        const angleDeg = (angleRad * 180) / Math.PI
-        setHeadingAngle(angleDeg)
+        const dLng = customerLng - nextLng
+        const dLat = customerLat - nextLat
+        const rad = Math.atan2(dLng, dLat)
+        const deg = (rad * 180 / Math.PI + 360) % 360
+        setHeadingAngle(deg)
       }
-      prevPosRef.current = newPos
-      setDriverPos(newPos)
+      prevPosRef.current = [nextLng, nextLat]
     } else {
-      // Position marker at restaurant kitchen store location when awaiting driver GPS stream
-      setDriverPos([restaurantLng, restaurantLat])
+      // Park rider marker at restaurant kitchen store location when awaiting driver GPS
+      targetPosRef.current = [restaurantLng, restaurantLat]
     }
   }, [driverLat, driverLng, restaurantLat, restaurantLng, customerLat, customerLng])
 
@@ -167,6 +255,15 @@ export default function LiveDriverMap({
         className="h-full w-full"
       >
         <MapControls position="top-right" showZoom showLocate={false} />
+
+        <MapCameraController
+          driverPos={driverPos}
+          restaurantLng={restaurantLng}
+          restaurantLat={restaurantLat}
+          customerLng={customerLng}
+          customerLat={customerLat}
+          hasLiveGps={hasLiveGps}
+        />
 
         {/* Turn-by-Turn Route */}
         {routePoints.length > 0 && (
@@ -187,7 +284,7 @@ export default function LiveDriverMap({
           </MarkerContent>
         </MapMarker>
 
-        {/* Customer Pin */}
+        {/* Customer Destination Pin */}
         <MapMarker longitude={customerLng} latitude={customerLat}>
           <MarkerContent>
             <div className="flex flex-col items-center">
@@ -201,28 +298,28 @@ export default function LiveDriverMap({
           </MarkerContent>
         </MapMarker>
 
-        {/* Live Rider Marker (Visible when GPS stream is actively connected) */}
-        {hasLiveGps && (
-          <MapMarker longitude={driverPos[0]} latitude={driverPos[1]}>
-            <MarkerContent>
-              <div className="relative size-10 sm:size-12 flex items-center justify-center">
-                <div className="absolute size-10 sm:size-12 bg-emerald-500/30 rounded-full animate-ping" />
-                <div
-                  className="size-8 sm:size-9 rounded-full bg-[#18201c] border-2 border-emerald-400 flex items-center justify-center shadow-2xl transition-transform duration-300"
-                  style={{ transform: `rotate(${headingAngle}deg)` }}
-                >
-                  <Navigation className="size-4 sm:size-5 text-emerald-400 fill-emerald-400" />
-                </div>
+        {/* Live Rider Marker: Rotated smoothly by true compass bearing */}
+        <MapMarker longitude={driverPos[0]} latitude={driverPos[1]}>
+          <MarkerContent>
+            <div className="relative size-10 sm:size-12 flex items-center justify-center">
+              <div className="absolute size-10 sm:size-12 bg-emerald-500/30 rounded-full animate-ping" />
+              <div
+                className="size-8 sm:size-9 rounded-full bg-[#18201c] border-2 border-emerald-400 flex items-center justify-center shadow-2xl transition-transform duration-300"
+                style={{ transform: `rotate(${headingAngle}deg)` }}
+                title={`Heading: ${Math.round(headingAngle)}°`}
+              >
+                {/* -rotate-45 aligns the natural 45° NE Lucide needle to straight North (0°) */}
+                <Navigation className="size-4 sm:size-5 text-emerald-400 fill-emerald-400 -rotate-45" />
               </div>
-            </MarkerContent>
-          </MapMarker>
-        )}
+            </div>
+          </MarkerContent>
+        </MapMarker>
       </Map>
 
       {/* Top Map Telemetry Indicator */}
       <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex items-center pointer-events-none max-w-[calc(100%-70px)]">
         <span
-          className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate bg-black/60 px-2 py-1 ${
+          className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate bg-black/60 px-2 py-1 rounded ${
             hasLiveGps ? (isStale ? 'text-amber-400' : 'text-emerald-400') : 'text-amber-400'
           }`}
         >
