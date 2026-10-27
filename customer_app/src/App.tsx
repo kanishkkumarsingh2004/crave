@@ -693,7 +693,7 @@ function CartPage({
           </button>
         </>
       ) : (
-        <>
+        <div className="cart-scroll">
           <div className="cart-restaurant">
             <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
             <span>
@@ -733,7 +733,7 @@ function CartPage({
               Continue <Icon name="chevron" />
             </button>
           </div>
-        </>
+        </div>
       )}
     </section>
   )
@@ -1340,7 +1340,7 @@ function OrdersPage({
     </article>
   )
   return (
-    <section className="page">
+    <section className="page orders">
       <header className="page-header">
         <div>
           <p className="eyebrow">LIVE TRACKING</p>

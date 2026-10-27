@@ -77,10 +77,11 @@
   --shadow-color: rgb(17 32 25 / 13%);
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
+  --nav-height: 78px;
   /* The raw inset, with no floor. Chrome that sits below the OS status bar
      reports 0, so headers can centre their content instead of reserving a
      phantom status-bar height. */
-  --safe-top-inset: env(safe-area-inset-top, 0px);
+  --safe-top-inset: 0px;
   /* The colour behind the receipt's perforated edges — the sheet it sits on. */
   --receipt-notch: #f7f7f2;
   /* Content pages sit below the OS status bar, so they only need the real
@@ -88,7 +89,7 @@
   --page-top: calc(var(--safe-top-inset) + 10px);
   /* Floating controls sit on top of artwork, so they must clear the OS status bar
      even when the browser reports no safe-area inset (desktop previews). */
-  --safe-top-float: max(env(safe-area-inset-top), 56px);
+  --safe-top-float: 0px;
 }
 * {
   box-sizing: border-box;
@@ -532,7 +533,6 @@ textarea {
 }
 .content {
   position: relative;
-  padding-bottom: calc(78px + var(--safe-bottom));
   max-width: 740px;
   margin: auto;
 }
@@ -554,11 +554,20 @@ textarea {
   z-index: 2;
 }
 .page {
-  padding: var(--page-top) 19px 30px;
-  min-height: calc(100dvh - 75px);
+  display: flex;
+  flex-direction: column;
+  padding: var(--page-top) 19px 0;
+  min-height: calc(100dvh - var(--nav-height));
 }
 .home {
   padding-top: var(--page-top);
+  padding-bottom: 75px;
+}
+.orders {
+  padding-bottom: 100px;
+}
+.account {
+  padding-bottom: 100px;
 }
 .home-header {
   display: flex;
@@ -892,7 +901,7 @@ textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(68px + var(--safe-bottom));
+  height: var(--nav-height);
   padding: 7px 8px var(--safe-bottom);
   display: flex;
   justify-content: space-around;
@@ -1557,6 +1566,12 @@ textarea {
 .cart-items article:last-child {
   border: 0;
 }
+.cart-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
 .cart-items h3 {
   margin: 0 0 3px;
   font-size: 14px;
@@ -1598,7 +1613,7 @@ textarea {
   z-index: 20;
   left: 0;
   right: 0;
-  bottom: calc(68px + var(--safe-bottom));
+  bottom: 0;
   max-width: 740px;
   margin: auto;
   padding: 12px 18px;
