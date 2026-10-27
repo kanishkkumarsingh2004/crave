@@ -158,9 +158,16 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
           ? Number(order.tip)
           : 0
 
-  // Calculate Commercial Engine Immutable Price Snapshot for full tax & commission accuracy
-  const priceSnapshot: ImmutablePriceSnapshot = calculateOrderPriceSnapshot({
-    orderId: order.id,
+  // Clean order ID without leading '#'
+  const cleanOrderId = String(order.id).replace('#', '')
+
+  // Priority 1: Server's canonical financial snapshot
+  const rawSnapshot = dbData?.financial_snapshot || (order as any)?.financial_snapshot
+  const hasPaiseSnapshot = rawSnapshot && typeof rawSnapshot.customerPayablePaise === 'number'
+
+  // Calculate fallback commercial engine snapshot if no backend snapshot exists
+  const fallbackSnapshot: ImmutablePriceSnapshot = calculateOrderPriceSnapshot({
+    orderId: cleanOrderId,
     restaurantId: dbData?.restaurant_id || 'rest_01',
     restaurantName: storeName,
     supplierState,
@@ -168,23 +175,136 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
     items:
       itemsList.length > 0
         ? itemsList
-        : [{ name: 'Chef Special Food Order', quantity: 1, price: Number(order.subtotal || 300) }],
+        : [{ name: 'Chef Special Food Order', quantity: 1, price: Number(order.subtotal || order.total || 300) }],
     tip,
     couponCode: couponCode || undefined,
     couponDiscountAmount: discountAmount,
-    restaurantDiscountContributionPercent: 60,
+    restaurantDiscountContributionPercent: storedBreakdown?.restaurant_discount_share ?? 50,
   })
 
-  // Resolved final financial breakdown
-  const finalSubtotal = priceSnapshot.subtotal
-  const finalPackagingFee = priceSnapshot.packagingFee
-  const finalDeliveryFee = priceSnapshot.deliveryFee
-  const finalPlatformFee = priceSnapshot.platformFee
-  const finalHandlingFee = priceSnapshot.handlingFee
-  const finalGst = priceSnapshot.foodGstTotal
+  // Adapted ImmutablePriceSnapshot from canonical backend snapshot (if available) or fallback
+  const priceSnapshot: ImmutablePriceSnapshot = hasPaiseSnapshot
+    ? {
+        snapshotId: rawSnapshot.snapshotId || `snp_${cleanOrderId}`,
+        orderId: cleanOrderId,
+        contractNumber: rawSnapshot.contractNumber || 'CRV-CC-2026',
+        contractVersion: rawSnapshot.contractVersion ?? 1,
+        currency: 'INR',
+        calculatedAt: rawSnapshot.calculatedAt || new Date().toISOString(),
+        supplierState: rawSnapshot.supplierState || supplierState,
+        customerState: rawSnapshot.customerState || customerState,
+        placeOfSupply: rawSnapshot.customerState || customerState,
+        taxMode: rawSnapshot.taxMode || 'CGST_SGST',
+        gstStatus: rawSnapshot.gstStatus || 'REGISTERED',
+        items:
+          Array.isArray(rawSnapshot.items) && rawSnapshot.items.length > 0
+            ? rawSnapshot.items.map((it: any) => ({
+                name: it.name,
+                hsnSacCode: it.hsnSacCode || '996331',
+                quantity: it.quantity || 1,
+                unitPrice: (it.unitPricePaise ?? 0) / 100,
+                grossAmount: (it.grossAmountPaise ?? 0) / 100,
+                taxMode: (it.priceTaxMode || 'TAX_INCLUSIVE') as PriceTaxMode,
+                taxableBase: (it.taxableBasePaise ?? 0) / 100,
+                taxRate: it.taxRatePercent ?? 5,
+                gstAmount: (it.gstTotalPaise ?? 0) / 100,
+                cgstAmount: (it.cgstPaise ?? 0) / 100,
+                sgstAmount: (it.sgstPaise ?? 0) / 100,
+                igstAmount: (it.igstPaise ?? 0) / 100,
+                netItemTotal: (it.grossAmountPaise ?? 0) / 100,
+                commissionRate: it.commissionRatePercent ?? 15,
+                commissionAmount: (it.commissionAmountPaise ?? 0) / 100,
+                markupRate: it.markupRatePercent ?? 0,
+                markupAmount: (it.markupAmountPaise ?? 0) / 100,
+              }))
+            : fallbackSnapshot.items,
+        subtotal: (rawSnapshot.grossSubtotalPaise ?? 0) / 100,
+        grossDiscount: (rawSnapshot.couponDiscountPaise ?? 0) / 100,
+        restaurantDiscount: (rawSnapshot.restaurantFundedDiscountPaise ?? 0) / 100,
+        platformDiscount: (rawSnapshot.platformFundedDiscountPaise ?? 0) / 100,
+        netItemSubtotal: (rawSnapshot.netMerchandisePaise ?? 0) / 100,
+        commercialModel: rawSnapshot.commercialModel || 'commission',
+        commissionRate: rawSnapshot.commissionRatePercent ?? 15,
+        markupRate: rawSnapshot.markupRatePercent ?? 0,
+        markupAmount: (rawSnapshot.markupAmountPaise ?? 0) / 100,
+        packagingFee: (rawSnapshot.packagingFeePaise ?? 0) / 100,
+        deliveryFee: (rawSnapshot.deliveryFeePaise ?? 0) / 100,
+        platformFee: (rawSnapshot.platformFeePaise ?? 0) / 100,
+        handlingFee: (rawSnapshot.handlingFeePaise ?? 0) / 100,
+        surgeFee: (rawSnapshot.surgeFeePaise ?? 0) / 100,
+        totalFees:
+          ((rawSnapshot.packagingFeePaise ?? 0) +
+            (rawSnapshot.deliveryFeePaise ?? 0) +
+            (rawSnapshot.platformFeePaise ?? 0) +
+            (rawSnapshot.handlingFeePaise ?? 0) +
+            (rawSnapshot.surgeFeePaise ?? 0)) /
+          100,
+        foodTaxableBase: (rawSnapshot.restaurantServiceTaxBreakdown?.taxableBasePaise ?? 0) / 100,
+        foodGstTotal: (rawSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise ?? 0) / 100,
+        foodCgst: (rawSnapshot.restaurantServiceTaxBreakdown?.cgstPaise ?? 0) / 100,
+        foodSgst: (rawSnapshot.restaurantServiceTaxBreakdown?.sgstPaise ?? 0) / 100,
+        foodIgst: (rawSnapshot.restaurantServiceTaxBreakdown?.igstPaise ?? 0) / 100,
+        platformServiceTaxableBase:
+          (rawSnapshot.platformServiceTaxBreakdown?.taxableBasePaise ?? 0) / 100,
+        platformServiceGst: (rawSnapshot.platformServiceTaxBreakdown?.totalGstPaise ?? 0) / 100,
+        tip: (rawSnapshot.tipPaise ?? 0) / 100,
+        customerPayable: (rawSnapshot.customerPayablePaise ?? 0) / 100,
+        commissionBasis: rawSnapshot.commissionBasis || 'ORDER_SUBTOTAL',
+        grossCommission: (rawSnapshot.grossCommissionPaise ?? 0) / 100,
+        commissionGst: (rawSnapshot.commissionGstPaise ?? 0) / 100,
+        totalCommissionDeduction: (rawSnapshot.totalCommissionDeductionPaise ?? 0) / 100,
+        restaurantGrossSales: (rawSnapshot.vendorGrossSalesPaise ?? 0) / 100,
+        restaurantNetDiscounts: (rawSnapshot.restaurantFundedDiscountPaise ?? 0) / 100,
+        restaurantNetSales: (rawSnapshot.vendorNetSalesPaise ?? 0) / 100,
+        restaurantPackagingFeeShare: (rawSnapshot.vendorPackagingSharePaise ?? 0) / 100,
+        restaurantPayableGross: (rawSnapshot.vendorPayableGrossPaise ?? 0) / 100,
+        restaurantPayableNet: (rawSnapshot.vendorPayableNetPaise ?? 0) / 100,
+        platformGrossRevenue: (rawSnapshot.platformGrossRevenuePaise ?? 0) / 100,
+        platformServiceGstLiability: (rawSnapshot.platformGstLiabilityPaise ?? 0) / 100,
+        platformNetRevenue: (rawSnapshot.platformNetRevenuePaise ?? 0) / 100,
+      }
+    : fallbackSnapshot
+
+  // Resolved final financial breakdown honoring canonical server values
+  const finalSubtotal =
+    priceSnapshot.subtotal > 0
+      ? priceSnapshot.subtotal
+      : (dbData?.subtotal ?? order.subtotal ?? 0)
+
+  const finalPackagingFee =
+    priceSnapshot.packagingFee > 0
+      ? priceSnapshot.packagingFee
+      : (dbData?.packaging_fee ?? order.packagingFee ?? 0)
+
+  const finalDeliveryFee =
+    priceSnapshot.deliveryFee >= 0 && hasPaiseSnapshot
+      ? priceSnapshot.deliveryFee
+      : (dbData?.delivery_fee ?? order.deliveryFee ?? priceSnapshot.deliveryFee)
+
+  const finalPlatformFee =
+    priceSnapshot.platformFee > 0
+      ? priceSnapshot.platformFee
+      : (dbData?.platform_fee ?? order.platformFee ?? priceSnapshot.platformFee)
+
+  const finalHandlingFee =
+    priceSnapshot.handlingFee > 0
+      ? priceSnapshot.handlingFee
+      : (dbData?.handling_fee ?? order.handlingFee ?? priceSnapshot.handlingFee)
+
+  const finalGst =
+    priceSnapshot.foodGstTotal > 0
+      ? priceSnapshot.foodGstTotal
+      : (dbData?.gst ?? order.gst ?? priceSnapshot.foodGstTotal)
+
   const finalPlatformServiceGst = priceSnapshot.platformServiceGst
   const finalMarkupAmount = priceSnapshot.markupAmount
-  const finalTotal = priceSnapshot.customerPayable
+
+  // Authoritative Customer Total: Canonical snapshot or DB total_amount_paise / total_amount / order.total
+  const finalTotal = hasPaiseSnapshot
+    ? priceSnapshot.customerPayable
+    : dbData?.total_amount_paise
+      ? dbData.total_amount_paise / 100
+      : (dbData?.total_amount ?? order.total ?? priceSnapshot.customerPayable)
 
   const exactUnroundedSum =
     Number(finalSubtotal || 0) -
@@ -312,7 +432,6 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
 
       <div
         className="modal-content modal-content-lg"
-        id="printable-invoice-modal-content"
         role="document"
       >
         {/* Top Header & Actions (hidden during print) */}
@@ -402,7 +521,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
         />
 
         {/* PRINTABLE CONTAINER TARGET */}
-        <div id="printable-invoice-modal-content">
+        <div id="printable-invoice-modal-content" tabIndex={-1}>
           {activeTab === 'tax_invoice' ? (
             <TaxInvoiceView
               storeName={storeName}
@@ -434,7 +553,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
           ) : (
             <CommissionInvoiceView
               storeName={storeName}
-              orderId={priceSnapshot.orderId}
+              orderId={cleanOrderId}
               finalSubtotal={finalSubtotal}
               vendorCommissionRate={vendorCommissionRate}
               vendorCommissionAmount={vendorCommissionAmount}
