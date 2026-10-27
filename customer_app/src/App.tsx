@@ -93,6 +93,97 @@ function Empty({
     </div>
   )
 }
+function PullToRefresh({
+  children,
+  onRefresh,
+  refreshing,
+}: {
+  children: React.ReactNode
+  onRefresh?: () => void | Promise<void>
+  refreshing?: boolean
+}) {
+  const [pullOffset, setPullOffset] = useState(0)
+  const [active, setActive] = useState(false)
+  const startY = useRef(0)
+  const THRESHOLD = 70
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const el = e.currentTarget as HTMLElement
+    if (el.scrollTop > 0) return
+    startY.current = e.touches[0].clientY
+    setActive(true)
+    setPullOffset(0)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!active) return
+    const el = e.currentTarget as HTMLElement
+    if (el.scrollTop > 0) {
+      setActive(false)
+      setPullOffset(0)
+      return
+    }
+    const y = e.touches[0].clientY
+    const delta = y - startY.current
+    if (delta <= 0) {
+      setPullOffset(0)
+      return
+    }
+    const offset = Math.min(delta * 0.5, 140)
+    setPullOffset(offset)
+    if (offset > 6) e.preventDefault()
+  }
+
+  const onTouchEnd = useCallback(async () => {
+    if (!active) return
+    setActive(false)
+    const off = pullOffset
+    setPullOffset(0)
+    if (off >= THRESHOLD && onRefresh && !refreshing) {
+      await onRefresh()
+    }
+  }, [active, pullOffset, onRefresh, refreshing])
+
+  const stretch = refreshing ? THRESHOLD : pullOffset
+  const showIndicator = refreshing || pullOffset > 10
+
+  return (
+    <div
+      className="ptr-scroll"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ maxHeight: `calc(100dvh - var(--nav-height))` }}
+    >
+      <div
+        className="ptr-indicator"
+        style={{
+          transform: refreshing
+            ? 'translateY(0)'
+            : `translateY(calc(-100% + ${pullOffset}px))`,
+          opacity: refreshing ? 1 : Math.min(pullOffset / 30, 1),
+          transition: refreshing
+            ? 'none'
+            : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1), opacity 0.15s ease',
+        }}
+      >
+        <Spinner />
+        <span>{refreshing ? 'Refreshing…' : 'Pull to refresh'}</span>
+      </div>
+      <div
+        className="ptr-stretch"
+        style={{
+          transform: `translateY(${stretch}px)`,
+          transition: refreshing
+            ? 'none'
+            : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
@@ -667,17 +758,22 @@ function CartPage({
   onQuantity,
   onBrowse,
   onCheckout,
+  onRefresh,
+  refreshing,
 }: {
   cart: CartItem[]
   restaurant?: Restaurant
   onQuantity: (k: string, d: number) => void
   onBrowse: () => void
   onCheckout: () => void
+  onRefresh: () => void
+  refreshing: boolean
 }) {
   const subtotal = cart.reduce((n, x) => n + x.price * x.quantity, 0)
   return (
     <section className="page">
-      <header className="bag-header">
+      <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+        <header className="bag-header">
         <h1>Bag</h1>
         <Logo compact />
       </header>
@@ -735,6 +831,7 @@ function CartPage({
           </div>
         </div>
       )}
+      </PullToRefresh>
     </section>
   )
 }
@@ -1257,12 +1354,14 @@ function OrdersPage({
   loading,
   error,
   onRefresh,
+  refreshing,
   customer,
 }: {
   orders: Order[]
   loading: boolean
   error: string
   onRefresh: () => void
+  refreshing: boolean
   customer?: User | null
 }) {
   const { t } = useLanguage()
@@ -1341,7 +1440,8 @@ function OrdersPage({
   )
   return (
     <section className="page orders">
-      <header className="page-header">
+      <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+        <header className="page-header">
         <div>
           <p className="eyebrow">LIVE TRACKING</p>
           <h1>Your orders</h1>
@@ -1393,6 +1493,7 @@ function OrdersPage({
         </>
       )}
       {invoiceOrder && <InvoiceSheet order={invoiceOrder} onClose={() => setInvoiceOrder(null)} />}
+      </PullToRefresh>
     </section>
   )
 }
@@ -1597,15 +1698,19 @@ function Account({
   addresses,
   onAddresses,
   onLogout,
+  onRefresh,
   theme,
   onTheme,
+  refreshing,
 }: {
   user: User
   addresses: Address[]
   onAddresses: () => void
   onLogout: () => void
+  onRefresh: () => void
   theme: ThemeMode
   onTheme: (theme: ThemeMode) => void
+  refreshing: boolean
 }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [passwordSheet, setPasswordSheet] = useState(false)
@@ -1731,7 +1836,8 @@ function Account({
   }
   return (
     <section className="page account">
-      <header className="page-header">
+      <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+        <header className="page-header">
         <div>
           <p className="eyebrow">YOUR CRAVE</p>
           <h1>Account</h1>
@@ -2280,6 +2386,7 @@ function Account({
         </div>
       )}
       <p className="version">CRAVE. Customer · 1.0.0</p>
+      </PullToRefresh>
     </section>
   )
 }
@@ -2532,6 +2639,7 @@ export default function App() {
   const { t } = useLanguage()
   const [permissionSheet, setPermissionSheet] = useState(false)
   const [savedDataHint, setSavedDataHint] = useState(false)
+  const [refreshingTab, setRefreshingTab] = useState<Tab | null>(null)
   const [ready, setReady] = useState(false),
     [user, setUser] = useState<User | null>(null),
     [tab, setTab] = useState<Tab>('home'),
@@ -2742,6 +2850,40 @@ export default function App() {
       )
     } finally {
       if (!silent) setOrdersLoading(false)
+    }
+  }, [])
+
+  const loadProfile = useCallback(async () => {
+    setRefreshingTab('account')
+    try {
+      const [me, addresses] = await Promise.all([
+        apiRequest<{ authenticated: boolean; user: User }>('/api/auth/me'),
+        cachedRequest<{ addresses: Address[] }>('/api/user/addresses', {
+          maxAge: 0,
+          scope: userIdRef.current,
+        }),
+      ])
+      setUser(me.user)
+      setAddresses(addresses.data.addresses || [])
+    } catch {
+      setAddresses([])
+    } finally {
+      setRefreshingTab(null)
+    }
+  }, [])
+
+  const refreshCart = useCallback(() => {
+    setRefreshingTab('cart')
+    try {
+      const saved = localStorage.getItem('crave_cart')
+      const savedRestaurant = localStorage.getItem('crave_cart_restaurant')
+      setCart(saved ? JSON.parse(saved) : [])
+      setCartRestaurant(savedRestaurant ? JSON.parse(savedRestaurant) : null)
+    } catch {
+      setCart([])
+      setCartRestaurant(null)
+    } finally {
+      setRefreshingTab(null)
     }
   }, [])
   useEffect(() => {
@@ -2985,7 +3127,8 @@ export default function App() {
     const content =
       pageTab === 'home' ? (
         <section className="page home">
-          <header className="home-header">
+          <PullToRefresh onRefresh={loadRestaurants} refreshing={refreshingTab === 'home'}>
+            <header className="home-header">
             <div>
               <p>DELIVERING TO</p>
               <button onClick={() => setAddressPage(true)}>
@@ -3048,10 +3191,12 @@ export default function App() {
               </button>
             </div>
           )}
+          </PullToRefresh>
         </section>
       ) : pageTab === 'search' ? (
         <section className="page">
-          <header className="page-header">
+          <PullToRefresh onRefresh={loadRestaurants} refreshing={refreshingTab === 'search'}>
+            <header className="page-header">
             <div>
               <p className="eyebrow">DISCOVER</p>
               <h1>Find your food</h1>
@@ -3099,6 +3244,7 @@ export default function App() {
               text="Try another dish, restaurant or cuisine."
             />
           )}
+          </PullToRefresh>
         </section>
       ) : pageTab === 'xp' ? (
         <XPStorePage onBrowse={() => selectTab('home')} />
@@ -3108,6 +3254,7 @@ export default function App() {
           loading={ordersLoading}
           error={ordersError}
           onRefresh={() => loadOrders()}
+          refreshing={refreshingTab === 'orders'}
           customer={user}
         />
       ) : pageTab === 'cart' ? (
@@ -3117,6 +3264,8 @@ export default function App() {
           onQuantity={quantity}
           onBrowse={() => selectTab('home')}
           onCheckout={() => setCheckout(true)}
+          onRefresh={refreshCart}
+          refreshing={refreshingTab === 'cart'}
         />
       ) : (
         <Account
@@ -3129,6 +3278,8 @@ export default function App() {
             setTheme(mode)
             void saveTheme(mode)
           }}
+          onRefresh={loadProfile}
+          refreshing={refreshingTab === 'account'}
         />
       )
 

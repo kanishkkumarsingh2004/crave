@@ -569,6 +569,33 @@ textarea {
 .account {
   padding-bottom: 100px;
 }
+/* Pull to refresh: revealed above the scrollable content when pulling down
+   from the top of any page. */
+.ptr-scroll {
+  position: relative;
+  max-height: calc(100dvh - var(--nav-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.ptr-stretch {
+  display: flex;
+  flex-direction: column;
+}
+.ptr-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  font-size: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
 .home-header {
   display: flex;
   align-items: center;
