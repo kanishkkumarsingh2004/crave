@@ -23,6 +23,7 @@
     "db:studio": "prisma studio",
     "push:generate-keys": "web-push generate-vapid-keys --json",
     "db:clean:data": "tsx scripts/clean-transactional-data.ts",
+    "db:scrub": "tsx scripts/scrub-db-and-reset-passwords.ts",
     "db:admin": "tsx scripts/create-admin.ts",
     "db:seed": "tsx scripts/seed-local-db.ts",
     "db:seed:full": "tsx scripts/seed-complete-data.ts",
