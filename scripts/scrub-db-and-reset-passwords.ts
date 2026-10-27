@@ -130,15 +130,64 @@ async function scrubDbAndResetPasswords() {
     console.log(`  ✓ Test account ready: ${acc.email} (${acc.role}) -> password: 123456789`)
   }
 
+  console.log('\n🗑️ 3. Removing all non-standard / other accounts...')
+  const standardEmails = standardTestAccounts.map((a) => a.email)
+  const otherUsers = await prisma.user.findMany({
+    where: {
+      email: { notIn: standardEmails },
+    },
+    include: {
+      owned_restaurants: {
+        include: {
+          menu_items: true,
+        },
+      },
+      customer_addresses: true,
+    },
+  })
+
+  for (const otherUser of otherUsers) {
+    console.log(`  Removing other user: ${otherUser.email} (${otherUser.role})...`)
+
+    // Remove customer addresses
+    await prisma.customerAddress.deleteMany({
+      where: { customer_id: otherUser.id },
+    })
+
+    // Remove push tokens and driver settings if any
+    await prisma.driverPushToken.deleteMany({ where: { user_id: otherUser.id } }).catch(() => {})
+    await prisma.driverCurrentLocation.deleteMany({ where: { driver_id: otherUser.id } }).catch(() => {})
+    await prisma.driverUpiAccount.deleteMany({ where: { driver_id: otherUser.id } }).catch(() => {})
+
+    // Remove test restaurants owned by this user (except core restaurants)
+    for (const rest of otherUser.owned_restaurants) {
+      if (rest.id !== 'rest_01' && rest.id !== 'cravexp_dark_store_01') {
+        await prisma.menuItem.deleteMany({ where: { restaurant_id: rest.id } })
+        await prisma.restaurant.delete({ where: { id: rest.id } })
+        console.log(`    ✓ Deleted associated test restaurant: ${rest.name} (${rest.id})`)
+      }
+    }
+
+    // Delete user
+    await prisma.user.delete({ where: { id: otherUser.id } })
+    console.log(`    ✓ Deleted user account: ${otherUser.email}`)
+  }
+
   // Summary counts
-  const userCount = await prisma.user.count()
+  const remainingUsers = await prisma.user.findMany({
+    select: { id: true, email: true, role: true, name: true },
+    orderBy: { role: 'asc' },
+  })
   const restaurantCount = await prisma.restaurant.count()
   const menuItemCount = await prisma.menuItem.count()
   const ordersCount = await prisma.order.count()
 
-  console.log('\n📊 Database State Summary:')
+  console.log('\n📊 Clean Database State (Only Official Test Accounts):')
+  console.table(remainingUsers)
+
+  console.log('\n📊 Entities Count:')
   console.table([
-    { Entity: 'Active Users', Count: userCount },
+    { Entity: 'Active Users', Count: remainingUsers.length },
     { Entity: 'Restaurants', Count: restaurantCount },
     { Entity: 'Menu Items', Count: menuItemCount },
     { Entity: 'Orders (Scrubbed)', Count: ordersCount },
