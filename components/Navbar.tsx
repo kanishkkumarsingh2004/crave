@@ -1,5 +1,6 @@
 'use client'
 
+<<<<<<< HEAD
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth, UserRole } from '@/lib/auth-context'
@@ -25,91 +26,39 @@ import {
   Zap,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+=======
+import React, { useEffect, useRef, useState } from 'react'
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { Menu, ShoppingCart } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+import { useCart } from '@/lib/cart-context'
+import ThemeToggle from '@/components/ThemeToggle'
+import { cn } from '@/lib/utils'
+import { roleDetails } from './navbar/types'
+import { AddressPill } from './navbar/AddressPill'
+import { DesktopNavLinks } from './navbar/DesktopNavLinks'
+import { UserDropdown } from './navbar/UserDropdown'
+import { MobileMenuDrawer } from './navbar/MobileMenuDrawer'
+
+export { roleDetails }
 
 const AddressModal = dynamic(() => import('@/components/AddressModal'), {
   ssr: false,
 })
 
-export const roleDetails: Partial<
-  Record<
-    UserRole,
-    { title: string; badge: string; color: string; bg: string; icon: React.ElementType }
-  >
-> = {
-  customer: {
-    title: 'Customer',
-    badge: 'Customer',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-100 border-emerald-200',
-    icon: ShoppingBag,
-  },
-  vendor: {
-    title: 'Vendor',
-    badge: 'Restaurant Partner',
-    color: 'text-amber-700',
-    bg: 'bg-amber-100 border-amber-200',
-    icon: Store,
-  },
-  driver: {
-    title: 'Driver',
-    badge: 'Delivery Partner',
-    color: 'text-blue-700',
-    bg: 'bg-blue-100 border-blue-200',
-    icon: Bike,
-  },
-  admin: {
-    title: 'Admin',
-    badge: 'Admin Console',
-    color: 'text-purple-700',
-    bg: 'bg-purple-100 border-purple-200',
-    icon: ShieldCheck,
-  },
-  user: {
-    title: 'Customer',
-    badge: 'Customer',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-100 border-emerald-200',
-    icon: ShoppingBag,
-  },
-  restaurant_vendor: {
-    title: 'Restaurant Vendor',
-    badge: 'Restaurant Partner',
-    color: 'text-amber-700',
-    bg: 'bg-amber-100 border-amber-200',
-    icon: UtensilsCrossed,
-  },
-  cravexp_store_vendor: {
-    title: 'CraveXP Store Vendor',
-    badge: 'CraveXP Store',
-    color: 'text-purple-700',
-    bg: 'bg-purple-100 border-purple-200',
-    icon: Store,
-  },
-  rider: {
-    title: 'Rider',
-    badge: 'Delivery Partner',
-    color: 'text-blue-700',
-    bg: 'bg-blue-100 border-blue-200',
-    icon: Bike,
-  },
-}
-
 export default function Navbar() {
   const { user, role, logout } = useAuth()
   const { items: cartItems, totalCount: cartCount } = useCart()
   const cartSubtotal = cartItems.reduce((acc, i) => acc + i.price * i.qty, 0)
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [mounted, setMounted] = useState(false)
   const [navVisible, setNavVisible] = useState(true)
   const lastScrollYRef = useRef(0)
-  const mobileMenuRef = useRef<HTMLElement>(null)
-  const lastFocusedRef = useRef<HTMLElement | null>(null)
   const pathname = usePathname()
 
   // Auto-hide mobile top navbar on scroll down, show on scroll up
@@ -157,44 +106,6 @@ export default function Navbar() {
   const isCustomer = Boolean(user && (normalizedRole === 'customer' || normalizedRole === 'user'))
   const showCustomerNav = Boolean(user && (isCustomer || isCustomerRoute))
 
-  // Focus trap for mobile menu
-  useEffect(() => {
-    if (showMobileMenu && mobileMenuRef.current) {
-      lastFocusedRef.current = document.activeElement as HTMLElement
-      const focusableElements = mobileMenuRef.current.querySelectorAll<HTMLElement>(
-        'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
-
-      firstElement?.focus()
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Tab') {
-          if (e.shiftKey && document.activeElement === firstElement) {
-            e.preventDefault()
-            lastElement?.focus()
-          } else if (!e.shiftKey && document.activeElement === lastElement) {
-            e.preventDefault()
-            firstElement?.focus()
-          }
-        }
-        if (e.key === 'Escape') {
-          setShowMobileMenu(false)
-        }
-      }
-
-      document.addEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'hidden'
-
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown)
-        document.body.style.overflow = ''
-        lastFocusedRef.current?.focus()
-      }
-    }
-  }, [showMobileMenu])
-
   const currentDashboardLink = isCustomer
     ? '/user/explore'
     : normalizedRole === 'rider' || normalizedRole === 'driver'
@@ -210,6 +121,7 @@ export default function Navbar() {
 
   if (!mounted) {
     return (
+<<<<<<< HEAD
       <>
         <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
           <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -247,6 +159,35 @@ export default function Navbar() {
           </nav>
         </header>
       </>
+=======
+      <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
+        <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
+              <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white">
+                crave<span className="text-[#86a018]">.</span>
+              </span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/login"
+                className="rounded-full border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] px-4 py-2 text-xs font-semibold text-[#18201c] dark:text-white transition hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-semibold text-white dark:text-[#18201c] transition hover:bg-[#323c36] dark:hover:bg-[#c8e434]"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+        </nav>
+      </header>
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
     )
   }
 
@@ -269,6 +210,7 @@ export default function Navbar() {
           </div>
 
           {/* Center navigation links (Desktop) */}
+<<<<<<< HEAD
           <div className="hidden items-center gap-1 text-xs font-bold justify-center bg-gray-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-gray-200/60 dark:border-white/10 backdrop-blur-xl lg:flex">
             {user ? (
               <>
@@ -419,55 +361,25 @@ export default function Navbar() {
               </>
             )}
           </div>
+=======
+          <DesktopNavLinks
+            user={user}
+            showCustomerNav={showCustomerNav}
+            pathname={pathname}
+            currentDashboardLink={currentDashboardLink}
+            normalizedRole={normalizedRole}
+            role={role}
+          />
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
 
           {/* Right side — auth & profile */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {user && showCustomerNav && (
-              <>
-                {/* Desktop Deliver-To Pill */}
-                <button
-                  type="button"
-                  onClick={() => setShowAddressModal(true)}
-                  className="hidden sm:flex items-center gap-2 rounded-full border border-gray-200/80 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.04] px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-white/10 transition cursor-pointer max-w-[210px] lg:max-w-[280px]"
-                  title="Change delivery location"
-                >
-                  <div className="grid size-6 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-[#d9f447] shrink-0">
-                    <MapPin className="size-3.5" />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <div className="flex items-center gap-1 leading-none text-[8px] font-black uppercase tracking-wider text-gray-400">
-                      <span>DELIVER TO</span>
-                      <span className="text-[#86a018] dark:text-[#d9f447] font-bold group-hover:underline">
-                        (Change)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-0.5 text-xs font-bold text-[#18201c] dark:text-white truncate mt-0.5">
-                      <span className="truncate">
-                        {deliveryAddress?.split(',')[0] ||
-                          user?.address?.split(',')[0] ||
-                          'Select Location'}
-                      </span>
-                      <ChevronDown className="size-3 text-gray-400 shrink-0" />
-                    </div>
-                  </div>
-                </button>
-
-                {/* Mobile Deliver-To Pill */}
-                <button
-                  type="button"
-                  onClick={() => setShowAddressModal(true)}
-                  className="sm:hidden flex items-center gap-1.5 rounded-full bg-gray-100/90 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 px-2.5 py-1 text-left min-w-0 max-w-[155px] xs:max-w-[190px] hover:bg-gray-200 dark:hover:bg-white/10 transition cursor-pointer"
-                  title="Change delivery location"
-                >
-                  <MapPin className="size-3 text-emerald-600 dark:text-[#d9f447] shrink-0" />
-                  <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">
-                    {deliveryAddress?.split(',')[0] ||
-                      user?.address?.split(',')[0] ||
-                      'Select location'}
-                  </span>
-                  <ChevronDown className="size-2.5 text-gray-400 shrink-0" />
-                </button>
-              </>
+              <AddressPill
+                deliveryAddress={deliveryAddress}
+                userAddress={user?.address}
+                onClick={() => setShowAddressModal(true)}
+              />
             )}
 
 
@@ -477,37 +389,38 @@ export default function Navbar() {
             </div>
 
             {user && (
-              <Link
-                href="/user/cart"
-                className="hidden sm:flex relative items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] shadow-xs hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
-                title="View Cart"
-              >
-                <ShoppingCart className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
-                <span>Cart ({cartCount})</span>
-                {cartSubtotal > 0 && (
-                  <span className="text-[#d9f447] dark:text-[#18201c] font-black">
-                    &bull; ₹{cartSubtotal}
-                  </span>
-                )}
-              </Link>
-            )}
+              <>
+                <Link
+                  href="/user/cart"
+                  className="hidden sm:flex relative items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] shadow-xs hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+                  title="View Cart"
+                >
+                  <ShoppingCart className="size-3.5 text-[#d9f447] dark:text-[#18201c]" />
+                  <span>Cart ({cartCount})</span>
+                  {cartSubtotal > 0 && (
+                    <span className="text-[#d9f447] dark:text-[#18201c] font-black">
+                      &bull; ₹{cartSubtotal}
+                    </span>
+                  )}
+                </Link>
 
-            {user && (
-              <Link
-                href="/user/cart"
-                className="sm:hidden relative grid size-9 place-items-center rounded-full border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs"
-                title="View Cart"
-              >
-                <ShoppingCart className="size-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 grid size-4.5 place-items-center rounded-full bg-[#86a018] text-[9px] font-black text-white shadow-sm">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
+                <Link
+                  href="/user/cart"
+                  className="sm:hidden relative grid size-9 place-items-center rounded-full border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs"
+                  title="View Cart"
+                >
+                  <ShoppingCart className="size-4" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 grid size-4.5 place-items-center rounded-full bg-[#86a018] text-[9px] font-black text-white shadow-sm">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+              </>
             )}
 
             {user ? (
+<<<<<<< HEAD
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setShowUserDropdown((v) => !v)}
@@ -664,6 +577,15 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+=======
+              <UserDropdown
+                user={user}
+                isCustomer={isCustomer}
+                normalizedRole={normalizedRole}
+                currentDashboardLink={currentDashboardLink}
+                onLogout={logout}
+              />
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
             ) : (
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
@@ -692,15 +614,22 @@ export default function Navbar() {
         </nav>
       </header>
 
-      {/* Mobile menu overlay */}
-      <div
-        onClick={() => setShowMobileMenu(false)}
-        className={`fixed inset-0 z-[85] bg-black/40 backdrop-blur-xs transition-opacity duration-300 lg:hidden ${
-          showMobileMenu ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-        aria-hidden="true"
+      <MobileMenuDrawer
+        isOpen={showMobileMenu}
+        onClose={() => setShowMobileMenu(false)}
+        user={user}
+        role={role}
+        isCustomer={isCustomer}
+        showCustomerNav={showCustomerNav}
+        deliveryAddress={deliveryAddress}
+        currentDashboardLink={currentDashboardLink}
+        logoTargetLink={logoTargetLink}
+        cartCount={cartCount}
+        onOpenAddressModal={() => setShowAddressModal(true)}
+        onLogout={logout}
       />
 
+<<<<<<< HEAD
       {/* Mobile slide-in drawer */}
       <aside
         ref={mobileMenuRef}
@@ -958,6 +887,8 @@ export default function Navbar() {
         </nav>
       </aside>
 
+=======
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
       {showAddressModal && (
         <AddressModal
           isOpen={showAddressModal}

@@ -1,23 +1,8 @@
 'use client'
 
-import VendorSidebar from '@/components/VendorSidebar'
-import BulkMenuImportModal from '@/components/menu/BulkMenuImportModal'
-import { useAuth } from '@/lib/auth-context'
-import { apiFetch } from '@/lib/client/api-fetch'
-import { useToast } from '@/lib/toast-context'
-import {
-  Check,
-  Edit,
-  FileSpreadsheet,
-  Image as ImageIcon,
-  Plus,
-  Search,
-  Sparkles,
-  Trash2,
-  Utensils,
-  X,
-} from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 export interface MenuItemRecord {
@@ -48,6 +33,16 @@ interface MenuItemVariantRecord {
   in_stock: boolean
   is_default: boolean
 }
+=======
+import { FileSpreadsheet, Plus, Search, Utensils } from 'lucide-react'
+import VendorSidebar from '@/components/VendorSidebar'
+import AddEditDishModal from '@/components/menu/AddEditDishModal'
+import BulkMenuImportModal from '@/components/menu/BulkMenuImportModal'
+import DishCard from '@/components/menu/DishCard'
+import { MenuItemRecord } from '@/components/menu/types'
+import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
 
 function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord {
   return {
@@ -70,124 +65,26 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
     price_tax_mode: item.price_tax_mode ?? 'TAX_INCLUSIVE',
     expiry_date: item.expiry_date ? String(item.expiry_date).substring(0, 10) : null,
     variants: Array.isArray(item.variants)
+<<<<<<< HEAD
       ? item.variants.map((variant: any) => ({
           id: variant.id,
           name: variant.name,
           restaurant_price: Number(variant.restaurant_price),
           in_stock: variant.in_stock !== false,
           is_default: variant.is_default === true,
+=======
+      ? item.variants.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          restaurant_price: Number(v.restaurant_price),
+          price: Number(v.price),
+          in_stock: v.in_stock !== false,
+          is_default: v.is_default === true,
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
         }))
       : [],
   }
 }
-
-const MENU_CATEGORY_GROUPS = [
-  {
-    group: 'Main Course & Meals',
-    categories: [
-      'Biryani, Rice & Pulao',
-      'North Indian Curries',
-      'South Indian & Dosa',
-      'Thali & Combos',
-      'Dal & Indian Breads',
-      'Paneer & Veg Specials',
-      'Chicken & Meat Curries',
-    ],
-  },
-  {
-    group: 'Starters & Street Food',
-    categories: [
-      'Starters & Appetizers',
-      'Kebabs & Tandoor',
-      'Chaat & Street Food',
-      'Rolls & Wraps',
-      'Momos & Dimsums',
-      'Soups & Salads',
-    ],
-  },
-  {
-    group: 'Fast Food & Continental',
-    categories: ['Burgers & Sandwiches', 'Pizzas & Pasta', 'Bowls', 'Snacks & Finger Food'],
-  },
-  {
-    group: 'Desserts & Bakes',
-    categories: [
-      'Desserts & Sweets',
-      'Cakes & Pastries',
-      'Ice Creams & Waffles',
-      'Bakery & Cookies',
-    ],
-  },
-  {
-    group: 'Beverages & Drinks',
-    categories: [
-      'Beverages',
-      'Cold Drinks & Sodas',
-      'Fresh Juices & Smoothies',
-      'Milkshakes',
-      'Chai, Coffee & Hot Drinks',
-    ],
-  },
-  {
-    group: 'Dark Store & Groceries',
-    categories: [
-      'Dairy & Eggs',
-      'Instant Food & Noodles',
-      'Packaged Snacks & Munchies',
-      'Cooking Essentials & Spices',
-    ],
-  },
-]
-
-const ALL_PRESET_CATEGORIES = MENU_CATEGORY_GROUPS.flatMap((g) => g.categories)
-
-const PORTION_PRESETS = [
-  'Serves 1',
-  'Serves 1-2',
-  'Serves 2-3',
-  '1 Plate',
-  'Half',
-  'Full',
-  '500 ml',
-  '250 g',
-  '1 Piece',
-  'Combo Box',
-]
-
-const QUICK_IMAGE_PRESETS = [
-  {
-    name: 'Biryani',
-    url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Burger',
-    url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Pizza',
-    url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Bowl / Salad',
-    url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Roll / Wrap',
-    url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Curry / Gravy',
-    url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Beverage',
-    url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    name: 'Dessert',
-    url: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=80',
-  },
-]
 
 export default function VendorMenuPage() {
   const { user, role, isLoading } = useAuth()
@@ -201,11 +98,11 @@ export default function VendorMenuPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
 
-  // Modal State for Adding / Editing Dish
   const [showItemModal, setShowItemModal] = useState(false)
   const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   const [editingItem, setEditingItem] = useState<MenuItemRecord | null>(null)
 
+<<<<<<< HEAD
   // Form Fields
   const [nameInput, setNameInput] = useState('')
   const [categoryInput, setCategoryInput] = useState('Biryani, Rice & Pulao')
@@ -226,6 +123,8 @@ export default function VendorMenuPage() {
     'TAX_INCLUSIVE'
   )
 
+=======
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
   useEffect(() => {
     if (isLoading) return
     if (!user) {
@@ -243,7 +142,6 @@ export default function VendorMenuPage() {
     }
   }, [user, role, isLoading, router])
 
-  // Load live menu items for logged-in vendor from database
   useEffect(() => {
     async function loadLiveMenu() {
       if (!user?.id) {
@@ -297,10 +195,7 @@ export default function VendorMenuPage() {
         if (menuRes.ok) {
           const menuResult = await menuRes.json()
           if (menuResult.success && menuResult.items) {
-            const formatted: MenuItemRecord[] = menuResult.items.map((item: any) =>
-              formatMenuItem(item, targetRestId || '')
-            )
-            setMenuItems(formatted)
+            setMenuItems(menuResult.items.map((item: any) => formatMenuItem(item, restId)))
           } else {
             setMenuItems([])
           }
@@ -318,25 +213,18 @@ export default function VendorMenuPage() {
     loadLiveMenu()
   }, [user?.id])
 
-  function triggerToast(msg: string) {
-    const isError = /could not|failed|error|unable|invalid/i.test(msg)
-    toast(msg, isError ? 'error' : 'success')
-  }
-
-  async function refreshMenuAfterImport() {
+  const refreshMenuAfterImport = async () => {
     if (!restaurantId) return
-    const response = await fetch(
-      `/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`,
-      {
-        cache: 'no-store',
-      }
-    )
+    const response = await fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, {
+      cache: 'no-store',
+    })
     const result = await response.json()
     if (!response.ok) throw new Error(result.error || 'Unable to refresh the menu.')
     setMenuItems((result.items || []).map((item: any) => formatMenuItem(item, restaurantId)))
-    triggerToast('Bulk menu import completed successfully!')
+    toast('Bulk menu import completed successfully!', 'success')
   }
 
+<<<<<<< HEAD
   function openAddModal() {
     setEditingItem(null)
     setNameInput('')
@@ -534,6 +422,9 @@ export default function VendorMenuPage() {
   }
 
   async function handleToggleStock(id: string, currentStock: boolean) {
+=======
+  const handleToggleStock = async (id: string, currentStock: boolean) => {
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
     const nextStock = !currentStock
     try {
       const res = await fetch('/api/menu-items', {
@@ -541,38 +432,24 @@ export default function VendorMenuPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, in_stock: nextStock }),
       })
-
-      if (!res.ok) {
-        throw new Error(await res.text())
-      }
-    } catch (err) {
-      console.error('Failed to update menu item stock:', err)
-      triggerToast('Could not update availability. Please try again.')
-      return
+      if (!res.ok) throw new Error(await res.text())
+      setMenuItems((prev) => prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i)))
+      toast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`, 'success')
+    } catch {
+      toast('Could not update availability.', 'error')
     }
-
-    setMenuItems((prev) => prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i)))
-    triggerToast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`)
   }
 
-  async function handleDeleteItem(id: string, name: string) {
+  const handleDeleteItem = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete '${name}' from your menu?`)) return
     try {
-      const res = await fetch(`/api/menu-items?id=${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) {
-        throw new Error(await res.text())
-      }
-    } catch (err) {
-      console.error('Failed to delete menu item:', err)
-      triggerToast('Could not delete the menu item. Please try again.')
-      return
+      const res = await fetch(`/api/menu-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(await res.text())
+      setMenuItems((prev) => prev.filter((i) => i.id !== id))
+      toast(`Deleted '${name}' from menu.`, 'success')
+    } catch {
+      toast('Could not delete the menu item.', 'error')
     }
-
-    setMenuItems((prev) => prev.filter((i) => i.id !== id))
-    triggerToast(`Deleted '${name}' from menu.`)
   }
 
   const categories = useMemo(() => {
@@ -589,17 +466,17 @@ export default function VendorMenuPage() {
       'Beverages',
       'Desserts & Sweets',
     ]
-    const unique = Array.from(new Set([...fromItems, ...baseOptions]))
-    return ['All', ...unique]
+    return ['All', ...Array.from(new Set([...fromItems, ...baseOptions]))]
   }, [menuItems])
 
-  const filteredItems = menuItems.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCat = selectedCategory === 'All' || item.category === selectedCategory
-    return matchesSearch && matchesCat
-  })
+  const filteredItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      const q = searchQuery.toLowerCase()
+      const matchesSearch = item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
+      const matchesCat = selectedCategory === 'All' || item.category === selectedCategory
+      return matchesSearch && matchesCat
+    })
+  }, [menuItems, searchQuery, selectedCategory])
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
     return (
@@ -625,8 +502,7 @@ export default function VendorMenuPage() {
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
               <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-                Manage dishes, categories, dietary types, portion sizes, pricing & live kitchen
-                inventory.
+                Manage dishes, categories, dietary types, portion sizes, pricing &amp; live kitchen inventory.
               </p>
             </div>
 
@@ -635,15 +511,18 @@ export default function VendorMenuPage() {
                 type="button"
                 onClick={() => setShowBulkImportModal(true)}
                 disabled={!restaurantId}
-                className="inline-flex items-center gap-2 rounded-full border border-stone-300 dark:border-[#334238] bg-white dark:bg-[#171f1b] px-5 py-3 text-xs font-black text-stone-700 dark:text-white shadow-sm hover:border-[#86a018] dark:hover:border-[#d9f447] disabled:cursor-not-allowed disabled:opacity-50 transition"
+                className="inline-flex items-center gap-2 rounded-full border border-stone-300 dark:border-[#334238] bg-white dark:bg-[#171f1b] px-5 py-3 text-xs font-black text-stone-700 dark:text-white shadow-sm hover:border-[#86a018] dark:hover:border-[#d9f447] disabled:opacity-50 transition cursor-pointer"
               >
                 <FileSpreadsheet className="size-4" /> Bulk Import CSV
               </button>
               <button
                 type="button"
-                onClick={openAddModal}
+                onClick={() => {
+                  setEditingItem(null)
+                  setShowItemModal(true)
+                }}
                 disabled={!restaurantId}
-                className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 transition cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-6 py-3 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] active:scale-95 disabled:opacity-50 transition cursor-pointer"
               >
                 <Plus className="size-4 text-[#0d1310]" /> Add New Dish
               </button>
@@ -661,7 +540,7 @@ export default function VendorMenuPage() {
                 className={`rounded-full px-4 py-1.5 text-xs font-bold transition shrink-0 border cursor-pointer ${
                   selectedCategory === cat
                     ? 'bg-[#d9f447] text-[#0d1310] border-[#d9f447] font-black'
-                    : 'bg-stone-100 dark:bg-[#141c17] text-stone-700 dark:text-gray-300 border-stone-200 dark:border-[#233228] hover:bg-stone-200/80 dark:hover:bg-[#1c2720] hover:text-stone-900 dark:hover:text-white'
+                    : 'bg-stone-100 dark:bg-[#141c17] text-stone-700 dark:text-gray-300 border-stone-200 dark:border-[#233228] hover:bg-stone-200/80 dark:hover:bg-[#1c2720]'
                 }`}
               >
                 {cat}
@@ -673,7 +552,7 @@ export default function VendorMenuPage() {
             <Search className="absolute left-3.5 top-2.5 size-4 text-stone-400 dark:text-gray-400" />
             <input
               type="text"
-              placeholder="Search dishes or ingredients..."
+              placeholder="Search dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-full border border-stone-200 dark:border-[#233228] bg-white dark:bg-[#141c17] py-2 pl-9 pr-4 text-xs font-medium text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-500 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447] shadow-xs"
@@ -688,10 +567,7 @@ export default function VendorMenuPage() {
               Loading menu from the database...
             </p>
           ) : menuError ? (
-            <p
-              role="alert"
-              className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-600 dark:text-rose-300"
-            >
+            <p role="alert" className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-600 dark:text-rose-300">
               {menuError}
             </p>
           ) : !restaurantId ? (
@@ -699,6 +575,7 @@ export default function VendorMenuPage() {
               No restaurant is linked to this vendor account yet.
             </p>
           ) : filteredItems.length === 0 ? (
+<<<<<<< HEAD
             <p className="col-span-full rounded-2xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-8 text-center text-sm text-stone-500 dark:text-gray-400">
               No menu items match your criteria. Click &quot;Add New Dish&quot; above to add one.
             </p>
@@ -822,18 +699,32 @@ export default function VendorMenuPage() {
           )}
 
           {filteredItems.length === 0 && (
+=======
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
             <div className="col-span-full rounded-3xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-12 text-center text-stone-500 dark:text-gray-400">
               <Utensils className="mx-auto size-12 text-stone-400 dark:text-gray-600 mb-2" />
               <p className="font-bold text-base text-[#121815] dark:text-white">No Dishes Found</p>
-              <p className="text-xs mt-1">
-                Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.
-              </p>
+              <p className="text-xs mt-1">Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.</p>
             </div>
+          ) : (
+            filteredItems.map((item) => (
+              <DishCard
+                key={item.id}
+                item={item}
+                onToggleStock={handleToggleStock}
+                onEdit={(dish) => {
+                  setEditingItem(dish)
+                  setShowItemModal(true)
+                }}
+                onDelete={handleDeleteItem}
+              />
+            ))
           )}
         </div>
       </div>
 
       {/* Add / Edit Dish Modal */}
+<<<<<<< HEAD
       {showItemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-[#121815] border border-stone-200 dark:border-[#233027] p-6 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto text-[#121815] dark:text-white custom-scrollbar">
@@ -1312,6 +1203,22 @@ export default function VendorMenuPage() {
             </form>
           </div>
         </div>
+=======
+      {restaurantId && (
+        <AddEditDishModal
+          isOpen={showItemModal}
+          onClose={() => setShowItemModal(false)}
+          editingItem={editingItem}
+          restaurantId={restaurantId}
+          onSaved={(savedItem, isEdit) => {
+            if (isEdit) {
+              setMenuItems((prev) => prev.map((i) => (i.id === savedItem.id ? savedItem : i)))
+            } else {
+              setMenuItems((prev) => [savedItem, ...prev])
+            }
+          }}
+        />
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
       )}
 
       {restaurantId && (

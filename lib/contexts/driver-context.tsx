@@ -1,11 +1,7 @@
 'use client'
 
-import { useAuth } from '@/lib/auth-context'
-import { apiFetch } from '@/lib/client/api-fetch'
-import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
-import { calculateCheckoutPricing } from '@/lib/distance-pricing'
-import { calculateHaversineDistanceKm } from '@/lib/utils'
 import CustomAlertModal from '@/components/CustomAlertModal'
+<<<<<<< HEAD
 import {
   getDriverLocationPermission,
   requestCurrentDriverPosition,
@@ -195,82 +191,39 @@ interface DriverContextType {
   setPrimaryUpi: (id: string) => void
   deleteUpiId: (id: string) => void
   handleInstantCashout: (amount: number) => boolean
+=======
+import { useAuth } from '@/lib/auth-context'
+import { playChimeSound, publishLiveEvent, useWebSocket } from '@/lib/websocket'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import {
+  createBroadcastOfferFromOrder,
+  getDriverPayoutDetails,
+} from './driver-helpers'
+import type {
+  BroadcastOrderOffer,
+  CompletedTripItem,
+  CustomAlertOptions,
+  DeliveryTask,
+  DriverContextType,
+  DriverPosition,
+  PayoutLogItem,
+  SavedUpiItem,
+} from './driver-types'
+
+export type {
+  BroadcastOrderOffer,
+  CompletedTripItem,
+  CustomAlertOptions,
+  DeliveryTask,
+  DriverContextType,
+  DriverPosition,
+  PayoutLogItem,
+  SavedUpiItem,
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
 }
+export { getDriverPayoutDetails }
 
 const DriverContext = createContext<DriverContextType | undefined>(undefined)
-
-export function getDriverPayoutDetails(order: any): {
-  basePayout: number
-  surgeBonus: number
-  tip: number
-  totalDriverPayout: number
-} {
-  if (!order) {
-    return { basePayout: 24, surgeBonus: 0, tip: 0, totalDriverPayout: 24 }
-  }
-
-  let itemsArr: any[] = []
-  try {
-    itemsArr = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || []
-  } catch (e) {}
-
-  const storedBreakdown =
-    order.pricing_breakdown || (itemsArr.length > 0 && itemsArr[0]?.billing_breakdown) || null
-
-  const tip = Number(order.tip || order.tip_amount || storedBreakdown?.tip || 0)
-
-  // 1. Direct driver_payout from DB column or stored breakdown
-  if (
-    order.driver_payout != null &&
-    !isNaN(Number(order.driver_payout)) &&
-    Number(order.driver_payout) > 0
-  ) {
-    const totalDriverPayout = Number(order.driver_payout)
-    const basePayout = Number(
-      storedBreakdown?.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
-    )
-    const surgeBonus = Number(storedBreakdown?.driver_surge_payout ?? 0)
-    return { basePayout, surgeBonus, tip, totalDriverPayout }
-  }
-
-  if (
-    storedBreakdown &&
-    (storedBreakdown.driver_payout != null || storedBreakdown.totalDriverEarnings != null)
-  ) {
-    const totalDriverPayout = Number(
-      storedBreakdown.driver_payout ?? storedBreakdown.totalDriverEarnings
-    )
-    const basePayout = Number(
-      storedBreakdown.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
-    )
-    const surgeBonus = Number(storedBreakdown.driver_surge_payout ?? 0)
-    return { basePayout, surgeBonus, tip, totalDriverPayout }
-  }
-
-  // 2. Fallback to calculation using food subtotal (not total_amount)
-  const foodSubtotal = Number(
-    order.subtotal ||
-      storedBreakdown?.subtotal ||
-      (order.total_amount ? Math.round(order.total_amount * 0.75) : 250)
-  )
-  const roadKm = Number(order.distance_km || order.distance || 1.8)
-  const pricing = calculateCheckoutPricing({
-    cartSubtotal: foodSubtotal,
-    roadDistanceKm: roadKm,
-  })
-  const dEarn = pricing.driverEarnings || {
-    baseDistanceShare: 24,
-    extraDistanceShare: 0,
-    surgeRainShare: 0,
-    totalDriverEarnings: 24,
-  }
-
-  const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-  const surgeBonus = dEarn.surgeRainShare
-  const totalDriverPayout = dEarn.totalDriverEarnings
-
-  return { basePayout, surgeBonus, tip, totalDriverPayout }
-}
 
 export function DriverProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth()
@@ -294,18 +247,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [isBackgroundWorkerActive, setIsBackgroundWorkerActive] = useState<boolean>(false)
   const [workerLastSyncTime, setWorkerLastSyncTime] = useState<string>('Never')
   const [backgroundSyncIntervalMs, setBackgroundSyncIntervalMs] = useState<number>(3000)
-  const workerRef = React.useRef<Worker | null>(null)
-  const isStepAdvancingRef = React.useRef(false)
-  const isAcceptingOfferRef = React.useRef(false)
+  const workerRef = useRef<Worker | null>(null)
+  const isStepAdvancingRef = useRef(false)
+  const isAcceptingOfferRef = useRef(false)
   const [completedSummaryModal, setCompletedSummaryModal] = useState<CompletedTripItem | null>(null)
 
-  // Completed Trips
+  // Completed Trips, UPI Saved List, Payout Logs
   const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([])
-
-  // UPI Saved List
   const [savedUpiList, setSavedUpiList] = useState<SavedUpiItem[]>([])
-
-  // Payout Logs
   const [payoutLogs, setPayoutLogs] = useState<PayoutLogItem[]>([])
 
   // Load Driver Profile Data (Orders, UPI, Payouts) from DB
@@ -314,7 +263,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
     const loadDriverData = async () => {
       try {
-        // 1. Fetch Orders (active task & completed trips)
         const ordersRes = await fetch(`/api/driver/orders?driverId=${user.id}`)
         const ordersJson = await ordersRes.json()
         if (ordersJson.success) {
@@ -359,14 +307,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // 2. Fetch UPI Saved Accounts
         const upiRes = await fetch(`/api/driver/upi?driverId=${user.id}`)
         const upiJson = await upiRes.json()
         if (upiJson.success && Array.isArray(upiJson.savedUpiList)) {
           setSavedUpiList(upiJson.savedUpiList)
         }
 
-        // 3. Fetch Payout Logs
         const payoutsRes = await fetch(`/api/driver/payouts?driverId=${user.id}`)
         const payoutsJson = await payoutsRes.json()
         if (payoutsJson.success && Array.isArray(payoutsJson.payoutLogs)) {
@@ -435,10 +381,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         const json = await res.json()
 
         if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
-          // Find active orders needing driver pickup
           const availableOrders = json.orders.filter(
             (o: any) =>
-              ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+              ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
               !o.rider_id &&
               (!o.driver_name ||
                 o.driver_name === 'Unassigned' ||
@@ -462,7 +407,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
+<<<<<<< HEAD
   // Query native permission first, then fall back to the browser Permissions API.
+=======
+  // Check geolocation permission using browser Permissions API
+>>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
   useEffect(() => {
     let cancelled = false
 
@@ -548,7 +497,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, isOnline, backgroundSyncIntervalMs])
 
-  // Screen Wake Lock API to prevent mobile browser sleep when app is in background/recent apps
+  // Screen Wake Lock API to prevent mobile browser sleep
   useEffect(() => {
     if (typeof window === 'undefined' || !isOnline) return
 
@@ -797,7 +746,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+            ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
             !o.rider_id &&
             (!o.driver_name ||
               o.driver_name === 'Unassigned' ||
@@ -815,7 +764,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {}
 
-    // No real customer orders available - trigger custom modal popup
     setBroadcastOffer(null)
     showCustomAlert({
       title: 'No Orders In Queue',
@@ -859,7 +807,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // 1. Post to dedicated driver accept endpoint with atomic concurrency guard
       const acceptRes = await fetch('/api/driver/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -885,10 +832,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Assignment confirmed authoritatively by PostgreSQL
       setActiveTask(task)
 
-      // 2. Patch orders API for standard order status sync
       await fetch('/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -903,7 +848,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         }),
       }).catch(() => {})
 
-      // Immediately publish driver live GPS position to WebSocket broadcast
       publishLiveEvent('driver_location', {
         driverId: user?.id || 'driver_partner',
         orderId: realId,
@@ -1179,7 +1123,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
 
-      {/* Global Custom Alert Modal Popup */}
       <CustomAlertModal
         isOpen={customAlert.isOpen}
         title={customAlert.title}
