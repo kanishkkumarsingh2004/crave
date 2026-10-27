@@ -76,6 +76,8 @@ export default function VendorSettlementsPage() {
             hasPendingSettlement: boolean
             disbursedAmount: number
             transactionRef: string
+            netPayableAmount: number
+            commissionAmount: number
           }
         > = {}
 
@@ -103,6 +105,8 @@ export default function VendorSettlementsPage() {
             hasPendingSettlement: false,
             disbursedAmount: 0,
             transactionRef: '',
+            netPayableAmount: 0,
+            commissionAmount: 0,
           }
         })
 
@@ -141,12 +145,16 @@ export default function VendorSettlementsPage() {
               hasPendingSettlement: false,
               disbursedAmount: 0,
               transactionRef: '',
+              netPayableAmount: 0,
+              commissionAmount: 0,
             }
           }
 
           restaurantMap[targetKey].weeklyGrossSales += Number(s.gross_sales || 0)
           restaurantMap[targetKey].completedDropsCount += 1
           restaurantMap[targetKey].settlementIds.push(s.id)
+          restaurantMap[targetKey].netPayableAmount += Number(s.net_payout || 0)
+          restaurantMap[targetKey].commissionAmount += Number(s.commission_amount || 0)
           if (s.status !== 'settled' && s.status !== 'paid') {
             restaurantMap[targetKey].hasPendingSettlement = true
           } else {
@@ -170,6 +178,20 @@ export default function VendorSettlementsPage() {
           if (targetKey && restaurantMap[targetKey].settlementIds.length === 0) {
             restaurantMap[targetKey].weeklyGrossSales += Number(o.subtotal || o.total_amount || 0)
             restaurantMap[targetKey].completedDropsCount += 1
+            const netPay = Number(
+              o.restaurant_payout ??
+              (o.financial_snapshot?.vendorPayableNetPaise
+                ? Math.round(o.financial_snapshot.vendorPayableNetPaise / 100)
+                : 0)
+            )
+            const comm = Number(
+              o.commission_amount ??
+              (o.financial_snapshot?.grossCommissionPaise
+                ? Math.round(o.financial_snapshot.grossCommissionPaise / 100)
+                : 0)
+            )
+            if (netPay > 0) restaurantMap[targetKey].netPayableAmount += netPay
+            if (comm > 0) restaurantMap[targetKey].commissionAmount += comm
           }
         })
 
@@ -199,6 +221,8 @@ export default function VendorSettlementsPage() {
           settlementIds: r.settlementIds,
           disbursedAmount: r.disbursedAmount || 0,
           transactionRef: r.transactionRef || '',
+          netPayableAmount: r.netPayableAmount || 0,
+          commissionAmount: r.commissionAmount || 0,
         }))
 
         setVendors(loaded)

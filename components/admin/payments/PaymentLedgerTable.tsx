@@ -127,13 +127,13 @@ export function PaymentLedgerTable({
                   <td className="px-5 py-4 text-right whitespace-nowrap text-[10px]">
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="text-amber-700 dark:text-amber-400 font-bold">
-                        Kitchen: ₹{tx.vendorCut}
+                        Kitchen: {formatCurrency(tx.vendorCut)}
                       </span>
                       <span className="text-blue-700 dark:text-blue-400 font-bold">
-                        Driver: ₹{tx.driverCut}
+                        Driver: {formatCurrency(tx.driverCut)}
                       </span>
                       <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">
-                        Crave Cut: ₹{tx.platformCut}
+                        Crave Cut: {formatCurrency(tx.platformCut)}
                       </span>
                     </div>
                   </td>

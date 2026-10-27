@@ -20,6 +20,8 @@ export interface VendorFinancialRecord {
   settlementIds?: string[]
   disbursedAmount?: number
   transactionRef?: string
+  netPayableAmount?: number
+  commissionAmount?: number
 }
 
 export function getVendorFinancials(v: VendorFinancialRecord) {
@@ -36,9 +38,15 @@ export function getVendorFinancials(v: VendorFinancialRecord) {
       ? v.promoSubsidyPct
       : parseFloat(v.promoSubsidyPct as any) || 0
 
-  const commissionCut = (gross * commRate) / 100
+  const commissionCut =
+    typeof v.commissionAmount === 'number' && v.commissionAmount > 0
+      ? v.commissionAmount
+      : (gross * commRate) / 100
   const promoCut = (gross * promoPct) / 100
-  const netPayable = gross - commissionCut + promoCut
+  const netPayable =
+    typeof v.netPayableAmount === 'number' && v.netPayableAmount > 0
+      ? v.netPayableAmount
+      : gross - commissionCut + promoCut
   const finalPayout =
     v.disbursedAmount != null && v.disbursedAmount > 0 ? v.disbursedAmount : netPayable
   return { commissionCut, promoCut, netPayable, finalPayout }

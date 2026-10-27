@@ -17,6 +17,9 @@ interface OrderRecord {
   total_amount: number
   status: string
   items: string
+  restaurant_payout?: number
+  commission_amount?: number
+  financial_snapshot?: any
 }
 
 interface SettlementRecord {
@@ -146,21 +149,33 @@ export default function VendorSalesPage() {
   )
   const ordersCommission = orders.reduce(
     (sum, o) =>
-      sum + Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100),
+      sum +
+      (o.commission_amount != null
+        ? Number(o.commission_amount)
+        : o.financial_snapshot?.grossCommissionPaise != null
+          ? Math.round(Number(o.financial_snapshot.grossCommissionPaise) / 100)
+          : Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100)),
     0
   )
   const calculatedCommission = Math.round((totalGrossSales * commissionRate) / 100)
   const totalCommission =
     ordersGross > 0
-      ? ordersCommission > 0
-        ? ordersCommission
-        : calculatedCommission
+      ? ordersCommission
       : settlementsCommission > 0
         ? settlementsCommission
         : calculatedCommission
 
   const settlementsNet = settlementsHistory.reduce((sum, s) => sum + Number(s.netPayout || 0), 0)
-  const ordersNet = ordersGross - totalCommission
+  const ordersNet = orders.reduce(
+    (sum, o) =>
+      sum +
+      (o.restaurant_payout != null
+        ? Number(o.restaurant_payout)
+        : o.financial_snapshot?.vendorPayableNetPaise != null
+          ? Math.round(Number(o.financial_snapshot.vendorPayableNetPaise) / 100)
+          : Math.max(0, Number(o.subtotal || o.total_amount || 0) - Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100))),
+    0
+  )
   const totalNetEarnings =
     ordersGross > 0
       ? ordersNet

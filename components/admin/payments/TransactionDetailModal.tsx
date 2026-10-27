@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Percent, Sparkles, Store, Truck, X } from 'lucide-react'
-import { TransactionRecord } from './types'
+import { formatCurrency, TransactionRecord } from './types'
 
 interface TransactionDetailModalProps {
   selectedTx: TransactionRecord | null
@@ -132,7 +132,7 @@ export function TransactionDetailModal({
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/10 text-amber-900 dark:text-amber-300">
             <span className="font-bold flex items-center gap-1.5">
-              <Store className="size-3.5" /> Kitchen Payout (Food - Commission)
+              <Store className="size-3.5" /> Kitchen Net Payout (Food + Packaging - Comm)
             </span>
             <span className="font-black text-sm">₹{selectedTx.vendorCut}</span>
           </div>

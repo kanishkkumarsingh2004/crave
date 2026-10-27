@@ -37,20 +37,74 @@ export default function AdminPaymentLedgerPage() {
 
       if (ordersJson.success && Array.isArray(ordersJson.orders)) {
         loaded = ordersJson.orders.map((o: any) => {
-          const subtotal = Number(o.subtotal) || Number(o.total_amount) || 0
-          const deliveryFee = Number(o.delivery_fee) || 0
-          const platformFee = Number(o.platform_fee) || 6
-          const handlingFee = Number(o.handling_fee) || 5
-          const packagingFee = Number(o.packaging_fee) || 0
-          const gst = Number(o.gst) || 0
-          const totalAmount =
-            Number(o.total_amount) ||
-            subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst
+          const snapshot = o.financial_snapshot || {}
+          const firstItem = Array.isArray(o.items) ? o.items[0] : null
+          const billingBreakdown = firstItem?.billing_breakdown || {}
 
-          // Estimated splits based on platform engine defaults
-          const vendorCut = Math.round(subtotal * 0.85) // 15% commission retained
-          const driverCut = Math.round(deliveryFee * 0.8) + (Number(o.tip) || 0)
-          const platformCut = Math.max(0, Math.round(totalAmount - vendorCut - driverCut))
+          const subtotal = Number(
+            o.subtotal ??
+            (snapshot.grossSubtotalPaise != null ? snapshot.grossSubtotalPaise / 100 : null) ??
+            o.total_amount ??
+            0
+          )
+          const deliveryFee = Number(
+            o.delivery_fee ??
+            (snapshot.deliveryFeePaise != null ? snapshot.deliveryFeePaise / 100 : null) ??
+            0
+          )
+          const platformFee = Number(
+            o.platform_fee ??
+            (snapshot.platformFeePaise != null ? snapshot.platformFeePaise / 100 : null) ??
+            0
+          )
+          const handlingFee = Number(
+            o.handling_fee ??
+            (snapshot.handlingFeePaise != null ? snapshot.handlingFeePaise / 100 : null) ??
+            0
+          )
+          const packagingFee = Number(
+            o.packaging_fee ??
+            (snapshot.packagingFeePaise != null ? snapshot.packagingFeePaise / 100 : null) ??
+            0
+          )
+          const gst = Number(
+            o.gst ??
+            (snapshot.platformServiceTaxBreakdown?.totalGstPaise != null
+              ? snapshot.platformServiceTaxBreakdown.totalGstPaise / 100
+              : null) ??
+            0
+          )
+          const totalAmount = Number(
+            o.total_amount ??
+            (snapshot.customerPayablePaise != null
+              ? Math.round(snapshot.customerPayablePaise / 100)
+              : null) ??
+            (subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst)
+          )
+
+          // Canonical splits derived from financial_snapshot / database columns:
+          // 1. Kitchen Net Payout
+          const vendorCut = Number(
+            o.restaurant_payout ??
+            (snapshot.vendorPayableNetPaise != null ? Math.round(snapshot.vendorPayableNetPaise / 100) : null) ??
+            billingBreakdown.vendor_net_payout ??
+            Math.round(subtotal * 0.85)
+          )
+
+          // 2. Driver Payout
+          const driverCut = Number(
+            billingBreakdown.driver_payout ??
+            (snapshot.riderPayablePaise != null ? Math.round(snapshot.riderPayablePaise / 100) : null) ??
+            Math.round(deliveryFee * 0.8) + (Number(o.tip) || 0)
+          )
+
+          // 3. Crave Platform Net Retained Margin
+          const platformCut = Number(
+            o.platform_revenue ??
+            (snapshot.platformNetRevenuePaise != null ? Math.round(snapshot.platformNetRevenuePaise / 100) : null) ??
+            billingBreakdown.platform_net_profit ??
+            Math.max(0, Math.round(totalAmount - vendorCut - driverCut))
+          )
 
           // Method & Status detection
           const rawMethod = (o.payment_method || '').toLowerCase()

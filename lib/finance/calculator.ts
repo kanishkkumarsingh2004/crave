@@ -240,7 +240,10 @@ export function calculateFullBreakdown(
   if (commercialModel === 'commission' || commercialModel === 'hybrid') {
     commissionDeducted = Math.ceil((subtotal * vendorCommissionPercent) / 100 + fixedCommission)
   }
-  const netVendorPayout = Math.max(0, subtotal - commissionDeducted)
+  // The restaurant receives the packaging fee and is deducted commission plus 18% commission GST
+  const commissionGst = Math.round(commissionDeducted * 0.18)
+  const totalCommissionDeduction = commissionDeducted + commissionGst
+  const netVendorPayout = Math.max(0, subtotal + packagingFee - totalCommissionDeduction)
 
   const vendorSettlement: VendorSettlementBreakdown = {
     restaurantName: input.restaurantName || 'Partner Restaurant',
@@ -277,6 +280,7 @@ export function calculateFullBreakdown(
   const totalPaidToDriver = totalDriverEarnings
   const totalGstCollected = gstAmount
 
+  const platformGstLiability = Number((platformServiceGst + commissionGst).toFixed(2))
   const platformGrossRevenue = Math.ceil(
     platformFee +
       handlingFee +
@@ -284,12 +288,9 @@ export function calculateFullBreakdown(
       markupAmount +
       grossDeliveryFee * (1 - deliveryShareMultiplier)
   )
-  const platformNetProfit = Math.ceil(
-    totalCollectedFromCustomer -
-      totalPaidToVendor -
-      totalPaidToDriver -
-      totalGstCollected -
-      packagingFee
+  const platformNetProfit = Math.max(
+    0,
+    Math.round(platformGrossRevenue - platformGstLiability)
   )
 
   const profitMarginPercent =
