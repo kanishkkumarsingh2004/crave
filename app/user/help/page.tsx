@@ -1,6 +1,7 @@
 'use client'
 
 import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
+import { HelpSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -36,16 +37,7 @@ export default function UserHelpPage() {
   }, [user, role, isLoading, router])
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading Help &amp; Support...
-          </p>
-        </div>
-      </div>
-    )
+    return <HelpSkeleton />
   }
 
   if (role !== 'user' && role !== 'customer') {

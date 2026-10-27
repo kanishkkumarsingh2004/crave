@@ -8,8 +8,10 @@ import AddEditDishModal from '@/components/menu/AddEditDishModal'
 import BulkMenuImportModal from '@/components/menu/BulkMenuImportModal'
 import DishCard from '@/components/menu/DishCard'
 import { MenuItemRecord } from '@/components/menu/types'
+import { VendorMenuSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
+import { publishLiveEvent } from '@/lib/websocket'
 
 function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord {
   return {
@@ -169,6 +171,15 @@ export default function VendorMenuPage() {
       })
       if (!res.ok) throw new Error(await res.text())
       setMenuItems((prev) => prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i)))
+      publishLiveEvent('menu_items', {
+        type: 'update',
+        item: {
+          id,
+          in_stock: nextStock,
+          stock_count: nextStock ? 10 : 0,
+          restaurant_id: restaurantId,
+        },
+      })
       toast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`, 'success')
     } catch {
       toast('Could not update availability.', 'error')
@@ -181,6 +192,13 @@ export default function VendorMenuPage() {
       const res = await fetch(`/api/menu-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(await res.text())
       setMenuItems((prev) => prev.filter((i) => i.id !== id))
+      publishLiveEvent('menu_items', {
+        type: 'delete',
+        item: {
+          id,
+          restaurant_id: restaurantId,
+        },
+      })
       toast(`Deleted '${name}' from menu.`, 'success')
     } catch {
       toast('Could not delete the menu item.', 'error')
@@ -214,11 +232,7 @@ export default function VendorMenuPage() {
   }, [menuItems, searchQuery, selectedCategory])
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
-    return (
-      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
-        <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <VendorMenuSkeleton />
   }
 
   return (

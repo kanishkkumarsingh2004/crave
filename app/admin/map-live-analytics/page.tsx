@@ -20,19 +20,11 @@ import {
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { MapSkeleton } from '@/components/ui/SkeletonLoaders'
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
   ssr: false,
-  loading: () => (
-    <div className="h-[calc(100vh-200px)] min-h-[600px] w-full rounded-2xl bg-gray-100 flex items-center justify-center border border-gray-200">
-      <div className="flex flex-col items-center gap-2">
-        <div className="size-6 border-2 border-[#b5de28] border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-gray-500">
-          Loading Live Map Telemetry & Addresses...
-        </span>
-      </div>
-    </div>
-  ),
+  loading: () => <MapSkeleton />,
 })
 
 interface LiveTelemetryPin {

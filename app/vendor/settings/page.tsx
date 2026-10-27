@@ -3,6 +3,7 @@
 import ThemeSelector from '@/components/ThemeSelector'
 import AppleToggle from '@/components/ui/AppleToggle'
 import VendorSidebar from '@/components/VendorSidebar'
+import { VendorDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import {
@@ -111,11 +112,7 @@ export default function VendorSettingsPage() {
   }, [user?.id, role])
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
-    return (
-      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
-        <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <VendorDashboardSkeleton />
   }
 
   if (settingsLoading) {

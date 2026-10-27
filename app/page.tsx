@@ -2,7 +2,7 @@
 
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
-import { CravePagePreloader } from '@/components/ui/ModernPreloader'
+import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
@@ -210,44 +210,7 @@ export default function HomePage() {
 
   const targetDashboard = getTargetDashboard()
   if (!isLoading && user && targetDashboard) {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#d9f447] selection:text-[#121815]">
-        {/* Ambient Subtle Glow */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 size-[420px] bg-gradient-to-b from-[#d9f447]/10 via-[#d9f447]/5 to-transparent blur-[100px]" />
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#121815_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.02] dark:opacity-[0.03]" />
-
-        <CravePagePreloader
-          title="Taking you to your dashboard"
-          subtitle="One moment while we load your personalized Crave account"
-          minHeight="min-h-[260px]"
-        />
-        {redirectTimeoutExceeded && (
-          <div className="mt-8 flex flex-col items-center gap-3.5 text-center animate-in fade-in duration-300 max-w-sm">
-            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-              Taking longer than expected to redirect?
-            </p>
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => router.push(targetDashboard)}
-                className="px-5 py-2.5 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] text-xs font-black shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5"
-              >
-                <span>Go to Dashboard</span>
-                <ArrowRight className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => logout && logout()}
-                className="px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-stone-700 dark:text-stone-300 text-xs font-bold hover:bg-black/5 dark:hover:bg-white/10 backdrop-blur-sm active:scale-95 transition-all flex items-center gap-1.5"
-              >
-                <LogOut className="size-3.5" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    )
+    return <CustomerDashboardSkeleton />
   }
 
   const handleNavigate = (path: string) => {

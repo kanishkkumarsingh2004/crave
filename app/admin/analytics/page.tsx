@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react'
+import { AdminDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useEffect, useState } from 'react'
 
 export default function AdminAnalyticsPage() {
@@ -58,13 +59,7 @@ export default function AdminAnalyticsPage() {
   const aov = liveCompletedOrders > 0 ? liveGrossRevenue / liveCompletedOrders : 0
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-[#dfe4dc] bg-white p-8 shadow-sm text-center">
-          <p className="text-sm text-gray-500">Loading analytics data...</p>
-        </div>
-      </div>
-    )
+    return <AdminDashboardSkeleton />
   }
 
   return (

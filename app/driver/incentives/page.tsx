@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { Clock3, Flame, Target, Zap } from 'lucide-react'
+import { SkeletonBlock } from '@/components/ui/SkeletonLoaders'
 import { useEffect, useState } from 'react'
 
 interface IncentiveItem {
@@ -79,8 +80,24 @@ export default function DriverIncentivesPage() {
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs font-bold text-gray-400">
-            Loading active surge programs...
+          <div className="grid gap-4 md:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-gray-200 p-5 bg-white shadow-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <SkeletonBlock className="h-4 w-24 rounded" />
+                  <SkeletonBlock className="h-4 w-16 rounded" />
+                </div>
+                <SkeletonBlock className="h-5 w-40 rounded" />
+                <SkeletonBlock className="h-3.5 w-full rounded" />
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <SkeletonBlock className="h-3 w-28 rounded" />
+                  <SkeletonBlock className="h-4 w-16 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : incentives.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2">

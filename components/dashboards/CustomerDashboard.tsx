@@ -13,7 +13,7 @@ import { useCart } from '@/lib/cart-context'
 import { getCachedLocation } from '@/lib/client-location'
 import { getOrderStatusNotification, showBrowserNotification } from '@/lib/notifications/web-notification'
 import { useToast } from '@/lib/toast-context'
-import { useDriverLocation, useOrderUpdates } from '@/lib/websocket'
+import { useDriverLocation, useMenuItemUpdates, useOrderUpdates } from '@/lib/websocket'
 import {
   Bike,
   Compass,
@@ -215,6 +215,11 @@ export default function CustomerDashboard({
             restaurantName: selectedRestaurant.name,
             restaurantId: selectedRestaurant.id,
             vendorId: selectedRestaurant.id,
+            category: item.category || 'Recommended',
+            in_stock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
+            inStock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
+            stock_count: item.stock_count ?? 10,
+            bestseller: item.bestseller ?? (item.price >= 250),
             variants: Array.isArray(item.variants)
               ? item.variants
                   .filter((v: any) => v.in_stock !== false)
@@ -234,6 +239,30 @@ export default function CustomerDashboard({
     }
     fetchLiveMenuItems()
   }, [selectedRestaurant])
+
+  // Real-time synchronization of menu items when vendor toggles out-of-stock
+  useMenuItemUpdates(selectedRestaurant?.id, (updatedItem: any) => {
+    if (!updatedItem?.id) return
+    setMenuItemsList((prev) =>
+      prev.map((item) => {
+        if (item.id === updatedItem.id) {
+          const isNowInStock =
+            updatedItem.in_stock !== false &&
+            (updatedItem.stock_count == null || updatedItem.stock_count > 0)
+          return {
+            ...item,
+            in_stock: isNowInStock,
+            inStock: isNowInStock,
+            stock_count: updatedItem.stock_count ?? item.stock_count,
+            price: updatedItem.price != null ? Number(updatedItem.price) : item.price,
+            name: updatedItem.name || item.name,
+            detail: updatedItem.description || item.detail,
+          }
+        }
+        return item
+      })
+    )
+  })
 
   // Orders State & WebSocket Updates
   const [ordersData, setOrdersData] = useState<any[]>([])
@@ -488,6 +517,11 @@ export default function CustomerDashboard({
 
   // Cart Handlers
   const handleAddToCart = (item: MenuItem, variant?: MenuItemVariant) => {
+    if (item.in_stock === false || item.inStock === false) {
+      toast(`${item.name} is currently out of stock.`, 'error')
+      return
+    }
+
     const itemRestId = item.restaurantId || item.vendorId || selectedRestaurant?.id || ''
     const currentRestId = cart[0]?.restaurantId || cart[0]?.vendorId || ''
 
@@ -679,6 +713,8 @@ export default function CustomerDashboard({
             selectedRestaurant={selectedRestaurant}
             onSelectRestaurant={setSelectedRestaurant}
             triggerToast={(m) => toast(m, 'info')}
+            customerLocation={selectedMapPin}
+            customerAddress={deliveryAddress || user?.address}
           />
         )}
 

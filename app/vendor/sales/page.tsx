@@ -1,6 +1,7 @@
 'use client'
 
 import VendorSidebar from '@/components/VendorSidebar'
+import { VendorDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { ArrowUpRight, CheckCircle2, Clock3, DollarSign, Percent, TrendingUp } from 'lucide-react'
@@ -131,11 +132,7 @@ export default function VendorSalesPage() {
   }, [user?.id])
 
   if (isLoading || !user || (role !== 'vendor' && role !== 'restaurant_vendor')) {
-    return (
-      <div className="min-h-screen bg-stone-50 dark:bg-[#0a0f0d] flex items-center justify-center p-4">
-        <div className="size-8 border-4 border-[#d9f447] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <VendorDashboardSkeleton />
   }
 
   // Aggregate financial metrics from orders or settlements

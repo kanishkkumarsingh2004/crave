@@ -1,5 +1,6 @@
 'use client'
 
+import { VendorDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { ChefHat, LogIn, RefreshCw, ShieldAlert, UserCheck } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -9,16 +10,7 @@ import { useEffect, useState } from 'react'
 // Dynamically import VendorDashboard with SSR disabled to guarantee ZERO hydration mismatches and ZERO reload loops
 const VendorDashboard = dynamic(() => import('@/components/dashboards/VendorDashboard'), {
   ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-      <div className="text-center">
-        <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-        <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
-          Initializing Kitchen Console...
-        </p>
-      </div>
-    </div>
-  ),
+  loading: () => <VendorDashboardSkeleton />,
 })
 
 export default function VendorDashboardPage() {
@@ -47,16 +39,7 @@ export default function VendorDashboardPage() {
 
   // Identical clean placeholder on initial render to prevent SSR/CSR hydration mismatch
   if (!mounted) {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
-            Loading Kitchen Console...
-          </p>
-        </div>
-      </div>
-    )
+    return <VendorDashboardSkeleton />
   }
 
   return (
