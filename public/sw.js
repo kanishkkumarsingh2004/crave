@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/__ws') ||
-    url.pathname.startsWith('/_next/webpack-hmr')
+    url.pathname.startsWith('/_next/')
   ) {
     return
   }

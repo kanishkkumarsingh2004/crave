@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   title: 'crave. | Crave What You Love • Instant Food & Grocery Delivery',
   description:
     'Order gourmet food, top local kitchen dishes, and 10-minute instant groceries delivered straight to your door.',
+  manifest: '/manifest.json',
+  applicationName: 'crave.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -26,6 +28,7 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
@@ -39,7 +42,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   colorScheme: 'light',
-  themeColor: '#ffffff',
+  themeColor: '#121815',
 }
 
 export default function RootLayout({
@@ -58,11 +61,14 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="crave." />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="application-name" content="Crave" />
+        <meta name="theme-color" content="#121815" />
+        <meta name="application-name" content="crave." />
         <script
           id="theme-initializer"
           dangerouslySetInnerHTML={{
