@@ -35,7 +35,7 @@ const FAQ_ITEMS = [
     category: 'Customer Support Hotline',
     question: 'How do I speak to someone if I need urgent help?',
     answer:
-      'You can reach our dedicated customer support team directly at -9625694673 anytime, 24 hours a day, 7 days a week. You can also chat with us on WhatsApp at the same number (-9625694673).',
+      'You can reach our dedicated customer support team directly at +91 96256 94673 anytime, 24 hours a day, 7 days a week. You can also chat with us on WhatsApp at the same number (+91 96256 94673).',
   },
   {
     id: 'delivery-otp',
@@ -56,14 +56,14 @@ const FAQ_ITEMS = [
     category: 'Food Quality & Disputes',
     question: 'What if an item is missing, incorrect, or food arrived damaged?',
     answer:
-      'We sincerely apologize! Please keep the packaging intact, take a photo, and call our priority customer care immediately at -9625694673 within 30 minutes of delivery with your Order ID. Our team will promptly issue a replacement or refund.',
+      'We sincerely apologize! Please keep the packaging intact, take a photo, and call our priority customer care immediately at +91 96256 94673 within 30 minutes of delivery with your Order ID. Our team will promptly issue a replacement or refund.',
   },
   {
     id: 'payment-deducted-order-failed',
     category: 'Payment Delays',
     question: 'Money was deducted from my bank/UPI app, but the order failed?',
     answer:
-      'If your bank debited money without order creation, your bank typically reverses the amount within 24-48 hours. If it does not reflect, please call us at -9625694673 with your 12-digit UTR reference number.',
+      'If your bank debited money without order creation, your bank typically reverses the amount within 24-48 hours. If it does not reflect, please call us at +91 96256 94673 with your 12-digit UTR reference number.',
   },
 ]
 
@@ -87,9 +87,8 @@ export default function HelpView({ onViewActiveOrder }: HelpViewProps) {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6 px-1 sm:px-0 animate-in fade-in duration-200">
-      {/* Top 24/7 Priority Helpline Hero Banner */}
-      <div className="rounded-3xl bg-gradient-to-br from-[#18201c] via-[#232f28] to-[#18201c] p-6 sm:p-8 text-white relative overflow-hidden border border-[#27342d] shadow-2xl">
-        <div className="absolute -right-12 -top-12 size-48 rounded-full bg-[#d9f447]/15 blur-3xl pointer-events-none" />
+      {/* Top 24/7 Priority Helpline Hero Banner - Apple Solid Style */}
+      <div className="rounded-2xl bg-[#1C1C1E] dark:bg-[#161617] p-6 sm:p-8 text-white relative overflow-hidden border border-black/[0.08] dark:border-white/[0.08] shadow-sm">
         <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-[#d9f447]/20 border border-[#d9f447]/40 text-[#d9f447] text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
@@ -112,7 +111,7 @@ export default function HelpView({ onViewActiveOrder }: HelpViewProps) {
               className="inline-flex items-center gap-2.5 rounded-full bg-[#d9f447] hover:bg-[#c8e434] px-6 py-3 text-xs sm:text-sm font-black text-[#18201c] shadow-lg transition hover:scale-105 active:scale-95"
             >
               <PhoneCall className="size-4 text-[#18201c]" />
-              <span>Call Helpline: -9625694673</span>
+              <span>Call Helpline: +91 96256 94673</span>
             </a>
 
             <a
@@ -122,7 +121,7 @@ export default function HelpView({ onViewActiveOrder }: HelpViewProps) {
               className="inline-flex items-center gap-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-6 py-3 text-xs sm:text-sm font-black text-white shadow-lg transition hover:scale-105 active:scale-95"
             >
               <MessageSquare className="size-4" />
-              <span>WhatsApp: -9625694673</span>
+              <span>WhatsApp: +91 96256 94673</span>
             </a>
 
             <button

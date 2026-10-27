@@ -1,6 +1,7 @@
 'use client'
 
 import ThemeToggle from '@/components/ThemeToggle'
+import CraveLogo from '@/components/CraveLogo'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
 import {
@@ -62,13 +63,8 @@ export default function VendorSidebar() {
       {/* Desktop Left Fixed Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-stone-200 dark:border-[#202923] bg-white dark:bg-[#121815] text-[#121815] dark:text-white lg:flex transition-colors duration-200">
         <div className="border-b border-stone-200 dark:border-white/10 p-6">
-          <Link href="/vendor/dashboard" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-xs">
-              <UtensilsCrossed className="size-5" />
-            </span>
-            <span className="text-xl font-black tracking-tight text-[#121815] dark:text-white">
-              crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
-            </span>
+          <Link href="/vendor/dashboard" className="flex items-center gap-2.5" aria-label="crave vendor dashboard">
+            <CraveLogo variant="full" size="md" />
           </Link>
           <div className="mt-5 rounded-xl bg-stone-100 dark:bg-white/5 border border-stone-200/80 dark:border-transparent px-3 py-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
@@ -123,9 +119,10 @@ export default function VendorSidebar() {
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
             <Link
               href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#121815] dark:text-white shrink-0 lg:hidden"
+              className="shrink-0 lg:hidden flex items-center"
+              aria-label="crave home"
             >
-              crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
+              <CraveLogo variant="full" size="md" />
             </Link>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
               VENDOR

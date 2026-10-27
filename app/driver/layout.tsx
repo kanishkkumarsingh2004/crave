@@ -1,5 +1,6 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { DriverDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
@@ -184,9 +185,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                       : 'opacity-100 max-w-[160px]'
                   }`}
                 >
-                  <span className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white leading-none">
-                    crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
-                  </span>
+                  <CraveLogo variant="full" size="sm" />
                   <span className="text-xs font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                     Driver
                   </span>

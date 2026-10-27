@@ -601,18 +601,7 @@ export default function CartPage() {
         toast('Payment verified! Your order has been placed and sent to the kitchen.', 'success')
         setTimeout(() => router.push(orderId ? `/user/track/${orderId}` : '/user/track'), 1500)
       } catch (err: any) {
-        toast(err?.message || 'Razorpay checkout cancelled or failed. Please try again.', 'error')
-        try {
-          await fetch('/api/orders', {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            credentials: 'include',
-            body: JSON.stringify({ orderId, status: 'cancelled' }),
-          })
-        } catch {}
+        toast(err?.message || 'Payment was not completed. Tap Pay to try again.', 'error')
         setIsSubmittingOrder(false)
         isSubmittingRef.current = false
       }
@@ -1361,7 +1350,7 @@ export default function CartPage() {
 
       {/* Floating Mobile Checkout Bar */}
       {cart.length > 0 && !orderSuccess && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex items-center justify-between rounded-2xl bg-[#121815] dark:bg-[#d9f447] p-4 shadow-2xl border border-black/10 dark:border-black/20 backdrop-blur-md">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-700">

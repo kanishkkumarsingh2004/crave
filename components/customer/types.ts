@@ -87,4 +87,5 @@ export type PastOrder = {
   otp?: string
   driverName?: string
   driverPhone?: string
+  restaurantId?: string
 }

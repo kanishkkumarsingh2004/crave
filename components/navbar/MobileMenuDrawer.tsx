@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
+import CraveLogo from '@/components/CraveLogo'
 
 interface MobileMenuDrawerProps {
   isOpen: boolean
@@ -109,13 +110,8 @@ export function MobileMenuDrawer({
         }`}
       >
         <div className="flex items-center justify-between border-b border-[#e5e9e1] dark:border-[#27342d] px-5 py-4">
-          <Link href={logoTargetLink} onClick={onClose} className="flex items-center gap-2.5">
-            <span className="grid size-10 place-items-center rounded-xl bg-[#d9f447] text-[#18201c]">
-              <UtensilsCrossed className="size-5 fill-current" />
-            </span>
-            <span className="text-xl font-bold text-[#18201c] dark:text-white">
-              crave<span className="text-[#869c18]">.</span>
-            </span>
+          <Link href={logoTargetLink} onClick={onClose} className="flex items-center gap-2" aria-label="crave home">
+            <CraveLogo variant="full" size="md" />
           </Link>
           <button
             onClick={onClose}

@@ -5,10 +5,12 @@ import {
   ArrowRight,
   Award,
   Check,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
   Copy,
+  Heart,
   Leaf,
   MapPin,
   Minus,
@@ -16,6 +18,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  Star,
   Tag,
   UtensilsCrossed,
   X,
@@ -134,6 +137,29 @@ export default function ExploreView({
   const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
   const [variantPickerSelection, setVariantPickerSelection] = useState('')
 
+  // Favorite Kitchens State
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem('crave_favorite_restaurants')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  const toggleFavorite = (id: string, name: string) => {
+    setFavoriteIds((prev) => {
+      const exists = prev.includes(id)
+      const next = exists ? prev.filter((item) => item !== id) : [...prev, id]
+      try {
+        localStorage.setItem('crave_favorite_restaurants', JSON.stringify(next))
+      } catch {}
+      triggerToast(exists ? `Removed ${name} from saved favorites` : `Added ${name} to saved favorites!`)
+      return next
+    })
+  }
+
   const scrollCategories = (direction: 'left' | 'right') => {
     if (categoryScrollRef.current) {
       const scrollAmount = direction === 'left' ? -350 : 350
@@ -191,28 +217,27 @@ export default function ExploreView({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      {/* Dynamic Hero Carousel */}
+      {/* Apple-Style Editorial Hero Carousel - Zero Gradients */}
       <div
         onMouseEnter={() => setHeroAutoplayPaused(true)}
         onMouseLeave={() => setHeroAutoplayPaused(false)}
-        className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-white/[0.12] bg-[#0d120f] transition-all duration-500 group/hero"
+        className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-black/[0.08] dark:border-white/[0.08] bg-[#161617] transition-all duration-300 group/hero shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
       >
         <div className="relative min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[480px] w-full flex items-center">
           {/* Slide 0: Gourmet Feasts */}
           <div
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
               heroSlideIndex === 0 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#170e0a] via-[#24140d]/95 to-[#150c08] -z-10" />
-            <div className="absolute -left-20 -top-20 size-80 rounded-full bg-orange-600/15 blur-3xl pointer-events-none" />
-            <div className="absolute right-0 top-0 size-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute inset-0 bg-[#161617] -z-10" />
 
             <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md">
-                  <Sparkles className="size-3" />
-                  50% OFF UP TO ₹120
+                <CraveLogo variant="full" size="md" theme="light" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-semibold tracking-wide border border-white/10 backdrop-blur-md">
+                  <Sparkles className="size-3 text-[#FF9500]" />
+                  <span>Flat ₹120 Off Gourmet</span>
                 </span>
 
                 <button
@@ -226,54 +251,66 @@ export default function ExploreView({
                       setTimeout(() => setCopiedPromoCode(null), 3000)
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-orange-200 text-[11px] font-mono font-black transition cursor-pointer backdrop-blur-md active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-mono font-medium transition cursor-pointer backdrop-blur-md active:scale-95"
                   title="Click to copy coupon code"
                 >
                   {copiedPromoCode === 'CRAVEFEAST' ? (
                     <>
-                      <Check className="size-3 text-emerald-400 stroke-[3]" />
-                      <span className="text-emerald-300">COPIED!</span>
+                      <Check className="size-3 text-[#34C759] stroke-[2.5]" />
+                      <span className="text-[#34C759]">Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="size-3 text-orange-300" />
-                      <span>CODE: CRAVEFEAST</span>
+                      <Copy className="size-3 text-white/80" />
+                      <span>CRAVEFEAST</span>
                     </>
                   )}
                 </button>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Savor Gourmet Feasts Delivered Fresh In 25 Mins
               </h2>
-              <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
                 Steaming dum biryani, woodfired pizzas, smash burgers &amp; sizzling fries cooked fresh on order.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
+              <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={() => document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-stone-950 font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#1D1D1F] font-semibold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
                 >
                   <span>Explore Signature Dishes</span>
-                  <ArrowRight className="size-4 text-stone-950" />
+                  <ChevronRight className="size-4 stroke-[2.5] text-[#1D1D1F]" />
                 </button>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-orange-200/90 bg-white/5 border border-white/10 px-3 py-2 rounded-xl backdrop-blur-sm">
-                  <span>⭐ 4.9 Master Chef Rated</span>
+
+                <button
+                  type="button"
+                  onClick={() => router.push('/user/cravexp')}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm backdrop-blur-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer shadow-sm"
+                >
+                  <CraveLogo variant="cravexp" size="sm" theme="light" />
+                  <span>Store</span>
+                  <ChevronRight className="size-4 stroke-[2.5] text-white/80" />
+                </button>
+
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
+                  <Star className="size-3.5 fill-[#FF9500] text-[#FF9500]" />
+                  <span>4.9 Master Chef Rated</span>
                 </div>
               </div>
             </div>
 
             <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
                 <img
                   src="/banners/gourmet-feast.jpg"
                   alt="Gourmet Feasts"
-                  className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl transform transition-transform duration-700 group-hover/hero:scale-105"
+                  className="w-full h-full object-cover object-center rounded-2xl"
                 />
-                <div className="absolute top-4 right-4 rounded-full bg-black/70 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-black text-amber-300 shadow-xl flex items-center gap-1.5">
-                  <Clock className="size-3.5" />
+                <div className="absolute top-3 right-3 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1 text-xs font-medium text-white shadow-sm flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-white/90" />
                   <span>20-25 Mins</span>
                 </div>
               </div>
@@ -282,42 +319,42 @@ export default function ExploreView({
 
           {/* Slide 1: craveXP Flash Drop */}
           <div
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
               heroSlideIndex === 1 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#07140e] via-[#0d2217]/95 to-[#050f0a] -z-10" />
+            <div className="absolute inset-0 bg-[#0C1510] -z-10" />
             <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <CraveLogo variant="cravexp" size="lg" theme="light" />
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#d9f447] text-[#0d1410] text-[11px] font-black uppercase tracking-wider">
-                  <span className="size-2 rounded-full bg-[#0d1410] animate-ping" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34C759] text-white text-[11px] font-semibold uppercase tracking-wider">
+                  <span className="size-1.5 rounded-full bg-white" />
                   10-Min Flash Drop
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Ultra-Fast Grocery &amp; Daily Essentials
               </h2>
-              <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
                 Farm eggs, chilled milk, organic avocados, fresh berries &amp; pantry snacks in 10 minutes flat.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <button
                   type="button"
                   onClick={() => router.push('/user/cravexp')}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] text-[#0d1410] font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#34C759] hover:bg-[#2EB84F] text-white font-semibold px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
                 >
                   <span>Open CraveXP Store</span>
-                  <ArrowRight className="size-4 text-[#0d1410]" />
+                  <ChevronRight className="size-4 stroke-[2.5] text-white" />
                 </button>
               </div>
             </div>
             <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
                 <img
                   src="/banners/cravexp-grocery.jpg"
                   alt="10-Minute Grocery Delivery Items"
-                  className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl"
+                  className="w-full h-full object-cover object-center rounded-2xl"
                 />
               </div>
             </div>
@@ -325,19 +362,22 @@ export default function ExploreView({
 
           {/* Slide 2: Midnight Cravings */}
           <div
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
               heroSlideIndex === 2 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0f081c] via-[#1a0e2e]/95 to-[#0b0514] -z-10" />
+            <div className="absolute inset-0 bg-[#14121E] -z-10" />
             <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[11px] font-black uppercase tracking-wider w-fit">
-                🌙 OPEN TILL 4 AM
-              </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15]">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <CraveLogo variant="full" size="md" theme="light" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6] text-white text-[11px] font-semibold uppercase tracking-wider w-fit">
+                  Open Till 4 AM
+                </span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Satisfy Your Late-Night Cravings
               </h2>
-              <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
                 Crispy wings, loaded cheesy nachos, warm chocolate lava cakes &amp; iced drinks delivered all night.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
@@ -347,35 +387,50 @@ export default function ExploreView({
                     setSearchQuery('Wings')
                     document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-black px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#1D1D1F] font-semibold px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
                 >
                   <span>Order Late Night Munchies</span>
-                  <ArrowRight className="size-4 text-white" />
+                  <ChevronRight className="size-4 stroke-[2.5] text-[#1D1D1F]" />
                 </button>
               </div>
             </div>
             <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl md:rounded-3xl overflow-hidden group/img">
-                <img src="/banners/midnight-feast.jpg" alt="Midnight Feast" className="w-full h-full object-cover object-center rounded-2xl md:rounded-3xl" />
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                <img src="/banners/midnight-feast.jpg" alt="Midnight Feast" className="w-full h-full object-cover object-center rounded-2xl" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Carousel Indicators & Arrows */}
+        {/* Apple-style Pill Indicators */}
+        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+          {[0, 1, 2].map((idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setHeroSlideIndex(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                heroSlideIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Carousel Indicators & Arrows - Apple Glass Controls */}
         <button
           type="button"
           onClick={() => setHeroSlideIndex((prev) => (prev === 0 ? 2 : prev - 1))}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 grid size-9 place-items-center rounded-full bg-black/60 text-white/80 hover:text-white border border-white/20 backdrop-blur-md cursor-pointer"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 grid size-8 sm:size-9 place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-90"
         >
-          <ChevronLeft className="size-5" />
+          <ChevronLeft className="size-4 stroke-[2.5]" />
         </button>
         <button
           type="button"
           onClick={() => setHeroSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 grid size-9 place-items-center rounded-full bg-black/60 text-white/80 hover:text-white border border-white/20 backdrop-blur-md cursor-pointer"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 grid size-8 sm:size-9 place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-90"
         >
-          <ChevronRight className="size-5" />
+          <ChevronRight className="size-4 stroke-[2.5]" />
         </button>
       </div>
 
@@ -537,6 +592,15 @@ export default function ExploreView({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {menuItemsList.map((item) => {
               const hasVariants = Boolean(item.variants?.length)
+              const variantItemsInCart = hasVariants
+                ? cart.filter(
+                    (c) =>
+                      c.id === item.id ||
+                      c.menuItemId === item.id ||
+                      ((c as any).variantId && item.variants?.some((v) => v.id === (c as any).variantId))
+                  )
+                : []
+              const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
               const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
               const isOutOfStock =
                 item.in_stock === false ||
@@ -607,28 +671,51 @@ export default function ExploreView({
                       <button
                         type="button"
                         onClick={() => openVariantPicker(item)}
-                        className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        className={`rounded-full px-4 py-2 text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                          variantQtyTotal > 0
+                            ? 'bg-emerald-600 dark:bg-[#d9f447] text-white dark:text-[#18201c] ring-2 ring-emerald-500/20'
+                            : 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] hover:scale-105 active:scale-95'
+                        }`}
                       >
-                        <Plus className="size-3.5" />
-                        <span>Options</span>
+                        {variantQtyTotal > 0 ? (
+                          <>
+                            <span>{variantQtyTotal} in Bag</span>
+                            <Plus className="size-3.5 stroke-[2.5]" />
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="size-3.5 stroke-[2.5]" />
+                            <span>Options</span>
+                          </>
+                        )}
                       </button>
                     ) : inCart ? (
-                      <div className="flex items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-2.5 py-1 text-xs font-bold text-white dark:text-[#18201c] shadow-xs">
-                        <button type="button" onClick={() => onUpdateQty(item.id, -1)} className="hover:opacity-75 cursor-pointer">
-                          <Minus className="size-3.5" />
+                      <div className="flex items-center rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-sm overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQty(item.id, -1)}
+                          className="size-8 grid place-items-center hover:bg-white/20 dark:hover:bg-black/20 transition cursor-pointer active:scale-90"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="size-3.5 stroke-[2.5]" />
                         </button>
-                        <span>{inCart.qty}</span>
-                        <button type="button" onClick={() => onUpdateQty(item.id, 1)} className="hover:opacity-75 cursor-pointer">
-                          <Plus className="size-3.5" />
+                        <span className="min-w-6 text-center text-xs font-mono font-black px-1">{inCart.qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQty(item.id, 1)}
+                          className="size-8 grid place-items-center hover:bg-white/20 dark:hover:bg-black/20 transition cursor-pointer active:scale-90"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="size-3.5 stroke-[2.5]" />
                         </button>
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => onAddToCart(item)}
-                        className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-5 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer min-h-[36px]"
                       >
-                        <Plus className="size-3.5" />
+                        <Plus className="size-3.5 stroke-[2.5]" />
                         <span>Add</span>
                       </button>
                     )}
@@ -651,97 +738,176 @@ export default function ExploreView({
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredRestaurants.map((rest) => (
-            <div
-              key={rest.id}
-              onClick={() => onSelectRestaurant(rest)}
-              className="group cursor-pointer overflow-hidden rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] transition duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative h-48 sm:h-52 w-full overflow-hidden">
-                  {rest.image ? (
-                    <img src={rest.image} alt={rest.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-108" />
-                  ) : (
-                    <div className="grid size-full place-items-center bg-gray-100 text-gray-400">
-                      <MapPin className="size-8" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredRestaurants.map((rest) => {
+            const displayOffer =
+              rest.offer ||
+              (rest.isPureVeg ? '100% Pure Veg Special' : 'Flat ₹120 Off')
+            const displayRating = rest.rating || '4.8'
+            const displayRatingCount = rest.ratingCount || '340'
+            const displayCost = rest.costForTwo || '₹350 for two'
+            const displayEta = rest.eta || '25 min'
+            const displayDistance = rest.distance ? `${rest.distance} km` : '2.2 km'
 
-                  <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap">
-                    {rest.tag && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-200 bg-black/60 px-2 py-0.5 rounded-md">
-                        {rest.tag}
-                      </span>
+            const isFavorited = favoriteIds.includes(rest.id)
+
+            return (
+              <div
+                key={rest.id}
+                onClick={() => onSelectRestaurant(rest)}
+                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#1C1C1E] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] active:scale-[0.99] flex flex-col justify-between"
+              >
+                <div>
+                  {/* Photo Visual Frame - Clean Apple Framing (Zero Gradients) */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]">
+                    {rest.image ? (
+                      <img
+                        src={rest.image}
+                        alt={rest.name}
+                        className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="grid size-full place-items-center bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#8E8E93]">
+                        <UtensilsCrossed className="size-8 stroke-[1.5]" />
+                      </div>
                     )}
-                    {rest.isPureVeg && (
-                      <span className="text-[10px] font-bold uppercase text-emerald-400 bg-black/60 px-2 py-0.5 rounded-md">
-                        Pure Veg
-                      </span>
-                    )}
+
+                    {/* Top Floating Apple Chips & SF Action Controls */}
+                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                      <div className="flex items-center gap-1.5 flex-wrap pointer-events-none">
+                        {rest.isPureVeg && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
+                            <span className="size-1.5 rounded-full bg-[#34C759]" />
+                            Pure Veg
+                          </span>
+                        )}
+                        {rest.tag && (
+                          <span className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium tracking-wide uppercase text-white shadow-sm">
+                            {rest.tag}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* SF Symbol Heart (Favorite Button) */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleFavorite(rest.id, rest.name)
+                          }}
+                          aria-label={isFavorited ? 'Remove from favorites' : 'Save to favorites'}
+                          className="size-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 grid place-items-center text-white transition-all active:scale-90 shadow-sm cursor-pointer"
+                        >
+                          <Heart
+                            className={`size-4 stroke-[1.75] transition-all duration-200 ${
+                              isFavorited
+                                ? 'fill-[#FF3B30] text-[#FF3B30] scale-105'
+                                : 'text-white'
+                            }`}
+                          />
+                        </button>
+
+                        {/* SF Symbol Star Rating */}
+                        <div className="inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[12px] font-semibold text-white shadow-sm pointer-events-none">
+                          <Star className="size-3.5 fill-[#FF9500] text-[#FF9500] stroke-[1.5]" />
+                          <span>{displayRating}</span>
+                          <span className="text-[11px] font-normal text-white/80">({displayRatingCount})</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Floating Metadata on Photo (Solid / Frosted Translucent Pills, Zero Gradients) */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 pointer-events-none z-10">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] px-3 py-1 shadow-sm">
+                        <Tag className="size-3 stroke-[2] text-[#FF9500]" />
+                        <span>{displayOffer}</span>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
+                        <Clock className="size-3 stroke-[2] text-white/90" />
+                        <span>{displayEta}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {rest.rating && (
-                    <div className="absolute right-3 top-3 text-[10px] font-bold text-emerald-400 bg-black/60 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Award className="size-3" />
-                      <span>{rest.rating}</span>
+                  {/* Card Content Body - Apple SF Pro Typographic Hierarchy */}
+                  <div className="p-4 sm:p-4.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-[17px] tracking-[-0.015em] text-[#1D1D1F] dark:text-[#F5F5F7] group-hover:text-[#007AFF] dark:group-hover:text-[#0A84FF] transition-colors flex items-center gap-1.5 truncate">
+                          <span>{rest.name}</span>
+                          <CheckCircle2 className="size-4 text-[#34C759] shrink-0 stroke-[2]" />
+                        </h4>
+                        <p className="mt-0.5 text-[13px] text-[#86868B] dark:text-[#98989D] font-normal line-clamp-1">
+                          {rest.cuisine}
+                        </p>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="inline-block text-[12px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-2.5 py-0.5 rounded-full">
+                          {displayCost}
+                        </span>
+                      </div>
                     </div>
-                  )}
 
-                  {rest.eta && (
-                    <span className="absolute bottom-3 right-3 text-[10px] font-medium text-white bg-black/60 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Clock className="size-3 text-[#d9f447]" />
-                      {rest.eta}
+                    {/* Apple Maps Style Metadata Row */}
+                    <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.06] text-[12px] text-[#86868B] dark:text-[#98989D]">
+                      <span className="flex items-center gap-1 font-normal">
+                        <MapPin className="size-3.5 text-[#86868B] dark:text-[#98989D] stroke-[1.75]" />
+                        <span>{displayDistance}</span>
+                      </span>
+                      <span>&bull;</span>
+                      <span className="flex items-center gap-1 font-medium text-[#34C759]">
+                        <Clock className="size-3.5 stroke-[1.75]" />
+                        <span>Fast Doorstep Delivery</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Action Bar - Apple App Store Button Style */}
+                <div className="px-4 sm:px-4.5 pb-4 pt-0">
+                  <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.06] pt-3">
+                    <span className="flex items-center gap-2 text-[12px] font-medium text-[#86868B] dark:text-[#98989D]">
+                      <span className="size-2 rounded-full bg-[#34C759]" />
+                      <span className="text-[#1D1D1F] dark:text-[#F5F5F7]">Kitchen Live</span>
                     </span>
-                  )}
-                </div>
 
-                <div className="p-4 sm:p-5">
-                  <h3 className="font-extrabold text-base tracking-tight text-[#18201c] dark:text-white group-hover:text-[#86a018] transition">
-                    {rest.name}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{rest.cuisine}</p>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] group-hover:bg-[#007AFF] group-hover:text-white dark:group-hover:bg-[#0A84FF] dark:group-hover:text-white text-[#007AFF] dark:text-[#0A84FF] px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200">
+                      <span>View</span>
+                      <ChevronRight className="size-3.5 stroke-[2.5]" />
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              <div className="p-4 sm:p-5 pt-0">
-                <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/5 pt-3 text-xs">
-                  <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    {rest.eta ? `Delivery · ${rest.eta}` : 'Available'}
-                  </span>
-                  <span className="font-bold text-[#86a018] flex items-center gap-1">
-                    View Menu <ArrowRight className="size-3" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
-      {/* Secondary CraveXP Banner */}
+      {/* Secondary CraveXP Card - Apple Solid Grouped Card (Zero Gradients) */}
       <div
         onClick={() => router.push('/user/cravexp')}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#141b17] via-[#1b2720] to-[#121915] p-5 sm:p-6 border border-emerald-500/20 hover:border-[#d9f447]/50 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group transition duration-300"
+        className="relative overflow-hidden rounded-2xl bg-[#1C1C1E] dark:bg-[#161617] p-5 sm:p-6 border border-black/[0.08] dark:border-white/[0.08] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group transition-all duration-200 active:scale-[0.99]"
       >
         <div className="flex items-center gap-4">
-          <div className="grid size-12 place-items-center rounded-2xl bg-[#d9f447]/15 border border-[#d9f447]/30 text-[#d9f447] shrink-0">
-            <Zap className="size-6 fill-current text-[#d9f447]" />
+          <div className="grid size-11 place-items-center rounded-xl bg-white/10 text-white shrink-0">
+            <Zap className="size-5 fill-current text-[#34C759]" />
           </div>
           <div>
-            <p className="font-extrabold text-sm sm:text-base text-white group-hover:text-[#d9f447] transition">
+            <p className="font-semibold text-sm sm:text-base text-white">
               Need Groceries or Midnight Snacks Fast?
             </p>
-            <p className="text-xs text-gray-300 mt-1 max-w-xl">
-              Daily essentials, fresh milk, beverages, eggs &amp; munchies dispatched in 10 mins.
+            <p className="text-xs text-[#86868B] mt-1 max-w-xl">
+              Daily essentials, fresh milk, beverages, eggs &amp; munchies dispatched in 10 mins flat.
             </p>
           </div>
         </div>
-        <span className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 group-hover:bg-[#d9f447] text-white group-hover:text-[#121815] px-4 py-2.5 text-xs font-black transition">
-          <span>Visit craveXP Store</span>
-          <ArrowRight className="size-3.5" />
+        <span className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-white hover:bg-stone-100 text-[#1D1D1F] px-5 py-2 text-[13px] font-semibold transition shadow-sm active:scale-95">
+          <span>Visit CraveXP Store</span>
+          <ChevronRight className="size-3.5 stroke-[2.5]" />
         </span>
       </div>
 

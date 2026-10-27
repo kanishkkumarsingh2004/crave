@@ -273,15 +273,13 @@ export default function RestaurantProfileView({
             alt={restaurant.name}
             className="size-full object-cover group-hover:scale-105 transition duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-          {/* Badges on hero banner */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-black text-white uppercase tracking-wider border border-white/20">
+            <span className="rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-xs font-medium text-white tracking-wide uppercase border border-white/15 shadow-sm">
               {restaurant.tag || 'Crave Partner'}
             </span>
             {restaurant.isPureVeg && (
-              <span className="rounded-full bg-emerald-600/90 backdrop-blur-md px-3 py-1 text-xs font-black text-white uppercase tracking-wider">
+              <span className="rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-xs font-medium text-white tracking-wide border border-white/15 shadow-sm flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#34C759]" />
                 Pure Veg
               </span>
             )}
@@ -549,6 +547,15 @@ export default function RestaurantProfileView({
                   <div className="divide-y divide-stone-100 dark:divide-[#1d2920]">
                     {dishes.map((item) => {
                       const hasVariants = Boolean(item.variants && item.variants.length > 0)
+                      const variantItemsInCart = hasVariants
+                        ? cart.filter(
+                            (c) =>
+                              c.id === item.id ||
+                              c.menuItemId === item.id ||
+                              ((c as any).variantId && item.variants?.some((v) => v.id === (c as any).variantId))
+                          )
+                        : []
+                      const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
                       const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
                       const isOutOfStock =
                         item.in_stock === false ||
@@ -653,41 +660,51 @@ export default function RestaurantProfileView({
                                   <button
                                     type="button"
                                     onClick={() => handleOpenVariantPicker(item)}
-                                    className="flex items-center gap-1.5 rounded-lg border border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] px-6 py-1.5 text-xs font-black text-emerald-600 dark:text-[#d9f447] shadow-md hover:bg-stone-50 dark:hover:bg-[#1e2d24] active:scale-95 transition cursor-pointer"
+                                    className={`flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-black shadow-sm active:scale-95 transition cursor-pointer min-h-[36px] ${
+                                      variantQtyTotal > 0
+                                        ? 'border-emerald-500/50 dark:border-[#d9f447]/50 bg-emerald-50 dark:bg-[#1a2920] text-emerald-700 dark:text-[#d9f447]'
+                                        : 'border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] text-emerald-600 dark:text-[#d9f447] hover:bg-stone-50 dark:hover:bg-[#1e2d24]'
+                                    }`}
                                   >
-                                    <span>ADD</span>
-                                    <Plus className="size-3" />
+                                    <span>{variantQtyTotal > 0 ? `${variantQtyTotal} ADDED` : 'ADD'}</span>
+                                    <Plus className="size-3.5 stroke-[2.5]" />
                                   </button>
                                   <span className="text-[9px] font-bold text-stone-400 dark:text-gray-500 mt-0.5">
                                     Customisable
                                   </span>
                                 </div>
                               ) : inCart ? (
-                                <div className="flex items-center gap-2 rounded-lg border border-emerald-600/30 bg-white dark:bg-[#17221b] px-3 py-1 text-xs font-black text-[#121815] dark:text-white shadow-md">
+                                <div className="flex items-center rounded-xl border border-emerald-600/30 bg-white dark:bg-[#17221b] shadow-sm overflow-hidden">
                                   <button
+                                    type="button"
                                     onClick={() => onUpdateQty(item.id, -1)}
-                                    className="hover:text-rose-500 transition cursor-pointer px-1"
+                                    className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer active:scale-90"
                                     title="Decrease quantity"
+                                    aria-label="Decrease quantity"
                                   >
-                                    <Minus className="size-3" />
+                                    <Minus className="size-3.5 stroke-[2.5]" />
                                   </button>
-                                  <span className="min-w-3 text-center">{inCart.qty}</span>
+                                  <span className="min-w-6 text-center text-xs font-mono font-black text-[#121815] dark:text-white px-1">
+                                    {inCart.qty}
+                                  </span>
                                   <button
+                                    type="button"
                                     onClick={() => onUpdateQty(item.id, 1)}
-                                    className="hover:text-emerald-500 transition cursor-pointer px-1"
+                                    className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-emerald-500 hover:bg-emerald-500/10 transition cursor-pointer active:scale-90"
                                     title="Increase quantity"
+                                    aria-label="Increase quantity"
                                   >
-                                    <Plus className="size-3" />
+                                    <Plus className="size-3.5 stroke-[2.5]" />
                                   </button>
                                 </div>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => onAddToCart(item)}
-                                  className="flex items-center gap-1.5 rounded-lg border border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] px-6 py-1.5 text-xs font-black text-emerald-600 dark:text-[#d9f447] shadow-md hover:bg-stone-50 dark:hover:bg-[#1e2d24] active:scale-95 transition cursor-pointer"
+                                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] px-5 py-2 text-xs font-black text-emerald-600 dark:text-[#d9f447] shadow-sm hover:bg-stone-50 dark:hover:bg-[#1e2d24] active:scale-95 transition cursor-pointer min-h-[36px]"
                                 >
                                   <span>ADD</span>
-                                  <Plus className="size-3" />
+                                  <Plus className="size-3.5 stroke-[2.5]" />
                                 </button>
                               )}
                             </div>

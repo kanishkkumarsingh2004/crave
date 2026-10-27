@@ -537,9 +537,9 @@ export default function ProfileView({
           <button
             type="button"
             onClick={onOpenAddAddressModal}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#b5de28] hover:bg-[#728812] px-3.5 py-1.5 text-xs font-black text-white transition shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#121815] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#121815] hover:opacity-90 active:scale-95 px-3.5 py-1.5 text-xs font-black transition shadow-xs cursor-pointer"
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-3.5 stroke-[3]" />
             <span>Add New</span>
           </button>
         </div>

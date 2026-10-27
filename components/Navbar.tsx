@@ -14,6 +14,7 @@ import { AddressPill } from './navbar/AddressPill'
 import { DesktopNavLinks } from './navbar/DesktopNavLinks'
 import { UserDropdown } from './navbar/UserDropdown'
 import { MobileMenuDrawer } from './navbar/MobileMenuDrawer'
+import CraveLogo from '@/components/CraveLogo'
 
 export { roleDetails }
 
@@ -96,10 +97,8 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
-              <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white">
-                crave<span className="text-[#86a018]">.</span>
-              </span>
+            <Link href="/" className="flex items-center gap-2 group shrink-0" suppressHydrationWarning aria-label="crave home">
+              <CraveLogo variant="full" size="md" />
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -134,10 +133,8 @@ export default function Navbar() {
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-3 py-2 sm:px-6 sm:py-2.5 gap-2">
           {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Link href={logoTargetLink} className="flex items-center gap-1.5 group shrink-0">
-              <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white hover:opacity-90 transition">
-                crave<span className="text-[#86a018]">.</span>
-              </span>
+            <Link href={logoTargetLink} className="flex items-center gap-1.5 group shrink-0" aria-label="crave home">
+              <CraveLogo variant="full" size="md" />
             </Link>
           </div>
 

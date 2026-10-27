@@ -1,5 +1,6 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import { CheckCircle, Download, PlusSquare, Share, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -130,10 +131,7 @@ export default function PwaInstallPrompt() {
         <div className="bg-[#18201c] text-white p-4 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 backdrop-blur-md">
           {/* App Logo */}
           <div className="w-12 h-12 rounded-xl bg-black/40 flex items-center justify-center shrink-0 border border-white/5 overflow-hidden">
-            {/* Crave mini icon */}
-            <span className="text-white font-black text-2xl tracking-tighter inline-flex items-baseline">
-              c<span className="w-1.5 h-1.5 bg-[#d9f447] rounded-sm ml-0.5" />
-            </span>
+            <CraveLogo variant="small" size="md" theme="light" />
           </div>
 
           {/* Text Details */}

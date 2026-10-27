@@ -1,5 +1,6 @@
 'use client'
 
+import CraveLogo from '@/components/CraveLogo'
 import { LogIn, UtensilsCrossed } from 'lucide-react'
 import Link from 'next/link'
 
@@ -8,15 +9,12 @@ export default function Forbidden() {
     <div className="min-h-screen bg-[#18201c] text-[#f8f9f7] relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 size-[600px] rounded-full bg-rose-500/5 blur-[130px]" />
-        <div className="absolute bottom-1/4 right-1/4 size-[400px] rounded-full bg-[#d9f447]/3 blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 size-[400px] rounded-full bg-[#86a018]/3 blur-[120px]" />
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-[1200px] flex-col items-center justify-center px-5 py-16 text-center">
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <UtensilsCrossed className="size-12 text-[#d9f447]" />
-          <span className="text-6xl font-black tracking-tight">
-            crave<span className="text-[#d9f447]">.</span>
-          </span>
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <CraveLogo variant="full" size="xl" theme="light" />
         </div>
 
         <div className="mb-10 text-[6rem] font-black text-rose-400 leading-none">403</div>

@@ -22,9 +22,12 @@ import type { LatLngCoords } from './types'
 const LiveDriverMap = dynamic(() => import('@/components/LiveDriverMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] font-bold">
-      <CraveSpinner size="lg" variant="crave" />
-      <span className="tracking-wider uppercase text-[11px] text-white">
+    <div className="h-64 sm:h-72 w-full rounded-2xl bg-[#121815] border border-[#27342d] flex flex-col items-center justify-center gap-3 text-xs text-[#9eb3a4] relative overflow-hidden">
+      <div className="absolute inset-0 bg-[#0F1411] opacity-90" />
+      <div className="relative size-12 rounded-2xl bg-[#d9f447]/10 border border-[#d9f447]/20 flex items-center justify-center text-[#d9f447]">
+        <Bike className="size-6 animate-pulse" />
+      </div>
+      <span className="tracking-wider uppercase text-[11px] font-bold text-stone-300 relative z-10">
         Connecting Live Rider GPS Map...
       </span>
     </div>
@@ -92,9 +95,8 @@ export default function LiveOrderView({
           </div>
 
           <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-[#dfe5db] bg-white shadow-xl">
-            {/* Header Banner */}
-            <div className="bg-gradient-to-br from-[#18201c] via-[#222c27] to-[#18201c] p-4 sm:p-7 text-white relative overflow-hidden">
-              <div className="absolute -right-12 -top-12 size-48 rounded-full bg-[#d9f447]/10 blur-3xl pointer-events-none" />
+            {/* Header Banner - Apple Solid Style */}
+            <div className="bg-[#1C1C1E] p-4 sm:p-7 text-white relative overflow-hidden">
 
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
                 <div className="space-y-2.5 sm:space-y-3 min-w-0">
@@ -197,9 +199,9 @@ export default function LiveOrderView({
               </div>
             </div>
 
-            {/* 15-Second Instant Cancellation Grace Window */}
+            {/* 15-Second Instant Cancellation Grace Window - Apple Solid Style */}
             {cancelTimeRemaining > 0 ? (
-              <div className="bg-gradient-to-r from-rose-950/90 via-zinc-900 to-rose-950/90 border-b border-rose-500/30 p-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white backdrop-blur-md">
+              <div className="bg-[#2C1518] border-b border-rose-500/20 p-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
                 <div className="flex items-center gap-3.5">
                   <div className="relative size-12 sm:size-14 shrink-0 grid place-items-center">
                     <svg className="size-full -rotate-90 transform" viewBox="0 0 44 44">
@@ -276,7 +278,7 @@ export default function LiveOrderView({
               <div className="relative max-w-3xl mx-auto px-2 py-4">
                 <div className="absolute top-[26px] sm:top-[30px] left-8 right-8 sm:left-12 sm:right-12 h-1.5 bg-gray-100 dark:bg-[#253229] rounded-full z-0 overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out shadow-sm"
+                    className="h-full bg-[#34C759] rounded-full transition-all duration-700 ease-out shadow-sm"
                     style={{
                       width: `${((Math.max(1, Math.min(activeOrder.statusStep, 4)) - 1) / 3) * 100}%`,
                     }}
@@ -404,9 +406,9 @@ export default function LiveOrderView({
               </div>
             </div>
 
-            {/* Confidential Delivery OTP */}
+            {/* Confidential Delivery OTP - Apple Solid Style */}
             {activeOrder.otp && (
-              <div className="p-4 sm:p-6 border-t border-gray-100 dark:border-[#27342d] bg-gradient-to-r from-[#f7faef] via-white to-[#f7faef] dark:from-[#1b251e] dark:via-[#161f19] dark:to-[#1b251e] flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-b-3xl">
+              <div className="p-4 sm:p-6 border-t border-black/[0.06] dark:border-white/[0.08] bg-[#F2F2F7] dark:bg-[#1C1C1E] flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-b-2xl sm:rounded-b-3xl">
                 <div className="flex items-center gap-3.5">
                   <div className="grid size-11 place-items-center rounded-2xl bg-[#d9f447] text-[#18201c] shrink-0 shadow-md">
                     <KeyRound className="size-5 stroke-[2.5]" />
@@ -536,11 +538,11 @@ export default function LiveOrderView({
                 <div
                   key={ord.id}
                   onClick={() => onSelectOrder(String(ord.id))}
-                  className="p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 bg-[#f8f9f6] text-[#18201c] border-[#e1e6df] hover:border-gray-300 hover:shadow-md"
+                  className="p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-3 bg-[#f8f9f6] dark:bg-[#131b16] text-[#18201c] dark:text-white border-[#e1e6df] dark:border-[#27342d] hover:border-gray-300 dark:hover:border-[#3a4d3f] hover:shadow-md"
                 >
                   <div className="flex items-start justify-between gap-2 min-w-0">
                     <div className="min-w-0">
-                      <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400">
+                      <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">
                         Order #{String(ord.id).slice(0, 8).toUpperCase()}
                       </p>
                       <h4 className="font-extrabold text-xs sm:text-sm truncate mt-0.5">
@@ -553,7 +555,7 @@ export default function LiveOrderView({
                   </div>
 
                   <div className="flex items-center justify-between border-t border-gray-200 dark:border-white/10 pt-2.5 text-xs">
-                    <div className="min-w-0 flex flex-col text-gray-500">
+                    <div className="min-w-0 flex flex-col text-gray-500 dark:text-gray-400">
                       <span>{itemsArr.length} items &bull; ₹{ord.total_amount || ord.subtotal || 0}</span>
                     </div>
                     <button
@@ -562,7 +564,7 @@ export default function LiveOrderView({
                         e.stopPropagation()
                         onSelectOrder(String(ord.id))
                       }}
-                      className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 bg-[#18201c] text-white hover:bg-[#2e3b34] cursor-pointer"
+                      className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition shadow-xs shrink-0 bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] hover:bg-[#2e3b34] dark:hover:bg-[#cbe838] cursor-pointer"
                     >
                       <Bike className="size-3" />
                       <span>Track</span>

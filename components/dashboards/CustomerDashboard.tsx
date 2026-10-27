@@ -1,6 +1,7 @@
 'use client'
 
 import AddressModal from '@/components/AddressModal'
+import CraveLogo from '@/components/CraveLogo'
 import InvoiceModal, { InvoiceOrderData } from '@/components/InvoiceModal'
 import ExploreView from '@/components/customer/ExploreView'
 import HelpView from '@/components/customer/HelpView'
@@ -468,6 +469,7 @@ export default function CustomerDashboard({
         deliveryTime: '',
         driverName: o.driver_name || undefined,
         driverPhone: o.driver_phone || undefined,
+        restaurantId: o.restaurant_id || o.restaurantId || undefined,
       }
     })
   }, [ordersData])
@@ -600,8 +602,8 @@ export default function CustomerDashboard({
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-1.5 sm:gap-4">
           {/* Logo & Location */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <Link href="/" className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] dark:text-white shrink-0 hover:opacity-90">
-              crave<span className="text-[#86a018]">.</span>
+            <Link href="/" className="shrink-0 hover:opacity-90 flex items-center" aria-label="crave home">
+              <CraveLogo variant="full" size="md" />
             </Link>
 
             <button
@@ -625,6 +627,15 @@ export default function CustomerDashboard({
             >
               <Compass className={`size-4 ${activeTab === 'explore' ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'}`} />
               <span>Explore</span>
+            </button>
+
+            <button
+              onClick={() => router.push('/user/cravexp')}
+              className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 cursor-pointer text-gray-700 dark:text-gray-300 hover:text-[#18201c] dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10 group"
+              title="craveXP 10-Minute Dark Store"
+            >
+              <CraveLogo variant="cravexp" size="sm" />
+              <span className="text-xs font-semibold text-[#86a018]">Store</span>
             </button>
 
             <button
@@ -758,6 +769,25 @@ export default function CustomerDashboard({
             onViewInvoice={setInvoiceModalOrder}
             customerName={user?.name}
             customerAddress={deliveryAddress}
+            onReorder={(order) => {
+              if (!order.items?.length) return
+              order.items.forEach((item, idx) => {
+                addItem({
+                  id: `reorder_${order.id}_${idx}_${Date.now()}`,
+                  name: item.name,
+                  price: item.price,
+                  qty: item.qty || 1,
+                  variantName: item.variantName,
+                  restaurantName: order.restaurantName,
+                  restaurantId: order.restaurantId,
+                  veg: true,
+                  detail: '',
+                  image: order.restaurantImage || '',
+                })
+              })
+              toast(`Added ${order.items.length} ${order.items.length === 1 ? 'item' : 'items'} to cart!`, 'success')
+              router.push('/user/cart')
+            }}
           />
         )}
 
@@ -796,6 +826,14 @@ export default function CustomerDashboard({
         >
           <Compass className="size-5" />
           <span>Explore</span>
+        </button>
+
+        <button
+          onClick={() => router.push('/user/cravexp')}
+          className="flex flex-col items-center gap-1 text-[10px] font-bold cursor-pointer text-gray-400 hover:text-[#86a018] dark:hover:text-white"
+        >
+          <CraveLogo variant="cravexp" size="sm" />
+          <span className="text-[9px] font-semibold text-[#86a018]">Store</span>
         </button>
 
         <button

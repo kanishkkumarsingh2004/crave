@@ -2,6 +2,7 @@
 
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
+import CraveLogo from '@/components/CraveLogo'
 import { AdminDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
@@ -153,9 +154,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     : 'opacity-100 max-w-[160px]'
                 }`}
               >
-                <span className="text-lg font-extrabold tracking-tight text-[#18201c] dark:text-white leading-none">
-                  crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
-                </span>
+                <CraveLogo variant="full" size="sm" />
                 <span className="text-[10px] font-extrabold uppercase text-purple-700 dark:text-purple-400">
                   Admin
                 </span>
