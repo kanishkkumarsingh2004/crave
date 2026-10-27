@@ -150,14 +150,14 @@ export default function VendorSalesPage() {
   const ordersCommission = orders.reduce(
     (sum, o) =>
       sum +
-      (o.commission_amount != null
-        ? Number(o.commission_amount)
-        : o.financial_snapshot?.grossCommissionPaise != null
-          ? Math.round(Number(o.financial_snapshot.grossCommissionPaise) / 100)
-          : Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100)),
+      (o.financial_snapshot?.grossCommissionPaise != null
+        ? Number(o.financial_snapshot.grossCommissionPaise) / 100
+        : o.commission_amount != null
+          ? Number(o.commission_amount)
+          : (Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100),
     0
   )
-  const calculatedCommission = Math.round((totalGrossSales * commissionRate) / 100)
+  const calculatedCommission = (totalGrossSales * commissionRate) / 100
   const totalCommission =
     ordersGross > 0
       ? ordersCommission
@@ -169,11 +169,11 @@ export default function VendorSalesPage() {
   const ordersNet = orders.reduce(
     (sum, o) =>
       sum +
-      (o.restaurant_payout != null
-        ? Number(o.restaurant_payout)
-        : o.financial_snapshot?.vendorPayableNetPaise != null
-          ? Math.round(Number(o.financial_snapshot.vendorPayableNetPaise) / 100)
-          : Math.max(0, Number(o.subtotal || o.total_amount || 0) - Math.round((Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100))),
+      (o.financial_snapshot?.vendorPayableNetPaise != null
+        ? Number(o.financial_snapshot.vendorPayableNetPaise) / 100
+        : o.restaurant_payout != null
+          ? Number(o.restaurant_payout)
+          : Math.max(0, Number(o.subtotal || o.total_amount || 0) - (Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100)),
     0
   )
   const totalNetEarnings =
@@ -238,7 +238,7 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#121815] dark:text-white truncate">
-              ₹{totalGrossSales.toLocaleString()}
+              ₹{totalGrossSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Across {totalRecordCount} {orders.length > 0 ? 'orders' : 'records'}
@@ -256,7 +256,7 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
-              -₹{totalCommission.toLocaleString()}
+              -₹{totalCommission.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Commission cut
@@ -274,7 +274,7 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400 truncate">
-              ₹{totalNetEarnings.toLocaleString()}
+              ₹{totalNetEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Total net earnings
@@ -292,7 +292,7 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#5e700a] dark:text-[#d9f447] truncate">
-              ₹{totalSettledAmount.toLocaleString()}
+              ₹{totalSettledAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-1 truncate">
               Transferred to bank
@@ -310,7 +310,7 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
-              ₹{remainingSettlementBalance.toLocaleString()}
+              ₹{remainingSettlementBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-1 truncate">
               Awaiting payout release

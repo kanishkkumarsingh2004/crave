@@ -42,68 +42,82 @@ export default function AdminPaymentLedgerPage() {
           const billingBreakdown = firstItem?.billing_breakdown || {}
 
           const subtotal = Number(
-            o.subtotal ??
             (snapshot.grossSubtotalPaise != null ? snapshot.grossSubtotalPaise / 100 : null) ??
+            o.subtotal ??
             o.total_amount ??
             0
           )
           const deliveryFee = Number(
-            o.delivery_fee ??
             (snapshot.deliveryFeePaise != null ? snapshot.deliveryFeePaise / 100 : null) ??
+            billingBreakdown.delivery_fee ??
+            o.delivery_fee ??
             0
           )
           const platformFee = Number(
-            o.platform_fee ??
             (snapshot.platformFeePaise != null ? snapshot.platformFeePaise / 100 : null) ??
+            billingBreakdown.platform_fee ??
+            o.platform_fee ??
             0
           )
           const handlingFee = Number(
-            o.handling_fee ??
             (snapshot.handlingFeePaise != null ? snapshot.handlingFeePaise / 100 : null) ??
+            billingBreakdown.handling_fee ??
+            o.handling_fee ??
             0
           )
           const packagingFee = Number(
-            o.packaging_fee ??
             (snapshot.packagingFeePaise != null ? snapshot.packagingFeePaise / 100 : null) ??
+            billingBreakdown.packaging_fee ??
+            o.packaging_fee ??
             0
           )
           const gst = Number(
-            o.gst ??
             (snapshot.platformServiceTaxBreakdown?.totalGstPaise != null
               ? snapshot.platformServiceTaxBreakdown.totalGstPaise / 100
               : null) ??
+            billingBreakdown.gst ??
+            o.gst ??
             0
           )
           const totalAmount = Number(
-            o.total_amount ??
             (snapshot.customerPayablePaise != null
-              ? Math.round(snapshot.customerPayablePaise / 100)
+              ? snapshot.customerPayablePaise / 100
               : null) ??
+            billingBreakdown.total_amount ??
+            o.total_amount ??
             (subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst)
           )
 
-          // Canonical splits derived from financial_snapshot / database columns:
+          // Canonical splits derived from financial_snapshot / database columns (paise exact):
           // 1. Kitchen Net Payout
           const vendorCut = Number(
-            o.restaurant_payout ??
-            (snapshot.vendorPayableNetPaise != null ? Math.round(snapshot.vendorPayableNetPaise / 100) : null) ??
+            (snapshot.vendorPayableNetPaise != null
+              ? snapshot.vendorPayableNetPaise / 100
+              : null) ??
             billingBreakdown.vendor_net_payout ??
+            o.restaurant_payout ??
             Math.round(subtotal * 0.85)
           )
 
           // 2. Driver Payout
           const driverCut = Number(
-            billingBreakdown.driver_payout ??
-            (snapshot.riderPayablePaise != null ? Math.round(snapshot.riderPayablePaise / 100) : null) ??
+            (snapshot.riderPayablePaise != null
+              ? snapshot.riderPayablePaise / 100
+              : null) ??
+            (billingBreakdown.driver_base_payout && billingBreakdown.driver_extra_distance_payout
+              ? billingBreakdown.driver_base_payout + billingBreakdown.driver_extra_distance_payout
+              : billingBreakdown.driver_payout) ??
             Math.round(deliveryFee * 0.8) + (Number(o.tip) || 0)
           )
 
           // 3. Crave Platform Net Retained Margin
           const platformCut = Number(
-            o.platform_revenue ??
-            (snapshot.platformNetRevenuePaise != null ? Math.round(snapshot.platformNetRevenuePaise / 100) : null) ??
+            (snapshot.platformNetRevenuePaise != null
+              ? snapshot.platformNetRevenuePaise / 100
+              : null) ??
             billingBreakdown.platform_net_profit ??
-            Math.max(0, Math.round(totalAmount - vendorCut - driverCut))
+            o.platform_revenue ??
+            Math.max(0, totalAmount - vendorCut - driverCut)
           )
 
           // Method & Status detection

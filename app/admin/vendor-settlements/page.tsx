@@ -179,16 +179,18 @@ export default function VendorSettlementsPage() {
             restaurantMap[targetKey].weeklyGrossSales += Number(o.subtotal || o.total_amount || 0)
             restaurantMap[targetKey].completedDropsCount += 1
             const netPay = Number(
-              o.restaurant_payout ??
               (o.financial_snapshot?.vendorPayableNetPaise
-                ? Math.round(o.financial_snapshot.vendorPayableNetPaise / 100)
-                : 0)
+                ? o.financial_snapshot.vendorPayableNetPaise / 100
+                : null) ??
+              o.restaurant_payout ??
+              0
             )
             const comm = Number(
-              o.commission_amount ??
               (o.financial_snapshot?.grossCommissionPaise
-                ? Math.round(o.financial_snapshot.grossCommissionPaise / 100)
-                : 0)
+                ? o.financial_snapshot.grossCommissionPaise / 100
+                : null) ??
+              o.commission_amount ??
+              0
             )
             if (netPay > 0) restaurantMap[targetKey].netPayableAmount += netPay
             if (comm > 0) restaurantMap[targetKey].commissionAmount += comm

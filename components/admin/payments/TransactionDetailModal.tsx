@@ -88,39 +88,39 @@ export function TransactionDetailModal({
 
           <div className="flex justify-between text-white/80">
             <span>Food Items Subtotal</span>
-            <span className="font-bold text-white">₹{selectedTx.subtotal}</span>
+            <span className="font-bold text-white">{formatCurrency(selectedTx.subtotal)}</span>
           </div>
 
           {selectedTx.packagingFee > 0 && (
             <div className="flex justify-between text-white/80">
               <span>Restaurant Packaging Fee</span>
-              <span className="font-bold text-white">₹{selectedTx.packagingFee}</span>
+              <span className="font-bold text-white">{formatCurrency(selectedTx.packagingFee)}</span>
             </div>
           )}
 
           <div className="flex justify-between text-white/80">
             <span>Distance Delivery Tariff</span>
-            <span className="font-bold text-white">₹{selectedTx.deliveryFee}</span>
+            <span className="font-bold text-white">{formatCurrency(selectedTx.deliveryFee)}</span>
           </div>
 
           <div className="flex justify-between text-white/80">
             <span>Platform Service Fee</span>
-            <span className="font-bold text-white">₹{selectedTx.platformFee}</span>
+            <span className="font-bold text-white">{formatCurrency(selectedTx.platformFee)}</span>
           </div>
 
           <div className="flex justify-between text-white/80">
             <span>Order Handling Charge</span>
-            <span className="font-bold text-white">₹{selectedTx.handlingFee}</span>
+            <span className="font-bold text-white">{formatCurrency(selectedTx.handlingFee)}</span>
           </div>
 
           <div className="flex justify-between text-[#d9f447]/90 font-medium">
             <span>Taxes &amp; GST</span>
-            <span className="font-bold">₹{selectedTx.gst}</span>
+            <span className="font-bold">{formatCurrency(selectedTx.gst)}</span>
           </div>
 
           <div className="pt-3 border-t border-white/15 flex justify-between items-baseline font-black text-base text-[#d9f447]">
             <span>Customer Grand Total</span>
-            <span>₹{selectedTx.amount}</span>
+            <span>{formatCurrency(selectedTx.amount)}</span>
           </div>
         </div>
 
@@ -134,14 +134,14 @@ export function TransactionDetailModal({
             <span className="font-bold flex items-center gap-1.5">
               <Store className="size-3.5" /> Kitchen Net Payout (Food + Packaging - Comm)
             </span>
-            <span className="font-black text-sm">₹{selectedTx.vendorCut}</span>
+            <span className="font-black text-sm">{formatCurrency(selectedTx.vendorCut)}</span>
           </div>
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-blue-500/10 text-blue-900 dark:text-blue-300">
             <span className="font-bold flex items-center gap-1.5">
               <Truck className="size-3.5" /> Driver Courier Payout (Tariff + Tip)
             </span>
-            <span className="font-black text-sm">₹{selectedTx.driverCut}</span>
+            <span className="font-black text-sm">{formatCurrency(selectedTx.driverCut)}</span>
           </div>
 
           <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-500/10 text-emerald-900 dark:text-emerald-300">
@@ -149,7 +149,7 @@ export function TransactionDetailModal({
               <Percent className="size-3.5" /> Crave Platform Net Margin
             </span>
             <span className="font-black text-sm text-emerald-700 dark:text-emerald-400">
-              ₹{selectedTx.platformCut}
+              {formatCurrency(selectedTx.platformCut)}
             </span>
           </div>
         </div>
