@@ -1,19 +1,69 @@
 name: crave-food-delivery
 
 services:
-  # ─── 1. Backend WebSocket Real-Time Server ─────────────────────────────────
+  # ─── 1. Database Migration Runner (One-Shot Deploy) ──────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crave-migrate
+    restart: 'no'
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED:-${DATABASE_URL}}
+    command: ['npx', 'prisma', 'migrate', 'deploy']
+    networks:
+      - crave-network
+
+  # ─── 2. Redis In-Memory Cache, Idempotency & Pub/Sub ────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: crave-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - crave_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ─── 3. Backend Real-Time WebSocket Dispatch Server ─────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: crave-backend
     restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+        required: false
+      redis:
+        condition: service_healthy
+        required: false
     env_file:
       - .env
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      REDIS_DISABLED: 'true'
+      PORT: 3000
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_DISABLED: ${REDIS_DISABLED:-false}
     command: ['node', 'ws-server.js']
     expose:
       - '8000'
@@ -37,7 +87,7 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # ─── 2. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
+  # ─── 4. Frontend Next.js Web Application & Reverse Proxy ────────────────────
   frontend:
     build:
       context: .
@@ -45,8 +95,14 @@ services:
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+        required: false
       backend:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+        required: false
     env_file:
       - .env
     environment:
@@ -56,7 +112,9 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      REDIS_DISABLED: 'true'
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_DISABLED: ${REDIS_DISABLED:-false}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     command: ['node', 'server.js']
     ports:
       - '${PORT:-3000}:3000'
@@ -80,8 +138,38 @@ services:
         max-size: '10m'
         max-file: '3'
 
-# ─── Networks ─────────────────────────────────────────────────────────────
+  # ─── 5. Optional Self-Hosted PostgreSQL 16 (Enabled via --profile with-db) ────
+  db:
+    image: postgres:16-alpine
+    container_name: crave-postgres
+    profiles:
+      - with-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crave_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crave_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-crave}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - crave_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-crave_owner} -d ${POSTGRES_DB:-crave}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crave-network
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
 networks:
   crave-network:
     name: crave-network
     driver: bridge
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  crave_redis_data:
+    name: crave_redis_data
+  crave_postgres_data:
+    name: crave_postgres_data

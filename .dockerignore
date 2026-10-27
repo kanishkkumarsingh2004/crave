@@ -1,22 +1,46 @@
+# Dependency directories
 node_modules
+.pnpm-store
+
+# Version control & IDE
 .git
-.next
 .gitignore
-Dockerfile
-docker-compose.yml
+.github
+.vscode
+.agents
+.turbo
+.neon
+
+# Build outputs & caches
+.next
+dist
+.nyc_output
+coverage
+*.tsbuildinfo
+a.out
+
+# Secrets & local environment configurations
 .env
 .env.local
 .env.development
 .env.production
 .env.test
+
+# Logs & temporary files
 *.log
 logs
-test
-tests
-.nyc_output
-coverage
-.prisma
-dist
-.agents
-load-test-results.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test suites & benchmarks (not needed inside production runtime image)
+test/
+tests/
 load-tests/
+load-test-results.json
+crave-docker-test.sh
+docker-compose.test.yml
+
+# Documentation
+docs/

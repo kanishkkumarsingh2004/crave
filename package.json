@@ -2,7 +2,7 @@
   "name": "crave",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.8.1",
   "scripts": {
     "dev": "node server.js",
     "dev:ws": "node ws-server.js",
@@ -37,6 +37,8 @@
     "format:check": "turbo run format:check:prettier",
     "format:check:prettier": "prettier --check .",
     "dc:up": "docker compose up --build -d",
+    "dc:migrate": "docker compose run --rm migrate",
+    "dc:with-db": "docker compose --profile with-db up --build -d",
     "dc:down": "docker compose down",
     "dc:restart": "docker compose restart frontend backend",
     "dc:restart:all": "docker compose restart",

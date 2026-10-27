@@ -212,14 +212,21 @@ Data access should go through `lib/dal/` rather than scattering Prisma calls in 
 
 ## Quick start
 
-### Docker (app + Redis)
-
-Postgres is **not** in Compose. Set `DATABASE_URL` first.
+### Docker (Production Deployment)
 
 ```bash
+# 1. Prepare environment
 cp .env.example .env
-# fill JWT_SECRET, DATABASE_URL, DIRECT_URL, REDIS_URL, WS_INTERNAL_SECRET
+# Fill in JWT_SECRET, DATABASE_URL, DIRECT_URL, WS_INTERNAL_SECRET
+
+# 2. Deploy all services (Migrations + Redis + WS Backend + Next.js Frontend)
+./deploy.sh          # Linux / macOS / WSL
+.\deploy.ps1         # Windows PowerShell
+# or via pnpm:
 pnpm dc:up
+
+# If you also need a local self-hosted PostgreSQL database container:
+pnpm dc:with-db
 ```
 
 - App: [http://localhost:3000](http://localhost:3000)
