@@ -58,10 +58,10 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   isRainModeActive: false,
   isNightSurgeActive: false,
   enableCashOnDelivery: false,
-  enableUpiDeepLink: true,
-  requireUtrNumber: true,
-  razorpayEnabled: false,
-  razorpayRouteEnabled: false,
+  enableUpiDeepLink: false,
+  requireUtrNumber: false,
+  razorpayEnabled: true,
+  razorpayRouteEnabled: true,
   razorpayTransferRelease: 'DELIVERY_COMPLETE',
 }
 

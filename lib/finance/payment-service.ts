@@ -60,7 +60,7 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
   const {
     orderId,
     gatewayPaymentId,
-    gateway = 'UPI_MANUAL',
+    gateway = 'RAZORPAY',
     amount,
     actorId = 'SYSTEM_PAYMENT_PROCESSOR',
     rawPayload,

@@ -91,7 +91,12 @@ export const ORDER_TO_PAYMENT_MAP: Record<OrderStatus, PaymentStatus> = {
 
 // Valid state transitions (from → allowed to[])
 export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PAYMENT_PENDING]: [OrderStatus.PAYMENT_SUBMITTED, OrderStatus.CANCELLED],
+  [OrderStatus.PAYMENT_PENDING]: [
+    OrderStatus.SENT_TO_VENDOR,
+    OrderStatus.PAYMENT_VERIFIED,
+    OrderStatus.PAYMENT_SUBMITTED,
+    OrderStatus.CANCELLED,
+  ],
   [OrderStatus.PAYMENT_SUBMITTED]: [
     OrderStatus.PAYMENT_VERIFIED,
     OrderStatus.PAYMENT_PENDING,

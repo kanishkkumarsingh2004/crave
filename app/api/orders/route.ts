@@ -19,6 +19,7 @@ import { findMenuItemsByIds } from '@/lib/dal/menu-items'
 import { getActivePaymentConfig, updatePaymentReviewStatus } from '@/lib/dal/payments'
 import { findRestaurantById } from '@/lib/dal/restaurants'
 import { calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
+import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import {
   processPaymentRejectionTx,
   processPaymentVerificationTx,
@@ -320,29 +321,7 @@ export async function POST(request: Request) {
       const orderId = id || crypto.randomUUID()
       const paymentConfig = await getActiveConfig()
       const isCustomerActor = actor.role === 'user' || (actor.role as string) === 'customer'
-      const paymentMethodLower = String(payment_method || 'UPI Online').toLowerCase()
-
-      const isRazorpayFlow =
-        paymentMethodLower.includes('razorpay') ||
-        Boolean(paymentConfig.razorpayEnabled || (paymentConfig as any).razorpay_enabled)
-
-      if (isCustomerActor && !paymentMethodLower.includes('upi') && !isRazorpayFlow) {
-        return NextResponse.json(
-          { error: 'Customer checkout supports UPI Online or Razorpay payments only.' },
-          { status: 400 }
-        )
-      }
-      if (
-        isCustomerActor &&
-        !isRazorpayFlow &&
-        paymentMethodLower.includes('upi') &&
-        (!utr_ref || !/^\d{10,18}$/.test(String(utr_ref).trim()))
-      ) {
-        return NextResponse.json(
-          { error: 'Enter a valid 10–18 digit UPI transaction reference (UTR).' },
-          { status: 400 }
-        )
-      }
+      const isRazorpayFlow = true // Razorpay is the exclusive automated gateway
 
       if (idempotencyKey) {
         const idemCheck = await acquireIdempotency(idempotencyKey, 'order_checkout', body)
@@ -372,27 +351,6 @@ export async function POST(request: Request) {
               message: 'Order already processed (idempotent)',
             })
           }
-        }
-      }
-
-      if (utr_ref) {
-        const existingWithUtr = await prisma.order.findFirst({
-          where: {
-            utr_ref: String(utr_ref).trim(),
-            customer_id: finalCustomerId,
-            status: { notIn: ['delivered', 'completed', 'cancelled'] },
-            created_at: { gte: new Date(Date.now() - 15 * 60 * 1000) },
-          },
-          orderBy: { created_at: 'desc' },
-        }).catch(() => null)
-
-        if (existingWithUtr) {
-          return NextResponse.json({
-            success: true,
-            order: sanitizeOrderForActor(actor, existingWithUtr),
-            orderId: existingWithUtr.id,
-            message: 'Order already received and processing (deduplicated)',
-          })
         }
       }
 
@@ -469,8 +427,11 @@ export async function POST(request: Request) {
           }
         }
 
-        if (restaurant && menuItem.restaurant_id !== restaurant.id) {
-          return NextResponse.json({ error: `Item ${itemId} not available at this restaurant` }, { status: 400 })
+        if (restaurant && menuItem.restaurant_id && menuItem.restaurant_id !== restaurant.id) {
+          return NextResponse.json(
+            { error: `Item "${menuItem.name}" does not belong to ${restaurant.name || restaurant_name}. All items in an order must be from a single restaurant.` },
+            { status: 400 }
+          )
         }
 
         if (menuItem.in_stock === false || (menuItem.stock_count != null && menuItem.stock_count < quantity)) {
@@ -527,6 +488,18 @@ export async function POST(request: Request) {
       }
 
       const finalRestaurantId = restaurant?.id || itemsList[0]?._menuItem?.restaurant_id || 'rest_spice_garden'
+
+      // Strict Invariant: Only one restaurant allowed per order
+      const hasMultiRestaurantItems = itemsList.some(
+        (it) => it._menuItem?.restaurant_id && it._menuItem.restaurant_id !== finalRestaurantId
+      )
+      if (hasMultiRestaurantItems) {
+        return NextResponse.json(
+          { error: 'All items in an order must belong to a single restaurant. Multi-restaurant carts are not allowed.' },
+          { status: 400 }
+        )
+      }
+
       const restaurantDetails = restaurant || getMockRestaurant(finalRestaurantId, restaurant_name)
       const finalRestaurantName = restaurantDetails.name || restaurant_name || 'Crave Restaurant'
 
@@ -663,7 +636,7 @@ export async function POST(request: Request) {
       if (itemsForStorage.length > 0) itemsForStorage[0].billing_breakdown = billingBreakdown
 
       const deliveryOtp = String(crypto.randomInt(100000, 999999))
-      const initialStatus: OrderStatus = utr_ref ? 'payment_submitted' : 'payment_pending'
+      const initialStatus: OrderStatus = 'payment_pending'
 
       let order: any
       try {
@@ -703,7 +676,7 @@ export async function POST(request: Request) {
               status: initialStatus,
               payment_status: 'pending',
               order_type: resolvedOrderType,
-              payment_method,
+              payment_method: 'razorpay',
               delivery_otp: deliveryOtp,
               tip: Number(tip) || 0,
               discount_amount: calcResult.customerBilling.couponDiscount,
@@ -712,7 +685,6 @@ export async function POST(request: Request) {
               markup_amount: Math.round((canonicalResult.markupAmountPaise + canonicalResult.platformProductMarginPaise) / 100),
               restaurant_payout: vendorNetPayout,
               platform_revenue: platformProfit,
-              utr_ref: utr_ref ? String(utr_ref).trim() : undefined,
               financial_snapshot: canonicalResult as any,
               total_amount_paise: canonicalResult.customerPayablePaise,
               idempotency_key: idempotencyKey || undefined,
@@ -733,39 +705,20 @@ export async function POST(request: Request) {
             if (claimed.length !== 1) throw new Error('COUPON_USAGE_LIMIT_EXCEEDED')
           }
 
-          const paymentGateway = isRazorpayFlow
-            ? 'RAZORPAY'
-            : String(payment_method).toLowerCase().includes('upi')
-              ? 'upi'
-              : 'cash_on_delivery'
-
           await tx.paymentTransaction.create({
             data: {
               id: `tx_${orderId}`,
               order_id: orderId,
-              gateway: paymentGateway,
-              gateway_payment_id: utr_ref ? String(utr_ref).trim() : null,
+              gateway: 'RAZORPAY',
+              gateway_payment_id: null,
               amount: calcResult.customerBilling.grandTotal,
               amount_paise: canonicalResult.customerPayablePaise,
               currency: 'INR',
               status: 'pending',
               idempotency_key: idempotencyKey ? `tx_${idempotencyKey}` : `tx_key_${orderId}`,
-              raw_payload: { payment_method, customer_vpa: customer_vpa || null, utr_ref: utr_ref || null },
+              raw_payload: { payment_method: 'razorpay' },
             },
           })
-
-          if (utr_ref && !isRazorpayFlow) {
-            await tx.paymentReview.create({
-              data: {
-                id: crypto.randomUUID(),
-                order_id: orderId,
-                utr_ref: String(utr_ref).trim(),
-                customer_vpa: customer_vpa || (actor as any)?.email || 'customer@upi',
-                amount: calcResult.customerBilling.grandTotal,
-                status: 'pending',
-              },
-            })
-          }
 
           await tx.vendorSettlement.upsert({
             where: { id: `set_${orderId}` },
@@ -1052,18 +1005,51 @@ export async function PATCH(request: Request) {
         await broadcast('admin_orders', { type: 'order_updated', order: broadcastOrder, orderId })
         await broadcast('vendor_orders', { type: 'order_updated', order: broadcastOrder, orderId, restaurantId: updated.restaurant_id || existing.restaurant_id, timestamp: new Date().toISOString() })
 
-        if (
-          DRIVER_OFFER_STATUSES.has(status as OrderStatus) &&
-          !DRIVER_OFFER_STATUSES.has(existing.status as OrderStatus) &&
+        const isReadyForPickupOrOffer =
+          (status === 'ready_for_pickup' ||
+            (DRIVER_OFFER_STATUSES.has(status as OrderStatus) &&
+              !DRIVER_OFFER_STATUSES.has(existing.status as OrderStatus))) &&
           !updated.rider_id &&
           updated.payment_status === 'verified'
-        ) {
+
+        if (isReadyForPickupOrOffer) {
           const snapshot = (updated as any).financial_snapshot || {}
           const driverPayout = Number(
             snapshot.riderPayablePaise != null
               ? snapshot.riderPayablePaise / 100
               : (updated as any).driver_payout || updated.delivery_fee || 30
           )
+
+          let candidateDriverIds: string[] = []
+          let pickupH3Cell = ''
+
+          try {
+            const restId = updated.restaurant_id || existing.restaurant_id
+            const restRecord = restId
+              ? await prisma.restaurant.findUnique({
+                  where: { id: restId },
+                  select: { latitude: true, longitude: true },
+                })
+              : null
+
+            const pLat = restRecord?.latitude ? Number(restRecord.latitude) : 12.9716
+            const pLng = restRecord?.longitude ? Number(restRecord.longitude) : 77.5946
+
+            const h3SearchResult = await findGeofencedCandidateDrivers({
+              requestId: `dsp_${orderId}_${Date.now()}`,
+              pickupLat: pLat,
+              pickupLng: pLng,
+              minCandidatesRequired: 5,
+            })
+
+            if (h3SearchResult && h3SearchResult.eligibleCandidates.length > 0) {
+              candidateDriverIds = h3SearchResult.eligibleCandidates.map((c) => c.driverId)
+              pickupH3Cell = h3SearchResult.pickupH3Cell
+            }
+          } catch (h3Err) {
+            console.error('[H3 Dispatch] Failed candidate lookup:', h3Err)
+          }
+
           await broadcast('driver_offers', {
             type: 'offer_available',
             order: {
@@ -1079,17 +1065,29 @@ export async function PATCH(request: Request) {
               driverPayout,
               tip: Number(updated.tip || 0),
               createdAt: updated.created_at,
+              pickupH3Cell: pickupH3Cell || undefined,
             },
             orderId,
             timestamp: new Date().toISOString(),
           })
-          await sendDriverPushToAll({
-            title: `New delivery · ₹${driverPayout.toLocaleString('en-IN')}`,
-            body: `${updated.restaurant_name || 'Crave restaurant'} · Open the app to review the trip.`,
-            orderId,
-            type: 'offer_available',
-            route: 'home',
-          }).catch(() => {})
+
+          if (candidateDriverIds.length > 0) {
+            await sendDriverPushToUsers(candidateDriverIds, {
+              title: `New delivery nearby · ₹${driverPayout.toLocaleString('en-IN')}`,
+              body: `${updated.restaurant_name || 'Crave restaurant'} is ready for pickup!`,
+              orderId,
+              type: 'offer_available',
+              route: 'home',
+            }).catch(() => {})
+          } else {
+            await sendDriverPushToAll({
+              title: `New delivery · ₹${driverPayout.toLocaleString('en-IN')}`,
+              body: `${updated.restaurant_name || 'Crave restaurant'} · Open the app to review the trip.`,
+              orderId,
+              type: 'offer_available',
+              route: 'home',
+            }).catch(() => {})
+          }
         }
 
         const statusMessages: Partial<Record<OrderStatus, string>> = {
