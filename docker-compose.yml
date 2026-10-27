@@ -1,19 +1,74 @@
 name: crave-food-delivery
 
 services:
-  # ─── 1. Backend WebSocket Real-Time Server ─────────────────────────────────
+  # ─── 1. Redis (distributed locking, rate limiting, caching) ────────────────
+  # Required by dispatch (acquireDriverOfferLock) and rate-limit middleware.
+  # REDIS_DISABLED must NOT be set to 'true' in production — doing so causes
+  # dispatch candidate generation to throw ("Redis required for distributed
+  # locking in production") and breaks driver offer coordination across pods.
+  redis:
+    image: redis:7-alpine
+    container_name: crave-redis
+    restart: unless-stopped
+    # CR-09 FIX: Run Redis as its own non-root user (redis user in the image).
+    user: redis:redis
+    # CR-09 FIX: Resource limits to prevent memory exhaustion.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 64M
+    # appendonly yes: AOF persistence — survives container restarts without
+    # losing lock state that would otherwise leave drivers in a locked limbo.
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    expose:
+      - '6379'
+    volumes:
+      - crave_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - crave-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ─── 2. Backend WebSocket Real-Time Server ─────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: crave-backend
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       NODE_ENV: production
       WS_PORT: 8000
-      REDIS_DISABLED: 'true'
+      # Explicit REDIS_URL is the authoritative config (resolveRedisConfig Rule 3).
+      # Do NOT set REDIS_DISABLED=true — dispatch locking requires Redis in production.
+      REDIS_URL: redis://redis:6379
+    # CR-09 FIX: Resource limits to prevent CPU/memory exhaustion.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
     command: ['node', 'ws-server.js']
     expose:
       - '8000'
@@ -37,7 +92,7 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # ─── 2. Frontend Next.js Web App & WebSocket Proxy ────────────────────────
+  # ─── 3. Frontend Next.js Web App & WebSocket Proxy ─────────────────────────
   frontend:
     build:
       context: .
@@ -45,6 +100,8 @@ services:
     container_name: crave-frontend
     restart: unless-stopped
     depends_on:
+      redis:
+        condition: service_healthy
       backend:
         condition: service_healthy
     env_file:
@@ -56,7 +113,18 @@ services:
       WS_HOST: backend
       WS_BROADCAST_PORT: 8000
       WS_BROADCAST_HOST: backend
-      REDIS_DISABLED: 'true'
+      # Explicit REDIS_URL is the authoritative config (resolveRedisConfig Rule 3).
+      # Do NOT set REDIS_DISABLED=true — rate limiting and dispatch require Redis.
+      REDIS_URL: redis://redis:6379
+    # CR-09 FIX: Resource limits to prevent CPU/memory exhaustion.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     command: ['node', 'server.js']
     ports:
       - '${PORT:-3000}:3000'
@@ -85,3 +153,10 @@ networks:
   crave-network:
     name: crave-network
     driver: bridge
+
+# ─── Volumes ──────────────────────────────────────────────────────────────
+volumes:
+  # Named volume keeps Redis AOF data across container restarts.
+  # Without persistence, a Redis restart clears in-flight offer locks and
+  # rate-limit counters, causing spurious 429s and double-dispatch until TTLs expire.
+  crave_redis_data:

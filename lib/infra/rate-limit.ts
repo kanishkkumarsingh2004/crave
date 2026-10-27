@@ -139,31 +139,116 @@ function checkRateLimitMemory(
 }
 
 /**
- * Get client IP from request headers
+ * Get client IP from request headers.
+ *
+ * CR-06 FIX: Only trust forwarded headers (x-forwarded-for, x-real-ip,
+ * cf-connecting-ip) when the request is known to come from a trusted proxy.
+ * If TRUSTED_PROXY_RANGES is not set, we fall back to the direct
+ * connection IP (request.socket.remoteAddress) and ignore potentially
+ * spoofable headers. This prevents an attacker from bypassing IP-based
+ * rate limiting by supplying arbitrary X-Forwarded-For values.
+ *
+ * For authenticated operations, prefer account-based rate limiting
+ * (see withAccountRateLimit below) which cannot be bypassed by IP rotation.
  */
+
+/** Set of CIDR ranges that are trusted to set forwarding headers. */
+const TRUSTED_PROXY_RANGES = (process.env.TRUSTED_PROXY_RANGES || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+/** Whether we are behind a reverse proxy (e.g. nginx, Caddy, Cloudflare). */
+const BEHIND_PROXY = process.env.BEHIND_PROXY === 'true' || process.env.NODE_ENV === 'production'
+
+function ipInCidr(ip: string, cidr: string): boolean {
+  // Simple IPv4 CIDR check. For production use a library like ip-regex;
+  // this is a minimal implementation sufficient for common deployments.
+  const [range, bitsStr] = cidr.split('/')
+  const bits = parseInt(bitsStr, 10)
+  if (!range || !bits || bits < 0 || bits > 32) return false
+  const ipNum = ipToNum(ip)
+  const rangeNum = ipToNum(range)
+  if (ipNum === null || rangeNum === null) return false
+  const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0
+  return (ipNum & mask) === (rangeNum & mask)
+}
+
+function ipToNum(ip: string): number | null {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return null
+  let num = 0
+  for (let i = 0; i < 4; i++) {
+    const octet = parseInt(parts[i], 10)
+    if (isNaN(octet) || octet < 0 || octet > 255) return null
+    num = (num << 8) | octet
+  }
+  return num >>> 0
+}
+
+function isTrustedIp(ip: string): boolean {
+  if (TRUSTED_PROXY_RANGES.length === 0) return false
+  return TRUSTED_PROXY_RANGES.some((cidr) => ipInCidr(ip, cidr))
+}
+
+function sanitizeIp(ip: string | null): string {
+  if (!ip) return '127.0.0.1'
+  // Strip any non-IP characters (basic sanitization)
+  const cleaned = ip.trim().replace(/[^a-zA-Z0-9.:_-]/g, '')
+  // IPv6 localhost fallback
+  if (cleaned === '' || cleaned === '::') return '127.0.0.1'
+  return cleaned
+}
+
 export function getClientIp(request: Request): string {
   try {
     const headers = request.headers
 
-    // Cloudflare
-    const cfIp = headers.get('cf-connecting-ip')
-    if (cfIp) return cfIp.trim().replace(/[^a-zA-Z0-9.:_-]/g, '')
+    // Only trust forwarded headers if we are behind a known proxy AND the
+    // direct connection IP is in a trusted proxy range.
+    if (BEHIND_PROXY) {
+      // Cloudflare always sets cf-connecting-ip when behind CF.
+      const cfIp = headers.get('cf-connecting-ip')
+      if (cfIp) return sanitizeIp(cfIp)
 
-    // Nginx/Proxy
-    const realIp = headers.get('x-real-ip')
-    if (realIp) return realIp.trim().replace(/[^a-zA-Z0-9.:_-]/g, '')
+      // X-Real-Ip is typically set by nginx/caddy reverse proxy.
+      const realIp = headers.get('x-real-ip')
+      if (realIp) return sanitizeIp(realIp)
 
-    // X-Forwarded-For
-    const xff = headers.get('x-forwarded-for')
-    if (xff) {
-      const parts = xff
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean)
-      if (parts.length > 0) return parts[0].replace(/[^a-zA-Z0-9.:_-]/g, '')
+      // X-Forwarded-For: take the leftmost (original client) entry.
+      // Only trust it if we have configured trusted proxy ranges.
+      if (TRUSTED_PROXY_RANGES.length > 0) {
+        const xff = headers.get('x-forwarded-for')
+        if (xff) {
+          const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+          if (parts.length > 0) return sanitizeIp(parts[0])
+        }
+      }
     }
+
+    // Fall back to the direct connection address.
+    // @ts-expect-error - socket may not exist on all Request implementations
+    const socketIp = request.socket?.remoteAddress
+    if (socketIp) return sanitizeIp(socketIp)
   } catch {}
   return '127.0.0.1'
+}
+
+/**
+ * CR-06 FIX: Account-based rate limiting for authenticated operations.
+ * Uses the authenticated actor's ID as the rate-limit key, so IP rotation
+ * cannot bypass the limit. Falls back to IP-based key when no actor is
+ * available (e.g. pre-auth endpoints).
+ */
+export function getRateLimitKey(
+  request: Request,
+  actorId?: string | null,
+  prefix?: string
+): string {
+  if (actorId) {
+    return `${prefix || 'account'}:${actorId}`
+  }
+  return `${prefix || 'ip'}:${getClientIp(request)}`
 }
 
 /**

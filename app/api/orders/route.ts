@@ -37,7 +37,7 @@ import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-
 import { maybeTriggerRouteSettlement } from '@/lib/payments/razorpay-split'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { sendWebPushToRoles, sendWebPushToUsers, type WebPushPayload } from '@/lib/web-push'
 import { Prisma, type OrderStatus } from '@prisma/client'
@@ -290,15 +290,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return withTiming('POST /api/orders', async (mark) => {
     try {
-      const clientIp = getClientIp(request)
-      const result = await checkRateLimit(`order_${clientIp}`, 'ORDER_CREATE')
+      // Allow customers as well as administrators (for end-to-end checkout verification)
+      const actor = await requireRole(request, ['user', 'admin'])
+      mark('auth')
+
+      // CR-06 FIX: Use account-based rate limiting keyed by the authenticated
+      // actor's ID, so IP rotation cannot bypass the order-create limit.
+      const accountKey = getRateLimitKey(request, actor.id, 'order_create')
+      const result = await checkRateLimit(accountKey, 'ORDER_CREATE')
       if (!result.allowed) {
         return rateLimitResponse(result.resetTime, result.retryAfter)
       }
 
-      // Allow customers as well as administrators (for end-to-end checkout verification)
-      const actor = await requireRole(request, ['user', 'admin'])
-      mark('auth')
+      // Secondary IP-based check to catch distributed attacks
+      const ipResult = await checkRateLimit(getRateLimitKey(request, null, 'order_ip'), 'ORDER_CREATE')
+      if (!ipResult.allowed) {
+        return rateLimitResponse(ipResult.resetTime, ipResult.retryAfter)
+      }
 
       const body = await request.json()
       // CR-005/CR-006: Only accept safe, non-financial fields from client

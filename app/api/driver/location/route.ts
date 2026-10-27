@@ -7,6 +7,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    // Step 1: authenticate — resolve actor before touching any untrusted body field.
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
     if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authentication token required' }, { status: 401 })
     }
 
+    // Step 2: parse body.
     const body = await request.json()
     const { driverId, orderId, lat, lng, status, available, vehicleType, resolution } = body
 
@@ -26,22 +28,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // P1-A FIX: Validate coordinate ranges
-    const LAT_MIN = -90,
-      LAT_MAX = 90,
-      LNG_MIN = -180,
-      LNG_MAX = 180
-    if (lat < LAT_MIN || lat > LAT_MAX || lng < LNG_MIN || lng > LNG_MAX) {
-      return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
-    }
-
-    // P1-A FIX: Per-driver rate limit (max 60 updates/minute)
-    const rlResult = await checkRateLimit(`gps_${driverId}`, 'GPS_UPDATE')
-    if (!rlResult.allowed) {
-      return rateLimitResponse(rlResult.resetTime, rlResult.retryAfter)
-    }
-
-    // Authorization check: Ensure requesting user is updating their own location or is admin
+    // Step 3: authorize — verify ownership *before* any rate-limit call so that
+    // an attacker cannot consume another driver's quota by supplying a foreign
+    // driverId. The rate-limit key is derived from the authenticated actor, not
+    // the caller-supplied identifier.
+    // CR-02 FIX: auth check moved before rate-limiting; key uses actor.id.
     const roleStr = actor.role as string
     const isSelf = actor.id === driverId
     const isAuthorizedRider = (actor.role === 'rider' || roleStr === 'driver') && isSelf
@@ -49,6 +40,22 @@ export async function POST(request: Request) {
 
     if (!isAuthorizedRider && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized driver location update' }, { status: 403 })
+    }
+
+    // Step 4: rate-limit on the authenticated actor identity (never on the
+    // body-supplied driverId which is untrusted at this point).
+    const rlResult = await checkRateLimit(`gps_${actor.id}`, 'GPS_UPDATE')
+    if (!rlResult.allowed) {
+      return rateLimitResponse(rlResult.resetTime, rlResult.retryAfter)
+    }
+
+    // Step 5: validate coordinate ranges.
+    const LAT_MIN = -90,
+      LAT_MAX = 90,
+      LNG_MIN = -180,
+      LNG_MAX = 180
+    if (lat < LAT_MIN || lat > LAT_MAX || lng < LNG_MIN || lng > LNG_MAX) {
+      return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
     }
 
     const result = await updateDriverLocation({
@@ -96,6 +103,7 @@ export async function POST(request: Request) {
     )
   }
 }
+
 
 export async function GET(request: Request) {
   try {

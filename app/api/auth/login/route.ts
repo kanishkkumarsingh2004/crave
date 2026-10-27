@@ -1,7 +1,7 @@
 import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb, updateUser } from '@/lib/dal'
 import { normalizeEmail } from '@/lib/email'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { NextResponse } from 'next/server'
 
@@ -26,12 +26,6 @@ function setCookies(response: ReturnType<typeof NextResponse.json>, token: strin
 
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request)
-    const result = await checkRateLimit(`login_${clientIp}`, 'AUTH_LOGIN')
-    if (!result.allowed) {
-      return rateLimitResponse(result.resetTime, result.retryAfter)
-    }
-
     const body = await request.json().catch(() => ({}))
     const email = normalizeEmail(body.email)
     const password = typeof body.password === 'string' ? body.password : ''
@@ -41,6 +35,21 @@ export async function POST(request: Request) {
         { error: 'A valid email address and password are required' },
         { status: 400 }
       )
+    }
+
+    // CR-06 FIX: Rate limit by email (account-based) rather than IP alone.
+    // An attacker rotating IPs cannot bypass this. We still include the IP
+    // as a secondary key to catch distributed brute-force attempts.
+    const emailKey = `login_email_${email.toLowerCase()}`
+    const emailResult = await checkRateLimit(emailKey, 'AUTH_LOGIN')
+    if (!emailResult.allowed) {
+      return rateLimitResponse(emailResult.resetTime, emailResult.retryAfter)
+    }
+
+    // Secondary IP-based check to catch distributed attacks
+    const ipResult = await checkRateLimit(getRateLimitKey(request, null, 'login_ip'), 'AUTH_LOGIN')
+    if (!ipResult.allowed) {
+      return rateLimitResponse(ipResult.resetTime, ipResult.retryAfter)
     }
 
     let profile: any

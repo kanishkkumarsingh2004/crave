@@ -1,25 +1,27 @@
 import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
-import { stripOrderSecrets } from '@/lib/auth/order-access'
+import { sanitizeOrderForActor, stripOrderSecrets } from '@/lib/auth/order-access'
 import { claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
 import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
 import { getDriverLocation, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request)
-    const result = await checkRateLimit(`dispatch_${clientIp}`, 'DISPATCH_ACCEPT')
-    if (!result.allowed) {
-      return rateLimitResponse(result.resetTime, result.retryAfter)
-    }
-
     const actor = await requireAuthApi(request)
     const roleStr = actor.role as string
     const isRiderRole = actor.role === 'rider' || roleStr === 'driver' || actor.role === 'admin'
     if (!isRiderRole) {
       return NextResponse.json({ error: 'Rider or driver access required' }, { status: 403 })
+    }
+
+    // CR-06 FIX: Rate limit by authenticated driver ID, not IP.
+    // An attacker rotating IPs cannot bypass dispatch rate limiting.
+    const accountKey = getRateLimitKey(request, actor.id, 'dispatch_accept')
+    const result = await checkRateLimit(accountKey, 'DISPATCH_ACCEPT')
+    if (!result.allowed) {
+      return rateLimitResponse(result.resetTime, result.retryAfter)
     }
 
     const body = await request.json().catch(() => ({}))
@@ -132,12 +134,15 @@ export async function POST(request: Request) {
         console.warn('[POST /api/driver/accept] Outbox dispatch notice:', outboxErr)
       })
 
+      // CR-01 FIX: sanitize per-actor so drivers never receive delivery_otp
+      // or otp_consumed_at, matching the protection already applied to the
+      // WebSocket broadcast path above.
       return NextResponse.json({
         success: true,
         message: 'Dispatch offer successfully accepted',
         driverId,
         requestId,
-        order: updatedOrder,
+        order: sanitizeOrderForActor(actor, updatedOrder as any),
         assignedAt: new Date().toISOString(),
       })
     } finally {
