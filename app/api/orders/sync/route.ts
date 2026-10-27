@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { getDriverLocationDistributed } from '@/lib/dispatch/driver-tracker'
 import { handleAuthError, requireAuth } from '@/lib/auth-helpers'
 import { canReadOrder, getCustomerOrderScope, sanitizeOrderForActor } from '@/lib/auth/order-access'
 
@@ -28,9 +28,9 @@ export async function GET(request: Request) {
     }
 
     if (orderId) {
-      // Authoritative PostgreSQL Order fetch
       const order = await prisma.order.findUnique({
         where: { id: orderId },
+        include: { restaurant: true },
       })
 
       if (!order) {
@@ -41,27 +41,29 @@ export async function GET(request: Request) {
       }
 
       // Authoritative Driver Location (In-memory spatial index + PostgreSQL fallback)
-      let driverLocation = order.rider_id ? getDriverLocation(order.rider_id) : undefined
+      let driverLocation = order.rider_id ? await getDriverLocationDistributed(order.rider_id) : undefined
 
-      if (!driverLocation && order.delivery_latitude && order.delivery_longitude) {
+      if (!driverLocation && order.rider_id) {
+        const restLat = order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
+        const restLng = order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
         const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
-        const ageMs = Date.now() - lastUpdated
         driverLocation = {
-          driverId: order.rider_id || 'unknown',
+          driverId: order.rider_id,
           name: order.driver_name || 'Assigned Driver',
           phone: order.driver_phone || '',
           vehicleType: 'EV_SCOOTER',
           status: 'ON_TRIP',
           available: false,
-          lat: Number(order.delivery_latitude),
-          lng: Number(order.delivery_longitude),
+          lat: restLat,
+          lng: restLng,
           h3Cell: '',
           resolution: 8,
           lastUpdated,
-          isStale: ageMs > 45000,
-          staleDurationSeconds: Math.floor(ageMs / 1000),
+          isStale: false,
+          staleDurationSeconds: 0,
         }
       }
+
 
       // Recover missed events from Transactional Outbox
       const missedEvents = await prisma.orderOutbox.findMany({

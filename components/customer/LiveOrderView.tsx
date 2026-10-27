@@ -344,15 +344,15 @@ export default function LiveOrderView({
 
               {activeOrder.driverName && activeOrder.driverName !== 'Unassigned' ? (
                 <LiveDriverMap
-                  restaurantName={activeOrder.restaurantName}
-                  driverName={activeOrder.driverName}
+                  restaurantName={activeOrder.restaurantName || activeOrder.restaurant?.name || activeOrder.restaurant_name || 'Crave Kitchen Store'}
+                  driverName={activeOrder.driverName || activeOrder.driver_name}
                   statusStep={activeOrder.statusStep}
                   driverLat={liveDriverPos?.lat ?? (activeOrder.driverLat ? Number(activeOrder.driverLat) : null)}
                   driverLng={liveDriverPos?.lng ?? (activeOrder.driverLng ? Number(activeOrder.driverLng) : null)}
-                  restaurantLat={activeOrder.restaurantLat ? Number(activeOrder.restaurantLat) : undefined}
-                  restaurantLng={activeOrder.restaurantLng ? Number(activeOrder.restaurantLng) : undefined}
-                  customerLat={activeOrder.customerLat ? Number(activeOrder.customerLat) : (selectedMapPin?.lat ?? undefined)}
-                  customerLng={activeOrder.customerLng ? Number(activeOrder.customerLng) : (selectedMapPin?.lng ?? undefined)}
+                  restaurantLat={Number(activeOrder.restaurantLat ?? activeOrder.restaurant?.latitude ?? 12.9716)}
+                  restaurantLng={Number(activeOrder.restaurantLng ?? activeOrder.restaurant?.longitude ?? 77.6412)}
+                  customerLat={Number(activeOrder.customerLat ?? activeOrder.delivery_latitude ?? selectedMapPin?.lat ?? 12.9716)}
+                  customerLng={Number(activeOrder.customerLng ?? activeOrder.delivery_longitude ?? selectedMapPin?.lng ?? 77.5946)}
                   isStale={isDriverGpsStale}
                 />
               ) : (

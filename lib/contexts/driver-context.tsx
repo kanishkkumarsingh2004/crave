@@ -107,10 +107,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
               tip: tipVal,
               distance: `${o.distance_km || 2.4} km`,
               step,
-              restaurantLat: o.restaurant_lat ? Number(o.restaurant_lat) : 12.6817,
-              restaurantLng: o.restaurant_lng ? Number(o.restaurant_lng) : 77.4729,
-              customerLat: o.customer_lat ? Number(o.customer_lat) : 12.679898,
-              customerLng: o.customer_lng ? Number(o.customer_lng) : 77.469493,
+              restaurantLat: o.restaurant_lat ? Number(o.restaurant_lat) : 12.9716,
+              restaurantLng: o.restaurant_lng ? Number(o.restaurant_lng) : 77.6412,
+              customerLat: o.customer_lat ? Number(o.customer_lat) : 12.9716,
+              customerLng: o.customer_lng ? Number(o.customer_lng) : 77.5946,
             })
           }
         }
@@ -567,8 +567,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     const realId = broadcastOffer.id
     const driverDisplayName = user?.name || 'Verified Delivery Partner'
     const driverDisplayPhone = user?.phone || '+91 98765 43210'
-    const currentLat = driverGpsCoords ? driverGpsCoords[0] : 12.679898
-    const currentLng = driverGpsCoords ? driverGpsCoords[1] : 77.469493
+    const currentLat = driverGpsCoords ? driverGpsCoords[0] : (broadcastOffer.restaurantLat ?? 12.9716)
+    const currentLng = driverGpsCoords ? driverGpsCoords[1] : (broadcastOffer.restaurantLng ?? 77.6412)
 
     const task: DeliveryTask = {
       id: realId,
@@ -585,10 +585,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       distance: broadcastOffer.distance,
       step: 'assigned',
       otp: broadcastOffer.otp || '',
-      restaurantLat: broadcastOffer.restaurantLat ?? 12.6817,
-      restaurantLng: broadcastOffer.restaurantLng ?? 77.4729,
-      customerLat: broadcastOffer.customerLat ?? 12.679898,
-      customerLng: broadcastOffer.customerLng ?? 77.469493,
+      restaurantLat: broadcastOffer.restaurantLat ?? 12.9716,
+      restaurantLng: broadcastOffer.restaurantLng ?? 77.6412,
+      customerLat: broadcastOffer.customerLat ?? 12.9716,
+      customerLng: broadcastOffer.customerLng ?? 77.5946,
     }
 
     try {
@@ -675,6 +675,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'ready_for_pickup',
+            order: {
+              id: activeTask.id,
+              status: 'ready_for_pickup',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            },
           })
         } catch (e) {}
       } else if (activeTask.step === 'at_restaurant') {
@@ -693,6 +699,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'picked_up',
+            order: {
+              id: activeTask.id,
+              status: 'picked_up',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            },
           })
         } catch (e) {}
       } else if (activeTask.step === 'picked_up') {
@@ -711,6 +723,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           publishLiveEvent('order_update', {
             orderId: activeTask.id,
             status: 'out_for_delivery',
+            order: {
+              id: activeTask.id,
+              status: 'out_for_delivery',
+              driver_name: driverDisplayName,
+              driver_phone: driverDisplayPhone,
+            },
           })
         } catch (e) {}
       }
@@ -787,6 +805,10 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       publishLiveEvent('order_update', {
         orderId: activeTask.id,
         status: 'delivered',
+        order: {
+          id: activeTask.id,
+          status: 'delivered',
+        },
       })
 
       setCompletedTrips((prev) => [newTrip, ...prev])

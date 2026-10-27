@@ -145,7 +145,7 @@ export default function DriverDashboardPage() {
                   <p className="text-xs text-[#9eb3a4] mt-0.5">{activeTask.restaurantAddress}</p>
                 </div>
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.9716},${activeTask.restaurantLng || 77.6412}`}
                   target="_blank"
                   rel="noreferrer"
                   className="shrink-0 self-start rounded-full border border-amber-500/50 bg-[#121815] px-3.5 py-1.5 text-xs font-bold text-amber-300 flex items-center gap-1 shadow-sm hover:bg-amber-500/20"

@@ -195,28 +195,31 @@ export async function GET(request: Request) {
           }
         }
 
-        const { getDriverLocation } = await import('@/lib/dispatch/driver-tracker')
-        let driverLocation = order.rider_id ? getDriverLocation(order.rider_id) : undefined
+        const { getDriverLocationDistributed } = await import('@/lib/dispatch/driver-tracker')
+        let driverLocation = order.rider_id ? await getDriverLocationDistributed(order.rider_id) : undefined
 
-        if (!driverLocation && order.delivery_latitude && order.delivery_longitude) {
+        if (!driverLocation && order.rider_id) {
+          const restLat = order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
+          const restLng = order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
           const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
           const ageMs = Date.now() - lastUpdated
           driverLocation = {
-            driverId: order.rider_id || 'unknown',
+            driverId: order.rider_id,
             name: order.driver_name || 'Assigned Driver',
             phone: order.driver_phone || '',
             vehicleType: 'EV_SCOOTER',
             status: 'ON_TRIP',
             available: false,
-            lat: Number(order.delivery_latitude),
-            lng: Number(order.delivery_longitude),
+            lat: restLat,
+            lng: restLng,
             h3Cell: '',
             resolution: 8,
             lastUpdated,
-            isStale: ageMs > 45000,
-            staleDurationSeconds: Math.floor(ageMs / 1000),
+            isStale: false,
+            staleDurationSeconds: 0,
           }
         }
+
 
         return NextResponse.json({
           success: true,
@@ -922,12 +925,24 @@ export async function PATCH(request: Request) {
         ...(driver_name && { driver_name }),
         ...(driver_phone && { driver_phone }),
         ...(assignedRiderId && { rider_id: assignedRiderId }),
-        ...(driver_lat != null && { delivery_latitude: driver_lat }),
-        ...(driver_lng != null && { delivery_longitude: driver_lng }),
         ...(items && { items }),
         ...(isDeliveryConfirmation && { delivered_at: new Date() }),
         ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: new Date() }),
       }
+
+      if (assignedRiderId && driver_lat != null && driver_lng != null) {
+        try {
+          const { updateDriverLocation } = await import('@/lib/dispatch/driver-tracker')
+          await updateDriverLocation({
+            driverId: assignedRiderId,
+            orderId,
+            lat: Number(driver_lat),
+            lng: Number(driver_lng),
+            status: 'ON_TRIP',
+          })
+        } catch (e) {}
+      }
+
 
       const updated = await prisma.$transaction(async (tx: any) => {
         let dalResult: any

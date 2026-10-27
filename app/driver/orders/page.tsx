@@ -280,7 +280,7 @@ export default function DriverAcceptedOrdersPage() {
               <h4 className="font-bold text-base text-white">{activeTask.restaurantName}</h4>
               <p className="text-xs text-[#a0ab9f]">{activeTask.restaurantAddress}</p>
               <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.6817},${activeTask.restaurantLng || 77.4729}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.restaurantLat || 12.9716},${activeTask.restaurantLng || 77.6412}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#d9f447] hover:underline pt-1"

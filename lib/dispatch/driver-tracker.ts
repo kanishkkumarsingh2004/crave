@@ -258,24 +258,10 @@ export async function updateDriverLocation(params: {
     staleDurationSeconds: isStalePacket ? Math.floor((now - clientTs) / 1000) : 0,
   }
 
-  // Update primary spatial cache
+  // Update primary spatial cache & persist to driver_current_locations table
   driverSpatialIndex.set(driverId, updatedState)
   await persistCurrentDriverLocation(updatedState, previousCell, cellChanged)
 
-  // Persist authoritative driver coordinates on Order in PostgreSQL when on trip
-  if (orderId) {
-    prisma.order
-      .updateMany({
-        where: { id: orderId, rider_id: driverId },
-        data: {
-          delivery_latitude: lat,
-          delivery_longitude: lng,
-        },
-      })
-      .catch((dbErr) => {
-        console.warn('[driver-tracker] PostgreSQL location sync notice:', dbErr)
-      })
-  }
 
   // Buffer position for history (async, non-blocking)
   bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })

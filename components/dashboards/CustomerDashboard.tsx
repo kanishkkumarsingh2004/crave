@@ -272,7 +272,16 @@ export default function CustomerDashboard({
         }
         if (o.status) prevStatusesRef.current.set(o.id, o.status)
       })
-      setOrdersData(orders)
+      setOrdersData((prev) => {
+        if (!prev || prev.length === 0) return orders
+        const map = new Map(prev.map((o) => [String(o.id), o]))
+        orders.forEach((incoming) => {
+          if (!incoming?.id) return
+          const existing = map.get(String(incoming.id))
+          map.set(String(incoming.id), existing ? { ...existing, ...incoming } : incoming)
+        })
+        return Array.from(map.values())
+      })
     }
   })
 
@@ -333,6 +342,11 @@ export default function CustomerDashboard({
     const rawDate = found.createdAt || found.created_at
     const timeStr = rawDate ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 
+    const restLat = Number(found.restaurant?.latitude ?? found.restaurant_latitude ?? found.restaurantLat ?? 12.9716)
+    const restLng = Number(found.restaurant?.longitude ?? found.restaurant_longitude ?? found.restaurantLng ?? 77.6412)
+    const custLat = Number(found.delivery_latitude ?? found.customer_lat ?? found.customerLat ?? selectedMapPin?.lat ?? 12.9716)
+    const custLng = Number(found.delivery_longitude ?? found.customer_lng ?? found.customerLng ?? selectedMapPin?.lng ?? 77.5946)
+
     return {
       ...found,
       statusStep,
@@ -341,16 +355,50 @@ export default function CustomerDashboard({
       total: Number(found.total_amount || 0),
       subtotal: Number(found.subtotal || 0),
       timestamp: timeStr,
+      restaurantLat: restLat,
+      restaurantLng: restLng,
+      customerLat: custLat,
+      customerLng: custLng,
+      restaurantName: found.restaurant?.name || found.restaurant_name || found.restaurantName || 'Crave Kitchen Store',
       driverName: found.driver_name || null,
       driverPhone: found.driver_phone || null,
       otp: found.delivery_otp || found.otp || null,
     }
-  }, [ordersData, selectedOrderId, inProgressOrders])
+  }, [ordersData, selectedOrderId, inProgressOrders, selectedMapPin])
 
   useDriverLocation(activeOrder?.id, (data: any) => {
-    setLiveDriverPos({ lat: data.lat, lng: data.lng })
-    setIsDriverGpsStale(Boolean(data.isStale))
+    if (data?.lat != null && data?.lng != null) {
+      setLiveDriverPos({ lat: Number(data.lat), lng: Number(data.lng) })
+      setIsDriverGpsStale(Boolean(data.isStale))
+    }
   })
+
+  // Real-time polling fallback: poll active order status & driver location every 3s so steps advance without reloading
+  useEffect(() => {
+    if (!activeOrder?.id || activeOrder.statusStep >= 4) return
+    const pollTimer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders?orderId=${encodeURIComponent(activeOrder.id)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.order) {
+            setOrdersData((prev) => {
+              const map = new Map(prev.map((o) => [String(o.id), o]))
+              const existing = map.get(String(data.order.id))
+              map.set(String(data.order.id), existing ? { ...existing, ...data.order } : data.order)
+              return Array.from(map.values())
+            })
+            if (data.driverLocation?.lat != null && data.driverLocation?.lng != null) {
+              setLiveDriverPos({ lat: Number(data.driverLocation.lat), lng: Number(data.driverLocation.lng) })
+              setIsDriverGpsStale(Boolean(data.driverLocation.isStale))
+            }
+          }
+        }
+      } catch (e) {}
+    }, 3000)
+    return () => clearInterval(pollTimer)
+  }, [activeOrder?.id, activeOrder?.statusStep])
+
 
   // Past Orders List
   const pastOrders: PastOrder[] = useMemo(() => {

@@ -57,5 +57,28 @@ app.prepare().then(() => {
   })
   server.listen(PORT, () => {
     console.log(`> Ready on http://localhost:${PORT}`)
+
+    // Auto-start WebSocket server if not already running
+    const { fork } = require('child_process')
+    const path = require('path')
+    const wsPort = Number(process.env.WS_PORT || 8000)
+    const testTester = net.connect(wsPort, '127.0.0.1', () => {
+      testTester.destroy()
+    })
+    testTester.on('error', () => {
+      try {
+        console.log(`[server.js] Starting background WebSocket server on port ${wsPort}...`)
+        const wsProc = fork(path.join(__dirname, 'ws-server.js'), [], {
+          env: process.env,
+          stdio: 'inherit',
+        })
+        process.on('exit', () => wsProc.kill())
+        process.on('SIGINT', () => wsProc.kill())
+        process.on('SIGTERM', () => wsProc.kill())
+      } catch (err) {
+        console.warn('[server.js] Failed to spawn ws-server:', err.message)
+      }
+    })
   })
 })
+
