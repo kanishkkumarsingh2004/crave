@@ -1,15 +1,19 @@
 'use client'
 
+import DatabaseInspectorTabs from '@/components/admin/calculator/DatabaseInspectorTabs'
+import EconomicsCards from '@/components/admin/calculator/EconomicsCards'
+import type { DbData } from '@/components/admin/calculator/types'
 import AppleSlider from '@/components/ui/AppleSlider'
-import { calculateFullBreakdown, CalculatorInput, FullCalculatorResult } from '@/lib/calculator'
-import { apiFetch } from '@/lib/client/api-fetch'
+import {
+  calculateFullBreakdown,
+  type CalculatorInput,
+  type FullCalculatorResult,
+} from '@/lib/calculator'
 import {
   Calculator,
   CheckCircle2,
   CloudRain,
-  Coins,
   Database,
-  DollarSign,
   Layers,
   Moon,
   RefreshCw,
@@ -17,20 +21,11 @@ import {
   Sparkles,
   Store,
   Tag,
-  Truck,
   Zap,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-interface DbData {
-  paymentConfig: any
-  restaurants: any[]
-  coupons: any[]
-  orders: any[]
-  vendorSettlements: any[]
-  driverPayouts: any[]
-  fetchedAt?: string
-}
+export type { DbData }
 
 export default function CalculatorPlaygroundPage() {
   const [dbData, setDbData] = useState<DbData | null>(null)
@@ -244,8 +239,6 @@ export default function CalculatorPlaygroundPage() {
     selectedCouponCode,
     activeCouponObj,
   ])
-
-  const { customerBilling, vendorSettlement, driverEarnings, platformEconomics } = calculatorResult
 
   return (
     <div className="space-y-6">
@@ -666,412 +659,19 @@ export default function CalculatorPlaygroundPage() {
           </div>
 
           {/* Right Output Breakdown Column (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Unit Economics 4-Grid Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* 1. Customer Bill Card */}
-              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <DollarSign className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Customer
-                    Bill
-                  </span>
-                  <span className="text-xs font-mono font-bold text-[#18201c] dark:text-[#d9f447]">
-                    ₹{customerBilling.grandTotal}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Food Subtotal</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">
-                      ₹{customerBilling.subtotal}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Packaging Charge</span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{customerBilling.packagingFee}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Delivery Fee ({distanceKm}km)
-                    </span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{customerBilling.netDeliveryFee}
-                    </span>
-                  </div>
-                  {customerBilling.couponDiscount > 0 && (
-                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span>Coupon ({selectedCouponCode})</span>
-                      <span>-₹{customerBilling.couponDiscount}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Platform &amp; Handling
-                    </span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{customerBilling.platformFee + customerBilling.handlingFee}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">GST (18%)</span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{customerBilling.gstAmount}
-                    </span>
-                  </div>
-                  {customerBilling.tip > 0 && (
-                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span>Driver Tip</span>
-                      <span>+₹{customerBilling.tip}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
-                    <span>Total Paid</span>
-                    <span className="text-[#18201c] dark:text-[#d9f447]">
-                      ₹{customerBilling.grandTotal}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Vendor Net Payout Card */}
-              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Store className="size-4 text-orange-500 dark:text-orange-400" /> Vendor Payout
-                  </span>
-                  <span className="text-xs font-mono font-black text-orange-600 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-400/10 dark:border-orange-400/20 px-2.5 py-1 rounded-lg">
-                    ₹{vendorSettlement.netVendorPayout}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Gross Food Sales</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">
-                      ₹{vendorSettlement.grossSales}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Commission Rate</span>
-                    <span className="text-[#18201c] dark:text-white">
-                      {vendorSettlement.commissionRatePercent}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-rose-600 dark:text-rose-400 font-bold">
-                    <span>Commission Deducted</span>
-                    <span>-₹{vendorSettlement.commissionDeducted}</span>
-                  </div>
-                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
-                    <span>Net Vendor Payout</span>
-                    <span className="text-orange-600 dark:text-orange-400">
-                      ₹{vendorSettlement.netVendorPayout}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Driver Earnings Card */}
-              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Truck className="size-4 text-emerald-500 dark:text-emerald-400" /> Driver
-                    Earnings
-                  </span>
-                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    ₹{driverEarnings.totalDriverEarnings}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Base Distance Share</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">
-                      ₹{driverEarnings.baseDistanceShare}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Extra KM Share</span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{driverEarnings.extraDistanceShare}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Surge/Rain Share</span>
-                    <span className="text-[#18201c] dark:text-white">
-                      ₹{driverEarnings.surgeRainShare}
-                    </span>
-                  </div>
-                  {driverEarnings.tip > 0 && (
-                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span>100% Customer Tip</span>
-                      <span>+₹{driverEarnings.tip}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
-                    <span>Total Driver Payout</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      ₹{driverEarnings.totalDriverEarnings}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. Platform Net Profit Card */}
-              <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-3.5 relative overflow-hidden shadow-sm dark:shadow-xl">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-2.5">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <Coins className="size-4 text-amber-500 dark:text-yellow-400" /> Platform Margin
-                  </span>
-                  <span
-                    className={`text-xs font-mono font-black px-2.5 py-1 rounded-lg border ${
-                      platformEconomics.platformNetProfit >= 0
-                        ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-yellow-400 dark:bg-yellow-400/10 dark:border-yellow-400/20'
-                        : 'text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-400/10 dark:border-rose-400/20'
-                    }`}
-                  >
-                    ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}
-                    %)
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Total Customer Paid</span>
-                    <span className="text-[#18201c] dark:text-white font-bold">
-                      ₹{platformEconomics.totalCollectedFromCustomer}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Less: Vendor Payout</span>
-                    <span>-₹{platformEconomics.totalPaidToVendor}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Less: Driver Earnings</span>
-                    <span>-₹{platformEconomics.totalPaidToDriver}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Less: GST Payable</span>
-                    <span>-₹{platformEconomics.totalGstCollected}</span>
-                  </div>
-                  <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
-                    <span>Platform Profit Margin</span>
-                    <span
-                      className={
-                        platformEconomics.platformNetProfit >= 0
-                          ? 'text-amber-700 dark:text-yellow-400'
-                          : 'text-rose-600 dark:text-rose-400'
-                      }
-                    >
-                      ₹{platformEconomics.platformNetProfit}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Comprehensive Output Breakdown Table */}
-            <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl">
-              <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-3">
-                <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics
-                  Summary Table
-                </h3>
-                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
-                  Real-time Computation
-                </span>
-              </div>
-
-              <div className="overflow-x-auto text-xs font-mono">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-[#202923] text-gray-500 dark:text-gray-400 uppercase text-[10px] bg-gray-50 dark:bg-[#0b0f0d]">
-                      <th className="py-2.5 px-3">Entity</th>
-                      <th className="py-2.5 px-3">Revenue / Amount</th>
-                      <th className="py-2.5 px-3">Outflow / Cost</th>
-                      <th className="py-2.5 px-3">Net Profit / Share</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-[#1c241f] text-gray-700 dark:text-gray-300">
-                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
-                        Customer
-                      </td>
-                      <td className="py-3 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">
-                        ₹{customerBilling.grandTotal}
-                      </td>
-                      <td className="py-3 px-3 text-gray-400">-</td>
-                      <td className="py-3 px-3 text-gray-500 dark:text-gray-400">
-                        Order Fulfilled
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
-                        Restaurant Vendor
-                      </td>
-                      <td className="py-3 px-3">₹{vendorSettlement.grossSales} (Gross)</td>
-                      <td className="py-3 px-3 text-rose-600 dark:text-rose-400 font-bold">
-                        -₹{vendorSettlement.commissionDeducted} (Commission)
-                      </td>
-                      <td className="py-3 px-3 text-orange-600 dark:text-orange-400 font-extrabold">
-                        ₹{vendorSettlement.netVendorPayout}
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                      <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
-                        Delivery Driver
-                      </td>
-                      <td className="py-3 px-3">
-                        ₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)
-                      </td>
-                      <td className="py-3 px-3 text-gray-400">-</td>
-                      <td className="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold">
-                        ₹{driverEarnings.totalDriverEarnings}
-                      </td>
-                    </tr>
-                    <tr className="bg-gray-50 dark:bg-[#17211b] border-t-2 border-gray-200 dark:border-[#202923]">
-                      <td className="py-3 px-3 font-black text-[#18201c] dark:text-[#d9f447]">
-                        Platform (Crave)
-                      </td>
-                      <td className="py-3 px-3 text-amber-700 dark:text-yellow-400 font-bold">
-                        ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
-                      </td>
-                      <td className="py-3 px-3 text-gray-600 dark:text-gray-400">
-                        ₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor}{' '}
-                        (Payouts)
-                      </td>
-                      <td className="py-3 px-3 font-black text-amber-700 dark:text-yellow-400 text-sm">
-                        ₹{platformEconomics.platformNetProfit} (
-                        {platformEconomics.profitMarginPercent}%)
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div className="lg:col-span-7">
+            <EconomicsCards
+              calculatorResult={calculatorResult}
+              distanceKm={distanceKm}
+              selectedCouponCode={selectedCouponCode}
+            />
           </div>
         </div>
       )}
 
-      {/* Tab Content: DB Payment Config */}
-      {activeTab === 'db_config' && (
-        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
-          <h3 className="text-base font-bold text-[#18201c] dark:text-[#d9f447] flex items-center gap-2">
-            <Zap className="size-4" /> Active Database Payment Configuration
-          </h3>
-          <pre className="bg-gray-900 dark:bg-[#0b0e0d] p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-gray-800 dark:border-[#232e27]">
-            {JSON.stringify(dbData?.paymentConfig || {}, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* Tab Content: DB Restaurants */}
-      {activeTab === 'db_restaurants' && (
-        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
-          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <Store className="size-4 text-orange-500 dark:text-orange-400" /> Loaded DB Restaurants
-            ({dbData?.restaurants?.length || 0})
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {dbData?.restaurants?.map((rest) => (
-              <div
-                key={rest.id}
-                className="bg-gray-50 dark:bg-[#0f1412] p-4 rounded-xl border border-gray-200 dark:border-[#232e27] space-y-1 text-xs"
-              >
-                <p className="font-bold text-[#18201c] dark:text-white text-sm">{rest.name}</p>
-                <p className="text-gray-500 dark:text-gray-400">{rest.cuisine || 'Cuisine N/A'}</p>
-                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-[#1f2923] text-gray-600 dark:text-gray-300 font-mono">
-                  <span>Commission Rate:</span>
-                  <span className="text-[#18201c] dark:text-[#d9f447] font-bold">
-                    {rest.commission_rate ?? 15}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab Content: DB Coupons */}
-      {activeTab === 'db_coupons' && (
-        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
-          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <Tag className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Loaded DB Active Coupons (
-            {dbData?.coupons?.length || 0})
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {dbData?.coupons?.map((coup) => (
-              <div
-                key={coup.id}
-                className="bg-gray-50 dark:bg-[#0f1412] p-4 rounded-xl border border-gray-200 dark:border-[#232e27] space-y-1 text-xs"
-              >
-                <span className="font-mono font-extrabold text-[#18201c] bg-gray-200 dark:text-[#d9f447] dark:bg-[#d9f447]/10 px-2 py-0.5 rounded">
-                  {coup.code}
-                </span>
-                <p className="text-gray-600 dark:text-gray-300 pt-1">{coup.description}</p>
-                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-[#1f2923] text-gray-600 dark:text-gray-300 font-mono">
-                  <span>Discount Value:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {coup.discount_type === 'percentage'
-                      ? `${coup.discount_value}%`
-                      : `₹${coup.discount_value}`}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab Content: DB Orders */}
-      {activeTab === 'db_orders' && (
-        <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
-          <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-            <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database
-            Orders ({dbData?.orders?.length || 0})
-          </h3>
-          <div className="overflow-x-auto text-xs font-mono">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-[#28352e] text-gray-500 dark:text-gray-400 uppercase text-[10px] bg-gray-50 dark:bg-transparent">
-                  <th className="py-2 px-3">Order ID</th>
-                  <th className="py-2 px-3">Customer</th>
-                  <th className="py-2 px-3">Restaurant</th>
-                  <th className="py-2 px-3">Subtotal</th>
-                  <th className="py-2 px-3">Total Amount</th>
-                  <th className="py-2 px-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-[#1e2722] text-gray-700 dark:text-gray-300">
-                {dbData?.orders?.map((ord) => (
-                  <tr key={ord.id} className="hover:bg-gray-50 dark:hover:bg-[#1b241f] transition">
-                    <td className="py-2.5 px-3 text-gray-500 dark:text-gray-400">
-                      {ord.id.slice(0, 10)}...
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-[#18201c] dark:text-white">
-                      {ord.customer_name}
-                    </td>
-                    <td className="py-2.5 px-3 text-gray-600 dark:text-gray-300">
-                      {ord.restaurant_name}
-                    </td>
-                    <td className="py-2.5 px-3 font-medium">₹{ord.subtotal}</td>
-                    <td className="py-2.5 px-3 text-[#18201c] dark:text-[#d9f447] font-bold">
-                      ₹{ord.total_amount}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="font-mono text-gray-700 dark:text-gray-300 text-[10px] uppercase font-bold">
-                        {ord.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* Database Inspector Tabs */}
+      {activeTab !== 'calculator' && (
+        <DatabaseInspectorTabs activeTab={activeTab} dbData={dbData} />
       )}
     </div>
   )

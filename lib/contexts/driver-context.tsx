@@ -1,283 +1,37 @@
 'use client'
 
-import { useAuth } from '@/lib/auth-context'
-import { apiFetch } from '@/lib/client/api-fetch'
-import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
-import { calculateCheckoutPricing } from '@/lib/distance-pricing'
-import { calculateHaversineDistanceKm } from '@/lib/utils'
 import CustomAlertModal from '@/components/CustomAlertModal'
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { playChimeSound, publishLiveEvent, useWebSocket } from '@/lib/websocket'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import {
+  createBroadcastOfferFromOrder,
+  getDriverPayoutDetails,
+} from './driver-helpers'
+import type {
+  BroadcastOrderOffer,
+  CompletedTripItem,
+  CustomAlertOptions,
+  DeliveryTask,
+  DriverContextType,
+  DriverPosition,
+  PayoutLogItem,
+  SavedUpiItem,
+} from './driver-types'
 
-export interface DriverPosition {
-  coords: {
-    latitude: number
-    longitude: number
-    accuracy: number
-    altitude?: number | null
-    altitudeAccuracy?: number | null
-    heading?: number | null
-    speed?: number | null
-  }
-  timestamp: number
+export type {
+  BroadcastOrderOffer,
+  CompletedTripItem,
+  CustomAlertOptions,
+  DeliveryTask,
+  DriverContextType,
+  DriverPosition,
+  PayoutLogItem,
+  SavedUpiItem,
 }
-
-// Default coordinates for fallback (Koramangala, Bengaluru)
-const DEFAULT_DRIVER_LAT = 12.679898
-const DEFAULT_DRIVER_LNG = 77.469493
-const DEFAULT_RESTAURANT_LAT = 12.9352
-const DEFAULT_RESTAURANT_LNG = 77.6245
-
-const ELIGIBLE_DRIVER_OFFER_STATUSES = [
-  'ready_for_pickup',
-  'ready',
-  'sent_to_vendor',
-  'preparing',
-  'cooking',
-  'packing',
-]
-
-/**
- * Creates a broadcast order offer from an order target
- * Shared utility to eliminate duplicate code between WebSocket listener and polling
- */
-function createBroadcastOfferFromOrder(
-  target: any,
-  driverGpsCoords?: number[] | null
-): BroadcastOrderOffer | null {
-  if (!target || !target.id) return null
-  if (
-    !target.id ||
-    !ELIGIBLE_DRIVER_OFFER_STATUSES.includes(target.status) ||
-    (target.rider_id && target.rider_id !== 'Unassigned') ||
-    (target.driver_name &&
-      target.driver_name !== 'Unassigned' &&
-      target.driver_name !== 'Unassigned Driver')
-  ) {
-    return null
-  }
-
-  const driverLat = driverGpsCoords ? driverGpsCoords[0] : DEFAULT_DRIVER_LAT
-  const driverLng = driverGpsCoords ? driverGpsCoords[1] : DEFAULT_DRIVER_LNG
-  const distKm = calculateHaversineDistanceKm(
-    driverLat,
-    driverLng,
-    DEFAULT_RESTAURANT_LAT,
-    DEFAULT_RESTAURANT_LNG
-  )
-
-  let itemsArr: any[] = []
-  try {
-    itemsArr = typeof target.items === 'string' ? JSON.parse(target.items) : target.items || []
-  } catch (e) {}
-
-  // The customer's handover code is never delivered to the driver — the driver
-  // reads it out from the customer at the door.
-  const { basePayout, surgeBonus, tip: tipVal } = getDriverPayoutDetails(target)
-
-  return {
-    id: target.id,
-    orderNumber: `#${target.id.slice(0, 8)}`,
-    restaurantName: target.restaurant_name || 'Crave Kitchen Store',
-    restaurantAddress: target.customer_address
-      ? `Kitchen near ${target.customer_address}`
-      : 'Koramangala 5th Block, Bengaluru',
-    customerName: target.customer_name || 'Customer',
-    customerAddress: target.customer_address || 'Indiranagar 100ft Rd',
-    basePayout,
-    surgeBonus,
-    tip: tipVal,
-    distance: `${distKm || 1.8} km`,
-    itemsCount: Array.isArray(itemsArr) ? itemsArr.length : 1,
-    customerPhone: target.customer_phone || undefined,
-  }
-}
-
-export interface CustomAlertOptions {
-  title?: string
-  message: string
-  variant?: 'warning' | 'info' | 'error' | 'success'
-  actionLabel?: string
-  actionPath?: string
-}
-
-export interface BroadcastOrderOffer {
-  id: string
-  orderNumber: string
-  restaurantName: string
-  restaurantAddress: string
-  customerName: string
-  customerAddress: string
-  basePayout: number
-  surgeBonus: number
-  tip: number
-  distance: string
-  itemsCount: number
-  customerPhone?: string
-  otp?: string
-  restaurantLat?: number
-  restaurantLng?: number
-  customerLat?: number
-  customerLng?: number
-}
-
-export interface DeliveryTask {
-  id: string
-  orderNumber: string
-  restaurantName: string
-  restaurantAddress: string
-  customerName: string
-  customerAddress: string
-  customerPhone: string
-  basePayout?: number
-  surgeBonus?: number
-  payout: number
-  tip: number
-  distance: string
-  step: 'assigned' | 'at_restaurant' | 'picked_up' | 'arrived_customer'
-  otp?: string
-  restaurantLat?: number
-  restaurantLng?: number
-  customerLat?: number
-  customerLng?: number
-}
-
-export interface CompletedTripItem {
-  id: string
-  order: string
-  restaurant: string
-  customer: string
-  baseEarnings: number
-  surge: number
-  tip: number
-  total: number
-  time: string
-  distance: string
-}
-
-export interface SavedUpiItem {
-  id: string
-  vpa: string
-  bankName: string
-  isPrimary: boolean
-  isVerified: boolean
-}
-
-export interface PayoutLogItem {
-  id: string
-  amount: number
-  date: string
-  status: string
-}
-
-interface DriverContextType {
-  isOnline: boolean
-  setIsOnline: React.Dispatch<React.SetStateAction<boolean>>
-  activeTask: DeliveryTask | null
-  setActiveTask: React.Dispatch<React.SetStateAction<DeliveryTask | null>>
-  broadcastOffer: BroadcastOrderOffer | null
-  setBroadcastOffer: React.Dispatch<React.SetStateAction<BroadcastOrderOffer | null>>
-  offerTimer: number
-  setOfferTimer: React.Dispatch<React.SetStateAction<number>>
-  completedTrips: CompletedTripItem[]
-  savedUpiList: SavedUpiItem[]
-  payoutLogs: PayoutLogItem[]
-  driverGpsCoords: [number, number] | null
-  gpsStatus: 'idle' | 'acquiring' | 'connected' | 'denied' | 'error'
-  gpsPermissionState: 'granted' | 'prompt' | 'denied' | 'unknown'
-  gpsAccuracy: number | null
-  lastGpsUpdate: string
-  isBackgroundWorkerActive: boolean
-  workerLastSyncTime: string
-  backgroundSyncIntervalMs: number
-  setBackgroundSyncIntervalMs: (ms: number) => void
-  completedSummaryModal: CompletedTripItem | null
-  setCompletedSummaryModal: React.Dispatch<React.SetStateAction<CompletedTripItem | null>>
-  showCustomAlert: (opts: CustomAlertOptions) => void
-  requestMobileGps: () => void
-  triggerSimulatedOffer: () => void
-  acceptBroadcastOffer: () => void
-  advanceStep: () => void
-  completeDelivery: (otpInput?: string) => Promise<{ success: boolean; message: string }>
-  handleAddUpiId: (vpa: string, provider: string) => void
-  setPrimaryUpi: (id: string) => void
-  deleteUpiId: (id: string) => void
-  handleInstantCashout: (amount: number) => boolean
-}
+export { getDriverPayoutDetails }
 
 const DriverContext = createContext<DriverContextType | undefined>(undefined)
-
-export function getDriverPayoutDetails(order: any): {
-  basePayout: number
-  surgeBonus: number
-  tip: number
-  totalDriverPayout: number
-} {
-  if (!order) {
-    return { basePayout: 24, surgeBonus: 0, tip: 0, totalDriverPayout: 24 }
-  }
-
-  let itemsArr: any[] = []
-  try {
-    itemsArr = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || []
-  } catch (e) {}
-
-  const storedBreakdown =
-    order.pricing_breakdown || (itemsArr.length > 0 && itemsArr[0]?.billing_breakdown) || null
-
-  const tip = Number(order.tip || order.tip_amount || storedBreakdown?.tip || 0)
-
-  // 1. Direct driver_payout from DB column or stored breakdown
-  if (
-    order.driver_payout != null &&
-    !isNaN(Number(order.driver_payout)) &&
-    Number(order.driver_payout) > 0
-  ) {
-    const totalDriverPayout = Number(order.driver_payout)
-    const basePayout = Number(
-      storedBreakdown?.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
-    )
-    const surgeBonus = Number(storedBreakdown?.driver_surge_payout ?? 0)
-    return { basePayout, surgeBonus, tip, totalDriverPayout }
-  }
-
-  if (
-    storedBreakdown &&
-    (storedBreakdown.driver_payout != null || storedBreakdown.totalDriverEarnings != null)
-  ) {
-    const totalDriverPayout = Number(
-      storedBreakdown.driver_payout ?? storedBreakdown.totalDriverEarnings
-    )
-    const basePayout = Number(
-      storedBreakdown.driver_base_payout ?? Math.max(0, totalDriverPayout - tip)
-    )
-    const surgeBonus = Number(storedBreakdown.driver_surge_payout ?? 0)
-    return { basePayout, surgeBonus, tip, totalDriverPayout }
-  }
-
-  // 2. Fallback to calculation using food subtotal (not total_amount)
-  const foodSubtotal = Number(
-    order.subtotal ||
-      storedBreakdown?.subtotal ||
-      (order.total_amount ? Math.round(order.total_amount * 0.75) : 250)
-  )
-  const roadKm = Number(order.distance_km || order.distance || 1.8)
-  const pricing = calculateCheckoutPricing({
-    cartSubtotal: foodSubtotal,
-    roadDistanceKm: roadKm,
-  })
-  const dEarn = pricing.driverEarnings || {
-    baseDistanceShare: 24,
-    extraDistanceShare: 0,
-    surgeRainShare: 0,
-    totalDriverEarnings: 24,
-  }
-
-  const basePayout = dEarn.baseDistanceShare + dEarn.extraDistanceShare
-  const surgeBonus = dEarn.surgeRainShare
-  const totalDriverPayout = dEarn.totalDriverEarnings
-
-  return { basePayout, surgeBonus, tip, totalDriverPayout }
-}
 
 export function DriverProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth()
@@ -301,18 +55,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
   const [isBackgroundWorkerActive, setIsBackgroundWorkerActive] = useState<boolean>(false)
   const [workerLastSyncTime, setWorkerLastSyncTime] = useState<string>('Never')
   const [backgroundSyncIntervalMs, setBackgroundSyncIntervalMs] = useState<number>(3000)
-  const workerRef = React.useRef<Worker | null>(null)
-  const isStepAdvancingRef = React.useRef(false)
-  const isAcceptingOfferRef = React.useRef(false)
+  const workerRef = useRef<Worker | null>(null)
+  const isStepAdvancingRef = useRef(false)
+  const isAcceptingOfferRef = useRef(false)
   const [completedSummaryModal, setCompletedSummaryModal] = useState<CompletedTripItem | null>(null)
 
-  // Completed Trips
+  // Completed Trips, UPI Saved List, Payout Logs
   const [completedTrips, setCompletedTrips] = useState<CompletedTripItem[]>([])
-
-  // UPI Saved List
   const [savedUpiList, setSavedUpiList] = useState<SavedUpiItem[]>([])
-
-  // Payout Logs
   const [payoutLogs, setPayoutLogs] = useState<PayoutLogItem[]>([])
 
   // Load Driver Profile Data (Orders, UPI, Payouts) from DB
@@ -321,7 +71,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
 
     const loadDriverData = async () => {
       try {
-        // 1. Fetch Orders (active task & completed trips)
         const ordersRes = await fetch(`/api/driver/orders?driverId=${user.id}`)
         const ordersJson = await ordersRes.json()
         if (ordersJson.success) {
@@ -366,14 +115,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // 2. Fetch UPI Saved Accounts
         const upiRes = await fetch(`/api/driver/upi?driverId=${user.id}`)
         const upiJson = await upiRes.json()
         if (upiJson.success && Array.isArray(upiJson.savedUpiList)) {
           setSavedUpiList(upiJson.savedUpiList)
         }
 
-        // 3. Fetch Payout Logs
         const payoutsRes = await fetch(`/api/driver/payouts?driverId=${user.id}`)
         const payoutsJson = await payoutsRes.json()
         if (payoutsJson.success && Array.isArray(payoutsJson.payoutLogs)) {
@@ -442,10 +189,9 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         const json = await res.json()
 
         if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
-          // Find active orders needing driver pickup
           const availableOrders = json.orders.filter(
             (o: any) =>
-              ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+              ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
               !o.rider_id &&
               (!o.driver_name ||
                 o.driver_name === 'Unassigned' ||
@@ -469,7 +215,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
-  // Check geolocation permission using browser Permissions API.
+  // Check geolocation permission using browser Permissions API
   useEffect(() => {
     let cancelled = false
 
@@ -547,7 +293,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, isOnline, backgroundSyncIntervalMs])
 
-  // Screen Wake Lock API to prevent mobile browser sleep when app is in background/recent apps
+  // Screen Wake Lock API to prevent mobile browser sleep
   useEffect(() => {
     if (typeof window === 'undefined' || !isOnline) return
 
@@ -785,7 +531,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            ELIGIBLE_DRIVER_OFFER_STATUSES.includes(o.status) &&
+            ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
             !o.rider_id &&
             (!o.driver_name ||
               o.driver_name === 'Unassigned' ||
@@ -803,7 +549,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {}
 
-    // No real customer orders available - trigger custom modal popup
     setBroadcastOffer(null)
     showCustomAlert({
       title: 'No Orders In Queue',
@@ -847,7 +592,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // 1. Post to dedicated driver accept endpoint with atomic concurrency guard
       const acceptRes = await fetch('/api/driver/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -873,10 +617,8 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Assignment confirmed authoritatively by PostgreSQL
       setActiveTask(task)
 
-      // 2. Patch orders API for standard order status sync
       await fetch('/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -891,7 +633,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         }),
       }).catch(() => {})
 
-      // Immediately publish driver live GPS position to WebSocket broadcast
       publishLiveEvent('driver_location', {
         driverId: user?.id || 'driver_partner',
         orderId: realId,
@@ -1167,7 +908,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
 
-      {/* Global Custom Alert Modal Popup */}
       <CustomAlertModal
         isOpen={customAlert.isOpen}
         title={customAlert.title}
