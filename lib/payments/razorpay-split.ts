@@ -8,11 +8,21 @@
  *
  * All transfer amounts come from the immutable Order.financial_snapshot:
  *   - Restaurant: vendorPayableNetPaise
- *   - Driver: riderPayablePaise
+ *   - Driver:     riderPayablePaise
  *   - Platform remainder: customerPayablePaise - vendorPayableNetPaise - riderPayablePaise
  *
  * Never trusts client amounts. Creates a durable RazorpayTransfer intent before
  * any Razorpay API call. Marks processed only on provider-confirmed state.
+ *
+ * Transfer status lifecycle
+ * ─────────────────────────
+ *   pending     – intent created, no API call attempted yet
+ *   processing  – API call in-flight or failed before a response was received
+ *   unknown     – API call timed-out / network error; provider outcome is
+ *                 ambiguous. Must NOT be re-submitted until reconciled.
+ *   processed   – provider confirmed successful transfer
+ *   failed      – provider confirmed rejection (terminal)
+ *   reversed    – provider reversed the transfer (terminal)
  */
 
 import { prisma } from '@/lib/prisma'
@@ -48,6 +58,33 @@ async function getTransferReleaseCondition(): Promise<'DELIVERY_COMPLETE' | 'ADM
 }
 
 /**
+ * CR-03-C: Verify that an admin has explicitly approved settlement for this
+ * order by checking for a corresponding AdminOverrideLog entry with
+ * action = 'settlement_approved'. Order status (delivered/completed) is
+ * still checked as a secondary guard — admin approval does not bypass it.
+ *
+ * The ADMIN_APPROVAL release condition previously only checked order.status,
+ * which is the same check used by DELIVERY_COMPLETE. An independent approval
+ * record is required to meaningfully distinguish the two modes.
+ */
+async function assertAdminApproval(orderId: string): Promise<void> {
+  const approvalRecord = await prisma.adminOverrideLog.findFirst({
+    where: {
+      order_id: orderId,
+      action: 'settlement_approved',
+    },
+    select: { id: true, admin_id: true, created_at: true },
+  })
+
+  if (!approvalRecord) {
+    throw new Error(
+      `Order ${orderId} requires an explicit admin approval record ` +
+        `(AdminOverrideLog.action='settlement_approved') before settlement can be released.`
+    )
+  }
+}
+
+/**
  * Create split Route transfers for an order after the release condition is met.
  * Idempotent: creates one RazorpayTransfer per recipient per order.
  */
@@ -75,11 +112,13 @@ export async function createRouteSplits(params: SplitOrderParams) {
       throw new Error(`Order ${orderId} not yet delivered — release condition not met`)
     }
   } else if (releaseCondition === 'ADMIN_APPROVAL') {
-    // Admin approval gate would be checked against an audit record.
-    // For now require order status delivered/completed as a safe default.
+    // CR-03-C: Require order status AND an independently persisted admin
+    // approval record. Order status alone is insufficient — it does not prove
+    // an admin reviewed and released this specific settlement.
     if (order.status !== 'delivered' && order.status !== 'completed') {
       throw new Error(`Order ${orderId} not yet delivered — admin approval required`)
     }
+    await assertAdminApproval(orderId)
   } else {
     throw new Error(`Unknown transfer release condition: ${releaseCondition}`)
   }
@@ -96,19 +135,32 @@ export async function createRouteSplits(params: SplitOrderParams) {
 
   const { customerPayablePaise, vendorPayableNetPaise, riderPayablePaise } = snapshot
 
-  // Build allocations (only positive amounts)
+  // CR-03-D: Validate recipient IDs before building allocations. The non-null
+  // assertion operators (!) do not validate at runtime — they only suppress
+  // TypeScript errors. An undefined restaurant_id or rider_id would silently
+  // pass a `null` to the linked-account lookup, producing a confusing error.
   const allocations: Allocation[] = []
   if (Number.isSafeInteger(vendorPayableNetPaise) && vendorPayableNetPaise > 0) {
+    if (!order.restaurant_id) {
+      throw new Error(
+        `Order ${orderId} has a non-zero vendor allocation but restaurant_id is null — cannot settle`
+      )
+    }
     allocations.push({
       type: 'RESTAURANT',
-      recipientId: order.restaurant_id!,
+      recipientId: order.restaurant_id,
       amountPaise: vendorPayableNetPaise,
     })
   }
   if (Number.isSafeInteger(riderPayablePaise) && riderPayablePaise > 0) {
+    if (!order.rider_id) {
+      throw new Error(
+        `Order ${orderId} has a non-zero driver allocation but rider_id is null — cannot settle`
+      )
+    }
     allocations.push({
       type: 'DRIVER',
-      recipientId: order.rider_id!,
+      recipientId: order.rider_id,
       amountPaise: riderPayablePaise,
     })
   }
@@ -148,6 +200,14 @@ export async function createRouteSplits(params: SplitOrderParams) {
       // isn't confirmed processed. Do NOT create another transfer — that would
       // double-pay. Leave it for the transfer webhook / reconcile to resolve.
       if (existing && existing.razorpay_transfer_id) {
+        return { transfer: existing, linked, alloc, idempotencyKey }
+      }
+
+      // CR-03-A: An 'unknown' status means a previous API call timed out and
+      // the provider outcome is ambiguous. We MUST NOT re-submit — doing so
+      // risks creating a duplicate payment if the provider did process it.
+      // Leave for reconcileStaleTransfers() to resolve.
+      if (existing && existing.status === 'unknown') {
         return { transfer: existing, linked, alloc, idempotencyKey }
       }
 
@@ -207,22 +267,23 @@ export async function createRouteSplits(params: SplitOrderParams) {
   const results: any[] = []
 
   for (const item of transfers) {
-    const { transfer, linked, alloc } = item as {
+    const { transfer, linked, alloc, idempotencyKey } = item as {
       transfer: any
       linked: any
       alloc: Allocation
+      idempotencyKey: string
     }
 
-    // Skip recipients whose transfer already reached the provider (settled or
-    // in-flight — handled above). Never re-call the API for these or we risk
-    // creating a duplicate transfer (double-pay).
-    if (transfer.razorpay_transfer_id) {
+    // Skip recipients whose transfer already reached the provider (settled,
+    // in-flight, or unknown-outcome — see guard above). Never re-call the API
+    // for these or we risk creating a duplicate transfer (double-pay).
+    if (transfer.razorpay_transfer_id || transfer.status === 'unknown') {
       results.push({
         transferId: transfer.id,
         recipientType: alloc.type,
         recipientId: alloc.recipientId,
         amountPaise: alloc.amountPaise,
-        providerTransferId: transfer.razorpay_transfer_id,
+        providerTransferId: transfer.razorpay_transfer_id ?? null,
         status: transfer.status,
         skipped: true,
       })
@@ -235,29 +296,48 @@ export async function createRouteSplits(params: SplitOrderParams) {
       data: { razorpay_payment_id: razorpayPaymentId },
     })
 
-    // Create Route transfer via Razorpay API
-    // Note: Route method signatures depend on the installed SDK version. Validate
-    // against your pinned SDK before enabling live Route transfers.
+    // CR-03-B: Pass the local idempotency key as an X-Idempotency-Key header
+    // on every transfers.create call. A local DB key alone cannot guarantee
+    // exactly-once execution at an external provider. The header instructs
+    // Razorpay to deduplicate on its side: a retry of the same key returns the
+    // original transfer rather than creating a second one.
     let providerTransferId: string | undefined
     let providerStatus: string | undefined
 
     try {
-      const routeResp: any = await client.transfers.create({
-        account: linked.razorpay_account_id,
-        amount: alloc.amountPaise,
-        currency: 'INR',
-        notes: { crave_order_id: orderId, recipient_type: alloc.type },
-      })
+      const routeResp: any = await client.transfers.create(
+        {
+          account: linked.razorpay_account_id,
+          amount: alloc.amountPaise,
+          currency: 'INR',
+          notes: { crave_order_id: orderId, recipient_type: alloc.type },
+        },
+        // Razorpay Node SDK passes extra options (including custom headers) as
+        // the second argument to resource methods.
+        { headers: { 'X-Idempotency-Key': idempotencyKey } } as any
+      )
 
       providerTransferId = routeResp.id
       providerStatus = routeResp.status
     } catch (err: any) {
-      // Timeout / unknown outcome: mark failed and rely on webhook reconciliation
+      // CR-03-A: A caught error does NOT prove Razorpay rejected the transfer.
+      // Timeouts and network failures frequently occur *after* the provider has
+      // processed the request but before the response arrives.
+      //
+      // Setting status='failed' here and retrying would re-submit the transfer,
+      // potentially causing a duplicate payment.
+      //
+      // Use status='unknown' instead: no razorpay_transfer_id is set, so the
+      // guard above blocks any future re-submission. reconcileStaleTransfers()
+      // will query Razorpay and transition to 'processed' or 'failed' once the
+      // true outcome is confirmed.
       await prisma.razorpayTransfer.update({
         where: { id: transfer.id },
         data: {
-          status: 'failed',
-          failure_reason: String(err?.message ?? 'Route transfer API error'),
+          status: 'unknown',
+          failure_reason:
+            `Ambiguous provider outcome — pending reconciliation: ` +
+            String(err?.message ?? 'Route transfer API error'),
           updated_at: new Date(),
         },
       })
@@ -342,14 +422,21 @@ export async function handleRouteTransferWebhook(event: any) {
 
 /**
  * Reconcile stale transfer intents without provider IDs.
- * Unknown provider outcome is not failure — query Razorpay first.
+ *
+ * CR-03-A: Also reconciles rows in 'unknown' status — not only 'processing'.
+ * Unknown-outcome rows have no razorpay_transfer_id and are blocked from
+ * re-submission until the provider state is confirmed here. Once the
+ * provider outcome is known, this job transitions rows to the correct status
+ * ('processed' or 'failed'), unblocking any subsequent retry if needed.
  */
 export async function reconcileStaleTransfers() {
   const staleCutoff = new Date(Date.now() - 30 * 60 * 1000) // 30 min
 
   const stale = await prisma.razorpayTransfer.findMany({
     where: {
-      status: 'processing',
+      // CR-03-A: include 'unknown' alongside 'processing' — both lack a
+      // razorpay_transfer_id and require provider-side reconciliation.
+      status: { in: ['processing', 'unknown'] },
       created_at: { lt: staleCutoff },
       razorpay_transfer_id: null,
     },
@@ -360,7 +447,6 @@ export async function reconcileStaleTransfers() {
   const client = getRazorpayClient()
 
   for (const t of stale) {
-    // Query Razorpay for the transfer by idempotency key / payment
     try {
       const transfers: any = await client.transfers.all({
         from: Date.now() - 7 * 24 * 60 * 60 * 1000,
@@ -372,18 +458,34 @@ export async function reconcileStaleTransfers() {
       )
 
       if (match) {
+        // Provider confirms a matching transfer — record the outcome.
+        const resolvedStatus = match.status === 'processed' ? 'processed' : 'failed'
         await prisma.razorpayTransfer.update({
           where: { id: t.id },
           data: {
             razorpay_transfer_id: match.id,
-            status: match.status === 'processed' ? 'processed' : 'failed',
-            ...(match.status === 'processed' ? { processed_at: new Date() } : {}),
+            status: resolvedStatus,
+            ...(resolvedStatus === 'processed' ? { processed_at: new Date() } : {}),
+            failure_reason:
+              resolvedStatus === 'failed'
+                ? String(match.failure_reason ?? 'Provider reported failure during reconciliation')
+                : null,
             updated_at: new Date(),
           },
         })
-        results.push({ transferId: t.id, reconciled: match.status })
+        results.push({ transferId: t.id, reconciled: match.status, providerTransferId: match.id })
       } else {
-        results.push({ transferId: t.id, reconciled: 'not_found' })
+        // Provider has no record — the transfer was never created on its side.
+        // Safe to mark failed and allow a retry on the next settlement attempt.
+        await prisma.razorpayTransfer.update({
+          where: { id: t.id },
+          data: {
+            status: 'failed',
+            failure_reason: 'Not found at provider during reconciliation — safe to retry',
+            updated_at: new Date(),
+          },
+        })
+        results.push({ transferId: t.id, reconciled: 'not_found_marked_failed' })
       }
     } catch (err: any) {
       results.push({ transferId: t.id, error: err?.message })

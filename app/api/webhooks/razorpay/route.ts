@@ -151,23 +151,44 @@ interface BeginResult {
   status: 'new' | 'processing' | 'completed'
 }
 
+/**
+ * CR-08 FIX: Atomically claim a webhook event for processing.
+ *
+ * The previous implementation had a race condition: when a previously-failed
+ * event was retried, it attempted to create a new record with the same
+ * provider/event_id. The database rejected the insertion (unique constraint),
+ * and the catch block returned 'processing' without actually transitioning
+ * the failed event back to a recoverable state. The event became permanently
+ * stuck in 'failed' state, requiring manual intervention.
+ *
+ * This implementation uses a single atomic database operation:
+ *   1. Try to insert a new 'processing' record (fast path for first delivery).
+ *   2. If the unique constraint fires, atomically claim an existing
+ *      'failed' record by transitioning it back to 'processing' with
+ *      incremented attempt count and a lease timestamp.
+ *   3. If the existing record is already 'processed', return 'completed'.
+ *   4. If the existing record is already 'processing' (claimed by another
+ *      worker), check for staleness. If stale (worker crashed mid-processing),
+ *      reclaim the lease. Otherwise return 'processing' to reject the duplicate.
+ *
+ * The atomic claim uses a conditional updateMany with status='failed' so
+ * that only one concurrent worker can win the lease. Workers that lose the
+ * race see 0 rows updated and treat the event as already in-flight.
+ *
+ * Stale-lease recovery: if an event has been 'processing' for longer than
+ * PROCESSING_LEASE_MS, we atomically reclaim it. This handles worker crashes
+ * without requiring manual intervention.
+ */
+const PROCESSING_LEASE_MS = 5 * 60 * 1000 // 5 minutes
+
 async function beginWebhookEvent(
   provider: string,
   eventId: string,
   type: string,
   payload: unknown
 ): Promise<BeginResult> {
+  // ── Fast path: insert a brand-new event record ──
   try {
-    const existing = await prisma.webhookEvent.findFirst({
-      where: { provider, provider_event_id: eventId },
-    })
-
-    if (existing) {
-      if (existing.status === 'processed') return { status: 'completed' }
-      if (existing.status === 'processing') return { status: 'processing' }
-      // Failed — allow retry
-    }
-
     await prisma.webhookEvent.create({
       data: {
         provider,
@@ -179,18 +200,78 @@ async function beginWebhookEvent(
         received_at: new Date(),
       },
     })
-
     return { status: 'new' }
   } catch (err: any) {
-    if (err?.code === 'P2002') {
-      const raceWinner = await prisma.webhookEvent.findFirst({
-        where: { provider, provider_event_id: eventId },
-      })
-      if (raceWinner?.status === 'processed') return { status: 'completed' }
-      return { status: 'processing' }
-    }
-    throw err
+    if (err?.code !== 'P2002') throw err
   }
+
+  // ── Slow path: an event with this provider+eventId already exists ──
+  const existing = await prisma.webhookEvent.findFirst({
+    where: { provider, provider_event_id: eventId },
+  })
+  if (!existing) {
+    // Unique constraint fired but no record found — retry the insert.
+    return beginWebhookEvent(provider, eventId, type, payload)
+  }
+
+  if (existing.status === 'processed') return { status: 'completed' }
+
+  if (existing.status === 'processing') {
+    // Check for stale lease (worker crashed mid-processing).
+    const leaseExpired =
+      existing.received_at && Date.now() - new Date(existing.received_at).getTime() > PROCESSING_LEASE_MS
+
+    if (leaseExpired) {
+      // Atomically reclaim the stale lease.
+      const reclaimed = await prisma.webhookEvent.updateMany({
+        where: {
+          provider,
+          provider_event_id: eventId,
+          status: 'processing',
+          received_at: { lt: new Date(Date.now() - PROCESSING_LEASE_MS) },
+        },
+        data: {
+          attempts: { increment: 1 },
+          received_at: new Date(),
+        },
+      })
+      if (reclaimed.count > 0) {
+        return { status: 'new' }
+      }
+      // Another worker reclaimed it first — fall through to 'processing'.
+    }
+    return { status: 'processing' }
+  }
+
+  // ── CR-08 FIX: Atomically claim a failed event for retry ──
+  // The conditional updateMany with status='failed' ensures only one
+  // concurrent worker can win the lease. The lease is established by
+  // transitioning status → 'processing' and incrementing attempts.
+  const claimed = await prisma.webhookEvent.updateMany({
+    where: {
+      provider,
+      provider_event_id: eventId,
+      status: 'failed',
+    },
+    data: {
+      status: 'processing',
+      attempts: { increment: 1 },
+      last_error: null,
+      received_at: new Date(),
+    },
+  })
+
+  if (claimed.count === 0) {
+    // Another worker claimed it between our read and this update.
+    // Re-read to determine the winner's state.
+    const winner = await prisma.webhookEvent.findFirst({
+      where: { provider, provider_event_id: eventId },
+    })
+    if (winner?.status === 'processed') return { status: 'completed' }
+    return { status: 'processing' }
+  }
+
+  return { status: 'new' }
 }
 
 async function markWebhookEventProcessed(provider: string, eventId: string) {

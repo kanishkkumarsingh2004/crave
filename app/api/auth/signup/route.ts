@@ -1,6 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail, createCustomerAddress, deleteUser } from '@/lib/dal'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { normalizeEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
@@ -9,12 +9,6 @@ import { hashPassword, validatePassword } from '@/lib/password'
 
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request)
-    const result = await checkRateLimit(`signup_${clientIp}`, 'AUTH_SIGNUP')
-    if (!result.allowed) {
-      return rateLimitResponse(result.resetTime, result.retryAfter)
-    }
-
     const body = await request.json().catch(() => ({}))
     const { password, role } = body
     const name = typeof body.name === 'string' ? body.name.trim() : ''
@@ -41,6 +35,20 @@ export async function POST(request: Request) {
         { error: 'Name (2-100 characters), a valid email address, and password are required' },
         { status: 400 }
       )
+    }
+
+    // CR-06 FIX: Rate limit by email (account-based) rather than IP alone.
+    // An attacker rotating IPs cannot bypass this.
+    const emailKey = `signup_email_${cleanEmail.toLowerCase()}`
+    const emailResult = await checkRateLimit(emailKey, 'AUTH_SIGNUP')
+    if (!emailResult.allowed) {
+      return rateLimitResponse(emailResult.resetTime, emailResult.retryAfter)
+    }
+
+    // Secondary IP-based check to catch distributed attacks
+    const ipResult = await checkRateLimit(getRateLimitKey(request, null, 'signup_ip'), 'AUTH_SIGNUP')
+    if (!ipResult.allowed) {
+      return rateLimitResponse(ipResult.resetTime, ipResult.retryAfter)
     }
 
     try {

@@ -120,12 +120,23 @@ jobs:
           WS_INTERNAL_SECRET: test-internal-secret
 
   load-test:
-    name: Load Test (Concurrent Users)
+    name: Load & Concurrency Test
     runs-on: ubuntu-latest
     needs: [build]
-    # Load/smoke test can be flaky in CI environments; correctness is already
-    # verified by the Unit & Integration Tests job. Reported informatively.
-    continue-on-error: true
+    # Two kinds of check live in this job, with very different gating:
+    #
+    #   1. The k6 smoke load test (below) is a flaky performance experiment —
+    #      it answers "how does it behave under traffic" and is allowed to
+    #      fail without blocking the pipeline. It has continue-on-error: true.
+    #
+    #   2. The abuse / concurrency suite is a deterministic correctness gate —
+    #      it answers "does the system stay correct when it is hammered" and
+    #      runs with --fail-on integrity, so any data corruption (duplicate
+    #      orders, oversold stock, replayed idempotency keys) fails the job.
+    #      This step has NO continue-on-error and is a mandatory release gate.
+    #
+    # The job as a whole is therefore gated on concurrency correctness, not
+    # on load-test flakiness.
     env:
       SEED_PASSWORD: 'ci-${{ github.run_id }}-${{ github.run_attempt }}-A9x!'
       SEED_ADMIN_EMAIL: 'load-admin-${{ github.run_id }}@example.test'
@@ -255,6 +266,9 @@ jobs:
           fi
 
       - name: Run load test
+        # Flaky performance experiment — non-blocking. Concurrency correctness
+        # is gated by the abuse / concurrency suite below.
+        continue-on-error: true
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load-tests/app-load-test.js
@@ -478,12 +492,13 @@ jobs:
           echo "  Build: ${{ needs.build.result }}"
           echo "  Security Scan: ${{ needs.security-scan.result }}"
           echo "  Dependency Scan (advisory): ${{ needs.dependency-scan.result }}"
-          echo "  Load Test (smoke): ${{ needs.load-test.result }}"
+          echo "  Load & Concurrency Test: ${{ needs.load-test.result }}"
           if [[ "${{ needs.lint-and-format.result }}" != "success" ]] ||
              [[ "${{ needs.typecheck.result }}" != "success" ]] ||
              [[ "${{ needs.test.result }}" != "success" ]] ||
              [[ "${{ needs.build.result }}" != "success" ]] ||
-             [[ "${{ needs.security-scan.result }}" != "success" ]]; then
+             [[ "${{ needs.security-scan.result }}" != "success" ]] ||
+             [[ "${{ needs.load-test.result }}" != "success" ]]; then
             echo "❌ CI FAILED"
             exit 1
           else
