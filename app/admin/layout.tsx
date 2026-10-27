@@ -4,7 +4,6 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/auth-context'
 import { useLanguage } from '@/lib/language-context'
-import { initializeNativeAdminBridge } from '@/lib/native-admin'
 import {
   AlertCircle,
   BarChart3,
@@ -39,23 +38,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
-  useEffect(() => {
-    let disposed = false
-    let cleanup: (() => void) | undefined
-
-    void initializeNativeAdminBridge()
-      .then((bridgeCleanup) => {
-        if (disposed) bridgeCleanup()
-        else cleanup = bridgeCleanup
-      })
-      .catch((error) => console.warn('[native] Admin bridge initialization failed:', error))
-
-    return () => {
-      disposed = true
-      cleanup?.()
-    }
-  }, [])
 
   useEffect(() => {
     if (isLoading) return

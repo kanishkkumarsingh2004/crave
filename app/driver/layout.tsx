@@ -4,7 +4,6 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/auth-context'
 import { DriverProvider, useDriver } from '@/lib/driver-context'
-import { initializeNativeDriverBridge, notifyNativeDeliveryOffer } from '@/lib/native-driver'
 import {
   Bike,
   CheckCircle2,
@@ -85,27 +84,6 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = ''
     }
   }, [sidebarOpen])
-
-  useEffect(() => {
-    let disposed = false
-    let cleanup: (() => void) | undefined
-
-    void initializeNativeDriverBridge({ driverId: user?.id })
-      .then((bridgeCleanup) => {
-        if (disposed) bridgeCleanup()
-        else cleanup = bridgeCleanup
-      })
-      .catch((error) => console.warn('[native] Driver bridge initialization failed:', error))
-
-    return () => {
-      disposed = true
-      cleanup?.()
-    }
-  }, [user?.id])
-
-  useEffect(() => {
-    if (broadcastOffer) void notifyNativeDeliveryOffer(broadcastOffer)
-  }, [broadcastOffer?.id])
 
   if (isLoading || !user) {
     return (

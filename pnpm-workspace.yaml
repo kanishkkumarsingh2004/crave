@@ -1,10 +1,6 @@
 pmOnFail: ignore
 
-packages:
-  - driver_app
-  - admin_app
-  - restaurant_app
-  - customer_app
+packages: []
 
 minimumReleaseAgeExclude:
   - '@next/*'

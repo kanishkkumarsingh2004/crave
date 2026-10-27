@@ -30,11 +30,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
   `lib/finance/`; dispatch is `lib/dispatch/`; the order state machine is
   `lib/catalog/order-state-machine.ts`.
 - `dictionary/` — the translation dictionaries. `en.ts` is the source of truth and every other
-  language is typed as `Dictionary`, so a missing key fails the build. `dictionary/react.tsx` is
-  the React binding the four native apps share — it is a **store**, not a context, so call
-  `useLanguage()` directly instead of adding a provider.
-- `admin_app/`, `driver_app/`, `restaurant_app/`, `customer_app/` — the four standalone Capacitor
-  React apps. They are not website wrappers.
+  language is typed as `Dictionary`, so a missing key fails the build.
 - `load-tests/` — the k6 load test (`app-load-test.js`) and the abuse / concurrency suite
   (`abuse/`).
 - `test/` — `node:test` suites run through `tsx`. The database-backed ones need
@@ -50,8 +46,6 @@ This block is written and re-added by `turbo` before repository-scoped commands 
   lock in `app/api/orders/route.ts` (the `where: { id, status }` write) instead of
   read-then-write.
 - **Broadcasts never carry a handover code.** `stripOrderSecrets()` runs over every WS payload.
-- **`versionCode` goes up on every build.** `pnpm build:android` raises it so the in-app updater
-  offers the new build. Use `KEEP_VERSION=1` to publish the version in `build.gradle` unchanged.
 - **A test script needs the native-app header.** The login route only returns a token in the body
   when the request sends `x-crave-native-app`; without it the client is silently unauthenticated.
 

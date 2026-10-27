@@ -1,4 +1,0 @@
-1c5976cd4eecdb66178bb5b90e45dffab13b6d8cb87940e9c69ded8a16428357  crave-admin-debug.apk
-1768173d306b238790f72f654d9beafec5e1fcfde7f7c8073eda365933eda676  crave-driver-debug.apk
-48fbe48aa5cd3ef46dad48253420615cd71efb91d2e91f4b4ef139e9a634854f  crave-restaurant-debug.apk
-50f627a293201fbafef320f5a73f71139680f741ea60e604aec2faa2268af50f  crave-customer-debug.apk

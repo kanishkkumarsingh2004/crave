@@ -6,13 +6,20 @@ import { useWebSocket, playChimeSound, publishLiveEvent } from '@/lib/websocket'
 import { calculateCheckoutPricing } from '@/lib/distance-pricing'
 import { calculateHaversineDistanceKm } from '@/lib/utils'
 import CustomAlertModal from '@/components/CustomAlertModal'
-import {
-  getDriverLocationPermission,
-  requestCurrentDriverPosition,
-  subscribeToDriverPosition,
-  type DriverPosition,
-} from '@/lib/native-driver'
 import React, { createContext, useContext, useEffect, useState } from 'react'
+
+export interface DriverPosition {
+  coords: {
+    latitude: number
+    longitude: number
+    accuracy: number
+    altitude?: number | null
+    altitudeAccuracy?: number | null
+    heading?: number | null
+    speed?: number | null
+  }
+  timestamp: number
+}
 
 // Default coordinates for fallback (Koramangala, Bengaluru)
 const DEFAULT_DRIVER_LAT = 12.679898
@@ -462,19 +469,11 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     checkLiveOrders()
   }, [isOnline, activeTask, broadcastOffer, driverGpsCoords])
 
-  // Query native permission first, then fall back to the browser Permissions API.
+  // Check geolocation permission using browser Permissions API.
   useEffect(() => {
     let cancelled = false
 
     const checkPermission = async () => {
-      const nativePermission = await getDriverLocationPermission()
-      if (cancelled) return
-      if (nativePermission !== 'unknown') {
-        setGpsPermissionState(nativePermission)
-        if (nativePermission === 'denied') setGpsStatus('denied')
-        return
-      }
-
       if (typeof window === 'undefined' || !('permissions' in navigator)) return
       navigator.permissions
         .query({ name: 'geolocation' })
@@ -653,16 +652,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const startWatching = async () => {
-      const nativeCleanup = await subscribeToDriverPosition(onPosition, onError)
-      if (cancelled) {
-        nativeCleanup?.()
-        return
-      }
-      if (nativeCleanup) {
-        stopWatching = nativeCleanup
-        return
-      }
+    const startWatching = () => {
       if (!('geolocation' in navigator)) {
         onError(new Error('Geolocation is unavailable on this device'))
         return
@@ -676,7 +666,7 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       stopWatching = () => navigator.geolocation.clearWatch(browserWatchId)
     }
 
-    void startWatching()
+    startWatching()
 
     return () => {
       cancelled = true
@@ -772,8 +762,6 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     }
 
     setGpsStatus('acquiring')
-    const handledNatively = await requestCurrentDriverPosition(onSuccess, onError)
-    if (handledNatively) return
 
     if (!('geolocation' in navigator)) {
       showCustomAlert({
