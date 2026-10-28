@@ -84,24 +84,6 @@ async function getActiveConfig(): Promise<PaymentConfig> {
   }
 }
 
-function getMockRestaurant(id?: string, name?: string) {
-  return {
-    id: id || 'rest_spice_garden',
-    name: name || 'Spice Garden',
-    cuisine: 'North Indian & Mughlai',
-    commercial_model: 'commission',
-    commission_rate: 15,
-    markup_rate: 0,
-    fixed_commission: 0,
-    fixed_markup: 0,
-    price_tax_mode: 'TAX_INCLUSIVE',
-    gst_status: 'REGISTERED',
-    supplier_state: 'Karnataka',
-    latitude: 12.686,
-    longitude: 77.475,
-  }
-}
-
 async function resolveCustomerAddress(customerId: string, body: any) {
   const targetId = body.address_id || body.addressId
   let addrRecord: any = null
@@ -357,16 +339,24 @@ export async function POST(request: Request) {
         }
       }
 
-      let restaurant: any = null
-      if (restaurant_id) {
-        restaurant = await findRestaurantById(restaurant_id).catch(() => null)
-        if (!restaurant) {
-          if (process.env.NODE_ENV !== 'production') {
-            restaurant = getMockRestaurant(restaurant_id, restaurant_name)
-          } else {
-            return NextResponse.json({ error: `Restaurant not found: ${restaurant_id}` }, { status: 404 })
-          }
-        }
+      const targetRestaurantId = restaurant_id || (isCraveXPOrder ? CRAVEXP_DARK_STORE_ID : null)
+      if (!targetRestaurantId) {
+        return NextResponse.json({ error: 'restaurant_id is required' }, { status: 400 })
+      }
+
+      const restaurant = await findRestaurantById(targetRestaurantId).catch(() => null)
+      if (!restaurant) {
+        return NextResponse.json(
+          { error: `Restaurant not found in database: ${targetRestaurantId}` },
+          { status: 404 }
+        )
+      }
+
+      if (restaurant.is_open === false) {
+        return NextResponse.json(
+          { error: `Restaurant "${restaurant.name}" is currently closed and not accepting orders` },
+          { status: 400 }
+        )
       }
 
       const rawItems: any[] = Array.isArray(items)
@@ -410,24 +400,12 @@ export async function POST(request: Request) {
       let foodSubtotal = 0
 
       for (const { itemId, variantId, quantity } of validatedRaw) {
-        let menuItem = menuItemMap.get(itemId)
+        const menuItem = menuItemMap.get(itemId)
         if (!menuItem) {
-          if (process.env.NODE_ENV !== 'production') {
-            menuItem = {
-              id: itemId,
-              name: 'Artisan Dish',
-              price: 250,
-              restaurant_id: restaurant?.id || restaurant_id || 'rest_spice_garden',
-              in_stock: true,
-              stock_count: 99,
-              category: 'food',
-            }
-          } else {
-            return NextResponse.json(
-              { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}` },
-              { status: 404 }
-            )
-          }
+          return NextResponse.json(
+            { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found in database: ${itemId}` },
+            { status: 404 }
+          )
         }
 
         if (restaurant && menuItem.restaurant_id && menuItem.restaurant_id !== restaurant.id) {
@@ -457,11 +435,31 @@ export async function POST(request: Request) {
         const price = isCraveXPOrder
           ? Number(selectedVariant?.price ?? menuItem.price ?? 0)
           : calculateMenuAppPrice(restaurantPrice, {
-              commercialModel: contract?.commercial_model ?? restaurant?.commercial_model,
-              commissionRate: contract?.commission_rate ?? restaurant?.commission_rate,
-              markupRate: contract?.markup_rate ?? restaurant?.markup_rate,
-              fixedCommission: contract?.fixed_commission ?? restaurant?.fixed_commission,
-              fixedMarkup: contract?.fixed_markup ?? restaurant?.fixed_markup,
+              commercialModel: (contract?.commercial_model ?? restaurant?.commercial_model) as any,
+              commissionRate:
+                contract?.commission_rate != null
+                  ? Number(contract.commission_rate)
+                  : restaurant?.commission_rate != null
+                  ? Number(restaurant.commission_rate)
+                  : undefined,
+              markupRate:
+                contract?.markup_rate != null
+                  ? Number(contract.markup_rate)
+                  : restaurant?.markup_rate != null
+                  ? Number(restaurant.markup_rate)
+                  : undefined,
+              fixedCommission:
+                contract?.fixed_commission != null
+                  ? Number(contract.fixed_commission)
+                  : restaurant?.fixed_commission != null
+                  ? Number(restaurant.fixed_commission)
+                  : undefined,
+              fixedMarkup:
+                contract?.fixed_markup != null
+                  ? Number(contract.fixed_markup)
+                  : restaurant?.fixed_markup != null
+                  ? Number(restaurant.fixed_markup)
+                  : undefined,
             })
 
         const lineTotal = price * quantity
@@ -490,7 +488,7 @@ export async function POST(request: Request) {
         })
       }
 
-      const finalRestaurantId = restaurant?.id || itemsList[0]?._menuItem?.restaurant_id || 'rest_spice_garden'
+      const finalRestaurantId = restaurant.id
 
       // Strict Invariant: Only one restaurant allowed per order
       const hasMultiRestaurantItems = itemsList.some(
@@ -503,8 +501,8 @@ export async function POST(request: Request) {
         )
       }
 
-      const restaurantDetails = restaurant || getMockRestaurant(finalRestaurantId, restaurant_name)
-      const finalRestaurantName = restaurantDetails.name || restaurant_name || 'Crave Restaurant'
+      const restaurantDetails = restaurant
+      const finalRestaurantName = restaurantDetails.name || 'Crave Kitchen'
 
       let couponDiscountAmount = 0
       let couponResult: any = null

@@ -114,7 +114,7 @@ export default function VendorDashboard() {
       if (isManualRefresh) setIsRefreshing(true)
 
       try {
-        const targetRestId = resolvedRestaurantId || user?.restaurantId || 'rest_demo_01'
+        const targetRestId = resolvedRestaurantId || user?.restaurantId || ''
         const query = targetRestId
           ? `vendorId=${encodeURIComponent(targetRestId)}`
           : user?.restaurantName

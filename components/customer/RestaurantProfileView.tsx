@@ -11,7 +11,6 @@ import {
   Search,
   Share2,
   Sparkles,
-  Star,
   UtensilsCrossed,
   X,
   Zap,
@@ -34,7 +33,7 @@ interface RestaurantProfileViewProps {
 /**
  * Calculates road distance accounting for city street grid circuity (~1.3x haversine)
  */
-function calculateEstimatedDistanceKm(
+export function calculateEstimatedDistanceKm(
   restLat?: number | string | null,
   restLng?: number | string | null,
   custLat?: number | string | null,
@@ -74,7 +73,6 @@ export default function RestaurantProfileView({
   customerAddress,
   triggerToast,
 }: RestaurantProfileViewProps) {
-  const [activeTab, setActiveTab] = useState<'order_online' | 'dineout'>('order_online')
   const [searchQuery, setSearchQuery] = useState('')
   const [vegOnly, setVegOnly] = useState(false)
   const [nonVegOnly, setNonVegOnly] = useState(false)
@@ -123,11 +121,11 @@ export default function RestaurantProfileView({
     )
   }, [restaurant.latitude, restaurant.longitude, customerLocation])
 
-  // Kitchen preparation time (avg 15 mins) + road travel (~2.8 mins/km at 25-30 km/h)
-  const prepTimeMinutes = 15
-  const roadTravelMinutes = Math.max(4, Math.round(distanceKm * 2.8))
-  const totalEtaMinutesMin = Math.max(12, prepTimeMinutes + roadTravelMinutes - 3)
-  const totalEtaMinutesMax = prepTimeMinutes + roadTravelMinutes + 3
+  // Kitchen preparation time (from real delivery_minutes) + road travel (~2.5 mins/km)
+  const prepTimeMinutes = Number(restaurant.delivery_minutes || restaurant.deliveryMinutes) || 20
+  const roadTravelMinutes = Math.max(3, Math.round(distanceKm * 2.5))
+  const totalEtaMinutesMin = prepTimeMinutes + roadTravelMinutes
+  const totalEtaMinutesMax = prepTimeMinutes + roadTravelMinutes + 5
 
   // Variant selector modal state
   const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
@@ -190,7 +188,7 @@ export default function RestaurantProfileView({
   return (
     <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] text-[#121815] dark:text-white pb-28 pt-2">
       <div className="mx-auto max-w-[1080px] px-3 sm:px-6 space-y-6">
-        {/* Breadcrumb Navigation matching Swiggy */}
+        {/* Navigation & Real URL Share */}
         <div className="flex items-center justify-between py-2 text-xs text-stone-500 dark:text-gray-400">
           <div className="flex items-center gap-2 overflow-hidden truncate">
             <button
@@ -198,10 +196,8 @@ export default function RestaurantProfileView({
               className="hover:text-[#121815] dark:hover:text-white transition flex items-center gap-1 font-bold cursor-pointer"
             >
               <ArrowLeft className="size-3.5" />
-              <span>Home</span>
+              <span>Explore</span>
             </button>
-            <span>/</span>
-            <span className="truncate">Bengaluru</span>
             <span>/</span>
             <span className="font-semibold text-[#121815] dark:text-white truncate">
               {restaurant.name}
@@ -211,8 +207,9 @@ export default function RestaurantProfileView({
           <button
             onClick={() => {
               if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                navigator.clipboard.writeText(window.location.href)
-                triggerToast?.('Restaurant link copied!')
+                const url = `${window.location.origin}/user/explore?restaurant=${restaurant.id}`
+                navigator.clipboard.writeText(url)
+                triggerToast?.('Restaurant link copied to clipboard!')
               }
             }}
             className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-stone-100 dark:bg-[#1a231d] hover:bg-stone-200 dark:hover:bg-[#25332a] text-[#121815] dark:text-white transition cursor-pointer"
@@ -223,44 +220,11 @@ export default function RestaurantProfileView({
           </button>
         </div>
 
-        {/* Restaurant Title & Subtabs */}
+        {/* Restaurant Title */}
         <div>
           <h1 className="text-2xl sm:text-4xl font-black text-[#121815] dark:text-white tracking-tight">
             {restaurant.name}
           </h1>
-
-          {/* Swiggy Tabs: Order Online vs Dineout */}
-          <div className="mt-3 flex items-center gap-8 border-b border-black/[0.08] dark:border-white/[0.08]">
-            <button
-              type="button"
-              onClick={() => setActiveTab('order_online')}
-              className={`pb-3 text-sm sm:text-base font-bold transition relative cursor-pointer ${
-                activeTab === 'order_online'
-                  ? 'text-[#1D1D1F] dark:text-white'
-                  : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              Order Online
-              {activeTab === 'order_online' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#1D1D1F] dark:bg-white" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('dineout')}
-              className={`pb-3 text-sm sm:text-base font-bold transition relative cursor-pointer ${
-                activeTab === 'dineout'
-                  ? 'text-[#1D1D1F] dark:text-white'
-                  : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              Dineout
-              {activeTab === 'dineout' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#1D1D1F] dark:bg-white" />
-              )}
-            </button>
-          </div>
         </div>
 
         {/* Hero Food Photo Banner */}
@@ -309,27 +273,24 @@ export default function RestaurantProfileView({
 
         {/* Swiggy Style Restaurant Info & Delivery Timeline Card */}
         <div className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-5 sm:p-6 shadow-sm space-y-4">
-          {/* Rating, Cost & Cuisines */}
+          {/* Cost & Cuisines (Ratings removed per user instruction) */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-[#1d2920] pb-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-xs font-black">
-                  <Star className="size-3 fill-current" />
-                  <span>{restaurant.rating || '4.2'}</span>
-                </span>
-                <span className="font-extrabold text-sm text-[#121815] dark:text-white">
-                  ({restaurant.ratingCount || '1.2K+'} ratings)
-                </span>
-                <span className="text-stone-400">•</span>
-                <span className="font-extrabold text-sm text-[#121815] dark:text-white">
-                  {restaurant.costForTwo || '₹350 for two'}
-                </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {restaurant.costForTwo && (
+                  <span className="font-extrabold text-sm text-[#121815] dark:text-white">
+                    {restaurant.costForTwo}
+                  </span>
+                )}
+                {restaurant.costForTwo && restaurant.cuisine && (
+                  <span className="text-stone-400">•</span>
+                )}
+                {restaurant.cuisine && (
+                  <p className="text-xs font-bold text-[#f97316] dark:text-[#d9f447]">
+                    {restaurant.cuisine}
+                  </p>
+                )}
               </div>
-
-              {/* Cuisines */}
-              <p className="mt-1.5 text-xs font-bold text-[#f97316] dark:text-[#d9f447] underline underline-offset-2">
-                {restaurant.cuisine || 'North Indian, Mughlai, Fast Food'}
-              </p>
             </div>
 
             <div className="text-xs font-semibold text-stone-500 dark:text-gray-400">
@@ -382,34 +343,8 @@ export default function RestaurantProfileView({
           </div>
         </div>
 
-        {/* Dineout Tab Content */}
-        {activeTab === 'dineout' && (
-          <div className="rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-8 text-center space-y-4">
-            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[#f97316]/10 text-[#f97316]">
-              <UtensilsCrossed className="size-8" />
-            </div>
-            <h3 className="text-xl font-bold text-[#121815] dark:text-white">
-              Table Booking &amp; Dine-in at {restaurant.name}
-            </h3>
-            <p className="max-w-md mx-auto text-xs text-stone-500 dark:text-gray-400 leading-relaxed">
-              Enjoy flat 15% off your dine-in bill with Crave Pass. Show your digital pass at the counter
-              or reserve a table for your family.
-            </p>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => triggerToast?.('Table reservations currently handled via concierge call.')}
-                className="rounded-full bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 text-xs font-black transition cursor-pointer"
-              >
-                Book Table via Concierge
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Order Online Tab Content */}
-        {activeTab === 'order_online' && (
-          <div className="space-y-6">
+        {/* Menu & Dishes */}
+        <div className="space-y-6">
             {/* Search and Dietary Filter Bar */}
             <div className="sticky top-2 z-20 rounded-2xl border border-stone-200/90 dark:border-[#223026] bg-white/95 dark:bg-[#131c16]/95 backdrop-blur-md p-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               {/* Search in Restaurant */}
@@ -588,7 +523,7 @@ export default function RestaurantProfileView({
 
                               {(item.bestseller || item.price >= 300) && (
                                 <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
-                                  <Star className="size-2.5 fill-current" />
+                                  <Sparkles className="size-2.5" />
                                   <span>Bestseller</span>
                                 </span>
                               )}
@@ -604,18 +539,12 @@ export default function RestaurantProfileView({
                               {hasVariants ? 'From ' : ''}₹{item.price}
                             </div>
 
-                            {/* Rating if available */}
-                            {item.rating && (
-                              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                <Star className="size-3 fill-current" />
-                                <span>{item.rating}</span>
-                              </div>
-                            )}
-
                             {/* Description */}
-                            <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2 leading-relaxed pt-0.5">
-                              {item.detail || 'Authentic regional preparation crafted with seasonal spices.'}
-                            </p>
+                            {item.detail && (
+                              <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2 leading-relaxed pt-0.5">
+                                {item.detail}
+                              </p>
+                            )}
                           </div>
 
                           {/* Right: Dish Photo & Swiggy-style Add Button */}
@@ -717,7 +646,6 @@ export default function RestaurantProfileView({
               ))
             )}
           </div>
-        )}
       </div>
 
       {/* Variant Selector Modal */}

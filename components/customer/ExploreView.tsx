@@ -18,16 +18,16 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
-  Star,
   Tag,
   UtensilsCrossed,
   X,
+  Flame,
   Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
-import RestaurantProfileView from './RestaurantProfileView'
+import RestaurantProfileView, { calculateEstimatedDistanceKm } from './RestaurantProfileView'
 import OrderAgainStrip from './OrderAgainStrip'
 
 const CATEGORY_LIST = [
@@ -133,6 +133,15 @@ export default function ExploreView({
   const [heroAutoplayPaused, setHeroAutoplayPaused] = useState(false)
   const [copiedPromoCode, setCopiedPromoCode] = useState<string | null>(null)
 
+  // Autoplay hero carousel (5s interval, paused on hover)
+  useEffect(() => {
+    if (heroAutoplayPaused) return
+    const timer = setInterval(() => {
+      setHeroSlideIndex((prev) => (prev + 1) % 3)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [heroAutoplayPaused])
+
   // Variant Picker State
   const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
   const [variantPickerSelection, setVariantPickerSelection] = useState('')
@@ -217,221 +226,375 @@ export default function ExploreView({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      {/* Apple-Style Editorial Hero Carousel - Zero Gradients */}
+      {/* ── ULTRA-PREMIUM HERO BANNER (ZEPTO / SWIGGY STYLE) ── */}
       <div
         onMouseEnter={() => setHeroAutoplayPaused(true)}
         onMouseLeave={() => setHeroAutoplayPaused(false)}
-        className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-black/[0.08] dark:border-white/[0.08] bg-[#161617] transition-all duration-300 group/hero shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+        className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border border-black/10 dark:border-white/10 group/hero"
       >
-        <div className="relative min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[480px] w-full flex items-center">
-          {/* Slide 0: Gourmet Feasts */}
+        <div className="relative min-h-[440px] sm:min-h-[460px] md:min-h-[480px] lg:min-h-[500px] w-full flex items-stretch">
+          {/* SLIDE 0: Crave Gourmet Feasts */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out flex items-stretch ${
               heroSlideIndex === 0 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-[#161617] -z-10" />
+            {/* Ambient Background & Radial Glow */}
+            <div className="absolute inset-0 bg-[#0A0D12] -z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_85%_45%,rgba(245,158,11,0.22),rgba(239,68,68,0.12)_35%,transparent_70%)] pointer-events-none -z-10" />
 
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                <CraveLogo variant="full" size="md" theme="light" />
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-semibold tracking-wide border border-white/10 backdrop-blur-md">
-                  <Sparkles className="size-3 text-[#FF9500]" />
-                  <span>Flat ₹120 Off Gourmet</span>
-                </span>
+            {/* Split Content Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 w-full items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 gap-6 relative z-10">
+              {/* Left Column: Headlines, Promo Code & CTAs */}
+              <div className="md:col-span-7 flex flex-col justify-center space-y-4 max-w-2xl">
+                {/* Brand & Offer Pill */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  <CraveLogo variant="full" size="md" theme="light" />
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                      navigator.clipboard.writeText('CRAVEFEAST')
-                      setCopiedPromoCode('CRAVEFEAST')
-                      triggerToast('Promo code CRAVEFEAST copied!')
-                      setTimeout(() => setCopiedPromoCode(null), 3000)
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-mono font-medium transition cursor-pointer backdrop-blur-md active:scale-95"
-                  title="Click to copy coupon code"
-                >
-                  {copiedPromoCode === 'CRAVEFEAST' ? (
-                    <>
-                      <Check className="size-3 text-[#34C759] stroke-[2.5]" />
-                      <span className="text-[#34C759]">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-3 text-white/80" />
-                      <span>CRAVEFEAST</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold tracking-wide backdrop-blur-md">
+                    <Flame className="size-3 text-amber-400 fill-amber-400" />
+                    <span>Flat ₹120 Off Gourmet</span>
+                  </span>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
-                Savor Gourmet Feasts Delivered Fresh In 25 Mins
-              </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
-                Steaming dum biryani, woodfired pizzas, smash burgers &amp; sizzling fries cooked fresh on order.
-              </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        navigator.clipboard.writeText('CRAVEFEAST')
+                        setCopiedPromoCode('CRAVEFEAST')
+                        triggerToast('Promo code CRAVEFEAST copied!')
+                        setTimeout(() => setCopiedPromoCode(null), 3000)
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-white text-[11px] font-mono font-medium transition cursor-pointer backdrop-blur-md active:scale-95 shadow-xs"
+                    title="Click to copy coupon code"
+                  >
+                    {copiedPromoCode === 'CRAVEFEAST' ? (
+                      <>
+                        <Check className="size-3 text-[#34C759] stroke-[2.5]" />
+                        <span className="text-[#34C759] font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="size-3 text-white/80" />
+                        <span>Code: CRAVEFEAST</span>
+                      </>
+                    )}
+                  </button>
+                </div>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#1D1D1F] font-semibold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
-                >
-                  <span>Explore Signature Dishes</span>
-                  <ChevronRight className="size-4 stroke-[2.5] text-[#1D1D1F]" />
-                </button>
+                {/* Main Headline */}
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-[-0.03em] leading-[1.12]">
+                  Savor Gourmet Feasts Delivered Fresh In 25 Mins.
+                </h2>
 
-                <button
-                  type="button"
-                  onClick={() => router.push('/user/cravexp')}
-                  className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm backdrop-blur-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer shadow-sm"
-                >
-                  <CraveLogo variant="cravexp" size="sm" theme="light" />
-                  <span>Store</span>
-                  <ChevronRight className="size-4 stroke-[2.5] text-white/80" />
-                </button>
+                <p className="text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
+                  Steaming handi dum biryani, woodfired artisanal pizzas, smash burgers &amp; sizzling fries cooked fresh on order.
+                </p>
 
-                <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
-                  <Star className="size-3.5 fill-[#FF9500] text-[#FF9500]" />
-                  <span>4.9 Master Chef Rated</span>
+                {/* Micro Benefit Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Live Kitchen Prep</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Clock className="size-3 text-amber-400" />
+                    <span>20–25 Min Doorstep</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Tag className="size-3 text-amber-400" />
+                    <span>Zero Markup Prices</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#12161A] font-extrabold px-6 py-3 text-xs sm:text-sm shadow-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
+                  >
+                    <span>Explore Signature Dishes</span>
+                    <ChevronRight className="size-4 stroke-[2.5]" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push('/user/cravexp')}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-5 py-3 text-xs sm:text-sm backdrop-blur-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer shadow-xs"
+                  >
+                    <CraveLogo variant="cravexp" size="sm" theme="light" />
+                    <span>10-Min Store</span>
+                    <ChevronRight className="size-4 stroke-[2.5] text-white/80" />
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl overflow-hidden">
-                <img
-                  src="/banners/gourmet-feast.jpg"
-                  alt="Gourmet Feasts"
-                  className="w-full h-full object-cover object-center rounded-2xl"
-                />
-                <div className="absolute top-3 right-3 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1 text-xs font-medium text-white shadow-sm flex items-center gap-1.5">
-                  <Clock className="size-3.5 text-white/90" />
-                  <span>20-25 Mins</span>
+              {/* Right Column: Full-Bleed Image with Seamless Blending */}
+              <div className="md:col-span-5 relative h-64 sm:h-72 md:h-[380px] lg:h-[420px] w-full flex items-center justify-center">
+                <div className="relative size-full rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src="/banners/gourmet-feast.jpg"
+                    alt="Gourmet Feasts"
+                    className="size-full object-cover object-center scale-[1.02] hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+                  {/* Floating Glass Pill */}
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <Clock className="size-3.5 text-amber-400 stroke-[2.5]" />
+                    <span>20–25 Mins Delivery</span>
+                  </div>
+
+                  <div className="absolute bottom-3.5 left-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-amber-400" />
+                    <span>Chef-Curated Kitchens</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Slide 1: craveXP Flash Drop */}
+          {/* SLIDE 1: craveXP Instant 10-Min Store */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out flex items-stretch ${
               heroSlideIndex === 1 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-[#0C1510] -z-10" />
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                <CraveLogo variant="cravexp" size="lg" theme="light" />
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34C759] text-white text-[11px] font-semibold uppercase tracking-wider">
-                  <span className="size-1.5 rounded-full bg-white" />
-                  10-Min Flash Drop
-                </span>
+            {/* Ambient Background & Radial Glow */}
+            <div className="absolute inset-0 bg-[#04140F] -z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_85%_45%,rgba(16,185,129,0.25),rgba(5,150,105,0.12)_35%,transparent_70%)] pointer-events-none -z-10" />
+
+            {/* Split Content Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 w-full items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 gap-6 relative z-10">
+              {/* Left Column: Headlines & CTAs */}
+              <div className="md:col-span-7 flex flex-col justify-center space-y-4 max-w-2xl">
+                {/* Brand & Offer Pill */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  <CraveLogo variant="cravexp" size="lg" theme="light" />
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold tracking-wide backdrop-blur-md">
+                    <Zap className="size-3 text-emerald-400 fill-emerald-400" />
+                    <span>10-Min Flash Drop</span>
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[11px] font-semibold backdrop-blur-md">
+                    <span>Free Delivery &gt; ₹199</span>
+                  </span>
+                </div>
+
+                {/* Main Headline */}
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-[-0.03em] leading-[1.12]">
+                  Ultra-Fast Grocery &amp; Daily Essentials.
+                </h2>
+
+                <p className="text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
+                  Farm-fresh milk, organic avocados, fresh berries, chilled nitro cold brew &amp; pantry snacks in 10 minutes flat.
+                </p>
+
+                {/* Micro Benefit Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Dark Store Dispatch</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Clock className="size-3 text-emerald-400" />
+                    <span>10 Mins Guaranteed</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Sparkles className="size-3 text-emerald-400" />
+                    <span>Cold-Chain Maintained</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push('/user/cravexp')}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#10B981] hover:bg-[#059669] text-white font-extrabold px-7 py-3 text-xs sm:text-sm shadow-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
+                  >
+                    <Zap className="size-4 fill-white" />
+                    <span>Open CraveXP Store</span>
+                    <ChevronRight className="size-4 stroke-[2.5]" />
+                  </button>
+                </div>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
-                Ultra-Fast Grocery &amp; Daily Essentials
-              </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
-                Farm eggs, chilled milk, organic avocados, fresh berries &amp; pantry snacks in 10 minutes flat.
-              </p>
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
-                <button
-                  type="button"
-                  onClick={() => router.push('/user/cravexp')}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#34C759] hover:bg-[#2EB84F] text-white font-semibold px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
-                >
-                  <span>Open CraveXP Store</span>
-                  <ChevronRight className="size-4 stroke-[2.5] text-white" />
-                </button>
-              </div>
-            </div>
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl overflow-hidden">
-                <img
-                  src="/banners/cravexp-grocery.jpg"
-                  alt="10-Minute Grocery Delivery Items"
-                  className="w-full h-full object-cover object-center rounded-2xl"
-                />
+
+              {/* Right Column: Full-Bleed Image with Seamless Blending */}
+              <div className="md:col-span-5 relative h-64 sm:h-72 md:h-[380px] lg:h-[420px] w-full flex items-center justify-center">
+                <div className="relative size-full rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src="/banners/cravexp-grocery.jpg"
+                    alt="10-Minute Grocery Delivery Items"
+                    className="size-full object-cover object-center scale-[1.02] hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+                  {/* Floating Glass Pill */}
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <Zap className="size-3.5 text-emerald-400 fill-emerald-400" />
+                    <span>10 Min Flash Drop</span>
+                  </div>
+
+                  <div className="absolute bottom-3.5 left-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <Clock className="size-3.5 text-emerald-400 stroke-[2]" />
+                    <span>Live Central Dark Store</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Slide 2: Midnight Cravings */}
+          {/* SLIDE 2: After-Hours Midnight Cravings */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out flex items-stretch ${
               heroSlideIndex === 2 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <div className="absolute inset-0 bg-[#14121E] -z-10" />
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                <CraveLogo variant="full" size="md" theme="light" />
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6] text-white text-[11px] font-semibold uppercase tracking-wider w-fit">
-                  Open Till 4 AM
-                </span>
+            {/* Ambient Background & Radial Glow */}
+            <div className="absolute inset-0 bg-[#0D0B1A] -z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_85%_45%,rgba(139,92,246,0.25),rgba(236,72,153,0.12)_35%,transparent_70%)] pointer-events-none -z-10" />
+
+            {/* Split Content Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 w-full items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 gap-6 relative z-10">
+              {/* Left Column: Headlines & CTAs */}
+              <div className="md:col-span-7 flex flex-col justify-center space-y-4 max-w-2xl">
+                {/* Brand & Offer Pill */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  <CraveLogo variant="full" size="md" theme="light" />
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[11px] font-bold tracking-wide backdrop-blur-md">
+                    <span>🌙 Open Till 4 AM</span>
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[11px] font-semibold backdrop-blur-md">
+                    <span>Midnight Cravings</span>
+                  </span>
+                </div>
+
+                {/* Main Headline */}
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-[-0.03em] leading-[1.12]">
+                  Satisfy Your Late-Night Cravings.
+                </h2>
+
+                <p className="text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
+                  Sizzling peri-peri wings, loaded queso nachos, warm molten chocolate lava cakes &amp; chilled boba tea delivered all night long.
+                </p>
+
+                {/* Micro Benefit Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <span className="size-1.5 rounded-full bg-purple-400 animate-pulse" />
+                    <span>Night Fleet Active</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Clock className="size-3 text-purple-400" />
+                    <span>Direct Doorstep</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                    <Sparkles className="size-3 text-purple-400" />
+                    <span>Contactless Delivery</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('Wings')
+                      document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#12161A] font-extrabold px-7 py-3 text-xs sm:text-sm shadow-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
+                  >
+                    <span>Order Late Night Bites</span>
+                    <ChevronRight className="size-4 stroke-[2.5]" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push('/user/cravexp')}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-5 py-3 text-xs sm:text-sm backdrop-blur-md hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer shadow-xs"
+                  >
+                    <CraveLogo variant="cravexp" size="sm" theme="light" />
+                    <span>Munchies</span>
+                    <ChevronRight className="size-4 stroke-[2.5] text-white/80" />
+                  </button>
+                </div>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
-                Satisfy Your Late-Night Cravings
-              </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
-                Crispy wings, loaded cheesy nachos, warm chocolate lava cakes &amp; iced drinks delivered all night.
-              </p>
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('Wings')
-                    document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-stone-100 text-[#1D1D1F] font-semibold px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm shadow-sm hover:scale-[1.02] active:scale-[0.97] transition-all cursor-pointer"
-                >
-                  <span>Order Late Night Munchies</span>
-                  <ChevronRight className="size-4 stroke-[2.5] text-[#1D1D1F]" />
-                </button>
-              </div>
-            </div>
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
-              <div className="relative w-full h-full rounded-2xl overflow-hidden">
-                <img src="/banners/midnight-feast.jpg" alt="Midnight Feast" className="w-full h-full object-cover object-center rounded-2xl" />
+
+              {/* Right Column: Full-Bleed Image with Seamless Blending */}
+              <div className="md:col-span-5 relative h-64 sm:h-72 md:h-[380px] lg:h-[420px] w-full flex items-center justify-center">
+                <div className="relative size-full rounded-2xl overflow-hidden shadow-2xl">
+                  <img
+                    src="/banners/midnight-feast.jpg"
+                    alt="Midnight Feast"
+                    className="size-full object-cover object-center scale-[1.02] hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+                  {/* Floating Glass Pill */}
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <span>🌙 Active Till 4:00 AM</span>
+                  </div>
+
+                  <div className="absolute bottom-3.5 left-3.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-lg flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-purple-400" />
+                    <span>Wings, Nachos &amp; Desserts</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Apple-style Pill Indicators */}
-        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-          {[0, 1, 2].map((idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setHeroSlideIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                heroSlideIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
+        {/* Sleek Segmented Progress Indicators (Zepto/Swiggy Style - NO huge round discs) */}
+        <div className="absolute bottom-4 left-6 sm:left-10 lg:left-12 z-20 flex items-center gap-2">
+          {[0, 1, 2].map((idx) => {
+            const isActive = heroSlideIndex === idx
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setHeroSlideIndex(idx)}
+                className="group py-1 cursor-pointer"
+                aria-label={`Go to slide ${idx + 1}`}
+              >
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    isActive
+                      ? 'w-10 sm:w-12 bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                      : 'w-3.5 sm:w-4 bg-white/30 group-hover:bg-white/60'
+                  }`}
+                />
+              </button>
+            )
+          })}
         </div>
 
-        {/* Carousel Indicators & Arrows - Apple Glass Controls */}
-        <button
-          type="button"
-          onClick={() => setHeroSlideIndex((prev) => (prev === 0 ? 2 : prev - 1))}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 grid size-8 sm:size-9 place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-90"
-        >
-          <ChevronLeft className="size-4 stroke-[2.5]" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setHeroSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 grid size-8 sm:size-9 place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-90"
-        >
-          <ChevronRight className="size-4 stroke-[2.5]" />
-        </button>
+        {/* Sleek Glass Arrow Controls */}
+        <div className="absolute bottom-4 right-6 sm:right-10 lg:right-12 z-20 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setHeroSlideIndex((prev) => (prev === 0 ? 2 : prev - 1))}
+            className="grid size-9 place-items-center rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-95 shadow-md"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="size-4 stroke-[2.5]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHeroSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))}
+            className="grid size-9 place-items-center rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/15 backdrop-blur-md cursor-pointer transition active:scale-95 shadow-md"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="size-4 stroke-[2.5]" />
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
@@ -734,20 +897,64 @@ export default function ExploreView({
             <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white">
               Restaurants ({filteredRestaurants.length})
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Available partner kitchens.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {filteredRestaurants.length === 0
+                ? 'Only verified vendor-registered kitchens appear here.'
+                : 'Available partner kitchens.'}
+            </p>
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredRestaurants.length === 0 ? (
+          <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#1C1C1E] p-10 sm:p-12 text-center flex flex-col items-center justify-center shadow-xs">
+            <div className="grid size-14 place-items-center rounded-2xl bg-black/[0.04] dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 mb-4">
+              <UtensilsCrossed className="size-6 stroke-[1.75]" />
+            </div>
+            <h4 className="text-base sm:text-lg font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
+              No Partner Kitchens Live Yet
+            </h4>
+            <p className="text-xs sm:text-sm text-[#86868B] dark:text-[#98989D] max-w-md mt-1.5 leading-relaxed">
+              When partner restaurants register through the vendor portal and activate their kitchen, their live menu dishes and accurate ETAs will display here.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/user/cravexp')}
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-5 py-2.5 text-xs font-bold hover:scale-105 active:scale-95 transition shadow-xs cursor-pointer"
+            >
+              <Zap className="size-3.5 fill-current text-[#d9f447] dark:text-[#18201c]" />
+              <span>Shop craveXP 10-Minute Dark Store</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredRestaurants.map((rest) => {
-            const displayOffer =
-              rest.offer ||
-              (rest.isPureVeg ? '100% Pure Veg Special' : 'Flat ₹120 Off')
-            const displayRating = rest.rating || '4.8'
-            const displayRatingCount = rest.ratingCount || '340'
-            const displayCost = rest.costForTwo || '₹350 for two'
-            const displayEta = rest.eta || '25 min'
-            const displayDistance = rest.distance ? `${rest.distance} km` : '2.2 km'
+            // Real GPS distance calculation
+            const hasCoords =
+              rest.latitude != null &&
+              rest.longitude != null &&
+              customerLocation?.lat != null &&
+              customerLocation?.lng != null
+            const distanceKm = hasCoords
+              ? calculateEstimatedDistanceKm(
+                  rest.latitude,
+                  rest.longitude,
+                  customerLocation.lat,
+                  customerLocation.lng
+                )
+              : rest.distance
+              ? Number(rest.distance)
+              : null
+
+            // Real ETA: kitchen prep (delivery_minutes) + transit (~2.5 mins/km)
+            const prepMinutes = Number(rest.delivery_minutes || rest.deliveryMinutes) || 20
+            const travelMinutes = distanceKm ? Math.max(3, Math.round(distanceKm * 2.5)) : 5
+            const totalEtaMin = prepMinutes + travelMinutes
+            const displayEta = `${totalEtaMin}-${totalEtaMin + 5} min`
+            const displayDistance = distanceKm ? `${distanceKm} km` : null
+
+            // Real data only from database
+            const displayOffer = rest.offer || null
+            const displayCost = rest.costForTwo || null
 
             const isFavorited = favoriteIds.includes(rest.id)
 
@@ -773,7 +980,7 @@ export default function ExploreView({
                       </div>
                     )}
 
-                    {/* Top Floating Apple Chips & SF Action Controls */}
+                    {/* Top Floating Chips & SF Action Controls */}
                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
                       <div className="flex items-center gap-1.5 flex-wrap pointer-events-none">
                         {rest.isPureVeg && (
@@ -808,22 +1015,17 @@ export default function ExploreView({
                             }`}
                           />
                         </button>
-
-                        {/* SF Symbol Star Rating */}
-                        <div className="inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[12px] font-semibold text-white shadow-sm pointer-events-none">
-                          <Star className="size-3.5 fill-[#FF9500] text-[#FF9500] stroke-[1.5]" />
-                          <span>{displayRating}</span>
-                          <span className="text-[11px] font-normal text-white/80">({displayRatingCount})</span>
-                        </div>
                       </div>
                     </div>
 
-                    {/* Bottom Floating Metadata on Photo (Solid / Frosted Translucent Pills, Zero Gradients) */}
+                    {/* Bottom Floating Metadata on Photo */}
                     <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 pointer-events-none z-10">
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] px-3 py-1 shadow-sm">
-                        <Tag className="size-3 stroke-[2] text-[#FF9500]" />
-                        <span>{displayOffer}</span>
-                      </div>
+                      {displayOffer ? (
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] px-3 py-1 shadow-sm">
+                          <Tag className="size-3 stroke-[2] text-[#FF9500]" />
+                          <span>{displayOffer}</span>
+                        </div>
+                      ) : <div />}
 
                       <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
                         <Clock className="size-3 stroke-[2] text-white/90" />
@@ -832,7 +1034,7 @@ export default function ExploreView({
                     </div>
                   </div>
 
-                  {/* Card Content Body - Apple SF Pro Typographic Hierarchy */}
+                  {/* Card Content Body */}
                   <div className="p-4 sm:p-4.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
@@ -840,23 +1042,27 @@ export default function ExploreView({
                           <span>{rest.name}</span>
                           <CheckCircle2 className="size-4 text-[#34C759] shrink-0 stroke-[2]" />
                         </h4>
-                        <p className="mt-0.5 text-[13px] text-[#86868B] dark:text-[#98989D] font-normal line-clamp-1">
-                          {rest.cuisine}
-                        </p>
+                        {rest.cuisine && (
+                          <p className="mt-0.5 text-[13px] text-[#86868B] dark:text-[#98989D] font-normal line-clamp-1">
+                            {rest.cuisine}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="inline-block text-[12px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-2.5 py-0.5 rounded-full">
-                          {displayCost}
-                        </span>
-                      </div>
+                      {displayCost && (
+                        <div className="text-right shrink-0">
+                          <span className="inline-block text-[12px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-2.5 py-0.5 rounded-full">
+                            {displayCost}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Apple Maps Style Metadata Row */}
+                    {/* Maps Style Distance Row */}
                     <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.06] text-[12px] text-[#86868B] dark:text-[#98989D]">
                       <span className="flex items-center gap-1 font-normal">
                         <MapPin className="size-3.5 text-[#86868B] dark:text-[#98989D] stroke-[1.75]" />
-                        <span>{displayDistance}</span>
+                        <span>{displayDistance || rest.address || 'Kitchen Live'}</span>
                       </span>
                       <span>&bull;</span>
                       <span className="flex items-center gap-1 font-medium text-[#34C759]">
@@ -885,7 +1091,8 @@ export default function ExploreView({
             )
           })}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* Secondary CraveXP Card - Apple Solid Grouped Card (Zero Gradients) */}
       <div

@@ -171,7 +171,7 @@ export default function CustomerDashboard({
             id: r.id,
             name: r.name,
             cuisine: r.cuisine ?? '',
-            rating: r.rating != null ? String(r.rating) : '4.5',
+            rating: r.rating != null ? String(r.rating) : '',
             ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '',
             eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
             distance: r.distance ? String(r.distance) : '',
@@ -188,11 +188,53 @@ export default function CustomerDashboard({
             deliveryMinutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
           }))
         setRestaurantsList(parsed)
+
+        // Check if a real restaurant URL query parameter exists on initial load
+        if (typeof window !== 'undefined') {
+          const searchParams = new URLSearchParams(window.location.search)
+          const targetId = searchParams.get('restaurant') || searchParams.get('restaurantId')
+          if (targetId) {
+            const found = parsed.find((p: any) => p.id === targetId)
+            if (found) setSelectedRestaurant(found)
+          }
+        }
       } catch {
         setRestaurantsList([])
       }
     }
     fetchRestaurants()
+  }, [])
+
+  // Listen for browser forward/back buttons to keep selected restaurant in sync with URL
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return
+      const searchParams = new URLSearchParams(window.location.search)
+      const targetId = searchParams.get('restaurant') || searchParams.get('restaurantId')
+      if (targetId) {
+        const found = restaurantsList.find((r) => r.id === targetId)
+        if (found) setSelectedRestaurant(found)
+      } else {
+        setSelectedRestaurant(null)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [restaurantsList])
+
+  // Real URL synchronizer when selecting/unselecting a restaurant
+  const handleSelectRestaurant = useCallback((rest: Restaurant | null) => {
+    setSelectedRestaurant(rest)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (rest?.id) {
+        url.searchParams.set('restaurant', rest.id)
+      } else {
+        url.searchParams.delete('restaurant')
+        url.searchParams.delete('restaurantId')
+      }
+      window.history.pushState({}, '', url.toString())
+    }
   }, [])
 
   useEffect(() => {
@@ -722,7 +764,7 @@ export default function CustomerDashboard({
             onAddToCart={handleAddToCart}
             onUpdateQty={updateItemQty}
             selectedRestaurant={selectedRestaurant}
-            onSelectRestaurant={setSelectedRestaurant}
+            onSelectRestaurant={handleSelectRestaurant}
             triggerToast={(m) => toast(m, 'info')}
             customerLocation={selectedMapPin}
             customerAddress={deliveryAddress || user?.address}

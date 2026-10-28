@@ -15,9 +15,10 @@
  */
 
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth-helpers'
+import { requireAuth, handleAuthError } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { getRazorpayClient } from '@/lib/payments/razorpay-client'
+import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 
 export const runtime = 'nodejs'
 
@@ -40,6 +41,70 @@ export async function POST(request: Request) {
     }
     if (order.payment_status === 'verified') {
       return NextResponse.json({ error: 'Order already paid' }, { status: 409 })
+    }
+
+    // Strict Invariant: Check that the restaurant exists in the database and is open
+    if (!order.restaurant_id) {
+      return NextResponse.json(
+        { error: 'Payment rejected: Order is not associated with a valid restaurant.' },
+        { status: 400 }
+      )
+    }
+
+    const rest = await prisma.restaurant.findUnique({
+      where: { id: order.restaurant_id },
+      select: { id: true, name: true, is_open: true },
+    })
+    if (!rest) {
+      return NextResponse.json(
+        { error: `Payment rejected: Restaurant "${order.restaurant_id}" does not exist in the database.` },
+        { status: 404 }
+      )
+    }
+    if (rest.is_open === false) {
+      return NextResponse.json(
+        { error: `Payment rejected: Restaurant "${rest.name}" is currently closed and not accepting payments.` },
+        { status: 400 }
+      )
+    }
+
+    // Strict Invariant: Check that all items in the order exist in the database
+    const rawOrderItems: any[] = Array.isArray(order.items)
+      ? (order.items as any[])
+      : typeof order.items === 'string'
+      ? JSON.parse(order.items)
+      : []
+
+    if (rawOrderItems.length === 0) {
+      return NextResponse.json({ error: 'Payment rejected: Order contains no items.' }, { status: 400 })
+    }
+
+    const itemIds = rawOrderItems
+      .map((it: any) => it.id || it.itemId || it.menuItemId)
+      .filter(Boolean)
+
+    if (order.order_type === 'cravexp_grocery' || order.restaurant_id === CRAVEXP_DARK_STORE_ID) {
+      const dbItems = await prisma.craveXPProduct.findMany({
+        where: { id: { in: itemIds } },
+        select: { id: true },
+      })
+      if (dbItems.length !== itemIds.length) {
+        return NextResponse.json(
+          { error: 'Payment rejected: One or more CraveXP items do not exist in the database.' },
+          { status: 404 }
+        )
+      }
+    } else {
+      const dbItems = await prisma.menuItem.findMany({
+        where: { id: { in: itemIds }, restaurant_id: order.restaurant_id },
+        select: { id: true },
+      })
+      if (dbItems.length !== itemIds.length) {
+        return NextResponse.json(
+          { error: 'Payment rejected: One or more items do not exist in the database or do not belong to the restaurant.' },
+          { status: 404 }
+        )
+      }
     }
 
     const snapshot = order.financial_snapshot as {
@@ -144,6 +209,8 @@ export async function POST(request: Request) {
       internalOrderId: order.id,
     })
   } catch (error) {
+    const authResponse = handleAuthError(error)
+    if (authResponse) return authResponse
     console.error('[razorpay/order] Failed', error)
     return NextResponse.json({ error: 'Unable to start payment' }, { status: 500 })
   }
