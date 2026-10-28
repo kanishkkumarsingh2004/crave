@@ -195,7 +195,38 @@ export default function CustomerDashboard({
           const searchParams = new URLSearchParams(window.location.search)
           const targetId = searchParams.get('restaurant') || searchParams.get('restaurantId')
           if (targetId) {
-            const found = parsed.find((p: any) => p.id === targetId)
+            let found = parsed.find((p: any) => p.id === targetId)
+            if (!found) {
+              try {
+                const singleRes = await fetch(`/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`, { cache: 'no-store' })
+                const singleJson = await singleRes.json()
+                const r = singleJson.restaurants?.[0]
+                if (r) {
+                  found = {
+                    id: r.id,
+                    name: r.name,
+                    cuisine: r.cuisine ?? '',
+                    rating: r.rating != null ? String(r.rating) : '4.8',
+                    ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
+                    eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
+                    distance: r.distance ? String(r.distance) : '',
+                    costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
+                    image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+                    tag: r.cuisine?.split(' ')[0] ?? '',
+                    address: r.address ?? '',
+                    offer: r.offer ? String(r.offer) : undefined,
+                    isPureVeg: r.is_pure_veg ?? false,
+                    isOpen: r.is_open ?? true,
+                    latitude: r.latitude != null ? Number(r.latitude) : undefined,
+                    longitude: r.longitude != null ? Number(r.longitude) : undefined,
+                    delivery_minutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
+                    deliveryMinutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
+                  }
+                }
+              } catch (err) {
+                console.error('Failed to fetch target restaurant:', err)
+              }
+            }
             if (found) setSelectedRestaurant(found)
           }
         }
@@ -213,7 +244,36 @@ export default function CustomerDashboard({
       const searchParams = new URLSearchParams(window.location.search)
       const targetId = searchParams.get('restaurant') || searchParams.get('restaurantId')
       if (targetId) {
-        const found = restaurantsList.find((r) => r.id === targetId)
+        let found = restaurantsList.find((r) => r.id === targetId)
+        if (!found) {
+          try {
+            const singleRes = await fetch(`/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`, { cache: 'no-store' })
+            const singleJson = await singleRes.json()
+            const r = singleJson.restaurants?.[0]
+            if (r) {
+              found = {
+                id: r.id,
+                name: r.name,
+                cuisine: r.cuisine ?? '',
+                rating: r.rating != null ? String(r.rating) : '4.8',
+                ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
+                eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
+                distance: r.distance ? String(r.distance) : '',
+                costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
+                image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+                tag: r.cuisine?.split(' ')[0] ?? '',
+                address: r.address ?? '',
+                offer: r.offer ? String(r.offer) : undefined,
+                isPureVeg: r.is_pure_veg ?? false,
+                isOpen: r.is_open ?? true,
+                latitude: r.latitude != null ? Number(r.latitude) : undefined,
+                longitude: r.longitude != null ? Number(r.longitude) : undefined,
+                delivery_minutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
+                deliveryMinutes: r.delivery_minutes != null ? Number(r.delivery_minutes) : 25,
+              }
+            }
+          } catch {}
+        }
         if (found) setSelectedRestaurant(found)
       } else {
         setSelectedRestaurant(null)

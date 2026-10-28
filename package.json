@@ -22,11 +22,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "push:generate-keys": "web-push generate-vapid-keys --json",
-    "db:clean:data": "tsx scripts/clean-transactional-data.ts",
-    "db:scrub": "tsx scripts/scrub-db-and-reset-passwords.ts",
-    "db:admin": "tsx scripts/create-admin.ts",
-    "db:seed": "tsx scripts/seed-local-db.ts",
-    "db:seed:full": "tsx scripts/seed-complete-data.ts",
+    "db:seed": "tsx scripts/db-reset-and-seed.ts",
     "loadtest:gps": "tsx scripts/gps-load-test.ts",
     "load-test": "node scripts/run-load-test.mjs",
     "load-test:ci": "node scripts/run-load-test.mjs --out load-test-results.json",
@@ -49,7 +45,8 @@
     "dc:clean": "docker compose down -v",
     "dc:wipe-all": "docker compose down -v --remove-orphans",
     "dc:logs": "docker compose logs -f",
-    "dc:ps": "docker compose ps"
+    "dc:ps": "docker compose ps",
+    "db:reset": "tsx scripts/db-reset-and-seed.ts"
   },
   "dependencies": {
     "@neon/config": "^1.9.2",
