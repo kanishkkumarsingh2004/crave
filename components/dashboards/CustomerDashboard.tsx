@@ -100,6 +100,7 @@ export default function CustomerDashboard({
   // Mobile sidebar
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
 
+<<<<<<< HEAD
   // Modals & Selection
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [invoiceModalOrder, setInvoiceModalOrder] = useState<InvoiceOrderData | null>(null)
@@ -144,6 +145,45 @@ export default function CustomerDashboard({
             const matched = mapped.find((a) => a.address === chosen) || primary
             if (matched.lat != null && matched.lng != null) {
               setSelectedMapPin({ lat: matched.lat, lng: matched.lng })
+=======
+  const [copiedPromoCode, setCopiedPromoCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (showMobileSideMenu) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showMobileSideMenu])
+
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      setShowMobileSideMenu((prev) => !prev)
+    }
+    window.addEventListener('toggle-mobile-sidebar', handleToggleSidebar)
+    return () => window.removeEventListener('toggle-mobile-sidebar', handleToggleSidebar)
+  }, [])
+
+  const { items: globalCartItems, setItems: setGlobalItems, isLoaded: globalCartLoaded } = useCart()
+  const [isCartInitialized, setIsCartInitialized] = useState(false)
+
+  // Sync initial cart state from CartProvider / localStorage on mount
+  useEffect(() => {
+    if (!isCartInitialized) {
+      if (globalCartItems.length > 0) {
+        setCart(globalCartItems as CartItem[])
+        setIsCartInitialized(true)
+      } else if (globalCartLoaded) {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('crave_cart') : null
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCart(parsed)
+>>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
             }
           }
         }
@@ -894,7 +934,580 @@ export default function CustomerDashboard({
               toast(`Added ${order.items.length} ${order.items.length === 1 ? 'item' : 'items'} to cart!`, 'success')
               router.push('/user/cart')
             }}
+<<<<<<< HEAD
           />
+=======
+            className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] transition"
+          >
+            <span className="flex items-center gap-3">
+              <ShoppingCart className="size-5 text-[#b5de28] dark:text-[#d9f447]" />
+              My Cart
+            </span>
+            {totalCartItemCount > 0 && (
+              <span className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-2.5 py-0.5 text-xs font-bold text-[#d9f447] dark:text-[#18201c]">
+                {totalCartItemCount} items
+              </span>
+            )}
+          </button>
+
+          <div className="my-3 border-t border-gray-100 dark:border-[#27342d]" />
+          <p className="px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
+            Quick Access
+          </p>
+
+          <Link
+            href="/user/cravexp"
+            onClick={() => setShowMobileSideMenu(false)}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition"
+          >
+            <Zap className="size-5 text-emerald-600 fill-emerald-600" />
+            <span>craveXP Instamart</span>
+          </Link>
+        </div>
+
+        {/* Side Drawer Footer / Sign Out */}
+        <div className="border-t border-gray-100 dark:border-[#27342d] p-4 bg-[#f9faf7] dark:bg-[#121815]">
+          <button
+            onClick={async () => {
+              setShowMobileSideMenu(false)
+              await logout()
+            }}
+            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+          >
+            <LogOut className="size-5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="mx-auto w-full max-w-[1600px] px-3.5 pt-4 sm:px-6 sm:pt-6 lg:px-8 2xl:px-10">
+        {activeTab === 'explore' && (
+          <div className="flex flex-col gap-6 sm:gap-8">
+            {/* Search, Food Categories & Interactive Filter Chips */}
+
+            {/* Search, Food Categories & Interactive Filter Chips */}
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1 group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-400 group-focus-within:text-[#86a018] transition" />
+                  <input
+                    type="text"
+                    placeholder="Search dishes, gourmet kitchens, or cuisines..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white/90 dark:bg-[#18201c]/90 text-[#18201c] dark:text-white placeholder:text-gray-400 py-3.5 pl-11 pr-10 text-xs sm:text-sm shadow-xs outline-none transition focus:border-[#86a018] focus:ring-4 focus:ring-[#d9f447]/20 font-medium backdrop-blur-md"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 size-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition text-[10px]"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Toggle Filter Chips */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setPureVegOnly(!pureVegOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      pureVegOnly
+                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-emerald-500'
+                    }`}
+                  >
+                    <Leaf className="size-3.5 text-emerald-500" />
+                    <span>Pure Veg</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFastDeliveryOnly(!fastDeliveryOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      fastDeliveryOnly
+                        ? 'bg-[#18201c] dark:bg-[#d9f447] border-[#18201c] dark:border-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#86a018]'
+                    }`}
+                  >
+                    <Zap className="size-3.5 text-amber-500" />
+                    <span>Fast Delivery (≤25m)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOffersOnly(!offersOnly)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold border transition shrink-0 cursor-pointer ${
+                      offersOnly
+                        ? 'bg-amber-500 border-amber-500 text-[#18201c] shadow-xs font-extrabold'
+                        : 'bg-white dark:bg-[#18201c] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-amber-400'
+                    }`}
+                  >
+                    <Tag className="size-3.5 text-amber-500" />
+                    <span>Offers</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* What's on your mind? Food Categories Carousel */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white tracking-tight flex items-center gap-2">
+                        <span>What&apos;s on your mind?</span>
+                        <span className="rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-extrabold text-gray-500 dark:text-gray-300">
+                          {categoryList.length} Cuisines
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Explore handpicked cravings by authentic culinary style
+                      </p>
+                    </div>
+
+                    {selectedTag !== 'All' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTag('All')}
+                        className="inline-flex items-center gap-1 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-2.5 py-1 text-[10px] font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                      >
+                        <span>Reset</span>
+                        <X className="size-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scroll navigation arrows for desktop */}
+                  <div className="hidden sm:flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => scrollCategories('left')}
+                      className="grid size-8 place-items-center rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shadow-xs cursor-pointer"
+                      aria-label="Scroll categories left"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollCategories('right')}
+                      className="grid size-8 place-items-center rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shadow-xs cursor-pointer"
+                      aria-label="Scroll categories right"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  ref={categoryScrollRef}
+                  className="flex items-center gap-4 sm:gap-5 overflow-x-auto pb-3 pt-1 no-scrollbar scroll-smooth"
+                >
+                  {categoryList.map((cat) => {
+                    const isSelected = selectedTag === cat.id
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedTag(cat.id)}
+                        className="flex flex-col items-center gap-2 group shrink-0 transition cursor-pointer"
+                      >
+                        <div
+                          className={`relative size-16 sm:size-20 rounded-full overflow-hidden border-2 transition duration-300 p-0.5 ${
+                            isSelected
+                              ? 'border-[#18201c] dark:border-[#d9f447] ring-4 ring-[#18201c]/10 dark:ring-[#d9f447]/20 scale-105 shadow-md'
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600 hover:scale-102'
+                          }`}
+                        >
+                          <img
+                            src={cat.image}
+                            alt={cat.label}
+                            loading="eager"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80'
+                            }}
+                            className="size-full rounded-full object-cover group-hover:scale-110 transition duration-500"
+                          />
+                          {isSelected && (
+                            <span className="absolute inset-0 bg-[#d9f447]/15 rounded-full pointer-events-none" />
+                          )}
+                        </div>
+                        <span
+                          className={`text-xs tracking-tight transition max-w-[84px] text-center line-clamp-1 ${
+                            isSelected
+                              ? 'text-[#18201c] dark:text-[#d9f447] font-extrabold'
+                              : 'text-gray-600 dark:text-gray-400 font-medium group-hover:text-[#18201c] dark:group-hover:text-white'
+                          }`}
+                        >
+                          {cat.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Trending Quick-Add Dishes */}
+            {(menuItemsList.length > 0 || selectedRestaurant) && (
+              <div id="dishes-section">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white flex items-center gap-2">
+                      <span className="grid size-6 place-items-center rounded-lg bg-[#86a018]/10 text-[#86a018]">
+                        <Sparkles className="size-3.5 text-[#86a018]" />
+                      </span>
+                      <span>Signature Dishes</span>
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {selectedRestaurant?.name
+                        ? `Chef recommendations from ${selectedRestaurant.name}.`
+                        : 'Master chef specials from available partner kitchens.'}
+                    </p>
+                  </div>
+                  {selectedRestaurant && (
+                    <button
+                      onClick={() => setSelectedRestaurant(null)}
+                      className="text-xs font-bold text-[#86a018] hover:underline cursor-pointer"
+                    >
+                      View all kitchens
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {menuItemsList.length === 0 ? (
+                    <p className="col-span-full rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] p-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                      No signature dishes listed for {selectedRestaurant?.name}.
+                    </p>
+                  ) : (
+                    menuItemsList.map((item) => (
+                      <div
+                        key={item.id}
+                        className="group rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-4 flex flex-col justify-between shadow-xs hover:border-gray-300 dark:hover:border-white/20 hover:shadow-lg transition duration-300"
+                      >
+                        <div>
+                          <div className="relative h-44 w-full overflow-hidden rounded-2xl">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                              />
+                            ) : (
+                              <div className="grid h-full w-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+                                <ShoppingBag className="size-8" />
+                              </div>
+                            )}
+
+                            {/* Veg / Non-Veg culinary indicator dot badge */}
+                            <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md p-1 shadow-xs border border-black/5 flex items-center gap-1">
+                              <div
+                                className={`size-3 rounded-sm border flex items-center justify-center ${
+                                  item.veg ? 'border-emerald-600' : 'border-rose-600'
+                                }`}
+                              >
+                                <div
+                                  className={`size-1.5 rounded-full ${
+                                    item.veg ? 'bg-emerald-600' : 'bg-rose-600'
+                                  }`}
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
+                                {item.veg ? 'Veg' : 'Non-Veg'}
+                              </span>
+                            </div>
+
+                            {/* Restaurant tag */}
+                            <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white/90">
+                              {item.restaurantName || 'Partner Kitchen'}
+                            </div>
+                          </div>
+
+                          <div className="mt-3.5">
+                            <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white group-hover:text-[#86a018] transition line-clamp-1">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                              Price
+                            </span>
+                            <span className="font-black text-base text-[#18201c] dark:text-white">
+                              {item.variants?.length ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
+                            </span>
+                          </div>
+                          {(() => {
+                            const hasVariants = Boolean(item.variants?.length)
+                            const inCart = hasVariants
+                              ? undefined
+                              : cart.find((i) => i.id === item.id)
+                            if (hasVariants) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => openVariantPicker(item)}
+                                  className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Plus className="size-3.5 stroke-[3]" />
+                                  <span>Options</span>
+                                </button>
+                              )
+                            }
+                            if (inCart) {
+                              return (
+                                <div className="flex items-center gap-2 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-2.5 py-1 text-xs font-bold text-white dark:text-[#18201c] shadow-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItemQty(item.id, -1)}
+                                    className="p-1 hover:opacity-80 active:scale-90 transition cursor-pointer"
+                                    title="Decrease quantity"
+                                  >
+                                    <Minus className="size-3.5 stroke-[3]" />
+                                  </button>
+                                  <span className="font-black px-1">{inCart.qty}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItemQty(item.id, 1)}
+                                    className="p-1 hover:opacity-80 active:scale-90 transition cursor-pointer"
+                                    title="Increase quantity"
+                                  >
+                                    <Plus className="size-3.5 stroke-[3]" />
+                                  </button>
+                                </div>
+                              )
+                            }
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => addToCart(item)}
+                                className="rounded-full bg-[#18201c] dark:bg-[#d9f447] px-4 py-2 text-xs font-bold text-white dark:text-[#18201c] hover:scale-105 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Plus className="size-3.5 stroke-[3]" />
+                                <span>Add to Cart</span>
+                              </button>
+                            )
+                          })()}
+                        </div>
+                        {item.variants && item.variants.length > 0 && (
+                          <p className="mt-2 text-[10px] font-bold text-[#86a018] dark:text-[#d9f447]">
+                            Choose Small, Medium or Large in the next step
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Featured Restaurant Card Grid */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg text-[#18201c] dark:text-white">
+                    Restaurants ({filteredRestaurants.length})
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Available restaurants from the database.
+                  </p>
+                </div>
+                {(searchQuery ||
+                  selectedTag !== 'All' ||
+                  pureVegOnly ||
+                  offersOnly ||
+                  fastDeliveryOnly) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('')
+                      setSelectedTag('All')
+                      setPureVegOnly(false)
+                      setOffersOnly(false)
+                      setFastDeliveryOnly(false)
+                    }}
+                    className="text-xs font-bold text-[#86a018] hover:underline cursor-pointer"
+                  >
+                    Reset filters
+                  </button>
+                )}
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredRestaurants.length === 0 ? (
+                  <div className="col-span-full rounded-3xl border border-dashed border-gray-200 dark:border-[#27342d] bg-white/60 dark:bg-[#18201c]/60 p-12 text-center flex flex-col items-center justify-center">
+                    <div className="size-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-3">
+                      <UtensilsCrossed className="size-6 text-gray-400" />
+                    </div>
+                    <p className="col-span-full rounded-2xl p-2 text-center text-sm font-bold text-gray-700 dark:text-gray-300">
+                      No restaurants match these filters.
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
+                      Try broadening your search query or clear selected cuisine filters to view all
+                      available kitchens.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('')
+                        setSelectedTag('All')
+                        setPureVegOnly(false)
+                        setOffersOnly(false)
+                        setFastDeliveryOnly(false)
+                      }}
+                      className="mt-4 rounded-full bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-5 py-2 text-xs font-bold hover:scale-105 active:scale-95 transition shadow-xs cursor-pointer"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                ) : (
+                  filteredRestaurants.map((rest) => (
+                    <div
+                      key={rest.id}
+                      onClick={() => setSelectedRestaurant(rest)}
+                      className="group cursor-pointer overflow-hidden rounded-3xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-gray-300 dark:hover:border-white/20 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="relative h-48 sm:h-52 w-full overflow-hidden">
+                          {rest.image ? (
+                            <img
+                              src={rest.image}
+                              alt={rest.name}
+                              className="h-full w-full object-cover transition duration-700 group-hover:scale-108"
+                            />
+                          ) : (
+                            <div className="grid size-full place-items-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+                              <MapPin className="size-8" />
+                            </div>
+                          )}
+
+                          {/* Gradient Overlay for badges */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
+
+                          {rest.isOpen === false && (
+                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
+                              <span className="text-xs font-bold uppercase tracking-wider text-rose-500">
+                                Currently Closed
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap">
+                            {rest.tag && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-200 bg-black/60 px-2 py-0.5">
+                                {rest.tag}
+                              </span>
+                            )}
+                            {rest.isPureVeg && (
+                              <span className="text-[10px] font-bold uppercase text-emerald-400 bg-black/60 px-2 py-0.5">
+                                Pure Veg
+                              </span>
+                            )}
+                          </div>
+
+                          {rest.rating && (
+                            <div className="absolute right-3 top-3 text-[10px] font-bold text-emerald-400 bg-black/60 px-2 py-0.5 flex items-center gap-1">
+                              <Award className="size-3" />
+                              <span>{rest.rating}</span>
+                            </div>
+                          )}
+
+                          {rest.eta && (
+                            <span className="absolute bottom-3 right-3 text-[10px] font-medium text-white bg-black/60 px-2 py-0.5 flex items-center gap-1">
+                              <Clock className="size-3 text-[#d9f447]" />
+                              {rest.eta}
+                            </span>
+                          )}
+
+                          {rest.offer && (
+                            <span className="absolute bottom-3 left-3 text-[10px] font-bold text-amber-300 bg-black/75 px-2 py-0.5 flex items-center gap-1">
+                              <Tag className="size-3" /> {rest.offer}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="p-4 sm:p-5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-extrabold text-base tracking-tight text-[#18201c] dark:text-white group-hover:text-[#86a018] transition">
+                                {rest.name}
+                              </h3>
+                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                                {rest.cuisine}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            {rest.address && (
+                              <span className="flex min-w-0 items-center gap-1 truncate">
+                                <MapPin className="size-3.5 shrink-0 text-[#86a018]" />
+                                <span className="truncate">{rest.address}</span>
+                              </span>
+                            )}
+                            {rest.costForTwo && (
+                              <span className="shrink-0 font-bold text-gray-700 dark:text-gray-300">
+                                {rest.costForTwo}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 sm:p-5 pt-0">
+                        <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/5 pt-3 text-xs">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
+                            {rest.eta ? `Delivery · ${rest.eta}` : 'Delivery time unavailable'}
+                          </span>
+                          <span className="font-bold text-[#86a018] group-hover:translate-x-0.5 transition flex items-center gap-1">
+                            View Menu <ArrowRight className="size-3" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Secondary craveXP Dark Store Quick-Switch Prompt */}
+            <div
+              onClick={() => router.push('/user/cravexp')}
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#141b17] via-[#1b2720] to-[#121915] p-5 sm:p-6 border border-emerald-500/20 hover:border-[#d9f447]/50 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group transition duration-300"
+            >
+              <div className="flex items-center gap-4">
+                <div className="grid size-12 place-items-center rounded-2xl bg-[#d9f447]/15 border border-[#d9f447]/30 text-[#d9f447] shrink-0 group-hover:scale-105 transition">
+                  <Zap className="size-6 fill-current text-[#d9f447]" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-extrabold text-sm sm:text-base text-white group-hover:text-[#d9f447] transition">
+                      Need Groceries or Midnight Snacks Fast?
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1 max-w-xl">
+                    Daily essentials, fresh milk, chilled beverages, farm eggs, chips &amp; munchies
+                    dispatched instantly from our local dark store.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 self-stretch sm:self-auto flex items-center justify-end">
+                <span className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 group-hover:bg-[#d9f447] text-white group-hover:text-[#121815] px-4 py-2.5 text-xs font-black transition duration-200">
+                  <span>Visit craveXP Store</span>
+                  <ArrowRight className="size-3.5 group-hover:translate-x-1 transition duration-200" />
+                </span>
+              </div>
+            </div>
+          </div>
+>>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
         )}
 
         {activeTab === 'profile' && (

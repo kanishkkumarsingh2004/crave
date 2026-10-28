@@ -102,7 +102,11 @@ export async function POST(request: Request) {
       bannerUrl,
       commercialModel,
       commissionRate,
+      commissionPercent,
+      commissionFlatRs,
       markupRate,
+      markupPercent,
+      markupFlatRs,
       fixedCommission,
       fixedMarkup,
       paymentModel,
@@ -270,9 +274,15 @@ export async function POST(request: Request) {
               restUpdateData.commercial_model = String(commercialModel)
             if (commissionRate !== undefined)
               restUpdateData.commission_rate = Number(commissionRate)
+            if (commissionPercent !== undefined)
+              restUpdateData.commission_rate = Number(commissionPercent)
+            if (commissionFlatRs !== undefined)
+              restUpdateData.fixed_commission = Number(commissionFlatRs)
             if (markupRate !== undefined) restUpdateData.markup_rate = Number(markupRate)
+            if (markupPercent !== undefined) restUpdateData.markup_rate = Number(markupPercent)
             if (fixedCommission !== undefined)
               restUpdateData.fixed_commission = Number(fixedCommission)
+            if (markupFlatRs !== undefined) restUpdateData.fixed_markup = Number(markupFlatRs)
             if (fixedMarkup !== undefined) restUpdateData.fixed_markup = Number(fixedMarkup)
             if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
             if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
@@ -305,9 +315,13 @@ export async function POST(request: Request) {
             if (
               commercialModel !== undefined ||
               commissionRate !== undefined ||
+              commissionPercent !== undefined ||
+              commissionFlatRs !== undefined ||
               markupRate !== undefined ||
+              markupPercent !== undefined ||
               fixedCommission !== undefined ||
-              fixedMarkup !== undefined
+              fixedMarkup !== undefined ||
+              markupFlatRs !== undefined
             ) {
               await tx.commercialContract.updateMany({
                 where: { restaurant_id: targetRestId, status: 'ACTIVE' },
@@ -315,13 +329,19 @@ export async function POST(request: Request) {
                   ...(commercialModel !== undefined && {
                     commercial_model: String(commercialModel) as any,
                   }),
-                  ...(commissionRate !== undefined && {
-                    commission_rate: Number(commissionRate),
+                  ...(commissionRate !== undefined && { commission_rate: Number(commissionRate) }),
+                  ...(commissionPercent !== undefined && {
+                    commission_rate: Number(commissionPercent),
+                  }),
+                  ...(commissionFlatRs !== undefined && {
+                    fixed_commission: Number(commissionFlatRs),
                   }),
                   ...(markupRate !== undefined && { markup_rate: Number(markupRate) }),
+                  ...(markupPercent !== undefined && { markup_rate: Number(markupPercent) }),
                   ...(fixedCommission !== undefined && {
                     fixed_commission: Number(fixedCommission),
                   }),
+                  ...(markupFlatRs !== undefined && { fixed_markup: Number(markupFlatRs) }),
                   ...(fixedMarkup !== undefined && { fixed_markup: Number(fixedMarkup) }),
                 },
               })
@@ -345,9 +365,15 @@ export async function POST(request: Request) {
           if (commercialModel !== undefined)
             restUpdateData.commercial_model = String(commercialModel)
           if (commissionRate !== undefined) restUpdateData.commission_rate = Number(commissionRate)
+          if (commissionPercent !== undefined)
+            restUpdateData.commission_rate = Number(commissionPercent)
+          if (commissionFlatRs !== undefined)
+            restUpdateData.fixed_commission = Number(commissionFlatRs)
           if (markupRate !== undefined) restUpdateData.markup_rate = Number(markupRate)
+          if (markupPercent !== undefined) restUpdateData.markup_rate = Number(markupPercent)
           if (fixedCommission !== undefined)
             restUpdateData.fixed_commission = Number(fixedCommission)
+          if (markupFlatRs !== undefined) restUpdateData.fixed_markup = Number(markupFlatRs)
           if (fixedMarkup !== undefined) restUpdateData.fixed_markup = Number(fixedMarkup)
           if (paymentModel) restUpdateData.payment_model = String(paymentModel).trim()
           if (latitude !== undefined) restUpdateData.latitude = Number(latitude)
@@ -377,9 +403,13 @@ export async function POST(request: Request) {
           if (
             commercialModel !== undefined ||
             commissionRate !== undefined ||
+            commissionPercent !== undefined ||
+            commissionFlatRs !== undefined ||
             markupRate !== undefined ||
+            markupPercent !== undefined ||
             fixedCommission !== undefined ||
-            fixedMarkup !== undefined
+            fixedMarkup !== undefined ||
+            markupFlatRs !== undefined
           ) {
             await prisma.commercialContract.updateMany({
               where: { restaurant_id: targetRestId, status: 'ACTIVE' },
@@ -388,10 +418,18 @@ export async function POST(request: Request) {
                   commercial_model: String(commercialModel) as any,
                 }),
                 ...(commissionRate !== undefined && { commission_rate: Number(commissionRate) }),
+                ...(commissionPercent !== undefined && {
+                  commission_rate: Number(commissionPercent),
+                }),
+                ...(commissionFlatRs !== undefined && {
+                  fixed_commission: Number(commissionFlatRs),
+                }),
                 ...(markupRate !== undefined && { markup_rate: Number(markupRate) }),
+                ...(markupPercent !== undefined && { markup_rate: Number(markupPercent) }),
                 ...(fixedCommission !== undefined && {
                   fixed_commission: Number(fixedCommission),
                 }),
+                ...(markupFlatRs !== undefined && { fixed_markup: Number(markupFlatRs) }),
                 ...(fixedMarkup !== undefined && { fixed_markup: Number(fixedMarkup) }),
               },
             })

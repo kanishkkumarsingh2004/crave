@@ -12,8 +12,19 @@ import { playChimeSound, useVendorOrderUpdates } from '@/lib/websocket'
 import {
   Bell,
   CookingPot,
+<<<<<<< HEAD
   LayoutGrid,
   ListFilter,
+=======
+  DollarSign,
+  Eye,
+  Flame,
+  Maximize2,
+  Menu,
+  Package,
+  PackageCheck,
+  Phone,
+>>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
   RefreshCw,
   UtensilsCrossed,
   Volume2,
@@ -34,7 +45,6 @@ export default function VendorDashboard() {
     () => user?.restaurantId || null
   )
   const [activeFilter, setActiveFilter] = useState<'all' | 'new' | 'preparing' | 'ready'>('all')
-  const [viewMode, setViewMode] = useState<'grid' | 'tickets'>('grid')
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<KitchenOrder | null>(null)
@@ -457,6 +467,7 @@ export default function VendorDashboard() {
                 )}
               </button>
 
+<<<<<<< HEAD
               {/* View mode toggle (4x4 Grid vs Ticket List) */}
               <div className="flex items-center rounded-full bg-stone-100 dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.08] p-0.5">
                 <button
@@ -487,6 +498,8 @@ export default function VendorDashboard() {
                 </button>
               </div>
 
+=======
+>>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
               {/* Manual refresh button */}
               <button
                 type="button"
@@ -591,6 +604,7 @@ export default function VendorDashboard() {
                 <span>View All Orders ({kitchenOrders.length})</span>
               </button>
             </div>
+<<<<<<< HEAD
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-4 gap-1.5 sm:gap-3 w-full min-w-0">
               {filteredOrders.map((order) => (
@@ -603,6 +617,8 @@ export default function VendorDashboard() {
                 />
               ))}
             </div>
+=======
+>>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
           ) : (
             <div className="space-y-3 w-full min-w-0">
               {filteredOrders.map((order) => (
