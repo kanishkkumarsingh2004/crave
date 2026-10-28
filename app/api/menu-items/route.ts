@@ -29,9 +29,12 @@ function normalizeVariants(
     const raw = value[index] as Record<string, unknown>
     const name = String(raw?.name || '').trim()
     const restaurantPrice = Number(raw?.restaurant_price)
-    const price = calculatePrice
-      ? calculatePrice(restaurantPrice)
-      : Number(raw?.price ?? restaurantPrice)
+    const explicitPrice = raw?.price != null && Number(raw.price) > 0 ? Number(raw.price) : null
+    const price = explicitPrice != null
+      ? explicitPrice
+      : calculatePrice
+        ? calculatePrice(restaurantPrice)
+        : Number(raw?.price ?? restaurantPrice)
     if (!name) return { error: `Variant ${index + 1} needs a name` }
     const nameKey = name.toLowerCase()
     if (names.has(nameKey)) return { error: `Variant names must be unique: ${name}` }
@@ -148,20 +151,27 @@ export async function GET(request: Request) {
       ? items
       : items.map(({ restaurant_price, variants, ...item }) => {
           const settings = pricingSettings(restaurant)
-          const customerPrice = calculateMenuAppPrice(
-            Number(restaurant_price ?? item.price),
-            settings
-          )
+          const explicitItemPrice = Number(item.price)
+          const customerPrice =
+            explicitItemPrice > 0
+              ? explicitItemPrice
+              : calculateMenuAppPrice(Number(restaurant_price ?? 0), settings)
           return {
             ...item,
             price: customerPrice,
-            variants: variants.map(({ restaurant_price: variantRestaurantPrice, ...variant }) => ({
-              ...variant,
-              price: calculateMenuAppPrice(
-                Number(variantRestaurantPrice ?? variant.price),
-                settings
-              ),
-            })),
+            variants: variants.map(({ restaurant_price: variantRestaurantPrice, ...variant }) => {
+              const explicitVariantPrice = Number(variant.price)
+              return {
+                ...variant,
+                price:
+                  explicitVariantPrice > 0
+                    ? explicitVariantPrice
+                    : calculateMenuAppPrice(
+                        Number(variantRestaurantPrice ?? 0),
+                        settings
+                      ),
+              }
+            }),
           }
         })
 
@@ -401,7 +411,7 @@ export async function PATCH(request: Request) {
     if (data.expiry_date !== undefined) {
       data.expiry_date = data.expiry_date ? new Date(data.expiry_date) : null
     }
-    if (calculatePrice) {
+    if (calculatePrice && data.price == null) {
       if (data.restaurant_price != null) data.price = calculatePrice(data.restaurant_price)
       else delete data.price
     }
