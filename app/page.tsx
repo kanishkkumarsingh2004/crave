@@ -7,7 +7,6 @@ import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
   ChevronRight,
-  Download,
   LogOut,
   MapPin,
   Search,
@@ -18,80 +17,6 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-
-const CUSTOMER_ANDROID_APK_URL =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
-
-function AppDownloadPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null
-  return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#111714] border border-black/10 dark:border-white/10 shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[10px] font-black tracking-widest uppercase text-[#5e8210] dark:text-[#d9f447]">
-              Get the app
-            </p>
-            <h2 className="text-xl font-black text-[#121815] dark:text-white mt-0.5">
-              Download CRAVE
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid size-8 place-items-center rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-[#121815] dark:text-white text-lg leading-none hover:bg-black/10 dark:hover:bg-white/15"
-          >
-            ×
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-          Order from your phone. Faster than the website.
-        </p>
-        <div className="space-y-2.5">
-          <a
-            href={CUSTOMER_ANDROID_APK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            download="crave-customer-debug.apk"
-            className="flex items-center gap-3 rounded-2xl bg-[#121815] dark:bg-[#d9f447] px-4 py-3.5 text-[#d9f447] dark:text-[#121815] hover:opacity-90 transition-opacity"
-          >
-            <span className="grid size-10 place-items-center rounded-xl bg-[#d9f447]/15 dark:bg-[#121815]/15">
-              <Download className="size-5" />
-            </span>
-            <span className="flex flex-col">
-              <b className="text-sm">Android</b>
-              <span className="text-[11px] opacity-80">Download the CRAVE app</span>
-              <p className="text-[8.5px] font-medium text-orange-500 dark:text-orange-400 mt-0.5 leading-tight">
-                ⚠️ Beta version — under development, may contain bugs
-              </p>
-            </span>
-            <ArrowRight className="size-4 ml-auto" />
-          </a>
-          <button
-            type="button"
-            disabled
-            className="flex items-center gap-3 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] px-4 py-3.5 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-          >
-            <span className="grid size-10 place-items-center rounded-xl bg-black/5 dark:bg-white/5">
-              <Download className="size-5" />
-            </span>
-            <span className="flex flex-col items-start">
-              <b className="text-sm">iOS</b>
-              <span className="text-[11px]">Coming soon</span>
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ── Featured Kitchen Collections (Zomato/Swiggy Curated Partners) ────────────
 const FEATURED_KITCHENS = [
@@ -169,7 +94,15 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('Kanakapura Road, Bengaluru')
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
-  const [showAppPopup, setShowAppPopup] = useState(false)
+  const [activeKitchen, setActiveKitchen] = useState(0)
+
+  // Auto-rotate featured kitchen cards every 3 seconds in a loop.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveKitchen((i) => (i + 1) % FEATURED_KITCHENS.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Compute target dashboard URL based on operational user role or URL redirect param
   const getTargetDashboard = () => {
@@ -188,7 +121,7 @@ export default function HomePage() {
           ? '/vendor/dashboard'
           : role === 'cravexp_store_vendor'
             ? '/vendor/crave-ep'
-            : null
+            : '/user/cravexp'
   }
 
   // Preserve authentication redirects to designated operational cockpits
@@ -487,51 +420,57 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="grid gap-3.5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {FEATURED_KITCHENS.map((k) => (
-              <div
-                key={k.id}
-                onClick={() => handleNavigate(k.path)}
-                className="group cursor-pointer rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#111714] overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative h-36 sm:h-44 w-full overflow-hidden bg-gray-100 dark:bg-white/5">
-                    <img
-                      src={k.image}
-                      alt={k.name}
-                      loading="lazy"
-                      className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute top-2.5 right-2.5 rounded-lg bg-emerald-600 text-white px-2 py-0.5 text-[10px] sm:text-[11px] font-black flex items-center gap-1 shadow-sm">
-                      <span>{k.rating}</span>
-                      <Star className="size-2.5 fill-current" />
+          {/* Auto-rotating featured kitchen carousel (3s loop, no pagination dots) */}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#111714] shadow-sm">
+            <div
+              className="flex transition-transform duration-500 ease-in-out will-change-transform"
+              style={{ transform: `translateX(-${activeKitchen * 100}%)` }}
+            >
+              {FEATURED_KITCHENS.map((k) => (
+                <div
+                  key={k.id}
+                  onClick={() => handleNavigate(k.path)}
+                  className="group cursor-pointer w-full min-w-[100%] shrink-0 border-r border-black/5 dark:border-white/5 last:border-0 bg-white dark:bg-[#111714] overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative h-36 sm:h-44 w-full overflow-hidden bg-gray-100 dark:bg-white/5">
+                      <img
+                        src={k.image}
+                        alt={k.name}
+                        loading="lazy"
+                        className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute top-2.5 right-2.5 rounded-lg bg-emerald-600 text-white px-2 py-0.5 text-[10px] sm:text-[11px] font-black flex items-center gap-1 shadow-sm">
+                        <span>{k.rating}</span>
+                        <Star className="size-2.5 fill-current" />
+                      </div>
+                      <div className="absolute bottom-2.5 left-2.5 rounded-md bg-[#121815]/90 text-white px-2 py-0.5 text-[10px] font-bold backdrop-blur-md">
+                        Est. {k.deliveryTime} • {k.distance}
+                      </div>
                     </div>
-                    <div className="absolute bottom-2.5 left-2.5 rounded-md bg-[#121815]/90 text-white px-2 py-0.5 text-[10px] font-bold backdrop-blur-md">
-                      Est. {k.deliveryTime} • {k.distance}
+
+                    <div className="p-3.5 sm:p-4 space-y-1">
+                      <h3 className="text-sm font-black text-[#121815] dark:text-white group-hover:text-[#5e8210] dark:group-hover:text-[#d9f447] transition-colors truncate">
+                        {k.name}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {k.cuisine}
+                      </p>
+                      <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 dark:text-gray-500 truncate">
+                        {k.tag}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="p-3.5 sm:p-4 space-y-1">
-                    <h3 className="text-sm font-black text-[#121815] dark:text-white group-hover:text-[#5e8210] dark:group-hover:text-[#d9f447] transition-colors truncate">
-                      {k.name}
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {k.cuisine}
-                    </p>
-                    <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 dark:text-gray-500 truncate">
-                      {k.tag}
-                    </p>
+                  <div className="px-3.5 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 truncate">
+                      {k.offer}
+                    </span>
+                    <ArrowRight className="size-3 text-gray-400 shrink-0" />
                   </div>
                 </div>
-
-                <div className="px-3.5 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 truncate">
-                    {k.offer}
-                  </span>
-                  <ArrowRight className="size-3 text-gray-400 shrink-0" />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -609,19 +548,6 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <Footer />
-
-      {/* Floating download button */}
-      <button
-        type="button"
-        onClick={() => setShowAppPopup(true)}
-        aria-label="Download the CRAVE app"
-        className="fixed bottom-6 right-6 z-[80] flex items-center gap-2 rounded-full bg-[#121815] dark:bg-[#d9f447] px-4 py-3 text-[#d9f447] dark:text-[#121815] shadow-2xl hover:opacity-90 active:scale-95 transition-all"
-      >
-        <Download className="size-4" />
-        <span className="text-xs font-black">Get the app</span>
-      </button>
-
-      <AppDownloadPopup open={showAppPopup} onClose={() => setShowAppPopup(false)} />
     </div>
   )
 }
