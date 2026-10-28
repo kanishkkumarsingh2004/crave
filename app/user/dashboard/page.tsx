@@ -44,6 +44,8 @@ export default function UserDashboardPage() {
       router.replace('/login')
     } else if (role !== 'user' && role !== 'customer') {
       router.replace(`/${getDashboardPath(role)}`)
+    } else {
+      router.replace('/user/explore')
     }
   }, [user, role, isLoading, router])
 

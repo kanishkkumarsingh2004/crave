@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 function getTargetDashboard(u: { role?: string; email?: string } | null): string {
-  if (!u) return '/user/dashboard'
+  if (!u) return '/user/explore'
   if (u.role === 'cravexp_store_vendor') {
     return '/vendor/crave-ep'
   }
@@ -35,7 +35,7 @@ function getTargetDashboard(u: { role?: string; email?: string } | null): string
     case 'user':
     case 'customer':
     default:
-      return '/user/dashboard'
+      return '/user/explore'
   }
 }
 

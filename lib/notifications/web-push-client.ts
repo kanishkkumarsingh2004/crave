@@ -24,6 +24,9 @@ export function isWebPushSupported(): boolean {
 
 export async function getWebPushRegistration() {
   if (!isWebPushSupported()) throw new Error('Push notifications are not supported on this device')
+  if (process.env.NODE_ENV !== 'production') {
+    return navigator.serviceWorker.ready
+  }
   await navigator.serviceWorker.register('/sw.js')
   return navigator.serviceWorker.ready
 }

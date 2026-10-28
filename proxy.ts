@@ -16,7 +16,7 @@ function getDashboardForRole(role: string): string {
     case 'user':
     case 'customer':
     default:
-      return '/user/dashboard'
+      return '/user/explore'
   }
 }
 

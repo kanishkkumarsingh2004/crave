@@ -294,13 +294,9 @@ export default function CustomerDashboard({
       } else {
         url.searchParams.delete('restaurant')
         url.searchParams.delete('restaurantId')
-        // If we are unselecting a restaurant and the current URL had a restaurant param,
-        // use history.back() so we don't push duplicate explore pages onto the history stack!
-        if (window.location.search.includes('restaurant')) {
-          window.history.back()
-        } else {
-          window.history.replaceState({}, '', url.toString())
-        }
+        // Clean in-app state replacement: unselecting restaurant returns to explore feed cleanly
+        // Never call history.back() to avoid bouncing user into previous pages or CraveXP loops!
+        window.history.replaceState({}, '', url.pathname)
       }
     }
   }, [])

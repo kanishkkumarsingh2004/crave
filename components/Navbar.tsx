@@ -80,7 +80,7 @@ export default function Navbar() {
   const showCustomerNav = Boolean(user && (isCustomer || isCustomerRoute))
 
   const currentDashboardLink = isCustomer
-    ? '/user/dashboard'
+    ? '/user/explore'
     : normalizedRole === 'rider' || normalizedRole === 'driver'
       ? '/driver/dashboard'
       : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'

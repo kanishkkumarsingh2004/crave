@@ -85,13 +85,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function(){
               try {
-                if (typeof window !== 'undefined' && typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object') {
-                  for (var k in window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
-                    if (typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__[k] === 'function') {
-                      window.__REACT_DEVTOOLS_GLOBAL_HOOK__[k] = function(){};
-                    }
-                  }
-                }
+
                 if (typeof console !== 'undefined' && console.log) {
                   setTimeout(function() {
                     console.log('%cSTOP! SECURITY WARNING', 'color: #ef4444; font-size: 24px; font-weight: 900;');
