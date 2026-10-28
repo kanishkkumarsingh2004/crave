@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PullToRefresh } from './components/PullToRefresh'
 import {
   Bell,
   Camera,
@@ -1158,686 +1159,699 @@ export default function App() {
         </button>
       )}
 
-      <main className="app-content">
-        {tab === 'overview' && (
-          <section className="page">
-            <article className="hero-card">
-              <span className="eyebrow">Live platform</span>
-              <h1>Everything is in view.</h1>
-              <p>{activeOrders.length} active orders currently need platform attention.</p>
-              <button className="primary-button" onClick={() => void loadDashboard()}>
-                <Icon name="refresh" /> Refresh operations
-              </button>
-            </article>
-            {pendingPayments.length > 0 && (
-              <button className="payment-alert" onClick={() => setTab('payments')}>
-                <span>
-                  <Icon name="money" />
-                </span>
+      <PullToRefresh onRefresh={() => void loadDashboard()} refreshing={refreshing}>
+        <main className="app-content">
+          {tab === 'overview' && (
+            <section className="page">
+              <article className="hero-card">
+                <span className="eyebrow">Live platform</span>
+                <h1>Everything is in view.</h1>
+                <p>{activeOrders.length} active orders currently need platform attention.</p>
+                <button className="primary-button" onClick={() => void loadDashboard()}>
+                  <Icon name="refresh" /> Refresh operations
+                </button>
+              </article>
+              {pendingPayments.length > 0 && (
+                <button className="payment-alert" onClick={() => setTab('payments')}>
+                  <span>
+                    <Icon name="money" />
+                  </span>
+                  <div>
+                    <strong>{pendingPayments.length} UPI payment awaiting review</strong>
+                    <small>Open the manual verification queue</small>
+                  </div>
+                  <b>Review</b>
+                </button>
+              )}
+              <div className="stats-grid">
+                <article>
+                  <span>Orders</span>
+                  <strong>{stats.orderCount || data.orders.length}</strong>
+                </article>
+                <article>
+                  <span>Revenue</span>
+                  <strong>{money(stats.weeklyRevenue)}</strong>
+                </article>
+                <article>
+                  <span>Restaurants</span>
+                  <strong>{stats.restaurantCount || data.restaurants.length}</strong>
+                </article>
+                <article>
+                  <span>Live users</span>
+                  <strong>{stats.liveDevices || 0}</strong>
+                </article>
+              </div>
+              <div className="section-heading">
                 <div>
-                  <strong>{pendingPayments.length} UPI payment awaiting review</strong>
-                  <small>Open the manual verification queue</small>
+                  <span className="eyebrow">Command queue</span>
+                  <h2>Recent orders</h2>
                 </div>
-                <b>Review</b>
-              </button>
-            )}
-            <div className="stats-grid">
-              <article>
-                <span>Orders</span>
-                <strong>{stats.orderCount || data.orders.length}</strong>
-              </article>
-              <article>
-                <span>Revenue</span>
-                <strong>{money(stats.weeklyRevenue)}</strong>
-              </article>
-              <article>
-                <span>Restaurants</span>
-                <strong>{stats.restaurantCount || data.restaurants.length}</strong>
-              </article>
-              <article>
-                <span>Live users</span>
-                <strong>{stats.liveDevices || 0}</strong>
-              </article>
-            </div>
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">Command queue</span>
-                <h2>Recent orders</h2>
+                <button onClick={() => setTab('orders')}>View all</button>
               </div>
-              <button onClick={() => setTab('orders')}>View all</button>
-            </div>
-            <div className="record-list">
-              {data.orders.slice(0, 5).map((order) => (
-                <OrderCard order={order} key={order.id} />
-              ))}
-              {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
-            </div>
-          </section>
-        )}
+              <div className="record-list">
+                {data.orders.slice(0, 5).map((order) => (
+                  <OrderCard order={order} key={order.id} />
+                ))}
+                {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
+              </div>
+            </section>
+          )}
 
-        {tab === 'orders' && (
-          <section className="page">
-            <div className="page-heading">
-              <span className="eyebrow">Live operations</span>
-              <h1>Orders</h1>
-              <p>Monitor every order across the platform.</p>
-            </div>
-            <div className="record-list">
-              {data.orders.map((order) => (
-                <OrderCard order={order} key={order.id} />
-              ))}
-              {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
-            </div>
-          </section>
-        )}
+          {tab === 'orders' && (
+            <section className="page">
+              <div className="page-heading">
+                <span className="eyebrow">Live operations</span>
+                <h1>Orders</h1>
+                <p>Monitor every order across the platform.</p>
+              </div>
+              <div className="record-list">
+                {data.orders.map((order) => (
+                  <OrderCard order={order} key={order.id} />
+                ))}
+                {data.orders.length === 0 && <EmptyState text="No orders are available yet." />}
+              </div>
+            </section>
+          )}
 
-        {tab === 'drivers' && (
-          <section className="page">
-            <header className="page-header">
-              <div>
-                <p className="eyebrow">DRIVER PAYOUTS</p>
-                <h1>Request queue</h1>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => void loadDriverPayouts()}
-                disabled={driverPayoutsLoading}
-                aria-label="Refresh payout requests"
-              >
-                <Icon name="refresh" />
-              </button>
-            </header>
-            {driverPayoutsLoading && driverPayouts.length === 0 ? (
-              <div className="loading-state">
-                <span className="loader" />
-                <p>Loading payout requests…</p>
-              </div>
-            ) : (
-              <>
-                {driverPayoutsError && (
-                  <div className="page-notice">
-                    <strong>
-                      {driverPayouts.length === 0
-                        ? 'The payout queue is unavailable'
-                        : 'The payout queue could not be refreshed'}
-                    </strong>
-                    <p>{driverPayoutsError}</p>
-                    <button className="secondary-button" onClick={() => void loadDriverPayouts()}>
-                      Try again
-                    </button>
-                  </div>
-                )}
-                {driverPayouts.length === 0 && !driverPayoutsError ? (
-                  <EmptyState text="No pending driver payout requests." />
-                ) : (
-                  <div className="payment-list">
-                    {driverPayouts.map((payout) => (
-                      <article className="payment-card pending" key={payout.id}>
-                        <div className="payment-card-head">
-                          <div>
-                            <span className="payment-utr">
-                              #{payout.id.slice(-10).toUpperCase()}
-                            </span>
-                            <h3>
-                              {payout.driver?.name || payout.driver?.email || payout.driver_id}
-                            </h3>
-                            <p>{payout.driver?.phone || payout.driver?.email || ''}</p>
-                          </div>
-                          <div className="payment-amount">
-                            <strong>{money(payout.amount)}</strong>
-                            <span>{label(payout.status)}</span>
-                          </div>
-                        </div>
-                        {payout.status === 'pending' && (
-                          <div className="payment-actions">
-                            <button
-                              className="ghost-button"
-                              onClick={async () => {
-                                try {
-                                  await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
-                                    method: 'PATCH',
-                                    body: { status: 'failed' },
-                                  })
-                                  setNotice('Payout rejected.')
-                                  void loadDriverPayouts()
-                                } catch (err) {
-                                  setDriverPayoutsError(
-                                    err instanceof Error ? err.message : 'Failed to reject payout.'
-                                  )
-                                }
-                              }}
-                            >
-                              Reject
-                            </button>
-                            <button
-                              className="primary-button"
-                              onClick={async () => {
-                                try {
-                                  await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
-                                    method: 'PATCH',
-                                    body: { status: 'paid', transaction_ref: `UPI_${Date.now()}` },
-                                  })
-                                  setNotice('Payout marked as paid.')
-                                  void loadDriverPayouts()
-                                } catch (err) {
-                                  setDriverPayoutsError(
-                                    err instanceof Error ? err.message : 'Failed to approve payout.'
-                                  )
-                                }
-                              }}
-                            >
-                              Mark as paid
-                            </button>
-                          </div>
-                        )}
-                        {payout.transaction_ref && (
-                          <p className="payment-note">Ref: {payout.transaction_ref}</p>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </section>
-        )}
-        {tab === 'payments' && (
-          <section className="page">
-            <div className="page-heading">
-              <span className="eyebrow">Manual UPI verification</span>
-              <h1>Payments</h1>
-              <p>Match each UTR with the bank transaction before approving the order.</p>
-            </div>
-            <div className="payment-list">
-              {payments.map((payment) => (
-                <article className={`payment-card ${payment.status}`} key={payment.id}>
-                  <div className="payment-card-head">
-                    <div>
-                      <span>UTR</span>
-                      <h3>{payment.utr_ref}</h3>
-                    </div>
-                    <strong>{money(payment.amount)}</strong>
-                  </div>
-                  <div className="payment-details">
-                    <span>
-                      Order <b>#{payment.order_id.slice(-8).toUpperCase()}</b>
-                    </span>
-                    <span>
-                      Customer UPI <b>{payment.customer_vpa || 'Not provided'}</b>
-                    </span>
-                    <span>
-                      Submitted{' '}
-                      <b>
-                        {payment.created_at
-                          ? new Date(payment.created_at).toLocaleString()
-                          : 'Just now'}
-                      </b>
-                    </span>
-                  </div>
-                  {payment.status === 'pending' ? (
-                    <div className="payment-actions">
-                      <button
-                        className="reject-button"
-                        disabled={paymentBusy === payment.id}
-                        onClick={() => void reviewPayment(payment, 'rejected')}
-                      >
-                        Reject
+          {tab === 'drivers' && (
+            <section className="page">
+              <header className="page-header">
+                <div>
+                  <p className="eyebrow">DRIVER PAYOUTS</p>
+                  <h1>Request queue</h1>
+                </div>
+                <button
+                  className="icon-button"
+                  onClick={() => void loadDriverPayouts()}
+                  disabled={driverPayoutsLoading}
+                  aria-label="Refresh payout requests"
+                >
+                  <Icon name="refresh" />
+                </button>
+              </header>
+              {driverPayoutsLoading && driverPayouts.length === 0 ? (
+                <div className="loading-state">
+                  <span className="loader" />
+                  <p>Loading payout requests…</p>
+                </div>
+              ) : (
+                <>
+                  {driverPayoutsError && (
+                    <div className="page-notice">
+                      <strong>
+                        {driverPayouts.length === 0
+                          ? 'The payout queue is unavailable'
+                          : 'The payout queue could not be refreshed'}
+                      </strong>
+                      <p>{driverPayoutsError}</p>
+                      <button className="secondary-button" onClick={() => void loadDriverPayouts()}>
+                        Try again
                       </button>
-                      <button
-                        className="primary-button"
-                        disabled={paymentBusy === payment.id}
-                        onClick={() => void reviewPayment(payment, 'verified')}
-                      >
-                        {paymentBusy === payment.id ? 'Saving…' : 'Verify payment'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className={`review-status ${payment.status}`}>
-                      {payment.status === 'verified' ? 'Payment verified' : 'Payment rejected'}
                     </div>
                   )}
-                </article>
-              ))}
-              {payments.length === 0 && <EmptyState text="No UPI payments need review." />}
-            </div>
-          </section>
-        )}
-
-        {tab === 'partners' && (
-          <section className="page">
-            <div className="page-heading partner-page-heading">
-              <div>
-                <span className="eyebrow">Partner network</span>
-                <h1>Restaurants</h1>
-                <p>Live status and commercial overview.</p>
-              </div>
-              <button className="add-partner-button" onClick={openAddPartner}>
-                <b>+</b> Add restaurant
-              </button>
-            </div>
-            <div className="partner-grid">
-              {data.restaurants.map((restaurant) => (
-                <article className="partner-card" key={restaurant.id}>
-                  <span className={restaurant.is_open ? 'status-dot open' : 'status-dot'} />
-                  <div>
-                    <h3>{restaurant.name}</h3>
-                    <p>{restaurant.cuisine || 'Restaurant partner'}</p>
-                  </div>
-                  <strong>{restaurant.is_open ? 'Open' : 'Offline'}</strong>
-                  <small>{commercialSummary(restaurant)}</small>
-                  <div className="partner-actions">
-                    <button onClick={() => openEditPartner(restaurant)}>Edit</button>
-                    <button
-                      className="suspend"
-                      onClick={() => void setPartnerSuspended(restaurant)}
-                    >
-                      {restaurant.is_open ? 'Suspend' : 'Restore'}
-                    </button>
-                    <button
-                      className="delete"
-                      disabled={partnerBusy}
-                      onClick={() => void deletePartner(restaurant)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))}
-              {data.restaurants.length === 0 && <EmptyState text="No restaurant partners found." />}
-            </div>
-          </section>
-        )}
-
-        {tab === 'xp-store' && (
-          <section className="page xp-page">
-            <div className="page-heading xp-page-heading">
-              <div>
-                <span className="eyebrow">Customer catalog</span>
-                <h1>XP Store</h1>
-                <p>Add products and control what customers can order from CraveXP.</p>
-              </div>
-              <button className="add-partner-button" onClick={openNewXPProduct}>
-                <b>+</b> Add item
-              </button>
-            </div>
-            <div className="xp-toolbar">
-              <label className="xp-search">
-                <Icon name="package" />
-                <input
-                  type="search"
-                  value={xpSearch}
-                  onChange={(event) => setXPSearch(event.target.value)}
-                  placeholder="Search name, category, SKU or barcode"
-                />
-              </label>
-              <button
-                className="secondary-button"
-                disabled={xpLoading}
-                onClick={() => void loadXPProducts()}
-              >
-                <Icon name="refresh" /> {xpLoading ? 'Syncing…' : 'Refresh'}
-              </button>
-            </div>
-            <div className="xp-grid">
-              {xpLoading && xpProducts.length === 0 && (
-                <EmptyState text="Loading XP Store items…" />
-              )}
-              {filteredXPProducts.map((product) => (
-                <article className="xp-card" key={product.id}>
-                  <div className="xp-card-image">
-                    {product.image ? (
-                      <img src={product.image} alt="" loading="lazy" />
-                    ) : (
-                      <Icon name="package" />
-                    )}
-                    <span className={product.in_stock ? 'available' : ''}>
-                      {product.in_stock ? 'Available' : 'Hidden'}
-                    </span>
-                  </div>
-                  <div className="xp-card-body">
-                    <small>{product.category}</small>
-                    <h3>{product.name}</h3>
-                    <p>
-                      {product.unit} · Stock {product.stock_count}
-                    </p>
-                    <div className="xp-prices">
-                      <strong>{money(product.price)}</strong>
-                      {Number(product.mrp) > Number(product.price) && <s>{money(product.mrp)}</s>}
+                  {driverPayouts.length === 0 && !driverPayoutsError ? (
+                    <EmptyState text="No pending driver payout requests." />
+                  ) : (
+                    <div className="payment-list">
+                      {driverPayouts.map((payout) => (
+                        <article className="payment-card pending" key={payout.id}>
+                          <div className="payment-card-head">
+                            <div>
+                              <span className="payment-utr">
+                                #{payout.id.slice(-10).toUpperCase()}
+                              </span>
+                              <h3>
+                                {payout.driver?.name || payout.driver?.email || payout.driver_id}
+                              </h3>
+                              <p>{payout.driver?.phone || payout.driver?.email || ''}</p>
+                            </div>
+                            <div className="payment-amount">
+                              <strong>{money(payout.amount)}</strong>
+                              <span>{label(payout.status)}</span>
+                            </div>
+                          </div>
+                          {payout.status === 'pending' && (
+                            <div className="payment-actions">
+                              <button
+                                className="ghost-button"
+                                onClick={async () => {
+                                  try {
+                                    await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                      method: 'PATCH',
+                                      body: { status: 'failed' },
+                                    })
+                                    setNotice('Payout rejected.')
+                                    void loadDriverPayouts()
+                                  } catch (err) {
+                                    setDriverPayoutsError(
+                                      err instanceof Error
+                                        ? err.message
+                                        : 'Failed to reject payout.'
+                                    )
+                                  }
+                                }}
+                              >
+                                Reject
+                              </button>
+                              <button
+                                className="primary-button"
+                                onClick={async () => {
+                                  try {
+                                    await apiRequest(`/api/admin/driver-payouts/${payout.id}`, {
+                                      method: 'PATCH',
+                                      body: {
+                                        status: 'paid',
+                                        transaction_ref: `UPI_${Date.now()}`,
+                                      },
+                                    })
+                                    setNotice('Payout marked as paid.')
+                                    void loadDriverPayouts()
+                                  } catch (err) {
+                                    setDriverPayoutsError(
+                                      err instanceof Error
+                                        ? err.message
+                                        : 'Failed to approve payout.'
+                                    )
+                                  }
+                                }}
+                              >
+                                Mark as paid
+                              </button>
+                            </div>
+                          )}
+                          {payout.transaction_ref && (
+                            <p className="payment-note">Ref: {payout.transaction_ref}</p>
+                          )}
+                        </article>
+                      ))}
                     </div>
-                    <code>{product.sku_code}</code>
-                    <div className="xp-card-actions">
-                      <button onClick={() => openEditXPProduct(product)}>Edit</button>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+          {tab === 'payments' && (
+            <section className="page">
+              <div className="page-heading">
+                <span className="eyebrow">Manual UPI verification</span>
+                <h1>Payments</h1>
+                <p>Match each UTR with the bank transaction before approving the order.</p>
+              </div>
+              <div className="payment-list">
+                {payments.map((payment) => (
+                  <article className={`payment-card ${payment.status}`} key={payment.id}>
+                    <div className="payment-card-head">
+                      <div>
+                        <span>UTR</span>
+                        <h3>{payment.utr_ref}</h3>
+                      </div>
+                      <strong>{money(payment.amount)}</strong>
+                    </div>
+                    <div className="payment-details">
+                      <span>
+                        Order <b>#{payment.order_id.slice(-8).toUpperCase()}</b>
+                      </span>
+                      <span>
+                        Customer UPI <b>{payment.customer_vpa || 'Not provided'}</b>
+                      </span>
+                      <span>
+                        Submitted{' '}
+                        <b>
+                          {payment.created_at
+                            ? new Date(payment.created_at).toLocaleString()
+                            : 'Just now'}
+                        </b>
+                      </span>
+                    </div>
+                    {payment.status === 'pending' ? (
+                      <div className="payment-actions">
+                        <button
+                          className="reject-button"
+                          disabled={paymentBusy === payment.id}
+                          onClick={() => void reviewPayment(payment, 'rejected')}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          className="primary-button"
+                          disabled={paymentBusy === payment.id}
+                          onClick={() => void reviewPayment(payment, 'verified')}
+                        >
+                          {paymentBusy === payment.id ? 'Saving…' : 'Verify payment'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={`review-status ${payment.status}`}>
+                        {payment.status === 'verified' ? 'Payment verified' : 'Payment rejected'}
+                      </div>
+                    )}
+                  </article>
+                ))}
+                {payments.length === 0 && <EmptyState text="No UPI payments need review." />}
+              </div>
+            </section>
+          )}
+
+          {tab === 'partners' && (
+            <section className="page">
+              <div className="page-heading partner-page-heading">
+                <div>
+                  <span className="eyebrow">Partner network</span>
+                  <h1>Restaurants</h1>
+                  <p>Live status and commercial overview.</p>
+                </div>
+                <button className="add-partner-button" onClick={openAddPartner}>
+                  <b>+</b> Add restaurant
+                </button>
+              </div>
+              <div className="partner-grid">
+                {data.restaurants.map((restaurant) => (
+                  <article className="partner-card" key={restaurant.id}>
+                    <span className={restaurant.is_open ? 'status-dot open' : 'status-dot'} />
+                    <div>
+                      <h3>{restaurant.name}</h3>
+                      <p>{restaurant.cuisine || 'Restaurant partner'}</p>
+                    </div>
+                    <strong>{restaurant.is_open ? 'Open' : 'Offline'}</strong>
+                    <small>{commercialSummary(restaurant)}</small>
+                    <div className="partner-actions">
+                      <button onClick={() => openEditPartner(restaurant)}>Edit</button>
                       <button
                         className="suspend"
-                        disabled={xpBusy}
-                        onClick={() => void toggleXPProduct(product)}
+                        onClick={() => void setPartnerSuspended(restaurant)}
                       >
-                        {product.in_stock ? 'Hide' : 'Show'}
+                        {restaurant.is_open ? 'Suspend' : 'Restore'}
                       </button>
                       <button
                         className="delete"
-                        disabled={xpBusy}
-                        onClick={() => void deleteXPProduct(product)}
+                        disabled={partnerBusy}
+                        onClick={() => void deletePartner(restaurant)}
                       >
                         Delete
                       </button>
                     </div>
-                  </div>
-                </article>
-              ))}
-              {!xpLoading && filteredXPProducts.length === 0 && (
-                <EmptyState
-                  text={
-                    xpSearch ? 'No XP Store items match your search.' : 'No XP Store items yet.'
-                  }
-                />
-              )}
-            </div>
-          </section>
-        )}
-
-        {tab === 'settings' && (
-          <section className="page settings-page">
-            <div className="page-heading">
-              <span className="eyebrow">Application control</span>
-              <h1>Settings</h1>
-              <p>Admin access, backend health and app updates.</p>
-            </div>
-            <article className="settings-card profile-card">
-              <span className="profile-avatar">{user.name?.slice(0, 1).toUpperCase() || 'A'}</span>
-              <div>
-                <h2>{user.name}</h2>
-                <p>{user.email}</p>
-                <small>Platform administrator</small>
-              </div>
-            </article>
-            <article className="settings-card">
-              <div className="settings-title">
-                <span>
-                  <Icon name="wifi" />
-                </span>
-                <div>
-                  <h3>Production backend</h3>
-                  <p>{getApiOrigin()}</p>
-                </div>
-              </div>
-              <div className={`health-pill ${networkConnected ? 'healthy' : ''}`}>
-                {networkConnected ? 'Connected' : 'Offline'}
-              </div>
-            </article>
-            <article className="settings-card">
-              <div className="settings-title">
-                <span className="theme-symbol">◐</span>
-                <div>
-                  <h3>Appearance</h3>
-                  <p>Choose a light, dark, or device-controlled theme.</p>
-                </div>
-              </div>
-              <div className="theme-control" role="group" aria-label="Admin app theme">
-                {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    className={theme === mode ? 'active' : ''}
-                    onClick={() => {
-                      setTheme(mode)
-                      void saveTheme(mode)
-                    }}
-                  >
-                    {label(mode)}
-                  </button>
+                  </article>
                 ))}
+                {data.restaurants.length === 0 && (
+                  <EmptyState text="No restaurant partners found." />
+                )}
               </div>
-            </article>
-            <h3 className="settings-list-heading">App</h3>
-            <div className="settings-list">
-              <button onClick={() => setUpdateSheet(true)}>
-                <span className="settings-list-icon">
-                  <Icon name="refresh" />
-                </span>
-                <span>
-                  <b>{t.settings.checkForUpdates}</b>
-                  <small>
-                    {checkingUpdate
-                      ? 'Checking for the latest admin app…'
-                      : availableUpdate
-                        ? `Version ${availableUpdate.versionName} is available`
-                        : updateError || 'You are using the latest available version.'}
-                  </small>
-                </span>
-                <Icon name="chevron" />
-              </button>
-              <button onClick={() => setPasswordSheet(true)}>
-                <span className="settings-list-icon">
-                  <Icon name="lock" />
-                </span>
-                <span>
-                  <b>{t.settings.changePassword}</b>
-                  <small>{t.settings.changePasswordHint}</small>
-                </span>
-                <Icon name="chevron" />
-              </button>
-              <button onClick={() => setLanguageSheet(true)}>
-                <span className="settings-list-icon">
-                  <Icon name="language" />
-                </span>
-                <span>
-                  <b>{t.settings.language}</b>
-                  <small>{language}</small>
-                </span>
-                <Icon name="chevron" />
-              </button>
-            </div>
-            <button className="logout-button" onClick={requestLogout}>
-              <Icon name="logout" /> Sign out of admin app
-            </button>
-            {updateSheet && (
-              <div
-                className="modal-backdrop"
-                role="dialog"
-                aria-modal="true"
-                onClick={() => setUpdateSheet(false)}
-              >
-                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                  <div className="partner-sheet-heading">
-                    <div>
-                      <span className="eyebrow">Admin app</span>
-                      <h2>{t.settings.checkForUpdates}</h2>
-                    </div>
-                    <button onClick={() => setUpdateSheet(false)} aria-label="Close">
-                      ×
-                    </button>
-                  </div>
-                  <div>
-                    <div className="settings-title">
-                      <span>
-                        <Icon name="download" />
+            </section>
+          )}
+
+          {tab === 'xp-store' && (
+            <section className="page xp-page">
+              <div className="page-heading xp-page-heading">
+                <div>
+                  <span className="eyebrow">Customer catalog</span>
+                  <h1>XP Store</h1>
+                  <p>Add products and control what customers can order from CraveXP.</p>
+                </div>
+                <button className="add-partner-button" onClick={openNewXPProduct}>
+                  <b>+</b> Add item
+                </button>
+              </div>
+              <div className="xp-toolbar">
+                <label className="xp-search">
+                  <Icon name="package" />
+                  <input
+                    type="search"
+                    value={xpSearch}
+                    onChange={(event) => setXPSearch(event.target.value)}
+                    placeholder="Search name, category, SKU or barcode"
+                  />
+                </label>
+                <button
+                  className="secondary-button"
+                  disabled={xpLoading}
+                  onClick={() => void loadXPProducts()}
+                >
+                  <Icon name="refresh" /> {xpLoading ? 'Syncing…' : 'Refresh'}
+                </button>
+              </div>
+              <div className="xp-grid">
+                {xpLoading && xpProducts.length === 0 && (
+                  <EmptyState text="Loading XP Store items…" />
+                )}
+                {filteredXPProducts.map((product) => (
+                  <article className="xp-card" key={product.id}>
+                    <div className="xp-card-image">
+                      {product.image ? (
+                        <img src={product.image} alt="" loading="lazy" />
+                      ) : (
+                        <Icon name="package" />
+                      )}
+                      <span className={product.in_stock ? 'available' : ''}>
+                        {product.in_stock ? 'Available' : 'Hidden'}
                       </span>
-                      <div>
-                        <h3>Admin app update</h3>
-                        <p>
-                          {checkingUpdate
-                            ? 'Checking for the latest admin app…'
-                            : availableUpdate
-                              ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
-                              : updateError || 'You are using the latest available version.'}
-                        </p>
+                    </div>
+                    <div className="xp-card-body">
+                      <small>{product.category}</small>
+                      <h3>{product.name}</h3>
+                      <p>
+                        {product.unit} · Stock {product.stock_count}
+                      </p>
+                      <div className="xp-prices">
+                        <strong>{money(product.price)}</strong>
+                        {Number(product.mrp) > Number(product.price) && <s>{money(product.mrp)}</s>}
+                      </div>
+                      <code>{product.sku_code}</code>
+                      <div className="xp-card-actions">
+                        <button onClick={() => openEditXPProduct(product)}>Edit</button>
+                        <button
+                          className="suspend"
+                          disabled={xpBusy}
+                          onClick={() => void toggleXPProduct(product)}
+                        >
+                          {product.in_stock ? 'Hide' : 'Show'}
+                        </button>
+                        <button
+                          className="delete"
+                          disabled={xpBusy}
+                          onClick={() => void deleteXPProduct(product)}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
-                    <div className="software-actions">
-                      <button
-                        className="secondary-button"
-                        disabled={checkingUpdate || installingUpdate}
-                        onClick={() => void refreshUpdateStatus()}
-                      >
-                        {checkingUpdate ? 'Checking…' : 'Check again'}
-                      </button>
-                      <button
-                        className="primary-button"
-                        disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                        onClick={() => void installUpdate()}
-                      >
-                        {installingUpdate
-                          ? 'Opening installer…'
-                          : availableUpdate
-                            ? `Update to ${availableUpdate.versionName}`
-                            : 'App is up to date'}
-                      </button>
-                    </div>
-                    {updateError && availableUpdate && (
-                      <div className="software-error">{updateError}</div>
-                    )}
-                  </div>
-                </article>
+                  </article>
+                ))}
+                {!xpLoading && filteredXPProducts.length === 0 && (
+                  <EmptyState
+                    text={
+                      xpSearch ? 'No XP Store items match your search.' : 'No XP Store items yet.'
+                    }
+                  />
+                )}
               </div>
-            )}
-            {passwordSheet && (
-              <div
-                className="modal-backdrop"
-                role="dialog"
-                aria-modal="true"
-                onClick={() => setPasswordSheet(false)}
-              >
-                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                  <div className="partner-sheet-heading">
-                    <div>
-                      <span className="eyebrow">Account security</span>
-                      <h2>{t.settings.changePassword}</h2>
-                    </div>
-                    <button onClick={() => setPasswordSheet(false)} aria-label="Close">
-                      ×
+            </section>
+          )}
+
+          {tab === 'settings' && (
+            <section className="page settings-page">
+              <div className="page-heading">
+                <span className="eyebrow">Application control</span>
+                <h1>Settings</h1>
+                <p>Admin access, backend health and app updates.</p>
+              </div>
+              <article className="settings-card profile-card">
+                <span className="profile-avatar">
+                  {user.name?.slice(0, 1).toUpperCase() || 'A'}
+                </span>
+                <div>
+                  <h2>{user.name}</h2>
+                  <p>{user.email}</p>
+                  <small>Platform administrator</small>
+                </div>
+              </article>
+              <article className="settings-card">
+                <div className="settings-title">
+                  <span>
+                    <Icon name="wifi" />
+                  </span>
+                  <div>
+                    <h3>Production backend</h3>
+                    <p>{getApiOrigin()}</p>
+                  </div>
+                </div>
+                <div className={`health-pill ${networkConnected ? 'healthy' : ''}`}>
+                  {networkConnected ? 'Connected' : 'Offline'}
+                </div>
+              </article>
+              <article className="settings-card">
+                <div className="settings-title">
+                  <span className="theme-symbol">◐</span>
+                  <div>
+                    <h3>Appearance</h3>
+                    <p>Choose a light, dark, or device-controlled theme.</p>
+                  </div>
+                </div>
+                <div className="theme-control" role="group" aria-label="Admin app theme">
+                  {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      className={theme === mode ? 'active' : ''}
+                      onClick={() => {
+                        setTheme(mode)
+                        void saveTheme(mode)
+                      }}
+                    >
+                      {label(mode)}
                     </button>
-                  </div>
-                  <p>Update the password used to sign in to the admin app.</p>
-                  <form
-                    className="change-password-form"
-                    noValidate
-                    onSubmit={(event) => void changePassword(event)}
-                  >
-                    <div className="change-password-fields">
-                      <PasswordField
-                        label="Current password"
-                        value={currentPassword}
-                        onChange={setCurrentPassword}
-                        placeholder="Current password"
-                        autoComplete="current-password"
-                        visible={showCurrentPassword}
-                        onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
-                        minLength={8}
-                        maxLength={256}
-                      />
-                      <PasswordField
-                        label="New password"
-                        value={newPassword}
-                        onChange={setNewPassword}
-                        placeholder="8–256 characters"
-                        autoComplete="new-password"
-                        visible={showNewPassword}
-                        onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
-                        minLength={8}
-                        maxLength={256}
-                      />
-                      <PasswordField
-                        label="Confirm new password"
-                        value={confirmPassword}
-                        onChange={setConfirmPassword}
-                        placeholder="Re-enter new password"
-                        autoComplete="new-password"
-                        visible={showConfirmPassword}
-                        onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
-                        minLength={8}
-                        maxLength={256}
-                      />
-                    </div>
-                    {passwordFeedback && (
-                      <div
-                        className={`password-feedback ${passwordFeedback.type}`}
-                        role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
-                        aria-live="polite"
-                      >
-                        {passwordFeedback.message}
-                      </div>
-                    )}
-                    <div className="change-password-actions">
-                      <small>Password length: 8–256 characters.</small>
-                      <button className="primary-button" type="submit" disabled={passwordBusy}>
-                        {passwordBusy ? 'Updating password…' : 'Update password'}
-                      </button>
-                    </div>
-                  </form>{' '}
-                </article>
+                  ))}
+                </div>
+              </article>
+              <h3 className="settings-list-heading">App</h3>
+              <div className="settings-list">
+                <button onClick={() => setUpdateSheet(true)}>
+                  <span className="settings-list-icon">
+                    <Icon name="refresh" />
+                  </span>
+                  <span>
+                    <b>{t.settings.checkForUpdates}</b>
+                    <small>
+                      {checkingUpdate
+                        ? 'Checking for the latest admin app…'
+                        : availableUpdate
+                          ? `Version ${availableUpdate.versionName} is available`
+                          : updateError || 'You are using the latest available version.'}
+                    </small>
+                  </span>
+                  <Icon name="chevron" />
+                </button>
+                <button onClick={() => setPasswordSheet(true)}>
+                  <span className="settings-list-icon">
+                    <Icon name="lock" />
+                  </span>
+                  <span>
+                    <b>{t.settings.changePassword}</b>
+                    <small>{t.settings.changePasswordHint}</small>
+                  </span>
+                  <Icon name="chevron" />
+                </button>
+                <button onClick={() => setLanguageSheet(true)}>
+                  <span className="settings-list-icon">
+                    <Icon name="language" />
+                  </span>
+                  <span>
+                    <b>{t.settings.language}</b>
+                    <small>{language}</small>
+                  </span>
+                  <Icon name="chevron" />
+                </button>
               </div>
-            )}
-            {languageSheet && (
-              <div
-                className="modal-backdrop"
-                role="dialog"
-                aria-modal="true"
-                onClick={() => setLanguageSheet(false)}
-              >
-                <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                  <div className="partner-sheet-heading">
-                    <div>
-                      <span className="eyebrow">App language</span>
-                      <h2>{t.settings.chooseLanguage}</h2>
-                    </div>
-                    <button onClick={() => setLanguageSheet(false)} aria-label="Close">
-                      ×
-                    </button>
-                  </div>
-                  <div className="language-list">
-                    {languages.map((option) => (
-                      <button
-                        key={option.code}
-                        className={language === option.code ? 'selected' : ''}
-                        onClick={() => {
-                          setLanguage(option.code)
-                          setLanguageSheet(false)
-                        }}
-                      >
-                        <span>{option.nativeName}</span>
-                        {language === option.code && <Icon name="check" />}
-                      </button>
-                    ))}
-                  </div>
-                </article>
-              </div>
-            )}
-            {confirmLogout && (
-              <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
-                <article
-                  className="partner-sheet"
+              <button className="logout-button" onClick={requestLogout}>
+                <Icon name="logout" /> Sign out of admin app
+              </button>
+              {updateSheet && (
+                <div
+                  className="modal-backdrop"
                   role="dialog"
                   aria-modal="true"
-                  aria-labelledby="logout-confirm-title"
-                  onClick={(event) => event.stopPropagation()}
+                  onClick={() => setUpdateSheet(false)}
                 >
-                  <div className="sheet-handle" />
-                  <div className="partner-sheet-heading">
-                    <div>
-                      <span className="eyebrow">Confirm sign out</span>
-                      <h2 id="logout-confirm-title">Really sign out?</h2>
+                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                    <div className="partner-sheet-heading">
+                      <div>
+                        <span className="eyebrow">Admin app</span>
+                        <h2>{t.settings.checkForUpdates}</h2>
+                      </div>
+                      <button onClick={() => setUpdateSheet(false)} aria-label="Close">
+                        ×
+                      </button>
                     </div>
-                    <button onClick={() => setConfirmLogout(false)} aria-label="Close">
-                      ×
-                    </button>
-                  </div>
-                  <p className="partner-form-help">
-                    You will be signed out of the admin app. You can sign back in anytime.
-                  </p>
-                  <div className="partner-form-actions">
-                    <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
-                      Cancel
-                    </button>
-                    <button className="primary-button" onClick={() => void logout()}>
-                      <Icon name="logout" /> Sign out
-                    </button>
-                  </div>
-                </article>
-              </div>
-            )}
-          </section>
-        )}
-      </main>
+                    <div>
+                      <div className="settings-title">
+                        <span>
+                          <Icon name="download" />
+                        </span>
+                        <div>
+                          <h3>Admin app update</h3>
+                          <p>
+                            {checkingUpdate
+                              ? 'Checking for the latest admin app…'
+                              : availableUpdate
+                                ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                                : updateError || 'You are using the latest available version.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="software-actions">
+                        <button
+                          className="secondary-button"
+                          disabled={checkingUpdate || installingUpdate}
+                          onClick={() => void refreshUpdateStatus()}
+                        >
+                          {checkingUpdate ? 'Checking…' : 'Check again'}
+                        </button>
+                        <button
+                          className="primary-button"
+                          disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                          onClick={() => void installUpdate()}
+                        >
+                          {installingUpdate
+                            ? 'Opening installer…'
+                            : availableUpdate
+                              ? `Update to ${availableUpdate.versionName}`
+                              : 'App is up to date'}
+                        </button>
+                      </div>
+                      {updateError && availableUpdate && (
+                        <div className="software-error">{updateError}</div>
+                      )}
+                    </div>
+                  </article>
+                </div>
+              )}
+              {passwordSheet && (
+                <div
+                  className="modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  onClick={() => setPasswordSheet(false)}
+                >
+                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                    <div className="partner-sheet-heading">
+                      <div>
+                        <span className="eyebrow">Account security</span>
+                        <h2>{t.settings.changePassword}</h2>
+                      </div>
+                      <button onClick={() => setPasswordSheet(false)} aria-label="Close">
+                        ×
+                      </button>
+                    </div>
+                    <p>Update the password used to sign in to the admin app.</p>
+                    <form
+                      className="change-password-form"
+                      noValidate
+                      onSubmit={(event) => void changePassword(event)}
+                    >
+                      <div className="change-password-fields">
+                        <PasswordField
+                          label="Current password"
+                          value={currentPassword}
+                          onChange={setCurrentPassword}
+                          placeholder="Current password"
+                          autoComplete="current-password"
+                          visible={showCurrentPassword}
+                          onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
+                          minLength={8}
+                          maxLength={256}
+                        />
+                        <PasswordField
+                          label="New password"
+                          value={newPassword}
+                          onChange={setNewPassword}
+                          placeholder="8–256 characters"
+                          autoComplete="new-password"
+                          visible={showNewPassword}
+                          onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
+                          minLength={8}
+                          maxLength={256}
+                        />
+                        <PasswordField
+                          label="Confirm new password"
+                          value={confirmPassword}
+                          onChange={setConfirmPassword}
+                          placeholder="Re-enter new password"
+                          autoComplete="new-password"
+                          visible={showConfirmPassword}
+                          onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
+                          minLength={8}
+                          maxLength={256}
+                        />
+                      </div>
+                      {passwordFeedback && (
+                        <div
+                          className={`password-feedback ${passwordFeedback.type}`}
+                          role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                          aria-live="polite"
+                        >
+                          {passwordFeedback.message}
+                        </div>
+                      )}
+                      <div className="change-password-actions">
+                        <small>Password length: 8–256 characters.</small>
+                        <button className="primary-button" type="submit" disabled={passwordBusy}>
+                          {passwordBusy ? 'Updating password…' : 'Update password'}
+                        </button>
+                      </div>
+                    </form>{' '}
+                  </article>
+                </div>
+              )}
+              {languageSheet && (
+                <div
+                  className="modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  onClick={() => setLanguageSheet(false)}
+                >
+                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
+                    <div className="partner-sheet-heading">
+                      <div>
+                        <span className="eyebrow">App language</span>
+                        <h2>{t.settings.chooseLanguage}</h2>
+                      </div>
+                      <button onClick={() => setLanguageSheet(false)} aria-label="Close">
+                        ×
+                      </button>
+                    </div>
+                    <div className="language-list">
+                      {languages.map((option) => (
+                        <button
+                          key={option.code}
+                          className={language === option.code ? 'selected' : ''}
+                          onClick={() => {
+                            setLanguage(option.code)
+                            setLanguageSheet(false)
+                          }}
+                        >
+                          <span>{option.nativeName}</span>
+                          {language === option.code && <Icon name="check" />}
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+                </div>
+              )}
+              {confirmLogout && (
+                <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
+                  <article
+                    className="partner-sheet"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="logout-confirm-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="sheet-handle" />
+                    <div className="partner-sheet-heading">
+                      <div>
+                        <span className="eyebrow">Confirm sign out</span>
+                        <h2 id="logout-confirm-title">Really sign out?</h2>
+                      </div>
+                      <button onClick={() => setConfirmLogout(false)} aria-label="Close">
+                        ×
+                      </button>
+                    </div>
+                    <p className="partner-form-help">
+                      You will be signed out of the admin app. You can sign back in anytime.
+                    </p>
+                    <div className="partner-form-actions">
+                      <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                        Cancel
+                      </button>
+                      <button className="primary-button" onClick={() => void logout()}>
+                        <Icon name="logout" /> Sign out
+                      </button>
+                    </div>
+                  </article>
+                </div>
+              )}
+            </section>
+          )}
+        </main>
+      </PullToRefresh>
 
       <nav className="bottom-nav" aria-label="Admin app navigation">
         {nav.map((item) => (

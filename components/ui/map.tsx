@@ -484,13 +484,13 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       clearStyleTimers()
       styleLoadTimerRef.current = window.setTimeout(() => {
         if (map.isStyleLoaded()) return
-        const fallbackStyle = createRasterFallbackStyle(resolvedThemeRef.current)
+        const fallbackStyle = resolvedThemeRef.current === 'dark' ? blankMapStyle : blankMapStyle
         currentStyleRef.current = fallbackStyle
         map.setStyle(fallbackStyle, { diff: false })
         styleFailureTimerRef.current = window.setTimeout(() => {
           if (!map.isStyleLoaded()) setLoadFailed(true)
-        }, 10_000)
-      }, 10_000)
+        }, 3_000)
+      }, 2_000)
     },
     [clearStyleTimers]
   )

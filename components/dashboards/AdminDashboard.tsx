@@ -41,6 +41,11 @@ interface AccountRecord {
   cuisine?: string
   commissionRate?: number
   paymentModel?: 'commission' | 'markup'
+  commissionType?: 'commission' | 'markup' | 'hybrid'
+  commissionPercent?: number
+  commissionFlatRs?: number
+  markupPercent?: number
+  markupFlatRs?: number
   vendorType?: 'Restaurant Vendor' | 'XP Store'
   totalSpent?: number
   totalOrders?: number
@@ -100,6 +105,10 @@ interface VendorStore {
   isOpen: boolean
   commissionRate?: number
   commissionType?: string
+  commissionPercent?: number
+  commissionFlatRs?: number
+  markupPercent?: number
+  markupFlatRs?: number
   bannerUrl?: string
   latitude?: number
   longitude?: number
@@ -213,6 +222,11 @@ export default function AdminDashboard() {
     storeName: '',
     cuisine: '',
     commissionRate: 15,
+    commissionType: 'commission' as 'commission' | 'markup' | 'hybrid',
+    commissionPercent: 15,
+    commissionFlatRs: 0,
+    markupPercent: 0,
+    markupFlatRs: 0,
     paymentModel: 'commission' as 'commission' | 'markup',
     vehicleType: 'Electric Scooter',
     licensePlate: '',
@@ -289,6 +303,10 @@ export default function AdminDashboard() {
             isOpen: r.is_open ?? true,
             commissionRate: r.commission_rate ?? 15,
             commissionType: r.payment_model || 'COMMISSION',
+            commissionPercent: r.commission_rate ?? 15,
+            commissionFlatRs: r.fixed_commission ?? 0,
+            markupPercent: r.markup_rate ?? 0,
+            markupFlatRs: r.fixed_markup ?? 0,
             bannerUrl: r.image,
             latitude: r.latitude ? Number(r.latitude) : undefined,
             longitude: r.longitude ? Number(r.longitude) : undefined,
@@ -347,6 +365,16 @@ export default function AdminDashboard() {
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
             cuisine: u.cuisine || matchedVendor?.description || undefined,
             commissionRate: Number(u.commission_rate || matchedVendor?.commissionRate || 15),
+            commissionType:
+              matchedVendor?.commissionType === 'MARKUP'
+                ? 'markup'
+                : matchedVendor?.commissionType === 'HYBRID'
+                  ? 'hybrid'
+                  : 'commission',
+            commissionPercent: Number(u.commission_rate || matchedVendor?.commissionPercent || 15),
+            commissionFlatRs: Number(u.fixed_commission || matchedVendor?.commissionFlatRs || 0),
+            markupPercent: Number(u.markup_rate || matchedVendor?.markupPercent || 0),
+            markupFlatRs: Number(u.fixed_markup || matchedVendor?.markupFlatRs || 0),
             paymentModel:
               u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP'
                 ? 'markup'
@@ -633,6 +661,11 @@ export default function AdminDashboard() {
       storeName: acc.restaurantName || acc.detail || '',
       cuisine: acc.cuisine || '',
       commissionRate: acc.commissionRate ?? 15,
+      commissionType: acc.commissionType || 'commission',
+      commissionPercent: acc.commissionPercent ?? 15,
+      commissionFlatRs: acc.commissionFlatRs ?? 0,
+      markupPercent: acc.markupPercent ?? 0,
+      markupFlatRs: acc.markupFlatRs ?? 0,
       paymentModel: acc.paymentModel || 'commission',
       vehicleType:
         acc.role === 'driver' || acc.role === 'rider'
@@ -673,6 +706,11 @@ export default function AdminDashboard() {
                 storeName: editForm.storeName,
                 cuisine: editForm.cuisine,
                 commissionRate: editForm.commissionRate,
+                commissionType: editForm.commissionType,
+                commissionPercent: editForm.commissionPercent,
+                commissionFlatRs: editForm.commissionFlatRs,
+                markupPercent: editForm.markupPercent,
+                markupFlatRs: editForm.markupFlatRs,
                 paymentModel: editForm.paymentModel,
                 bannerUrl: editForm.bannerUrl,
                 latitude: editForm.latitude,
@@ -2009,18 +2047,110 @@ export default function AdminDashboard() {
 
                     <div>
                       <label className="font-bold text-gray-700 dark:text-gray-300">
-                        Commission Rate (%)
+                        Commission Type
                       </label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={50}
-                        value={editForm.commissionRate}
+                      <select
+                        value={editForm.commissionType}
                         onChange={(e) =>
-                          setEditForm({ ...editForm, commissionRate: Number(e.target.value) })
+                          setEditForm({
+                            ...editForm,
+                            commissionType: e.target.value as 'commission' | 'markup' | 'hybrid',
+                          })
                         }
-                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-bold outline-none focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
-                      />
+                        className="mt-1 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2.5 font-medium outline-none focus:border-blue-500"
+                      >
+                        <option value="commission">Commission (Platform % + Flat)</option>
+                        <option value="markup">Markup (% + Flat ₹)</option>
+                        <option value="hybrid">Hybrid (Commission + Markup)</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <p className="font-bold text-stone-600 dark:text-stone-300 text-xs uppercase tracking-wider mb-1.5">
+                        Commission Rate Configuration
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400">
+                            Commission %
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.01}
+                            value={editForm.commissionPercent}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                commissionPercent: Number(e.target.value),
+                              })
+                            }
+                            className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 text-xs font-bold outline-none focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400">
+                            Commission ₹
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={editForm.commissionFlatRs}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                commissionFlatRs: Number(e.target.value),
+                              })
+                            }
+                            className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 text-xs font-bold outline-none focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <p className="font-bold text-stone-600 dark:text-stone-300 text-xs uppercase tracking-wider mb-1.5">
+                        Markup Rate Configuration
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400">
+                            Markup %
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.01}
+                            value={editForm.markupPercent}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, markupPercent: Number(e.target.value) })
+                            }
+                            className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 text-xs font-bold outline-none focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400">
+                            Markup ₹
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={editForm.markupFlatRs}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, markupFlatRs: Number(e.target.value) })
+                            }
+                            className="w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] text-[#18201c] dark:text-white p-2 text-xs font-bold outline-none focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

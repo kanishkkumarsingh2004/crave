@@ -173,6 +173,10 @@ export default function LocationPickerMap({
         zoom={14}
         onClick={handleMapClick}
         className="h-full w-full"
+        styles={{
+          light: 'https://tiles.openfreemap.org/styles/bright',
+          dark: 'https://tiles.openfreemap.org/styles/liberty',
+        }}
       >
         <MapControls position="bottom-right" showZoom />
 

@@ -158,9 +158,7 @@ function PullToRefresh({
       <div
         className="ptr-indicator"
         style={{
-          transform: refreshing
-            ? 'translateY(0)'
-            : `translateY(calc(-100% + ${pullOffset}px))`,
+          transform: refreshing ? 'translateY(0)' : `translateY(calc(-100% + ${pullOffset}px))`,
           opacity: refreshing ? 1 : Math.min(pullOffset / 30, 1),
           transition: refreshing
             ? 'none'
@@ -174,9 +172,7 @@ function PullToRefresh({
         className="ptr-stretch"
         style={{
           transform: `translateY(${stretch}px)`,
-          transition: refreshing
-            ? 'none'
-            : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
+          transition: refreshing ? 'none' : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
         }}
       >
         {children}
@@ -774,63 +770,63 @@ function CartPage({
     <section className="page">
       <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
         <header className="bag-header">
-        <h1>Bag</h1>
-        <Logo compact />
-      </header>
-      {!cart.length ? (
-        <>
-          <Empty
-            icon="cart"
-            title="Your bag is hungry"
-            text="Add something delicious and it will show up here."
-          />
-          <button className="primary center" onClick={onBrowse}>
-            Browse restaurants
-          </button>
-        </>
-      ) : (
-        <div className="cart-scroll">
-          <div className="cart-restaurant">
-            <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
-            <span>
-              <small>ORDERING FROM</small>
-              <b>{restaurant?.name || 'Restaurant'}</b>
-            </span>
-          </div>
-          <div className="cart-items">
-            {cart.map((x) => (
-              <article key={x.key}>
-                <div className="veg-dot">
-                  <i className="veg" />
-                </div>
-                <div>
-                  <h3>{x.name}</h3>
-                  {x.variant && <p>{x.variant}</p>}
-                  <strong>{money(x.price)}</strong>
-                </div>
-                <div className="stepper">
-                  <button onClick={() => onQuantity(x.key, -1)}>
-                    <Icon name="minus" />
-                  </button>
-                  <b>{x.quantity}</b>
-                  <button onClick={() => onQuantity(x.key, 1)}>
-                    <Icon name="plus" />
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="sticky-action">
-            <div>
-              <small>ITEM TOTAL</small>
-              <strong>{money(subtotal)}</strong>
-            </div>
-            <button className="primary" onClick={onCheckout}>
-              Continue <Icon name="chevron" />
+          <h1>Bag</h1>
+          <Logo compact />
+        </header>
+        {!cart.length ? (
+          <>
+            <Empty
+              icon="cart"
+              title="Your bag is hungry"
+              text="Add something delicious and it will show up here."
+            />
+            <button className="primary center" onClick={onBrowse}>
+              Browse restaurants
             </button>
+          </>
+        ) : (
+          <div className="cart-scroll">
+            <div className="cart-restaurant">
+              <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
+              <span>
+                <small>ORDERING FROM</small>
+                <b>{restaurant?.name || 'Restaurant'}</b>
+              </span>
+            </div>
+            <div className="cart-items">
+              {cart.map((x) => (
+                <article key={x.key}>
+                  <div className="veg-dot">
+                    <i className="veg" />
+                  </div>
+                  <div>
+                    <h3>{x.name}</h3>
+                    {x.variant && <p>{x.variant}</p>}
+                    <strong>{money(x.price)}</strong>
+                  </div>
+                  <div className="stepper">
+                    <button onClick={() => onQuantity(x.key, -1)}>
+                      <Icon name="minus" />
+                    </button>
+                    <b>{x.quantity}</b>
+                    <button onClick={() => onQuantity(x.key, 1)}>
+                      <Icon name="plus" />
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="sticky-action">
+              <div>
+                <small>ITEM TOTAL</small>
+                <strong>{money(subtotal)}</strong>
+              </div>
+              <button className="primary" onClick={onCheckout}>
+                Continue <Icon name="chevron" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </PullToRefresh>
     </section>
   )
@@ -1442,57 +1438,59 @@ function OrdersPage({
     <section className="page orders">
       <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
         <header className="page-header">
-        <div>
-          <p className="eyebrow">LIVE TRACKING</p>
-          <h1>Your orders</h1>
-        </div>
-        <button className="round pale" onClick={onRefresh}>
-          <Icon name="refresh" />
-        </button>
-      </header>
-      {loading ? (
-        <div className="loading">
-          <Spinner /> Syncing orders
-        </div>
-      ) : error ? (
-        <div className="inline-retry">
-          <div className="error-box">{error}</div>
-          <button className="secondary" onClick={onRefresh}>
-            Try again
+          <div>
+            <p className="eyebrow">LIVE TRACKING</p>
+            <h1>Your orders</h1>
+          </div>
+          <button className="round pale" onClick={onRefresh}>
+            <Icon name="refresh" />
           </button>
-        </div>
-      ) : !orders.length ? (
-        <Empty
-          icon="orders"
-          title={t.customer.noOrdersYet}
-          text="Your first great meal is a few taps away."
-        />
-      ) : (
-        <>
-          <h2 className="section-title">
-            Active <span>{active.length}</span>
-          </h2>
-          {active.length ? (
-            active.slice(0, visibleCount).map(card)
-          ) : (
-            <p className="muted">No active deliveries right now.</p>
-          )}
-          {past.length > 0 && (
-            <>
-              <h2 className="section-title spaced">Past orders</h2>
-              {past.slice(0, visibleCount).map(card)}
-            </>
-          )}
-          {visibleCount < orders.length && (
-            <div className="text-center mt-6">
-              <button className="secondary" onClick={() => setVisibleCount((c) => c + 5)}>
-                {t.customer.loadMore}
-              </button>
-            </div>
-          )}
-        </>
-      )}
-      {invoiceOrder && <InvoiceSheet order={invoiceOrder} onClose={() => setInvoiceOrder(null)} />}
+        </header>
+        {loading ? (
+          <div className="loading">
+            <Spinner /> Syncing orders
+          </div>
+        ) : error ? (
+          <div className="inline-retry">
+            <div className="error-box">{error}</div>
+            <button className="secondary" onClick={onRefresh}>
+              Try again
+            </button>
+          </div>
+        ) : !orders.length ? (
+          <Empty
+            icon="orders"
+            title={t.customer.noOrdersYet}
+            text="Your first great meal is a few taps away."
+          />
+        ) : (
+          <>
+            <h2 className="section-title">
+              Active <span>{active.length}</span>
+            </h2>
+            {active.length ? (
+              active.slice(0, visibleCount).map(card)
+            ) : (
+              <p className="muted">No active deliveries right now.</p>
+            )}
+            {past.length > 0 && (
+              <>
+                <h2 className="section-title spaced">Past orders</h2>
+                {past.slice(0, visibleCount).map(card)}
+              </>
+            )}
+            {visibleCount < orders.length && (
+              <div className="text-center mt-6">
+                <button className="secondary" onClick={() => setVisibleCount((c) => c + 5)}>
+                  {t.customer.loadMore}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+        {invoiceOrder && (
+          <InvoiceSheet order={invoiceOrder} onClose={() => setInvoiceOrder(null)} />
+        )}
       </PullToRefresh>
     </section>
   )
@@ -1838,554 +1836,565 @@ function Account({
     <section className="page account">
       <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
         <header className="page-header">
-        <div>
-          <p className="eyebrow">YOUR CRAVE</p>
-          <h1>Account</h1>
+          <div>
+            <p className="eyebrow">YOUR CRAVE</p>
+            <h1>Account</h1>
+          </div>
+          <div className="avatar">{user.name?.[0]?.toUpperCase() || 'C'}</div>
+        </header>
+        <div className="profile-card">
+          <h2>{user.name}</h2>
+          <p>{user.email}</p>
+          {user.phone && <small>{user.phone}</small>}
         </div>
-        <div className="avatar">{user.name?.[0]?.toUpperCase() || 'C'}</div>
-      </header>
-      <div className="profile-card">
-        <h2>{user.name}</h2>
-        <p>{user.email}</p>
-        {user.phone && <small>{user.phone}</small>}
-      </div>
-      <h2 className="section-title">Preferences</h2>
-      <div className="settings-list">
-        <div>
-          <span className="setting-icon">
-            <Icon name="bell" />
-          </span>
-          <span>
-            <b>Order notifications</b>
-            <small>Payment, kitchen and delivery alerts</small>
-          </span>
-          <Toggle
-            checked={notifications}
-            onChange={async (v) => setNotifications(await enableNotifications(v))}
-          />
-        </div>
-        <button onClick={onAddresses}>
-          <span className="setting-icon">
-            <Icon name="pin" />
-          </span>
-          <span>
-            <b>Saved addresses</b>
-            <small>
-              {addresses.length} delivery {addresses.length === 1 ? 'address' : 'addresses'}
-            </small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-      </div>
-      <h2 className="section-title">Appearance</h2>
-      <div className="theme-control" role="group" aria-label="App theme">
-        {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
-          <button
-            key={mode}
-            className={theme === mode ? 'active' : ''}
-            onClick={() => onTheme(mode)}
-          >
-            {titleCase(mode)}
+        <h2 className="section-title">Preferences</h2>
+        <div className="settings-list">
+          <div>
+            <span className="setting-icon">
+              <Icon name="bell" />
+            </span>
+            <span>
+              <b>Order notifications</b>
+              <small>Payment, kitchen and delivery alerts</small>
+            </span>
+            <Toggle
+              checked={notifications}
+              onChange={async (v) => setNotifications(await enableNotifications(v))}
+            />
+          </div>
+          <button onClick={onAddresses}>
+            <span className="setting-icon">
+              <Icon name="pin" />
+            </span>
+            <span>
+              <b>Saved addresses</b>
+              <small>
+                {addresses.length} delivery {addresses.length === 1 ? 'address' : 'addresses'}
+              </small>
+            </span>
+            <Icon name="chevron" />
           </button>
-        ))}
-      </div>
-      <h2 className="section-title">App</h2>
-      <div className="settings-list">
-        <button
-          onClick={
-            update ? () => installCustomerUpdate(update).catch((e) => setMessage(e.message)) : check
-          }
-          disabled={checking}
-        >
-          <span className="setting-icon">
-            <Icon name={update ? 'download' : 'refresh'} />
-          </span>
-          <span>
-            <b>{update ? 'Update CRAVE now' : t.customer.checkForUpdates}</b>
-            <small>{checking ? 'Checking…' : message}</small>
-          </span>
-          {checking ? <Spinner /> : <Icon name="chevron" />}
-        </button>
-        <button onClick={() => setPasswordSheet(true)}>
-          <span className="setting-icon">
-            <Icon name="settings" />
-          </span>
-          <span>
-            <b>{t.customer.changePassword}</b>
-            <small>{t.customer.changePasswordHint}</small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-        <button onClick={() => setLanguageSheet(true)}>
-          <span className="setting-icon">
-            <Icon name="language" />
-          </span>
-          <span>
-            <b>Language</b>
-            <small>{language}</small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-        <button onClick={() => setHelpSheet(true)}>
-          <span className="setting-icon">
-            <Icon name="help" />
-          </span>
-          <span>
-            <b>Help &amp; Support (24/7)</b>
-            <small>FAQs, cancellation policy, reach -9625694673</small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-      </div>
-      <button className="logout-button" onClick={() => setConfirmLogout(true)}>
-        <Icon name="logout" /> Sign out
-      </button>
-      {passwordSheet && (
-        <div
-          className="modal-backdrop animated-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="change-password-title"
-          onClick={() => setPasswordSheet(false)}
-        >
-          <section
-            className="bottom-sheet animated-sheet password-sheet"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">ACCOUNT SECURITY</p>
-                <h2 id="change-password-title">{t.customer.changePassword}</h2>
-              </div>
-              <button
-                className="round pale"
-                onClick={() => setPasswordSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-            <p className="confirm-note">Choose a password you do not use anywhere else.</p>
-            <form className="password-form" onSubmit={changePassword} noValidate>
-              <div className="password-card">
-                <div className="password-fields">
-                  <label>
-                    Current password
-                    <div className="password">
-                      <input
-                        required
-                        minLength={8}
-                        maxLength={256}
-                        type={showCurrentPassword ? 'text' : 'password'}
-                        value={currentPassword}
-                        onChange={(event) => {
-                          setCurrentPassword(event.target.value)
-                          setPasswordFeedback(null)
-                        }}
-                        autoComplete="current-password"
-                        placeholder="Current password"
-                      />
-                      <button
-                        type="button"
-                        aria-label={
-                          showCurrentPassword ? 'Hide current password' : 'Show current password'
-                        }
-                        aria-pressed={showCurrentPassword}
-                        onClick={() => setShowCurrentPassword((visible) => !visible)}
-                      >
-                        {showCurrentPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </label>
-                  <label>
-                    New password
-                    <div className="password">
-                      <input
-                        required
-                        minLength={8}
-                        maxLength={256}
-                        type={showNewPassword ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={(event) => {
-                          setNewPassword(event.target.value)
-                          setPasswordFeedback(null)
-                        }}
-                        autoComplete="new-password"
-                        placeholder="8–256 characters"
-                      />
-                      <button
-                        type="button"
-                        aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                        aria-pressed={showNewPassword}
-                        onClick={() => setShowNewPassword((visible) => !visible)}
-                      >
-                        {showNewPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </label>
-                  <label>
-                    Confirm new password
-                    <div className="password">
-                      <input
-                        required
-                        minLength={8}
-                        maxLength={256}
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(event) => {
-                          setConfirmPassword(event.target.value)
-                          setPasswordFeedback(null)
-                        }}
-                        autoComplete="new-password"
-                        placeholder="Re-enter new password"
-                      />
-                      <button
-                        type="button"
-                        aria-label={
-                          showConfirmPassword
-                            ? 'Hide confirmed password'
-                            : 'Show confirmed password'
-                        }
-                        aria-pressed={showConfirmPassword}
-                        onClick={() => setShowConfirmPassword((visible) => !visible)}
-                      >
-                        {showConfirmPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </label>
-                </div>
-                <p className="password-guidance">New passwords must be 8–256 characters long.</p>
-                {passwordFeedback && (
-                  <div
-                    className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
-                    role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
-                    aria-live="polite"
-                  >
-                    {passwordFeedback.message}
-                  </div>
-                )}
-                <button className="primary wide" type="submit" disabled={changingPassword}>
-                  {changingPassword ? (
-                    <>
-                      <Spinner /> Updating password
-                    </>
-                  ) : (
-                    'Change password'
-                  )}
-                </button>
-              </div>
-            </form>
-          </section>
         </div>
-      )}
-      {languageSheet && (
-        <div
-          className="modal-backdrop animated-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="language-sheet-title"
-          onClick={() => setLanguageSheet(false)}
-        >
-          <section
-            className="bottom-sheet animated-sheet language-sheet"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">{t.customer.accountSecurity}</p>
-                <h2 id="language-sheet-title">{t.customer.chooseLanguage}</h2>
-              </div>
-              <button
-                className="round pale"
-                onClick={() => setLanguageSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-            <div className="language-list">
-              {languages.map((option) => (
-                <button
-                  key={option.code}
-                  className={locale === option.code ? 'selected' : ''}
-                  onClick={() => {
-                    setLanguage(option.code)
-                    setLanguageSheet(false)
-                  }}
-                >
-                  <span>{option.nativeName}</span>
-                  {locale === option.code && <Icon name="check" />}
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
-      {confirmLogout && (
-        <div
-          className="modal-backdrop animated-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="customer-logout-title"
-          onClick={() => setConfirmLogout(false)}
-        >
-          <section
-            className="bottom-sheet animated-sheet"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">Confirm sign out</p>
-                <h2 id="customer-logout-title">Really sign out?</h2>
-              </div>
-              <button
-                className="round pale"
-                onClick={() => setConfirmLogout(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-            <p className="confirm-note">
-              You will be signed out of the CRAVE app. You can sign back in anytime.
-            </p>
-            <div className="confirm-grid">
-              <button onClick={() => setConfirmLogout(false)}>
-                <span className="confirm-icon cancel">
-                  <Icon name="close" />
-                </span>
-                <b>Cancel</b>
-                <small>Stay signed in</small>
-              </button>
-              <button onClick={onLogout}>
-                <span className="confirm-icon signout">
-                  <Icon name="logout" />
-                </span>
-                <b>Sign out</b>
-                <small>Leave the app</small>
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-      {helpSheet && (
-        <div
-          className="modal-backdrop animated-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="help-sheet-title"
-          onClick={() => setHelpSheet(false)}
-        >
-          <section
-            className="bottom-sheet animated-sheet"
-            style={{ maxHeight: '85vh', overflowY: 'auto' }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">24/7 CUSTOMER CARE</p>
-                <h2 id="help-sheet-title">Help &amp; Support</h2>
-              </div>
-              <button className="round pale" onClick={() => setHelpSheet(false)} aria-label="Close">
-                <Icon name="close" />
-              </button>
-            </div>
-
-            <div
-              style={{
-                padding: '16px',
-                background: '#18201c',
-                color: '#fff',
-                borderRadius: '18px',
-                margin: '8px 16px',
-              }}
+        <h2 className="section-title">Appearance</h2>
+        <div className="theme-control" role="group" aria-label="App theme">
+          {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+            <button
+              key={mode}
+              className={theme === mode ? 'active' : ''}
+              onClick={() => onTheme(mode)}
             >
-              <p
-                style={{
-                  fontSize: '11px',
-                  color: '#d9f447',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Priority Assistance Desk
-              </p>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, margin: '6px 0', color: '#fff' }}>
-                Reach out to: -9625694673
-              </h3>
-              <p
-                style={{ fontSize: '12px', color: '#ccc', margin: '4px 0 14px 0', lineHeight: 1.5 }}
-              >
-                Our Bengaluru support team is online 24/7 to resolve cancellations, refund status,
-                or delivery partner tracking queries.
-              </p>
-              <a
-                href="tel:+919625694673"
-                style={{
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 20px',
-                  borderRadius: '999px',
-                  background: '#d9f447',
-                  color: '#18201c',
-                  fontWeight: 900,
-                  fontSize: '13px',
-                }}
-              >
-                <Icon name="phone" /> Call -9625694673
-              </a>
-            </div>
-
-            <div style={{ padding: '12px 16px 32px 16px' }}>
-              <h4
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  color: 'var(--text-secondary, #666)',
-                  marginBottom: '12px',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                Pre-Questions &amp; Policy FAQs
-              </h4>
-
-              <div
-                style={{
-                  background: 'var(--surface-subtle, #f5f6f4)',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  marginBottom: '10px',
-                }}
-              >
-                <b
-                  style={{
-                    fontSize: '13px',
-                    display: 'block',
-                    color: 'var(--text-primary, #18201c)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  Can I cancel my order? What is the cancellation window?
-                </b>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary, #666)',
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Orders can be cancelled strictly within the first 15 seconds after placement.
-                  After 15 seconds, the restaurant kitchen immediately begins food preparation and
-                  cancellation is locked.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  background: 'var(--surface-subtle, #f5f6f4)',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  marginBottom: '10px',
-                }}
-              >
-                <b
-                  style={{
-                    fontSize: '13px',
-                    display: 'block',
-                    color: 'var(--text-primary, #18201c)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  I cancelled within 15 seconds. Where is my refund?
-                </b>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary, #666)',
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Cancelled orders enter our Admin Review Queue. Once approved, refunds are credited
-                  back to your original payment method (UPI / Card / NetBanking) within 2-4 business
-                  days.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  background: 'var(--surface-subtle, #f5f6f4)',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  marginBottom: '10px',
-                }}
-              >
-                <b
-                  style={{
-                    fontSize: '13px',
-                    display: 'block',
-                    color: 'var(--text-primary, #18201c)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  Where is my 6-digit Delivery OTP?
-                </b>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary, #666)',
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Your delivery OTP is revealed on your order screen once the rider picks up your
-                  package. Share this 6-digit code only at your doorstep when receiving the food.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  background: 'var(--surface-subtle, #f5f6f4)',
-                  padding: '14px',
-                  borderRadius: '14px',
-                }}
-              >
-                <b
-                  style={{
-                    fontSize: '13px',
-                    display: 'block',
-                    color: 'var(--text-primary, #18201c)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  What if an item is missing or spoiled?
-                </b>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary, #666)',
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Please call our direct support line at -9625694673 within 30 minutes of delivery
-                  with your Order ID for instant assistance and resolution.
-                </p>
-              </div>
-            </div>
-          </section>
+              {titleCase(mode)}
+            </button>
+          ))}
         </div>
-      )}
-      <p className="version">CRAVE. Customer · 1.0.0</p>
+        <h2 className="section-title">App</h2>
+        <div className="settings-list">
+          <button
+            onClick={
+              update
+                ? () => installCustomerUpdate(update).catch((e) => setMessage(e.message))
+                : check
+            }
+            disabled={checking}
+          >
+            <span className="setting-icon">
+              <Icon name={update ? 'download' : 'refresh'} />
+            </span>
+            <span>
+              <b>{update ? 'Update CRAVE now' : t.customer.checkForUpdates}</b>
+              <small>{checking ? 'Checking…' : message}</small>
+            </span>
+            {checking ? <Spinner /> : <Icon name="chevron" />}
+          </button>
+          <button onClick={() => setPasswordSheet(true)}>
+            <span className="setting-icon">
+              <Icon name="settings" />
+            </span>
+            <span>
+              <b>{t.customer.changePassword}</b>
+              <small>{t.customer.changePasswordHint}</small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+          <button onClick={() => setLanguageSheet(true)}>
+            <span className="setting-icon">
+              <Icon name="language" />
+            </span>
+            <span>
+              <b>Language</b>
+              <small>{language}</small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+          <button onClick={() => setHelpSheet(true)}>
+            <span className="setting-icon">
+              <Icon name="help" />
+            </span>
+            <span>
+              <b>Help &amp; Support (24/7)</b>
+              <small>FAQs, cancellation policy, reach -9625694673</small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+        </div>
+        <button className="logout-button" onClick={() => setConfirmLogout(true)}>
+          <Icon name="logout" /> Sign out
+        </button>
+        {passwordSheet && (
+          <div
+            className="modal-backdrop animated-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="change-password-title"
+            onClick={() => setPasswordSheet(false)}
+          >
+            <section
+              className="bottom-sheet animated-sheet password-sheet"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <div className="sheet-title">
+                <div>
+                  <p className="eyebrow">ACCOUNT SECURITY</p>
+                  <h2 id="change-password-title">{t.customer.changePassword}</h2>
+                </div>
+                <button
+                  className="round pale"
+                  onClick={() => setPasswordSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+              <p className="confirm-note">Choose a password you do not use anywhere else.</p>
+              <form className="password-form" onSubmit={changePassword} noValidate>
+                <div className="password-card">
+                  <div className="password-fields">
+                    <label>
+                      Current password
+                      <div className="password">
+                        <input
+                          required
+                          minLength={8}
+                          maxLength={256}
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(event) => {
+                            setCurrentPassword(event.target.value)
+                            setPasswordFeedback(null)
+                          }}
+                          autoComplete="current-password"
+                          placeholder="Current password"
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            showCurrentPassword ? 'Hide current password' : 'Show current password'
+                          }
+                          aria-pressed={showCurrentPassword}
+                          onClick={() => setShowCurrentPassword((visible) => !visible)}
+                        >
+                          {showCurrentPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </label>
+                    <label>
+                      New password
+                      <div className="password">
+                        <input
+                          required
+                          minLength={8}
+                          maxLength={256}
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(event) => {
+                            setNewPassword(event.target.value)
+                            setPasswordFeedback(null)
+                          }}
+                          autoComplete="new-password"
+                          placeholder="8–256 characters"
+                        />
+                        <button
+                          type="button"
+                          aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                          aria-pressed={showNewPassword}
+                          onClick={() => setShowNewPassword((visible) => !visible)}
+                        >
+                          {showNewPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </label>
+                    <label>
+                      Confirm new password
+                      <div className="password">
+                        <input
+                          required
+                          minLength={8}
+                          maxLength={256}
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(event) => {
+                            setConfirmPassword(event.target.value)
+                            setPasswordFeedback(null)
+                          }}
+                          autoComplete="new-password"
+                          placeholder="Re-enter new password"
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            showConfirmPassword
+                              ? 'Hide confirmed password'
+                              : 'Show confirmed password'
+                          }
+                          aria-pressed={showConfirmPassword}
+                          onClick={() => setShowConfirmPassword((visible) => !visible)}
+                        >
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+                  <p className="password-guidance">New passwords must be 8–256 characters long.</p>
+                  {passwordFeedback && (
+                    <div
+                      className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
+                      role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
+                      aria-live="polite"
+                    >
+                      {passwordFeedback.message}
+                    </div>
+                  )}
+                  <button className="primary wide" type="submit" disabled={changingPassword}>
+                    {changingPassword ? (
+                      <>
+                        <Spinner /> Updating password
+                      </>
+                    ) : (
+                      'Change password'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+        {languageSheet && (
+          <div
+            className="modal-backdrop animated-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="language-sheet-title"
+            onClick={() => setLanguageSheet(false)}
+          >
+            <section
+              className="bottom-sheet animated-sheet language-sheet"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <div className="sheet-title">
+                <div>
+                  <p className="eyebrow">{t.customer.accountSecurity}</p>
+                  <h2 id="language-sheet-title">{t.customer.chooseLanguage}</h2>
+                </div>
+                <button
+                  className="round pale"
+                  onClick={() => setLanguageSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+              <div className="language-list">
+                {languages.map((option) => (
+                  <button
+                    key={option.code}
+                    className={locale === option.code ? 'selected' : ''}
+                    onClick={() => {
+                      setLanguage(option.code)
+                      setLanguageSheet(false)
+                    }}
+                  >
+                    <span>{option.nativeName}</span>
+                    {locale === option.code && <Icon name="check" />}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+        {confirmLogout && (
+          <div
+            className="modal-backdrop animated-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="customer-logout-title"
+            onClick={() => setConfirmLogout(false)}
+          >
+            <section
+              className="bottom-sheet animated-sheet"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <div className="sheet-title">
+                <div>
+                  <p className="eyebrow">Confirm sign out</p>
+                  <h2 id="customer-logout-title">Really sign out?</h2>
+                </div>
+                <button
+                  className="round pale"
+                  onClick={() => setConfirmLogout(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+              <p className="confirm-note">
+                You will be signed out of the CRAVE app. You can sign back in anytime.
+              </p>
+              <div className="confirm-grid">
+                <button onClick={() => setConfirmLogout(false)}>
+                  <span className="confirm-icon cancel">
+                    <Icon name="close" />
+                  </span>
+                  <b>Cancel</b>
+                  <small>Stay signed in</small>
+                </button>
+                <button onClick={onLogout}>
+                  <span className="confirm-icon signout">
+                    <Icon name="logout" />
+                  </span>
+                  <b>Sign out</b>
+                  <small>Leave the app</small>
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+        {helpSheet && (
+          <div
+            className="modal-backdrop animated-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-sheet-title"
+            onClick={() => setHelpSheet(false)}
+          >
+            <section
+              className="bottom-sheet animated-sheet"
+              style={{ maxHeight: '85vh', overflowY: 'auto' }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <div className="sheet-title">
+                <div>
+                  <p className="eyebrow">24/7 CUSTOMER CARE</p>
+                  <h2 id="help-sheet-title">Help &amp; Support</h2>
+                </div>
+                <button
+                  className="round pale"
+                  onClick={() => setHelpSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+
+              <div
+                style={{
+                  padding: '16px',
+                  background: '#18201c',
+                  color: '#fff',
+                  borderRadius: '18px',
+                  margin: '8px 16px',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: '#d9f447',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Priority Assistance Desk
+                </p>
+                <h3 style={{ fontSize: '20px', fontWeight: 900, margin: '6px 0', color: '#fff' }}>
+                  Reach out to: -9625694673
+                </h3>
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: '#ccc',
+                    margin: '4px 0 14px 0',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Our Bengaluru support team is online 24/7 to resolve cancellations, refund status,
+                  or delivery partner tracking queries.
+                </p>
+                <a
+                  href="tel:+919625694673"
+                  style={{
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    borderRadius: '999px',
+                    background: '#d9f447',
+                    color: '#18201c',
+                    fontWeight: 900,
+                    fontSize: '13px',
+                  }}
+                >
+                  <Icon name="phone" /> Call -9625694673
+                </a>
+              </div>
+
+              <div style={{ padding: '12px 16px 32px 16px' }}>
+                <h4
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    color: 'var(--text-secondary, #666)',
+                    marginBottom: '12px',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  Pre-Questions &amp; Policy FAQs
+                </h4>
+
+                <div
+                  style={{
+                    background: 'var(--surface-subtle, #f5f6f4)',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <b
+                    style={{
+                      fontSize: '13px',
+                      display: 'block',
+                      color: 'var(--text-primary, #18201c)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    Can I cancel my order? What is the cancellation window?
+                  </b>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary, #666)',
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Orders can be cancelled strictly within the first 15 seconds after placement.
+                    After 15 seconds, the restaurant kitchen immediately begins food preparation and
+                    cancellation is locked.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    background: 'var(--surface-subtle, #f5f6f4)',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <b
+                    style={{
+                      fontSize: '13px',
+                      display: 'block',
+                      color: 'var(--text-primary, #18201c)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    I cancelled within 15 seconds. Where is my refund?
+                  </b>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary, #666)',
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Cancelled orders enter our Admin Review Queue. Once approved, refunds are
+                    credited back to your original payment method (UPI / Card / NetBanking) within
+                    2-4 business days.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    background: 'var(--surface-subtle, #f5f6f4)',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <b
+                    style={{
+                      fontSize: '13px',
+                      display: 'block',
+                      color: 'var(--text-primary, #18201c)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    Where is my 6-digit Delivery OTP?
+                  </b>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary, #666)',
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Your delivery OTP is revealed on your order screen once the rider picks up your
+                    package. Share this 6-digit code only at your doorstep when receiving the food.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    background: 'var(--surface-subtle, #f5f6f4)',
+                    padding: '14px',
+                    borderRadius: '14px',
+                  }}
+                >
+                  <b
+                    style={{
+                      fontSize: '13px',
+                      display: 'block',
+                      color: 'var(--text-primary, #18201c)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    What if an item is missing or spoiled?
+                  </b>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary, #666)',
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Please call our direct support line at -9625694673 within 30 minutes of delivery
+                    with your Order ID for instant assistance and resolution.
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+        <p className="version">CRAVE. Customer · 1.0.0</p>
       </PullToRefresh>
     </section>
   )
@@ -3129,121 +3138,121 @@ export default function App() {
         <section className="page home">
           <PullToRefresh onRefresh={loadRestaurants} refreshing={refreshingTab === 'home'}>
             <header className="home-header">
-            <div>
-              <p>DELIVERING TO</p>
-              <button onClick={() => setAddressPage(true)}>
-                <Icon name="pin" />
-                <span>
-                  {addresses.find((a) => a.is_default)?.label ||
-                    addresses[0]?.label ||
-                    'Add address'}
-                </span>
-                <Icon name="chevron" />
-              </button>
+              <div>
+                <p>DELIVERING TO</p>
+                <button onClick={() => setAddressPage(true)}>
+                  <Icon name="pin" />
+                  <span>
+                    {addresses.find((a) => a.is_default)?.label ||
+                      addresses[0]?.label ||
+                      'Add address'}
+                  </span>
+                  <Icon name="chevron" />
+                </button>
+              </div>
+              <Logo compact />
+            </header>
+            <div className="welcome">
+              <p>
+                {t.customer.dashboard}, {user.name.split(' ')[0]} 👋
+              </p>
+              <h1>
+                Good food. <em>No waiting.</em>
+              </h1>
             </div>
-            <Logo compact />
-          </header>
-          <div className="welcome">
-            <p>
-              {t.customer.dashboard}, {user.name.split(' ')[0]} 👋
-            </p>
-            <h1>
-              Good food. <em>No waiting.</em>
-            </h1>
-          </div>
-          <button className="search-launch" onClick={() => selectTab('search')}>
-            <Icon name="search" />
-            {t.customer.searchPlaceholder}
-          </button>
-          <div className="promo">
-            <div>
-              <span>FIRST BITE</span>
-              <h2>Tonight’s sorted.</h2>
-              <p>Local favourites, delivered fresh.</p>
-              <button onClick={() => selectTab('search')}>
-                Explore food <Icon name="chevron" />
-              </button>
+            <button className="search-launch" onClick={() => selectTab('search')}>
+              <Icon name="search" />
+              {t.customer.searchPlaceholder}
+            </button>
+            <div className="promo">
+              <div>
+                <span>FIRST BITE</span>
+                <h2>Tonight’s sorted.</h2>
+                <p>Local favourites, delivered fresh.</p>
+                <button onClick={() => selectTab('search')}>
+                  Explore food <Icon name="chevron" />
+                </button>
+              </div>
+              <div className="promo-food">🍱</div>
             </div>
-            <div className="promo-food">🍱</div>
-          </div>
-          <div className="title-row">
-            <div>
-              <p className="eyebrow">NEAR YOU</p>
-              <h2>Popular right now</h2>
+            <div className="title-row">
+              <div>
+                <p className="eyebrow">NEAR YOU</p>
+                <h2>Popular right now</h2>
+              </div>
+              <button onClick={() => selectTab('search')}>See all</button>
             </div>
-            <button onClick={() => selectTab('search')}>See all</button>
-          </div>
-          <div className="restaurant-list">
-            {restaurants.slice(0, 6).map((r) => (
-              <RestaurantCard
-                key={r.id}
-                restaurant={r}
-                onOpen={() => setSelected(r)}
-                distanceKm={restaurantDistances.get(r.id)}
-              />
-            ))}
-          </div>
-          {catalogError && (
-            <div className="inline-retry">
-              <div className="error-box">{catalogError}</div>
-              <button className="secondary" onClick={loadRestaurants}>
-                Try again
-              </button>
+            <div className="restaurant-list">
+              {restaurants.slice(0, 6).map((r) => (
+                <RestaurantCard
+                  key={r.id}
+                  restaurant={r}
+                  onOpen={() => setSelected(r)}
+                  distanceKm={restaurantDistances.get(r.id)}
+                />
+              ))}
             </div>
-          )}
+            {catalogError && (
+              <div className="inline-retry">
+                <div className="error-box">{catalogError}</div>
+                <button className="secondary" onClick={loadRestaurants}>
+                  Try again
+                </button>
+              </div>
+            )}
           </PullToRefresh>
         </section>
       ) : pageTab === 'search' ? (
         <section className="page">
           <PullToRefresh onRefresh={loadRestaurants} refreshing={refreshingTab === 'search'}>
             <header className="page-header">
-            <div>
-              <p className="eyebrow">DISCOVER</p>
-              <h1>Find your food</h1>
-            </div>
-          </header>
-          <div className="search-field sticky-search">
-            <Icon name="search" />
-            <input
-              autoFocus
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search restaurants or cuisines"
-            />
-            {search && (
-              <button onClick={() => setSearch('')}>
-                <Icon name="close" />
-              </button>
-            )}
-          </div>
-          <h2 className="section-title">
-            {search ? `Results for “${search}”` : 'All restaurants'} <span>{visible.length}</span>
-          </h2>
-          <div className="restaurant-list">
-            {visible.map((r) => (
-              <RestaurantCard
-                key={r.id}
-                restaurant={r}
-                onOpen={() => setSelected(r)}
-                distanceKm={restaurantDistances.get(r.id)}
+              <div>
+                <p className="eyebrow">DISCOVER</p>
+                <h1>Find your food</h1>
+              </div>
+            </header>
+            <div className="search-field sticky-search">
+              <Icon name="search" />
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search restaurants or cuisines"
               />
-            ))}
-          </div>
-          {catalogError && (
-            <div className="inline-retry">
-              <div className="error-box">{catalogError}</div>
-              <button className="secondary" onClick={loadRestaurants}>
-                Try again
-              </button>
+              {search && (
+                <button onClick={() => setSearch('')}>
+                  <Icon name="close" />
+                </button>
+              )}
             </div>
-          )}
-          {!visible.length && (
-            <Empty
-              icon="search"
-              title="Nothing matched"
-              text="Try another dish, restaurant or cuisine."
-            />
-          )}
+            <h2 className="section-title">
+              {search ? `Results for “${search}”` : 'All restaurants'} <span>{visible.length}</span>
+            </h2>
+            <div className="restaurant-list">
+              {visible.map((r) => (
+                <RestaurantCard
+                  key={r.id}
+                  restaurant={r}
+                  onOpen={() => setSelected(r)}
+                  distanceKm={restaurantDistances.get(r.id)}
+                />
+              ))}
+            </div>
+            {catalogError && (
+              <div className="inline-retry">
+                <div className="error-box">{catalogError}</div>
+                <button className="secondary" onClick={loadRestaurants}>
+                  Try again
+                </button>
+              </div>
+            )}
+            {!visible.length && (
+              <Empty
+                icon="search"
+                title="Nothing matched"
+                text="Try another dish, restaurant or cuisine."
+              />
+            )}
           </PullToRefresh>
         </section>
       ) : pageTab === 'xp' ? (

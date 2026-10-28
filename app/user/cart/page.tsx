@@ -1847,10 +1847,6 @@ export default function CartPage() {
                         )}
                       </button>
                     </form>
-
-                    <p className="text-center text-[11px] text-stone-400 dark:text-stone-500">
-                      100% secure payment &bull; 256-bit encryption
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1858,35 +1854,6 @@ export default function CartPage() {
           </div>
         )}
       </main>
-
-      {/* Floating Sticky Mobile Checkout Bar */}
-      {cart.length > 0 && !orderSuccess && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center justify-between rounded-2xl bg-[#121815] dark:bg-[#d9f447] p-4 shadow-2xl border border-black/10 dark:border-black/20 backdrop-blur-md">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-700">
-                {totalCount} {totalCount === 1 ? 'item' : 'items'} &bull; Total to Pay
-              </p>
-              <p className="text-lg font-black text-[#d9f447] dark:text-[#121815]">
-                ₹{formatPrice(exactNetPayable)}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const target = document.getElementById('checkout-action-section')
-                if (target) {
-                  target.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="rounded-xl bg-[#d9f447] dark:bg-[#121815] text-[#121815] dark:text-[#d9f447] px-4 py-2 text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer"
-            >
-              <span>Pay ₹{formatPrice(exactNetPayable)}</span>
-              <ArrowRight className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Available Coupons Modal */}
       {showCouponsModal && (

@@ -4,6 +4,7 @@ import { LocalNotifications } from '@capacitor/local-notifications'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { PullToRefresh } from './components/PullToRefresh'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -1423,438 +1424,448 @@ export default function App() {
         </button>
       )}
 
-      <main className="app-content">
-        {activeTab === 'home' && (
-          <section className="page home-page">
-            <div className="hero-card">
-              <div>
-                <span className="eyebrow">Live kitchen</span>
-                <h1>
-                  {restaurant?.is_open ? 'Ready for the rush.' : 'Your restaurant is offline.'}
-                </h1>
-                <p>
-                  {restaurant?.is_open
-                    ? `${activeOrders.length} active order${activeOrders.length === 1 ? '' : 's'} need your team’s attention.`
-                    : 'Turn the kitchen online when you are ready to accept new orders.'}
-                </p>
-              </div>
-              <button
-                className={`store-switch ${restaurant?.is_open ? 'online' : ''} ${restaurantTogglePending ? 'saving' : ''}`}
-                onClick={() => void toggleRestaurant()}
-                disabled={restaurantTogglePending}
-                aria-pressed={restaurant?.is_open}
-              >
-                <span>
-                  <i />
-                </span>
-                {restaurant?.is_open ? 'Accepting orders' : 'Go online'}
-              </button>
-            </div>
-
-            <div className="stats-grid">
-              <StatCard label="Active orders" value={String(activeOrders.length)} tone="amber" />
-              <StatCard label="Ready pickup" value={String(readyOrders.length)} tone="green" />
-              <StatCard label="Today’s orders" value={String(todayOrders.length)} tone="blue" />
-              <StatCard label="Today’s sales" value={money(todaySales)} tone="violet" />
-            </div>
-
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">Kitchen queue</span>
-                <h2>Orders needing action</h2>
-              </div>
-              <button className="text-button" onClick={() => setActiveTab('orders')}>
-                View all <Icon name="chevron" />
-              </button>
-            </div>
-            {activeOrders.length > 0 ? (
-              <div className="order-grid home-order-grid">
-                {activeOrders.slice(0, 4).map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    busy={Boolean(busyOrders[order.id])}
-                    onAdvance={updateOrderStatus}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <Icon name="orders" />
-                <h3>Kitchen queue is clear</h3>
-                <p>New verified orders will appear here instantly.</p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === 'orders' && (
-          <section className="page">
-            <div className="page-title-row">
-              <div>
-                <span className="eyebrow">Real-time operations</span>
-                <h1>Orders</h1>
-                <p>Prepare and hand off every paid order.</p>
-              </div>
-              <button
-                className="icon-button refresh-button"
-                onClick={() => void refreshAll()}
-                disabled={refreshing}
-              >
-                <Icon name="refresh" />
-              </button>
-            </div>
-            <div className="filter-tabs">
-              {[
-                ['active', 'Active'],
-                ['ready', 'Ready'],
-                ['completed', 'History'],
-                ['all', 'All'],
-              ].map(([id, label]) => (
+      <PullToRefresh onRefresh={() => void refreshAll()} refreshing={refreshing}>
+        <main className="app-content">
+          {activeTab === 'home' && (
+            <section className="page home-page">
+              <div className="hero-card">
+                <div>
+                  <span className="eyebrow">Live kitchen</span>
+                  <h1>
+                    {restaurant?.is_open ? 'Ready for the rush.' : 'Your restaurant is offline.'}
+                  </h1>
+                  <p>
+                    {restaurant?.is_open
+                      ? `${activeOrders.length} active order${activeOrders.length === 1 ? '' : 's'} need your team’s attention.`
+                      : 'Turn the kitchen online when you are ready to accept new orders.'}
+                  </p>
+                </div>
                 <button
-                  key={id}
-                  className={orderFilter === id ? 'active' : ''}
-                  onClick={() => setOrderFilter(id)}
+                  className={`store-switch ${restaurant?.is_open ? 'online' : ''} ${restaurantTogglePending ? 'saving' : ''}`}
+                  onClick={() => void toggleRestaurant()}
+                  disabled={restaurantTogglePending}
+                  aria-pressed={restaurant?.is_open}
                 >
-                  {label}
+                  <span>
+                    <i />
+                  </span>
+                  {restaurant?.is_open ? 'Accepting orders' : 'Go online'}
                 </button>
-              ))}
-            </div>
-            {filteredOrders.length > 0 ? (
-              <div className="order-grid">
-                {filteredOrders.map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    busy={Boolean(busyOrders[order.id])}
-                    onAdvance={updateOrderStatus}
-                  />
+              </div>
+
+              <div className="stats-grid">
+                <StatCard label="Active orders" value={String(activeOrders.length)} tone="amber" />
+                <StatCard label="Ready pickup" value={String(readyOrders.length)} tone="green" />
+                <StatCard label="Today’s orders" value={String(todayOrders.length)} tone="blue" />
+                <StatCard label="Today’s sales" value={money(todaySales)} tone="violet" />
+              </div>
+
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">Kitchen queue</span>
+                  <h2>Orders needing action</h2>
+                </div>
+                <button className="text-button" onClick={() => setActiveTab('orders')}>
+                  View all <Icon name="chevron" />
+                </button>
+              </div>
+              {activeOrders.length > 0 ? (
+                <div className="order-grid home-order-grid">
+                  {activeOrders.slice(0, 4).map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      busy={Boolean(busyOrders[order.id])}
+                      onAdvance={updateOrderStatus}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <Icon name="orders" />
+                  <h3>Kitchen queue is clear</h3>
+                  <p>New verified orders will appear here instantly.</p>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeTab === 'orders' && (
+            <section className="page">
+              <div className="page-title-row">
+                <div>
+                  <span className="eyebrow">Real-time operations</span>
+                  <h1>Orders</h1>
+                  <p>Prepare and hand off every paid order.</p>
+                </div>
+                <button
+                  className="icon-button refresh-button"
+                  onClick={() => void refreshAll()}
+                  disabled={refreshing}
+                >
+                  <Icon name="refresh" />
+                </button>
+              </div>
+              <div className="filter-tabs">
+                {[
+                  ['active', 'Active'],
+                  ['ready', 'Ready'],
+                  ['completed', 'History'],
+                  ['all', 'All'],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    className={orderFilter === id ? 'active' : ''}
+                    onClick={() => setOrderFilter(id)}
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
-            ) : (
-              <div className="empty-state">
-                <Icon name="clock" />
-                <h3>No orders in this view</h3>
-                <p>Live events will update this page automatically.</p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === 'menu' && (
-          <section className="page">
-            <div className="page-title-row">
-              <div>
-                <span className="eyebrow">Restaurant catalog</span>
-                <h1>Menu</h1>
-                <p>{menuItems.length} dishes connected to the live customer menu.</p>
-              </div>
-              <button className="primary-button add-button" onClick={() => editMenuItem()}>
-                <Icon name="plus" /> Add dish
-              </button>
-            </div>
-            <label className="search-field">
-              <Icon name="search" />
-              <input
-                value={menuSearch}
-                onChange={(event) => setMenuSearch(event.target.value)}
-                placeholder="Search dishes or categories"
-              />
-              {menuSearch && (
-                <button onClick={() => setMenuSearch('')}>
-                  <Icon name="close" />
-                </button>
+              {filteredOrders.length > 0 ? (
+                <div className="order-grid">
+                  {filteredOrders.map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      busy={Boolean(busyOrders[order.id])}
+                      onAdvance={updateOrderStatus}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <Icon name="clock" />
+                  <h3>No orders in this view</h3>
+                  <p>Live events will update this page automatically.</p>
+                </div>
               )}
-            </label>
-            <div className="menu-grid">
-              {filteredMenu.map((item) => (
-                <article className="menu-card" key={item.id}>
-                  <div className="menu-image">
-                    {item.image ? (
-                      <img src={item.image} alt="" />
-                    ) : (
-                      <span>
-                        <Icon name="menu" />
-                      </span>
-                    )}
-                    <i className={item.is_veg ? 'veg' : 'non-veg'} />
-                  </div>
-                  <div className="menu-card-content">
-                    <div>
-                      <span className="menu-category">{item.category}</span>
-                      <h3>{item.name}</h3>
-                      <p>{item.description || item.unit || 'Restaurant menu item'}</p>
-                    </div>
-                    {item.variants.length > 0 && (
-                      <div className="size-chips">
-                        {item.variants.map((variant) => (
-                          <span key={variant.id}>
-                            {variant.name} {money(variant.restaurant_price)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="menu-price-row">
-                      <div>
-                        <small>Restaurant price</small>
-                        <strong>{money(item.restaurant_price)}</strong>
-                      </div>
-                      <button
-                        className={`mini-switch ${item.in_stock ? 'on' : ''} ${busyMenuStock[item.id] ? 'saving' : ''}`}
-                        onClick={() => void toggleMenuStock(item)}
-                        disabled={busyMenuStock[item.id]}
-                        aria-label={`${item.in_stock ? 'Mark' : 'Restore'} ${item.name} ${item.in_stock ? 'unavailable' : 'available'}`}
-                        aria-pressed={item.in_stock}
-                      >
-                        <span />
-                      </button>
-                    </div>
-                    <div className="menu-actions">
-                      <button onClick={() => editMenuItem(item)}>
-                        <Icon name="edit" /> Edit
-                      </button>
-                      <button className="danger" onClick={() => void deleteMenuItem(item)}>
-                        <Icon name="trash" /> Delete
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {activeTab === 'sales' && (
-          <section className="page">
-            <div className="page-title-row">
-              <div>
-                <span className="eyebrow">Payout intelligence</span>
-                <h1>Sales &amp; settlements</h1>
-                <p>Your restaurant earnings from the live backend.</p>
+          {activeTab === 'menu' && (
+            <section className="page">
+              <div className="page-title-row">
+                <div>
+                  <span className="eyebrow">Restaurant catalog</span>
+                  <h1>Menu</h1>
+                  <p>{menuItems.length} dishes connected to the live customer menu.</p>
+                </div>
+                <button className="primary-button add-button" onClick={() => editMenuItem()}>
+                  <Icon name="plus" /> Add dish
+                </button>
               </div>
-            </div>
-            <div className="sales-hero">
-              <span>Net earnings</span>
-              <strong>{money(salesMetrics.net)}</strong>
-              <small>After {Number(restaurant?.commission_rate || 0)}% platform commission</small>
-            </div>
-            <div className="stats-grid sales-stats">
-              <StatCard label="Gross sales" value={money(salesMetrics.gross)} tone="blue" />
-              <StatCard label="Commission" value={money(salesMetrics.commission)} tone="amber" />
-              <StatCard label="Settled" value={money(salesMetrics.paid)} tone="green" />
-              <StatCard label="Pending payout" value={money(salesMetrics.pending)} tone="violet" />
-            </div>
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">Payout ledger</span>
-                <h2>Settlement history</h2>
-              </div>
-            </div>
-            <div className="settlement-list">
-              {settlements.length > 0 ? (
-                settlements.map((settlement) => (
-                  <article key={settlement.id}>
-                    <span className={`settlement-status ${settlement.status}`}>
-                      {settlement.status}
-                    </span>
-                    <div>
-                      <strong>{money(settlement.net_payout)}</strong>
-                      <small>
-                        {settlement.payout_date
-                          ? new Date(settlement.payout_date).toLocaleDateString()
-                          : 'Scheduled'}{' '}
-                        · {settlement.transaction_ref || 'Reference pending'}
-                      </small>
+              <label className="search-field">
+                <Icon name="search" />
+                <input
+                  value={menuSearch}
+                  onChange={(event) => setMenuSearch(event.target.value)}
+                  placeholder="Search dishes or categories"
+                />
+                {menuSearch && (
+                  <button onClick={() => setMenuSearch('')}>
+                    <Icon name="close" />
+                  </button>
+                )}
+              </label>
+              <div className="menu-grid">
+                {filteredMenu.map((item) => (
+                  <article className="menu-card" key={item.id}>
+                    <div className="menu-image">
+                      {item.image ? (
+                        <img src={item.image} alt="" />
+                      ) : (
+                        <span>
+                          <Icon name="menu" />
+                        </span>
+                      )}
+                      <i className={item.is_veg ? 'veg' : 'non-veg'} />
                     </div>
-                    <div className="settlement-gross">
-                      <span>Gross</span>
-                      <strong>{money(settlement.gross_sales)}</strong>
+                    <div className="menu-card-content">
+                      <div>
+                        <span className="menu-category">{item.category}</span>
+                        <h3>{item.name}</h3>
+                        <p>{item.description || item.unit || 'Restaurant menu item'}</p>
+                      </div>
+                      {item.variants.length > 0 && (
+                        <div className="size-chips">
+                          {item.variants.map((variant) => (
+                            <span key={variant.id}>
+                              {variant.name} {money(variant.restaurant_price)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="menu-price-row">
+                        <div>
+                          <small>Restaurant price</small>
+                          <strong>{money(item.restaurant_price)}</strong>
+                        </div>
+                        <button
+                          className={`mini-switch ${item.in_stock ? 'on' : ''} ${busyMenuStock[item.id] ? 'saving' : ''}`}
+                          onClick={() => void toggleMenuStock(item)}
+                          disabled={busyMenuStock[item.id]}
+                          aria-label={`${item.in_stock ? 'Mark' : 'Restore'} ${item.name} ${item.in_stock ? 'unavailable' : 'available'}`}
+                          aria-pressed={item.in_stock}
+                        >
+                          <span />
+                        </button>
+                      </div>
+                      <div className="menu-actions">
+                        <button onClick={() => editMenuItem(item)}>
+                          <Icon name="edit" /> Edit
+                        </button>
+                        <button className="danger" onClick={() => void deleteMenuItem(item)}>
+                          <Icon name="trash" /> Delete
+                        </button>
+                      </div>
                     </div>
                   </article>
-                ))
-              ) : (
-                <div className="empty-state compact">
-                  <Icon name="sales" />
-                  <h3>No settlements yet</h3>
-                  <p>Completed payout records will appear here.</p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+                ))}
+              </div>
+            </section>
+          )}
 
-        {activeTab === 'settings' && (
-          <section className="page settings-page">
-            <div className="page-title-row">
-              <div>
-                <span className="eyebrow">Restaurant control</span>
-                <h1>Settings</h1>
-                <p>Store profile, alerts and account access.</p>
+          {activeTab === 'sales' && (
+            <section className="page">
+              <div className="page-title-row">
+                <div>
+                  <span className="eyebrow">Payout intelligence</span>
+                  <h1>Sales &amp; settlements</h1>
+                  <p>Your restaurant earnings from the live backend.</p>
+                </div>
               </div>
-            </div>
-            <div className="settings-layout">
-              <form className="settings-card" onSubmit={saveRestaurantSettings}>
-                <div className="card-title">
-                  <span>
-                    <Icon name="store" />
-                  </span>
-                  <div>
-                    <h2>Restaurant profile</h2>
-                    <p>These details appear across Crave.</p>
-                  </div>
+              <div className="sales-hero">
+                <span>Net earnings</span>
+                <strong>{money(salesMetrics.net)}</strong>
+                <small>After {Number(restaurant?.commission_rate || 0)}% platform commission</small>
+              </div>
+              <div className="stats-grid sales-stats">
+                <StatCard label="Gross sales" value={money(salesMetrics.gross)} tone="blue" />
+                <StatCard label="Commission" value={money(salesMetrics.commission)} tone="amber" />
+                <StatCard label="Settled" value={money(salesMetrics.paid)} tone="green" />
+                <StatCard
+                  label="Pending payout"
+                  value={money(salesMetrics.pending)}
+                  tone="violet"
+                />
+              </div>
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">Payout ledger</span>
+                  <h2>Settlement history</h2>
                 </div>
-                <div className="form-grid">
-                  <label>
-                    Restaurant name
-                    <div className="readonly-field">
-                      {settingsForm.name || restaurant?.name || '-'}
-                    </div>
-                  </label>
-                  <label>
-                    Cuisine
-                    <input
-                      value={settingsForm.cuisine}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, cuisine: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Phone
-                    <input
-                      value={settingsForm.phone}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, phone: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Payout UPI
-                    <input
-                      value={settingsForm.payoutVpa}
-                      onChange={(event) =>
-                        setSettingsForm({ ...settingsForm, payoutVpa: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label className="field-wide">
-                    Address
-                    <div className="readonly-field multiline">
-                      {settingsForm.address || restaurant?.address || '-'}
-                    </div>
-                  </label>
-                  <label className="field-wide">
-                    FSSAI licence
-                    <div className="readonly-field">
-                      {settingsForm.fssai || restaurant?.fssai_license || '-'}
-                    </div>
-                  </label>
+              </div>
+              <div className="settlement-list">
+                {settlements.length > 0 ? (
+                  settlements.map((settlement) => (
+                    <article key={settlement.id}>
+                      <span className={`settlement-status ${settlement.status}`}>
+                        {settlement.status}
+                      </span>
+                      <div>
+                        <strong>{money(settlement.net_payout)}</strong>
+                        <small>
+                          {settlement.payout_date
+                            ? new Date(settlement.payout_date).toLocaleDateString()
+                            : 'Scheduled'}{' '}
+                          · {settlement.transaction_ref || 'Reference pending'}
+                        </small>
+                      </div>
+                      <div className="settlement-gross">
+                        <span>Gross</span>
+                        <strong>{money(settlement.gross_sales)}</strong>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="empty-state compact">
+                    <Icon name="sales" />
+                    <h3>No settlements yet</h3>
+                    <p>Completed payout records will appear here.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'settings' && (
+            <section className="page settings-page">
+              <div className="page-title-row">
+                <div>
+                  <span className="eyebrow">Restaurant control</span>
+                  <h1>Settings</h1>
+                  <p>Store profile, alerts and account access.</p>
                 </div>
-                <button className="primary-button" type="submit">
-                  Save restaurant profile
-                </button>
-              </form>
-              <div className="settings-stack">
-                <article className="settings-card theme-card">
-                  <div className="card-title">
-                    <span className="theme-symbol">◐</span>
-                    <div>
-                      <h2>Appearance</h2>
-                      <p>Use a light, dark, or device-controlled theme.</p>
-                    </div>
-                  </div>
-                  <div className="theme-control" role="group" aria-label="Restaurant app theme">
-                    {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
-                      <button
-                        key={mode}
-                        className={theme === mode ? 'active' : ''}
-                        onClick={() => {
-                          setTheme(mode)
-                          void saveTheme(mode)
-                        }}
-                      >
-                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </article>
-                <article className="settings-card notification-card">
+              </div>
+              <div className="settings-layout">
+                <form className="settings-card" onSubmit={saveRestaurantSettings}>
                   <div className="card-title">
                     <span>
-                      <Icon name="bell" />
+                      <Icon name="store" />
                     </span>
                     <div>
-                      <h2>Live order notifications</h2>
-                      <p>Native alerts and vibration when a new paid order reaches your kitchen.</p>
+                      <h2>Restaurant profile</h2>
+                      <p>These details appear across Crave.</p>
                     </div>
                   </div>
-                  <button
-                    className={`large-toggle ${notificationEnabled ? 'on' : ''}`}
-                    onClick={() => void toggleNotifications()}
-                  >
-                    <span>
-                      <i />
-                    </span>
-                    <b>{notificationEnabled ? 'Enabled on this device' : 'Enable notifications'}</b>
+                  <div className="form-grid">
+                    <label>
+                      Restaurant name
+                      <div className="readonly-field">
+                        {settingsForm.name || restaurant?.name || '-'}
+                      </div>
+                    </label>
+                    <label>
+                      Cuisine
+                      <input
+                        value={settingsForm.cuisine}
+                        onChange={(event) =>
+                          setSettingsForm({ ...settingsForm, cuisine: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Phone
+                      <input
+                        value={settingsForm.phone}
+                        onChange={(event) =>
+                          setSettingsForm({ ...settingsForm, phone: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Payout UPI
+                      <input
+                        value={settingsForm.payoutVpa}
+                        onChange={(event) =>
+                          setSettingsForm({ ...settingsForm, payoutVpa: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="field-wide">
+                      Address
+                      <div className="readonly-field multiline">
+                        {settingsForm.address || restaurant?.address || '-'}
+                      </div>
+                    </label>
+                    <label className="field-wide">
+                      FSSAI licence
+                      <div className="readonly-field">
+                        {settingsForm.fssai || restaurant?.fssai_license || '-'}
+                      </div>
+                    </label>
+                  </div>
+                  <button className="primary-button" type="submit">
+                    Save restaurant profile
                   </button>
-                </article>
-                <h2 className="section-title">App</h2>
-                <div className="settings-list">
-                  <button onClick={() => setUpdateSheet(true)}>
-                    <span className="settings-list-icon">
-                      <Icon name="refresh" />
-                    </span>
-                    <span>
-                      <b>{t.settings.checkForUpdates}</b>
-                      <small>
-                        {checkingUpdate
-                          ? 'Checking for the latest restaurant app…'
-                          : availableUpdate
-                            ? `Version ${availableUpdate.versionName} is available`
-                            : updateError || 'You are using the latest available version.'}
-                      </small>
-                    </span>
-                    <Icon name="chevron" />
-                  </button>
-                  <button onClick={() => setPasswordSheet(true)}>
-                    <span className="settings-list-icon">
-                      <Icon name="settings" />
-                    </span>
-                    <span>
-                      <b>{t.settings.changePassword}</b>
-                      <small>{t.settings.changePasswordHint}</small>
-                    </span>
-                    <Icon name="chevron" />
-                  </button>
-                  <button onClick={() => setLanguageSheet(true)}>
-                    <span className="settings-list-icon">
-                      <Icon name="language" />
-                    </span>
-                    <span>
-                      <b>{t.settings.language}</b>
-                      <small>{language}</small>
-                    </span>
-                    <Icon name="chevron" />
-                  </button>
+                </form>
+                <div className="settings-stack">
+                  <article className="settings-card theme-card">
+                    <div className="card-title">
+                      <span className="theme-symbol">◐</span>
+                      <div>
+                        <h2>Appearance</h2>
+                        <p>Use a light, dark, or device-controlled theme.</p>
+                      </div>
+                    </div>
+                    <div className="theme-control" role="group" aria-label="Restaurant app theme">
+                      {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                        <button
+                          key={mode}
+                          className={theme === mode ? 'active' : ''}
+                          onClick={() => {
+                            setTheme(mode)
+                            void saveTheme(mode)
+                          }}
+                        >
+                          {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="settings-card notification-card">
+                    <div className="card-title">
+                      <span>
+                        <Icon name="bell" />
+                      </span>
+                      <div>
+                        <h2>Live order notifications</h2>
+                        <p>
+                          Native alerts and vibration when a new paid order reaches your kitchen.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className={`large-toggle ${notificationEnabled ? 'on' : ''}`}
+                      onClick={() => void toggleNotifications()}
+                    >
+                      <span>
+                        <i />
+                      </span>
+                      <b>
+                        {notificationEnabled ? 'Enabled on this device' : 'Enable notifications'}
+                      </b>
+                    </button>
+                  </article>
+                  <h2 className="section-title">App</h2>
+                  <div className="settings-list">
+                    <button onClick={() => setUpdateSheet(true)}>
+                      <span className="settings-list-icon">
+                        <Icon name="refresh" />
+                      </span>
+                      <span>
+                        <b>{t.settings.checkForUpdates}</b>
+                        <small>
+                          {checkingUpdate
+                            ? 'Checking for the latest restaurant app…'
+                            : availableUpdate
+                              ? `Version ${availableUpdate.versionName} is available`
+                              : updateError || 'You are using the latest available version.'}
+                        </small>
+                      </span>
+                      <Icon name="chevron" />
+                    </button>
+                    <button onClick={() => setPasswordSheet(true)}>
+                      <span className="settings-list-icon">
+                        <Icon name="settings" />
+                      </span>
+                      <span>
+                        <b>{t.settings.changePassword}</b>
+                        <small>{t.settings.changePasswordHint}</small>
+                      </span>
+                      <Icon name="chevron" />
+                    </button>
+                    <button onClick={() => setLanguageSheet(true)}>
+                      <span className="settings-list-icon">
+                        <Icon name="language" />
+                      </span>
+                      <span>
+                        <b>{t.settings.language}</b>
+                        <small>{language}</small>
+                      </span>
+                      <Icon name="chevron" />
+                    </button>
+                  </div>
+                  <article className="settings-card account-card">
+                    <div className="profile-avatar">
+                      {user.name?.slice(0, 1).toUpperCase() || 'R'}
+                    </div>
+                    <div>
+                      <h2>{user.name}</h2>
+                      <p>{user.email}</p>
+                      <span>Restaurant partner</span>
+                    </div>
+                    <button className="logout-button" onClick={requestLogout}>
+                      <Icon name="logout" /> Sign out
+                    </button>
+                  </article>
                 </div>
-                <article className="settings-card account-card">
-                  <div className="profile-avatar">
-                    {user.name?.slice(0, 1).toUpperCase() || 'R'}
-                  </div>
-                  <div>
-                    <h2>{user.name}</h2>
-                    <p>{user.email}</p>
-                    <span>Restaurant partner</span>
-                  </div>
-                  <button className="logout-button" onClick={requestLogout}>
-                    <Icon name="logout" /> Sign out
-                  </button>
-                </article>
               </div>
-            </div>
-          </section>
-        )}
-      </main>
+            </section>
+          )}
+        </main>
+      </PullToRefresh>
 
       {updateSheet && (
         <div

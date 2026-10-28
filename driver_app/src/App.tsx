@@ -2,6 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { PullToRefresh } from './components/PullToRefresh'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -368,65 +369,77 @@ function ActiveTripCard({
   )
 }
 
-function TripsPage({ orders, trips }: { orders: DriverOrder[]; trips: CompletedTrip[] }) {
+function TripsPage({
+  orders,
+  trips,
+  onRefresh,
+  refreshing,
+}: {
+  orders: DriverOrder[]
+  trips: CompletedTrip[]
+  onRefresh?: () => void | Promise<void>
+  refreshing?: boolean
+}) {
   const history = orders.filter((order) => !ACTIVE_STATUSES.has(order.status))
   return (
-    <section className="page-section">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Delivery record</span>
-          <h1>Your trips</h1>
+    <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+      <section className="page-section">
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">Delivery record</span>
+            <h1>Your trips</h1>
+          </div>
+          <span className="count-badge">{trips.length || history.length} completed</span>
         </div>
-        <span className="count-badge">{trips.length || history.length} completed</span>
-      </div>
-      <div className="trip-history-list">
-        {trips.length > 0 ? (
-          trips.map((trip) => (
-            <article className="history-card" key={trip.id}>
-              <span className="history-icon">
-                <Icon name="check" />
-              </span>
-              <div className="history-main">
-                <div>
-                  <strong>{trip.restaurant}</strong>
-                  <span>
-                    {trip.order} · {trip.time}
-                  </span>
+        <div className="trip-history-list">
+          {trips.length > 0 ? (
+            trips.map((trip) => (
+              <article className="history-card" key={trip.id}>
+                <span className="history-icon">
+                  <Icon name="check" />
+                </span>
+                <div className="history-main">
+                  <div>
+                    <strong>{trip.restaurant}</strong>
+                    <span>
+                      {trip.order} · {trip.time}
+                    </span>
+                  </div>
+                  <p>
+                    <Icon name="pin" /> {trip.customer} · {trip.distance}
+                  </p>
                 </div>
-                <p>
-                  <Icon name="pin" /> {trip.customer} · {trip.distance}
-                </p>
-              </div>
-              <strong className="history-pay">{money(trip.total)}</strong>
-            </article>
-          ))
-        ) : history.length > 0 ? (
-          history.map((order) => (
-            <article className="history-card" key={order.id}>
-              <span className="history-icon">
-                <Icon name="check" />
-              </span>
-              <div className="history-main">
-                <div>
-                  <strong>{order.restaurant_name}</strong>
-                  <span>
-                    {shortId(order.id)} · {dateTime(order.created_at)}
-                  </span>
+                <strong className="history-pay">{money(trip.total)}</strong>
+              </article>
+            ))
+          ) : history.length > 0 ? (
+            history.map((order) => (
+              <article className="history-card" key={order.id}>
+                <span className="history-icon">
+                  <Icon name="check" />
+                </span>
+                <div className="history-main">
+                  <div>
+                    <strong>{order.restaurant_name}</strong>
+                    <span>
+                      {shortId(order.id)} · {dateTime(order.created_at)}
+                    </span>
+                  </div>
+                  <p>{statusLabel(order.status)}</p>
                 </div>
-                <p>{statusLabel(order.status)}</p>
-              </div>
-              <strong className="history-pay">{money(driverPay(order))}</strong>
-            </article>
-          ))
-        ) : (
-          <EmptyState
-            icon="trips"
-            title="No completed trips yet"
-            text="Completed deliveries will appear here with their final earnings."
-          />
-        )}
-      </div>
-    </section>
+                <strong className="history-pay">{money(driverPay(order))}</strong>
+              </article>
+            ))
+          ) : (
+            <EmptyState
+              icon="trips"
+              title="No completed trips yet"
+              text="Completed deliveries will appear here with their final earnings."
+            />
+          )}
+        </div>
+      </section>
+    </PullToRefresh>
   )
 }
 
@@ -437,6 +450,8 @@ function EarningsPage({
   busy,
   onCashout,
   onAddUpiAccount,
+  onRefresh,
+  refreshing,
 }: {
   trips: CompletedTrip[]
   payouts: PayoutLog[]
@@ -444,6 +459,8 @@ function EarningsPage({
   busy: boolean
   onCashout: (amount: number) => Promise<void>
   onAddUpiAccount: () => void
+  onRefresh?: () => void | Promise<void>
+  refreshing?: boolean
 }) {
   const earned = trips.reduce((total, trip) => total + Number(trip.total || 0), 0)
   const withdrawn = payouts
@@ -472,120 +489,122 @@ function EarningsPage({
   const [hint, setHint] = useState('')
 
   return (
-    <section className="page-section">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Money centre</span>
-          <h1>Earnings</h1>
+    <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+      <section className="page-section">
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">Money centre</span>
+            <h1>Earnings</h1>
+          </div>
         </div>
-      </div>
-      <article className="wallet-hero">
-        <span>Available balance</span>
-        <strong>{money(balance)}</strong>
-        <p>{primary ? `Payout to ${primary.vpa}` : 'Add a UPI account from the Account page'}</p>
-        <button
-          className="light-button"
-          onClick={() => {
-            if (!primary) {
-              setHint('Add a UPI payout account to receive your money.')
-              onAddUpiAccount()
-              return
-            }
-            if (balance <= 0) {
-              setHint('No available balance yet. Earnings appear after a delivery is completed.')
-              return
-            }
-            setHint('')
-            setAmount(String(Math.floor(balance)))
-            setShowCashout(true)
-          }}
-        >
-          Request payout
-        </button>
-        {hint && <p className="wallet-hint">{hint}</p>}
-      </article>
-      <div className="money-stats">
-        <article>
-          <span>Lifetime earned</span>
-          <strong>{money(earned)}</strong>
+        <article className="wallet-hero">
+          <span>Available balance</span>
+          <strong>{money(balance)}</strong>
+          <p>{primary ? `Payout to ${primary.vpa}` : 'Add a UPI account from the Account page'}</p>
+          <button
+            className="light-button"
+            onClick={() => {
+              if (!primary) {
+                setHint('Add a UPI payout account to receive your money.')
+                onAddUpiAccount()
+                return
+              }
+              if (balance <= 0) {
+                setHint('No available balance yet. Earnings appear after a delivery is completed.')
+                return
+              }
+              setHint('')
+              setAmount(String(Math.floor(balance)))
+              setShowCashout(true)
+            }}
+          >
+            Request payout
+          </button>
+          {hint && <p className="wallet-hint">{hint}</p>}
         </article>
-        <article>
-          <span>Paid out</span>
-          <strong>{money(withdrawn)}</strong>
-        </article>
-        <article>
-          <span>Trips</span>
-          <strong>{trips.length}</strong>
-        </article>
-      </div>
-      <div className="section-title">
-        <h2>Payout activity</h2>
-      </div>
-      <div className="payout-list">
-        {payouts.length > 0 ? (
-          payouts.map((payout) => (
-            <article key={payout.id}>
-              <span className="payout-icon">
-                <Icon name="wallet" />
-              </span>
-              <div>
-                <strong>{payout.status}</strong>
-                <small>{payout.date}</small>
+        <div className="money-stats">
+          <article>
+            <span>Lifetime earned</span>
+            <strong>{money(earned)}</strong>
+          </article>
+          <article>
+            <span>Paid out</span>
+            <strong>{money(withdrawn)}</strong>
+          </article>
+          <article>
+            <span>Trips</span>
+            <strong>{trips.length}</strong>
+          </article>
+        </div>
+        <div className="section-title">
+          <h2>Payout activity</h2>
+        </div>
+        <div className="payout-list">
+          {payouts.length > 0 ? (
+            payouts.map((payout) => (
+              <article key={payout.id}>
+                <span className="payout-icon">
+                  <Icon name="wallet" />
+                </span>
+                <div>
+                  <strong>{payout.status}</strong>
+                  <small>{payout.date}</small>
+                </div>
+                <b>-{money(payout.amount)}</b>
+              </article>
+            ))
+          ) : (
+            <EmptyState
+              icon="wallet"
+              title="No payouts yet"
+              text="Your payout requests and transfers will be shown here."
+            />
+          )}
+        </div>
+        {showCashout && (
+          <div className="modal-backdrop" role="dialog" aria-modal="true">
+            <section className="sheet small-sheet">
+              <header>
+                <div>
+                  <span className="eyebrow">Instant payout</span>
+                  <h2>Move your earnings</h2>
+                </div>
+                <button className="icon-button" onClick={() => setShowCashout(false)}>
+                  <Icon name="close" />
+                </button>
+              </header>
+              <label className="field-label">
+                Amount
+                <input
+                  type="number"
+                  min="1"
+                  max={balance}
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                />
+              </label>
+              <div className="destination-card">
+                <Icon name="card" />
+                <div>
+                  <span>Destination</span>
+                  <strong>{primary?.vpa}</strong>
+                </div>
               </div>
-              <b>-{money(payout.amount)}</b>
-            </article>
-          ))
-        ) : (
-          <EmptyState
-            icon="wallet"
-            title="No payouts yet"
-            text="Your payout requests and transfers will be shown here."
-          />
-        )}
-      </div>
-      {showCashout && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <section className="sheet small-sheet">
-            <header>
-              <div>
-                <span className="eyebrow">Instant payout</span>
-                <h2>Move your earnings</h2>
-              </div>
-              <button className="icon-button" onClick={() => setShowCashout(false)}>
-                <Icon name="close" />
+              <button
+                className="primary-button"
+                disabled={busy || Number(amount) <= 0 || Number(amount) > balance}
+                onClick={async () => {
+                  await onCashout(Number(amount))
+                  setShowCashout(false)
+                }}
+              >
+                {busy ? <span className="button-spinner dark" /> : `Request ${money(amount)}`}
               </button>
-            </header>
-            <label className="field-label">
-              Amount
-              <input
-                type="number"
-                min="1"
-                max={balance}
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-              />
-            </label>
-            <div className="destination-card">
-              <Icon name="card" />
-              <div>
-                <span>Destination</span>
-                <strong>{primary?.vpa}</strong>
-              </div>
-            </div>
-            <button
-              className="primary-button"
-              disabled={busy || Number(amount) <= 0 || Number(amount) > balance}
-              onClick={async () => {
-                await onCashout(Number(amount))
-                setShowCashout(false)
-              }}
-            >
-              {busy ? <span className="button-spinner dark" /> : `Request ${money(amount)}`}
-            </button>
-          </section>
-        </div>
-      )}
-    </section>
+            </section>
+          </div>
+        )}
+      </section>
+    </PullToRefresh>
   )
 }
 
@@ -610,6 +629,8 @@ function AccountPage({
   onCheckUpdate,
   onInstallUpdate,
   onLogout,
+  onRefresh,
+  refreshing,
 }: {
   profile: DriverProfile
   upi: UpiAccount[]
@@ -635,6 +656,8 @@ function AccountPage({
   onCheckUpdate: () => Promise<void>
   onInstallUpdate: () => Promise<void>
   onLogout: () => Promise<void>
+  onRefresh?: () => void | Promise<void>
+  refreshing?: boolean
 }) {
   const { t } = useLanguage()
   const [draft, setDraft] = useState(profile)
@@ -650,383 +673,385 @@ function AccountPage({
   useEffect(() => setDraft(profile), [profile])
 
   return (
-    <section className="page-section account-page">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Partner account</span>
-          <h1>Profile & settings</h1>
-        </div>
-      </div>
-      <article className="profile-summary">
-        <span className="profile-avatar">{profile.name?.charAt(0).toUpperCase() || 'D'}</span>
-        <div>
-          <h2>{profile.name}</h2>
-          <p>{profile.email}</p>
-          <span>{profile.kycStatus || 'Verified delivery partner'}</span>
-        </div>
-      </article>
-      <article className="settings-card">
-        <div className="settings-card-title">
-          <span className="settings-icon">
-            <Icon name="bell" />
-          </span>
+    <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
+      <section className="page-section account-page">
+        <div className="page-heading">
           <div>
-            <h3>Delivery notifications</h3>
-            <p>Get instant alerts for nearby offers and trip updates.</p>
-          </div>
-          <button
-            type="button"
-            className={`switch ${notificationsEnabled ? 'on' : ''}`}
-            aria-label="Toggle delivery notifications"
-            role="switch"
-            aria-checked={notificationsEnabled}
-            aria-busy={notificationBusy}
-            disabled={notificationBusy}
-            onClick={() => void onToggleNotifications(!notificationsEnabled)}
-          >
-            <span />
-          </button>
-        </div>
-      </article>
-      <h2 className="section-title">App</h2>
-      <div className="settings-list">
-        <button onClick={() => setUpdateSheet(true)}>
-          <span className="settings-list-icon">
-            <Icon name="refresh" />
-          </span>
-          <span>
-            <b>{t.settings.checkForUpdates}</b>
-            <small>
-              {checkingUpdate
-                ? 'Checking for the latest driver app…'
-                : availableUpdate
-                  ? `Version ${availableUpdate.versionName} is available`
-                  : updateError || 'You are using the latest available version.'}
-            </small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-        <button onClick={() => setPasswordSheet(true)}>
-          <span className="settings-list-icon">
-            <Icon name="shield" />
-          </span>
-          <span>
-            <b>{t.settings.changePassword}</b>
-            <small>{t.settings.changePasswordHint}</small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-        <button onClick={() => setLanguageSheet(true)}>
-          <span className="settings-list-icon">
-            <Icon name="language" />
-          </span>
-          <span>
-            <b>{t.settings.language}</b>
-            <small>{language}</small>
-          </span>
-          <Icon name="chevron" />
-        </button>
-      </div>
-      <article className="settings-card">
-        <div className="settings-card-title">
-          <span className="settings-icon">
-            <Icon name="theme" />
-          </span>
-          <div>
-            <h3>Appearance</h3>
-            <p>Choose light, dark, or follow your device setting.</p>
+            <span className="eyebrow">Partner account</span>
+            <h1>Profile & settings</h1>
           </div>
         </div>
-        <div className="theme-control" role="group" aria-label="Driver app theme">
-          {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+        <article className="profile-summary">
+          <span className="profile-avatar">{profile.name?.charAt(0).toUpperCase() || 'D'}</span>
+          <div>
+            <h2>{profile.name}</h2>
+            <p>{profile.email}</p>
+            <span>{profile.kycStatus || 'Verified delivery partner'}</span>
+          </div>
+        </article>
+        <article className="settings-card">
+          <div className="settings-card-title">
+            <span className="settings-icon">
+              <Icon name="bell" />
+            </span>
+            <div>
+              <h3>Delivery notifications</h3>
+              <p>Get instant alerts for nearby offers and trip updates.</p>
+            </div>
             <button
               type="button"
-              key={mode}
-              className={theme === mode ? 'active' : ''}
-              aria-pressed={theme === mode}
-              onClick={() => onTheme(mode)}
+              className={`switch ${notificationsEnabled ? 'on' : ''}`}
+              aria-label="Toggle delivery notifications"
+              role="switch"
+              aria-checked={notificationsEnabled}
+              aria-busy={notificationBusy}
+              disabled={notificationBusy}
+              onClick={() => void onToggleNotifications(!notificationsEnabled)}
             >
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              <span />
             </button>
-          ))}
-        </div>
-      </article>
-      <article className="settings-card">
-        <div className="settings-card-title">
-          <span className="settings-icon">
-            <Icon name="user" />
-          </span>
-          <div>
-            <h3>Personal & vehicle details</h3>
-            <p>These details are shared with customers during an active trip.</p>
           </div>
-        </div>
-        <div className="form-grid">
-          <label className="field-label">
-            Full name
-            <input
-              value={draft.name || ''}
-              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-            />
-          </label>
-          <label className="field-label">
-            Phone
-            <input
-              value={draft.phone || ''}
-              onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
-            />
-          </label>
-          <label className="field-label full">
-            Operating address
-            <input
-              value={draft.address || ''}
-              onChange={(event) => setDraft({ ...draft, address: event.target.value })}
-            />
-          </label>
-          <label className="field-label">
-            Vehicle type
-            <select
-              value={draft.vehicleType || ''}
-              onChange={(event) => setDraft({ ...draft, vehicleType: event.target.value })}
-            >
-              <option>Commercial EV Delivery Scooter</option>
-              <option>Petrol Two-Wheeler Motorcycle</option>
-              <option>Cargo E-Loader Trike</option>
-              <option>Bicycle Partner</option>
-            </select>
-          </label>
-          <label className="field-label">
-            License plate
-            <input
-              value={draft.licensePlate || ''}
-              onChange={(event) =>
-                setDraft({ ...draft, licensePlate: event.target.value.toUpperCase() })
-              }
-            />
-          </label>
-        </div>
-        <button className="secondary-button" disabled={busy} onClick={() => onSaveProfile(draft)}>
-          Save profile
-        </button>
-      </article>
-      <article className="settings-card">
-        <div className="settings-card-title">
-          <span className="settings-icon">
-            <Icon name="card" />
-          </span>
-          <div>
-            <h3>UPI payout accounts</h3>
-            <p>Choose where your approved payouts should be sent.</p>
-          </div>
-        </div>
-        <div className="upi-list">
-          {upi.map((account) => (
-            <div className={account.isPrimary ? 'primary' : ''} key={account.id}>
-              <button
-                className="radio-button"
-                aria-label="Make primary"
-                onClick={() => onPrimaryUpi(account.id)}
-              >
-                <span />
-              </button>
-              <div>
-                <strong>{account.vpa}</strong>
-                <small>
-                  {account.bankName} · {account.isVerified ? 'Verified' : 'Pending'}
-                </small>
-              </div>
-              {!account.isPrimary && (
-                <button className="text-danger" onClick={() => onDeleteUpi(account.id)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        <form
-          className="upi-form"
-          onSubmit={async (event) => {
-            event.preventDefault()
-            await onAddUpi(vpa, provider)
-            setVpa('')
-          }}
-        >
-          <input
-            required
-            pattern=".+@.+"
-            placeholder="name@upi"
-            value={vpa}
-            onChange={(event) => setVpa(event.target.value)}
-          />
-          <select value={provider} onChange={(event) => setProvider(event.target.value)}>
-            <option>Google Pay / PhonePe UPI</option>
-            <option>Paytm Payments Bank</option>
-            <option>BHIM NPCI UPI</option>
-            <option>Bank UPI</option>
-          </select>
-          <button className="secondary-button" type="submit">
-            Add UPI
-          </button>
-        </form>
-      </article>
-      <button className="logout-button" onClick={() => setConfirmLogout(true)}>
-        <Icon name="logout" /> Sign out of driver app
-      </button>
-      {updateSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setUpdateSheet(false)}
-        >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">Driver app</span>
-                <h2>{t.settings.checkForUpdates}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setUpdateSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <p>
-              {checkingUpdate
-                ? 'Checking for the latest driver app…'
-                : availableUpdate
-                  ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
-                  : updateError || 'You are using the latest available version.'}
-            </p>
-            <div className="software-actions">
-              <button
-                className="secondary-button"
-                disabled={checkingUpdate || installingUpdate}
-                onClick={() => void onCheckUpdate()}
-              >
-                {checkingUpdate ? 'Checking…' : 'Check again'}
-              </button>
-              <button
-                className="primary-button"
-                disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                onClick={() => void onInstallUpdate()}
-              >
-                {installingUpdate
-                  ? 'Opening installer…'
+        </article>
+        <h2 className="section-title">App</h2>
+        <div className="settings-list">
+          <button onClick={() => setUpdateSheet(true)}>
+            <span className="settings-list-icon">
+              <Icon name="refresh" />
+            </span>
+            <span>
+              <b>{t.settings.checkForUpdates}</b>
+              <small>
+                {checkingUpdate
+                  ? 'Checking for the latest driver app…'
                   : availableUpdate
-                    ? `Update to ${availableUpdate.versionName}`
-                    : 'App is up to date'}
-              </button>
+                    ? `Version ${availableUpdate.versionName} is available`
+                    : updateError || 'You are using the latest available version.'}
+              </small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+          <button onClick={() => setPasswordSheet(true)}>
+            <span className="settings-list-icon">
+              <Icon name="shield" />
+            </span>
+            <span>
+              <b>{t.settings.changePassword}</b>
+              <small>{t.settings.changePasswordHint}</small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+          <button onClick={() => setLanguageSheet(true)}>
+            <span className="settings-list-icon">
+              <Icon name="language" />
+            </span>
+            <span>
+              <b>{t.settings.language}</b>
+              <small>{language}</small>
+            </span>
+            <Icon name="chevron" />
+          </button>
+        </div>
+        <article className="settings-card">
+          <div className="settings-card-title">
+            <span className="settings-icon">
+              <Icon name="theme" />
+            </span>
+            <div>
+              <h3>Appearance</h3>
+              <p>Choose light, dark, or follow your device setting.</p>
             </div>
-            {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
-          </section>
-        </div>
-      )}
-
-      {passwordSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPasswordSheet(false)}
-        >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">Account security</span>
-                <h2>{t.settings.changePassword}</h2>
-              </div>
+          </div>
+          <div className="theme-control" role="group" aria-label="Driver app theme">
+            {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
               <button
-                className="icon-button"
-                onClick={() => setPasswordSheet(false)}
-                aria-label="Close"
+                type="button"
+                key={mode}
+                className={theme === mode ? 'active' : ''}
+                aria-pressed={theme === mode}
+                onClick={() => onTheme(mode)}
               >
-                <Icon name="close" />
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
               </button>
-            </header>
-            <p>Keep your driver account secure with a new sign-in password.</p>
-            <ChangePasswordForm onChangePassword={onChangePassword} />
-          </section>
-        </div>
-      )}
-
-      {languageSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setLanguageSheet(false)}
-        >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">App language</span>
-                <h2>{t.settings.chooseLanguage}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setLanguageSheet(false)}
-                aria-label="Close"
+            ))}
+          </div>
+        </article>
+        <article className="settings-card">
+          <div className="settings-card-title">
+            <span className="settings-icon">
+              <Icon name="user" />
+            </span>
+            <div>
+              <h3>Personal & vehicle details</h3>
+              <p>These details are shared with customers during an active trip.</p>
+            </div>
+          </div>
+          <div className="form-grid">
+            <label className="field-label">
+              Full name
+              <input
+                value={draft.name || ''}
+                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+              />
+            </label>
+            <label className="field-label">
+              Phone
+              <input
+                value={draft.phone || ''}
+                onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
+              />
+            </label>
+            <label className="field-label full">
+              Operating address
+              <input
+                value={draft.address || ''}
+                onChange={(event) => setDraft({ ...draft, address: event.target.value })}
+              />
+            </label>
+            <label className="field-label">
+              Vehicle type
+              <select
+                value={draft.vehicleType || ''}
+                onChange={(event) => setDraft({ ...draft, vehicleType: event.target.value })}
               >
-                <Icon name="close" />
-              </button>
-            </header>
-            <div className="language-list">
-              {languages.map((option) => (
+                <option>Commercial EV Delivery Scooter</option>
+                <option>Petrol Two-Wheeler Motorcycle</option>
+                <option>Cargo E-Loader Trike</option>
+                <option>Bicycle Partner</option>
+              </select>
+            </label>
+            <label className="field-label">
+              License plate
+              <input
+                value={draft.licensePlate || ''}
+                onChange={(event) =>
+                  setDraft({ ...draft, licensePlate: event.target.value.toUpperCase() })
+                }
+              />
+            </label>
+          </div>
+          <button className="secondary-button" disabled={busy} onClick={() => onSaveProfile(draft)}>
+            Save profile
+          </button>
+        </article>
+        <article className="settings-card">
+          <div className="settings-card-title">
+            <span className="settings-icon">
+              <Icon name="card" />
+            </span>
+            <div>
+              <h3>UPI payout accounts</h3>
+              <p>Choose where your approved payouts should be sent.</p>
+            </div>
+          </div>
+          <div className="upi-list">
+            {upi.map((account) => (
+              <div className={account.isPrimary ? 'primary' : ''} key={account.id}>
                 <button
-                  key={option.code}
-                  className={language === option.code ? 'selected' : ''}
-                  onClick={() => {
-                    setLanguage(option.code)
-                    setLanguageSheet(false)
-                  }}
+                  className="radio-button"
+                  aria-label="Make primary"
+                  onClick={() => onPrimaryUpi(account.id)}
                 >
-                  <span>{option.nativeName}</span>
-                  {language === option.code && <Icon name="check" />}
+                  <span />
                 </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
-
-      {confirmLogout && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="driver-logout-title"
-          onClick={() => setConfirmLogout(false)}
-        >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">Confirm sign out</span>
-                <h2 id="driver-logout-title">Really sign out?</h2>
+                <div>
+                  <strong>{account.vpa}</strong>
+                  <small>
+                    {account.bankName} · {account.isVerified ? 'Verified' : 'Pending'}
+                  </small>
+                </div>
+                {!account.isPrimary && (
+                  <button className="text-danger" onClick={() => onDeleteUpi(account.id)}>
+                    Remove
+                  </button>
+                )}
               </div>
-              <button
-                className="icon-button"
-                onClick={() => setConfirmLogout(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <p>You will be signed out of the driver app. You can sign back in anytime.</p>
-            <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
-              <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
-                Cancel
-              </button>
-              <button className="primary-button" onClick={onLogout}>
-                <Icon name="logout" /> Sign out
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-    </section>
+            ))}
+          </div>
+          <form
+            className="upi-form"
+            onSubmit={async (event) => {
+              event.preventDefault()
+              await onAddUpi(vpa, provider)
+              setVpa('')
+            }}
+          >
+            <input
+              required
+              pattern=".+@.+"
+              placeholder="name@upi"
+              value={vpa}
+              onChange={(event) => setVpa(event.target.value)}
+            />
+            <select value={provider} onChange={(event) => setProvider(event.target.value)}>
+              <option>Google Pay / PhonePe UPI</option>
+              <option>Paytm Payments Bank</option>
+              <option>BHIM NPCI UPI</option>
+              <option>Bank UPI</option>
+            </select>
+            <button className="secondary-button" type="submit">
+              Add UPI
+            </button>
+          </form>
+        </article>
+        <button className="logout-button" onClick={() => setConfirmLogout(true)}>
+          <Icon name="logout" /> Sign out of driver app
+        </button>
+        {updateSheet && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setUpdateSheet(false)}
+          >
+            <section className="sheet" onClick={(event) => event.stopPropagation()}>
+              <header className="sheet-header">
+                <div>
+                  <span className="eyebrow">Driver app</span>
+                  <h2>{t.settings.checkForUpdates}</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  onClick={() => setUpdateSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </header>
+              <p>
+                {checkingUpdate
+                  ? 'Checking for the latest driver app…'
+                  : availableUpdate
+                    ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                    : updateError || 'You are using the latest available version.'}
+              </p>
+              <div className="software-actions">
+                <button
+                  className="secondary-button"
+                  disabled={checkingUpdate || installingUpdate}
+                  onClick={() => void onCheckUpdate()}
+                >
+                  {checkingUpdate ? 'Checking…' : 'Check again'}
+                </button>
+                <button
+                  className="primary-button"
+                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                  onClick={() => void onInstallUpdate()}
+                >
+                  {installingUpdate
+                    ? 'Opening installer…'
+                    : availableUpdate
+                      ? `Update to ${availableUpdate.versionName}`
+                      : 'App is up to date'}
+                </button>
+              </div>
+              {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
+            </section>
+          </div>
+        )}
+
+        {passwordSheet && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setPasswordSheet(false)}
+          >
+            <section className="sheet" onClick={(event) => event.stopPropagation()}>
+              <header className="sheet-header">
+                <div>
+                  <span className="eyebrow">Account security</span>
+                  <h2>{t.settings.changePassword}</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  onClick={() => setPasswordSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </header>
+              <p>Keep your driver account secure with a new sign-in password.</p>
+              <ChangePasswordForm onChangePassword={onChangePassword} />
+            </section>
+          </div>
+        )}
+
+        {languageSheet && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setLanguageSheet(false)}
+          >
+            <section className="sheet" onClick={(event) => event.stopPropagation()}>
+              <header className="sheet-header">
+                <div>
+                  <span className="eyebrow">App language</span>
+                  <h2>{t.settings.chooseLanguage}</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  onClick={() => setLanguageSheet(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </header>
+              <div className="language-list">
+                {languages.map((option) => (
+                  <button
+                    key={option.code}
+                    className={language === option.code ? 'selected' : ''}
+                    onClick={() => {
+                      setLanguage(option.code)
+                      setLanguageSheet(false)
+                    }}
+                  >
+                    <span>{option.nativeName}</span>
+                    {language === option.code && <Icon name="check" />}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {confirmLogout && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="driver-logout-title"
+            onClick={() => setConfirmLogout(false)}
+          >
+            <section className="sheet" onClick={(event) => event.stopPropagation()}>
+              <header className="sheet-header">
+                <div>
+                  <span className="eyebrow">Confirm sign out</span>
+                  <h2 id="driver-logout-title">Really sign out?</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  onClick={() => setConfirmLogout(false)}
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </header>
+              <p>You will be signed out of the driver app. You can sign back in anytime.</p>
+              <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+                <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                  Cancel
+                </button>
+                <button className="primary-button" onClick={onLogout}>
+                  <Icon name="logout" /> Sign out
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </PullToRefresh>
   )
 }
 
@@ -1293,6 +1318,7 @@ export default function App() {
   const [busyKey, setBusyKey] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
   const [otpOpen, setOtpOpen] = useState(false)
   const [permissionSheet, setPermissionSheet] = useState(false)
   const activeOrder = useMemo(
@@ -1411,6 +1437,15 @@ export default function App() {
     }
     if (upiResult.status === 'fulfilled') {
       setUpi(upiResult.value.savedUpiList || [])
+    }
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    try {
+      await Promise.all([loadData(), loadOffers()])
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -2035,151 +2070,164 @@ export default function App() {
           </button>
         </div>
       )}
-      <main className="app-content">
-        {tab === 'home' && (
-          <section className="page-section home-page">
-            <div className="driver-welcome">
-              <div>
-                <span className="eyebrow">
-                  {online ? 'You are on duty' : 'You are currently offline'}
+      <PullToRefresh onRefresh={handleRefresh} refreshing={refreshing}>
+        <main className="app-content">
+          {tab === 'home' && (
+            <section className="page-section home-page">
+              <div className="driver-welcome">
+                <div>
+                  <span className="eyebrow">
+                    {online ? 'You are on duty' : 'You are currently offline'}
+                  </span>
+                  <h1>
+                    {online
+                      ? `Ride safe, ${profile.name.split(' ')[0]}.`
+                      : `Ready when you are, ${profile.name.split(' ')[0]}.`}
+                  </h1>
+                  <p>
+                    {online
+                      ? 'New delivery offers will appear here in real time.'
+                      : 'Go online to share GPS and receive nearby delivery offers.'}
+                  </p>
+                </div>
+                <span className={`gps-orb ${gpsStatus}`}>
+                  <Icon name={gpsStatus === 'live' ? 'navigation' : 'pin'} />
+                  <small>
+                    {gpsStatus === 'live'
+                      ? `GPS ±${Math.round(coords?.accuracy || 0)}m`
+                      : gpsStatus === 'acquiring'
+                        ? 'Finding GPS'
+                        : 'GPS off'}
+                  </small>
                 </span>
-                <h1>
-                  {online
-                    ? `Ride safe, ${profile.name.split(' ')[0]}.`
-                    : `Ready when you are, ${profile.name.split(' ')[0]}.`}
-                </h1>
-                <p>
-                  {online
-                    ? 'New delivery offers will appear here in real time.'
-                    : 'Go online to share GPS and receive nearby delivery offers.'}
-                </p>
               </div>
-              <span className={`gps-orb ${gpsStatus}`}>
-                <Icon name={gpsStatus === 'live' ? 'navigation' : 'pin'} />
-                <small>
-                  {gpsStatus === 'live'
-                    ? `GPS ±${Math.round(coords?.accuracy || 0)}m`
-                    : gpsStatus === 'acquiring'
-                      ? 'Finding GPS'
-                      : 'GPS off'}
-                </small>
-              </span>
-            </div>
-            <div className="home-stats">
-              <article>
-                <span>Today&apos;s earnings</span>
-                <strong>{money(todayEarnings)}</strong>
-              </article>
-              <article>
-                <span>Completed trips</span>
-                <strong>{completedTrips.length}</strong>
-              </article>
-              <article>
-                <span>Live offers</span>
-                <strong>{online ? offers.length : '—'}</strong>
-              </article>
-            </div>
-            {activeOrder ? (
-              <>
-                <div className="section-title">
-                  <div>
-                    <span className="eyebrow">Current job</span>
-                    <h2>Active delivery</h2>
+              <div className="home-stats">
+                <article>
+                  <span>Today&apos;s earnings</span>
+                  <strong>{money(todayEarnings)}</strong>
+                </article>
+                <article>
+                  <span>Completed trips</span>
+                  <strong>{completedTrips.length}</strong>
+                </article>
+                <article>
+                  <span>Live offers</span>
+                  <strong>{online ? offers.length : '—'}</strong>
+                </article>
+              </div>
+              {activeOrder ? (
+                <>
+                  <div className="section-title">
+                    <div>
+                      <span className="eyebrow">Current job</span>
+                      <h2>Active delivery</h2>
+                    </div>
                   </div>
-                </div>
-                <ActiveTripCard
-                  order={activeOrder}
-                  busy={busyKey === 'advance' || busyKey === 'complete'}
-                  onAdvance={advanceTrip}
-                  onComplete={() => setOtpOpen(true)}
-                />
-              </>
-            ) : online ? (
-              <>
-                <div className="section-title">
-                  <div>
-                    <span className="eyebrow">Nearby queue</span>
-                    <h2>Delivery offers</h2>
+                  <ActiveTripCard
+                    order={activeOrder}
+                    busy={busyKey === 'advance' || busyKey === 'complete'}
+                    onAdvance={advanceTrip}
+                    onComplete={() => setOtpOpen(true)}
+                  />
+                </>
+              ) : online ? (
+                <>
+                  <div className="section-title">
+                    <div>
+                      <span className="eyebrow">Nearby queue</span>
+                      <h2>Delivery offers</h2>
+                    </div>
+                    <button className="refresh-button" onClick={() => loadOffers()}>
+                      <Icon name="refresh" /> Refresh
+                    </button>
                   </div>
-                  <button className="refresh-button" onClick={() => loadOffers()}>
-                    <Icon name="refresh" /> Refresh
-                  </button>
-                </div>
-                <div className="offer-grid">
-                  {offers.length > 0 ? (
-                    offers.map((offer) => (
-                      <OfferCard
-                        key={offer.id}
-                        offer={offer}
-                        busy={busyKey === `offer-${offer.id}`}
-                        onAccept={acceptOffer}
+                  <div className="offer-grid">
+                    {offers.length > 0 ? (
+                      offers.map((offer) => (
+                        <OfferCard
+                          key={offer.id}
+                          offer={offer}
+                          busy={busyKey === `offer-${offer.id}`}
+                          onAccept={acceptOffer}
+                        />
+                      ))
+                    ) : (
+                      <EmptyState
+                        icon="bike"
+                        title="Waiting for the next order"
+                        text="Stay online. A live alert will appear as soon as an eligible order is ready."
                       />
-                    ))
-                  ) : (
-                    <EmptyState
-                      icon="bike"
-                      title="Waiting for the next order"
-                      text="Stay online. A live alert will appear as soon as an eligible order is ready."
-                    />
-                  )}
-                </div>
-              </>
-            ) : (
-              <article className="offline-card">
-                <span>
-                  <Icon name="bike" />
-                </span>
-                <h2>Start accepting deliveries</h2>
-                <p>
-                  Going online requests precise location access so Crave can route nearby orders and
-                  keep customers updated.
-                </p>
-                <button className="primary-button" onClick={() => toggleDuty(true)}>
-                  Go online
-                </button>
-              </article>
-            )}
-          </section>
-        )}
-        {tab === 'trips' && <TripsPage orders={orders} trips={completedTrips} />}
-        {tab === 'earnings' && (
-          <EarningsPage
-            trips={completedTrips}
-            payouts={payouts}
-            upi={upi}
-            busy={busyKey === 'cashout'}
-            onCashout={cashout}
-            onAddUpiAccount={() => setTab('account')}
-          />
-        )}
-        {tab === 'account' && (
-          <AccountPage
-            profile={profile}
-            upi={upi}
-            notificationsEnabled={notificationsEnabled}
-            notificationBusy={notificationBusy}
-            busy={busyKey === 'profile'}
-            onSaveProfile={saveProfile}
-            onChangePassword={changePassword}
-            onAddUpi={addUpi}
-            onPrimaryUpi={primaryUpi}
-            onDeleteUpi={deleteUpi}
-            onToggleNotifications={toggleNotifications}
-            onTheme={(mode) => {
-              setTheme(mode)
-              void saveTheme(mode)
-            }}
-            theme={theme}
-            availableUpdate={availableUpdate}
-            checkingUpdate={checkingUpdate}
-            installingUpdate={installingUpdate}
-            updateError={updateError}
-            onCheckUpdate={refreshUpdateStatus}
-            onInstallUpdate={installUpdate}
-            onLogout={logout}
-          />
-        )}
-      </main>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <article className="offline-card">
+                  <span>
+                    <Icon name="bike" />
+                  </span>
+                  <h2>Start accepting deliveries</h2>
+                  <p>
+                    Going online requests precise location access so Crave can route nearby orders
+                    and keep customers updated.
+                  </p>
+                  <button className="primary-button" onClick={() => toggleDuty(true)}>
+                    Go online
+                  </button>
+                </article>
+              )}
+            </section>
+          )}
+          {tab === 'trips' && (
+            <TripsPage
+              orders={orders}
+              trips={completedTrips}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+            />
+          )}
+          {tab === 'earnings' && (
+            <EarningsPage
+              trips={completedTrips}
+              payouts={payouts}
+              upi={upi}
+              busy={busyKey === 'cashout'}
+              onCashout={cashout}
+              onAddUpiAccount={() => setTab('account')}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+            />
+          )}
+          {tab === 'account' && (
+            <AccountPage
+              profile={profile}
+              upi={upi}
+              notificationsEnabled={notificationsEnabled}
+              notificationBusy={notificationBusy}
+              busy={busyKey === 'profile'}
+              onSaveProfile={saveProfile}
+              onChangePassword={changePassword}
+              onAddUpi={addUpi}
+              onPrimaryUpi={primaryUpi}
+              onDeleteUpi={deleteUpi}
+              onToggleNotifications={toggleNotifications}
+              onTheme={(mode) => {
+                setTheme(mode)
+                void saveTheme(mode)
+              }}
+              theme={theme}
+              availableUpdate={availableUpdate}
+              checkingUpdate={checkingUpdate}
+              installingUpdate={installingUpdate}
+              updateError={updateError}
+              onCheckUpdate={refreshUpdateStatus}
+              onInstallUpdate={installUpdate}
+              onLogout={logout}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+            />
+          )}
+        </main>
+      </PullToRefresh>
       <nav className="bottom-nav" aria-label="Driver app navigation">
         {NAV_ITEMS.map((item) => (
           <button

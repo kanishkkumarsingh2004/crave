@@ -25,7 +25,7 @@ export interface MenuItemRecord {
   restaurant_id: string
   name: string
   category: string
-  price: number
+  price?: number
   restaurant_price: number
   description: string
   in_stock: boolean
@@ -44,7 +44,7 @@ interface MenuItemVariantRecord {
   id: string
   name: string
   restaurant_price: number
-  price: number
+  price?: number
   in_stock: boolean
   is_default: boolean
 }
@@ -55,8 +55,8 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
     restaurant_id: item.restaurant_id || fallbackRestaurantId,
     name: item.name,
     category: item.category || 'General',
-    price: Number(item.price),
-    restaurant_price: Number(item.restaurant_price ?? item.price),
+    price: Number(item.price ?? 0),
+    restaurant_price: Number(item.restaurant_price ?? item.price ?? 0),
     description: item.description ?? '',
     in_stock: item.in_stock ?? true,
     image:
@@ -74,7 +74,6 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
           id: variant.id,
           name: variant.name,
           restaurant_price: Number(variant.restaurant_price),
-          price: Number(variant.price),
           in_stock: variant.in_stock !== false,
           is_default: variant.is_default === true,
         }))
@@ -212,17 +211,14 @@ export default function VendorMenuPage() {
   const [categoryInput, setCategoryInput] = useState('Biryani, Rice & Pulao')
   const [isCustomCategory, setIsCustomCategory] = useState(false)
   const [customCategoryInput, setCustomCategoryInput] = useState('')
-  const [priceInput, setPriceInput] = useState<number | ''>('')
   const [restaurantPriceInput, setRestaurantPriceInput] = useState<number | ''>('')
   const [variantsInput, setVariantsInput] = useState<MenuItemVariantRecord[]>([])
   const [descInput, setDescInput] = useState('')
   const [imageInput, setImageInput] = useState('')
   const [isVegInput, setIsVegInput] = useState(true)
   const [inStockInput, setInStockInput] = useState(true)
-  const [stockCountInput, setStockCountInput] = useState<number | ''>(50)
   const [unitInput, setUnitInput] = useState('Serves 1')
   const [skuCodeInput, setSkuCodeInput] = useState('')
-  const [expiryDateInput, setExpiryDateInput] = useState('')
 
   // Commercial Engine Item Fields
   const [hsnSacInput, setHsnSacInput] = useState('996331')
@@ -347,19 +343,16 @@ export default function VendorMenuPage() {
     setCategoryInput('Biryani, Rice & Pulao')
     setIsCustomCategory(false)
     setCustomCategoryInput('')
-    setPriceInput('')
     setRestaurantPriceInput('')
     setVariantsInput([])
     setDescInput('')
     setImageInput('')
     setIsVegInput(true)
     setInStockInput(true)
-    setStockCountInput(50)
     setUnitInput('Serves 1')
     setSkuCodeInput('')
     setHsnSacInput('996331')
     setPriceTaxModeInput('TAX_INCLUSIVE')
-    setExpiryDateInput('')
     setShowItemModal(true)
   }
 
@@ -376,32 +369,27 @@ export default function VendorMenuPage() {
       setIsCustomCategory(true)
       setCustomCategoryInput(item.category)
     }
-    setPriceInput(item.price)
     setRestaurantPriceInput(item.restaurant_price ?? item.price)
     setVariantsInput(item.variants || [])
     setDescInput(item.description || '')
     setImageInput(item.image || '')
     setIsVegInput(item.veg !== false)
     setInStockInput(item.in_stock !== false)
-    setStockCountInput(item.stock_count != null ? item.stock_count : 50)
     setUnitInput(item.unit || '')
     setSkuCodeInput(item.sku_code || '')
     setHsnSacInput(item.hsn_sac_code || '996331')
     setPriceTaxModeInput(item.price_tax_mode || 'TAX_INCLUSIVE')
-    setExpiryDateInput(item.expiry_date || '')
     setShowItemModal(true)
   }
 
   function addStandardSizes() {
     if (variantsInput.length > 0) return
     const baseRestaurantPrice = Number(restaurantPriceInput || 0)
-    const baseAppPrice = Number(priceInput || baseRestaurantPrice)
     setVariantsInput(
       ['Small', 'Medium', 'Large'].map((name, index) => ({
         id: crypto.randomUUID(),
         name,
         restaurant_price: baseRestaurantPrice,
-        price: baseAppPrice,
         in_stock: true,
         is_default: index === 0,
       }))
@@ -426,25 +414,12 @@ export default function VendorMenuPage() {
 
   async function handleSaveItem(e: FormEvent) {
     e.preventDefault()
-    if (!nameInput.trim() || priceInput === '' || restaurantPriceInput === '' || !restaurantId) {
-      triggerToast('Please provide the dish name, restaurant price, and app price.')
+    if (!nameInput.trim() || restaurantPriceInput === '' || !restaurantId) {
+      triggerToast('Please provide the dish name and restaurant price.')
       return
     }
-    if (Number(priceInput) < Number(restaurantPriceInput)) {
-      triggerToast('App selling price cannot be lower than the restaurant price.')
-      return
-    }
-    if (
-      variantsInput.some(
-        (variant) =>
-          !variant.name.trim() ||
-          variant.restaurant_price < 0 ||
-          variant.price < variant.restaurant_price
-      )
-    ) {
-      triggerToast(
-        'Every size needs a name and an app price at least equal to its restaurant price.'
-      )
+    if (variantsInput.some((variant) => !variant.name.trim() || variant.restaurant_price < 0)) {
+      triggerToast('Every size needs a name and a valid restaurant price.')
       return
     }
 
@@ -463,18 +438,15 @@ export default function VendorMenuPage() {
       restaurant_id: restaurantId,
       name: nameInput.trim(),
       category: resolvedCategory,
-      price: Number(priceInput),
       restaurant_price: Number(restaurantPriceInput),
       description: descInput.trim(),
       in_stock: inStockInput,
       image: imageInput.trim() || defaultImg,
       veg: isVegInput,
       unit: unitInput.trim() || null,
-      stock_count: stockCountInput !== '' ? Number(stockCountInput) : 0,
       sku_code: skuCodeInput.trim() || null,
       hsn_sac_code: hsnSacInput.trim() || '996331',
       price_tax_mode: priceTaxModeInput,
-      expiry_date: expiryDateInput || null,
       variants: variantsInput.map((variant, index) => ({
         ...variant,
         is_default: variantsInput.some((entry) => entry.is_default)
@@ -490,7 +462,6 @@ export default function VendorMenuPage() {
         restaurant_id: restaurantId,
         name: itemData.name,
         category: itemData.category,
-        price: itemData.price,
         restaurant_price: itemData.restaurant_price,
         description: itemData.description || null,
         image: itemData.image || null,
@@ -498,11 +469,9 @@ export default function VendorMenuPage() {
         is_veg: itemData.veg ?? true,
         unit: itemData.unit || null,
         mrp: null,
-        stock_count: itemData.stock_count || 0,
         sku_code: itemData.sku_code || null,
         hsn_sac_code: itemData.hsn_sac_code || '996331',
         price_tax_mode: itemData.price_tax_mode || 'TAX_INCLUSIVE',
-        expiry_date: itemData.expiry_date || null,
         variants: itemData.variants,
       }
 
@@ -533,14 +502,13 @@ export default function VendorMenuPage() {
       if (result.item) {
         savedItem = {
           ...itemData,
-          price: Number(result.item.price),
-          restaurant_price: Number(result.item.restaurant_price ?? result.item.price),
+          price: Number(result.item.price ?? 0),
+          restaurant_price: Number(result.item.restaurant_price ?? result.item.price ?? 0),
           variants: Array.isArray(result.item.variants)
             ? result.item.variants.map((variant: any) => ({
                 id: variant.id,
                 name: variant.name,
                 restaurant_price: Number(variant.restaurant_price),
-                price: Number(variant.price),
                 in_stock: variant.in_stock !== false,
                 is_default: variant.is_default === true,
               }))
@@ -790,15 +758,7 @@ export default function VendorMenuPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-black text-lg text-[#5e700a] dark:text-[#d9f447]">
-                        {item.variants.length > 0 ? 'From ' : ''}₹{item.price}
-                      </span>
-                      <span className="block text-[10px] font-bold text-stone-500 dark:text-gray-400">
-                        Restaurant ₹{item.restaurant_price} · Margin ₹
-                        {item.price - item.restaurant_price}
-                      </span>
-                    </div>
+                    {/* Pricing hidden from vendor view - managed by admin commission config */}
                   </div>
 
                   <p className="text-xs text-stone-500 dark:text-gray-400 mt-1 line-clamp-2">
@@ -811,7 +771,7 @@ export default function VendorMenuPage() {
                         key={variant.id}
                         className="font-bold text-[#65780d] dark:text-[#d9f447] text-xs"
                       >
-                        {variant.name}: ₹{variant.price}
+                        {variant.name}: ₹{variant.restaurant_price ?? variant.price}
                       </span>
                     ))}
                     {item.stock_count != null && (
@@ -1072,27 +1032,6 @@ export default function VendorMenuPage() {
                 </div>
                 <div>
                   <label className="font-bold text-stone-700 dark:text-gray-200">
-                    App Selling Price (₹) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    step={1}
-                    placeholder="e.g. 110"
-                    value={priceInput}
-                    onChange={(e) =>
-                      setPriceInput(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-black text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
-                  />
-                  <span className="mt-1 block text-[10px] text-stone-400">
-                    Customer price; difference is platform margin
-                  </span>
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">
                     GST Tax Mode
                   </label>
                   <select
@@ -1123,7 +1062,7 @@ export default function VendorMenuPage() {
                       Sizes / Variants
                     </p>
                     <p className="text-[10px] text-stone-500 dark:text-gray-400">
-                      Optional. Each size has its own restaurant and app price.
+                      Optional. Each size has its own restaurant price.
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -1145,7 +1084,6 @@ export default function VendorMenuPage() {
                             id: crypto.randomUUID(),
                             name: '',
                             restaurant_price: Number(restaurantPriceInput || 0),
-                            price: Number(priceInput || restaurantPriceInput || 0),
                             in_stock: true,
                             is_default: current.length === 0,
                           },
@@ -1185,18 +1123,6 @@ export default function VendorMenuPage() {
                           }
                           className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-[#121815] outline-none dark:border-[#233027] dark:bg-[#0d1210] dark:text-white"
                           placeholder="Restaurant ₹"
-                        />
-                        <input
-                          aria-label={`${variant.name || 'Size'} app price`}
-                          type="number"
-                          min={0}
-                          step={1}
-                          value={variant.price}
-                          onChange={(e) =>
-                            updateVariant(variant.id, { price: Number(e.target.value) })
-                          }
-                          className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-[#121815] outline-none dark:border-[#233027] dark:bg-[#0d1210] dark:text-white"
-                          placeholder="App ₹"
                         />
                         <div className="flex items-center justify-end gap-2">
                           <label className="flex items-center gap-1 text-[10px] font-bold text-stone-500">
@@ -1254,25 +1180,6 @@ export default function VendorMenuPage() {
 
                 <div>
                   <label className="font-bold text-stone-700 dark:text-gray-200">
-                    Stock Quantity (Units)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={stockCountInput}
-                    onChange={(e) =>
-                      setStockCountInput(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
-                    placeholder="50"
-                  />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">
-                    Daily kitchen inventory
-                  </span>
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">
                     SKU / Item Code <span className="text-stone-400 font-normal">(Optional)</span>
                   </label>
                   <input
@@ -1284,21 +1191,6 @@ export default function VendorMenuPage() {
                   />
                   <span className="text-[10px] text-stone-400 mt-0.5 block">
                     Internal tracking code
-                  </span>
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 dark:text-gray-200">
-                    Expiry Date <span className="text-stone-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={expiryDateInput}
-                    onChange={(e) => setExpiryDateInput(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
-                  />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">
-                    Use the same YYYY-MM-DD value as the CSV
                   </span>
                 </div>
               </div>
