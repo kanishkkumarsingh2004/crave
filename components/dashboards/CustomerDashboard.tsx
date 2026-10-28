@@ -23,6 +23,7 @@ import {
   MapPin,
   Menu,
   ShoppingCart,
+  Store,
   User,
   X,
   Zap,
@@ -832,8 +833,8 @@ export default function CustomerDashboard({
           onClick={() => router.push('/user/cravexp')}
           className="flex flex-col items-center gap-1 text-[10px] font-bold cursor-pointer text-gray-400 hover:text-[#86a018] dark:hover:text-white"
         >
-          <CraveLogo variant="cravexp" size="sm" />
-          <span className="text-[9px] font-semibold text-[#86a018]">Store</span>
+          <Store className="size-5 text-emerald-600" />
+          <span className="text-[9px] font-semibold text-[#86a018]">XP Store</span>
         </button>
 
         <button

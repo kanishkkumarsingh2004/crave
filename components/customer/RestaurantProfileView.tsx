@@ -74,7 +74,7 @@ export default function RestaurantProfileView({
   customerAddress,
   triggerToast,
 }: RestaurantProfileViewProps) {
-  const [activeTab, setActiveTab] = useState<'order_online' | 'dineout'>('order_online')
+  const [activeTab, setActiveTab] = useState<'order_online'>('order_online')
   const [searchQuery, setSearchQuery] = useState('')
   const [vegOnly, setVegOnly] = useState(false)
   const [nonVegOnly, setNonVegOnly] = useState(false)
@@ -96,8 +96,9 @@ export default function RestaurantProfileView({
       prev.map((item) => {
         if (item.id === updatedItem.id) {
           const isNowInStock =
-            updatedItem.in_stock !== false &&
-            (updatedItem.stock_count == null || updatedItem.stock_count > 0)
+            updatedItem.in_stock === true ||
+            (updatedItem.in_stock !== false &&
+              (updatedItem.stock_count == null || updatedItem.stock_count > 0))
           return {
             ...item,
             in_stock: isNowInStock,
@@ -246,20 +247,6 @@ export default function RestaurantProfileView({
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('dineout')}
-              className={`pb-3 text-sm sm:text-base font-bold transition relative cursor-pointer ${
-                activeTab === 'dineout'
-                  ? 'text-[#1D1D1F] dark:text-white'
-                  : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              Dineout
-              {activeTab === 'dineout' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#1D1D1F] dark:bg-white" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -381,31 +368,6 @@ export default function RestaurantProfileView({
             </div>
           </div>
         </div>
-
-        {/* Dineout Tab Content */}
-        {activeTab === 'dineout' && (
-          <div className="rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-8 text-center space-y-4">
-            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[#f97316]/10 text-[#f97316]">
-              <UtensilsCrossed className="size-8" />
-            </div>
-            <h3 className="text-xl font-bold text-[#121815] dark:text-white">
-              Table Booking &amp; Dine-in at {restaurant.name}
-            </h3>
-            <p className="max-w-md mx-auto text-xs text-stone-500 dark:text-gray-400 leading-relaxed">
-              Enjoy flat 15% off your dine-in bill with Crave Pass. Show your digital pass at the counter
-              or reserve a table for your family.
-            </p>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => triggerToast?.('Table reservations currently handled via concierge call.')}
-                className="rounded-full bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 text-xs font-black transition cursor-pointer"
-              >
-                Book Table via Concierge
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Order Online Tab Content */}
         {activeTab === 'order_online' && (
@@ -558,9 +520,12 @@ export default function RestaurantProfileView({
                       const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
                       const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
                       const isOutOfStock =
-                        item.in_stock === false ||
-                        item.inStock === false ||
-                        (item.stock_count != null && item.stock_count <= 0)
+                        (item.in_stock === false || item.inStock === false) &&
+                        !(item.in_stock === true || item.inStock === true)
+                          ? true
+                          : item.stock_count != null &&
+                            item.stock_count <= 0 &&
+                            !(item.in_stock === true || item.inStock === true)
 
                       return (
                         <div

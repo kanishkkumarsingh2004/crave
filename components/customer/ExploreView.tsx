@@ -25,7 +25,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
 import RestaurantProfileView from './RestaurantProfileView'
 import OrderAgainStrip from './OrderAgainStrip'
@@ -131,6 +131,15 @@ export default function ExploreView({
   // Hero Carousel State
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
   const [heroAutoplayPaused, setHeroAutoplayPaused] = useState(false)
+
+  // Autoplay loop every 3 seconds
+  useEffect(() => {
+    if (heroAutoplayPaused) return
+    const timer = setInterval(() => {
+      setHeroSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [heroAutoplayPaused])
   const [copiedPromoCode, setCopiedPromoCode] = useState<string | null>(null)
 
   // Variant Picker State
@@ -223,16 +232,16 @@ export default function ExploreView({
         onMouseLeave={() => setHeroAutoplayPaused(false)}
         className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-black/[0.08] dark:border-white/[0.08] bg-[#161617] transition-all duration-300 group/hero shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
       >
-        <div className="relative min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[480px] w-full flex items-center">
+        <div className="relative min-h-[360px] sm:min-h-[420px] md:min-h-[460px] lg:min-h-[480px] xl:min-h-[500px] w-full flex items-center">
           {/* Slide 0: Gourmet Feasts */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out flex flex-row items-center p-3 sm:p-6 lg:p-8 pb-6 sm:pb-8 md:pb-4 gap-4 sm:gap-6 ${
               heroSlideIndex === 0 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
             <div className="absolute inset-0 bg-[#161617] -z-10" />
 
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+            <div className="z-10 flex flex-col justify-center space-y-2 sm:space-y-3 px-2 sm:px-0 lg:px-0 order-1 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <CraveLogo variant="full" size="md" theme="light" />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-semibold tracking-wide border border-white/10 backdrop-blur-md">
@@ -268,14 +277,14 @@ export default function ExploreView({
                 </button>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Savor Gourmet Feasts Delivered Fresh In 25 Mins
               </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
+              <p className="text-[10px] sm:text-xs text-[#86868B] max-w-xs sm:max-w-xl font-normal leading-relaxed">
                 Steaming dum biryani, woodfired pizzas, smash burgers &amp; sizzling fries cooked fresh on order.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => document.getElementById('dishes-section')?.scrollIntoView({ behavior: 'smooth' })}
@@ -302,7 +311,7 @@ export default function ExploreView({
               </div>
             </div>
 
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+            <div className="relative h-40 sm:h-48 md:h-[400px] lg:h-[430px] w-48 sm:w-64 md:w-80 flex-shrink-0 flex items-center justify-center md:justify-end order-2 mt-0 min-w-0">
               <div className="relative w-full h-full rounded-2xl overflow-hidden">
                 <img
                   src="/banners/gourmet-feast.jpg"
@@ -319,12 +328,12 @@ export default function ExploreView({
 
           {/* Slide 1: craveXP Flash Drop */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out flex flex-row items-center p-3 sm:p-6 lg:p-8 pb-6 sm:pb-8 md:pb-4 gap-4 sm:gap-6 ${
               heroSlideIndex === 1 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
             <div className="absolute inset-0 bg-[#0C1510] -z-10" />
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+            <div className="z-10 flex flex-col justify-center space-y-2 sm:space-y-3 px-2 sm:px-0 lg:px-0 order-1 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <CraveLogo variant="cravexp" size="lg" theme="light" />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34C759] text-white text-[11px] font-semibold uppercase tracking-wider">
@@ -332,10 +341,10 @@ export default function ExploreView({
                   10-Min Flash Drop
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Ultra-Fast Grocery &amp; Daily Essentials
               </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
+              <p className="text-[10px] sm:text-xs text-[#86868B] max-w-xs sm:max-w-xl font-normal leading-relaxed">
                 Farm eggs, chilled milk, organic avocados, fresh berries &amp; pantry snacks in 10 minutes flat.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
@@ -349,7 +358,7 @@ export default function ExploreView({
                 </button>
               </div>
             </div>
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+            <div className="relative h-40 sm:h-48 md:h-[400px] lg:h-[430px] w-48 sm:w-64 md:w-80 flex-shrink-0 flex items-center justify-center md:justify-end order-2 mt-0 min-w-0">
               <div className="relative w-full h-full rounded-2xl overflow-hidden">
                 <img
                   src="/banners/cravexp-grocery.jpg"
@@ -362,22 +371,22 @@ export default function ExploreView({
 
           {/* Slide 2: Midnight Cravings */}
           <div
-            className={`absolute inset-0 transition-opacity duration-500 ease-out grid grid-cols-1 md:grid-cols-12 items-center p-6 sm:p-10 lg:p-12 pb-16 sm:pb-16 md:pb-12 ${
+            className={`absolute inset-0 transition-opacity duration-500 ease-out flex flex-row items-center p-3 sm:p-6 lg:p-8 pb-6 sm:pb-8 md:pb-4 gap-4 sm:gap-6 ${
               heroSlideIndex === 2 ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
             <div className="absolute inset-0 bg-[#14121E] -z-10" />
-            <div className="md:col-span-7 z-10 flex flex-col justify-center space-y-4">
+            <div className="z-10 flex flex-col justify-center space-y-2 sm:space-y-3 px-2 sm:px-0 lg:px-0 order-1 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <CraveLogo variant="full" size="md" theme="light" />
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6] text-white text-[11px] font-semibold uppercase tracking-wider w-fit">
                   Open Till 4 AM
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white tracking-[-0.02em] leading-[1.15]">
                 Satisfy Your Late-Night Cravings
               </h2>
-              <p className="text-xs sm:text-sm text-[#86868B] max-w-xl font-normal leading-relaxed">
+              <p className="text-[10px] sm:text-xs text-[#86868B] max-w-xs sm:max-w-xl font-normal leading-relaxed">
                 Crispy wings, loaded cheesy nachos, warm chocolate lava cakes &amp; iced drinks delivered all night.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
@@ -394,27 +403,12 @@ export default function ExploreView({
                 </button>
               </div>
             </div>
-            <div className="md:col-span-5 relative h-64 sm:h-80 md:h-[400px] lg:h-[430px] w-full flex items-center justify-center md:justify-end mt-4 md:mt-0">
+            <div className="relative h-40 sm:h-48 md:h-[400px] lg:h-[430px] w-48 sm:w-64 md:w-80 flex-shrink-0 flex items-center justify-center md:justify-end order-2 mt-0 min-w-0">
               <div className="relative w-full h-full rounded-2xl overflow-hidden">
                 <img src="/banners/midnight-feast.jpg" alt="Midnight Feast" className="w-full h-full object-cover object-center rounded-2xl" />
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Apple-style Pill Indicators */}
-        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-          {[0, 1, 2].map((idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setHeroSlideIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                heroSlideIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
         </div>
 
         {/* Carousel Indicators & Arrows - Apple Glass Controls */}
@@ -602,10 +596,15 @@ export default function ExploreView({
                 : []
               const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
               const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+              const explicitlyInStock =
+                item.in_stock === true || item.inStock === true
+              const explicitlyOutOfStock =
+                item.in_stock === false || item.inStock === false
               const isOutOfStock =
-                item.in_stock === false ||
-                item.inStock === false ||
-                (item.stock_count != null && item.stock_count <= 0)
+                explicitlyOutOfStock ||
+                (!explicitlyInStock &&
+                  item.stock_count != null &&
+                  item.stock_count <= 0)
 
               return (
                 <div

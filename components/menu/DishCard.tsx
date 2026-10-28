@@ -76,16 +76,9 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
           </div>
           <div className="text-right shrink-0">
             <span className="font-bold text-lg text-[#1D1D1F] dark:text-white block">
-              {item.variants.length > 0 ? 'From ' : ''}₹{item.price}
+              {item.variants.length > 0 ? 'From ' : ''}₹{item.restaurant_price ?? item.price}
             </span>
           </div>
-        </div>
-
-        {/* Margin Pill */}
-        <div className="inline-flex items-center gap-1.5 rounded-md bg-stone-100 dark:bg-white/5 px-2 py-0.5 text-[11px] font-medium text-stone-500 dark:text-stone-400 mt-1">
-          <span>Restaurant ₹{item.restaurant_price}</span>
-          <span className="opacity-50">·</span>
-          <span>Margin ₹{item.price - item.restaurant_price}</span>
         </div>
 
         {/* Description */}

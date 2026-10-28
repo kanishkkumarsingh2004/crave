@@ -121,7 +121,7 @@ export default function HomePage() {
           ? '/vendor/dashboard'
           : role === 'cravexp_store_vendor'
             ? '/vendor/crave-ep'
-            : null
+            : '/user/cravexp'
   }
 
   // Preserve authentication redirects to designated operational cockpits
