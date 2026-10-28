@@ -290,7 +290,7 @@ export default function CraveXPStore() {
       {/* ── STICKY SUB-HEADER: search + category tabs only (logo/cart/nav come from app layout) ── */}
       <div className="sticky top-[60px] z-40 bg-white border-b border-gray-100 shadow-xs">
         {/* Search row */}
-        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 py-2.5">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 py-2.5">
           <div className="relative flex items-center rounded-xl bg-white border border-gray-200 px-3.5 py-2.5 focus-within:border-[#8B1EEF] focus-within:ring-2 focus-within:ring-[#8B1EEF]/20 transition-all">
             <Search className="size-4 text-gray-400 mr-2.5 shrink-0" />
             <input
@@ -315,7 +315,7 @@ export default function CraveXPStore() {
 
           {/* Instant Search Suggestions Dropdown */}
           {isSearchFocused && searchQuery.trim().length > 0 && (
-            <div className="absolute left-4 right-4 sm:left-6 sm:right-6 mt-2 z-50 rounded-2xl bg-white border border-gray-100 shadow-2xl p-3 text-[#1A1A1A] animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute left-4 right-4 sm:left-8 sm:right-8 lg:left-10 lg:right-10 mt-2 z-50 rounded-2xl bg-white border border-gray-100 shadow-2xl p-3 text-[#1A1A1A] animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-gray-400 pb-2 border-b border-gray-100">
                 <span>Matching Products ({searchSuggestions.length})</span>
                 <span>Instant Add</span>
@@ -379,7 +379,7 @@ export default function CraveXPStore() {
 
         {/* Category tabs */}
         <div className="border-t border-gray-100 bg-white">
-          <div className="mx-auto flex max-w-[1280px] items-center gap-6 sm:gap-8 px-4 sm:px-6 overflow-x-auto scrollbar-none text-xs sm:text-[13px] font-bold">
+          <div className="mx-auto flex max-w-[1440px] items-center gap-6 sm:gap-8 px-4 sm:px-8 lg:px-10 overflow-x-auto scrollbar-none text-xs sm:text-[13px] font-bold">
             <button
               onClick={() => { setSelectedCategory('All Items'); setSearchQuery('') }}
               className={`flex items-center gap-1.5 py-2.5 sm:py-3 border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
@@ -415,55 +415,59 @@ export default function CraveXPStore() {
 
       {/* ── 3. HERO PROMO BANNER (CYAN/TEAL GROCERY THEME - NO PAAN) ────────── */}
       {selectedCategory === 'All Items' && !searchQuery && (
-        <section className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-4 sm:pt-6">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#D7F5F7] via-[#E4FAF9] to-[#C9F3F6] border border-[#BCE8EB] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 pt-4 sm:pt-6">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#D7F5F7] via-[#E4FAF9] to-[#C9F3F6] border border-[#BCE8EB] p-6 sm:p-8 lg:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xs">
             {/* Left Content */}
             <div className="z-10 max-w-xl text-center md:text-left">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#005C6E] tracking-tight uppercase">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#005C6E]/10 px-3.5 py-1 text-xs font-black text-[#005C6E] uppercase tracking-wider mb-2.5">
+                <span className="size-2 rounded-full bg-[#00A878] animate-ping" />
+                <span>Instant 10-Min Dark Store</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#005C6E] tracking-tight uppercase leading-tight">
                 CraveXP Grocery Hub
               </h1>
-              <p className="mt-2 text-sm sm:text-base font-semibold text-[#026E80] leading-relaxed">
-                Get farm-fresh produce, chilled dairy, snacks &amp; daily essentials delivered in 10 minutes!
+              <p className="mt-2 text-sm sm:text-base font-semibold text-[#026E80] leading-relaxed max-w-lg">
+                Farm-fresh produce, chilled dairy, snacks &amp; daily essentials delivered in 10 minutes!
               </p>
-              <div className="mt-5 flex items-center justify-center md:justify-start gap-3">
+              <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <button
                   onClick={() => {
                     const el = document.getElementById('shop-by-category')
                     el?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="rounded-full bg-[#0C1A1E] hover:bg-black text-white font-black text-xs sm:text-sm px-6 py-3 shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="rounded-full bg-[#0C1A1E] hover:bg-black text-white font-black text-xs sm:text-sm px-7 py-3 shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Order now</span>
+                  <span>Explore Catalog</span>
                   <ChevronRight className="size-4 stroke-[3]" />
                 </button>
-                <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-3.5 py-2 text-xs font-bold text-[#005C6E] border border-white/60">
+                <div className="flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-xs px-4 py-2.5 text-xs font-bold text-[#005C6E] border border-white/80 shadow-xs">
                   <Zap className="size-3.5 fill-[#FF9500] text-[#FF9500]" />
                   <span>Free delivery above ₹199</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Side: High-res Product Pack Arrangement */}
-            <div className="relative z-10 flex items-center gap-2 sm:gap-3 shrink-0">
-              <div className="size-24 sm:size-32 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-sm border border-white/60">
+            {/* Right Side: High-res Full Product Pack Arrangement */}
+            <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4 shrink-0">
+              <div className="w-24 sm:w-32 md:w-36 aspect-3/4 rounded-2xl overflow-hidden shadow-md border-2 border-white/90 group">
                 <img
-                  src="https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
-                  alt="Fresh Milk"
-                  className="size-full object-cover rounded-xl"
+                  src="https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600"
+                  alt="Farm Fresh Milk & Dairy"
+                  className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="size-28 sm:size-36 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-md border border-white/60 -translate-y-2">
+              <div className="w-28 sm:w-36 md:w-40 aspect-3/4 rounded-2xl overflow-hidden shadow-lg border-2 border-white/90 -translate-y-2 group">
                 <img
-                  src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400"
-                  alt="Fresh Fruits"
-                  className="size-full object-cover rounded-xl"
+                  src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600"
+                  alt="Organic Fruits & Vegetables"
+                  className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="size-24 sm:size-32 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-sm border border-white/60">
+              <div className="w-24 sm:w-32 md:w-36 aspect-3/4 rounded-2xl overflow-hidden shadow-md border-2 border-white/90 group hidden sm:block">
                 <img
-                  src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
-                  alt="Cold Drinks"
-                  className="size-full object-cover rounded-xl"
+                  src="https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600"
+                  alt="Crispy Snacks & Munchies"
+                  className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
             </div>
@@ -471,32 +475,42 @@ export default function CraveXPStore() {
         </section>
       )}
 
-      {/* ── SHOP BY CATEGORY GRID (uses CRAVEXP_CATEGORIES — single source of truth) ── */}
+      {/* ── SHOP BY CATEGORY GRID (Full-bleed images — single source of truth) ── */}
       {selectedCategory === 'All Items' && !searchQuery && (
-        <section id="shop-by-category" className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-6 sm:pt-8">
+        <section id="shop-by-category" className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 pt-6 sm:pt-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-black text-[#1A1A1A] tracking-tight">
-              Shop by Category
-            </h2>
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-[#1A1A1A] tracking-tight">
+                Shop by Category
+              </h2>
+              <p className="text-xs text-gray-400 font-medium mt-0.5">
+                Curated daily essentials organized for rapid 10-minute dispatch
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3.5 sm:gap-4">
             {CRAVEXP_CATEGORIES.map((cat) => (
               <div
                 key={cat.id}
                 onClick={() => scrollToCategory(cat.id)}
-                className="group rounded-2xl bg-[#F4F6FB] hover:bg-[#EEF1F8] border border-gray-100 p-3 sm:p-4 flex flex-col items-center justify-between text-center transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white hover:border-[#8B1EEF]/30 hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 flex flex-col"
               >
-                <div className="size-20 sm:size-24 rounded-2xl overflow-hidden bg-white p-2 shadow-xs group-hover:scale-105 transition-transform duration-300">
+                {/* Full-bleed category photo */}
+                <div className="relative aspect-4/3 w-full overflow-hidden bg-gray-100">
                   <img
                     src={cat.image}
                     alt={cat.label}
-                    className="size-full object-cover rounded-xl"
+                    className="size-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                 </div>
-                <h3 className="mt-3 text-xs sm:text-[13px] font-bold text-[#1A1A1A] group-hover:text-[#8B1EEF] transition-colors line-clamp-2 leading-tight">
-                  {cat.label}
-                </h3>
+                {/* Category label bar */}
+                <div className="p-2.5 sm:p-3 text-center bg-white flex-1 flex items-center justify-center">
+                  <h3 className="text-xs sm:text-[13px] font-black text-[#1A1A1A] group-hover:text-[#8B1EEF] transition-colors line-clamp-2 leading-tight">
+                    {cat.label}
+                  </h3>
+                </div>
               </div>
             ))}
           </div>
@@ -504,7 +518,7 @@ export default function CraveXPStore() {
       )}
 
       {/* ── PRODUCT RAILS & CAROUSELS ── */}
-      <main className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-6 sm:pt-8">
+      <main className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 pt-6 sm:pt-8">
         {isLoadingItems ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5 sm:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -809,14 +823,14 @@ function CraveXPProductCard({ item, qty, onUpdateQty, onQuickView }: CraveXPProd
     : 0
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl bg-white p-3 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 min-w-[170px] sm:min-w-[195px] max-w-[210px] shrink-0">
+    <div className="group relative flex flex-col justify-between rounded-2xl bg-white p-3 sm:p-3.5 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 min-w-[185px] sm:min-w-[215px] max-w-[235px] shrink-0">
       <div>
         {/* Top Badges: Veg indicator & 10 Mins Delivery */}
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
             {/* Indian Food Veg/Non-Veg symbol */}
             <span
-              className={`inline-flex items-center justify-center size-3.5 rounded-sm border ${
+              className={`inline-flex items-center justify-center size-3.5 rounded-xs border ${
                 item.isVeg !== false ? 'border-emerald-600 bg-white' : 'border-red-600 bg-white'
               }`}
               title={item.isVeg !== false ? 'Vegetarian' : 'Non-Vegetarian'}
@@ -840,13 +854,15 @@ function CraveXPProductCard({ item, qty, onUpdateQty, onQuickView }: CraveXPProd
           )}
         </div>
 
-        {/* Product Image Frame with Floating ADD Button */}
-        <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-white flex items-center justify-center p-2 mb-2 cursor-pointer">
+        {/* Product Image Frame: Full-bleed product display without thick white padding */}
+        <div
+          onClick={onQuickView}
+          className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50/50 flex items-center justify-center p-1.5 mb-2.5 cursor-pointer group-hover:bg-gray-100/60 transition-colors"
+        >
           <img
             src={item.image}
             alt={item.name}
             loading="lazy"
-            onClick={onQuickView}
             className="size-full object-contain transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               const target = e.target as HTMLImageElement
