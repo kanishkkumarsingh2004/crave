@@ -10,6 +10,7 @@ import {
 import { useWebSocket } from '@/lib/websocket'
 import {
   Apple as AppleIcon,
+  ArrowLeft,
   ArrowRight,
   Check,
   ChevronLeft,
@@ -289,9 +290,18 @@ export default function CraveXPStore() {
     <div className="min-h-screen bg-white text-[#1A1A1A] pb-28 font-sans antialiased selection:bg-[#8B1EEF]/20 selection:text-[#8B1EEF]">
       {/* ── STICKY SUB-HEADER: search + category tabs only (logo/cart/nav come from app layout) ── */}
       <div className="sticky top-[60px] z-40 bg-white border-b border-gray-100 shadow-xs">
-        {/* Search row */}
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 py-2.5">
-          <div className="relative flex items-center rounded-xl bg-white border border-gray-200 px-3.5 py-2.5 focus-within:border-[#8B1EEF] focus-within:ring-2 focus-within:ring-[#8B1EEF]/20 transition-all">
+        {/* Search row with Back to Food Delivery Escape Button */}
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 py-2.5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push('/user/explore')}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-[#1A1A1A] px-3.5 py-2.5 text-xs font-bold transition shrink-0 cursor-pointer shadow-xs"
+            title="Return to Food Delivery (Explore)"
+          >
+            <ArrowLeft className="size-4 text-gray-600" />
+            <span className="hidden sm:inline">Food Delivery</span>
+          </button>
+          <div className="relative flex-1 flex items-center rounded-xl bg-white border border-gray-200 px-3.5 py-2.5 focus-within:border-[#8B1EEF] focus-within:ring-2 focus-within:ring-[#8B1EEF]/20 transition-all">
             <Search className="size-4 text-gray-400 mr-2.5 shrink-0" />
             <input
               type="text"

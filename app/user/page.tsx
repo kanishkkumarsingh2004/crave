@@ -14,7 +14,7 @@ export default function UserIndexPage() {
     if (!user) {
       router.replace('/login?logout=1')
     } else {
-      router.replace('/user/dashboard')
+      router.replace('/user/explore')
     }
   }, [user, isLoading, router])
 

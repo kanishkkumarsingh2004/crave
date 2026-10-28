@@ -18,63 +18,33 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-// ── Featured Kitchen Collections (Zomato/Swiggy Curated Partners) ────────────
-const FEATURED_KITCHENS = [
+// ── Featured Kitchen Collections (Real Database Fallback) ────────────
+const DEFAULT_FEATURED_KITCHENS = [
   {
-    id: 'k1',
-    name: 'The Woodfired Hearth',
-    cuisine: 'Authentic Neapolitan • Sourdough Pizza',
-    rating: 4.9,
-    ratingCount: '1.4k',
-    deliveryTime: '22 min',
-    distance: '1.8 km',
-    offer: 'Complimentary Garlic Bread with Order',
-    image:
-      'https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=600&q=80',
-    tag: 'Artisan Woodfired Hearth',
-    path: '/user/explore',
-  },
-  {
-    id: 'k2',
-    name: 'Nawabi Dum Darbar',
-    cuisine: 'Hyderabadi Biryani • Mughlai Gravies',
+    id: 'rest_01',
+    name: 'Spice Garden Gourmet',
+    cuisine: 'North Indian & Mughlai',
     rating: 4.8,
-    ratingCount: '2.8k',
-    deliveryTime: '24 min',
-    distance: '2.4 km',
-    offer: 'Flat 20% Off Code CRAVENAWAB',
-    image:
-      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80',
-    tag: 'Slow-Cooked Royal Awadh',
-    path: '/user/explore',
+    ratingCount: '320',
+    deliveryTime: '25 min',
+    distance: '1.2 km',
+    offer: '50% OFF up to ₹100',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    tag: 'Gourmet Handi & Mughlai',
+    path: '/user/explore?restaurant=rest_01',
   },
   {
-    id: 'k3',
-    name: 'CraveXP Flash Store #01',
-    cuisine: '15-Min Groceries • Dairy & Ice Creams',
+    id: 'rest_02',
+    name: 'Bella Italia Bistro',
+    cuisine: 'Italian, Pizza & Pasta',
     rating: 4.9,
-    ratingCount: '5.2k',
-    deliveryTime: '12 min',
-    distance: '0.9 km',
-    offer: 'Complimentary Express Delivery',
-    image:
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
-    tag: 'Hyper-Local Dark Store Hub',
-    path: '/user/cravexp',
-  },
-  {
-    id: 'k4',
-    name: 'The Green Fork Bistro',
-    cuisine: 'Macro Bowls • Cold-Pressed Juice',
-    rating: 4.8,
-    ratingCount: '890',
+    ratingCount: '450',
     deliveryTime: '20 min',
-    distance: '2.1 km',
-    offer: 'Calorie Counted • 100% Organic',
-    image:
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
-    tag: 'Organic Farm-to-Table',
-    path: '/user/explore',
+    distance: '1.8 km',
+    offer: 'Flat ₹120 Off Gourmet',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    tag: 'Artisan Woodfired & Pasta',
+    path: '/user/explore?restaurant=rest_02',
   },
 ]
 
@@ -95,14 +65,45 @@ export default function HomePage() {
   const [selectedLocation, setSelectedLocation] = useState('Kanakapura Road, Bengaluru')
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
   const [activeKitchen, setActiveKitchen] = useState(0)
+  const [featuredKitchens, setFeaturedKitchens] = useState(DEFAULT_FEATURED_KITCHENS)
+
+  // Fetch real restaurants from the database for the homepage
+  useEffect(() => {
+    fetch('/api/restaurants', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.restaurants && Array.isArray(data.restaurants)) {
+          const foodRests = data.restaurants
+            .filter((r: any) => !r.is_dark_store && r.id !== 'cravexp_dark_store_01')
+            .map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              cuisine: r.cuisine || 'Curated Kitchen',
+              rating: Number(r.rating) || 4.8,
+              ratingCount: r.rating_count ? `${r.rating_count}` : '100+',
+              deliveryTime: `${r.delivery_minutes || 25} min`,
+              distance: r.distance ? `${r.distance}` : '1.5 km',
+              offer: r.offer || 'Special Discount Available',
+              image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+              tag: r.cuisine?.split(' ')[0] || 'Verified Kitchen',
+              path: `/user/explore?restaurant=${r.id}`,
+            }))
+          if (foodRests.length > 0) {
+            setFeaturedKitchens(foodRests)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Auto-rotate featured kitchen cards every 3 seconds in a loop.
   useEffect(() => {
+    if (featuredKitchens.length === 0) return
     const timer = setInterval(() => {
-      setActiveKitchen((i) => (i + 1) % FEATURED_KITCHENS.length)
+      setActiveKitchen((i) => (i + 1) % featuredKitchens.length)
     }, 3000)
     return () => clearInterval(timer)
-  }, [])
+  }, [featuredKitchens.length])
 
   // Compute target dashboard URL based on operational user role or URL redirect param
   const getTargetDashboard = () => {
@@ -121,7 +122,7 @@ export default function HomePage() {
           ? '/vendor/dashboard'
           : role === 'cravexp_store_vendor'
             ? '/vendor/crave-ep'
-            : '/user/cravexp'
+            : '/user/explore'
   }
 
   // Preserve authentication redirects to designated operational cockpits
@@ -426,7 +427,7 @@ export default function HomePage() {
               className="flex transition-transform duration-500 ease-in-out will-change-transform"
               style={{ transform: `translateX(-${activeKitchen * 100}%)` }}
             >
-              {FEATURED_KITCHENS.map((k) => (
+              {featuredKitchens.map((k) => (
                 <div
                   key={k.id}
                   onClick={() => handleNavigate(k.path)}

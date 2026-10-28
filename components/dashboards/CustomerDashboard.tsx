@@ -239,7 +239,7 @@ export default function CustomerDashboard({
 
   // Listen for browser forward/back buttons to keep selected restaurant in sync with URL
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = async () => {
       if (typeof window === 'undefined') return
       const searchParams = new URLSearchParams(window.location.search)
       const targetId = searchParams.get('restaurant') || searchParams.get('restaurantId')
@@ -290,11 +290,18 @@ export default function CustomerDashboard({
       const url = new URL(window.location.href)
       if (rest?.id) {
         url.searchParams.set('restaurant', rest.id)
+        window.history.pushState({ modal: 'restaurant', id: rest.id }, '', url.toString())
       } else {
         url.searchParams.delete('restaurant')
         url.searchParams.delete('restaurantId')
+        // If we are unselecting a restaurant and the current URL had a restaurant param,
+        // use history.back() so we don't push duplicate explore pages onto the history stack!
+        if (window.location.search.includes('restaurant')) {
+          window.history.back()
+        } else {
+          window.history.replaceState({}, '', url.toString())
+        }
       }
-      window.history.pushState({}, '', url.toString())
     }
   }, [])
 

@@ -53,6 +53,21 @@ const CATEGORY_LIST = [
   { id: 'Thali', label: 'Royal Thalis', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80' },
 ]
 
+const CATEGORY_IMAGE_MAP: Record<string, string> = {
+  All: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
+  Biryani: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+  Pizzas: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  Pizza: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  Curries: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  'North Indian': 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  Pastas: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  Pasta: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  Breads: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80',
+  Desserts: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80',
+  Italian: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80',
+  Mughlai: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+}
+
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   All: [],
   Biryani: ['biryani', 'hyderabadi', 'mughlai', 'rice'],
@@ -120,6 +135,38 @@ export default function ExploreView({
 
   const router = useRouter()
   const categoryScrollRef = useRef<HTMLDivElement>(null)
+
+  // Dynamically compute cuisine/dish categories that currently exist in the database
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>()
+    menuItemsList.forEach((m) => {
+      if (m.category?.trim()) set.add(m.category.trim())
+    })
+    restaurantsList.forEach((r) => {
+      if (r.cuisine) {
+        r.cuisine.split(/[,&•]/).forEach((c) => {
+          const trimmed = c.trim()
+          if (trimmed && trimmed.length > 2) set.add(trimmed)
+        })
+      }
+    })
+
+    const list = [
+      { id: 'All', label: 'All Cravings', image: CATEGORY_IMAGE_MAP.All },
+    ]
+
+    Array.from(set).forEach((name) => {
+      const matchKey = Object.keys(CATEGORY_IMAGE_MAP).find((k) =>
+        name.toLowerCase().includes(k.toLowerCase())
+      )
+      const image = matchKey
+        ? CATEGORY_IMAGE_MAP[matchKey]
+        : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80'
+      list.push({ id: name, label: name, image })
+    })
+
+    return list.length > 1 ? list : CATEGORY_LIST.slice(0, 6)
+  }, [menuItemsList, restaurantsList])
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('')
@@ -261,16 +308,16 @@ export default function ExploreView({
                     onClick={(e) => {
                       e.stopPropagation()
                       if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                        navigator.clipboard.writeText('CRAVEFEAST')
-                        setCopiedPromoCode('CRAVEFEAST')
-                        triggerToast('Promo code CRAVEFEAST copied!')
+                        navigator.clipboard.writeText('CRAVE50')
+                        setCopiedPromoCode('CRAVE50')
+                        triggerToast('Promo code CRAVE50 copied (50% OFF)!')
                         setTimeout(() => setCopiedPromoCode(null), 3000)
                       }
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-white text-[11px] font-mono font-medium transition cursor-pointer backdrop-blur-md active:scale-95 shadow-xs"
                     title="Click to copy coupon code"
                   >
-                    {copiedPromoCode === 'CRAVEFEAST' ? (
+                    {copiedPromoCode === 'CRAVE50' ? (
                       <>
                         <Check className="size-3 text-[#34C759] stroke-[2.5]" />
                         <span className="text-[#34C759] font-bold">Copied!</span>
@@ -278,7 +325,7 @@ export default function ExploreView({
                     ) : (
                       <>
                         <Copy className="size-3 text-white/80" />
-                        <span>Code: CRAVEFEAST</span>
+                        <span>Code: CRAVE50</span>
                       </>
                     )}
                   </button>
@@ -671,7 +718,7 @@ export default function ExploreView({
               <h3 className="text-sm sm:text-base font-bold text-[#18201c] dark:text-white tracking-tight flex items-center gap-2">
                 <span>What&apos;s on your mind?</span>
                 <span className="rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-extrabold text-gray-500 dark:text-gray-300">
-                  {CATEGORY_LIST.length} Cuisines
+                  {availableCategories.length} Categories
                 </span>
               </h3>
             </div>
@@ -697,7 +744,7 @@ export default function ExploreView({
             ref={categoryScrollRef}
             className="flex items-center gap-4 sm:gap-5 overflow-x-auto pb-3 pt-1 no-scrollbar scroll-smooth"
           >
-            {CATEGORY_LIST.map((cat) => {
+            {availableCategories.map((cat) => {
               const isSelected = selectedTag === cat.id
               return (
                 <button
